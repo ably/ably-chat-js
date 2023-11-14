@@ -1,0 +1,13 @@
+.idea/
+*.iml
+dist/
+node_modules/
+.vscode
+coverage
+.env
+docs/typedoc/generated/
+test-results/
+
+# Local Netlify folder
+.netlify
+.DS_Store
