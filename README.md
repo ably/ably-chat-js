@@ -34,7 +34,7 @@ const client = new Conversations(ably);
 ```
 You can use [basic authentication](https://ably.com/docs/auth/basic) i.e. the API Key directly for testing purposes, however it is strongly recommended that you use [token authentication](https://ably.com/docs/auth/token) in production environments.
 
-To use Spaces you must also set a [`clientId`](https://ably.com/docs/auth/identified-clients) so that clients are identifiable. If you are prototyping, you can use a package like [nanoid](https://www.npmjs.com/package/nanoid) to generate an ID.
+To use Conversations you must also set a [`clientId`](https://ably.com/docs/auth/identified-clients) so that clients are identifiable. If you are prototyping, you can use a package like [nanoid](https://www.npmjs.com/package/nanoid) to generate an ID.
 
 
 ## Creating a new Conversation
@@ -50,11 +50,28 @@ const conversation = await client.create(`namespace:${entityId}`);
 ### Listen to all changes
 
 ```ts
-conversation.subscribe('update', (data) => {
-  // members are online, currently active users of the conversation
-  console.log(data.members);
-  // user-defined state of cnversations, can hold conversation name, image, description, etc.
-  console.log(data.details);
+conversation.subscribe(({ type, ...payload }) => {
+  switch (type) {
+    case 'message.created':
+    case 'message.updated':
+    case 'message.deleted':
+      console.log('messages event', payload);
+      break;
+    case 'reaction.added':
+    case 'reaction.deleted':
+      console.log('messages event', payload);
+      break;
+    case 'members.enter':
+    case 'members.leave':
+    case 'members.remove':
+    case 'members.updateProfile':
+      console.log('members event', payload);
+      break;
+    case 'typings.typed':
+    case 'typings.stopped':
+      console.log('members event', payload);
+      break;
+  }
 });
 ```
 
@@ -67,6 +84,7 @@ const messages = await conversation.messages.query({
   limit,
   from,
   to,
+  direction,
 })
 ```
 
@@ -113,32 +131,24 @@ await conversation.messages.removeReaction(msgId, type)
 
 ```ts
 // Subscribe to all message events in a conversation
-conversation.messages.subscribe((updatePayload) => {
-  console.log(updatePayload);
-});
-
-conversation.messages.subscribe('publishMessage', (messagePublished) => {
-  console.log(messagePublished);
-});
-
-conversation.messages.subscribe('editMessage', (messageEdited) => {
-    console.log(messageEdited);
-});
-
-conversation.messages.subscribe('removeMessage', (messageRemoved) => {
-  console.log(messageRemoved);
-});
-
-conversation.messages.subscribe('addReaction', (reactionAdded) => {
-  console.log(reactionAdded);
-});
-
-conversation.messages.subscribe('addReaction', (reactionAdded) => {
-  console.log(reactionAdded);
-});
-
-conversation.messages.subscribe('removeReaction', (reactionRemoved) => {
-  console.log(reactionRemoved);
+conversation.messages.subscribe(({ type, message, reaction, diff, messageId, reactionId, deletedAt }) => {
+    switch (type) {
+      case 'message.created':
+        console.log(message);
+        break;
+      case 'message.updated':
+        console.log(diff);
+        break;
+      case 'message.deleted':
+        console.log(messageId);
+        break;
+      case 'reaction.added':
+        console.log(reaction);
+        break;
+      case 'reaction.deleted':
+        console.log(reactionId);
+        break;
+    }
 });
 ```
 
@@ -198,13 +208,13 @@ const othersMemberInfo = await conversation.members.getOthers();
 
 ## Typing indicator
 
-Indicate that typing is started
+This function should be invoked on each keypress on the input field
 
 ```ts
-conversation.typing.start()
+conversation.typing.type()
 ```
 
-Indicate that typing is stopped
+This function should be triggered when the user exits the input field focus.
 
 ```ts
 conversation.typing.stop()
@@ -213,7 +223,12 @@ conversation.typing.stop()
 Subscribe to typing events:
 
 ```ts
-conversation.typing.subscribe('update', (typingUpdate) => {
-  console.log(typingUpdate);
-})
+conversation.messages.subscribe(({ type, member }) => {
+  switch (type) {
+    case 'typings.typed':
+    case 'typings.stopped':
+      console.log(member);
+      break;
+  }
+});
 ```
