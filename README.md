@@ -80,12 +80,27 @@ conversation.subscribe(({ type, ...payload }) => {
 Get window of messages:
 
 ```ts
-const messages = await conversation.messages.query({
+const messages: Message[] = await conversation.messages.query({
   limit,
   from,
   to,
   direction,
 })
+```
+
+where `Message` is
+
+```ts
+class Message {
+    
+    getState(): MessageState
+    
+    update(diff: MessageUpdate)
+
+    addReaction(reaction: Reaction)
+  
+    removeReaction(type: string)
+}
 ```
 
 Send messages:
@@ -96,18 +111,17 @@ const message = await conversation.messages.publishMessage({
 })
 ```
 
+
 Update message:
 
 ```ts
-const message = await conversation.messages.editMessage(msgId, {
-  text
-})
+message.update({ text })
 ```
 
 Delete message:
 
 ```ts
-await conversation.messages.removeMessage(msgId)
+conversation.messages.delete(msgId)
 ```
 
 ## Reactions
@@ -115,7 +129,7 @@ await conversation.messages.removeMessage(msgId)
 Add reaction:
 
 ```ts
-const reaction = await conversation.messages.addReaction(msgId, {
+message.addReaction({
   type,
   ...
 })
@@ -124,7 +138,7 @@ const reaction = await conversation.messages.addReaction(msgId, {
 Delete reaction:
 
 ```ts
-await conversation.messages.removeReaction(msgId, type)
+message.removeReaction(type)
 ```
 
 ### Subscribe to message changes
