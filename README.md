@@ -45,34 +45,18 @@ A Conversation is a chat between one or more participants that may be backed by 
 const conversation = await client.create(`namespace:${entityId}`);
 ```
 
-## Listen to changes
+## Getting existing Conversation
 
-### Listen to all changes
+You can connect to the existing conversation by its name:
 
 ```ts
-conversation.subscribe(({ type, ...payload }) => {
-  switch (type) {
-    case 'message.created':
-    case 'message.updated':
-    case 'message.deleted':
-      console.log('messages event', payload);
-      break;
-    case 'reaction.added':
-    case 'reaction.deleted':
-      console.log('messages event', payload);
-      break;
-    case 'members.enter':
-    case 'members.leave':
-    case 'members.remove':
-    case 'members.updateProfile':
-      console.log('members event', payload);
-      break;
-    case 'typings.typed':
-    case 'typings.stopped':
-      console.log('members event', payload);
-      break;
-  }
-});
+const conversation = await client.get(`namespace:${entityId}`);
+```
+
+Also you can send `createIfNotExists: true` option that will create new Conversation if it doesn't exist.
+
+```ts
+const conversation = await client.get(`namespace:${entityId}`, { createIfNotExists: true });
 ```
 
 ## Messaging
@@ -152,12 +136,50 @@ conversation.messages.subscribe(({ type, message, reaction, diff, messageId, rea
 });
 ```
 
+```ts
+// Subscribe to specific even in a conversation
+conversation.messages.subscribe('message.created', ({ type, message }) => {
+  console.log(message);
+});
+```
+
+### Subscribe and fetch latest messages
+
+Common use-case for Messages is getting latest messages and subscribe to future updates, to make it easier,
+you can use `fetch` option:
+
+```ts
+conversation.messages.subscribe(({ type, messages, ...restEventsPayload }) => {
+  switch (type) {
+    case 'messages.fetched':
+      console.log(messages);
+    default:
+      console.log(type, restEventsPayload);
+  }
+}, {
+  fetch: {
+    limit,
+    from,
+    to,
+    direction,
+  }
+});
+```
+
 [//]: # (TODO message statuses updates: sent, delivered, read)
 
 ## Presence
 
 > [!IMPORTANT]  
 > Idea is to keep it similar to Spaces members and potentially reuse code 
+
+```ts
+// Enter a conversation, publishing an update event, including optional profile data
+await conversation.enter({
+  username: 'Claire Lemons',
+  avatar: 'https://slides-internal.com/users/clemons.png',
+});
+```
 
 ```ts
 // Subscribe to all member events in a conversation
@@ -183,11 +205,6 @@ conversation.members.subscribe('remove', (memberRemoved) => {
 // Subscribe to profile updates on members only
 conversation.members.subscribe('updateProfile', (memberProfileUpdated) => {
   console.log(memberProfileUpdated);
-});
-
-// Subscribe to all updates to members
-conversation.members.subscribe('update', (memberUpdate) => {
-  console.log(memberUpdate);
 });
 ```
 
