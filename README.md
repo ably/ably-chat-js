@@ -149,19 +149,18 @@ Common use-case for Messages is getting latest messages and subscribe to future 
 you can use `fetch` option:
 
 ```ts
-conversation.messages.subscribe(({ type, messages, ...restEventsPayload }) => {
+conversation.messages.subscribe(({ type, message, ...restEventsPayload }) => {
   switch (type) {
-    case 'messages.fetched':
-      console.log(messages);
+    case 'message.created':
+      // last messages will come as  message.created event 
+      console.log(message);
+      break;
     default:
       console.log(type, restEventsPayload);
   }
 }, {
   fetch: {
-    limit,
-    from,
-    to,
-    direction,
+    limit
   }
 });
 ```
@@ -247,5 +246,25 @@ conversation.messages.subscribe(({ type, member }) => {
       console.log(member);
       break;
   }
+});
+```
+
+## Connection and Ably channels statuses
+
+Conversation exposes `channel` and `connection` fields, which implements `EventEmitter` interface,
+you can register a channel and connection state change listener with the on() or once() methods, 
+depending on whether you want to monitor all state changes, or only the first occurrence of one.
+
+```ts
+conversation.connection.on('connected', (stateChange) => {
+    console.log('Ably is connected');
+});
+
+conversation.connection.on((stateChange) => {
+  console.log('New connection state is ' + stateChange.current);
+});
+
+conversation.channel.on('attached', (stateChange) => {
+  console.log('channel ' + channel.name + ' is now attached');
 });
 ```
