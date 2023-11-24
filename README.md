@@ -1,7 +1,7 @@
-# Ably Conversations SDK
+# Ably Chat SDK
 
-The **Conversations SDK** offers a seamless and customizable API designed to facilitate diverse 
-in-app conversation scenarios, encompassing live comments, in-app chat functionalities, 
+The **Chat SDK** offers a seamless and customizable API designed to facilitate diverse 
+in-app conversations scenarios, encompassing live comments, in-app chat functionalities, 
 and the management of real-time updates and user interactions.
 
 ## Prerequisites
@@ -17,46 +17,46 @@ To start using this SDK, you will need the following:
 
 ## Installation and authentication
 
-Install the Ably JavaScript SDK and the Conversations SDK:
+Install the Ably JavaScript SDK and the Chat SDK:
 
 ```sh
-npm install ably @ably/conversations
+npm install ably @ably/chat
 ```
 
-To instantiate the Conversations SDK, create an [Ably client](https://ably.com/docs/getting-started/setup) and pass it into the Conversations constructor:
+To instantiate the Chat SDK, create an [Ably client](https://ably.com/docs/getting-started/setup) and pass it into the Chat constructor:
 
 ```ts
-import Conversations from '@ably/conversations';
+import Chat from '@ably/chat';
 import { Realtime } from 'ably';
 
 const ably = new Realtime.Promise({ key: "<API-key>", clientId: "<client-ID>" });
-const client = new Conversations(ably);
+const client = new Chat(ably);
 ```
 You can use [basic authentication](https://ably.com/docs/auth/basic) i.e. the API Key directly for testing purposes, however it is strongly recommended that you use [token authentication](https://ably.com/docs/auth/token) in production environments.
 
-To use Conversations you must also set a [`clientId`](https://ably.com/docs/auth/identified-clients) so that clients are identifiable. If you are prototyping, you can use a package like [nanoid](https://www.npmjs.com/package/nanoid) to generate an ID.
+To use Chat you must also set a [`clientId`](https://ably.com/docs/auth/identified-clients) so that clients are identifiable. If you are prototyping, you can use a package like [nanoid](https://www.npmjs.com/package/nanoid) to generate an ID.
 
 
-## Creating a new Conversation
+## Creating a new Room
 
-A Conversation is a chat between one or more participants that may be backed by one or more Ably PubSub channels.
+A Room is a chat between one or more participants that may be backed by one or more Ably PubSub channels.
 
 ```ts
-const conversation = await client.create(`namespace:${entityId}`);
+const room = await client.create(`namespace:${entityId}`);
 ```
 
-## Getting existing Conversation
+## Getting existing Room
 
-You can connect to the existing conversation by its name:
+You can connect to the existing room by its name:
 
 ```ts
-const conversation = await client.get(`namespace:${entityId}`);
+const room = await client.get(`namespace:${entityId}`);
 ```
 
-Also you can send `createIfNotExists: true` option that will create new Conversation if it doesn't exist.
+Also you can send `createIfNotExists: true` option that will create new Room if it doesn't exist.
 
 ```ts
-const conversation = await client.get(`namespace:${entityId}`, { createIfNotExists: true });
+const room = await client.get(`namespace:${entityId}`, { createIfNotExists: true });
 ```
 
 ## Messaging
@@ -64,7 +64,7 @@ const conversation = await client.get(`namespace:${entityId}`, { createIfNotExis
 Get window of messages:
 
 ```ts
-const messages = await conversation.messages.query({
+const messages = await room.messages.query({
   limit,
   from,
   to,
@@ -75,7 +75,7 @@ const messages = await conversation.messages.query({
 Send messages:
 
 ```ts
-const message = await conversation.messages.publishMessage({
+const message = await room.messages.publishMessage({
   text
 })
 ```
@@ -83,7 +83,7 @@ const message = await conversation.messages.publishMessage({
 Update message:
 
 ```ts
-const message = await conversation.messages.editMessage(msgId, {
+const message = await room.messages.editMessage(msgId, {
   text
 })
 ```
@@ -91,7 +91,7 @@ const message = await conversation.messages.editMessage(msgId, {
 Delete message:
 
 ```ts
-await conversation.messages.removeMessage(msgId)
+await room.messages.removeMessage(msgId)
 ```
 
 ## Reactions
@@ -99,7 +99,7 @@ await conversation.messages.removeMessage(msgId)
 Add reaction:
 
 ```ts
-const reaction = await conversation.messages.addReaction(msgId, {
+const reaction = await room.messages.addReaction(msgId, {
   type,
   ...
 })
@@ -108,14 +108,14 @@ const reaction = await conversation.messages.addReaction(msgId, {
 Delete reaction:
 
 ```ts
-await conversation.messages.removeReaction(msgId, type)
+await room.messages.removeReaction(msgId, type)
 ```
 
 ### Subscribe to message changes
 
 ```ts
-// Subscribe to all message events in a conversation
-conversation.messages.subscribe(({ type, message, reaction, diff, messageId, reactionId, deletedAt }) => {
+// Subscribe to all message events in a room
+room.messages.subscribe(({ type, message, reaction, diff, messageId, reactionId, deletedAt }) => {
     switch (type) {
       case 'message.created':
         console.log(message);
@@ -137,8 +137,8 @@ conversation.messages.subscribe(({ type, message, reaction, diff, messageId, rea
 ```
 
 ```ts
-// Subscribe to specific even in a conversation
-conversation.messages.subscribe('message.created', ({ type, message }) => {
+// Subscribe to specific even in a room
+room.messages.subscribe('message.created', ({ type, message }) => {
   console.log(message);
 });
 ```
@@ -149,7 +149,7 @@ Common use-case for Messages is getting latest messages and subscribe to future 
 you can use `fetch` option:
 
 ```ts
-conversation.messages.subscribe(({ type, message, ...restEventsPayload }) => {
+room.messages.subscribe(({ type, message, ...restEventsPayload }) => {
   switch (type) {
     case 'message.created':
       // last messages will come as  message.created event 
@@ -173,36 +173,36 @@ conversation.messages.subscribe(({ type, message, ...restEventsPayload }) => {
 > Idea is to keep it similar to Spaces members and potentially reuse code 
 
 ```ts
-// Enter a conversation, publishing an update event, including optional profile data
-await conversation.enter({
+// Enter a room, publishing an update event, including optional profile data
+await room.enter({
   username: 'Claire Lemons',
   avatar: 'https://slides-internal.com/users/clemons.png',
 });
 ```
 
 ```ts
-// Subscribe to all member events in a conversation
-conversation.members.subscribe((memberUpdate) => {
+// Subscribe to all member events in a room
+room.members.subscribe((memberUpdate) => {
   console.log(memberUpdate);
 });
 
 // Subscribe to member enter events only
-conversation.members.subscribe('enter', (memberJoined) => {
+room.members.subscribe('enter', (memberJoined) => {
   console.log(memberJoined);
 });
 
 // Subscribe to member leave events only
-conversation.members.subscribe('leave', (memberLeft) => {
+room.members.subscribe('leave', (memberLeft) => {
   console.log(memberLeft);
 });
 
 // Subscribe to member remove events only
-conversation.members.subscribe('remove', (memberRemoved) => {
+room.members.subscribe('remove', (memberRemoved) => {
   console.log(memberRemoved);
 });
 
 // Subscribe to profile updates on members only
-conversation.members.subscribe('updateProfile', (memberProfileUpdated) => {
+room.members.subscribe('updateProfile', (memberProfileUpdated) => {
   console.log(memberProfileUpdated);
 });
 ```
@@ -212,14 +212,14 @@ conversation.members.subscribe('updateProfile', (memberProfileUpdated) => {
 Members has methods to get the current snapshot of member state:
 
 ```ts
-// Get all members in a conversation
-const allMembers = await conversation.members.getAll();
+// Get all members in a room
+const allMembers = await room.members.getAll();
 
 // Get your own member object
-const myMemberInfo = await conversation.members.getSelf();
+const myMemberInfo = await room.members.getSelf();
 
 // Get everyone else's member object but yourself
-const othersMemberInfo = await conversation.members.getOthers();
+const othersMemberInfo = await room.members.getOthers();
 ```
 
 ## Typing indicator
@@ -227,19 +227,19 @@ const othersMemberInfo = await conversation.members.getOthers();
 This function should be invoked on each keypress on the input field
 
 ```ts
-conversation.typing.type()
+room.typing.type()
 ```
 
 This function should be triggered when the user exits the input field focus.
 
 ```ts
-conversation.typing.stop()
+room.typing.stop()
 ```
 
 Subscribe to typing events:
 
 ```ts
-conversation.messages.subscribe(({ type, member }) => {
+room.messages.subscribe(({ type, member }) => {
   switch (type) {
     case 'typings.typed':
     case 'typings.stopped':
@@ -256,15 +256,15 @@ you can register a channel and connection state change listener with the on() or
 depending on whether you want to monitor all state changes, or only the first occurrence of one.
 
 ```ts
-conversation.connection.on('connected', (stateChange) => {
+room.connection.on('connected', (stateChange) => {
     console.log('Ably is connected');
 });
 
-conversation.connection.on((stateChange) => {
+room.connection.on((stateChange) => {
   console.log('New connection state is ' + stateChange.current);
 });
 
-conversation.channel.on('attached', (stateChange) => {
+room.channel.on('attached', (stateChange) => {
   console.log('channel ' + channel.name + ' is now attached');
 });
 ```
