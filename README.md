@@ -42,7 +42,7 @@ To use Chat you must also set a [`clientId`](https://ably.com/docs/auth/identifi
 A Room is a chat between one or more participants that may be backed by one or more Ably PubSub channels.
 
 ```ts
-const room = await client.create(`namespace:${entityId}`);
+const room = await client.rooms.create(`namespace:${entityId}`);
 ```
 
 ## Getting existing Room
@@ -50,13 +50,13 @@ const room = await client.create(`namespace:${entityId}`);
 You can connect to the existing room by its name:
 
 ```ts
-const room = await client.get(`namespace:${entityId}`);
+const room = await client.rooms.get(`namespace:${entityId}`);
 ```
 
 Also you can send `createIfNotExists: true` option that will create new Room if it doesn't exist.
 
 ```ts
-const room = await client.get(`namespace:${entityId}`, { createIfNotExists: true });
+const room = await client.rooms.get(`namespace:${entityId}`, { createIfNotExists: true });
 ```
 
 ## Messaging
@@ -75,7 +75,7 @@ const messages = await room.messages.query({
 Send messages:
 
 ```ts
-const message = await room.messages.publishMessage({
+const message = await room.messages.send({
   text
 })
 ```
@@ -83,7 +83,7 @@ const message = await room.messages.publishMessage({
 Update message:
 
 ```ts
-const message = await room.messages.editMessage(msgId, {
+const message = await room.messages.edit(msgId, {
   text
 })
 ```
@@ -91,7 +91,35 @@ const message = await room.messages.editMessage(msgId, {
 Delete message:
 
 ```ts
-await room.messages.removeMessage(msgId)
+await room.messages.delete(msgId)
+await room.messages.delete(msg)
+```
+
+### Message Object
+
+```json5
+{
+  "id": "string",
+  "client_id": "string",
+  "conversation_id": "string",
+  "content": "string",
+  "reactions": {
+    "counts": {
+      "like": "number",
+      "heart": "number",
+    },
+    "latest": [
+      // List of most recent reactions
+    ],
+    "mine": [
+      // List of Reaction objects
+    ]		
+  },
+  "created_at": "number",
+  "updated_at": "number|null",
+  "deleted_at": "number|null"
+}
+
 ```
 
 ## Reactions
@@ -111,26 +139,49 @@ Delete reaction:
 await room.messages.removeReaction(msgId, type)
 ```
 
+### Reaction object
+
+```json5
+{
+  "id": "string",
+  "message_id": "string",
+  "type": "string",
+  "client_id": "string",
+  "updated_at": "number|null",
+  "deleted_at": "number|null"
+}
+```
+
 ### Subscribe to message changes
 
 ```ts
 // Subscribe to all message events in a room
-room.messages.subscribe(({ type, message, reaction, diff, messageId, reactionId, deletedAt }) => {
+room.messages.subscribe(({ type, message }) => {
     switch (type) {
       case 'message.created':
         console.log(message);
         break;
       case 'message.updated':
-        console.log(diff);
+        console.log(message);
         break;
       case 'message.deleted':
-        console.log(messageId);
+        console.log(message);
         break;
+    }
+});
+```
+
+### Subscribe to reactions
+
+```ts
+// Subscribe to all reactions
+room.reactions.subscribe(({ type, reaction }) => {
+    switch (type) {
       case 'reaction.added':
         console.log(reaction);
         break;
       case 'reaction.deleted':
-        console.log(reactionId);
+        console.log(reaction);
         break;
     }
 });
@@ -220,6 +271,40 @@ const myMemberInfo = await room.members.getSelf();
 
 // Get everyone else's member object but yourself
 const othersMemberInfo = await room.members.getOthers();
+```
+
+## Room reactions
+
+Get reactions
+
+```ts
+room.reactions.get()
+```
+
+Subscribe to reactions updates
+
+```ts
+room.reactions.subscribe(({ type, reaction }) => {
+  switch (type) {
+    case "reaction.added":
+    case "reaction.deleted":
+      console.log(reaction);
+      break;
+  }
+});
+```
+
+Add reaction
+
+```ts
+room.reactions.add(reactionType)
+```
+
+Remove reaction
+
+```ts
+room.reactions.delete(reaction)
+room.reactions.delete(reactionType)
 ```
 
 ## Typing indicator
