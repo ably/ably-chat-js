@@ -1,7 +1,7 @@
 # Ably Chat SDK
 
-The **Chat SDK** offers a seamless and customizable API designed to facilitate diverse 
-in-app conversations scenarios, encompassing live comments, in-app chat functionalities, 
+The **Chat SDK** offers a seamless and customizable API designed to facilitate diverse
+in-app conversations scenarios, encompassing live comments, in-app chat functionalities,
 and the management of real-time updates and user interactions.
 
 ## Prerequisites
@@ -37,26 +37,20 @@ You can use [basic authentication](https://ably.com/docs/auth/basic) i.e. the AP
 To use Chat you must also set a [`clientId`](https://ably.com/docs/auth/identified-clients) so that clients are identifiable. If you are prototyping, you can use a package like [nanoid](https://www.npmjs.com/package/nanoid) to generate an ID.
 
 
-## Creating a new Room
+## Getting Conversation controller
 
-A Room is a chat between one or more participants that may be backed by one or more Ably PubSub channels.
+You can get conversation controller:
 
 ```ts
-const room = await client.rooms.create(`namespace:${entityId}`);
+const conversation = client.conversations.get(conversationId);
 ```
 
-## Getting existing Room
+## Create a Conversation
 
-You can connect to the existing room by its name:
-
-```ts
-const room = await client.rooms.get(`namespace:${entityId}`);
-```
-
-Also you can send `createIfNotExists: true` option that will create new Room if it doesn't exist.
+You can create conversation using controller:
 
 ```ts
-const room = await client.rooms.get(`namespace:${entityId}`, { createIfNotExists: true });
+await conversation.create({ ttl });
 ```
 
 ## Messaging
@@ -64,7 +58,7 @@ const room = await client.rooms.get(`namespace:${entityId}`, { createIfNotExists
 Get window of messages:
 
 ```ts
-const messages = await room.messages.query({
+const messages = await conversation.messages.query({
   limit,
   from,
   to,
@@ -75,7 +69,7 @@ const messages = await room.messages.query({
 Send messages:
 
 ```ts
-const message = await room.messages.send({
+const message = await conversation.messages.send({
   text
 })
 ```
@@ -83,7 +77,7 @@ const message = await room.messages.send({
 Update message:
 
 ```ts
-const message = await room.messages.edit(msgId, {
+const message = await conversation.messages.edit(msgId, {
   text
 })
 ```
@@ -91,8 +85,8 @@ const message = await room.messages.edit(msgId, {
 Delete message:
 
 ```ts
-await room.messages.delete(msgId)
-await room.messages.delete(msg)
+await conversation.messages.delete(msgId)
+await conversation.messages.delete(msg)
 ```
 
 ### Message Object
@@ -113,7 +107,7 @@ await room.messages.delete(msg)
     ],
     "mine": [
       // List of Reaction objects
-    ]		
+    ]
   },
   "created_at": "number",
   "updated_at": "number|null",
@@ -127,7 +121,7 @@ await room.messages.delete(msg)
 Add reaction:
 
 ```ts
-const reaction = await room.messages.addReaction(msgId, {
+const reaction = await conversation.messages.addReaction(msgId, {
   type,
   ...
 })
@@ -136,7 +130,7 @@ const reaction = await room.messages.addReaction(msgId, {
 Delete reaction:
 
 ```ts
-await room.messages.removeReaction(msgId, type)
+await conversation.messages.removeReaction(msgId, type)
 ```
 
 ### Reaction object
@@ -155,8 +149,8 @@ await room.messages.removeReaction(msgId, type)
 ### Subscribe to message changes
 
 ```ts
-// Subscribe to all message events in a room
-room.messages.subscribe(({ type, message }) => {
+// Subscribe to all message events in a conversation
+conversation.messages.subscribe(({ type, message }) => {
     switch (type) {
       case 'message.created':
         console.log(message);
@@ -175,7 +169,7 @@ room.messages.subscribe(({ type, message }) => {
 
 ```ts
 // Subscribe to all reactions
-room.reactions.subscribe(({ type, reaction }) => {
+conversation.reactions.subscribe(({ type, reaction }) => {
     switch (type) {
       case 'reaction.added':
         console.log(reaction);
@@ -188,8 +182,8 @@ room.reactions.subscribe(({ type, reaction }) => {
 ```
 
 ```ts
-// Subscribe to specific even in a room
-room.messages.subscribe('message.created', ({ type, message }) => {
+// Subscribe to specific even in a conversation
+conversation.messages.subscribe('message.created', ({ type, message }) => {
   console.log(message);
 });
 ```
@@ -200,10 +194,10 @@ Common use-case for Messages is getting latest messages and subscribe to future 
 you can use `fetch` option:
 
 ```ts
-room.messages.subscribe(({ type, message, ...restEventsPayload }) => {
+conversation.messages.subscribe(({ type, message, ...restEventsPayload }) => {
   switch (type) {
     case 'message.created':
-      // last messages will come as  message.created event 
+      // last messages will come as  message.created event
       console.log(message);
       break;
     default:
@@ -220,41 +214,36 @@ room.messages.subscribe(({ type, message, ...restEventsPayload }) => {
 
 ## Presence
 
-> [!IMPORTANT]  
-> Idea is to keep it similar to Spaces members and potentially reuse code 
+> [!IMPORTANT]
+> Idea is to keep it similar to Spaces members and potentially reuse code
 
 ```ts
-// Enter a room, publishing an update event, including optional profile data
-await room.enter({
+// Enter a conversation, publishing an update event, including optional profile data
+await conversation.enter({
   username: 'Claire Lemons',
   avatar: 'https://slides-internal.com/users/clemons.png',
 });
 ```
 
 ```ts
-// Subscribe to all member events in a room
-room.members.subscribe((memberUpdate) => {
+// Subscribe to all member events in a conversation
+conversation.members.subscribe((memberUpdate) => {
   console.log(memberUpdate);
 });
 
 // Subscribe to member enter events only
-room.members.subscribe('enter', (memberJoined) => {
+conversation.members.subscribe('enter', (memberJoined) => {
   console.log(memberJoined);
 });
 
 // Subscribe to member leave events only
-room.members.subscribe('leave', (memberLeft) => {
+conversation.members.subscribe('leave', (memberLeft) => {
   console.log(memberLeft);
 });
 
-// Subscribe to member remove events only
-room.members.subscribe('remove', (memberRemoved) => {
+// Subscribe to member update events only
+conversation.members.subscribe('update', (memberRemoved) => {
   console.log(memberRemoved);
-});
-
-// Subscribe to profile updates on members only
-room.members.subscribe('updateProfile', (memberProfileUpdated) => {
-  console.log(memberProfileUpdated);
 });
 ```
 
@@ -263,28 +252,28 @@ room.members.subscribe('updateProfile', (memberProfileUpdated) => {
 Members has methods to get the current snapshot of member state:
 
 ```ts
-// Get all members in a room
-const allMembers = await room.members.getAll();
+// Get all members in a conversation
+const allMembers = await conversation.members.getAll();
 
 // Get your own member object
-const myMemberInfo = await room.members.getSelf();
+const myMemberInfo = await conversation.members.getSelf();
 
 // Get everyone else's member object but yourself
-const othersMemberInfo = await room.members.getOthers();
+const othersMemberInfo = await conversation.members.getOthers();
 ```
 
-## Room reactions
+## Conversation reactions
 
 Get reactions
 
 ```ts
-room.reactions.get()
+conversation.reactions.get()
 ```
 
 Subscribe to reactions updates
 
 ```ts
-room.reactions.subscribe(({ type, reaction }) => {
+conversation.reactions.subscribe(({ type, reaction }) => {
   switch (type) {
     case "reaction.added":
     case "reaction.deleted":
@@ -297,14 +286,14 @@ room.reactions.subscribe(({ type, reaction }) => {
 Add reaction
 
 ```ts
-room.reactions.add(reactionType)
+conversation.reactions.add(reactionType)
 ```
 
 Remove reaction
 
 ```ts
-room.reactions.delete(reaction)
-room.reactions.delete(reactionType)
+conversation.reactions.delete(reaction)
+conversation.reactions.delete(reactionType)
 ```
 
 ## Typing indicator
@@ -312,19 +301,19 @@ room.reactions.delete(reactionType)
 This function should be invoked on each keypress on the input field
 
 ```ts
-room.typing.type()
+conversation.typing.type()
 ```
 
 This function should be triggered when the user exits the input field focus.
 
 ```ts
-room.typing.stop()
+conversation.typing.stop()
 ```
 
 Subscribe to typing events:
 
 ```ts
-room.messages.subscribe(({ type, member }) => {
+conversation.messages.subscribe(({ type, member }) => {
   switch (type) {
     case 'typings.typed':
     case 'typings.stopped':
@@ -337,19 +326,19 @@ room.messages.subscribe(({ type, member }) => {
 ## Connection and Ably channels statuses
 
 Conversation exposes `channel` and `connection` fields, which implements `EventEmitter` interface,
-you can register a channel and connection state change listener with the on() or once() methods, 
+you can register a channel and connection state change listener with the on() or once() methods,
 depending on whether you want to monitor all state changes, or only the first occurrence of one.
 
 ```ts
-room.connection.on('connected', (stateChange) => {
+conversation.connection.on('connected', (stateChange) => {
     console.log('Ably is connected');
 });
 
-room.connection.on((stateChange) => {
+conversation.connection.on((stateChange) => {
   console.log('New connection state is ' + stateChange.current);
 });
 
-room.channel.on('attached', (stateChange) => {
+conversation.channel.on('attached', (stateChange) => {
   console.log('channel ' + channel.name + ' is now attached');
 });
 ```
