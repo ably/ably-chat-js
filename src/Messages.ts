@@ -1,31 +1,107 @@
-import { Realtime } from 'ably/promises';
+import { Types } from 'ably/promises';
 import { ChatApi } from './ChatApi.js';
+import { Message } from './entities.js';
+import RealtimeChannelPromise = Types.RealtimeChannelPromise;
+import { MessageEvents } from './events.js';
 
-const enum Direction {
-  ascending = 'ascending',
-  descending = 'descending',
+export const enum Direction {
+  forwards = 'forwards',
+  backwards = 'backwards',
 }
 
 interface QueryOptions {
-  from: string;
-  to: string;
-  limit: string;
-  direction: Direction;
+  startId?: string;
+  endId?: string;
+  limit: number;
+  direction?: keyof typeof Direction;
 }
+
+interface MessageListenerArgs {
+  type: MessageEvents;
+  message: Message;
+}
+
+type MessageListener = (args: MessageListenerArgs) => void;
+type ChannelListener = Types.messageCallback<Types.Message>;
 
 export class Messages {
   private readonly conversationId: string;
-  private readonly realtime: Realtime;
+  private readonly channel: RealtimeChannelPromise;
   private readonly chatApi: ChatApi;
+  private messageToChannelListener = new WeakMap<MessageListener, ChannelListener>();
 
-  constructor(conversationId: string, realtime: Realtime, chatApi: ChatApi) {
+  constructor(conversationId: string, channel: RealtimeChannelPromise, chatApi: ChatApi) {
     this.conversationId = conversationId;
-    this.realtime = realtime;
+    this.channel = channel;
     this.chatApi = chatApi;
   }
 
   // eslint-disable-next-line
-  async query(options: QueryOptions) {
-    return [];
+  async query(options: QueryOptions): Promise<Message[]> {
+    return this.chatApi.getMessages(this.conversationId, options);
+  }
+
+  async send(text: string): Promise<Message> {
+    const createdMessages: Record<string, Message> = {};
+
+    let waitingMessageId: string | null = null;
+    let resolver: ((message: Message) => void) | null = null;
+
+    const waiter = ({ data }: Types.Message) => {
+      const message: Message = data;
+      if (waitingMessageId == null) createdMessages[message.id] = message;
+      if (waitingMessageId == message.id) resolver?.(message);
+    };
+
+    await this.channel.subscribe(MessageEvents.created, waiter);
+    const { id } = await this.chatApi.sendMessage(this.conversationId, text);
+
+    if (createdMessages[id]) return createdMessages[id];
+
+    waitingMessageId = id;
+
+    return new Promise((resolve) => {
+      resolver = (message) => {
+        this.channel.unsubscribe(MessageEvents.created, waiter);
+        resolve(message);
+      };
+    });
+  }
+
+  async edit(messageId: string, text: string): Promise<Message> {
+    let resolver: ((message: Message) => void) | null = null;
+    const waiter = ({ data }: Types.Message) => {
+      const message: Message = data;
+      if (messageId == message.id) resolver?.(message);
+    };
+
+    const promise: Promise<Message> = new Promise((resolve) => {
+      resolver = (message) => {
+        this.channel.unsubscribe(MessageEvents.updated, waiter);
+        resolve(message);
+      };
+    });
+
+    await this.channel.subscribe(MessageEvents.updated, waiter);
+    await this.chatApi.editMessage(this.conversationId, messageId, text);
+
+    return promise;
+  }
+
+  async subscribe(event: MessageEvents, listener: MessageListener) {
+    const channelListener = ({ name, data }: Types.Message) => {
+      listener({
+        type: name as MessageEvents,
+        message: data,
+      });
+    };
+    this.messageToChannelListener.set(listener, channelListener);
+    return this.channel.subscribe(event, channelListener);
+  }
+
+  unsubscribe(event: MessageEvents, listener: MessageListener) {
+    const channelListener = this.messageToChannelListener.get(listener);
+    if (!channelListener) return;
+    this.channel.unsubscribe(event, channelListener);
   }
 }
