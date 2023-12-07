@@ -1,4 +1,6 @@
 import { Conversation, Message } from './entities.js';
+import { Types } from 'ably';
+import ErrorInfo = Types.ErrorInfo;
 
 export interface CreateConversationRequest {
   ttl: number;
@@ -29,7 +31,7 @@ export class ChatApi {
 
   async getConversation(conversationId: string): Promise<Conversation> {
     const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}`);
-    if (!response.ok) throw Error(response.statusText);
+    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
     return response.json();
   }
 
@@ -41,7 +43,7 @@ export class ChatApi {
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
     });
-    if (!response.ok) throw Error(response.statusText);
+    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
     return response.json();
   }
 
@@ -51,26 +53,26 @@ export class ChatApi {
       limit: params.limit.toString(),
     }).toString();
 
-    const response = await fetch(`${this.baseUrl}/v1/conversation/${conversationId}/messages?${queryString}`);
-    if (!response.ok) throw Error(response.statusText);
+    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages?${queryString}`);
+    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
     return response.json();
   }
 
   async sendMessage(conversationId: string, text: string): Promise<CreateMessageResponse> {
-    const response = await fetch(`${this.baseUrl}/v1/conversation/${conversationId}/messages`, {
+    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages`, {
       method: 'POST',
       body: JSON.stringify({ content: text }),
     });
-    if (!response.ok) throw Error(response.statusText);
+    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
     return response.json();
   }
 
   async editMessage(conversationId: string, messageId: string, text: string): Promise<UpdateMessageResponse> {
-    const response = await fetch(`${this.baseUrl}/v1/conversation/${conversationId}/messages/${messageId}`, {
+    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages/${messageId}`, {
       method: 'POST',
       body: JSON.stringify({ content: text }),
     });
-    if (!response.ok) throw Error(response.statusText);
+    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
     return response.json();
   }
 }
