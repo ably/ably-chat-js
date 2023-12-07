@@ -6,9 +6,9 @@ export class Conversations {
   private readonly realtime: Realtime;
   private readonly chatApi: ChatApi;
 
-  constructor(realtime: Realtime, baseUrl: string) {
+  constructor(realtime: Realtime) {
     this.realtime = realtime;
-    this.chatApi = new ChatApi(baseUrl);
+    this.chatApi = new ChatApi();
   }
 
   get(conversationId: string) {

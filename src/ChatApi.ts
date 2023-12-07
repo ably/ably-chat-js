@@ -7,18 +7,16 @@ export interface Conversation {
 }
 
 export class ChatApi {
-  private readonly baseUrl: string;
+  private readonly baseUrl =
+    process.env.NODE_ENV === 'production' ? 'https://rest.ably.io/conversation' : 'http://localhost:8281/conversations';
 
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-  }
   async getConversation(conversationId: string): Promise<Conversation> {
-    const response = await fetch(`${this.baseUrl}/v1/conversation/${conversationId}`);
+    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}`);
     return response.json();
   }
 
   async createConversation(conversationId: string, body?: CreateConversationOptions): Promise<Conversation> {
-    const response = await fetch(`${this.baseUrl}/v1/conversation/${conversationId}`, {
+    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}`, {
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
     });
