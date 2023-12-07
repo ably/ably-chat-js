@@ -14,7 +14,7 @@ export class Conversation {
     this.conversationId = conversationId;
     this.realtime = realtime;
     this.chatApi = chatApi;
-    this.channel = realtime.channels.get(`${conversationId}::$conversation`);
+    this.channel = realtime.channels.get(`conversations:${conversationId}`);
     this.messages = new Messages(conversationId, this.channel, this.chatApi);
   }
 

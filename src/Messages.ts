@@ -54,11 +54,18 @@ export class Messages {
     };
 
     await this.channel.subscribe(MessageEvents.created, waiter);
-    const { id } = await this.chatApi.sendMessage(this.conversationId, text);
 
-    if (createdMessages[id]) return createdMessages[id];
-
-    waitingMessageId = id;
+    try {
+      const { id } = await this.chatApi.sendMessage(this.conversationId, text);
+      if (createdMessages[id]) {
+        this.channel.unsubscribe(MessageEvents.created, waiter);
+        return createdMessages[id];
+      }
+      waitingMessageId = id;
+    } catch (e) {
+      this.channel.unsubscribe(MessageEvents.created, waiter);
+      throw e;
+    }
 
     return new Promise((resolve) => {
       resolver = (message) => {
@@ -83,7 +90,13 @@ export class Messages {
     });
 
     await this.channel.subscribe(MessageEvents.updated, waiter);
-    await this.chatApi.editMessage(this.conversationId, messageId, text);
+
+    try {
+      await this.chatApi.editMessage(this.conversationId, messageId, text);
+    } catch (e) {
+      this.channel.unsubscribe(MessageEvents.updated, waiter);
+      throw e;
+    }
 
     return promise;
   }
