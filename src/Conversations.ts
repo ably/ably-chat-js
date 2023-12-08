@@ -8,7 +8,7 @@ export class Conversations {
 
   constructor(realtime: Realtime) {
     this.realtime = realtime;
-    this.chatApi = new ChatApi();
+    this.chatApi = process.env.CHAT_SDK_STATUS === 'extended' ? new ChatApi((realtime as any).options.clientId) : new ChatApi();
   }
 
   get(conversationId: string) {
