@@ -13,4 +13,8 @@ export class Chat {
   get connection() {
     return this.realtime.connection;
   }
+
+  get clientId() {
+    return (this.realtime as any).options.clientId;
+  }
 }
