@@ -1,6 +1,5 @@
 import { Conversation, Message } from './entities.js';
-import { Types } from 'ably';
-import ErrorInfo = Types.ErrorInfo;
+import { ErrorInfo } from 'ably';
 
 export interface CreateConversationRequest {
   ttl: number;
@@ -29,7 +28,7 @@ export interface UpdateMessageResponse {
  * Chat SDK Backend
  */
 export class ChatApi {
-  private readonly baseUrl = process.env.CHAT_SDK_BASE_URL ?? '/api/conversations';
+  private readonly baseUrl = '/api/conversations';
 
   private readonly clientId: string;
 
