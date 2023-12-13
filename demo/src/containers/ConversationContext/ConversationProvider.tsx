@@ -13,7 +13,7 @@ export const ConversationProvider: FC<ConversationProviderProps> = ({ client, co
       client,
       conversation: client.conversations.get(conversationId),
     }),
-    [client],
+    [client, conversationId],
   );
   return <ConversationContext.Provider value={value}>{children}</ConversationContext.Provider>;
 };

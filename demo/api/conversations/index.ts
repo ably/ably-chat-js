@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 import * as Ably from 'ably/promises';
 import { HandlerEvent } from '@netlify/functions';
-import { nanoid } from 'nanoid';
+import { ulid } from 'ulidx';
 
 dotenv.config();
 
@@ -26,7 +26,7 @@ Please see README.md for more details on configuring your Ably API Key.`);
   if (/\/api\/conversations\/v1\/conversations\/(\w+)\/messages/.test(event.path) && event.httpMethod === 'POST') {
     const conversationId = /\/api\/conversations\/v1\/conversations\/(\w+)\/messages/.exec(event.path)[1];
     const message = {
-      id: nanoid(),
+      id: ulid(),
       ...JSON.parse(event.body),
       client_id: event.headers['ably-clientid'],
       conversation_id: conversationId,
