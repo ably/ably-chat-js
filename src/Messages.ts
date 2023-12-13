@@ -21,7 +21,7 @@ interface MessageListenerArgs {
   message: Message;
 }
 
-type MessageListener = (args: MessageListenerArgs) => void;
+export type MessageListener = (args: MessageListenerArgs) => void;
 type ChannelListener = Types.messageCallback<Types.Message>;
 
 export class Messages {

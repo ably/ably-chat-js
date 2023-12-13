@@ -6,12 +6,6 @@
   "scripts": {
     "serve": "netlify functions:serve"
   },
-  "keywords": [
-    "netlify",
-    "serverless",
-    "typescript"
-  ],
-  "author": "Netlify",
   "license": "MIT",
   "dependencies": {
     "@netlify/functions": "^1.4.0",
@@ -19,6 +13,7 @@
     "ably": "^1.2.36",
     "dotenv": "^16.0.3",
     "nanoid": "^5.0.4",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "ulidx": "^2.2.1"
   }
 }

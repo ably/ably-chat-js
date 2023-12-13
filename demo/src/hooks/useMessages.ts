@@ -1,4 +1,4 @@
-import { Message, MessageEvents } from '@ably-labs/chat';
+import { Message, MessageEvents, type MessageListener } from '@ably-labs/chat';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { ConversationContext } from '../containers/ConversationContext';
 
@@ -8,7 +8,7 @@ export const useMessages = () => {
 
   const sendMessage = useCallback(
     (text: string) => {
-      if (!context) throw Error('Client is not setup!');
+      if (!context?.conversation) throw Error('Client is not setup!');
       context.conversation.messages.send(text);
     },
     [context?.conversation],
@@ -17,7 +17,7 @@ export const useMessages = () => {
   useEffect(() => {
     if (!context) throw Error('Client is not setup!');
 
-    const handler = ({ message }: any) => {
+    const handler: MessageListener = ({ message }) => {
       setMessages((prevMessage) => [...prevMessage, message]);
     };
     context.conversation.messages.subscribe(MessageEvents.created, handler);
