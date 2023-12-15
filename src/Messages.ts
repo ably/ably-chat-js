@@ -28,6 +28,7 @@ export class Messages {
   private readonly conversationId: string;
   private readonly channel: RealtimeChannelPromise;
   private readonly chatApi: ChatApi;
+
   private messageToChannelListener = new WeakMap<MessageListener, ChannelListener>();
 
   constructor(conversationId: string, channel: RealtimeChannelPromise, chatApi: ChatApi) {

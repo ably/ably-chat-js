@@ -6,12 +6,19 @@ export class Conversations {
   private readonly realtime: Realtime;
   private readonly chatApi: ChatApi;
 
+  private conversations: Record<string, Conversation> = {};
+
   constructor(realtime: Realtime) {
     this.realtime = realtime;
     this.chatApi = new ChatApi((realtime as any).options.clientId);
   }
 
-  get(conversationId: string) {
-    return new Conversation(conversationId, this.realtime, this.chatApi);
+  get(conversationId: string): Conversation {
+    if (this.conversations[conversationId]) return this.conversations[conversationId];
+
+    const conversation = new Conversation(conversationId, this.realtime, this.chatApi);
+    this.conversations[conversationId] = conversation;
+
+    return conversation;
   }
 }
