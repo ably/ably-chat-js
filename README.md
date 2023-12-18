@@ -130,7 +130,7 @@ const reaction = await conversation.messages.addReaction(msgId, {
 Delete reaction:
 
 ```ts
-await conversation.messages.removeReaction(msgId, type)
+await conversation.messages.removeReaction(reactionId)
 ```
 
 ### Reaction object
@@ -169,7 +169,7 @@ conversation.messages.subscribe(({ type, message }) => {
 
 ```ts
 // Subscribe to all reactions
-conversation.reactions.subscribe(({ type, reaction }) => {
+conversation.messages.subscribeReactions(({ type, reaction }) => {
     switch (type) {
       case 'reaction.added':
         console.log(reaction);
@@ -292,8 +292,7 @@ conversation.reactions.add(reactionType)
 Remove reaction
 
 ```ts
-conversation.reactions.delete(reaction)
-conversation.reactions.delete(reactionType)
+conversation.reactions.delete(reactionId)
 ```
 
 ## Typing indicator

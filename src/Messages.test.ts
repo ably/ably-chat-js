@@ -183,4 +183,115 @@ describe('Messages', () => {
       });
     });
   });
+
+  describe('adding message reaction', () => {
+    it<TestContext>('should return reaction if chat backend request come before realtime', async (context) => {
+      const { chatApi, realtime } = context;
+      vi.spyOn(chatApi, 'addMessageReaction').mockResolvedValue({ id: 'reactionId' });
+
+      const conversation = new Conversation('conversationId', realtime, chatApi);
+      const reactionPromise = conversation.messages.addReaction('messageId', 'like');
+
+      context.emulateBackendPublish({
+        clientId: 'clientId',
+        data: {
+          id: 'reactionId',
+          message_id: 'messageId',
+          type: 'like',
+          client_id: 'clientId',
+        },
+      });
+
+      const reaction = await reactionPromise;
+
+      expect(reaction).toContain({
+        id: 'reactionId',
+        message_id: 'messageId',
+        type: 'like',
+        client_id: 'clientId',
+      });
+    });
+
+    it<TestContext>('should return reaction if chat backend request come after realtime', async (context) => {
+      const { chatApi, realtime } = context;
+
+      vi.spyOn(chatApi, 'addMessageReaction').mockImplementation(async (conversationId, messageId, type) => {
+        context.emulateBackendPublish({
+          clientId: 'clientId',
+          data: {
+            id: 'reactionId',
+            message_id: messageId,
+            type,
+            client_id: 'clientId',
+          },
+        });
+        return { id: 'reactionId' };
+      });
+
+      const conversation = new Conversation('conversationId', realtime, chatApi);
+      const reaction = await conversation.messages.addReaction('messageId', 'like');
+
+      expect(reaction).toContain({
+        id: 'reactionId',
+        message_id: 'messageId',
+        type: 'like',
+        client_id: 'clientId',
+      });
+    });
+  });
+
+  describe('deleting message reaction', () => {
+    it<TestContext>('should return reaction if chat backend request come before realtime', async (context) => {
+      const { chatApi, realtime } = context;
+      vi.spyOn(chatApi, 'deleteMessageReaction').mockResolvedValue(undefined);
+
+      const conversation = new Conversation('conversationId', realtime, chatApi);
+      const reactionPromise = conversation.messages.removeReaction('reactionId');
+
+      context.emulateBackendPublish({
+        clientId: 'clientId',
+        data: {
+          id: 'reactionId',
+          message_id: 'messageId',
+          type: 'like',
+          client_id: 'clientId',
+        },
+      });
+
+      const reaction = await reactionPromise;
+
+      expect(reaction).toContain({
+        id: 'reactionId',
+        message_id: 'messageId',
+        type: 'like',
+        client_id: 'clientId',
+      });
+    });
+
+    it<TestContext>('should return reaction if chat backend request come after realtime', async (context) => {
+      const { chatApi, realtime } = context;
+
+      vi.spyOn(chatApi, 'deleteMessageReaction').mockImplementation(async (reactionId) => {
+        context.emulateBackendPublish({
+          clientId: 'clientId',
+          data: {
+            id: reactionId,
+            message_id: 'messageId',
+            type: 'like',
+            client_id: 'clientId',
+          },
+        });
+      });
+
+      const conversation = new Conversation('conversationId', realtime, chatApi);
+      const reaction = await conversation.messages.removeReaction('reactionId');
+
+      expect(reaction).toContain({
+        id: 'reactionId',
+        message_id: 'messageId',
+        type: 'like',
+        client_id: 'clientId',
+      });
+    });
+  });
 });

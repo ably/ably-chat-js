@@ -24,6 +24,10 @@ export interface UpdateMessageResponse {
   id: string;
 }
 
+export interface AddReactionResponse {
+  id: string;
+}
+
 /**
  * Chat SDK Backend
  */
@@ -102,6 +106,28 @@ export class ChatApi {
 
   async deleteMessage(conversationId: string, messageId: string): Promise<void> {
     const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages/${messageId}`, {
+      method: 'DELETE',
+      headers: {
+        'ably-clientId': this.clientId,
+      },
+    });
+    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
+  }
+
+  async addMessageReaction(conversationId: string, messageId: string, type: string): Promise<AddReactionResponse> {
+    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages/${messageId}/reactions`, {
+      method: 'POST',
+      headers: {
+        'ably-clientId': this.clientId,
+      },
+      body: JSON.stringify({ type }),
+    });
+    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
+    return response.json();
+  }
+
+  async deleteMessageReaction(reactionId: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/v1/conversations/reactions/${reactionId}`, {
       method: 'DELETE',
       headers: {
         'ably-clientId': this.clientId,
