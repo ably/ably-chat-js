@@ -128,4 +128,59 @@ describe('Messages', () => {
       });
     });
   });
+
+  describe('deleting message', () => {
+    it<TestContext>('should delete message by message object', async (context) => {
+      const { chatApi, realtime } = context;
+
+      vi.spyOn(chatApi, 'deleteMessage').mockImplementation(async (conversationId, messageId) => {
+        context.emulateBackendPublish({
+          clientId: 'clientId',
+          data: {
+            id: messageId,
+            client_id: 'clientId',
+            content: 'text',
+            deleted_at: 1111,
+          },
+        });
+      });
+
+      const conversation = new Conversation('conversationId', realtime, chatApi);
+      const message = await conversation.messages.delete({ id: 'messageId', content: 'text' } as any);
+
+      expect(message).toContain({
+        id: 'messageId',
+        client_id: 'clientId',
+        content: 'text',
+        deleted_at: 1111,
+      });
+    });
+
+    it<TestContext>('should delete message by messageId', async (context) => {
+      const { chatApi, realtime } = context;
+      vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue(undefined);
+
+      const conversation = new Conversation('conversationId', realtime, chatApi);
+      const messagePromise = conversation.messages.delete('messageId');
+
+      context.emulateBackendPublish({
+        clientId: 'clientId',
+        data: {
+          id: 'messageId',
+          client_id: 'clientId',
+          content: 'text',
+          deleted_at: 1111,
+        },
+      });
+
+      const message = await messagePromise;
+
+      expect(message).toContain({
+        id: 'messageId',
+        client_id: 'clientId',
+        content: 'text',
+        deleted_at: 1111,
+      });
+    });
+  });
 });

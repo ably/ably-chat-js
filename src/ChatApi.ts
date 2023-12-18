@@ -99,4 +99,14 @@ export class ChatApi {
     if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
     return response.json();
   }
+
+  async deleteMessage(conversationId: string, messageId: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages/${messageId}`, {
+      method: 'DELETE',
+      headers: {
+        'ably-clientId': this.clientId,
+      },
+    });
+    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
+  }
 }

@@ -43,63 +43,28 @@ export class Messages {
   }
 
   async send(text: string): Promise<Message> {
-    const createdMessages: Record<string, Message> = {};
-
-    let waitingMessageId: string | null = null;
-    let resolver: ((message: Message) => void) | null = null;
-
-    const waiter = ({ data }: Types.Message) => {
-      const message: Message = data;
-      if (waitingMessageId == null) createdMessages[message.id] = message;
-      if (waitingMessageId == message.id) resolver?.(message);
-    };
-
-    await this.channel.subscribe(MessageEvents.created, waiter);
-
-    try {
+    return this.makeApiCallAndWaitForRealtimeResult(MessageEvents.created, async () => {
       const { id } = await this.chatApi.sendMessage(this.conversationId, text);
-      if (createdMessages[id]) {
-        this.channel.unsubscribe(MessageEvents.created, waiter);
-        return createdMessages[id];
-      }
-      waitingMessageId = id;
-    } catch (e) {
-      this.channel.unsubscribe(MessageEvents.created, waiter);
-      throw e;
-    }
-
-    return new Promise((resolve) => {
-      resolver = (message) => {
-        this.channel.unsubscribe(MessageEvents.created, waiter);
-        resolve(message);
-      };
+      return id;
     });
   }
 
   async edit(messageId: string, text: string): Promise<Message> {
-    let resolver: ((message: Message) => void) | null = null;
-    const waiter = ({ data }: Types.Message) => {
-      const message: Message = data;
-      if (messageId == message.id) resolver?.(message);
-    };
-
-    const promise: Promise<Message> = new Promise((resolve) => {
-      resolver = (message) => {
-        this.channel.unsubscribe(MessageEvents.updated, waiter);
-        resolve(message);
-      };
-    });
-
-    await this.channel.subscribe(MessageEvents.updated, waiter);
-
-    try {
+    return this.makeApiCallAndWaitForRealtimeResult(MessageEvents.deleted, async () => {
       await this.chatApi.editMessage(this.conversationId, messageId, text);
-    } catch (e) {
-      this.channel.unsubscribe(MessageEvents.updated, waiter);
-      throw e;
-    }
+      return messageId;
+    });
+  }
 
-    return promise;
+  async delete(message: Message): Promise<Message>;
+  async delete(messageId: string): Promise<Message>;
+  async delete(messageIdOrMessage: string | Message): Promise<Message> {
+    const messageId = typeof messageIdOrMessage === 'string' ? messageIdOrMessage : messageIdOrMessage.id;
+
+    return this.makeApiCallAndWaitForRealtimeResult(MessageEvents.deleted, async () => {
+      await this.chatApi.deleteMessage(this.conversationId, messageId);
+      return messageId;
+    });
   }
 
   async subscribe(event: MessageEvents, listener: MessageListener) {
@@ -117,5 +82,43 @@ export class Messages {
     const channelListener = this.messageToChannelListener.get(listener);
     if (!channelListener) return;
     this.channel.unsubscribe(event, channelListener);
+  }
+
+  private async makeApiCallAndWaitForRealtimeResult(event: MessageEvents, apiCall: () => Promise<string>) {
+    const queuedMessages: Record<string, Message> = {};
+
+    let waitingMessageId: string | null = null;
+    let resolver: ((message: Message) => void) | null = null;
+
+    const waiter = ({ data }: Types.Message) => {
+      const message: Message = data;
+      if (waitingMessageId === null) {
+        queuedMessages[message.id] = message;
+      } else if (waitingMessageId === message.id) {
+        resolver?.(message);
+        resolver = null;
+      }
+    };
+
+    await this.channel.subscribe(event, waiter);
+
+    try {
+      const messageId = await apiCall();
+      if (queuedMessages[messageId]) {
+        this.channel.unsubscribe(event, waiter);
+        return queuedMessages[messageId];
+      }
+      waitingMessageId = messageId;
+    } catch (e) {
+      this.channel.unsubscribe(event, waiter);
+      throw e;
+    }
+
+    return new Promise<Message>((resolve) => {
+      resolver = (message) => {
+        this.channel.unsubscribe(event, waiter);
+        resolve(message);
+      };
+    });
   }
 }
