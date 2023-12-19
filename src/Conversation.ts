@@ -20,4 +20,8 @@ export class Conversation {
   async create() {
     await this.chatApi.createConversation(this.conversationId);
   }
+
+  get members() {
+    return this.channel.presence;
+  }
 }
