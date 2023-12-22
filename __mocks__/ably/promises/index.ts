@@ -48,6 +48,7 @@ class MockRealtime {
   };
   public auth: {
     clientId: string;
+    requestToken(): void;
   };
   public connection: {
     id?: string;
@@ -65,6 +66,7 @@ class MockRealtime {
     };
     this.auth = {
       clientId: MOCK_CLIENT_ID,
+      requestToken: () => {},
     };
     this.connection = {
       id: '1',
