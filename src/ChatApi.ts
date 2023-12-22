@@ -1,6 +1,7 @@
 import { Conversation, Message } from './entities.js';
 import { ErrorInfo, Types } from 'ably';
 import AuthPromise = Types.AuthPromise;
+import TokenDetails = Types.TokenDetails;
 
 export interface CreateConversationRequest {
   ttl: number;
@@ -35,6 +36,7 @@ export interface AddReactionResponse {
 export class ChatApi {
   private readonly baseUrl = '/api/conversations';
   private readonly auth: AuthPromise;
+  private tokenDetails: TokenDetails | undefined;
 
   constructor(auth: AuthPromise) {
     this.auth = auth;
@@ -88,16 +90,25 @@ export class ChatApi {
     method: 'POST' | 'GET' | ' PUT' | 'DELETE',
     body?: REQ,
   ): Promise<RES> {
-    const tokenDetails = await this.auth.requestToken();
+    const tokenDetails = await this.getTokenDetails();
     const response = await fetch(`${this.baseUrl}/${url}`, {
       method,
       headers: {
-        'ably-clientId': tokenDetails.clientId,
+        'ably-clientId': tokenDetails.clientId as string,
         authorization: `Bearer ${tokenDetails.token}`,
       },
       body: body ? JSON.stringify(body) : undefined,
     });
     if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
     return response.json();
+  }
+
+  private async getTokenDetails(): Promise<TokenDetails> {
+    if (this.tokenDetails && this.tokenDetails.expires > Date.now()) {
+      return this.tokenDetails;
+    }
+    const newTokenDetails = await this.auth.requestToken();
+    this.tokenDetails = newTokenDetails;
+    return newTokenDetails;
   }
 }
