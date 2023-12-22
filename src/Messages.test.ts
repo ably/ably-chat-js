@@ -14,7 +14,15 @@ vi.mock('ably/promises');
 describe('Messages', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Realtime({ clientId: 'clientId', key: 'key' });
-    context.chatApi = new ChatApi('clientId');
+    context.chatApi = new ChatApi(context.realtime.auth);
+
+    vi.spyOn(context.realtime.auth, 'requestToken').mockResolvedValue({
+      clientId: 'clientId',
+      token: 'token',
+      capability: '',
+      expires: -1,
+      issued: -1,
+    });
 
     const channel = context.realtime.channels.get('conversationId');
     vi.spyOn(channel, 'subscribe').mockImplementation(

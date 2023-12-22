@@ -1,5 +1,6 @@
 import { Conversation, Message } from './entities.js';
-import { ErrorInfo } from 'ably';
+import { ErrorInfo, Types } from 'ably';
+import AuthPromise = Types.AuthPromise;
 
 export interface CreateConversationRequest {
   ttl: number;
@@ -33,36 +34,21 @@ export interface AddReactionResponse {
  */
 export class ChatApi {
   private readonly baseUrl = '/api/conversations';
+  private readonly auth: AuthPromise;
 
-  private readonly clientId: string;
-
-  constructor(clientId: string) {
-    this.clientId = clientId;
+  constructor(auth: AuthPromise) {
+    this.auth = auth;
   }
 
   async getConversation(conversationId: string): Promise<Conversation> {
-    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}`, {
-      headers: {
-        'ably-clientId': this.clientId,
-      },
-    });
-    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
-    return response.json();
+    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}`, 'GET');
   }
 
   async createConversation(
     conversationId: string,
     body?: CreateConversationRequest,
   ): Promise<CreateConversationResponse> {
-    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}`, {
-      method: 'POST',
-      headers: {
-        'ably-clientId': this.clientId,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
-    return response.json();
+    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}`, 'POST', body);
   }
 
   async getMessages(conversationId: string, params: GetMessagesQueryParams): Promise<Message[]> {
@@ -70,69 +56,48 @@ export class ChatApi {
       ...params,
       limit: params.limit.toString(),
     }).toString();
-
-    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages?${queryString}`, {
-      headers: {
-        'ably-clientId': this.clientId,
-      },
-    });
-    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
-    return response.json();
+    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}/messages?${queryString}`, 'GET');
   }
 
   async sendMessage(conversationId: string, text: string): Promise<CreateMessageResponse> {
-    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages`, {
-      method: 'POST',
-      headers: {
-        'ably-clientId': this.clientId,
-      },
-      body: JSON.stringify({ content: text }),
-    });
-    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
-    return response.json();
+    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}/messages`, 'POST', { content: text });
   }
 
   async editMessage(conversationId: string, messageId: string, text: string): Promise<UpdateMessageResponse> {
-    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages/${messageId}`, {
-      method: 'POST',
-      headers: {
-        'ably-clientId': this.clientId,
-      },
-      body: JSON.stringify({ content: text }),
+    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}/messages/${messageId}`, 'POST', {
+      content: text,
     });
-    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
-    return response.json();
   }
 
   async deleteMessage(conversationId: string, messageId: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages/${messageId}`, {
-      method: 'DELETE',
-      headers: {
-        'ably-clientId': this.clientId,
-      },
-    });
-    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
+    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}/messages/${messageId}`, 'DELETE');
   }
 
   async addMessageReaction(conversationId: string, messageId: string, type: string): Promise<AddReactionResponse> {
-    const response = await fetch(`${this.baseUrl}/v1/conversations/${conversationId}/messages/${messageId}/reactions`, {
-      method: 'POST',
-      headers: {
-        'ably-clientId': this.clientId,
-      },
-      body: JSON.stringify({ type }),
+    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}/messages/${messageId}/reactions`, 'POST', {
+      type,
     });
-    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
-    return response.json();
   }
 
   async deleteMessageReaction(reactionId: string): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/v1/conversations/reactions/${reactionId}`, {
-      method: 'DELETE',
+    return this.makeAuthorisedRequest(`v1/conversations/reactions/${reactionId}`, 'DELETE');
+  }
+
+  private async makeAuthorisedRequest<RES, REQ = undefined>(
+    url: string,
+    method: 'POST' | 'GET' | ' PUT' | 'DELETE',
+    body?: REQ,
+  ): Promise<RES> {
+    const tokenDetails = await this.auth.requestToken();
+    const response = await fetch(`${this.baseUrl}/${url}`, {
+      method,
       headers: {
-        'ably-clientId': this.clientId,
+        'ably-clientId': tokenDetails.clientId,
+        authorization: `Bearer ${tokenDetails.token}`,
       },
+      body: body ? JSON.stringify(body) : undefined,
     });
     if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
+    return response.json();
   }
 }
