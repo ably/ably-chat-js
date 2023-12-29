@@ -82,7 +82,7 @@ export class ChatApi {
   }
 
   async deleteMessageReaction(reactionId: string): Promise<void> {
-    return this.makeAuthorisedRequest(`v1/conversations/reactions/${reactionId}`, 'DELETE');
+    return this.makeAuthorisedRequest(`v1/reactions/${reactionId}`, 'DELETE');
   }
 
   private async makeAuthorisedRequest<RES, REQ = undefined>(
