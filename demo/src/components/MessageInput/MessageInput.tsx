@@ -1,20 +1,22 @@
-import { useState, ChangeEventHandler, FormEventHandler } from 'react';
+import { FC, ChangeEventHandler, FormEventHandler } from 'react';
 
 interface MessageInputProps {
+  disabled: boolean;
+  value: string;
+  onValueChange(text: string): void;
   onSend(text: string): void;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ onSend }) => {
-  const [value, setValue] = useState('');
+export const MessageInput: FC<MessageInputProps> = ({ value, disabled, onValueChange, onSend }) => {
   const handleValueChange: ChangeEventHandler<HTMLInputElement> = ({ target }) => {
-    setValue(target.value);
+    onValueChange(target.value);
   };
 
   const handleFormSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     event.stopPropagation();
     onSend(value);
-    setValue('');
+    onValueChange('');
   };
 
   return (
@@ -26,11 +28,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend }) => {
         type="text"
         value={value}
         onChange={handleValueChange}
+        disabled={disabled}
         placeholder="Type.."
         className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-2 bg-gray-200 rounded-md py-1"
       />
       <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
         <button
+          disabled={disabled}
           type="submit"
           className="inline-flex items-center justify-center rounded-md px-3 py-1 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
         >

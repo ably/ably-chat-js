@@ -1,5 +1,4 @@
 import { ulid } from 'ulidx';
-import exp = require('constants');
 
 export interface Conversation {
   id: string;
