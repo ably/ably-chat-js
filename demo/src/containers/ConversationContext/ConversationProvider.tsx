@@ -15,5 +15,6 @@ export const ConversationProvider: FC<ConversationProviderProps> = ({ client, co
     }),
     [client, conversationId],
   );
+
   return <ConversationContext.Provider value={value}>{children}</ConversationContext.Provider>;
 };
