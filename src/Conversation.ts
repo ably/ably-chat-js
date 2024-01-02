@@ -21,6 +21,9 @@ export class Conversation {
     await this.chatApi.createConversation(this.conversationId);
   }
 
+  get members() {
+    return this.channel.presence;
+    
   async delete() {
     await this.chatApi.deleteConversation(this.conversationId);
   }
