@@ -21,4 +21,13 @@ export class Conversations {
 
     return conversation;
   }
+
+  async release(conversationId: string) {
+    const conversation = this.conversations[conversationId];
+    if (!conversation) {
+      return;
+    }
+    delete this.conversations[conversationId];
+    await conversation.delete();
+  }
 }
