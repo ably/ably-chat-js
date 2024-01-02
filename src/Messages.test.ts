@@ -52,11 +52,13 @@ describe('Messages', () => {
 
       const message = await messagePromise;
 
-      expect(message).toContain({
-        id: 'messageId',
-        content: 'text',
-        client_id: 'clientId',
-      });
+      expect(message).toEqual(
+        expect.objectContaining({
+          id: 'messageId',
+          content: 'text',
+          client_id: 'clientId',
+        }),
+      );
     });
 
     it<TestContext>('should return message if chat backend request come after realtime', async (context) => {
@@ -77,11 +79,13 @@ describe('Messages', () => {
       const conversation = new Conversation('conversationId', realtime, chatApi);
       const message = await conversation.messages.send('text');
 
-      expect(message).toContain({
-        id: 'messageId',
-        content: 'text',
-        client_id: 'clientId',
-      });
+      expect(message).toEqual(
+        expect.objectContaining({
+          id: 'messageId',
+          content: 'text',
+          client_id: 'clientId',
+        }),
+      );
     });
   });
 
@@ -104,11 +108,13 @@ describe('Messages', () => {
 
       const message = await messagePromise;
 
-      expect(message).toContain({
-        id: 'messageId',
-        content: 'new_text',
-        client_id: 'clientId',
-      });
+      expect(message).toEqual(
+        expect.objectContaining({
+          id: 'messageId',
+          content: 'new_text',
+          client_id: 'clientId',
+        }),
+      );
     });
 
     it<TestContext>('should return message if chat backend request come after realtime', async (context) => {
@@ -129,11 +135,13 @@ describe('Messages', () => {
       const conversation = new Conversation('conversationId', realtime, chatApi);
       const message = await conversation.messages.edit('messageId', 'new_text');
 
-      expect(message).toContain({
-        id: 'messageId',
-        content: 'new_text',
-        client_id: 'clientId',
-      });
+      expect(message).toEqual(
+        expect.objectContaining({
+          id: 'messageId',
+          content: 'new_text',
+          client_id: 'clientId',
+        }),
+      );
     });
   });
 
@@ -156,12 +164,14 @@ describe('Messages', () => {
       const conversation = new Conversation('conversationId', realtime, chatApi);
       const message = await conversation.messages.delete({ id: 'messageId', content: 'text' } as any);
 
-      expect(message).toContain({
-        id: 'messageId',
-        client_id: 'clientId',
-        content: 'text',
-        deleted_at: 1111,
-      });
+      expect(message).toEqual(
+        expect.objectContaining({
+          id: 'messageId',
+          client_id: 'clientId',
+          content: 'text',
+          deleted_at: 1111,
+        }),
+      );
     });
 
     it<TestContext>('should delete message by messageId', async (context) => {
@@ -183,12 +193,14 @@ describe('Messages', () => {
 
       const message = await messagePromise;
 
-      expect(message).toContain({
-        id: 'messageId',
-        client_id: 'clientId',
-        content: 'text',
-        deleted_at: 1111,
-      });
+      expect(message).toEqual(
+        expect.objectContaining({
+          id: 'messageId',
+          client_id: 'clientId',
+          content: 'text',
+          deleted_at: 1111,
+        }),
+      );
     });
   });
 
@@ -212,12 +224,14 @@ describe('Messages', () => {
 
       const reaction = await reactionPromise;
 
-      expect(reaction).toContain({
-        id: 'reactionId',
-        message_id: 'messageId',
-        type: 'like',
-        client_id: 'clientId',
-      });
+      expect(reaction).toEqual(
+        expect.objectContaining({
+          id: 'reactionId',
+          message_id: 'messageId',
+          type: 'like',
+          client_id: 'clientId',
+        }),
+      );
     });
 
     it<TestContext>('should return reaction if chat backend request come after realtime', async (context) => {
@@ -239,12 +253,14 @@ describe('Messages', () => {
       const conversation = new Conversation('conversationId', realtime, chatApi);
       const reaction = await conversation.messages.addReaction('messageId', 'like');
 
-      expect(reaction).toContain({
-        id: 'reactionId',
-        message_id: 'messageId',
-        type: 'like',
-        client_id: 'clientId',
-      });
+      expect(reaction).toEqual(
+        expect.objectContaining({
+          id: 'reactionId',
+          message_id: 'messageId',
+          type: 'like',
+          client_id: 'clientId',
+        }),
+      );
     });
   });
 
@@ -268,12 +284,14 @@ describe('Messages', () => {
 
       const reaction = await reactionPromise;
 
-      expect(reaction).toContain({
-        id: 'reactionId',
-        message_id: 'messageId',
-        type: 'like',
-        client_id: 'clientId',
-      });
+      expect(reaction).toEqual(
+        expect.objectContaining({
+          id: 'reactionId',
+          message_id: 'messageId',
+          type: 'like',
+          client_id: 'clientId',
+        }),
+      );
     });
 
     it<TestContext>('should return reaction if chat backend request come after realtime', async (context) => {
@@ -294,12 +312,14 @@ describe('Messages', () => {
       const conversation = new Conversation('conversationId', realtime, chatApi);
       const reaction = await conversation.messages.removeReaction('reactionId');
 
-      expect(reaction).toContain({
-        id: 'reactionId',
-        message_id: 'messageId',
-        type: 'like',
-        client_id: 'clientId',
-      });
+      expect(reaction).toEqual(
+        expect.objectContaining({
+          id: 'reactionId',
+          message_id: 'messageId',
+          type: 'like',
+          client_id: 'clientId',
+        }),
+      );
     });
   });
 });

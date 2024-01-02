@@ -53,6 +53,10 @@ export class ChatApi {
     return this.makeAuthorisedRequest(`v1/conversations/${conversationId}`, 'POST', body);
   }
 
+  async deleteConversation(conversationId: string): Promise<CreateConversationResponse> {
+    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}`, 'DELETE');
+  }
+
   async getMessages(conversationId: string, params: GetMessagesQueryParams): Promise<Message[]> {
     const queryString = new URLSearchParams({
       ...params,

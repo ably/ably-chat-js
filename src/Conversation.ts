@@ -23,7 +23,8 @@ export class Conversation {
 
   get members() {
     return this.channel.presence;
-    
+  }
+
   async delete() {
     await this.chatApi.deleteConversation(this.conversationId);
   }
