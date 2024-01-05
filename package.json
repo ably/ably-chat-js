@@ -2,7 +2,9 @@
   "name": "@ably-labs/chat",
   "version": "0.0.1",
   "description": "The Ably Chat SDK offers a seamless and customizable API designed to facilitate diverse in-app conversations scenarios, encompassing live comments, in-app chat functionalities, and the management of real-time updates and user interactions",
-  "main": "src/index.js",
+  "main": "dist/cjs/index.js",
+  "module": "dist/mjs/index.js",
+  "types": "dist/mjs/index.d.ts",
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
