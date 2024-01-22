@@ -155,7 +155,7 @@ conversation.messages.subscribe(({ type, message }) => {
       case 'message.created':
         console.log(message);
         break;
-      case 'message.updated':
+      case 'message.edited':
         console.log(message);
         break;
       case 'message.deleted':
