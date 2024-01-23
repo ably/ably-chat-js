@@ -10,7 +10,7 @@ export class Conversations {
 
   constructor(realtime: Realtime) {
     this.realtime = realtime;
-    this.chatApi = new ChatApi(realtime.auth);
+    this.chatApi = new ChatApi(realtime);
   }
 
   get(conversationId: string): Conversation {
