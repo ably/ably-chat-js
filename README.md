@@ -94,7 +94,7 @@ await conversation.messages.delete(msg)
 ```json5
 {
   "id": "string",
-  "client_id": "string",
+  "created_by": "string",
   "conversation_id": "string",
   "content": "string",
   "reactions": {

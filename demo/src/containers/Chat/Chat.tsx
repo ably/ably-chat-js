@@ -15,14 +15,14 @@ export const Chat = () => {
       const message = messages.find((message) => message.id === id) ?? null;
       const alreadySelected = selectedMessage?.id === id;
       setSelectedMessage(alreadySelected ? null : message);
-      setValue(!alreadySelected && message?.client_id === clientId ? message?.content ?? '' : '');
+      setValue(!alreadySelected && message?.created_by === clientId ? message?.content ?? '' : '');
     },
     [clientId, selectedMessage, messages],
   );
 
   const handleMessageSend = useCallback(
     (text: string) => {
-      if (selectedMessage && selectedMessage?.client_id === clientId) {
+      if (selectedMessage && selectedMessage?.created_by === clientId) {
         setSelectedMessage(null);
         editMessage(selectedMessage.id, text);
       } else {
@@ -58,7 +58,7 @@ export const Chat = () => {
       <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-screen">
         {selectedMessage && (
           <div className="flex flex-none space-x-4 p-2">
-            {selectedMessage.client_id === clientId && (
+            {selectedMessage.created_by === clientId && (
               <button
                 onClick={handleDeleteMessage}
                 className="rounded-md px-3 py-1 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
@@ -94,12 +94,12 @@ export const Chat = () => {
               <MessageComponent
                 id={msg.id}
                 key={msg.id}
-                self={msg.client_id === clientId}
+                self={msg.created_by === clientId}
                 onMessageClick={handleMessageClick}
               >
                 <div className="flex flex-col">
                   <div>{msg.content}</div>
-                  {!!msg.reactions.counts.like && (
+                  {!!msg.reactions?.counts?.like && (
                     <div className="flex flex-row-reverse mt-4 text-xs">{msg.reactions.counts.like} ❤️</div>
                   )}
                 </div>

@@ -1,7 +1,5 @@
 import { Conversation, Message } from './entities.js';
-import { ErrorInfo, Types } from 'ably';
-import AuthPromise = Types.AuthPromise;
-import TokenDetails = Types.TokenDetails;
+import { Realtime, ErrorInfo } from 'ably/promises';
 
 export interface CreateConversationRequest {
   ttl: number;
@@ -34,59 +32,73 @@ export interface AddReactionResponse {
  * Chat SDK Backend
  */
 export class ChatApi {
-  private readonly baseUrl = '/api/conversations';
-  private readonly auth: AuthPromise;
-  private tokenDetails: TokenDetails | undefined;
+  private readonly realtime: Realtime;
 
-  constructor(auth: AuthPromise) {
-    this.auth = auth;
+  constructor(realtime: Realtime) {
+    this.realtime = realtime;
   }
 
   async getConversation(conversationId: string): Promise<Conversation> {
-    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}`, 'GET');
+    return this.makeAuthorisedRequest(`/conversations/v1/conversations/${conversationId}`, 'GET');
   }
 
   async createConversation(
     conversationId: string,
     body?: CreateConversationRequest,
   ): Promise<CreateConversationResponse> {
-    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}`, 'POST', body);
+    return this.makeAuthorisedRequest(`/conversations/v1/conversations`, 'POST', {
+      name: conversationId,
+      ...body,
+    });
   }
 
   async deleteConversation(conversationId: string): Promise<CreateConversationResponse> {
-    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}`, 'DELETE');
+    return this.makeAuthorisedRequest(`/conversations/v1/conversations/${conversationId}`, 'DELETE');
   }
 
   async getMessages(conversationId: string, params: GetMessagesQueryParams): Promise<Message[]> {
-    const queryString = new URLSearchParams({
-      ...params,
-      limit: params.limit.toString(),
-    }).toString();
-    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}/messages?${queryString}`, 'GET');
+    return this.makeAuthorisedPaginatedRequest(
+      `/conversations/v1/conversations/${conversationId}/messages`,
+      'GET',
+      params,
+    );
   }
 
   async sendMessage(conversationId: string, text: string): Promise<CreateMessageResponse> {
-    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}/messages`, 'POST', { content: text });
-  }
-
-  async editMessage(conversationId: string, messageId: string, text: string): Promise<UpdateMessageResponse> {
-    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}/messages/${messageId}`, 'POST', {
+    return this.makeAuthorisedRequest(`/conversations/v1/conversations/${conversationId}/messages`, 'POST', {
       content: text,
     });
   }
 
+  async editMessage(conversationId: string, messageId: string, text: string): Promise<UpdateMessageResponse> {
+    return this.makeAuthorisedRequest(
+      `/conversations/v1/conversations/${conversationId}/messages/${messageId}`,
+      'POST',
+      {
+        content: text,
+      },
+    );
+  }
+
   async deleteMessage(conversationId: string, messageId: string): Promise<void> {
-    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}/messages/${messageId}`, 'DELETE');
+    return this.makeAuthorisedRequest(
+      `/conversations/v1/conversations/${conversationId}/messages/${messageId}`,
+      'DELETE',
+    );
   }
 
   async addMessageReaction(conversationId: string, messageId: string, type: string): Promise<AddReactionResponse> {
-    return this.makeAuthorisedRequest(`v1/conversations/${conversationId}/messages/${messageId}/reactions`, 'POST', {
-      type,
-    });
+    return this.makeAuthorisedRequest(
+      `/conversations/v1/conversations/${conversationId}/messages/${messageId}/reactions`,
+      'POST',
+      {
+        type,
+      },
+    );
   }
 
   async deleteMessageReaction(reactionId: string): Promise<void> {
-    return this.makeAuthorisedRequest(`v1/reactions/${reactionId}`, 'DELETE');
+    await this.makeAuthorisedRequest(`/conversations/v1/reactions/${reactionId}`, 'DELETE');
   }
 
   private async makeAuthorisedRequest<RES, REQ = undefined>(
@@ -94,25 +106,20 @@ export class ChatApi {
     method: 'POST' | 'GET' | ' PUT' | 'DELETE',
     body?: REQ,
   ): Promise<RES> {
-    const tokenDetails = await this.getTokenDetails();
-    const response = await fetch(`${this.baseUrl}/${url}`, {
-      method,
-      headers: {
-        'ably-clientId': tokenDetails.clientId as string,
-        authorization: `Bearer ${tokenDetails.token}`,
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    if (!response.ok) throw new ErrorInfo(response.statusText, response.status, 4000);
-    return response.json();
+    const response = await this.realtime.request(method, url, {}, body);
+    if (!response.success) throw new ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    const [result] = response.items;
+    return result as RES;
   }
 
-  private async getTokenDetails(): Promise<TokenDetails> {
-    if (this.tokenDetails && this.tokenDetails.expires > Date.now()) {
-      return this.tokenDetails;
-    }
-    const newTokenDetails = await this.auth.requestToken();
-    this.tokenDetails = newTokenDetails;
-    return newTokenDetails;
+  private async makeAuthorisedPaginatedRequest<RES, REQ = undefined>(
+    url: string,
+    method: 'POST' | 'GET' | ' PUT' | 'DELETE',
+    params?: any,
+    body?: REQ,
+  ): Promise<RES[]> {
+    const response = await this.realtime.request(method, url, params, body);
+    if (!response.success) throw new ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    return response.items as RES[];
   }
 }
