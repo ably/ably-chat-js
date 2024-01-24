@@ -1,6 +1,6 @@
 export const enum MessageEvents {
   created = 'message.created',
-  updated = 'message.updated',
+  edited = 'message.edited',
   deleted = 'message.deleted',
 }
 
