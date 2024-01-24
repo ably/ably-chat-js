@@ -21,16 +21,10 @@ Please see README.md for more details on configuring your Ably API Key.`);
   }
 
   const clientId = event.queryStringParameters?.['clientId'] || process.env.DEFAULT_CLIENT_ID || 'NO_CLIENT_ID';
-  const client = new Ably.Rest({
-    key: process.env.ABLY_API_KEY,
-    restHost: 'eu-west-2-a.primary.chat.cluster.ably-nonprod.net',
-    realtimeHost: 'eu-west-2-a.primary.chat.cluster.ably-nonprod.net',
-  });
+  const client = new Ably.Rest(process.env.ABLY_API_KEY);
   const tokenRequestData = await client.auth.createTokenRequest({
     capability: {
       'conversations:*': ['publish', 'subscribe', 'presence'],
-      // @ts-ignore
-      '[conversation]*': ['publish', 'subscribe', 'presence', 'create', 'delete', 'history'],
     },
     clientId: clientId,
   });

@@ -66,11 +66,11 @@ export const useMessages = () => {
                 ...message,
                 reactions: {
                   mine:
-                    reaction.created_by === clientId ? [...message.reactions.mine, reaction] : message.reactions.mine,
+                    reaction.client_id === clientId ? [...message.reactions.mine, reaction] : message.reactions.mine,
                   latest: [...message.reactions.latest, reaction],
                   counts: {
-                    ...message.reactions?.counts,
-                    [reaction.type]: (message.reactions?.counts?.[reaction.type] ?? 0) + 1,
+                    ...message.reactions.counts,
+                    [reaction.type]: (message.reactions.counts[reaction.type] ?? 0) + 1,
                   },
                 },
               },
@@ -86,13 +86,13 @@ export const useMessages = () => {
                 ...message,
                 reactions: {
                   mine:
-                    reaction.created_by === clientId
+                    reaction.client_id === clientId
                       ? message.reactions.mine.filter(({ id }) => id !== reaction.id)
                       : message.reactions.mine,
                   latest: message.reactions.latest.filter(({ id }) => id !== reaction.id),
                   counts: {
-                    ...message.reactions?.counts,
-                    [reaction.type]: message.reactions?.counts?.[reaction.type] - 1,
+                    ...message.reactions.counts,
+                    [reaction.type]: message.reactions.counts[reaction.type] - 1,
                   },
                 },
               },

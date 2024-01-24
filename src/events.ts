@@ -1,10 +1,10 @@
-export enum MessageEvents {
+export const enum MessageEvents {
   created = 'message.created',
   edited = 'message.edited',
   deleted = 'message.deleted',
 }
 
-export enum ReactionEvents {
+export const enum ReactionEvents {
   added = 'reaction.added',
   deleted = 'reaction.deleted',
 }
