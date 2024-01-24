@@ -110,7 +110,7 @@ await conversation.messages.delete(msg)
     ]
   },
   "created_at": "number",
-  "updated_at": "number|null",
+  "edited_at": "number|null",
   "deleted_at": "number|null"
 }
 
