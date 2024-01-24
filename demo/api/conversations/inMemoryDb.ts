@@ -18,7 +18,7 @@ export interface Message {
     mine: Reaction[];
   };
   created_at: number;
-  updated_at: number | null;
+  edited_at: number | null;
   deleted_at: number | null;
 }
 
@@ -69,7 +69,7 @@ export const createMessage = (message: Pick<Message, 'client_id' | 'conversation
       mine: [],
     },
     created_at: Date.now(),
-    updated_at: null,
+    edited_at: null,
     deleted_at: null,
   };
   conversationIdToMessages[created.conversation_id].push(created);

@@ -16,7 +16,7 @@ export interface Message {
     mine: Reaction[];
   };
   created_at: number;
-  updated_at: number | null;
+  edited_at: number | null;
   deleted_at: number | null;
 }
 
