@@ -73,7 +73,7 @@ export class ChatApi {
   async editMessage(conversationId: string, messageId: string, text: string): Promise<UpdateMessageResponse> {
     return this.makeAuthorisedRequest(
       `/conversations/v1/conversations/${conversationId}/messages/${messageId}`,
-      'POST',
+      'PATCH',
       {
         content: text,
       },
@@ -103,7 +103,7 @@ export class ChatApi {
 
   private async makeAuthorisedRequest<RES, REQ = undefined>(
     url: string,
-    method: 'POST' | 'GET' | ' PUT' | 'DELETE',
+    method: 'POST' | 'GET' | ' PUT' | 'DELETE' | 'PATCH',
     body?: REQ,
   ): Promise<RES> {
     const response = await this.realtime.request(method, url, {}, body);

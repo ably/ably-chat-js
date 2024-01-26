@@ -66,7 +66,7 @@ export const Chat = () => {
                 Delete
               </button>
             )}
-            {!selectedMessage.reactions.mine.length && (
+            {!selectedMessage.reactions?.mine.length && (
               <button
                 onClick={handleLikeReaction}
                 className="rounded-md px-3 py-1 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
@@ -74,7 +74,7 @@ export const Chat = () => {
                 Like
               </button>
             )}
-            {!!selectedMessage.reactions.mine.length && (
+            {!!selectedMessage.reactions?.mine.length && (
               <button
                 onClick={handleRemoveReaction}
                 className="rounded-md px-3 py-1 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
