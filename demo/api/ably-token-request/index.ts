@@ -29,7 +29,7 @@ Please see README.md for more details on configuring your Ably API Key.`);
   const tokenRequestData = await client.auth.createTokenRequest({
     capability: {
       'conversations:*': ['publish', 'subscribe', 'presence'],
-      '[conversation]*': ['publish', 'subscribe', 'presence', 'create', 'delete', 'history'],
+      '[conversation]*': ['publish', 'subscribe', 'presence', 'create', 'delete-all', 'edit-all', 'history'],
     },
     clientId: clientId,
   });
