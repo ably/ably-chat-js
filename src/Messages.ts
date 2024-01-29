@@ -1,10 +1,19 @@
-import { Types } from 'ably/promises';
+import { ErrorInfo, Types } from 'ably/promises';
 import { ChatApi } from './ChatApi.js';
 import { Message, Reaction } from './entities.js';
 import RealtimeChannelPromise = Types.RealtimeChannelPromise;
 import { MessageEvents, ReactionEvents } from './events.js';
+import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
+import { type MessageCache, initMessageCache, CACHE_SIZE } from './utils/messageCache.js';
+import { MessageReactions, ReactionEventsMap } from './MessageReactions.js';
 
-export const enum Direction {
+interface MessageEventsMap {
+  [MessageEvents.created]: MessageEventPayload;
+  [MessageEvents.edited]: MessageEventPayload;
+  [MessageEvents.deleted]: MessageEventPayload;
+}
+
+export enum Direction {
   forwards = 'forwards',
   backwards = 'backwards',
 }
@@ -16,31 +25,39 @@ interface QueryOptions {
   direction?: keyof typeof Direction;
 }
 
-interface MessageListenerArgs {
+interface MessageEventPayload {
   type: MessageEvents;
   message: Message;
 }
 
-interface ReactionListenerArgs {
-  type: ReactionEvents;
-  reaction: Reaction;
+enum MessagesInternalState {
+  empty = 'empty',
+  attaching = 'attaching',
+  idle = 'idle',
+  fetching = 'fetching',
 }
 
-export type MessageListener = (args: MessageListenerArgs) => void;
-export type ReactionListener = (args: ReactionListenerArgs) => void;
-type ChannelListener = Types.messageCallback<Types.Message>;
+export type MessageListener = EventListener<MessageEventsMap, keyof MessageEventsMap>;
 
-export class Messages {
+export class Messages extends EventEmitter<MessageEventsMap> {
   private readonly conversationId: string;
   private readonly channel: RealtimeChannelPromise;
   private readonly chatApi: ChatApi;
+  private readonly reactions: MessageReactions;
+  private readonly clientId: String;
 
-  private channelListeners = new WeakMap<MessageListener | ReactionListener, ChannelListener>();
+  private readonly cache: MessageCache;
+  private state: MessagesInternalState = MessagesInternalState.empty;
+  private eventsQueue: Types.Message[] = [];
 
-  constructor(conversationId: string, channel: RealtimeChannelPromise, chatApi: ChatApi) {
+  constructor(conversationId: string, channel: RealtimeChannelPromise, chatApi: ChatApi, clientId: String) {
+    super();
     this.conversationId = conversationId;
     this.channel = channel;
     this.chatApi = chatApi;
+    this.clientId = clientId;
+    this.reactions = new MessageReactions(conversationId, channel, chatApi);
+    this.cache = initMessageCache();
   }
 
   // eslint-disable-next-line
@@ -74,51 +91,204 @@ export class Messages {
   }
 
   async addReaction(messageId: string, reactionType: string) {
-    return this.makeReactionApiCallAndWaitForRealtimeResult(ReactionEvents.added, async () => {
-      const { id } = await this.chatApi.addMessageReaction(this.conversationId, messageId, reactionType);
-      return id;
-    });
+    return this.reactions.add(messageId, reactionType);
   }
 
   async removeReaction(reactionId: string) {
-    return this.makeReactionApiCallAndWaitForRealtimeResult(ReactionEvents.deleted, async () => {
-      await this.chatApi.deleteMessageReaction(reactionId);
-      return reactionId;
+    return this.reactions.remove(reactionId);
+  }
+
+  private async attach() {
+    if (this.state !== MessagesInternalState.empty) return;
+    this.state = MessagesInternalState.attaching;
+
+    await this.channel.subscribe((channelEventMessage: Types.Message) => {
+      if (this.state === MessagesInternalState.idle) {
+        this.processEvent(channelEventMessage);
+      } else {
+        this.eventsQueue.push(channelEventMessage);
+      }
     });
+
+    const messages = await this.query({ limit: CACHE_SIZE / 2 });
+    messages.forEach((msg) => this.cache.set(msg.id, msg));
+    this.state = MessagesInternalState.idle;
+    this.processQueue();
   }
 
-  async subscribe(event: MessageEvents, listener: MessageListener) {
-    const channelListener = ({ name, data }: Types.Message) => {
-      listener({
-        type: name as MessageEvents,
-        message: data,
-      });
+  subscribe<K extends keyof MessageEventsMap>(
+    eventOrEvents: K | K[],
+    listener?: EventListener<MessageEventsMap, K>,
+  ): void;
+  subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): void;
+  subscribe<K extends keyof MessageEventsMap>(
+    listenerOrEvents?: K | K[] | EventListener<MessageEventsMap, K>,
+    listener?: EventListener<MessageEventsMap, K>,
+  ) {
+    try {
+      super.on(listenerOrEvents, listener);
+      return this.attach();
+    } catch (e: unknown) {
+      if (e instanceof InvalidArgumentError) {
+        throw new InvalidArgumentError(
+          'Messages.subscribe(): Invalid arguments: ' + inspect([listenerOrEvents, listener]),
+        );
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  unsubscribe<K extends keyof MessageEventsMap>(
+    eventOrEvents: K | K[],
+    listener?: EventListener<MessageEventsMap, K>,
+  ): void;
+  unsubscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): void;
+  unsubscribe<K extends keyof MessageEventsMap>(
+    listenerOrEvents?: K | K[] | EventListener<MessageEventsMap, K>,
+    listener?: EventListener<MessageEventsMap, K>,
+  ) {
+    // this.dettach();
+    try {
+      super.off(listenerOrEvents, listener);
+    } catch (e: unknown) {
+      if (e instanceof InvalidArgumentError) {
+        throw new InvalidArgumentError(
+          'Messages.unsubscribe(): Invalid arguments: ' + inspect([listenerOrEvents, listener]),
+        );
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  subscribeReactions(
+    eventOrEvents: ReactionEvents | ReactionEvents[],
+    listener?: EventListener<ReactionEventsMap, ReactionEvents>,
+  ) {
+    this.reactions.subscribe(eventOrEvents, listener);
+    return this.attach();
+  }
+
+  unsubscribeReactions(
+    eventOrEvents: ReactionEvents | ReactionEvents[],
+    listener?: EventListener<ReactionEventsMap, ReactionEvents>,
+  ) {
+    //this.detach()
+    this.reactions.unsubscribe(eventOrEvents, listener);
+  }
+
+  private async fetchSingleMessage(messageId: string) {
+    this.state = MessagesInternalState.fetching;
+    const message = await this.chatApi.getMessage(this.conversationId, messageId);
+    this.cache.set(messageId, message);
+    this.state = MessagesInternalState.idle;
+    return this.processQueue();
+  }
+
+  private async processQueue(): Promise<void> {
+    if (this.eventsQueue.length === 0 || this.state !== MessagesInternalState.idle) return;
+    const event = this.eventsQueue[0];
+    try {
+      const processed = await this.processEvent(event);
+      if (processed) {
+        this.eventsQueue.shift();
+        return this.processQueue();
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
+  private async processEvent(channelEventMessage: Types.Message) {
+    const { name, data } = channelEventMessage;
+    switch (name) {
+      case MessageEvents.created:
+        this.cache.set(data.id, data);
+        this.emit(MessageEvents.created, { type: name, message: data });
+        return true;
+      case MessageEvents.edited:
+        return this.processIfInCache(data.id, channelEventMessage, (message) => {
+          const updated = { ...message, ...data };
+          this.cache.set(updated.id, updated);
+          this.emit(MessageEvents.edited, { type: name, message: updated });
+        });
+      case MessageEvents.deleted:
+        return this.processIfInCache(data.id, channelEventMessage, (message) => {
+          this.emit(MessageEvents.deleted, { type: name, message });
+        });
+      case ReactionEvents.created:
+        return this.processIfInCache(data.message_id, channelEventMessage, (message) => {
+          this.reactions.emit(ReactionEvents.created, { type: name, reaction: data });
+          const updated = this.addReactionToMessage(message, data);
+          this.cache.set(updated.id, updated);
+          this.emit(MessageEvents.edited, {
+            type: MessageEvents.edited,
+            message: updated,
+          });
+        });
+      case ReactionEvents.deleted:
+        return this.processIfInCache(data.message_id, channelEventMessage, (msg) => {
+          this.reactions.emit(ReactionEvents.deleted, { type: name, reaction: data });
+          const updated = this.deleteReactionFromMessage(msg, data);
+          this.cache.set(updated.id, updated);
+          this.emit(MessageEvents.edited, {
+            type: MessageEvents.edited,
+            message: updated,
+          });
+        });
+      default:
+        throw new ErrorInfo(`Received illegal event="${name}"`, 400, 4000);
+    }
+  }
+
+  private processIfInCache(
+    messageId: string,
+    channelEventMessage: Types.Message,
+    processor: (msg: Message) => void,
+  ): boolean {
+    if (!this.cache.has(messageId)) {
+      this.fetchSingleMessage(messageId);
+      this.eventsQueue.push(channelEventMessage);
+      return false;
+    } else {
+      processor(this.cache.get(messageId)!!);
+      return true;
+    }
+  }
+
+  private addReactionToMessage(message: Message, reaction: Reaction): Message {
+    return {
+      ...message,
+      reactions: {
+        mine:
+          reaction.created_by === this.clientId
+            ? [...(message.reactions?.mine ?? []), reaction]
+            : message.reactions?.mine ?? [],
+        latest: [...(message.reactions?.latest ?? []), reaction],
+        counts: {
+          ...message.reactions?.counts,
+          [reaction.type]: (message.reactions?.counts?.[reaction.type] ?? 0) + 1,
+        },
+      },
     };
-    this.channelListeners.set(listener, channelListener);
-    return this.channel.subscribe(event, channelListener);
   }
 
-  unsubscribe(event: MessageEvents, listener: MessageListener) {
-    const channelListener = this.channelListeners.get(listener);
-    if (!channelListener) return;
-    this.channel.unsubscribe(event, channelListener);
-  }
-
-  async subscribeReactions(event: ReactionEvents, listener: ReactionListener) {
-    const channelListener = ({ name, data }: Types.Message) => {
-      listener({
-        type: name as ReactionEvents,
-        reaction: data,
-      });
+  private deleteReactionFromMessage(message: Message, reaction: Reaction): Message {
+    return {
+      ...message,
+      reactions: {
+        mine:
+          (reaction.created_by === this.clientId
+            ? message.reactions?.mine.filter(({ id }) => id !== reaction.id)
+            : message.reactions?.mine) ?? [],
+        latest: message.reactions?.latest.filter(({ id }) => id !== reaction.id) ?? [],
+        counts: {
+          ...message.reactions?.counts,
+          [reaction.type]: (message.reactions?.counts?.[reaction.type] ?? 0) - 1,
+        },
+      },
     };
-    this.channelListeners.set(listener, channelListener);
-    return this.channel.subscribe(event, channelListener);
-  }
-
-  unsubscribeReactions(event: ReactionEvents, listener: ReactionListener) {
-    const channelListener = this.channelListeners.get(listener);
-    if (!channelListener) return;
-    this.channel.unsubscribe(event, channelListener);
   }
 
   private async makeMessageApiCallAndWaitForRealtimeResult(event: MessageEvents, apiCall: () => Promise<string>) {
@@ -155,44 +325,6 @@ export class Messages {
       resolver = (message) => {
         this.channel.unsubscribe(event, waiter);
         resolve(message);
-      };
-    });
-  }
-
-  private async makeReactionApiCallAndWaitForRealtimeResult(event: ReactionEvents, apiCall: () => Promise<string>) {
-    const queuedReaction: Record<string, Reaction> = {};
-
-    let waitingReactionId: string | null = null;
-    let resolver: ((reaction: Reaction) => void) | null = null;
-
-    const waiter = ({ data }: Types.Message) => {
-      const reaction: Reaction = data;
-      if (waitingReactionId === null) {
-        queuedReaction[reaction.id] = reaction;
-      } else if (waitingReactionId === reaction.id) {
-        resolver?.(reaction);
-        resolver = null;
-      }
-    };
-
-    await this.channel.subscribe(event, waiter);
-
-    try {
-      const reactionId = await apiCall();
-      if (queuedReaction[reactionId]) {
-        this.channel.unsubscribe(event, waiter);
-        return queuedReaction[reactionId];
-      }
-      waitingReactionId = reactionId;
-    } catch (e) {
-      this.channel.unsubscribe(event, waiter);
-      throw e;
-    }
-
-    return new Promise<Reaction>((resolve) => {
-      resolver = (reaction) => {
-        this.channel.unsubscribe(event, waiter);
-        resolve(reaction);
       };
     });
   }
