@@ -14,15 +14,7 @@ vi.mock('ably/promises');
 describe('Messages', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Realtime({ clientId: 'clientId', key: 'key' });
-    context.chatApi = new ChatApi(context.realtime.auth);
-
-    vi.spyOn(context.realtime.auth, 'requestToken').mockResolvedValue({
-      clientId: 'clientId',
-      token: 'token',
-      capability: '',
-      expires: -1,
-      issued: -1,
-    });
+    context.chatApi = new ChatApi(context.realtime);
 
     const channel = context.realtime.channels.get('conversationId');
     vi.spyOn(channel, 'subscribe').mockImplementation(
@@ -46,7 +38,7 @@ describe('Messages', () => {
         data: {
           id: 'messageId',
           content: 'text',
-          client_id: 'clientId',
+          created_by: 'clientId',
         },
       });
 
@@ -56,7 +48,7 @@ describe('Messages', () => {
         expect.objectContaining({
           id: 'messageId',
           content: 'text',
-          client_id: 'clientId',
+          created_by: 'clientId',
         }),
       );
     });
@@ -70,7 +62,7 @@ describe('Messages', () => {
           data: {
             id: 'messageId',
             content: text,
-            client_id: 'clientId',
+            created_by: 'clientId',
           },
         });
         return { id: 'messageId' };
@@ -83,7 +75,7 @@ describe('Messages', () => {
         expect.objectContaining({
           id: 'messageId',
           content: 'text',
-          client_id: 'clientId',
+          created_by: 'clientId',
         }),
       );
     });
@@ -102,7 +94,6 @@ describe('Messages', () => {
         data: {
           id: 'messageId',
           content: 'new_text',
-          client_id: 'clientId',
         },
       });
 
@@ -112,7 +103,6 @@ describe('Messages', () => {
         expect.objectContaining({
           id: 'messageId',
           content: 'new_text',
-          client_id: 'clientId',
         }),
       );
     });
@@ -126,7 +116,7 @@ describe('Messages', () => {
           data: {
             id: messageId,
             content: text,
-            client_id: 'clientId',
+            created_by: 'clientId',
           },
         });
         return { id: 'messageId' };
@@ -139,7 +129,7 @@ describe('Messages', () => {
         expect.objectContaining({
           id: 'messageId',
           content: 'new_text',
-          client_id: 'clientId',
+          created_by: 'clientId',
         }),
       );
     });
@@ -154,7 +144,7 @@ describe('Messages', () => {
           clientId: 'clientId',
           data: {
             id: messageId,
-            client_id: 'clientId',
+            created_by: 'clientId',
             content: 'text',
             deleted_at: 1111,
           },
@@ -167,7 +157,7 @@ describe('Messages', () => {
       expect(message).toEqual(
         expect.objectContaining({
           id: 'messageId',
-          client_id: 'clientId',
+          created_by: 'clientId',
           content: 'text',
           deleted_at: 1111,
         }),
@@ -185,7 +175,7 @@ describe('Messages', () => {
         clientId: 'clientId',
         data: {
           id: 'messageId',
-          client_id: 'clientId',
+          created_by: 'clientId',
           content: 'text',
           deleted_at: 1111,
         },
@@ -196,7 +186,7 @@ describe('Messages', () => {
       expect(message).toEqual(
         expect.objectContaining({
           id: 'messageId',
-          client_id: 'clientId',
+          created_by: 'clientId',
           content: 'text',
           deleted_at: 1111,
         }),
@@ -218,7 +208,7 @@ describe('Messages', () => {
           id: 'reactionId',
           message_id: 'messageId',
           type: 'like',
-          client_id: 'clientId',
+          created_by: 'clientId',
         },
       });
 
@@ -229,7 +219,7 @@ describe('Messages', () => {
           id: 'reactionId',
           message_id: 'messageId',
           type: 'like',
-          client_id: 'clientId',
+          created_by: 'clientId',
         }),
       );
     });
@@ -244,7 +234,7 @@ describe('Messages', () => {
             id: 'reactionId',
             message_id: messageId,
             type,
-            client_id: 'clientId',
+            created_by: 'clientId',
           },
         });
         return { id: 'reactionId' };
@@ -258,7 +248,7 @@ describe('Messages', () => {
           id: 'reactionId',
           message_id: 'messageId',
           type: 'like',
-          client_id: 'clientId',
+          created_by: 'clientId',
         }),
       );
     });
@@ -278,7 +268,7 @@ describe('Messages', () => {
           id: 'reactionId',
           message_id: 'messageId',
           type: 'like',
-          client_id: 'clientId',
+          created_by: 'clientId',
         },
       });
 
@@ -289,7 +279,7 @@ describe('Messages', () => {
           id: 'reactionId',
           message_id: 'messageId',
           type: 'like',
-          client_id: 'clientId',
+          created_by: 'clientId',
         }),
       );
     });
@@ -304,7 +294,7 @@ describe('Messages', () => {
             id: reactionId,
             message_id: 'messageId',
             type: 'like',
-            client_id: 'clientId',
+            created_by: 'clientId',
           },
         });
       });
@@ -317,7 +307,7 @@ describe('Messages', () => {
           id: 'reactionId',
           message_id: 'messageId',
           type: 'like',
-          client_id: 'clientId',
+          created_by: 'clientId',
         }),
       );
     });

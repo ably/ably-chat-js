@@ -56,6 +56,18 @@ export class ChatApi {
     return this.makeAuthorisedRequest(`/conversations/v1/conversations/${conversationId}`, 'DELETE');
   }
 
+  async getMessage(conversationId: string, messageId: string): Promise<Message> {
+    const [message] = await this.makeAuthorisedPaginatedRequest<Message>(
+      `/conversations/v1/conversations/${conversationId}/messages`,
+      'GET',
+      {
+        limit: 1,
+        startId: messageId.substring(0, messageId.length - 2) + '00',
+      },
+    );
+    return message;
+  }
+
   async getMessages(conversationId: string, params: GetMessagesQueryParams): Promise<Message[]> {
     return this.makeAuthorisedPaginatedRequest(
       `/conversations/v1/conversations/${conversationId}/messages`,

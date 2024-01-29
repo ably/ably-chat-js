@@ -5,6 +5,6 @@ export enum MessageEvents {
 }
 
 export enum ReactionEvents {
-  added = 'reaction.added',
+  created = 'reaction.created',
   deleted = 'reaction.deleted',
 }

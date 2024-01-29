@@ -26,7 +26,7 @@ export interface Reaction {
   id: string;
   message_id: string;
   type: string;
-  client_id: string;
+  created_by: string;
   updated_at: number | null;
   deleted_at: number | null;
 }
