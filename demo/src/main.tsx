@@ -10,8 +10,8 @@ const clientId = nanoid();
 
 const ablyClient = new Realtime({
   authUrl: `/api/ably-token-request?clientId=${clientId}`,
-  restHost: 'eu-west-2-a.primary.chat.cluster.ably-nonprod.net',
-  realtimeHost: 'eu-west-2-a.primary.chat.cluster.ably-nonprod.net',
+  restHost: import.meta.env.VITE_ABLY_HOST,
+  realtimeHost: import.meta.env.VITE_ABLY_HOST,
   clientId,
 });
 
