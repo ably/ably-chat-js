@@ -2,6 +2,7 @@ import { beforeEach, describe, vi, it, expect } from 'vitest';
 import { Realtime, Types } from 'ably/promises';
 import { ChatApi } from './ChatApi.js';
 import { Conversation } from './Conversation.js';
+import { MessageEvents } from './events';
 
 interface TestContext {
   realtime: Realtime;
@@ -17,10 +18,20 @@ describe('Messages', () => {
     context.chatApi = new ChatApi(context.realtime);
 
     const channel = context.realtime.channels.get('conversationId');
+    const listeners: Types.messageCallback<Types.Message>[] = [];
     vi.spyOn(channel, 'subscribe').mockImplementation(
       // @ts-ignore
-      async (name: string, listener: Types.messageCallback<Types.Message>) => {
-        context.emulateBackendPublish = listener;
+      async (
+        nameOrListener: string | Types.messageCallback<Types.Message>,
+        listener: Types.messageCallback<Types.Message>,
+      ) => {
+        if (typeof nameOrListener === 'string') {
+          listeners.push(listener);
+        } else {
+          listeners.push(nameOrListener);
+        }
+        // @ts-ignore
+        context.emulateBackendPublish = (msg) => listeners.forEach((listener) => listener(msg));
       },
     );
   });
@@ -35,6 +46,7 @@ describe('Messages', () => {
 
       context.emulateBackendPublish({
         clientId: 'clientId',
+        name: 'message.created',
         data: {
           id: 'messageId',
           content: 'text',
@@ -192,6 +204,73 @@ describe('Messages', () => {
         }),
       );
     });
+  });
+
+  describe('subscribing to updates', () => {
+    it<TestContext>('should not miss events that came before last messages has been fetched and emit them after', (context) =>
+      new Promise<void>((done) => {
+        const { chatApi, realtime } = context;
+        vi.spyOn(chatApi, 'getMessages').mockResolvedValue([
+          {
+            id: '01HNBQ3QF6RPYNMYE6P226BMD1',
+            conversation_id: 'conversationId',
+            content: 'foo',
+          } as any,
+        ]);
+
+        const conversation = new Conversation('conversationId', realtime, chatApi);
+        conversation.messages.subscribe(MessageEvents.created, ({ type, message }) => {
+          expect(message).toEqual(
+            expect.objectContaining({
+              id: 'messageId',
+              content: 'text',
+              created_by: 'clientId',
+            }),
+          );
+          done();
+        });
+        context.emulateBackendPublish({
+          clientId: 'clientId',
+          name: 'message.created',
+          data: {
+            id: 'messageId',
+            content: 'text',
+            created_by: 'clientId',
+          },
+        });
+      }));
+
+    it<TestContext>('should enrich edited message even if it is not in cache', (context) =>
+      new Promise<void>((done) => {
+        const { chatApi, realtime } = context;
+        vi.spyOn(chatApi, 'getMessages').mockResolvedValue([]);
+        vi.spyOn(chatApi, 'getMessage').mockResolvedValue({
+          id: '01HNBQ3QF6RPYNMYE6P226BMD1',
+          conversation_id: 'conversationId',
+          content: 'old_text',
+          created_by: 'clientId',
+        } as any);
+
+        const conversation = new Conversation('conversationId', realtime, chatApi);
+        conversation.messages.subscribe(MessageEvents.edited, ({ type, message }) => {
+          expect(message).toEqual(
+            expect.objectContaining({
+              id: '01HNBQ3QF6RPYNMYE6P226BMD1',
+              content: 'text',
+              created_by: 'clientId',
+            }),
+          );
+          done();
+        });
+        context.emulateBackendPublish({
+          clientId: 'clientId',
+          name: 'message.edited',
+          data: {
+            id: '01HNBQ3QF6RPYNMYE6P226BMD1',
+            content: 'text',
+          },
+        });
+      }));
   });
 
   describe('adding message reaction', () => {
