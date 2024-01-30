@@ -357,4 +357,13 @@ export default class EventEmitter<T> {
       this.once(targetState, listener);
     }
   }
+
+  hasListeners(): boolean {
+    return (
+      this.any.length !== 0 ||
+      this.anyOnce.length !== 0 ||
+      Object.keys(this.events).length !== 0 ||
+      Object.keys(this.eventsOnce).length !== 0
+    );
+  }
 }

@@ -60,7 +60,7 @@ export const useMessages = () => {
 
     let mounted = true;
     const initMessages = async () => {
-      const lastMessages = await conversation.messages.query({ limit: 10 });
+      const lastMessages = await conversation.messages.query({ limit: 100 });
       if (mounted) {
         setLoading(false);
         setMessages((prevMessages) => [...prevMessages, ...lastMessages].reverse());

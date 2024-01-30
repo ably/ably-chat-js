@@ -2,7 +2,7 @@ import { beforeEach, describe, vi, it, expect } from 'vitest';
 import { Realtime, Types } from 'ably/promises';
 import { ChatApi } from './ChatApi.js';
 import { Conversation } from './Conversation.js';
-import { MessageEvents } from './events';
+import { MessageEvents } from './events.js';
 
 interface TestContext {
   realtime: Realtime;
@@ -219,7 +219,7 @@ describe('Messages', () => {
         ]);
 
         const conversation = new Conversation('conversationId', realtime, chatApi);
-        conversation.messages.subscribe(MessageEvents.created, ({ type, message }) => {
+        conversation.messages.subscribe(MessageEvents.created, ({ message }) => {
           expect(message).toEqual(
             expect.objectContaining({
               id: 'messageId',
@@ -252,7 +252,7 @@ describe('Messages', () => {
         } as any);
 
         const conversation = new Conversation('conversationId', realtime, chatApi);
-        conversation.messages.subscribe(MessageEvents.edited, ({ type, message }) => {
+        conversation.messages.subscribe(MessageEvents.edited, ({ message }) => {
           expect(message).toEqual(
             expect.objectContaining({
               id: '01HNBQ3QF6RPYNMYE6P226BMD1',

@@ -98,24 +98,6 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     return this.reactions.remove(reactionId);
   }
 
-  private async attach() {
-    if (this.state !== MessagesInternalState.empty) return;
-    this.state = MessagesInternalState.attaching;
-
-    await this.channel.subscribe((channelEventMessage: Types.Message) => {
-      if (this.state === MessagesInternalState.idle) {
-        this.processEvent(channelEventMessage);
-      } else {
-        this.eventsQueue.push(channelEventMessage);
-      }
-    });
-
-    const messages = await this.query({ limit: CACHE_SIZE / 2 });
-    messages.forEach((msg) => this.cache.set(msg.id, msg));
-    this.state = MessagesInternalState.idle;
-    this.processQueue();
-  }
-
   subscribe<K extends keyof MessageEventsMap>(
     eventOrEvents: K | K[],
     listener?: EventListener<MessageEventsMap, K>,
@@ -148,9 +130,9 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     listenerOrEvents?: K | K[] | EventListener<MessageEventsMap, K>,
     listener?: EventListener<MessageEventsMap, K>,
   ) {
-    // this.dettach();
     try {
       super.off(listenerOrEvents, listener);
+      return this.detach();
     } catch (e: unknown) {
       if (e instanceof InvalidArgumentError) {
         throw new InvalidArgumentError(
@@ -174,8 +156,32 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     eventOrEvents: ReactionEvents | ReactionEvents[],
     listener?: EventListener<ReactionEventsMap, ReactionEvents>,
   ) {
-    //this.detach()
     this.reactions.unsubscribe(eventOrEvents, listener);
+    return this.detach();
+  }
+
+  private async attach() {
+    if (this.state !== MessagesInternalState.empty) return;
+    this.state = MessagesInternalState.attaching;
+
+    await this.channel.subscribe((channelEventMessage: Types.Message) => {
+      if (this.state === MessagesInternalState.idle) {
+        this.processEvent(channelEventMessage);
+      } else {
+        this.eventsQueue.push(channelEventMessage);
+      }
+    });
+
+    const messages = await this.query({ limit: CACHE_SIZE / 2 });
+    messages.forEach((msg) => this.cache.set(msg.id, msg));
+    this.state = MessagesInternalState.idle;
+    this.processQueue();
+  }
+
+  private async detach() {
+    if (this.hasListeners() || this.reactions.hasListeners()) return;
+    this.state = MessagesInternalState.empty;
+    this.cache.clear();
   }
 
   private async fetchSingleMessage(messageId: string) {
