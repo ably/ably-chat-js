@@ -6,6 +6,7 @@ import { MessageEvents, ReactionEvents } from './events.js';
 import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
 import { type MessageCache, initMessageCache, CACHE_SIZE } from './utils/messageCache.js';
 import { MessageReactions, ReactionEventsMap } from './MessageReactions.js';
+import { addToArrayWithLimit } from './utils/array.js';
 
 interface MessageEventsMap {
   [MessageEvents.created]: MessageEventPayload;
@@ -38,6 +39,8 @@ enum MessagesInternalState {
 }
 
 export type MessageListener = EventListener<MessageEventsMap, keyof MessageEventsMap>;
+
+const MAX_STORED_REACTIONS = 10;
 
 export class Messages extends EventEmitter<MessageEventsMap> {
   private readonly conversationId: string;
@@ -185,7 +188,6 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   }
 
   private async fetchSingleMessage(messageId: string) {
-    this.state = MessagesInternalState.fetching;
     const message = await this.chatApi.getMessage(this.conversationId, messageId);
     this.cache.set(messageId, message);
     this.state = MessagesInternalState.idle;
@@ -254,6 +256,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     processor: (msg: Message) => void,
   ): boolean {
     if (!this.cache.has(messageId)) {
+      this.state = MessagesInternalState.fetching;
       this.fetchSingleMessage(messageId);
       this.eventsQueue.push(channelEventMessage);
       return false;
@@ -269,9 +272,9 @@ export class Messages extends EventEmitter<MessageEventsMap> {
       reactions: {
         mine:
           reaction.created_by === this.clientId
-            ? [...(message.reactions?.mine ?? []), reaction]
+            ? addToArrayWithLimit(message.reactions?.mine ?? [], reaction, MAX_STORED_REACTIONS)
             : message.reactions?.mine ?? [],
-        latest: [...(message.reactions?.latest ?? []), reaction],
+        latest: addToArrayWithLimit(message.reactions?.latest ?? [], reaction, MAX_STORED_REACTIONS),
         counts: {
           ...message.reactions?.counts,
           [reaction.type]: (message.reactions?.counts?.[reaction.type] ?? 0) + 1,
