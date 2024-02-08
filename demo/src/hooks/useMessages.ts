@@ -2,6 +2,10 @@ import { Message, MessageEvents, type MessageListener } from '@ably-labs/chat';
 import { useCallback, useEffect, useState } from 'react';
 import { useConversation } from './useConversation';
 
+const combineMessages = (previousMessages: Message[], lastMessages: Message[]) => {
+  return [...previousMessages.filter((msg) => lastMessages.every(({ id }) => id !== msg.id)), ...lastMessages];
+};
+
 export const useMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -63,7 +67,7 @@ export const useMessages = () => {
       const lastMessages = await conversation.messages.query({ limit: 100 });
       if (mounted) {
         setLoading(false);
-        setMessages((prevMessages) => [...prevMessages, ...lastMessages].reverse());
+        setMessages((prevMessages) => combineMessages(prevMessages, lastMessages).reverse());
       }
     };
     setMessages([]);
