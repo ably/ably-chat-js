@@ -52,6 +52,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   private readonly cache: MessageCache;
   private state: MessagesInternalState = MessagesInternalState.empty;
   private eventsQueue: Types.Message[] = [];
+  private unsubscribeFromChannel: (() => void) | null = null;
 
   constructor(conversationId: string, channel: RealtimeChannelPromise, chatApi: ChatApi, clientId: String) {
     super();
@@ -163,28 +164,38 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     return this.detach();
   }
 
-  private async attach() {
-    if (this.state !== MessagesInternalState.empty) return;
+  private attach() {
+    if (this.state !== MessagesInternalState.empty) return Promise.resolve();
     this.state = MessagesInternalState.attaching;
-
-    await this.channel.subscribe((channelEventMessage: Types.Message) => {
+    return this.doAttach((channelEventMessage: Types.Message) => {
       if (this.state === MessagesInternalState.idle) {
         this.processEvent(channelEventMessage);
       } else {
         this.eventsQueue.push(channelEventMessage);
       }
     });
+  }
+
+  private async doAttach(channelHandler: Types.messageCallback<Types.Message>) {
+    const unsubscribeFromChannel = () => this.channel.unsubscribe(channelHandler);
+    this.unsubscribeFromChannel = unsubscribeFromChannel;
+    await this.channel.subscribe(channelHandler);
 
     const messages = await this.query({ limit: CACHE_SIZE / 2 });
+
+    if (this.unsubscribeFromChannel !== unsubscribeFromChannel) return;
+
     messages.forEach((msg) => this.cache.set(msg.id, msg));
     this.state = MessagesInternalState.idle;
     this.processQueue();
   }
 
-  private async detach() {
+  private detach() {
     if (this.hasListeners() || this.reactions.hasListeners()) return;
     this.state = MessagesInternalState.empty;
     this.cache.clear();
+    this.unsubscribeFromChannel?.();
+    this.unsubscribeFromChannel = null;
   }
 
   private async fetchSingleMessage(messageId: string) {
