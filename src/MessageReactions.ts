@@ -29,17 +29,13 @@ export class MessageReactions extends EventEmitter<ReactionEventsMap> {
   }
 
   async add(messageId: string, reactionType: string) {
-    return this.makeApiCallAndWaitForRealtimeResult(ReactionEvents.created, async () => {
-      const { id } = await this.chatApi.addMessageReaction(this.conversationId, messageId, reactionType);
-      return id;
-    });
+    const { id } = await this.chatApi.addMessageReaction(this.conversationId, messageId, reactionType);
+    return id;
   }
 
   async remove(reactionId: string) {
-    return this.makeApiCallAndWaitForRealtimeResult(ReactionEvents.deleted, async () => {
-      await this.chatApi.deleteMessageReaction(reactionId);
-      return reactionId;
-    });
+    await this.chatApi.deleteMessageReaction(reactionId);
+    return reactionId;
   }
 
   subscribe<K extends keyof ReactionEventsMap>(

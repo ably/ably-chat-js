@@ -47,14 +47,14 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   private readonly channel: RealtimeChannelPromise;
   private readonly chatApi: ChatApi;
   private readonly reactions: MessageReactions;
-  private readonly clientId: String;
+  private readonly clientId: string;
 
   private readonly cache: MessageCache;
   private state: MessagesInternalState = MessagesInternalState.empty;
   private eventsQueue: Types.Message[] = [];
   private unsubscribeFromChannel: (() => void) | null = null;
 
-  constructor(conversationId: string, channel: RealtimeChannelPromise, chatApi: ChatApi, clientId: String) {
+  constructor(conversationId: string, channel: RealtimeChannelPromise, chatApi: ChatApi, clientId: string) {
     super();
     this.conversationId = conversationId;
     this.channel = channel;
@@ -69,29 +69,69 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     return this.chatApi.getMessages(this.conversationId, options);
   }
 
+  async get(messageId: string): Promise<Message> {
+    if (this.cache.has(messageId)) {
+      return this.cache.get(messageId)!!;
+    }
+    
+    return this.chatApi.getMessage(this.conversationId, messageId);
+  }
+
   async send(text: string): Promise<Message> {
-    return this.makeMessageApiCallAndWaitForRealtimeResult(MessageEvents.created, async () => {
-      const { id } = await this.chatApi.sendMessage(this.conversationId, text);
-      return id;
-    });
+    const { id } = await this.chatApi.sendMessage(this.conversationId, text);
+    const createdAtTime = new Date().getTime()/1000;
+    return {
+      id,
+      conversation_id: this.conversationId,
+      content: text,
+      created_at: createdAtTime,
+      edited_at: createdAtTime,
+      created_by: this.clientId,
+      reactions: {
+        mine: [],
+        latest: [],
+        counts: {},
+      },
+      deleted_at: null,
+    };
   }
 
   async edit(messageId: string, text: string): Promise<Message> {
-    return this.makeMessageApiCallAndWaitForRealtimeResult(MessageEvents.deleted, async () => {
-      await this.chatApi.editMessage(this.conversationId, messageId, text);
-      return messageId;
-    });
+    await this.chatApi.editMessage(this.conversationId, messageId, text);
+
+    // Return updated message from cache
+    const message = this.cache.get(messageId);
+    if (!message) {
+      throw new Error('Message not found in cache');
+    }
+
+    const updatedMessage = {
+      ...message,
+      content: text,
+      edited_at: new Date().getTime()/1000,
+    };
+
+    return updatedMessage;
   }
 
   async delete(message: Message): Promise<Message>;
   async delete(messageId: string): Promise<Message>;
   async delete(messageIdOrMessage: string | Message): Promise<Message> {
     const messageId = typeof messageIdOrMessage === 'string' ? messageIdOrMessage : messageIdOrMessage.id;
+    await this.chatApi.deleteMessage(this.conversationId, messageId);
 
-    return this.makeMessageApiCallAndWaitForRealtimeResult(MessageEvents.deleted, async () => {
-      await this.chatApi.deleteMessage(this.conversationId, messageId);
-      return messageId;
-    });
+    // Return deleted message from cache
+    const message = this.cache.get(messageId);
+    if (!message) {
+      throw new Error('Message not found in cache');
+    }
+
+    const deletedMessage = {
+      ...message,
+      deleted_at: new Date().getTime()/1000,
+    };
+
+    return deletedMessage;
   }
 
   async addReaction(messageId: string, reactionType: string) {
@@ -309,43 +349,5 @@ export class Messages extends EventEmitter<MessageEventsMap> {
         },
       },
     };
-  }
-
-  private async makeMessageApiCallAndWaitForRealtimeResult(event: MessageEvents, apiCall: () => Promise<string>) {
-    const queuedMessages: Record<string, Message> = {};
-
-    let waitingMessageId: string | null = null;
-    let resolver: ((message: Message) => void) | null = null;
-
-    const waiter = ({ data }: Types.Message) => {
-      const message: Message = data;
-      if (waitingMessageId === null) {
-        queuedMessages[message.id] = message;
-      } else if (waitingMessageId === message.id) {
-        resolver?.(message);
-        resolver = null;
-      }
-    };
-
-    await this.channel.subscribe(event, waiter);
-
-    try {
-      const messageId = await apiCall();
-      if (queuedMessages[messageId]) {
-        this.channel.unsubscribe(event, waiter);
-        return queuedMessages[messageId];
-      }
-      waitingMessageId = messageId;
-    } catch (e) {
-      this.channel.unsubscribe(event, waiter);
-      throw e;
-    }
-
-    return new Promise<Message>((resolve) => {
-      resolver = (message) => {
-        this.channel.unsubscribe(event, waiter);
-        resolve(message);
-      };
-    });
   }
 }
