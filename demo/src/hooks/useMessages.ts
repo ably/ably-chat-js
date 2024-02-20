@@ -40,8 +40,8 @@ export const useMessages = () => {
   );
 
   const removeReaction = useCallback(
-    (reactionId: string) => {
-      conversation.messages.removeReaction(reactionId);
+    (messageId: string, reactionId: string) => {
+      conversation.messages.removeReaction(messageId, reactionId);
     },
     [conversation],
   );

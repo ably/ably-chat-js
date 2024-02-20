@@ -35,9 +35,9 @@ export class MessageReactions extends EventEmitter<ReactionEventsMap> {
     });
   }
 
-  async remove(reactionId: string) {
+  async remove(messageId: string, reactionId: string) {
     return this.makeApiCallAndWaitForRealtimeResult(ReactionEvents.deleted, async () => {
-      await this.chatApi.deleteMessageReaction(reactionId);
+      await this.chatApi.deleteMessageReaction(this.conversationId, messageId, reactionId);
       return reactionId;
     });
   }

@@ -104,8 +104,11 @@ export class ChatApi {
     );
   }
 
-  async deleteMessageReaction(reactionId: string): Promise<void> {
-    await this.makeAuthorisedRequest(`/conversations/v1/reactions/${reactionId}`, 'DELETE');
+  async deleteMessageReaction(conversationId: string, messageId: string, reactionId: string): Promise<void> {
+    await this.makeAuthorisedRequest(
+      `/conversations/v1/conversations/${conversationId}/messages/${messageId}/reactions/${reactionId}`,
+      'DELETE',
+    );
   }
 
   private async makeAuthorisedRequest<RES, REQ = undefined>(

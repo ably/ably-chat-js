@@ -98,8 +98,8 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     return this.reactions.add(messageId, reactionType);
   }
 
-  async removeReaction(reactionId: string) {
-    return this.reactions.remove(reactionId);
+  async removeReaction(messageId: string, reactionId: string) {
+    return this.reactions.remove(messageId, reactionId);
   }
 
   subscribe<K extends keyof MessageEventsMap>(

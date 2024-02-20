@@ -48,7 +48,7 @@ export const Chat = () => {
 
   const handleRemoveReaction = useCallback(() => {
     if (!selectedMessage?.reactions?.mine?.[0]) return;
-    removeReaction(selectedMessage.reactions.mine[0].id);
+    removeReaction(selectedMessage.id, selectedMessage.reactions.mine[0].id);
     setSelectedMessage(null);
     setValue('');
   }, [selectedMessage, removeReaction]);
