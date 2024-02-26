@@ -130,7 +130,7 @@ const reaction = await conversation.messages.addReaction(msgId, {
 Delete reaction:
 
 ```ts
-await conversation.messages.removeReaction(reactionId)
+await conversation.messages.removeReaction(msgId, reactionId)
 ```
 
 ### Reaction object

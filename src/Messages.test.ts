@@ -339,7 +339,7 @@ describe('Messages', () => {
       vi.spyOn(chatApi, 'deleteMessageReaction').mockResolvedValue(undefined);
 
       const conversation = new Conversation('conversationId', realtime, chatApi);
-      const reactionPromise = conversation.messages.removeReaction('reactionId');
+      const reactionPromise = conversation.messages.removeReaction('messageId', 'reactionId');
 
       context.emulateBackendPublish({
         clientId: 'clientId',
@@ -366,7 +366,7 @@ describe('Messages', () => {
     it<TestContext>('should return reaction if chat backend request come after realtime', async (context) => {
       const { chatApi, realtime } = context;
 
-      vi.spyOn(chatApi, 'deleteMessageReaction').mockImplementation(async (reactionId) => {
+      vi.spyOn(chatApi, 'deleteMessageReaction').mockImplementation(async (conversationId, messageId, reactionId) => {
         context.emulateBackendPublish({
           clientId: 'clientId',
           data: {
@@ -379,7 +379,7 @@ describe('Messages', () => {
       });
 
       const conversation = new Conversation('conversationId', realtime, chatApi);
-      const reaction = await conversation.messages.removeReaction('reactionId');
+      const reaction = await conversation.messages.removeReaction('messageId', 'reactionId');
 
       expect(reaction).toEqual(
         expect.objectContaining({
