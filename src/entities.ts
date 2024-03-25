@@ -27,6 +27,4 @@ export interface Reaction {
   message_id: string;
   type: string;
   created_by: string;
-  updated_at: number | null;
-  deleted_at: number | null;
 }
