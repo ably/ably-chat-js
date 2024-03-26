@@ -51,6 +51,6 @@
   },
   "dependencies": {
     "lru-cache": "^10.2.0",
-    "nanoid": "^5.0.4"
+    "nanoid": "^5.0.6"
   }
 }
