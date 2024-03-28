@@ -42,10 +42,7 @@ export class ChatApi {
     return this.makeAuthorisedRequest(`/chat/v1/room/${roomId}`, 'GET');
   }
 
-  async createRoom(
-    roomId: string,
-    body?: CreateRoomRequest,
-  ): Promise<CreateRoomResponse> {
+  async createRoom(roomId: string, body?: CreateRoomRequest): Promise<CreateRoomResponse> {
     return this.makeAuthorisedRequest(`/chat/v1/room`, 'POST', {
       name: roomId,
       ...body,
@@ -57,18 +54,11 @@ export class ChatApi {
   }
 
   async getMessage(roomId: string, messageId: string): Promise<Message> {
-    return this.makeAuthorisedRequest<Message>(
-      `/chat/v1/room/${roomId}/messages/${messageId}`,
-      'GET',
-    );
+    return this.makeAuthorisedRequest<Message>(`/chat/v1/room/${roomId}/messages/${messageId}`, 'GET');
   }
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<Message[]> {
-    return this.makeAuthorisedPaginatedRequest(
-      `/chat/v1/room/${roomId}/messages`,
-      'GET',
-      params,
-    );
+    return this.makeAuthorisedPaginatedRequest(`/chat/v1/room/${roomId}/messages`, 'GET', params);
   }
 
   async sendMessage(roomId: string, text: string): Promise<CreateMessageResponse> {
@@ -78,37 +68,23 @@ export class ChatApi {
   }
 
   async editMessage(roomId: string, messageId: string, text: string): Promise<UpdateMessageResponse> {
-    return this.makeAuthorisedRequest(
-      `/chat/v1/room/${roomId}/messages/${messageId}`,
-      'PATCH',
-      {
-        content: text,
-      },
-    );
+    return this.makeAuthorisedRequest(`/chat/v1/room/${roomId}/messages/${messageId}`, 'PATCH', {
+      content: text,
+    });
   }
 
   async deleteMessage(roomId: string, messageId: string): Promise<void> {
-    return this.makeAuthorisedRequest(
-      `/chat/v1/room/${roomId}/messages/${messageId}`,
-      'DELETE',
-    );
+    return this.makeAuthorisedRequest(`/chat/v1/room/${roomId}/messages/${messageId}`, 'DELETE');
   }
 
   async addMessageReaction(roomId: string, messageId: string, type: string): Promise<AddReactionResponse> {
-    return this.makeAuthorisedRequest(
-      `/chat/v1/room/${roomId}/messages/${messageId}/reactions`,
-      'POST',
-      {
-        type,
-      },
-    );
+    return this.makeAuthorisedRequest(`/chat/v1/room/${roomId}/messages/${messageId}/reactions`, 'POST', {
+      type,
+    });
   }
 
   async deleteMessageReaction(roomId: string, messageId: string, reactionId: string): Promise<void> {
-    await this.makeAuthorisedRequest(
-      `/chat/v1/room/${roomId}/messages/${messageId}/reactions/${reactionId}`,
-      'DELETE',
-    );
+    await this.makeAuthorisedRequest(`/chat/v1/room/${roomId}/messages/${messageId}/reactions/${reactionId}`, 'DELETE');
   }
 
   private async makeAuthorisedRequest<RES, REQ = undefined>(
