@@ -1,4 +1,4 @@
-export interface Conversation {
+export interface Room {
   id: string;
   application_id: string;
   ttl: number | null;
@@ -8,7 +8,7 @@ export interface Conversation {
 export interface Message {
   id: string;
   created_by: string;
-  conversation_id: string;
+  room_id: string;
   content: string;
   reactions:
     | {

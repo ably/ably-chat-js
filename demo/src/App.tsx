@@ -1,18 +1,18 @@
 import { FC } from 'react';
 import { Chat as ChatSdk } from '@ably-labs/chat';
-import { ConversationProvider } from './containers/ConversationContext';
+import { RoomProvider } from './containers/RoomContext';
 import { Chat } from './containers/Chat';
 
 interface AppProps {
   client: ChatSdk;
 }
 const App: FC<AppProps> = ({ client }) => (
-  <ConversationProvider
+  <RoomProvider
     client={client}
-    conversationId="conversation1"
+    roomId="abcd"
   >
     <Chat />
-  </ConversationProvider>
+  </RoomProvider>
 );
 
 export default App;

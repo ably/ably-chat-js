@@ -1,13 +1,13 @@
 import { Realtime } from 'ably/promises';
-import { Conversations } from './Conversations.js';
+import { Rooms } from './Rooms.js';
 
 export class Chat {
   private readonly realtime: Realtime;
 
-  readonly conversations: Conversations;
+  readonly rooms: Rooms;
   constructor(realtime: Realtime) {
     this.realtime = realtime;
-    this.conversations = new Conversations(realtime);
+    this.rooms = new Rooms(realtime);
   }
 
   get connection() {

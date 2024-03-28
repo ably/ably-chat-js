@@ -1,11 +1,11 @@
-import { Conversation, Message } from './entities.js';
+import { Room as Room, Message } from './entities.js';
 import { Realtime, ErrorInfo } from 'ably/promises';
 
-export interface CreateConversationRequest {
+export interface CreateRoomRequest {
   ttl: number;
 }
 
-export interface CreateConversationResponse {
+export interface CreateRoomResponse {
   id: string;
 }
 
@@ -38,48 +38,48 @@ export class ChatApi {
     this.realtime = realtime;
   }
 
-  async getConversation(conversationId: string): Promise<Conversation> {
-    return this.makeAuthorisedRequest(`/conversations/v1/conversations/${conversationId}`, 'GET');
+  async getRoom(roomId: string): Promise<Room> {
+    return this.makeAuthorisedRequest(`/chat/v1/room/${roomId}`, 'GET');
   }
 
-  async createConversation(
-    conversationId: string,
-    body?: CreateConversationRequest,
-  ): Promise<CreateConversationResponse> {
-    return this.makeAuthorisedRequest(`/conversations/v1/conversations`, 'POST', {
-      name: conversationId,
+  async createRoom(
+    roomId: string,
+    body?: CreateRoomRequest,
+  ): Promise<CreateRoomResponse> {
+    return this.makeAuthorisedRequest(`/chat/v1/room`, 'POST', {
+      name: roomId,
       ...body,
     });
   }
 
-  async deleteConversation(conversationId: string): Promise<CreateConversationResponse> {
-    return this.makeAuthorisedRequest(`/conversations/v1/conversations/${conversationId}`, 'DELETE');
+  async deleteRoom(roomId: string): Promise<CreateRoomResponse> {
+    return this.makeAuthorisedRequest(`/chat/v1/room/${roomId}`, 'DELETE');
   }
 
-  async getMessage(conversationId: string, messageId: string): Promise<Message> {
+  async getMessage(roomId: string, messageId: string): Promise<Message> {
     return this.makeAuthorisedRequest<Message>(
-      `/conversations/v1/conversations/${conversationId}/messages/${messageId}`,
+      `/chat/v1/room/${roomId}/messages/${messageId}`,
       'GET',
     );
   }
 
-  async getMessages(conversationId: string, params: GetMessagesQueryParams): Promise<Message[]> {
+  async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<Message[]> {
     return this.makeAuthorisedPaginatedRequest(
-      `/conversations/v1/conversations/${conversationId}/messages`,
+      `/chat/v1/room/${roomId}/messages`,
       'GET',
       params,
     );
   }
 
-  async sendMessage(conversationId: string, text: string): Promise<CreateMessageResponse> {
-    return this.makeAuthorisedRequest(`/conversations/v1/conversations/${conversationId}/messages`, 'POST', {
+  async sendMessage(roomId: string, text: string): Promise<CreateMessageResponse> {
+    return this.makeAuthorisedRequest(`/chat/v1/room/${roomId}/messages`, 'POST', {
       content: text,
     });
   }
 
-  async editMessage(conversationId: string, messageId: string, text: string): Promise<UpdateMessageResponse> {
+  async editMessage(roomId: string, messageId: string, text: string): Promise<UpdateMessageResponse> {
     return this.makeAuthorisedRequest(
-      `/conversations/v1/conversations/${conversationId}/messages/${messageId}`,
+      `/chat/v1/room/${roomId}/messages/${messageId}`,
       'PATCH',
       {
         content: text,
@@ -87,16 +87,16 @@ export class ChatApi {
     );
   }
 
-  async deleteMessage(conversationId: string, messageId: string): Promise<void> {
+  async deleteMessage(roomId: string, messageId: string): Promise<void> {
     return this.makeAuthorisedRequest(
-      `/conversations/v1/conversations/${conversationId}/messages/${messageId}`,
+      `/chat/v1/room/${roomId}/messages/${messageId}`,
       'DELETE',
     );
   }
 
-  async addMessageReaction(conversationId: string, messageId: string, type: string): Promise<AddReactionResponse> {
+  async addMessageReaction(roomId: string, messageId: string, type: string): Promise<AddReactionResponse> {
     return this.makeAuthorisedRequest(
-      `/conversations/v1/conversations/${conversationId}/messages/${messageId}/reactions`,
+      `/chat/v1/room/${roomId}/messages/${messageId}/reactions`,
       'POST',
       {
         type,
@@ -104,9 +104,9 @@ export class ChatApi {
     );
   }
 
-  async deleteMessageReaction(conversationId: string, messageId: string, reactionId: string): Promise<void> {
+  async deleteMessageReaction(roomId: string, messageId: string, reactionId: string): Promise<void> {
     await this.makeAuthorisedRequest(
-      `/conversations/v1/conversations/${conversationId}/messages/${messageId}/reactions/${reactionId}`,
+      `/chat/v1/room/${roomId}/messages/${messageId}/reactions/${reactionId}`,
       'DELETE',
     );
   }
