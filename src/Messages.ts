@@ -43,7 +43,7 @@ export type MessageListener = EventListener<MessageEventsMap, keyof MessageEvent
 const MAX_STORED_REACTIONS = 10;
 
 export class Messages extends EventEmitter<MessageEventsMap> {
-  private readonly conversationId: string;
+  private readonly roomId: string;
   private readonly channel: RealtimeChannelPromise;
   private readonly chatApi: ChatApi;
   private readonly reactions: MessageReactions;
@@ -54,31 +54,31 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   private eventsQueue: Types.Message[] = [];
   private unsubscribeFromChannel: (() => void) | null = null;
 
-  constructor(conversationId: string, channel: RealtimeChannelPromise, chatApi: ChatApi, clientId: String) {
+  constructor(roomId: string, channel: RealtimeChannelPromise, chatApi: ChatApi, clientId: String) {
     super();
-    this.conversationId = conversationId;
+    this.roomId = roomId;
     this.channel = channel;
     this.chatApi = chatApi;
     this.clientId = clientId;
-    this.reactions = new MessageReactions(conversationId, channel, chatApi);
+    this.reactions = new MessageReactions(roomId, channel, chatApi);
     this.cache = initMessageCache();
   }
 
   // eslint-disable-next-line
   async query(options: QueryOptions): Promise<Message[]> {
-    return this.chatApi.getMessages(this.conversationId, options);
+    return this.chatApi.getMessages(this.roomId, options);
   }
 
   async send(text: string): Promise<Message> {
     return this.makeMessageApiCallAndWaitForRealtimeResult(MessageEvents.created, async () => {
-      const { id } = await this.chatApi.sendMessage(this.conversationId, text);
+      const { id } = await this.chatApi.sendMessage(this.roomId, text);
       return id;
     });
   }
 
   async edit(messageId: string, text: string): Promise<Message> {
     return this.makeMessageApiCallAndWaitForRealtimeResult(MessageEvents.deleted, async () => {
-      await this.chatApi.editMessage(this.conversationId, messageId, text);
+      await this.chatApi.editMessage(this.roomId, messageId, text);
       return messageId;
     });
   }
@@ -89,7 +89,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     const messageId = typeof messageIdOrMessage === 'string' ? messageIdOrMessage : messageIdOrMessage.id;
 
     return this.makeMessageApiCallAndWaitForRealtimeResult(MessageEvents.deleted, async () => {
-      await this.chatApi.deleteMessage(this.conversationId, messageId);
+      await this.chatApi.deleteMessage(this.roomId, messageId);
       return messageId;
     });
   }
@@ -199,7 +199,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   }
 
   private async fetchSingleMessage(messageId: string) {
-    const message = await this.chatApi.getMessage(this.conversationId, messageId);
+    const message = await this.chatApi.getMessage(this.roomId, messageId);
     this.cache.set(messageId, message);
     this.state = MessagesInternalState.idle;
     return this.processQueue();

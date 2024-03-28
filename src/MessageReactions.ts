@@ -17,27 +17,27 @@ export interface ReactionEventsMap {
 }
 
 export class MessageReactions extends EventEmitter<ReactionEventsMap> {
-  private readonly conversationId: string;
+  private readonly roomId: string;
   private readonly channel: RealtimeChannelPromise;
   private readonly chatApi: ChatApi;
 
-  constructor(conversationId: string, channel: RealtimeChannelPromise, chatApi: ChatApi) {
+  constructor(roomId: string, channel: RealtimeChannelPromise, chatApi: ChatApi) {
     super();
-    this.conversationId = conversationId;
+    this.roomId = roomId;
     this.channel = channel;
     this.chatApi = chatApi;
   }
 
   async add(messageId: string, reactionType: string) {
     return this.makeApiCallAndWaitForRealtimeResult(ReactionEvents.created, async () => {
-      const { id } = await this.chatApi.addMessageReaction(this.conversationId, messageId, reactionType);
+      const { id } = await this.chatApi.addMessageReaction(this.roomId, messageId, reactionType);
       return id;
     });
   }
 
   async remove(messageId: string, reactionId: string) {
     return this.makeApiCallAndWaitForRealtimeResult(ReactionEvents.deleted, async () => {
-      await this.chatApi.deleteMessageReaction(this.conversationId, messageId, reactionId);
+      await this.chatApi.deleteMessageReaction(this.roomId, messageId, reactionId);
       return reactionId;
     });
   }
