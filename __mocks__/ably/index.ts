@@ -1,4 +1,4 @@
-import { Types } from 'ably/promises';
+import * as Ably from 'ably'
 
 const MOCK_CLIENT_ID = 'MOCK_CLIENT_ID';
 
@@ -7,7 +7,7 @@ const methodReturningVoidPromise = () => mockPromisify<void>((() => {})());
 
 function createMockPresence() {
   return {
-    get: () => mockPromisify<Types.PresenceMessage[]>([]),
+    get: () => mockPromisify<Ably.PresenceMessage[]>([]),
     update: () => mockPromisify<void>(undefined),
     enter: methodReturningVoidPromise,
     leave: methodReturningVoidPromise,

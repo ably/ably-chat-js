@@ -1,16 +1,14 @@
-import { Realtime, type Types } from 'ably/promises';
+import * as Ably from 'ably'
 import { ChatApi } from './ChatApi.js';
 import { Messages } from './Messages.js';
-
-type RealtimeChannelPromise = Types.RealtimeChannelPromise;
 
 export class Room {
   private readonly roomId: string;
   private readonly chatApi: ChatApi;
-  private readonly channel: RealtimeChannelPromise;
+  private readonly channel: Ably.RealtimeChannel;
   readonly messages: Messages;
 
-  constructor(roomId: string, realtime: Realtime, chatApi: ChatApi) {
+  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi) {
     this.roomId = roomId;
     this.chatApi = chatApi;
     this.channel = realtime.channels.get(`room:${roomId}`);

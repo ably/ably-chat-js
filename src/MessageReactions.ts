@@ -2,8 +2,7 @@ import { ReactionEvents } from './events.js';
 import { Reaction } from './entities.js';
 import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
 import { ChatApi } from './ChatApi.js';
-import { Types } from 'ably/promises.js';
-import RealtimeChannelPromise = Types.RealtimeChannelPromise;
+import * as Ably from 'ably'
 
 export type ReactionListener = EventListener<ReactionEventsMap, keyof ReactionEventsMap>;
 interface ReactionEventPayload {
@@ -18,10 +17,10 @@ export interface ReactionEventsMap {
 
 export class MessageReactions extends EventEmitter<ReactionEventsMap> {
   private readonly roomId: string;
-  private readonly channel: RealtimeChannelPromise;
+  private readonly channel: Ably.RealtimeChannel;
   private readonly chatApi: ChatApi;
 
-  constructor(roomId: string, channel: RealtimeChannelPromise, chatApi: ChatApi) {
+  constructor(roomId: string, channel: Ably.RealtimeChannel, chatApi: ChatApi) {
     super();
     this.roomId = roomId;
     this.channel = channel;
@@ -91,7 +90,7 @@ export class MessageReactions extends EventEmitter<ReactionEventsMap> {
     let waitingReactionId: string | null = null;
     let resolver: ((reaction: Reaction) => void) | null = null;
 
-    const waiter = ({ data }: Types.Message) => {
+    const waiter = ({ data }: Ably.Message) => {
       const reaction: Reaction = data;
       if (waitingReactionId === null) {
         queuedReaction[reaction.id] = reaction;

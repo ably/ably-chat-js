@@ -1,29 +1,29 @@
 import { beforeEach, describe, vi, it, expect } from 'vitest';
-import { Realtime, Types } from 'ably/promises';
+import * as Ably from 'ably'
 import { ChatApi } from './ChatApi.js';
 import { Room } from './Room.js';
 import { MessageEvents } from './events.js';
 
 interface TestContext {
-  realtime: Realtime;
+  realtime: Ably.Realtime;
   chatApi: ChatApi;
-  emulateBackendPublish: Types.messageCallback<Partial<Types.Message>>;
+  emulateBackendPublish: Ably.messageCallback<Partial<Ably.Message>>;
 }
 
-vi.mock('ably/promises');
+vi.mock('ably');
 
 describe('Messages', () => {
   beforeEach<TestContext>((context) => {
-    context.realtime = new Realtime({ clientId: 'clientId', key: 'key' });
+    context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime);
 
     const channel = context.realtime.channels.get('roomId');
-    const listeners: Types.messageCallback<Types.Message>[] = [];
+    const listeners: Ably.messageCallback<Ably.Message>[] = [];
     vi.spyOn(channel, 'subscribe').mockImplementation(
       // @ts-ignore
       async (
-        nameOrListener: string | Types.messageCallback<Types.Message>,
-        listener: Types.messageCallback<Types.Message>,
+        nameOrListener: string | Ably.messageCallback<Ably.Message>,
+        listener: Ably.messageCallback<Ably.Message>,
       ) => {
         if (typeof nameOrListener === 'string') {
           listeners.push(listener);
