@@ -1,5 +1,5 @@
 import { Room as Room, Message } from './entities.js';
-import Ably from 'ably'
+import Ably from 'ably';
 
 export interface CreateRoomRequest {
   ttl: number;

@@ -2,7 +2,7 @@ import { ReactionEvents } from './events.js';
 import { Reaction } from './entities.js';
 import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
 import { ChatApi } from './ChatApi.js';
-import Ably from 'ably'
+import Ably from 'ably';
 
 export type ReactionListener = EventListener<ReactionEventsMap, keyof ReactionEventsMap>;
 interface ReactionEventPayload {

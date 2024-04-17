@@ -1,4 +1,4 @@
-import Ably from 'ably'
+import Ably from 'ably';
 import { Rooms } from './Rooms.js';
 
 export class Chat {

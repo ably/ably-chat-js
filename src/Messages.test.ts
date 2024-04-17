@@ -1,5 +1,5 @@
 import { beforeEach, describe, vi, it, expect } from 'vitest';
-import Ably from 'ably'
+import Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { Room } from './Room.js';
 import { MessageEvents } from './events.js';

@@ -1,4 +1,4 @@
-import Ably from 'ably'
+import Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { Room } from './Room.js';
 
