@@ -1,7 +1,6 @@
-import { ErrorInfo, Types } from 'ably/promises';
+import Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { Message, Reaction } from './entities.js';
-import RealtimeChannelPromise = Types.RealtimeChannelPromise;
 import { MessageEvents, ReactionEvents } from './events.js';
 import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
 import { type MessageCache, initMessageCache, CACHE_SIZE } from './utils/messageCache.js';
@@ -44,17 +43,17 @@ const MAX_STORED_REACTIONS = 10;
 
 export class Messages extends EventEmitter<MessageEventsMap> {
   private readonly roomId: string;
-  private readonly channel: RealtimeChannelPromise;
+  private readonly channel: Ably.RealtimeChannel;
   private readonly chatApi: ChatApi;
   private readonly reactions: MessageReactions;
   private readonly clientId: String;
 
   private readonly cache: MessageCache;
   private state: MessagesInternalState = MessagesInternalState.empty;
-  private eventsQueue: Types.Message[] = [];
+  private eventsQueue: Ably.Message[] = [];
   private unsubscribeFromChannel: (() => void) | null = null;
 
-  constructor(roomId: string, channel: RealtimeChannelPromise, chatApi: ChatApi, clientId: String) {
+  constructor(roomId: string, channel: Ably.RealtimeChannel, chatApi: ChatApi, clientId: String) {
     super();
     this.roomId = roomId;
     this.channel = channel;
@@ -167,7 +166,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   private attach() {
     if (this.state !== MessagesInternalState.empty) return Promise.resolve();
     this.state = MessagesInternalState.attaching;
-    return this.doAttach((channelEventMessage: Types.Message) => {
+    return this.doAttach((channelEventMessage: Ably.Message) => {
       if (this.state === MessagesInternalState.idle) {
         this.processEvent(channelEventMessage);
       } else {
@@ -176,7 +175,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     });
   }
 
-  private async doAttach(channelHandler: Types.messageCallback<Types.Message>) {
+  private async doAttach(channelHandler: Ably.messageCallback<Ably.Message>) {
     const unsubscribeFromChannel = () => this.channel.unsubscribe(channelHandler);
     this.unsubscribeFromChannel = unsubscribeFromChannel;
     await this.channel.subscribe(channelHandler);
@@ -219,7 +218,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     }
   }
 
-  private async processEvent(channelEventMessage: Types.Message) {
+  private async processEvent(channelEventMessage: Ably.Message) {
     const { name, data } = channelEventMessage;
     switch (name) {
       case MessageEvents.created:
@@ -257,13 +256,13 @@ export class Messages extends EventEmitter<MessageEventsMap> {
           });
         });
       default:
-        throw new ErrorInfo(`Received illegal event="${name}"`, 400, 4000);
+        throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 400, 4000);
     }
   }
 
   private processIfInCache(
     messageId: string,
-    channelEventMessage: Types.Message,
+    channelEventMessage: Ably.Message,
     processor: (msg: Message) => void,
   ): boolean {
     if (!this.cache.has(messageId)) {
@@ -317,7 +316,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     let waitingMessageId: string | null = null;
     let resolver: ((message: Message) => void) | null = null;
 
-    const waiter = ({ data }: Types.Message) => {
+    const waiter = ({ data }: Ably.Message) => {
       const message: Message = data;
       if (waitingMessageId === null) {
         queuedMessages[message.id] = message;

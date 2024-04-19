@@ -1,14 +1,14 @@
-import { Realtime } from 'ably/promises';
+import Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { Room } from './Room.js';
 
 export class Rooms {
-  private readonly realtime: Realtime;
+  private readonly realtime: Ably.Realtime;
   private readonly chatApi: ChatApi;
 
   private rooms: Record<string, Room> = {};
 
-  constructor(realtime: Realtime) {
+  constructor(realtime: Ably.Realtime) {
     this.realtime = realtime;
     this.chatApi = new ChatApi(realtime);
   }
