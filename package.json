@@ -38,7 +38,7 @@
     "ably": "^2.0.2"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.14.0",
     "eslint": "^8.54.0",
     "eslint-plugin-import": "^2.29.1",
