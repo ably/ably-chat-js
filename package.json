@@ -47,7 +47,7 @@
     "eslint-plugin-security": "^1.7.1",
     "prettier": "^3.2.5",
     "typescript": "^5.4.5",
-    "vitest": "^1.4.0"
+    "vitest": "^1.5.2"
   },
   "dependencies": {
     "lru-cache": "^10.2.0",
