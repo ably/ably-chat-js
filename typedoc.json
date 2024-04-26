@@ -3,5 +3,23 @@
   "entryPoints": ["src/index.ts"],
   "out": "typedoc/generated",
   "readme": "typedoc/landing-page.md",
-  "tsconfig": "tsconfig.base.json"
+  "tsconfig": "tsconfig.base.json",
+  "treatWarningsAsErrors": false,
+  "includeVersion": true,
+  "validation": true,
+  "requiredToBeDocumented": [
+    "Accessor",
+    "Class",
+    "Constructor",
+    "Enum",
+    "EnumMember",
+    "Function",
+    "Interface",
+    "Method",
+    "Parameter",
+    "Property",
+    "TypeAlias",
+    "Variable",
+    "Namespace"
+  ]
 }
