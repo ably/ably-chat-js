@@ -16,5 +16,5 @@
     "allowSyntheticDefaultImports": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["node"]
-  }
+  },
 }
