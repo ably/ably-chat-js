@@ -1,0 +1,7 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "typedoc/generated",
+  "readme": "typedoc/landing-page.md",
+  "tsconfig": "tsconfig.base.json"
+}
