@@ -15,7 +15,8 @@
     "build": "npm run build:mjs && npm run build:cjs",
     "build:mjs": "tsc --project tsconfig.mjs.json && cp package.mjs.json dist/mjs/package.json",
     "build:cjs": "tsc --project tsconfig.cjs.json && cp package.cjs.json dist/cjs/package.json",
-    "demo:reload": "npm run build && cd demo && npm i file:../"
+    "demo:reload": "npm run build && cd demo && npm i file:../",
+    "docs": "typedoc"
   },
   "repository": {
     "type": "git",
