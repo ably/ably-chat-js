@@ -1,6 +1,12 @@
 {
-  "include": ["./src/**/*.ts"],
-  "exclude": ["./src/**/*.test.tsx", "./src/**/*.test.ts", "./src/fakes/**/*.ts"],
+  "include": [
+    "./src/**/*.ts"
+  ],
+  "exclude": [
+    "./src/**/*.test.tsx",
+    "./src/**/*.test.ts",
+    "./src/fakes/**/*.ts"
+  ],
   "compilerOptions": {
     "target": "es6",
     "rootDir": "./src",
@@ -14,7 +20,13 @@
     "skipLibCheck": true,
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["node"]
-  },
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
+    "types": [
+      "node"
+    ]
+  }
 }
