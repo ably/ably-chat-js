@@ -15,7 +15,8 @@
     "build": "npm run build:mjs && npm run build:cjs",
     "build:mjs": "tsc --project tsconfig.mjs.json && cp package.mjs.json dist/mjs/package.json",
     "build:cjs": "tsc --project tsconfig.cjs.json && cp package.cjs.json dist/cjs/package.json",
-    "demo:reload": "npm run build && cd demo && npm i file:../"
+    "demo:reload": "npm run build && cd demo && npm i file:../",
+    "docs": "typedoc"
   },
   "repository": {
     "type": "git",
@@ -46,6 +47,7 @@
     "eslint-plugin-react-refresh": "^0.4.6",
     "eslint-plugin-security": "^1.7.1",
     "prettier": "^3.2.5",
+    "typedoc": "^0.25.13",
     "typescript": "^5.4.5",
     "vitest": "^1.4.0"
   },
