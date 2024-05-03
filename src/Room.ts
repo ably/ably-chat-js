@@ -10,7 +10,6 @@ export class Room {
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi) {
     this.roomId = roomId;
     this.chatApi = chatApi;
-    this.messages = new Messages(roomId, realtime, this.chatApi, (realtime as any).options.clientId);
+    this.messages = new Messages(roomId, realtime, this.chatApi, realtime.auth.clientId);
   }
-
 }
