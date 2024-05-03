@@ -32,7 +32,6 @@ export class ChatApi {
     });
   }
 
-
   private async makeAuthorisedRequest<RES, REQ = undefined>(
     url: string,
     method: 'POST' | 'GET' | ' PUT' | 'DELETE' | 'PATCH',
