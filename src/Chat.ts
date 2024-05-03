@@ -15,6 +15,6 @@ export class Chat {
   }
 
   get clientId() {
-    return (this.realtime as any).options.clientId;
+    return this.realtime.auth.clientId;
   }
 }
