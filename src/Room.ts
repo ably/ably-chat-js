@@ -3,7 +3,7 @@ import { ChatApi } from './ChatApi.js';
 import { Messages } from './Messages.js';
 
 export class Room {
-  private readonly roomId: string;
+  public readonly roomId: string;
   private readonly chatApi: ChatApi;
   readonly messages: Messages;
 
