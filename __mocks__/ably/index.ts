@@ -57,7 +57,8 @@ class MockRealtime {
 
   public time() {}
 
-  constructor() {
+  constructor(data) {
+    const client_id = data.clientId || MOCK_CLIENT_ID;
     this.channels = {
       get: (() => {
         const mockChannel = createMockChannel();
@@ -65,7 +66,7 @@ class MockRealtime {
       })(),
     };
     this.auth = {
-      clientId: MOCK_CLIENT_ID,
+      clientId: client_id,
       requestToken: () => {},
     };
     this.connection = {
