@@ -52,7 +52,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     this.clientId = clientId;
   }
 
-  get realtimeChannelName() : string {
+  get realtimeChannelName(): string {
     return `${this.roomId}::$chat::$chatMessages`;
   }
 
@@ -174,5 +174,4 @@ export class Messages extends EventEmitter<MessageEventsMap> {
         throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 400, 4000);
     }
   }
-
 }

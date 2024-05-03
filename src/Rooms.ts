@@ -17,9 +17,9 @@ export class Rooms {
    * Gets a room reference by ID. The Rooms class ensures that only one reference
    * exists for each room. A new reference object is created if it doesn't already
    * exist, or if the one used previously was released using release(roomId).
-   * 
+   *
    * Always call `release(roomId)` after the Room object is no longer needed.
-   * 
+   *
    * @param roomId The ID of the room.
    * @returns Room A new or existing Room object.
    */
@@ -37,8 +37,8 @@ export class Rooms {
    * to the Room object from the Rooms instance. It does not unsubscribe to any
    * events, leave the chat room or perform any other cleanup task. Those should
    * be done before calling release().
-   * 
-   * @param roomId 
+   *
+   * @param roomId
    */
   async release(roomId: string) {
     const room = this.rooms[roomId];
