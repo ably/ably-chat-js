@@ -30,35 +30,29 @@ import Chat from '@ably/chat';
 import { Realtime } from 'ably';
 
 const ably = new Realtime.Promise({ key: "<API-key>", clientId: "<client-ID>" });
-const client = new Chat(ably);
+const chat = new Chat(ably);
 ```
 You can use [basic authentication](https://ably.com/docs/auth/basic) i.e. the API Key directly for testing purposes, however it is strongly recommended that you use [token authentication](https://ably.com/docs/auth/token) in production environments.
 
 To use Chat you must also set a [`clientId`](https://ably.com/docs/auth/identified-clients) so that clients are identifiable. If you are prototyping, you can use a package like [nanoid](https://www.npmjs.com/package/nanoid) to generate an ID.
 
 
-## Getting Conversation controller
+## Getting a Room
 
-You can get conversation controller:
-
-```ts
-const conversation = client.conversations.get(conversationId);
-```
-
-## Create a Conversation
-
-You can create conversation using controller:
+You can get Room with name `"abc"` this way:
 
 ```ts
-await conversation.create({ ttl });
+const room = chat.rooms.get("abc");
 ```
+
+There is no need to create the room. You can start using it right away.
 
 ## Messaging
 
 Get window of messages:
 
 ```ts
-const messages = await conversation.messages.query({
+const messages = await room.messages.query({
   limit,
   from,
   to,
@@ -69,24 +63,7 @@ const messages = await conversation.messages.query({
 Send messages:
 
 ```ts
-const message = await conversation.messages.send({
-  text
-})
-```
-
-Update message:
-
-```ts
-const message = await conversation.messages.edit(msgId, {
-  text
-})
-```
-
-Delete message:
-
-```ts
-await conversation.messages.delete(msgId)
-await conversation.messages.delete(msg)
+const message = await room.messages.send("hello")
 ```
 
 ### Message Object
@@ -95,95 +72,31 @@ await conversation.messages.delete(msg)
 {
   "id": "string",
   "created_by": "string",
-  "conversation_id": "string",
+  "room_id": "string",
   "content": "string",
-  "reactions": {
-    "counts": {
-      "like": "number",
-      "heart": "number",
-    },
-    "latest": [
-      // List of most recent reactions
-    ],
-    "mine": [
-      // List of Reaction objects
-    ]
-  },
   "created_at": "number",
-  "edited_at": "number|null",
-  "deleted_at": "number|null"
 }
 
 ```
 
-## Reactions
-
-Add reaction:
+### Subscribe to messages
 
 ```ts
-const reaction = await conversation.messages.addReaction(msgId, {
-  type,
-  ...
-})
-```
-
-Delete reaction:
-
-```ts
-await conversation.messages.removeReaction(msgId, reactionId)
-```
-
-### Reaction object
-
-```json5
-{
-  "id": "string",
-  "message_id": "string",
-  "type": "string",
-  "client_id": "string",
-  "updated_at": "number|null",
-  "deleted_at": "number|null"
-}
-```
-
-### Subscribe to message changes
-
-```ts
-// Subscribe to all message events in a conversation
-conversation.messages.subscribe(({ type, message }) => {
+// Subscribe to all message events in a room
+room.messages.subscribe(({ type, message }) => {
     switch (type) {
       case 'message.created':
         console.log(message);
         break;
-      case 'message.edited':
-        console.log(message);
-        break;
-      case 'message.deleted':
-        console.log(message);
-        break;
     }
 });
 ```
 
-### Subscribe to reactions
+Or
 
 ```ts
-// Subscribe to all reactions
-conversation.messages.subscribeReactions(({ type, reaction }) => {
-    switch (type) {
-      case 'reaction.added':
-        console.log(reaction);
-        break;
-      case 'reaction.deleted':
-        console.log(reaction);
-        break;
-    }
-});
-```
-
-```ts
-// Subscribe to specific even in a conversation
-conversation.messages.subscribe('message.created', ({ type, message }) => {
+// Subscribe to specific even in a room
+room.messages.subscribe('message.created', ({ type, message }) => {
   console.log(message);
 });
 ```
@@ -194,7 +107,7 @@ Common use-case for Messages is getting latest messages and subscribe to future 
 you can use `fetch` option:
 
 ```ts
-conversation.messages.subscribe(({ type, message, ...restEventsPayload }) => {
+room.messages.subscribe(({ type, message, ...restEventsPayload }) => {
   switch (type) {
     case 'message.created':
       // last messages will come as  message.created event
@@ -210,134 +123,27 @@ conversation.messages.subscribe(({ type, message, ...restEventsPayload }) => {
 });
 ```
 
-[//]: # (TODO message statuses updates: sent, delivered, read)
-
-## Presence
-
-> [!IMPORTANT]
-> Idea is to keep it similar to Spaces members and potentially reuse code
-
-```ts
-// Enter a conversation, publishing an update event, including optional profile data
-await conversation.enter({
-  username: 'Claire Lemons',
-  avatar: 'https://slides-internal.com/users/clemons.png',
-});
-```
-
-```ts
-// Subscribe to all member events in a conversation
-conversation.members.subscribe((memberUpdate) => {
-  console.log(memberUpdate);
-});
-
-// Subscribe to member enter events only
-conversation.members.subscribe('enter', (memberJoined) => {
-  console.log(memberJoined);
-});
-
-// Subscribe to member leave events only
-conversation.members.subscribe('leave', (memberLeft) => {
-  console.log(memberLeft);
-});
-
-// Subscribe to member update events only
-conversation.members.subscribe('update', (memberRemoved) => {
-  console.log(memberRemoved);
-});
-```
-
-### Getting a snapshot of members
-
-Members has methods to get the current snapshot of member state:
-
-```ts
-// Get all members in a conversation
-const allMembers = await conversation.members.getAll();
-
-// Get your own member object
-const myMemberInfo = await conversation.members.getSelf();
-
-// Get everyone else's member object but yourself
-const othersMemberInfo = await conversation.members.getOthers();
-```
-
-## Conversation reactions
-
-Get reactions
-
-```ts
-conversation.reactions.get()
-```
-
-Subscribe to reactions updates
-
-```ts
-conversation.reactions.subscribe(({ type, reaction }) => {
-  switch (type) {
-    case "reaction.added":
-    case "reaction.deleted":
-      console.log(reaction);
-      break;
-  }
-});
-```
-
-Add reaction
-
-```ts
-conversation.reactions.add(reactionType)
-```
-
-Remove reaction
-
-```ts
-conversation.reactions.delete(reactionId)
-```
-
-## Typing indicator
-
-This function should be invoked on each keypress on the input field
-
-```ts
-conversation.typing.type()
-```
-
-This function should be triggered when the user exits the input field focus.
-
-```ts
-conversation.typing.stop()
-```
-
-Subscribe to typing events:
-
-```ts
-conversation.messages.subscribe(({ type, member }) => {
-  switch (type) {
-    case 'typings.typed':
-    case 'typings.stopped':
-      console.log(member);
-      break;
-  }
-});
-```
-
 ## Connection and Ably channels statuses
 
-Conversation exposes `channel` and `connection` fields, which implements `EventEmitter` interface,
+The Room object exposes `channel` and `connection` fields, which implements `EventEmitter` interface,
 you can register a channel and connection state change listener with the on() or once() methods,
 depending on whether you want to monitor all state changes, or only the first occurrence of one.
 
 ```ts
-conversation.connection.on('connected', (stateChange) => {
+room.connection.on('connected', (stateChange) => {
     console.log('Ably is connected');
 });
 
-conversation.connection.on((stateChange) => {
+room.connection.on((stateChange) => {
   console.log('New connection state is ' + stateChange.current);
 });
 
-conversation.channel.on('attached', (stateChange) => {
+room.channel.on('attached', (stateChange) => {
   console.log('channel ' + channel.name + ' is now attached');
 });
+```
+
+You can also get the realtime channel name of the chat room with
+```ts
+room.channelName
 ```
