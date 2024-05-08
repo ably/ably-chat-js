@@ -13,7 +13,7 @@ export class Room {
     this.messages = new Messages(roomId, realtime, this.chatApi, realtime.auth.clientId);
   }
 
-  get roomId() : string {
+  get roomId(): string {
     return this._roomId;
   }
 }
