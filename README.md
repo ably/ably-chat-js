@@ -95,7 +95,7 @@ room.messages.subscribe(({ type, message }) => {
 Or
 
 ```ts
-// Subscribe to specific even in a room
+// Subscribe to specific event in a room
 room.messages.subscribe('message.created', ({ type, message }) => {
   console.log(message);
 });
