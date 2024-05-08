@@ -11,7 +11,7 @@ export const Chat = () => {
     (text: string) => {
       sendMessage(text);
     },
-    [clientId, sendMessage],
+    [sendMessage],
   );
 
   return (
