@@ -144,7 +144,6 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   }
 
   private detach() {
-    if (this.hasListeners()) return;
     this.state = MessagesInternalState.empty;
     this.unsubscribeFromChannel?.();
     this.unsubscribeFromChannel = null;
