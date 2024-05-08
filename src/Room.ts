@@ -3,13 +3,17 @@ import { ChatApi } from './ChatApi.js';
 import { Messages } from './Messages.js';
 
 export class Room {
-  public readonly roomId: string;
+  private readonly _roomId: string;
   private readonly chatApi: ChatApi;
   readonly messages: Messages;
 
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi) {
-    this.roomId = roomId;
+    this._roomId = roomId;
     this.chatApi = chatApi;
     this.messages = new Messages(roomId, realtime, this.chatApi, realtime.auth.clientId);
+  }
+
+  get roomId() : string {
+    return this._roomId;
   }
 }
