@@ -66,10 +66,10 @@ export class Messages extends EventEmitter<MessageEventsMap> {
 
     // note: this implementation will change when posting a message starts returning the full message
     return {
-      id: response.id,
+      id: response.timeserial,
       content: text,
       created_by: this.clientId,
-      created_at: new Date().getTime(), // note: this is not a real created_at timestamp, that can right now be parsed from the ULID
+      created_at: response.createdAt, // note: this is not a real created_at timestamp, that can right now be parsed from the ULID
       room_id: this.roomId,
     };
   }

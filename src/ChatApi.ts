@@ -9,7 +9,12 @@ export interface GetMessagesQueryParams {
 }
 
 export interface CreateMessageResponse {
-  id: string;
+  timeserial: string;
+  createdAt: number;
+}
+
+interface CreateMessageRequest {
+  content: string;
 }
 
 /**
@@ -27,7 +32,7 @@ export class ChatApi {
   }
 
   async sendMessage(roomId: string, text: string): Promise<CreateMessageResponse> {
-    return this.makeAuthorisedRequest(`/chat/v1/rooms/${roomId}/messages`, 'POST', {
+    return this.makeAuthorisedRequest<CreateMessageResponse, CreateMessageRequest>(`/chat/v1/rooms/${roomId}/messages`, 'POST', {
       content: text,
     });
   }
