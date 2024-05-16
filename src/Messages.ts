@@ -64,12 +64,11 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   async send(text: string): Promise<Message> {
     const response = await this.chatApi.sendMessage(this.roomId, text);
 
-    // note: this implementation will change when posting a message starts returning the full message
     return {
       id: response.timeserial,
       content: text,
       created_by: this.clientId,
-      created_at: response.createdAt, // note: this is not a real created_at timestamp, that can right now be parsed from the ULID
+      created_at: response.createdAt,
       room_id: this.roomId,
     };
   }
