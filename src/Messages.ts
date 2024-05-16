@@ -149,11 +149,11 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     this.unsubscribeFromChannel = null;
   }
 
-  private async processQueue(): Promise<void> {
+  private processQueue(): void {
     if (this.eventsQueue.length === 0 || this.state !== MessagesInternalState.idle) return;
     const event = this.eventsQueue[0];
     try {
-      const processed = await this.processEvent(event);
+      const processed = this.processEvent(event);
       if (processed) {
         this.eventsQueue.shift();
         return this.processQueue();
@@ -163,11 +163,19 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     }
   }
 
-  private async processEvent(channelEventMessage: Ably.Message) {
+  private processEvent(channelEventMessage: Ably.Message) {
     const { name, data } = channelEventMessage;
+
     switch (name) {
       case MessageEvents.created:
-        this.emit(MessageEvents.created, { type: name, message: data });
+        const message: Message = {
+          id: channelEventMessage.extras.timeserial,
+          created_by: channelEventMessage.clientId!,
+          created_at: channelEventMessage.timestamp!,
+          room_id: this.roomId,
+          content: data,
+        };
+        this.emit(MessageEvents.created, { type: name, message: message });
         return true;
       default:
         throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 400, 4000);
