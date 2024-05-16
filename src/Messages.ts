@@ -167,7 +167,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     const { name, data } = channelEventMessage;
 
     switch (name) {
-      case MessageEvents.created:
+      case MessageEvents.created: {
         const message: Message = {
           id: channelEventMessage.extras.timeserial,
           created_by: channelEventMessage.clientId!,
@@ -177,6 +177,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
         };
         this.emit(MessageEvents.created, { type: name, message: message });
         return true;
+      }
       default:
         throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 400, 4000);
     }

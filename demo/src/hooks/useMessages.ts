@@ -27,8 +27,9 @@ export const useMessages = () => {
     };
     room.messages.subscribe(MessageEvents.created, handleAdd);
 
-    let mounted = true;
     setMessages([]);
+
+    // let mounted = true;
     // const initMessages = async () => {
     //   const lastMessages = await room.messages.query({ limit: 100 });
     //   if (mounted) {
@@ -40,7 +41,7 @@ export const useMessages = () => {
 
 
     return () => {
-      mounted = false;
+      // mounted = false;
       room.messages.unsubscribe(MessageEvents.created, handleAdd);
     };
   }, [clientId, room]);
