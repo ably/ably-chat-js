@@ -31,6 +31,7 @@ export const MessageInput: FC<MessageInputProps> = ({ value, disabled, onValueCh
         disabled={disabled}
         placeholder="Type.."
         className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-2 bg-gray-200 rounded-md py-1"
+        autoFocus
       />
       <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
         <button
