@@ -3,7 +3,7 @@
   command = "npm run build"
 
 [functions]
-  directory = "api"
+  directory = "demo/api"
   external_node_modules = ["express"]
   node_bundler = "esbuild"
 
