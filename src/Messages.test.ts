@@ -39,18 +39,24 @@ describe('Messages', () => {
   describe('sending message', () => {
     it<TestContext>('should be able to send message and get it back from response', async (context) => {
       const { chatApi, realtime } = context;
-      vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({ id: 'messageId' });
+      const timestamp = new Date().getTime();
+      vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
+        timeserial: 'abcdefghij@1672531200000-123',
+        createdAt: timestamp,
+      });
 
-      const room = new Room('roomId', realtime, chatApi);
-      const messagePromise = room.messages.send('text');
+      const room = new Room('coffee-room-chat', realtime, chatApi);
+      const messagePromise = room.messages.send('hello there');
 
       const message = await messagePromise;
 
       expect(message).toEqual(
         expect.objectContaining({
-          id: 'messageId',
-          content: 'text',
+          id: 'abcdefghij@1672531200000-123',
+          content: 'hello there',
           created_by: 'clientId',
+          created_at: timestamp,
+          room_id: 'coffee-room-chat',
         }),
       );
     });
