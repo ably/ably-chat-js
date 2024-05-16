@@ -30,6 +30,7 @@ Please see README.md for more details on configuring your Ably API Key.`);
     capability: {
       'room:*': ['publish', 'subscribe', 'presence'],
       '[chat]*': ['*'],
+      '*': ['*'],
     },
     clientId: clientId,
   });
