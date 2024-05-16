@@ -52,7 +52,5 @@
     "vitest": "^1.4.0"
   },
   "dependencies": {
-    "lru-cache": "^10.2.0",
-    "nanoid": "^5.0.6"
   }
 }

@@ -76,12 +76,12 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   subscribe<K extends keyof MessageEventsMap>(
     eventOrEvents: K | K[],
     listener?: EventListener<MessageEventsMap, K>,
-  ): void;
-  subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): void;
+  ): Promise<void>;
+  subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): Promise<void>;
   subscribe<K extends keyof MessageEventsMap>(
     listenerOrEvents?: K | K[] | EventListener<MessageEventsMap, K>,
     listener?: EventListener<MessageEventsMap, K>,
-  ) {
+  ): Promise<void> {
     try {
       super.on(listenerOrEvents, listener);
       return this.attach();
