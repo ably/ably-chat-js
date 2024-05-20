@@ -11,3 +11,6 @@ test-results/
 # Local Netlify folder
 .netlify
 .DS_Store
+
+# Typedoc
+typedoc/

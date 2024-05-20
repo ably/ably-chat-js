@@ -40,7 +40,7 @@ module.exports = {
       },
     },
   ],
-  ignorePatterns: ['dist', 'node_modules', 'ably-common'],
+  ignorePatterns: ['dist', 'node_modules', 'ably-common', 'typedoc'],
   settings: {
     jsdoc: {
       tagNamePreference: {
