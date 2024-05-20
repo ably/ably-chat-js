@@ -20,6 +20,7 @@
     "skipLibCheck": true,
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
     "lib": [
       "DOM",
       "DOM.Iterable",
