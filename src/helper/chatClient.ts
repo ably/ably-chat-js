@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { Chat } from '../Chat.ts';
+import { Chat } from '../Chat.js';
 
 // Create a chat client with the given options
 // and return it.
