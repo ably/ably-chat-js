@@ -34,6 +34,12 @@ enum MessagesInternalState {
 
 export type MessageListener = EventListener<MessageEventsMap, keyof MessageEventsMap>;
 
+/**
+ * This class is used to interact with messages in a chat room including subscribing
+ * to them, fetching history, or sending messages.
+ *
+ * Get an instance via room.messages.
+ */
 export class Messages extends EventEmitter<MessageEventsMap> {
   private readonly roomId: string;
   private readonly channel: Ably.RealtimeChannel;
@@ -52,6 +58,10 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     this.clientId = clientId;
   }
 
+  /**
+   * Get the full name of the Ably realtime channel used for the messages in this
+   * chat room.
+   */
   get realtimeChannelName(): string {
     return `${this.roomId}::$chat::$chatMessages`;
   }
@@ -61,28 +71,51 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     return this.chatApi.getMessages(this.roomId, options);
   }
 
+  /**
+   * Send a message in the chat room.
+   *
+   * This method uses the Ably Chat API endpoint for sending messages.
+   *
+   * Note that the Promise may resolve before OR after the message is received
+   * from the realtime channel. This means you may see the message that was just
+   * sent in a callback to `subscribe` before the returned promise resolves.
+   *
+   * @param text content of the message
+   * @returns A promise that resolves when the message was published.
+   */
   async send(text: string): Promise<Message> {
     const response = await this.chatApi.sendMessage(this.roomId, text);
 
-    // note: this implementation will change when posting a message starts returning the full message
     return {
-      id: response.id,
+      id: response.timeserial,
       content: text,
       created_by: this.clientId,
-      created_at: new Date().getTime(), // note: this is not a real created_at timestamp, that can right now be parsed from the ULID
+      created_at: response.createdAt,
       room_id: this.roomId,
     };
   }
 
+  /**
+   * Subscribe to a subset of message events in this chat room.
+   *
+   * @param eventOrEvents single event name or array of events to listen to
+   * @param listener callback that will be called when these events are received
+   */
   subscribe<K extends keyof MessageEventsMap>(
     eventOrEvents: K | K[],
     listener?: EventListener<MessageEventsMap, K>,
-  ): void;
-  subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): void;
+  ): Promise<void>;
+
+  /**
+   * Subscribe to all message events in this chat room.
+   * @param listener callback that will be called
+   */
+  subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): Promise<void>;
+
   subscribe<K extends keyof MessageEventsMap>(
     listenerOrEvents?: K | K[] | EventListener<MessageEventsMap, K>,
     listener?: EventListener<MessageEventsMap, K>,
-  ) {
+  ): Promise<void> {
     try {
       super.on(listenerOrEvents, listener);
       return this.attach();
@@ -97,10 +130,20 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     }
   }
 
+  /**
+   * Unsubscribe the given listener from the given list of events.
+   * @param eventOrEvents single event name or array of events to unsubscribe from
+   * @param listener listener to unsubscribe
+   */
   unsubscribe<K extends keyof MessageEventsMap>(
     eventOrEvents: K | K[],
     listener?: EventListener<MessageEventsMap, K>,
   ): void;
+
+  /**
+   * Unsubscribe the given listener from all events.
+   * @param listener listener to unsubscribe
+   */
   unsubscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): void;
   unsubscribe<K extends keyof MessageEventsMap>(
     listenerOrEvents?: K | K[] | EventListener<MessageEventsMap, K>,
@@ -149,11 +192,11 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     this.unsubscribeFromChannel = null;
   }
 
-  private async processQueue(): Promise<void> {
+  private processQueue(): void {
     if (this.eventsQueue.length === 0 || this.state !== MessagesInternalState.idle) return;
     const event = this.eventsQueue[0];
     try {
-      const processed = await this.processEvent(event);
+      const processed = this.processEvent(event);
       if (processed) {
         this.eventsQueue.shift();
         return this.processQueue();
@@ -163,14 +206,23 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     }
   }
 
-  private async processEvent(channelEventMessage: Ably.Message) {
+  private processEvent(channelEventMessage: Ably.Message) {
     const { name, data } = channelEventMessage;
+
     switch (name) {
-      case MessageEvents.created:
-        this.emit(MessageEvents.created, { type: name, message: data });
+      case MessageEvents.created: {
+        const message: Message = {
+          id: channelEventMessage.extras.timeserial,
+          created_by: channelEventMessage.clientId!,
+          created_at: channelEventMessage.timestamp!,
+          room_id: this.roomId,
+          content: data,
+        };
+        this.emit(MessageEvents.created, { type: name, message: message });
         return true;
+      }
       default:
-        throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 400, 4000);
+        throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 40000, 400);
     }
   }
 }

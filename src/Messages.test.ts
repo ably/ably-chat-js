@@ -31,7 +31,9 @@ describe('Messages', () => {
           listeners.push(nameOrListener);
         }
         // @ts-ignore
-        context.emulateBackendPublish = (msg) => listeners.forEach((listener) => listener(msg));
+        context.emulateBackendPublish = (msg) => {
+          listeners.forEach((listener) => listener(msg));
+        };
       },
     );
   });
@@ -39,55 +41,67 @@ describe('Messages', () => {
   describe('sending message', () => {
     it<TestContext>('should be able to send message and get it back from response', async (context) => {
       const { chatApi, realtime } = context;
-      vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({ id: 'messageId' });
+      const timestamp = new Date().getTime();
+      vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
+        timeserial: 'abcdefghij@1672531200000-123',
+        createdAt: timestamp,
+      });
 
-      const room = new Room('roomId', realtime, chatApi);
-      const messagePromise = room.messages.send('text');
+      const room = new Room('coffee-room-chat', realtime, chatApi);
+      const messagePromise = room.messages.send('hello there');
 
       const message = await messagePromise;
 
       expect(message).toEqual(
         expect.objectContaining({
-          id: 'messageId',
-          content: 'text',
+          id: 'abcdefghij@1672531200000-123',
+          content: 'hello there',
           created_by: 'clientId',
+          created_at: timestamp,
+          room_id: 'coffee-room-chat',
         }),
       );
     });
   });
 
   describe('subscribing to updates', () => {
-    it<TestContext>('should not miss events that came before last messages has been fetched and emit them after', (context) =>
-      new Promise<void>((done) => {
+    it<TestContext>('subscribing to messages should work live', (context) =>
+      new Promise<void>((done, reject) => {
+        const publishTimestamp = new Date().getTime();
         const { chatApi, realtime } = context;
-        vi.spyOn(chatApi, 'getMessages').mockResolvedValue([
-          {
-            id: '01HNBQ3QF6RPYNMYE6P226BMD1',
-            room_id: 'roomId',
-            content: 'foo',
-          } as any,
-        ]);
-
-        const room = new Room('roomId', realtime, chatApi);
-        room.messages.subscribe(MessageEvents.created, ({ message }) => {
-          expect(message).toEqual(
-            expect.objectContaining({
-              id: 'messageId',
-              content: 'text',
-              created_by: 'clientId',
-            }),
-          );
-          done();
-        });
-        context.emulateBackendPublish({
-          clientId: 'clientId',
-          name: 'message.created',
-          data: {
-            id: 'messageId',
-            content: 'text',
-            created_by: 'clientId',
-          },
-        });
+        const room = new Room('sw', realtime, chatApi);
+        room.messages
+          .subscribe(MessageEvents.created, (rawMsg) => {
+            const message = rawMsg.message;
+            try {
+              expect(message).toEqual(
+                expect.objectContaining({
+                  id: 'abcdefg',
+                  content: 'may the fourth be with you',
+                  created_by: 'yoda',
+                  created_at: publishTimestamp,
+                  room_id: 'sw',
+                }),
+              );
+            } catch (err) {
+              reject(err);
+            }
+            done();
+          })
+          .then(() => {
+            context.emulateBackendPublish({
+              clientId: 'yoda',
+              name: 'message.created',
+              data: 'may the fourth be with you',
+              extras: {
+                timeserial: 'abcdefg',
+              },
+              timestamp: publishTimestamp,
+            });
+          })
+          .catch((err) => {
+            reject(err);
+          });
       }));
   });
 });

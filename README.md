@@ -27,9 +27,9 @@ To instantiate the Chat SDK, create an [Ably client](https://ably.com/docs/getti
 
 ```ts
 import Chat from '@ably/chat';
-import { Realtime } from 'ably';
+import * as Ably from 'ably';
 
-const ably = new Realtime.Promise({ key: "<API-key>", clientId: "<client-ID>" });
+const ably = new Ably.Realtime({ key: "<API-key>", clientId: "<client-ID>", useBinaryProtocol: false });
 const chat = new Chat(ably);
 ```
 You can use [basic authentication](https://ably.com/docs/auth/basic) i.e. the API Key directly for testing purposes, however it is strongly recommended that you use [token authentication](https://ably.com/docs/auth/token) in production environments.

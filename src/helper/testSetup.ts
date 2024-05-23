@@ -14,7 +14,10 @@ const setup = async () => {
   }
 
   const testApp = await response.json();
-  process.env.testAblyApiKey = testApp.keys[0].keyStr;
+
+  // The key we need to use is the one at index 5, which gives enough permissions
+  // to interact with Chat and Channels
+  process.env.testAblyApiKey = testApp.keys[5].keyStr;
 };
 
 export { setup };
