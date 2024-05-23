@@ -76,7 +76,7 @@ describe('Messages', () => {
             try {
               expect(message).toEqual(
                 expect.objectContaining({
-                  timeserial: 'abcdefg',
+                  timeserial: 'abcdefghij@1672531200000-123',
                   content: 'may the fourth be with you',
                   createdBy: 'yoda',
                   createdAt: publishTimestamp,
@@ -94,7 +94,7 @@ describe('Messages', () => {
               name: 'message.created',
               data: 'may the fourth be with you',
               extras: {
-                timeserial: 'abcdefg',
+                timeserial: 'abcdefghij@1672531200000-123',
               },
               timestamp: publishTimestamp,
             });
