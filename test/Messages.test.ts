@@ -1,8 +1,8 @@
 import { beforeEach, describe, vi, it, expect } from 'vitest';
 import * as Ably from 'ably';
-import { ChatApi } from './ChatApi.js';
-import { Room } from './Room.js';
-import { MessageEvents } from './events.js';
+import { ChatApi } from '../src/ChatApi.js';
+import { Room } from '../src/Room.js';
+import { MessageEvents } from '../src/events.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
