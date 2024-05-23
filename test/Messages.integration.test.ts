@@ -50,13 +50,13 @@ describe('integration', () => {
       expect(messages).toEqual([
         expect.objectContaining({
           content: 'Hello there!',
-          created_by: defaultTestClientId,
-          id: message1.id,
+          createdBy: defaultTestClientId,
+          timeserial: message1.timeserial,
         }),
         expect.objectContaining({
           content: 'I have the high ground!',
-          created_by: defaultTestClientId,
-          id: message2.id,
+          createdBy: defaultTestClientId,
+          timeserial: message2.timeserial,
         }),
       ]);
     });

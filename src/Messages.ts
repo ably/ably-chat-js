@@ -87,11 +87,11 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     const response = await this.chatApi.sendMessage(this.roomId, text);
 
     return {
-      id: response.timeserial,
+      timeserial: response.timeserial,
       content: text,
-      created_by: this.clientId,
-      created_at: response.createdAt,
-      room_id: this.roomId,
+      createdBy: this.clientId,
+      createdAt: response.createdAt,
+      roomId: this.roomId,
     };
   }
 
@@ -212,10 +212,10 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     switch (name) {
       case MessageEvents.created: {
         const message: Message = {
-          id: channelEventMessage.extras.timeserial,
-          created_by: channelEventMessage.clientId!,
-          created_at: channelEventMessage.timestamp!,
-          room_id: this.roomId,
+          timeserial: channelEventMessage.extras.timeserial,
+          createdBy: channelEventMessage.clientId!,
+          createdAt: channelEventMessage.timestamp!,
+          roomId: this.roomId,
           content: data,
         };
         this.emit(MessageEvents.created, { type: name, message: message });

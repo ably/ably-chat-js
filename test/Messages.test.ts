@@ -54,11 +54,11 @@ describe('Messages', () => {
 
       expect(message).toEqual(
         expect.objectContaining({
-          id: 'abcdefghij@1672531200000-123',
+          timeserial: 'abcdefghij@1672531200000-123',
           content: 'hello there',
-          created_by: 'clientId',
-          created_at: timestamp,
-          room_id: 'coffee-room-chat',
+          createdBy: 'clientId',
+          createdAt: timestamp,
+          roomId: 'coffee-room-chat',
         }),
       );
     });
@@ -76,11 +76,11 @@ describe('Messages', () => {
             try {
               expect(message).toEqual(
                 expect.objectContaining({
-                  id: 'abcdefg',
+                  timeserial: 'abcdefg',
                   content: 'may the fourth be with you',
-                  created_by: 'yoda',
-                  created_at: publishTimestamp,
-                  room_id: 'sw',
+                  createdBy: 'yoda',
+                  createdAt: publishTimestamp,
+                  roomId: 'sw',
                 }),
               );
             } catch (err) {
