@@ -3,6 +3,7 @@ import { ablyRealtimeClientWithToken } from './helper/realtimeClient.ts';
 import { Chat } from '../src/Chat.ts';
 import { Message } from '../src/entities.ts';
 import { randomRoomId } from './helper/identifier.ts';
+import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
 
 interface TestContext {
   chat: Chat;
@@ -26,6 +27,16 @@ const waitForMessages = (messages: Message[], expectedCount: number) => {
 describe('messages integration', () => {
   beforeEach<TestContext>((context) => {
     context.chat = new Chat(ablyRealtimeClientWithToken());
+  });
+
+  it<TestContext>('sets the agent version on the channel', async (context) => {
+    const { chat } = context;
+
+    const roomName = Math.random().toString(36).substring(7);
+    const room = chat.rooms.get(roomName);
+    const channel = room.messages.channel as RealtimeChannelWithOptions;
+
+    expect(channel.channelOptions.params).toEqual({ agent: 'chat-js/0.0.1' });
   });
 
   it<TestContext>('should be able to send and receive chat messages', async (context) => {
