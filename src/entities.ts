@@ -1,7 +1,7 @@
 export interface Message {
-  id: string;
-  created_by: string;
-  room_id: string;
+  timeserial: string;
+  createdBy: string;
+  roomId: string;
   content: string;
-  created_at: number;
+  createdAt: number;
 }
