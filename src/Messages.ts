@@ -222,7 +222,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
         return true;
       }
       default:
-        throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 400, 4000);
+        throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 40000, 400);
     }
   }
 }
