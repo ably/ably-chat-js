@@ -1,7 +1,7 @@
 import { beforeEach, describe, it, expect } from 'vitest';
 import { PresenceMessage, RealtimeChannel, Message } from 'ably';
 import { ablyRealtimeClient } from './helper/realtimeClient.ts';
-import { DefaultSubscriptionManager } from './SubscriptionManager.ts';
+import { DefaultSubscriptionManager } from '../src/SubscriptionManager.ts';
 
 interface TestContext {
   channel: RealtimeChannel;

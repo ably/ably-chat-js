@@ -3,8 +3,8 @@
     "./src/**/*.ts"
   ],
   "exclude": [
-    "./src/**/*.test.tsx",
-    "./src/**/*.test.ts",
+    "./test/**/*.test.tsx",
+    "./test/**/*.test.ts",
     "./src/fakes/**/*.ts"
   ],
   "compilerOptions": {

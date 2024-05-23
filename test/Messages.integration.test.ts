@@ -1,7 +1,7 @@
 import { beforeEach, describe, it, expect } from 'vitest';
 import { ablyRealtimeClientWithToken, defaultTestClientId } from './helper/realtimeClient.ts';
-import { Chat } from './Chat.ts';
-import { Message } from './entities.ts';
+import { Chat } from '../src/Chat.ts';
+import { Message } from '../src/entities.ts';
 
 interface TestContext {
   chat: Chat;
