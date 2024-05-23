@@ -3,6 +3,7 @@ import { ChatApi } from './ChatApi.js';
 import { Message } from './entities.js';
 import { MessageEvents } from './events.js';
 import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
+import { ChatMessage } from './ChatMessage.js';
 
 interface MessageEventsMap {
   [MessageEvents.created]: MessageEventPayload;
@@ -86,13 +87,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   async send(text: string): Promise<Message> {
     const response = await this.chatApi.sendMessage(this.roomId, text);
 
-    return {
-      timeserial: response.timeserial,
-      content: text,
-      createdBy: this.clientId,
-      createdAt: response.createdAt,
-      roomId: this.roomId,
-    };
+    return new ChatMessage(response.timeserial, this.clientId, this.roomId, text, response.createdAt);
   }
 
   /**
@@ -211,13 +206,13 @@ export class Messages extends EventEmitter<MessageEventsMap> {
 
     switch (name) {
       case MessageEvents.created: {
-        const message: Message = {
-          timeserial: channelEventMessage.extras.timeserial,
-          createdBy: channelEventMessage.clientId!,
-          createdAt: channelEventMessage.timestamp!,
-          roomId: this.roomId,
-          content: data,
-        };
+        const message = new ChatMessage(
+          channelEventMessage.extras.timeserial,
+          channelEventMessage.clientId!,
+          this.roomId,
+          data,
+          channelEventMessage.timestamp!,
+        );
         this.emit(MessageEvents.created, { type: name, message: message });
         return true;
       }
