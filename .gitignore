@@ -5,6 +5,7 @@ node_modules/
 .vscode
 coverage
 .env
+.env.test
 docs/typedoc/generated/
 test-results/
 

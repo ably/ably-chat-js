@@ -2,6 +2,7 @@ import { beforeEach, describe, it, expect } from 'vitest';
 import { PresenceMessage, RealtimeChannel, Message } from 'ably';
 import { ablyRealtimeClient } from './helper/realtimeClient.ts';
 import { DefaultSubscriptionManager } from '../src/SubscriptionManager.ts';
+import { randomString } from './helper/identifier.ts';
 
 interface TestContext {
   channel: RealtimeChannel;
@@ -60,7 +61,7 @@ const assertNoChannelStateChange = (channel, expectedState) => {
 
 describe('subscription manager', () => {
   beforeEach<TestContext>((context) => {
-    const channelName = Math.random().toString(36).substring(7);
+    const channelName = randomString();
     context.channel = ablyRealtimeClient().channels.get(channelName);
     context.publishChannel = ablyRealtimeClient().channels.get(channelName);
     context.subscriptionManager = new DefaultSubscriptionManager(context.channel);
