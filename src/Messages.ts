@@ -139,6 +139,13 @@ export interface Messages {
    * @returns the channel name
    */
   get realtimeChannelName(): string;
+
+  /**
+   * Get the underlying Ably realtime channel used for the messages in this chat room.
+   *
+   * @returns the realtime channel
+   */
+  get channel(): RealtimeChannel;
 }
 
 /**
@@ -173,15 +180,13 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   }
 
   /**
-   * Get the underlying Ably realtime channel used for the messages in this chat room.
-   *
-   * @returns The Ably realtime channel.
+   * @inheritdoc Messages
    */
   get channel(): RealtimeChannel {
     return this._managedChannel.channel;
   }
 
-  /*
+  /**
    * @inheritdoc Messages
    */
   async query(options: QueryOptions): Promise<PaginatedResult<Message>> {
