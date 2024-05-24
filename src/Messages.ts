@@ -74,10 +74,80 @@ export type MessageListener = EventListener<MessageEventsMap, keyof MessageEvent
 /**
  * This class is used to interact with messages in a chat room including subscribing
  * to them, fetching history, or sending messages.
+ */
+export interface Messages {
+  /**
+   * Subscribe to a subset of message events in this chat room.
+   *
+   * @param eventOrEvents single event name or array of events to listen to
+   * @param listener callback that will be called when these events are received
+   */
+  subscribe<K extends keyof MessageEventsMap>(
+    eventOrEvents: K | K[],
+    listener?: EventListener<MessageEventsMap, K>,
+  ): Promise<void>;
+
+  /**
+   * Subscribe to all message events in this chat room.
+   * @param listener callback that will be called
+   */
+  subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): Promise<void>;
+
+  /**
+   * Unsubscribe the given listener from the given list of events.
+   * @param eventOrEvents single event name or array of events to unsubscribe from
+   * @param listener listener to unsubscribe
+   */
+  unsubscribe<K extends keyof MessageEventsMap>(
+    eventOrEvents: K | K[],
+    listener?: EventListener<MessageEventsMap, K>,
+  ): void;
+
+  /**
+   * Unsubscribe the given listener from all events.
+   * @param listener listener to unsubscribe
+   */
+  unsubscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): void;
+
+  /**
+   * Queries the chat room for messages, based on the provided query options.
+   *
+   * @param options
+   * @returns A promise that resolves with the paginated result of messages. This paginated result can
+   * be used to fetch more messages if available.
+   */
+  query(options: QueryOptions): Promise<PaginatedResult<Message>>;
+
+  /**
+   * Send a message in the chat room.
+   *
+   * This method uses the Ably Chat API endpoint for sending messages.
+   *
+   * Note that the Promise may resolve before OR after the message is received
+   * from the realtime channel. This means you may see the message that was just
+   * sent in a callback to `subscribe` before the returned promise resolves.
+   *
+   * @param text content of the message
+   * @returns A promise that resolves when the message was published.
+   */
+  send(text: string): Promise<Message>;
+
+  /**
+   * Get the full name of the Ably realtime channel used for the messages in this
+   * chat room.
+   *
+   * @returns the channel name
+   */
+  get realtimeChannelName(): string;
+}
+
+/**
+ * This class is used to interact with messages in a chat room including subscribing
+ * to them, fetching history, or sending messages.
  *
  * Get an instance via room.messages.
  */
-export class Messages extends EventEmitter<MessageEventsMap> {
+export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages {
   private readonly roomId: string;
   private readonly _managedChannel: SubscriptionManager;
   private readonly chatApi: ChatApi;
@@ -96,10 +166,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   }
 
   /**
-   * Get the full name of the Ably realtime channel used for the messages in this
-   * chat room.
-   *
-   * @returns the channel name
+   * @inheritdoc Messages
    */
   get realtimeChannelName(): string {
     return `${this.roomId}::$chat::$chatMessages`;
@@ -115,27 +182,14 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   }
 
   /*
-   * Queries the chat room for messages, based on the provided query options.
-   *
-   * @param options
-   * @returns A promise that resolves with the paginated result of messages. This paginated result can
-   * be used to fetch more messages if available.
+   * @inheritdoc Messages
    */
   async query(options: QueryOptions): Promise<PaginatedResult<Message>> {
     return this.chatApi.getMessages(this.roomId, options);
   }
 
   /**
-   * Send a message in the chat room.
-   *
-   * This method uses the Ably Chat API endpoint for sending messages.
-   *
-   * Note that the Promise may resolve before OR after the message is received
-   * from the realtime channel. This means you may see the message that was just
-   * sent in a callback to `subscribe` before the returned promise resolves.
-   *
-   * @param text content of the message
-   * @returns A promise that resolves when the message was published.
+   * @inheritdoc Messages
    */
   async send(text: string): Promise<Message> {
     const response = await this.chatApi.sendMessage(this.roomId, text);
@@ -144,10 +198,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   }
 
   /**
-   * Subscribe to a subset of message events in this chat room.
-   *
-   * @param eventOrEvents single event name or array of events to listen to
-   * @param listener callback that will be called when these events are received
+   * @inheritdoc Messages
    */
   subscribe<K extends keyof MessageEventsMap>(
     eventOrEvents: K | K[],
@@ -155,8 +206,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   ): Promise<void>;
 
   /**
-   * Subscribe to all message events in this chat room.
-   * @param listener callback that will be called
+   * @inheritdoc Messages
    */
   subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): Promise<void>;
 
@@ -179,9 +229,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   }
 
   /**
-   * Unsubscribe the given listener from the given list of events.
-   * @param eventOrEvents single event name or array of events to unsubscribe from
-   * @param listener listener to unsubscribe
+   * @inheritdoc Messages
    */
   unsubscribe<K extends keyof MessageEventsMap>(
     eventOrEvents: K | K[],
