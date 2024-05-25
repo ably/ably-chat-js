@@ -70,11 +70,11 @@ const message = await room.messages.send("hello")
 
 ```json5
 {
-  "id": "string",
-  "created_by": "string",
-  "room_id": "string",
+  "timeserial": "string",
+  "clientId": "string",
+  "roomId": "string",
   "content": "string",
-  "created_at": "number",
+  "createdAt": "number",
 }
 
 ```
