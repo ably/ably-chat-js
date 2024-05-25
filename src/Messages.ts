@@ -15,7 +15,14 @@ interface MessageEventsMap {
  * A direction to query messages in a chat room.
  */
 export enum Direction {
+  /**
+   * Query messages from the start of the time window to the end.
+   */
   forwards = 'forwards',
+
+  /**
+   * Query messages from the end of the time window to the start.
+   */
   backwards = 'backwards',
 }
 
@@ -112,7 +119,7 @@ export interface Messages {
   /**
    * Queries the chat room for messages, based on the provided query options.
    *
-   * @param options
+   * @param options Options for the query.
    * @returns A promise that resolves with the paginated result of messages. This paginated result can
    * be used to fetch more messages if available.
    */
