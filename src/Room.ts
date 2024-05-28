@@ -1,19 +1,27 @@
 import Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { Messages } from './Messages.js';
-import { UserPresence } from './UserPresence.js';
+import { Presence } from './Presence.js';
+import { DefaultSubscriptionManager } from './SubscriptionManager.js';
+import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 
 export class Room {
   private readonly _roomId: string;
   private readonly chatApi: ChatApi;
+  readonly subscriptionManager: DefaultSubscriptionManager;
   readonly messages: Messages;
-  readonly userPresence: UserPresence;
+  readonly presence: Presence;
+  private readonly realtimeChannelName: string;
 
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi) {
     this._roomId = roomId;
     this.chatApi = chatApi;
+    this.realtimeChannelName = `${this._roomId}::$chat::$chatMessages`;
+    this.subscriptionManager = new DefaultSubscriptionManager(
+      realtime.channels.get(this.realtimeChannelName, DEFAULT_CHANNEL_OPTIONS),
+    );
     this.messages = new Messages(roomId, realtime, this.chatApi, realtime.auth.clientId);
-    this.userPresence = new UserPresence(roomId, realtime, realtime.auth.clientId);
+    this.presence = new Presence(this.subscriptionManager, realtime.auth.clientId);
   }
 
   get roomId(): string {
