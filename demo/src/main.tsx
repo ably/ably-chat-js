@@ -6,7 +6,17 @@ import { nanoid } from 'nanoid';
 import App from './App.tsx';
 import './index.css';
 
-const clientId = nanoid();
+// generate a random clientId and remember it for the length of the session, so
+// if refreshing the page you still see your messages as yours
+const clientId = function(){
+  const knownClientId = sessionStorage.getItem("ably-chat-demo-clientId");
+  if (knownClientId) {
+    return knownClientId;
+  }
+  const newClientId = nanoid();
+  sessionStorage.setItem("ably-chat-demo-clientId", newClientId);
+  return newClientId;
+}();
 
 // use this for local development with local realtime
 //
