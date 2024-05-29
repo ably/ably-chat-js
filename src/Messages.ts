@@ -4,6 +4,7 @@ import { Message } from './entities.js';
 import { MessageEvents } from './events.js';
 import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
 import { ChatMessage } from './ChatMessage.js';
+import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 
 interface MessageEventsMap {
   [MessageEvents.created]: MessageEventPayload;
@@ -43,7 +44,7 @@ export type MessageListener = EventListener<MessageEventsMap, keyof MessageEvent
  */
 export class Messages extends EventEmitter<MessageEventsMap> {
   private readonly roomId: string;
-  private readonly channel: Ably.RealtimeChannel;
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly chatApi: ChatApi;
   private readonly clientId: string;
 
@@ -54,7 +55,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientId: string) {
     super();
     this.roomId = roomId;
-    this.channel = realtime.channels.get(this.realtimeChannelName);
+    this._channel = realtime.channels.get(this.realtimeChannelName, DEFAULT_CHANNEL_OPTIONS);
     this.chatApi = chatApi;
     this.clientId = clientId;
   }
@@ -65,6 +66,15 @@ export class Messages extends EventEmitter<MessageEventsMap> {
    */
   get realtimeChannelName(): string {
     return `${this.roomId}::$chat::$chatMessages`;
+  }
+
+  /**
+   * Get the underlying Ably realtime channel used for the messages in this chat room.
+   *
+   * @returns The Ably realtime channel.
+   */
+  get channel(): Ably.RealtimeChannel {
+    return this._channel;
   }
 
   // eslint-disable-next-line
