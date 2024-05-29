@@ -1,16 +1,23 @@
 import * as Ably from 'ably';
 import * as jwt from 'jsonwebtoken';
-
-const defaultTestClientId = 'ably-chat-js-client-id';
+import { ablyApiKey, isLocalEnvironment, testEnvironment } from './environment.js';
+import { randomClientId } from './identifier.js';
 
 const baseOptions = (options?: Ably.ClientOptions): Ably.ClientOptions => {
   options = options || {};
-  options.clientId = options.clientId || defaultTestClientId;
-  options.environment = options.environment || 'sandbox';
-  options.key = options.key || process.env.testAblyApiKey;
+  options.clientId = options.clientId || randomClientId();
+  options.environment = options.environment || testEnvironment();
+  options.key = options.key || ablyApiKey();
   // TODO: Support non-JSON protocol
   options.useBinaryProtocol = false;
-  options.logHandler = options.logHandler || ((msg) => console.log(msg));
+  options.logHandler = options.logHandler || ((msg) => console.error(msg));
+  options.logLevel = options.logLevel || 1; // error
+
+  if (isLocalEnvironment()) {
+    options.port = 8081;
+    options.tls = false;
+  }
+
   return options;
 };
 
@@ -47,4 +54,4 @@ const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtim
   return ablyRealtimeClient(options);
 };
 
-export { ablyRealtimeClient, ablyRealtimeClientWithToken, defaultTestClientId };
+export { ablyRealtimeClient, ablyRealtimeClientWithToken };
