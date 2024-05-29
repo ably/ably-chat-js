@@ -1,16 +1,19 @@
 import Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { Room } from './Room.js';
+import { ClientOptions, DefaultClientOptions } from './config.js';
 
 export class Rooms {
   private readonly realtime: Ably.Realtime;
   private readonly chatApi: ChatApi;
+  private readonly _clientOptions: ClientOptions;
 
   private rooms: Record<string, Room> = {};
 
-  constructor(realtime: Ably.Realtime) {
+  constructor(realtime: Ably.Realtime, clientOptions?: ClientOptions) {
     this.realtime = realtime;
     this.chatApi = new ChatApi(realtime);
+    this._clientOptions = clientOptions ? clientOptions : DefaultClientOptions;
   }
 
   /**
@@ -26,10 +29,18 @@ export class Rooms {
   get(roomId: string): Room {
     if (this.rooms[roomId]) return this.rooms[roomId];
 
-    const room = new Room(roomId, this.realtime, this.chatApi);
+    const room = new Room(roomId, this.realtime, this.chatApi, this._clientOptions);
     this.rooms[roomId] = room;
 
     return room;
+  }
+
+  /**
+   * Get the client options used to create the Rooms instance.
+   * @returns ClientOptions
+   */
+  get clientOptions(): ClientOptions {
+    return this._clientOptions;
   }
 
   /**

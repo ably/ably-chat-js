@@ -47,7 +47,7 @@ describe('Messages', () => {
         createdAt: timestamp,
       });
 
-      const room = new Room('coffee-room-chat', realtime, chatApi);
+      const room = new Room('coffee-room-chat', realtime, chatApi, { typingTimeoutMs: 300 });
       const messagePromise = room.messages.send('hello there');
 
       const message = await messagePromise;
@@ -69,7 +69,7 @@ describe('Messages', () => {
       new Promise<void>((done, reject) => {
         const publishTimestamp = new Date().getTime();
         const { chatApi, realtime } = context;
-        const room = new Room('sw', realtime, chatApi);
+        const room = new Room('sw', realtime, chatApi, { typingTimeoutMs: 300 });
         room.messages
           .subscribe(MessageEvents.created, (rawMsg) => {
             const message = rawMsg.message;

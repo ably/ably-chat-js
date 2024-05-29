@@ -1,4 +1,4 @@
-import Ably from 'ably'
+import Ably from 'ably';
 
 const MOCK_CLIENT_ID = 'MOCK_CLIENT_ID';
 
@@ -9,6 +9,8 @@ function createMockPresence() {
   return {
     get: () => mockPromisify<Ably.PresenceMessage[]>([]),
     update: () => mockPromisify<void>(undefined),
+    enterClient: methodReturningVoidPromise,
+    leaveClient: methodReturningVoidPromise,
     enter: methodReturningVoidPromise,
     leave: methodReturningVoidPromise,
     subscriptions: {
@@ -38,6 +40,7 @@ function createMockChannel() {
     on: () => {},
     off: () => {},
     publish: () => {},
+    detach: () => {},
     subscriptions: createMockEmitter(),
   };
 }
