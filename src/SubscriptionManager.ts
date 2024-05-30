@@ -1,15 +1,29 @@
 import * as Ably from 'ably';
+import { ChannelStateChange } from 'ably';
 
 type Listener = Ably.messageCallback<Ably.InboundMessage>;
 type PresenceListener = Ably.messageCallback<Ably.PresenceMessage>;
 
 export interface SubscriptionManager {
   subscribe(events: string[], listener: Listener): Promise<Ably.ChannelStateChange | null>;
+
   subscribe(listener: Listener): Promise<Ably.ChannelStateChange | null>;
+
   unsubscribe(listener: Listener): Promise<void>;
+
   presenceSubscribe(listener: PresenceListener): Promise<void>;
+
   presenceSubscribe(events: Ably.PresenceAction[] | Ably.PresenceAction, listener: PresenceListener): Promise<void>;
+
   presenceUnsubscribe(listener: PresenceListener): Promise<void>;
+
+  presenceEnterClient(clientId: string, data?: string): Promise<void>;
+
+  presenceUpdateClient(clientId: string, data?: string): Promise<void>;
+
+  presenceLeaveClient(clientId: string, data?: string): Promise<void>;
+
+  get channel(): Ably.RealtimeChannel;
 }
 
 /**
@@ -22,11 +36,20 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _listeners: Set<Listener>;
   private readonly _presenceListeners: Set<PresenceListener>;
+  private _presenceEntered: boolean = false;
 
   constructor(channel: Ably.RealtimeChannel) {
     this._channel = channel;
     this._listeners = new Set();
     this._presenceListeners = new Set();
+
+    // Handle case where channel fails to reconnect and so presence is not entered
+    this.channel.on((stateChange: ChannelStateChange) => {
+      if (stateChange.resumed && stateChange.reason?.code === 91004) {
+        this._presenceEntered = false;
+        this.detachChannelIfNotListening().then(() => {});
+      }
+    });
   }
 
   /**
@@ -108,8 +131,27 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
     if (this.hasListeners()) {
       return Promise.resolve();
     }
-
+    if (this._presenceEntered) {
+      return Promise.resolve();
+    }
     return this._channel.detach();
+  }
+
+  presenceEnterClient(clientId: string, data?: string): Promise<void> {
+    this._presenceEntered = true;
+    return this._channel.presence.enterClient(clientId, data);
+  }
+
+  async presenceLeaveClient(clientId: string, data?: string): Promise<void> {
+    this._presenceEntered = false;
+    return this._channel.presence.leaveClient(clientId, data).finally(() => {
+      return this.detachChannelIfNotListening();
+    });
+  }
+
+  presenceUpdateClient(clientId: string, data?: string): Promise<void> {
+    this._presenceEntered = true;
+    return this._channel.presence.updateClient(clientId, data);
   }
 
   private hasListeners(): boolean {
