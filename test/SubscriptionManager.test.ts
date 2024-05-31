@@ -246,99 +246,94 @@ describe('subscription manager', () => {
       await waitForChannelStateChange(channel, 'detached');
     },
   );
-  describe('When entering presence', async () => {
-    it<TestContext>('should attach to the channel', async (context) => {
-      const { channel, subscriptionManager } = context;
-      // sending an enter should implicitly attach the channel
-      await subscriptionManager.presenceEnterClient(context.defaultClientId);
-      await waitForChannelStateChange(channel, 'attached');
-    });
-    it<TestContext>('should emit an enter event with supplied data', async (context) => {
-      const receivedMessages: PresenceMessage[] = [];
-      const listener = (message) => {
-        receivedMessages.push(message);
-      };
-      // subscribe to presence events
-      await context.subscriptionManager.presenceSubscribe(listener);
-      // enter presence and wait for the event
-      await context.subscriptionManager.presenceEnterClient(context.defaultClientId, 'test-data');
-      // should receive one enter event
-      await waitForMessages(receivedMessages, 1);
-      expect(receivedMessages[0].action).toBe('enter');
-      expect(receivedMessages[0].data).toBe('test-data');
-    });
+  it<TestContext>('should attach to the channel when entering presence', async (context) => {
+    const { channel, subscriptionManager } = context;
+    // sending an enter should implicitly attach the channel
+    await subscriptionManager.presenceEnterClient(context.defaultClientId);
+    await waitForChannelStateChange(channel, 'attached');
   });
-  describe('When updating presence', async () => {
-    it<TestContext>('should attach to the channel', async (context) => {
-      const { channel, subscriptionManager } = context;
-      // sending an update should implicitly attach the channel
-      await subscriptionManager.presenceUpdateClient(context.defaultClientId);
-      await waitForChannelStateChange(channel, 'attached');
-    });
-    it<TestContext>('should emit an event enter when joining for the first time', async (context) => {
-      const receivedMessages: PresenceMessage[] = [];
-      const listener = (message) => {
-        receivedMessages.push(message);
-      };
-      // subscribe to presence events
-      await context.subscriptionManager.presenceSubscribe(listener);
-      // update presence, triggering an enter event
-      await context.subscriptionManager.presenceUpdateClient(context.defaultClientId, 'test-data');
-      // should receive one enter event
-      await waitForMessages(receivedMessages, 1);
-      expect(receivedMessages[0].action).toBe('enter');
-      expect(receivedMessages[0].data).toBe('test-data');
-    });
-    it<TestContext>('should emit an event update event when already in joined', async (context) => {
-      const receivedMessages: PresenceMessage[] = [];
-      const listener = (message) => {
-        receivedMessages.push(message);
-      };
-      // Join presence first
-      await context.subscriptionManager.presenceEnterClient(context.defaultClientId);
-      // subscribe to presence events
-      await context.subscriptionManager.presenceSubscribe(listener);
-      // update presence and wait for the event
-      await context.subscriptionManager.presenceUpdateClient(context.defaultClientId, 'test-data');
-      // should receive one enter event
-      await waitForMessages(receivedMessages, 1);
-      expect(receivedMessages[0].action).toBe('update');
-      expect(receivedMessages[0].data).toBe('test-data');
-    });
+  it<TestContext>('should emit an enter event with supplied data when entering presence', async (context) => {
+    const receivedMessages: PresenceMessage[] = [];
+    const listener = (message) => {
+      receivedMessages.push(message);
+    };
+    // subscribe to presence events
+    await context.subscriptionManager.presenceSubscribe(listener);
+    // enter presence and wait for the event
+    await context.subscriptionManager.presenceEnterClient(context.defaultClientId, 'test-data');
+    // should receive one enter event
+    await waitForMessages(receivedMessages, 1);
+    expect(receivedMessages[0].action).toBe('enter');
+    expect(receivedMessages[0].data).toBe('test-data');
   });
-  describe('When leaving presence', async () => {
-    it<TestContext>('should detach from the channel if no listeners are subscribed', async (context) => {
-      const { channel, subscriptionManager } = context;
-      // sending an enter should implicitly attach the channel
-      await subscriptionManager.presenceEnterClient(context.defaultClientId);
+  it<TestContext>('should attach to the channel when updating presence', async (context) => {
+    const { channel, subscriptionManager } = context;
+    // sending an update should implicitly attach the channel
+    await subscriptionManager.presenceUpdateClient(context.defaultClientId);
+    await waitForChannelStateChange(channel, 'attached');
+  });
+  it<TestContext>('should emit an event enter when joining for the first time', async (context) => {
+    const receivedMessages: PresenceMessage[] = [];
+    const listener = (message) => {
+      receivedMessages.push(message);
+    };
+    // subscribe to presence events
+    await context.subscriptionManager.presenceSubscribe(listener);
+    // update presence, triggering an enter event
+    await context.subscriptionManager.presenceUpdateClient(context.defaultClientId, 'test-data');
+    // should receive one enter event
+    await waitForMessages(receivedMessages, 1);
+    expect(receivedMessages[0].action).toBe('enter');
+    expect(receivedMessages[0].data).toBe('test-data');
+  });
+  it<TestContext>('should emit an update event if already enter presence', async (context) => {
+    const receivedMessages: PresenceMessage[] = [];
+    const listener = (message) => {
+      receivedMessages.push(message);
+    };
+    // Join presence first
+    await context.subscriptionManager.presenceEnterClient(context.defaultClientId);
+    // subscribe to presence events
+    await context.subscriptionManager.presenceSubscribe(listener);
+    // update presence and wait for the event
+    await context.subscriptionManager.presenceUpdateClient(context.defaultClientId, 'test-data');
+    // should receive one enter event
+    await waitForMessages(receivedMessages, 1);
+    expect(receivedMessages[0].action).toBe('update');
+    expect(receivedMessages[0].data).toBe('test-data');
+  });
 
-      // trigger a leave event and detach from the channel
-      await subscriptionManager.presenceLeaveClient(context.defaultClientId);
-      await waitForChannelStateChange(channel, 'detached');
-    });
-    it<TestContext>('should not detach from the channel if listeners are still subscribed', async (context) => {
-      const { channel, subscriptionManager } = context;
-      // Add a listener, which implicitly attaches, should prevent the channel from detaching during the leave event
-      await subscriptionManager.presenceSubscribe(() => {});
-      // trigger a leave event
-      await subscriptionManager.presenceLeaveClient(context.defaultClientId);
-      // should not detach from the channel
-      await assertNoChannelStateChange(channel, 'detached');
-    });
+  it<TestContext>('should leave presence and detach from the channel if no listeners are subscribed', async (context) => {
+    const { channel, subscriptionManager } = context;
+    // sending an enter should implicitly attach the channel
+    await subscriptionManager.presenceEnterClient(context.defaultClientId);
 
-    it<TestContext>('should emit a leave event with supplied data', async (context) => {
-      const receivedMessages: PresenceMessage[] = [];
-      const listener = (message) => {
-        receivedMessages.push(message);
-      };
-      // subscribe to presence events
-      await context.subscriptionManager.presenceSubscribe(listener);
-      // enter presence and wait for the event
-      await context.subscriptionManager.presenceLeaveClient(context.defaultClientId, 'test-data');
-      // should receive one enter event
-      await waitForMessages(receivedMessages, 1);
-      expect(receivedMessages[0].action).toBe('leave');
-      expect(receivedMessages[0].data).toBe('test-data');
-    });
+    // trigger a leave event and detach from the channel
+    await subscriptionManager.presenceLeaveClient(context.defaultClientId);
+    await waitForChannelStateChange(channel, 'detached');
+  });
+  it<TestContext>('should leave presence, but not detach from the channel if listeners are still subscribed', async (context) => {
+    const { channel, subscriptionManager } = context;
+    // Add a listener, which implicitly attaches, should prevent the channel from detaching during the leave event
+    await subscriptionManager.presenceSubscribe(() => {});
+    // trigger a leave event
+    await subscriptionManager.presenceLeaveClient(context.defaultClientId);
+    // should not detach from the channel
+    await assertNoChannelStateChange(channel, 'detached');
+  });
+
+  it<TestContext>('should emit a leave event with supplied data when leaving presence', async (context) => {
+    const receivedMessages: PresenceMessage[] = [];
+    const listener = (message) => {
+      receivedMessages.push(message);
+    };
+    // subscribe to presence events
+    await context.subscriptionManager.presenceSubscribe(listener);
+    // enter presence and wait for the event
+    await context.subscriptionManager.presenceLeaveClient(context.defaultClientId, 'test-data');
+    // should receive one enter event
+    await waitForMessages(receivedMessages, 1);
+    expect(receivedMessages[0].action).toBe('leave');
+    expect(receivedMessages[0].data).toBe('test-data');
   });
 });
