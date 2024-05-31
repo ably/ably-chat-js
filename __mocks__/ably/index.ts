@@ -34,14 +34,16 @@ function createMockEmitter() {
 
 function createMockChannel() {
   return {
+    attach: methodReturningVoidPromise,
+    detach: methodReturningVoidPromise,
     presence: createMockPresence(),
     subscribe: () => {},
     unsubscribe: () => {},
     on: () => {},
     off: () => {},
     publish: () => {},
-    detach: () => {},
     subscriptions: createMockEmitter(),
+    setOptions: methodReturningVoidPromise,
   };
 }
 
@@ -81,4 +83,6 @@ class MockRealtime {
   }
 }
 
-export { MockRealtime as Realtime };
+class MockErrorInfo extends Ably.ErrorInfo {}
+
+export { MockRealtime as Realtime, MockErrorInfo as ErrorInfo };

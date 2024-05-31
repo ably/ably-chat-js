@@ -8,3 +8,4 @@ export type { ClientOptions, DefaultClientOptions } from './config.js';
 export type { Messages, MessageListener, QueryOptions, Direction } from './Messages.js';
 export type { PaginatedResult } from './query.js';
 export type { Reaction, RoomReactions } from './RoomReactions.js';
+export type { Occupancy, OccupancyEvent, OccupancyListener } from './Occupancy.js';

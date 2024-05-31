@@ -1,3 +1,4 @@
+import { OccupancyEvent } from './Occupancy.js';
 import { Message } from './entities.js';
 import { Realtime, ErrorInfo } from 'ably';
 import { PaginatedResult } from './query.js';
@@ -40,6 +41,10 @@ export class ChatApi {
         content: text,
       },
     );
+  }
+
+  async getOccupancy(roomId: string): Promise<OccupancyEvent> {
+    return this.makeAuthorisedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
   }
 
   private async makeAuthorisedRequest<RES, REQ = undefined>(
