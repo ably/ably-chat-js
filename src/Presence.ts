@@ -227,7 +227,6 @@ export class Presence extends EventEmitter<PresenceEventsMap> {
         timestamp: member.timestamp,
         data: parsedData.userCustomData,
       });
-      console.debug(`Received ${member.action} presence event`);
     } catch (error) {
       throw new Ably.ErrorInfo(
         `unable to handle ${member.action} presence event: not a valid presence event`,
