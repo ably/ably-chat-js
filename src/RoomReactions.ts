@@ -67,7 +67,7 @@ export class RoomReactions_ implements RoomReactions {
       listener(reaction);
     };
     this.listeners.set(listener, forwarder);
-    return this._channel.subscribe(forwarder);
+    return this._channel.subscribe(ROOM_REACTION_REALTIME_MESSAGE_NAME, forwarder);
   }
 
   unsubscribe(listener: RoomReactionListener) {
@@ -93,11 +93,6 @@ export class RoomReactions_ implements RoomReactions {
 }
 
 function realtime2reaction(inbound: Ably.InboundMessage, clientId: string): Reaction | null {
-  if (inbound.name !== ROOM_REACTION_REALTIME_MESSAGE_NAME) {
-    // not a reaction if it doesn't have the reaction realtime message name
-    return null;
-  }
-
   if (!inbound.data || !inbound.data.type || typeof inbound.data.type !== 'string') {
     // not a reaction if there's no type or type is not a string
     return null;
