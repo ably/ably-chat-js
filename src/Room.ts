@@ -6,6 +6,7 @@ import { DefaultSubscriptionManager } from './SubscriptionManager.js';
 import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 import { DefaultTypingIndicator, TypingIndicators } from './TypingIndicator.js';
 import { ClientOptions } from './config.js';
+import { RoomReactions, RoomReactions_ } from './RoomReactions.js';
 
 export class Room {
   private readonly _roomId: string;
@@ -17,6 +18,7 @@ export class Room {
   readonly messages: Messages;
   private readonly _typingIndicators: TypingIndicators;
   readonly presence: Presence;
+  readonly reactions: RoomReactions;
   private readonly realtimeChannelName: string;
 
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientOptions: ClientOptions) {
@@ -35,6 +37,7 @@ export class Room {
       realtime.auth.clientId,
       clientOptions.typingTimeoutMs,
     );
+    this.reactions = new RoomReactions_(roomId, realtime, realtime.auth.clientId);
   }
 
   get roomId(): string {
