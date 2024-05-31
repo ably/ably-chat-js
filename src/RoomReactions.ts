@@ -3,6 +3,9 @@ import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 
 export const ROOM_REACTION_REALTIME_MESSAGE_NAME = 'roomReaction';
 
+/**
+ * Represents a room-level reaction.
+ */
 export interface Reaction {
   // type of the reaction, such as "like", "love", etc.
   type: string;
@@ -22,6 +25,11 @@ export interface Reaction {
 
 export type RoomReactionListener = (reaction: Reaction) => void;
 
+/**
+ * Object used to send and subscribe to room-level reactions.
+ * 
+ * Get an instance via room.reactions.
+ */
 export interface RoomReactions {
   send(type: string): Promise<void>;
   send(type: string, metadata?: any): Promise<void>;
@@ -33,7 +41,7 @@ export interface RoomReactions {
   get channel(): Ably.RealtimeChannel;
 }
 
-export class RoomReactions_ implements RoomReactions {
+export class DefaultRoomReactions implements RoomReactions {
   private readonly roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly clientId: string;
