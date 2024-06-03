@@ -92,7 +92,9 @@ describe('Messages', () => {
             context.emulateBackendPublish({
               clientId: 'yoda',
               name: 'message.created',
-              data: 'may the fourth be with you',
+              data: {
+                content: 'may the fourth be with you',
+              },
               extras: {
                 timeserial: 'abcdefghij@1672531200000-123',
               },
@@ -104,4 +106,105 @@ describe('Messages', () => {
           });
       }));
   });
+
+  it<TestContext>('should raise an error if no clientId provided with incoming message', (context) =>
+    new Promise<void>((done, reject) => {
+      const publishTimestamp = new Date().getTime();
+      const { chatApi, realtime } = context;
+      const room = new Room('sw', realtime, chatApi);
+      room.messages
+        .subscribe(MessageEvents.created, () => {
+          reject(new Error('should not have received message without clientId'));
+        })
+        .then(() => {
+          context.emulateBackendPublish({
+            name: 'message.created',
+            data: {
+              content: 'may the fourth be with you',
+            },
+            extras: {
+              timeserial: 'abcdefghij@1672531200000-123',
+            },
+            timestamp: publishTimestamp,
+          });
+        })
+        .catch(() => {
+          done();
+        });
+    }));
+
+  it<TestContext>('should raise an error if no timeserial provided with incoming message', (context) =>
+    new Promise<void>((done, reject) => {
+      const publishTimestamp = new Date().getTime();
+      const { chatApi, realtime } = context;
+      const room = new Room('sw', realtime, chatApi);
+      room.messages
+        .subscribe(MessageEvents.created, () => {
+          reject(new Error('should not have received message without clientId'));
+        })
+        .then(() => {
+          context.emulateBackendPublish({
+            name: 'message.created',
+            clientId: 'abc',
+            data: {
+              content: 'may the fourth be with you',
+            },
+            extras: {},
+            timestamp: publishTimestamp,
+          });
+        })
+        .catch(() => {
+          done();
+        });
+    }));
+
+  it<TestContext>('should raise an error if no content in incoming message', (context) =>
+    new Promise<void>((done, reject) => {
+      const publishTimestamp = new Date().getTime();
+      const { chatApi, realtime } = context;
+      const room = new Room('sw', realtime, chatApi);
+      room.messages
+        .subscribe(MessageEvents.created, () => {
+          reject(new Error('should not have received message without clientId'));
+        })
+        .then(() => {
+          context.emulateBackendPublish({
+            name: 'message.created',
+            clientId: 'abc',
+            data: {},
+            extras: {
+              timeserial: 'abcdefghij@1672531200000-123',
+            },
+            timestamp: publishTimestamp,
+          });
+        })
+        .catch(() => {
+          done();
+        });
+    }));
+
+  it<TestContext>('should raise an error if no timestamp provided with incoming message', (context) =>
+    new Promise<void>((done, reject) => {
+      const { chatApi, realtime } = context;
+      const room = new Room('sw', realtime, chatApi);
+      room.messages
+        .subscribe(MessageEvents.created, () => {
+          reject(new Error('should not have received message without clientId'));
+        })
+        .then(() => {
+          context.emulateBackendPublish({
+            name: 'message.created',
+            clientId: 'abc',
+            data: {
+              content: 'may the fourth be with you',
+            },
+            extras: {
+              timeserial: 'abcdefghij@1672531200000-123',
+            },
+          });
+        })
+        .catch(() => {
+          done();
+        });
+    }));
 });

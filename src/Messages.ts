@@ -212,22 +212,47 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   }
 
   private processEvent(channelEventMessage: Ably.Message) {
-    const { name, data } = channelEventMessage;
+    const { name } = channelEventMessage;
 
+    // Send the message to the listeners
     switch (name) {
       case MessageEvents.created: {
-        const message = new ChatMessage(
-          channelEventMessage.extras.timeserial,
-          channelEventMessage.clientId!,
-          this.roomId,
-          data,
-          channelEventMessage.timestamp!,
-        );
+        const message = this.validateNewMessage(channelEventMessage);
         this.emit(MessageEvents.created, { type: name, message: message });
         return true;
       }
       default:
         throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 40000, 400);
     }
+  }
+
+  /**
+   * Validate the realtime message and convert it to a chat message.
+   */
+  private validateNewMessage(channelEventMessage: Ably.Message): Message {
+    const {
+      data: { content },
+      clientId,
+      timestamp,
+      extras: { timeserial },
+    } = channelEventMessage;
+
+    if (!content) {
+      throw new Ably.ErrorInfo(`Received message without data`, 50000, 500);
+    }
+
+    if (!clientId) {
+      throw new Ably.ErrorInfo(`Received message without clientId`, 50000, 500);
+    }
+
+    if (!timeserial) {
+      throw new Ably.ErrorInfo(`Received message without timeserial`, 50000, 500);
+    }
+
+    if (!timestamp) {
+      throw new Ably.ErrorInfo(`Received message without timestamp`, 50000, 500);
+    }
+
+    return new ChatMessage(timeserial, clientId, this.roomId, content, timestamp);
   }
 }
