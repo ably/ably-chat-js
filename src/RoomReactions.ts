@@ -1,7 +1,8 @@
 import Ably from 'ably';
 import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
-
-export const ROOM_REACTION_REALTIME_MESSAGE_NAME = 'roomReaction';
+import { SubscriptionManager, DefaultSubscriptionManager } from './SubscriptionManager.js';
+import EventEmitter from './utils/EventEmitter.js';
+import { RoomReactionEvents } from './events.js';
 
 /**
  * Represents a room-level reaction.
@@ -27,7 +28,7 @@ export type RoomReactionListener = (reaction: Reaction) => void;
 
 /**
  * Object used to send and subscribe to room-level reactions.
- * 
+ *
  * Get an instance via room.reactions.
  */
 export interface RoomReactions {
@@ -41,52 +42,84 @@ export interface RoomReactions {
   get channel(): Ably.RealtimeChannel;
 }
 
-export class DefaultRoomReactions implements RoomReactions {
+interface RoomReactionEventsMap {
+  [RoomReactionEvents.reaction]: Reaction;
+}
+
+export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> implements RoomReactions {
   private readonly roomId: string;
-  private readonly _channel: Ably.RealtimeChannel;
+  private readonly _managedChannel: SubscriptionManager;
   private readonly clientId: string;
-  private listeners = new Map<RoomReactionListener, Ably.messageCallback<Ably.InboundMessage>>();
 
   constructor(roomId: string, realtime: Ably.Realtime, clientId: string) {
+    super();
     this.roomId = roomId;
-    this._channel = realtime.channels.get(this.realtimeChannelName, DEFAULT_CHANNEL_OPTIONS);
+    const channel = realtime.channels.get(this.realtimeChannelName, DEFAULT_CHANNEL_OPTIONS);
+    this._managedChannel = new DefaultSubscriptionManager(channel);
     this.clientId = clientId;
   }
 
+  /**
+   * Send a room-level reaction with given type and metadata.
+   * @param type A string representing the reaction type, for example "like" or an emoji.
+   * @param metadata Any JSON serializable info to be associated with the reaction.
+   * @returns The returned promise resolves when the reaction was sent. Note that it is possible to receive your own reaction via the reactions listener before this promise resolves.
+   */
   send(type: string, metadata?: any): Promise<void> {
     const payload: any = { type: type };
     if (metadata) {
       payload.metadata = metadata;
     }
-    return this._channel.publish(ROOM_REACTION_REALTIME_MESSAGE_NAME, payload);
+    return this._managedChannel.channel.publish(RoomReactionEvents.reaction, payload);
   }
 
+  /**
+   * Subscribe to receive room-level reactions. At the first subscription the SDK will automatically attach to
+   * the room-level reactions Ably realtime channel. When the last listener is removed via unsubscribe() the SDK
+   * automatically detaches from the channel.
+   *
+   * @param listener
+   * @returns A promise that resolves when attachment completed or instantly if already attached.
+   */
   subscribe(listener: RoomReactionListener) {
-    if (this.listeners.has(listener)) {
+    const hasListeners = this.hasListeners();
+    this.on(listener);
+    if (!hasListeners) {
+      return this.onFirstSubscribe();
+    }
+    return Promise.resolve(null);
+  }
+
+  // gets called when the first listener is added via subscribe
+  private onFirstSubscribe() {
+    return this._managedChannel.subscribe([RoomReactionEvents.reaction], this.forwarder);
+  }
+
+  // gets called when the last listener is removed via unsubscribe
+  private onLastUnsubscribe() {
+    return this._managedChannel.unsubscribe(this.forwarder);
+  }
+
+  // parses reactions from realtime channel into Reaction objects and forwards them to the EventEmitter
+  private forwarder = (inbound: Ably.InboundMessage) => {
+    const reaction = realtime2reaction(inbound, this.clientId);
+    if (!reaction) {
+      // ignore non-reactions
       return;
     }
-    const clientId = this.clientId;
-    const forwarder = function (inbound: Ably.InboundMessage) {
-      const reaction = realtime2reaction(inbound, clientId);
-      if (!reaction) {
-        // ignore non-reactions
-        return;
-      }
-      listener(reaction);
-    };
-    this.listeners.set(listener, forwarder);
-    return this._channel.subscribe(ROOM_REACTION_REALTIME_MESSAGE_NAME, forwarder);
-  }
+    this.emit(RoomReactionEvents.reaction, reaction);
+  };
 
+  /**
+   * Unsubscribe removes the given listener. If no other listeners remain the SDK detaches from the realtime channel.
+   * @param listener
+   * @returns Promise that resolves instantly for any but the last subscriber. When removing the last subscriber the promise resolves when detachment was successful.
+   */
   unsubscribe(listener: RoomReactionListener) {
-    const forwarder = this.listeners.get(listener);
-    if (!forwarder) {
-      return Promise.resolve();
-    }
-    this._channel.unsubscribe(forwarder);
-    this.listeners.delete(listener);
-    if (this.listeners.size === 0) {
-      return this._channel.detach();
+    this.off(listener);
+    if (!this.hasListeners()) {
+      // last unsubscribe, must do teardown work
+      return this.onLastUnsubscribe();
     }
     return Promise.resolve();
   }
@@ -96,7 +129,7 @@ export class DefaultRoomReactions implements RoomReactions {
   }
 
   get channel(): Ably.RealtimeChannel {
-    return this._channel;
+    return this._managedChannel.channel;
   }
 }
 

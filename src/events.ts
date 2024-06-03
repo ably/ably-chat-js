@@ -41,3 +41,14 @@ export enum TypingIndicatorEvents {
   /** Event trigger when a user stops typing. */
   typingStopped = 'typingIndicator.typingStopped',
 }
+
+/**
+ * Room reaction events. This is used for the realtime system since room reactions
+ * have only one event: "roomReaction".
+ */
+export enum RoomReactionEvents {
+  /**
+   * Event triggered when a room reaction was received.
+   */
+  reaction = 'roomReaction',
+}
