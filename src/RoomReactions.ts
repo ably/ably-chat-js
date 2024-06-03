@@ -32,13 +32,42 @@ export type RoomReactionListener = (reaction: Reaction) => void;
  * Get an instance via room.reactions.
  */
 export interface RoomReactions {
+  /**
+   * Send a reaction to the room.
+   * @param type The reaction type, for example "like" or an emoji.
+   */
   send(type: string): Promise<void>;
+
+  /**
+   * Send a reaction to the room including some metadata.
+   * @param type The reaction type, for example "like" or an emoji.
+   * @param metadata Any JSON-serializable data that will be attached to the reaction.
+   */
   send(type: string, metadata?: any): Promise<void>;
 
+  /**
+   * Subscribe to receive room-level reactions. At the first subscription the SDK will automatically attach to
+   * the room-level reactions Ably realtime channel. When the last listener is removed via unsubscribe() the SDK
+   * automatically detaches from the channel.
+   *
+   * @param listener
+   * @returns A promise that resolves when attachment completed or instantly if already attached.
+   */
   subscribe(listener: RoomReactionListener): Promise<Ably.ChannelStateChange | null> | undefined;
+
+  /**
+   * Unsubscribe removes the given listener. If no other listeners remain the SDK detaches from the realtime channel.
+   * @param listener
+   * @returns Promise that resolves instantly for any but the last subscriber. When removing the last subscriber the promise resolves when detachment was successful.
+   */
   unsubscribe(listener: RoomReactionListener): Promise<void>;
 
+  /** Returns the full name of the Ably realtime channel used for room-level reactions. */
   get realtimeChannelName(): string;
+
+  /** Returns an instance of the Ably realtime channel used for room-level reactions.
+   * Avoid using this directly unless special features that cannot otherwise be implemented are needed.
+   */
   get channel(): Ably.RealtimeChannel;
 }
 
