@@ -3,13 +3,28 @@ import { FC, ChangeEventHandler, FormEventHandler } from 'react';
 interface MessageInputProps {
   disabled: boolean;
   value: string;
+
   onValueChange(text: string): void;
+
   onSend(text: string): void;
+
+  onStartTyping(): void;
+
+  onStopTyping(): void;
+
 }
 
-export const MessageInput: FC<MessageInputProps> = ({ value, disabled, onValueChange, onSend }) => {
+export const MessageInput: FC<MessageInputProps> = ({
+                                                      value,
+                                                      disabled,
+                                                      onValueChange,
+                                                      onSend,
+                                                      onStartTyping,
+                                                      onStopTyping
+                                                    }) => {
   const handleValueChange: ChangeEventHandler<HTMLInputElement> = ({ target }) => {
     onValueChange(target.value);
+    onStartTyping();
   };
 
   const handleFormSubmit: FormEventHandler<HTMLFormElement> = (event) => {
@@ -17,6 +32,7 @@ export const MessageInput: FC<MessageInputProps> = ({ value, disabled, onValueCh
     event.stopPropagation();
     onSend(value);
     onValueChange('');
+    onStopTyping();
   };
 
   return (
@@ -46,7 +62,8 @@ export const MessageInput: FC<MessageInputProps> = ({ value, disabled, onValueCh
             fill="currentColor"
             className="h-6 w-6 ml-2 transform rotate-90"
           >
-            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+            <path
+              d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
           </svg>
         </button>
       </div>

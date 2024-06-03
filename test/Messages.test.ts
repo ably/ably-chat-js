@@ -111,7 +111,7 @@ describe('Messages', () => {
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
       const { chatApi, realtime } = context;
-      const room = new Room('sw', realtime, chatApi);
+      const room = new Room('sw', realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
         .subscribe(MessageEvents.created, () => {
           reject(new Error('should not have received message without clientId'));
@@ -137,7 +137,7 @@ describe('Messages', () => {
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
       const { chatApi, realtime } = context;
-      const room = new Room('sw', realtime, chatApi);
+      const room = new Room('sw', realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
         .subscribe(MessageEvents.created, () => {
           reject(new Error('should not have received message without clientId'));
@@ -162,7 +162,7 @@ describe('Messages', () => {
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
       const { chatApi, realtime } = context;
-      const room = new Room('sw', realtime, chatApi);
+      const room = new Room('sw', realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
         .subscribe(MessageEvents.created, () => {
           reject(new Error('should not have received message without clientId'));
@@ -186,7 +186,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no timestamp provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const { chatApi, realtime } = context;
-      const room = new Room('sw', realtime, chatApi);
+      const room = new Room('sw', realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
         .subscribe(MessageEvents.created, () => {
           reject(new Error('should not have received message without clientId'));

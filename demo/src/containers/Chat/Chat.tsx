@@ -1,11 +1,22 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Message as MessageComponent } from '../../components/Message';
 import { MessageInput } from '../../components/MessageInput';
 import { useMessages } from '../../hooks/useMessages';
+import { useTypingIndicators } from '../../hooks/useTypingIndicators.ts';
 
 export const Chat = () => {
   const { loading, clientId, messages, sendMessage } = useMessages();
+
+  // define for typing indicator
+  const { startTyping, stopTyping, subscribeToTypingIndicators } = useTypingIndicators();
+  const [typingClients, setTypingClients] = useState<string[]>([]);
   const [value, setValue] = useState('');
+
+  useEffect(() => {
+    subscribeToTypingIndicators((typingClients) => {
+      setTypingClients([...typingClients.currentlyTypingClientIds.values()]);
+    });
+  }, [subscribeToTypingIndicators]);
 
   const handleMessageSend = useCallback(
     (text: string) => {
@@ -15,7 +26,6 @@ export const Chat = () => {
   );
 
   return (
-    <>
       <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-screen">
         {loading && <div>loading...</div>}
         {!loading && (
@@ -36,15 +46,23 @@ export const Chat = () => {
             ))}
           </div>
         )}
+        <div className="typing-indicator-container">
+          {typingClients
+            .filter((client) => client !== clientId)
+            .map((client) => (
+              <p key={client}>{client} is typing...</p>
+            ))}
         <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
           <MessageInput
             value={value}
             disabled={loading}
             onValueChange={setValue}
             onSend={handleMessageSend}
+            onStartTyping={startTyping}
+            onStopTyping={stopTyping}
           />
         </div>
       </div>
-    </>
+    </div>
   );
 };
