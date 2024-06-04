@@ -56,18 +56,9 @@ There is no need to create the room. You can start using it right away.
 
 ## Messaging
 
-Get window of messages:
+### Sending Messages
 
-```ts
-const messages = await room.messages.query({
-  limit,
-  from,
-  to,
-  direction,
-})
-```
-
-Send messages:
+To send a message, simply call `send` on the Room's `messages` property, with the text you want to send.
 
 ```ts
 const message = await room.messages.send("hello")
@@ -86,7 +77,9 @@ const message = await room.messages.send("hello")
 
 ```
 
-### Subscribe to messages
+### Subscribe to incoming messages
+
+To subscribe to incoming messages, call `subscribe` with your listener.
 
 ```ts
 // Subscribe to all message events in a room
@@ -108,27 +101,8 @@ room.messages.subscribe('message.created', ({ type, message }) => {
 });
 ```
 
-### Subscribe and fetch latest messages
-
-Common use-case for Messages is getting latest messages and subscribe to future updates, to make it easier,
-you can use `fetch` option:
-
-```ts
-room.messages.subscribe(({ type, message, ...restEventsPayload }) => {
-  switch (type) {
-    case 'message.created':
-      // last messages will come as  message.created event
-      console.log(message);
-      break;
-    default:
-      console.log(type, restEventsPayload);
-  }
-}, {
-  fetch: {
-    limit
-  }
-});
-```
+To unsubscribe, call `unsubscribe`, passing in the same listener you did when subscribing. Note that listeners are removed by reference equality,
+so you must pass in the same reference that you subscribed.
 
 ### Query message history
 
@@ -148,29 +122,36 @@ to the given criteria. It returns a paginated response that can be used to query
 
 ## Connection and Ably channels statuses
 
-The Room object exposes `channel` and `connection` fields, which implements `EventEmitter` interface,
-you can register a channel and connection state change listener with the on() or once() methods,
-depending on whether you want to monitor all state changes, or only the first occurrence of one.
+You can monitor the status of the overall connection to Ably using the `connection` member of the Realtime client that you
+passed into the Chat SDK, like so:
 
 ```ts
-room.connection.on('connected', (stateChange) => {
+ably.connection.on('connected', (stateChange) => {
   console.log('Ably is connected');
 });
 
-room.connection.on((stateChange) => {
+ably.connection.on((stateChange) => {
   console.log('New connection state is ' + stateChange.current);
 });
+```
 
-room.channel.on('attached', (stateChange) => {
+Different features in the Chat SDK often use separate channels, to give you more flexible permission control as well as more predictable scalability.
+You can retrieve the channel used by each feature and listen for state events to determine the attachment status by calling the `channel` property on the feature. For example:
+
+```ts
+room.messages.channel.on('attached', (stateChange) => {
   console.log('channel ' + channel.name + ' is now attached');
 });
 ```
 
-You can also get the realtime channel name of the chat room with
+You can also get the realtime channel name of the chat room by calling `name` on the underlying channel
 
 ```ts
-room.channelName
+channel.name
 ```
+
+Note, that the SDK will automatically detach a channel whenever it isn't needed. For example if you unsubscribe all of your listeners
+for room reactions, we'll automatically detach from the channel used for this purpose.
 
 ## Presence
 
@@ -250,8 +231,6 @@ await room.presence.subscribe(['update', 'leave'], (event: PresenceEvent) => {
 
   console.log(`${event.clientId} updated with data: ${event.data}`);
 });
-
-
 ```
 
 ### Unsubscribe from presence
