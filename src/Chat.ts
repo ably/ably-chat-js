@@ -2,6 +2,7 @@ import { Realtime, Connection } from 'ably';
 import { Rooms } from './Rooms.js';
 import { AGENT_STRING } from './version.js';
 import { RealtimeWithOptions } from './realtimeextensions.js';
+import { ClientOptions } from './config.js';
 
 /**
  * This is the core client for Ably chat. It provides access to chat rooms.
@@ -10,9 +11,9 @@ export class Chat {
   private readonly _realtime: Realtime;
   private readonly _rooms: Rooms;
 
-  constructor(realtime: Realtime) {
+  constructor(realtime: Realtime, clientOptions?: ClientOptions) {
     this._realtime = realtime;
-    this._rooms = new Rooms(realtime);
+    this._rooms = new Rooms(realtime, clientOptions);
     this.setAgent();
   }
 

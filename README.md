@@ -261,3 +261,76 @@ You can unsubscribe a listener from presence events by providing the listener to
 ```ts
 await room.presence.unsubscribe(listener);
 ```
+
+## Typing Indicators
+
+Typing Indicators allow you to subscribe to updates when other users are typing in a chat room.
+You can also inform other users that you are typing.
+
+### Get Current Typers
+
+You can get the complete set of the current typing clientIds, by calling the get method.
+
+```ts
+// Retrieve the entire list of currently typing clients
+const currentlyTypingClientIds: Set<string> = await room.presence.get()
+```
+
+### Start Typing
+
+To inform other users that you are typing, you can call the startTyping method. This will begin a timer that will
+automatically stop typing after a set amount of time.
+
+```ts
+await room.typingIndicators.startTyping();
+```
+
+Repeated calls to startTyping will reset the timer, so that the typing indicator will remain active.
+
+```ts
+await room.typingIndicators.startTyping();
+// Some short delay - still typing
+await room.typingIndicators.startTyping();
+// Some short delay - still typing
+await room.typingIndicators.startTyping();
+// Some long delay - timer expires, stopped typing event emitted and listeners are notified
+```
+
+### Stop Typing
+
+You can immediately stop typing without waiting for the timer to expire.
+
+```ts
+await room.typingIndicators.startTyping();
+// Some short delay - timer not yet expired
+await room.typingIndicators.stopTyping();
+// Timer cleared and stopped typing event emitted and listeners are notified
+```
+
+### Subscribe To Typing Indicators
+
+You can provide a single listener, if so, the listener will be subscribed to receive all typing indicator event types.
+
+```ts
+import { TypingIndicatorEvent } from './TypingIndicator';
+
+await room.typingIndicators.subscribe((event: TypingIndicatorEvent) => {
+  console.log(event);
+});
+```
+
+You can also provide a specific event type or types to subscribe to along with a listener.
+
+```ts
+await room.typingIndicators.subscribe('startedTyping', (event: TypingIndicatorEvents) => {
+  console.log(event);
+});
+```
+
+### Unsubscribe From Typing Indicators
+
+You can unsubscribe a listener from typing indicator events by providing the listener to the unsubscribe method.
+
+```ts
+await room.typingIndicators.unsubscribe(listener);
+```
