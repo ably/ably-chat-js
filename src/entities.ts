@@ -10,7 +10,7 @@ export interface Message {
   /**
    * The clientId of the user who created the message.
    */
-  readonly createdBy: string;
+  readonly clientId: string;
 
   /**
    * The roomId of the chat room to which the message belongs.

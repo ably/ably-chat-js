@@ -27,7 +27,7 @@ export const Chat = () => {
               <MessageComponent
                 id={msg.timeserial}
                 key={msg.timeserial}
-                self={msg.createdBy === clientId}
+                self={msg.clientId === clientId}
               >
                 <div className="flex flex-col">
                   <div>{msg.content}</div>

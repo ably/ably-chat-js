@@ -3,9 +3,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRoom } from './useRoom';
 
 // todo: uncomment. used for history query when we add it back
-// const combineMessages = (previousMessages: Message[], lastMessages: Message[]) => {
-//   return [...previousMessages.filter((msg) => lastMessages.every(({ id }) => id !== msg.id)), ...lastMessages];
-// };
+const combineMessages = (previousMessages: Message[], lastMessages: Message[]) => {
+  return [
+    ...previousMessages.filter((msg) => lastMessages.every(({ timeserial }) => timeserial !== msg.timeserial)),
+    ...lastMessages,
+  ];
+};
 
 export const useMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -20,7 +23,7 @@ export const useMessages = () => {
   );
 
   useEffect(() => {
-    setLoading(false); // todo: set to true here when we add back history query (see commented initMessages below)
+    setLoading(true);
 
     const handleAdd: MessageListener = ({ message }) => {
       setMessages((prevMessage) => [...prevMessage, message]);
@@ -29,16 +32,15 @@ export const useMessages = () => {
 
     setMessages([]);
 
-    // let mounted = true;
-    // const initMessages = async () => {
-    //   const lastMessages = await room.messages.query({ limit: 100 });
-    //   if (mounted) {
-    //     // setLoading(false);
-    //     setMessages((prevMessages) => combineMessages(prevMessages, lastMessages).reverse());
-    //   }
-    // };
-    // initMessages();
-
+    const mounted = true;
+    const initMessages = async () => {
+      const lastMessages = await room.messages.query({ limit: 100 });
+      if (mounted) {
+        setMessages((prevMessages) => combineMessages(prevMessages, lastMessages.items).reverse());
+        setLoading(false);
+      }
+    };
+    initMessages();
 
     return () => {
       // mounted = false;

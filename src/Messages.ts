@@ -1,24 +1,56 @@
-import Ably from 'ably';
+import { RealtimeChannel, ErrorInfo, messageCallback, InboundMessage } from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { Message } from './entities.js';
 import { MessageEvents } from './events.js';
 import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
 import { ChatMessage } from './ChatMessage.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
+import { PaginatedResult } from './query.js';
 
 interface MessageEventsMap {
   [MessageEvents.created]: MessageEventPayload;
 }
 
+/**
+ * A direction to query messages in a chat room.
+ */
 export enum Direction {
   forwards = 'forwards',
   backwards = 'backwards',
 }
 
-interface QueryOptions {
-  startId?: string;
-  endId?: string;
-  limit: number;
+/**
+ * Options for querying messages in a chat room.
+ */
+export interface QueryOptions {
+  /**
+   * The start of the time window to query from. If provided, the response will include
+   * messages with timestamps equal to or greater than this value.
+   *
+   * @defaultValue The beginning of time
+   */
+  start?: number;
+
+  /**
+   * The end of the time window to query from. If provided, the response will include
+   * messages with timestamps less than this value.
+   *
+   * @defaultValue Now
+   */
+  end?: number;
+
+  /**
+   * The maximum number of messages to return in the response.
+   *
+   * @defaultValue 100
+   */
+  limit?: number;
+
+  /**
+   * The direction to query messages in.
+   *
+   * @defaultValue forwards
+   */
   direction?: keyof typeof Direction;
 }
 
@@ -34,6 +66,9 @@ enum MessagesInternalState {
   fetching = 'fetching',
 }
 
+/**
+ * A listener for message events in a chat room.
+ */
 export type MessageListener = EventListener<MessageEventsMap, keyof MessageEventsMap>;
 
 /**
@@ -49,7 +84,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   private readonly clientId: string;
 
   private state: MessagesInternalState = MessagesInternalState.empty;
-  private eventsQueue: Ably.Message[] = [];
+  private eventsQueue: InboundMessage[] = [];
   private unsubscribeFromChannel: (() => void) | null = null;
 
   constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string) {
@@ -63,6 +98,8 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   /**
    * Get the full name of the Ably realtime channel used for the messages in this
    * chat room.
+   *
+   * @returns the channel name
    */
   get realtimeChannelName(): string {
     return `${this.roomId}::$chat::$chatMessages`;
@@ -73,12 +110,18 @@ export class Messages extends EventEmitter<MessageEventsMap> {
    *
    * @returns The Ably realtime channel.
    */
-  get channel(): Ably.RealtimeChannel {
+  get channel(): RealtimeChannel {
     return this._managedChannel.channel;
   }
 
-  // eslint-disable-next-line
-  async query(options: QueryOptions): Promise<Message[]> {
+  /*
+   * Queries the chat room for messages, based on the provided query options.
+   *
+   * @param options
+   * @returns A promise that resolves with the paginated result of messages. This paginated result can
+   * be used to fetch more messages if available.
+   */
+  async query(options: QueryOptions): Promise<PaginatedResult<Message>> {
     return this.chatApi.getMessages(this.roomId, options);
   }
 
@@ -171,7 +214,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   private attach() {
     if (this.state !== MessagesInternalState.empty) return Promise.resolve();
     this.state = MessagesInternalState.attaching;
-    return this.doAttach((channelEventMessage: Ably.Message) => {
+    return this.doAttach((channelEventMessage: InboundMessage) => {
       if (this.state === MessagesInternalState.idle) {
         this.processEvent(channelEventMessage);
       } else {
@@ -180,7 +223,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     });
   }
 
-  private async doAttach(channelHandler: Ably.messageCallback<Ably.Message>) {
+  private async doAttach(channelHandler: messageCallback<InboundMessage>) {
     const unsubscribeFromChannel = () => this.channel.unsubscribe(channelHandler);
     this.unsubscribeFromChannel = unsubscribeFromChannel;
     await this.channel.subscribe(channelHandler);
@@ -211,7 +254,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     }
   }
 
-  private processEvent(channelEventMessage: Ably.Message) {
+  private processEvent(channelEventMessage: InboundMessage) {
     const { name } = channelEventMessage;
 
     // Send the message to the listeners
@@ -222,14 +265,14 @@ export class Messages extends EventEmitter<MessageEventsMap> {
         return true;
       }
       default:
-        throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 50000, 500);
+        throw new ErrorInfo(`Received illegal event="${name}"`, 50000, 500);
     }
   }
 
   /**
    * Validate the realtime message and convert it to a chat message.
    */
-  private validateNewMessage(channelEventMessage: Ably.Message): Message {
+  private validateNewMessage(channelEventMessage: InboundMessage): Message {
     const {
       data: { content },
       clientId,
@@ -238,19 +281,19 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     } = channelEventMessage;
 
     if (!content) {
-      throw new Ably.ErrorInfo(`Received message without data`, 50000, 500);
+      throw new ErrorInfo(`Received message without data`, 50000, 500);
     }
 
     if (!clientId) {
-      throw new Ably.ErrorInfo(`Received message without clientId`, 50000, 500);
+      throw new ErrorInfo(`Received message without clientId`, 50000, 500);
     }
 
     if (!timeserial) {
-      throw new Ably.ErrorInfo(`Received message without timeserial`, 50000, 500);
+      throw new ErrorInfo(`Received message without timeserial`, 50000, 500);
     }
 
     if (!timestamp) {
-      throw new Ably.ErrorInfo(`Received message without timestamp`, 50000, 500);
+      throw new ErrorInfo(`Received message without timestamp`, 50000, 500);
     }
 
     return new ChatMessage(timeserial, clientId, this.roomId, content, timestamp);

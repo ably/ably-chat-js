@@ -56,7 +56,7 @@ describe('Messages', () => {
         expect.objectContaining({
           timeserial: 'abcdefghij@1672531200000-123',
           content: 'hello there',
-          createdBy: 'clientId',
+          clientId: 'clientId',
           createdAt: timestamp,
           roomId: 'coffee-room-chat',
         }),
@@ -78,7 +78,7 @@ describe('Messages', () => {
                 expect.objectContaining({
                   timeserial: 'abcdefghij@1672531200000-123',
                   content: 'may the fourth be with you',
-                  createdBy: 'yoda',
+                  clientId: 'yoda',
                   createdAt: publishTimestamp,
                   roomId: 'sw',
                 }),
