@@ -8,14 +8,14 @@ and the management of real-time updates and user interactions.
 
 To start using this SDK, you will need the following:
 
-* An Ably account
-    * You can [sign up](https://ably.com/signup) to the generous free tier.
-* An Ably API key
-    * Use the default or create a new API key in an app within
-      your [Ably account dashboard](https://ably.com/dashboard).
-    * Make sure your API key has the
-      following [capabilities](https://ably.com/docs/auth/capabilities): `publish`, `subscribe`, `presence`
-      and `history`.
+- An Ably account
+  - You can [sign up](https://ably.com/signup) to the generous free tier.
+- An Ably API key
+  - Use the default or create a new API key in an app within
+    your [Ably account dashboard](https://ably.com/dashboard).
+  - Make sure your API key has the
+    following [capabilities](https://ably.com/docs/auth/capabilities): `publish`, `subscribe`, `presence`
+    and `history`.
 
 ## Installation and authentication
 
@@ -32,7 +32,7 @@ Chat constructor:
 import Chat from '@ably/chat';
 import * as Ably from 'ably';
 
-const ably = new Ably.Realtime({ key: "<API-key>", clientId: "<client-ID>", useBinaryProtocol: false });
+const ably = new Ably.Realtime({ key: '<API-key>', clientId: '<client-ID>', useBinaryProtocol: false });
 const chat = new Chat(ably);
 ```
 
@@ -49,7 +49,7 @@ generate an ID.
 You can get Room with name `"abc"` this way:
 
 ```ts
-const room = chat.rooms.get("abc");
+const room = chat.rooms.get('abc');
 ```
 
 There is no need to create the room. You can start using it right away.
@@ -61,20 +61,19 @@ There is no need to create the room. You can start using it right away.
 To send a message, simply call `send` on the Room's `messages` property, with the text you want to send.
 
 ```ts
-const message = await room.messages.send("hello")
+const message = await room.messages.send('hello');
 ```
 
 ### Message Object
 
 ```json5
 {
-  "timeserial": "string",
-  "clientId": "string",
-  "roomId": "string",
-  "content": "string",
-  "createdAt": "number",
+  timeserial: 'string',
+  clientId: 'string',
+  roomId: 'string',
+  content: 'string',
+  createdAt: 'number',
 }
-
 ```
 
 ### Subscribe to incoming messages
@@ -110,14 +109,14 @@ The messages object also exposes the `query` method which can be used to return 
 to the given criteria. It returns a paginated response that can be used to query for more messages.
 
 ```typescript
-  const historicalMessages = await room.messages.query({direction: 'backwards', limit: 50});
-  console.log(historicalMessages.items);
-  if (historicalMessages.hasNext()) {
-    const next = await historicalMessages.next();
-    console.log(next);
-  } else {
-    console.log('End of messages');
-  }
+const historicalMessages = await room.messages.query({ direction: 'backwards', limit: 50 });
+console.log(historicalMessages.items);
+if (historicalMessages.hasNext()) {
+  const next = await historicalMessages.next();
+  console.log(next);
+} else {
+  console.log('End of messages');
+}
 ```
 
 ## Connection and Ably channels statuses
@@ -147,7 +146,7 @@ room.messages.channel.on('attached', (stateChange) => {
 You can also get the realtime channel name of the chat room by calling `name` on the underlying channel
 
 ```ts
-channel.name
+channel.name;
 ```
 
 Note, that the SDK will automatically detach a channel whenever it isn't needed. For example if you unsubscribe all of your listeners
@@ -162,13 +161,13 @@ You can get the complete list of current presence members, their state and data,
 ```ts
 import { PresenceMember } from './Presence';
 // Retrieve the entire list of present members
-const presentMembers: PresenceMember[] = await room.presence.get()
+const presentMembers: PresenceMember[] = await room.presence.get();
 
 // You can supply a clientId to retrieve the presence of a specific member with the given clientId
-const presentMember: PresenceMember[] = await room.presence.get({ clientId: 'client-id' })
+const presentMember: PresenceMember[] = await room.presence.get({ clientId: 'client-id' });
 
 // You can call this to get a simple boolean value of whether a member is present or not
-const isPresent: boolean = await room.presence.userIsPresent('client-id')
+const isPresent: boolean = await room.presence.userIsPresent('client-id');
 ```
 
 Calls to `presence.get()` will return an array of the presence messages. Where each message contains the most recent
@@ -228,7 +227,6 @@ await room.presence.subscribe('enter', (event: PresenceEvent) => {
 });
 
 await room.presence.subscribe(['update', 'leave'], (event: PresenceEvent) => {
-
   console.log(`${event.clientId} updated with data: ${event.data}`);
 });
 ```
@@ -252,7 +250,7 @@ You can get the complete set of the current typing clientIds, by calling the get
 
 ```ts
 // Retrieve the entire list of currently typing clients
-const currentlyTypingClientIds: Set<string> = await room.presence.get()
+const currentlyTypingClientIds: Set<string> = await room.presence.get();
 ```
 
 ### Start Typing
