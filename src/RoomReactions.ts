@@ -53,7 +53,7 @@ export interface RoomReactions {
    * @param listener
    * @returns A promise that resolves when attachment completed or instantly if already attached.
    */
-  subscribe(listener: RoomReactionListener): Promise<Ably.ChannelStateChange | null> | undefined;
+  subscribe(listener: RoomReactionListener): Promise<Ably.ChannelStateChange | null>;
 
   /**
    * Unsubscribe removes the given listener. If no other listeners remain the SDK detaches from the realtime channel.
