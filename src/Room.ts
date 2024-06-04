@@ -37,7 +37,11 @@ export class Room {
       realtime.auth.clientId,
       clientOptions.typingTimeoutMs,
     );
-    this.reactions = new DefaultRoomReactions(roomId, realtime, realtime.auth.clientId);
+
+    const reactionsManagedChannel = new DefaultSubscriptionManager(
+      realtime.channels.get(`${this._roomId}::$chat::$reactions`, DEFAULT_CHANNEL_OPTIONS)
+    )
+    this.reactions = new DefaultRoomReactions(roomId, reactionsManagedChannel, realtime.auth.clientId);
   }
 
   get roomId(): string {

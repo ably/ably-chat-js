@@ -80,11 +80,10 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   private readonly _managedChannel: SubscriptionManager;
   private readonly clientId: string;
 
-  constructor(roomId: string, realtime: Ably.Realtime, clientId: string) {
+  constructor(roomId: string, managedChannel: SubscriptionManager, clientId: string) {
     super();
     this.roomId = roomId;
-    const channel = realtime.channels.get(this.realtimeChannelName, DEFAULT_CHANNEL_OPTIONS);
-    this._managedChannel = new DefaultSubscriptionManager(channel);
+    this._managedChannel = managedChannel;
     this.clientId = clientId;
   }
 
@@ -154,7 +153,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   }
 
   get realtimeChannelName(): string {
-    return this.roomId + '::$chat::$reactions';
+    return this._managedChannel.channel.name;
   }
 
   get channel(): Ably.RealtimeChannel {
