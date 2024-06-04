@@ -39,8 +39,8 @@ export class Room {
     );
 
     const reactionsManagedChannel = new DefaultSubscriptionManager(
-      realtime.channels.get(`${this._roomId}::$chat::$reactions`, DEFAULT_CHANNEL_OPTIONS)
-    )
+      realtime.channels.get(`${this._roomId}::$chat::$reactions`, DEFAULT_CHANNEL_OPTIONS),
+    );
     this.reactions = new DefaultRoomReactions(roomId, reactionsManagedChannel, realtime.auth.clientId);
   }
 

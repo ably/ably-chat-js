@@ -1,6 +1,5 @@
 import Ably from 'ably';
-import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
-import { SubscriptionManager, DefaultSubscriptionManager } from './SubscriptionManager.js';
+import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 import { RoomReactionEvents } from './events.js';
 

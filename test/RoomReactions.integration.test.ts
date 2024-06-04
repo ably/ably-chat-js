@@ -15,7 +15,9 @@ const waitForReactions = (foundTypes: string[], expectedTypes: string[]) => {
     const interval = setInterval(() => {
       if (foundTypes.length === expectedTypes.length) {
         clearInterval(interval);
-        if (timeout) { clearTimeout(timeout); }
+        if (timeout) {
+          clearTimeout(timeout);
+        }
 
         foundTypes.forEach((foundType, idx) => {
           const expectedType = expectedTypes[idx];
@@ -57,12 +59,12 @@ describe('room-level reactions integration test', () => {
 
     const room = chat.rooms.get(randomRoomId());
 
-    const expectedReactions = ["like", "like", "love", "hate"];
-    const reactions : string[] = [];
+    const expectedReactions = ['like', 'like', 'love', 'hate'];
+    const reactions: string[] = [];
 
-    const subscriber = (reaction : Reaction) => {
+    const subscriber = (reaction: Reaction) => {
       reactions.push(reaction.type);
-    }
+    };
     await room.reactions.subscribe(subscriber);
 
     for (let reactionType of expectedReactions) {
@@ -71,5 +73,5 @@ describe('room-level reactions integration test', () => {
 
     await waitForReactions(reactions, expectedReactions);
     await room.reactions.unsubscribe(subscriber);
-  })
+  });
 });
