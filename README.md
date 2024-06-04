@@ -130,6 +130,22 @@ room.messages.subscribe(({ type, message, ...restEventsPayload }) => {
 });
 ```
 
+### Query message history
+
+The messages object also exposes the `query` method which can be used to return historical messages in the chat room, according
+to the given criteria. It returns a paginated response that can be used to query for more messages.
+
+```typescript
+  const historicalMessages = await room.messages.query({direction: 'backwards', limit: 50});
+  console.log(historicalMessages.items);
+  if (historicalMessages.hasNext()) {
+    const next = await historicalMessages.next();
+    console.log(next);
+  } else {
+    console.log('End of messages');
+  }
+```
+
 ## Connection and Ably channels statuses
 
 The Room object exposes `channel` and `connection` fields, which implements `EventEmitter` interface,

@@ -1,24 +1,63 @@
-import Ably from 'ably';
+import { RealtimeChannel, ErrorInfo, messageCallback, InboundMessage } from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { Message } from './entities.js';
 import { MessageEvents } from './events.js';
 import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
 import { ChatMessage } from './ChatMessage.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
+import { PaginatedResult } from './query.js';
 
 interface MessageEventsMap {
   [MessageEvents.created]: MessageEventPayload;
 }
 
+/**
+ * A direction to query messages in a chat room.
+ */
 export enum Direction {
+  /**
+   * Query messages from the start of the time window to the end.
+   */
   forwards = 'forwards',
+
+  /**
+   * Query messages from the end of the time window to the start.
+   */
   backwards = 'backwards',
 }
 
-interface QueryOptions {
-  startId?: string;
-  endId?: string;
-  limit: number;
+/**
+ * Options for querying messages in a chat room.
+ */
+export interface QueryOptions {
+  /**
+   * The start of the time window to query from. If provided, the response will include
+   * messages with timestamps equal to or greater than this value.
+   *
+   * @defaultValue The beginning of time
+   */
+  start?: number;
+
+  /**
+   * The end of the time window to query from. If provided, the response will include
+   * messages with timestamps less than this value.
+   *
+   * @defaultValue Now
+   */
+  end?: number;
+
+  /**
+   * The maximum number of messages to return in the response.
+   *
+   * @defaultValue 100
+   */
+  limit?: number;
+
+  /**
+   * The direction to query messages in.
+   *
+   * @defaultValue forwards
+   */
   direction?: keyof typeof Direction;
 }
 
@@ -34,72 +73,16 @@ enum MessagesInternalState {
   fetching = 'fetching',
 }
 
+/**
+ * A listener for message events in a chat room.
+ */
 export type MessageListener = EventListener<MessageEventsMap, keyof MessageEventsMap>;
 
 /**
  * This class is used to interact with messages in a chat room including subscribing
  * to them, fetching history, or sending messages.
- *
- * Get an instance via room.messages.
  */
-export class Messages extends EventEmitter<MessageEventsMap> {
-  private readonly roomId: string;
-  private readonly _managedChannel: SubscriptionManager;
-  private readonly chatApi: ChatApi;
-  private readonly clientId: string;
-
-  private state: MessagesInternalState = MessagesInternalState.empty;
-  private eventsQueue: Ably.Message[] = [];
-  private unsubscribeFromChannel: (() => void) | null = null;
-
-  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string) {
-    super();
-    this.roomId = roomId;
-    this._managedChannel = managedChannel;
-    this.chatApi = chatApi;
-    this.clientId = clientId;
-  }
-
-  /**
-   * Get the full name of the Ably realtime channel used for the messages in this
-   * chat room.
-   */
-  get realtimeChannelName(): string {
-    return `${this.roomId}::$chat::$chatMessages`;
-  }
-
-  /**
-   * Get the underlying Ably realtime channel used for the messages in this chat room.
-   *
-   * @returns The Ably realtime channel.
-   */
-  get channel(): Ably.RealtimeChannel {
-    return this._managedChannel.channel;
-  }
-
-  // eslint-disable-next-line
-  async query(options: QueryOptions): Promise<Message[]> {
-    return this.chatApi.getMessages(this.roomId, options);
-  }
-
-  /**
-   * Send a message in the chat room.
-   *
-   * This method uses the Ably Chat API endpoint for sending messages.
-   *
-   * Note that the Promise may resolve before OR after the message is received
-   * from the realtime channel. This means you may see the message that was just
-   * sent in a callback to `subscribe` before the returned promise resolves.
-   *
-   * @param text content of the message
-   * @returns A promise that resolves when the message was published.
-   */
-  async send(text: string): Promise<Message> {
-    const response = await this.chatApi.sendMessage(this.roomId, text);
-
-    return new ChatMessage(response.timeserial, this.clientId, this.roomId, text, response.createdAt);
-  }
-
+export interface Messages {
   /**
    * Subscribe to a subset of message events in this chat room.
    *
@@ -114,6 +97,128 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   /**
    * Subscribe to all message events in this chat room.
    * @param listener callback that will be called
+   */
+  subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): Promise<void>;
+
+  /**
+   * Unsubscribe the given listener from the given list of events.
+   * @param eventOrEvents single event name or array of events to unsubscribe from
+   * @param listener listener to unsubscribe
+   */
+  unsubscribe<K extends keyof MessageEventsMap>(
+    eventOrEvents: K | K[],
+    listener?: EventListener<MessageEventsMap, K>,
+  ): void;
+
+  /**
+   * Unsubscribe the given listener from all events.
+   * @param listener listener to unsubscribe
+   */
+  unsubscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): void;
+
+  /**
+   * Queries the chat room for messages, based on the provided query options.
+   *
+   * @param options Options for the query.
+   * @returns A promise that resolves with the paginated result of messages. This paginated result can
+   * be used to fetch more messages if available.
+   */
+  query(options: QueryOptions): Promise<PaginatedResult<Message>>;
+
+  /**
+   * Send a message in the chat room.
+   *
+   * This method uses the Ably Chat API endpoint for sending messages.
+   *
+   * Note that the Promise may resolve before OR after the message is received
+   * from the realtime channel. This means you may see the message that was just
+   * sent in a callback to `subscribe` before the returned promise resolves.
+   *
+   * @param text content of the message
+   * @returns A promise that resolves when the message was published.
+   */
+  send(text: string): Promise<Message>;
+
+  /**
+   * Get the full name of the Ably realtime channel used for the messages in this
+   * chat room.
+   *
+   * @returns the channel name
+   */
+  get realtimeChannelName(): string;
+
+  /**
+   * Get the underlying Ably realtime channel used for the messages in this chat room.
+   *
+   * @returns the realtime channel
+   */
+  get channel(): RealtimeChannel;
+}
+
+/**
+ * This class is used to interact with messages in a chat room including subscribing
+ * to them, fetching history, or sending messages.
+ *
+ * Get an instance via room.messages.
+ */
+export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages {
+  private readonly roomId: string;
+  private readonly _managedChannel: SubscriptionManager;
+  private readonly chatApi: ChatApi;
+  private readonly clientId: string;
+
+  private state: MessagesInternalState = MessagesInternalState.empty;
+  private eventsQueue: InboundMessage[] = [];
+  private unsubscribeFromChannel: (() => void) | null = null;
+
+  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string) {
+    super();
+    this.roomId = roomId;
+    this._managedChannel = managedChannel;
+    this.chatApi = chatApi;
+    this.clientId = clientId;
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  get realtimeChannelName(): string {
+    return `${this.roomId}::$chat::$chatMessages`;
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  get channel(): RealtimeChannel {
+    return this._managedChannel.channel;
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  async query(options: QueryOptions): Promise<PaginatedResult<Message>> {
+    return this.chatApi.getMessages(this.roomId, options);
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  async send(text: string): Promise<Message> {
+    const response = await this.chatApi.sendMessage(this.roomId, text);
+
+    return new ChatMessage(response.timeserial, this.clientId, this.roomId, text, response.createdAt);
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  subscribe<K extends keyof MessageEventsMap>(
+    eventOrEvents: K | K[],
+    listener?: EventListener<MessageEventsMap, K>,
+  ): Promise<void>;
+
+  /**
+   * @inheritdoc Messages
    */
   subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): Promise<void>;
 
@@ -136,9 +241,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   }
 
   /**
-   * Unsubscribe the given listener from the given list of events.
-   * @param eventOrEvents single event name or array of events to unsubscribe from
-   * @param listener listener to unsubscribe
+   * @inheritdoc Messages
    */
   unsubscribe<K extends keyof MessageEventsMap>(
     eventOrEvents: K | K[],
@@ -171,7 +274,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
   private attach() {
     if (this.state !== MessagesInternalState.empty) return Promise.resolve();
     this.state = MessagesInternalState.attaching;
-    return this.doAttach((channelEventMessage: Ably.Message) => {
+    return this.doAttach((channelEventMessage: InboundMessage) => {
       if (this.state === MessagesInternalState.idle) {
         this.processEvent(channelEventMessage);
       } else {
@@ -180,7 +283,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     });
   }
 
-  private async doAttach(channelHandler: Ably.messageCallback<Ably.Message>) {
+  private async doAttach(channelHandler: messageCallback<InboundMessage>) {
     const unsubscribeFromChannel = () => this.channel.unsubscribe(channelHandler);
     this.unsubscribeFromChannel = unsubscribeFromChannel;
     await this.channel.subscribe(channelHandler);
@@ -211,7 +314,7 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     }
   }
 
-  private processEvent(channelEventMessage: Ably.Message) {
+  private processEvent(channelEventMessage: InboundMessage) {
     const { name } = channelEventMessage;
 
     // Send the message to the listeners
@@ -222,14 +325,14 @@ export class Messages extends EventEmitter<MessageEventsMap> {
         return true;
       }
       default:
-        throw new Ably.ErrorInfo(`Received illegal event="${name}"`, 50000, 500);
+        throw new ErrorInfo(`Received illegal event="${name}"`, 50000, 500);
     }
   }
 
   /**
    * Validate the realtime message and convert it to a chat message.
    */
-  private validateNewMessage(channelEventMessage: Ably.Message): Message {
+  private validateNewMessage(channelEventMessage: InboundMessage): Message {
     const {
       data: { content },
       clientId,
@@ -238,19 +341,19 @@ export class Messages extends EventEmitter<MessageEventsMap> {
     } = channelEventMessage;
 
     if (!content) {
-      throw new Ably.ErrorInfo(`Received message without data`, 50000, 500);
+      throw new ErrorInfo(`Received message without data`, 50000, 500);
     }
 
     if (!clientId) {
-      throw new Ably.ErrorInfo(`Received message without clientId`, 50000, 500);
+      throw new ErrorInfo(`Received message without clientId`, 50000, 500);
     }
 
     if (!timeserial) {
-      throw new Ably.ErrorInfo(`Received message without timeserial`, 50000, 500);
+      throw new ErrorInfo(`Received message without timeserial`, 50000, 500);
     }
 
     if (!timestamp) {
-      throw new Ably.ErrorInfo(`Received message without timestamp`, 50000, 500);
+      throw new ErrorInfo(`Received message without timestamp`, 50000, 500);
     }
 
     return new ChatMessage(timeserial, clientId, this.roomId, content, timestamp);

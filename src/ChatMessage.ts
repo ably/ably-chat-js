@@ -7,12 +7,17 @@ interface Timeserial {
   index?: number;
 }
 
+/**
+ * An implementation of the Message interface for chat messages.
+ *
+ * Allows for comparison of messages based on their timeserials.
+ */
 export class ChatMessage implements Message {
   private readonly calculatedTimeserial: Timeserial;
 
   constructor(
     public timeserial: string,
-    public createdBy: string,
+    public clientId: string,
     public roomId: string,
     public content: string,
     public createdAt: number,

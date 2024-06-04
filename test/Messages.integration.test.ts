@@ -60,14 +60,149 @@ describe('messages integration', () => {
     expect(messages).toEqual([
       expect.objectContaining({
         content: 'Hello there!',
-        createdBy: chat.clientId,
+        clientId: chat.clientId,
         timeserial: message1.timeserial,
       }),
       expect.objectContaining({
         content: 'I have the high ground!',
-        createdBy: chat.clientId,
+        clientId: chat.clientId,
         timeserial: message2.timeserial,
       }),
     ]);
+  });
+
+  it<TestContext>('should be able to retrieve chat history', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId());
+
+    // Publish 3 messages
+    const message1 = await room.messages.send('Hello there!');
+    const message2 = await room.messages.send('I have the high ground!');
+    const message3 = await room.messages.send('You underestimate my power!');
+
+    // Do a history request to get all 3 messages
+    const history = await room.messages.query({ limit: 3, direction: 'forwards' });
+
+    expect(history.items).toEqual([
+      expect.objectContaining({
+        content: 'Hello there!',
+        clientId: chat.clientId,
+        timeserial: message1.timeserial,
+      }),
+      expect.objectContaining({
+        content: 'I have the high ground!',
+        clientId: chat.clientId,
+        timeserial: message2.timeserial,
+      }),
+      expect.objectContaining({
+        content: 'You underestimate my power!',
+        clientId: chat.clientId,
+        timeserial: message3.timeserial,
+      }),
+    ]);
+
+    // We shouldn't have a "next" link in the response
+    expect(history.hasNext()).toBe(false);
+  });
+
+  it<TestContext>('should be able to paginate chat history', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId());
+
+    // Publish 4 messages
+    const message1 = await room.messages.send('Hello there!');
+    const message2 = await room.messages.send('I have the high ground!');
+    const message3 = await room.messages.send('You underestimate my power!');
+    const message4 = await room.messages.send("Don't try it!");
+
+    // Do a history request to get the first 3 messages
+    const history1 = await room.messages.query({ limit: 3, direction: 'forwards' });
+
+    expect(history1.items).toEqual([
+      expect.objectContaining({
+        content: 'Hello there!',
+        clientId: chat.clientId,
+        timeserial: message1.timeserial,
+      }),
+      expect.objectContaining({
+        content: 'I have the high ground!',
+        clientId: chat.clientId,
+        timeserial: message2.timeserial,
+      }),
+      expect.objectContaining({
+        content: 'You underestimate my power!',
+        clientId: chat.clientId,
+        timeserial: message3.timeserial,
+      }),
+    ]);
+
+    // We should have a "next" link in the response
+    expect(history1.hasNext()).toBe(true);
+
+    // Do a history request to get the next 2 messages
+    const history2 = await history1.next();
+
+    expect(history2!.items).toEqual([
+      expect.objectContaining({
+        content: "Don't try it!",
+        clientId: chat.clientId,
+        timeserial: message4.timeserial,
+      }),
+    ]);
+
+    // We shouldn't have a "next" link in the response
+    expect(history2!.hasNext()).toBe(false);
+  });
+
+  it<TestContext>('should be able to paginate chat history, but backwards', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId());
+
+    // Publish 4 messages
+    const message1 = await room.messages.send('Hello there!');
+    const message2 = await room.messages.send('I have the high ground!');
+    const message3 = await room.messages.send('You underestimate my power!');
+    const message4 = await room.messages.send("Don't try it!");
+
+    // Do a history request to get the last 3 messages
+    const history1 = await room.messages.query({ limit: 3, direction: 'backwards' });
+
+    expect(history1.items).toEqual([
+      expect.objectContaining({
+        content: "Don't try it!",
+        clientId: chat.clientId,
+        timeserial: message4.timeserial,
+      }),
+      expect.objectContaining({
+        content: 'You underestimate my power!',
+        clientId: chat.clientId,
+        timeserial: message3.timeserial,
+      }),
+      expect.objectContaining({
+        content: 'I have the high ground!',
+        clientId: chat.clientId,
+        timeserial: message2.timeserial,
+      }),
+    ]);
+
+    // We should have a "next" link in the response
+    expect(history1.hasNext()).toBe(true);
+
+    // Do a history request to get the next 2 messages
+    const history2 = await history1.next();
+
+    expect(history2!.items).toEqual([
+      expect.objectContaining({
+        content: 'Hello there!',
+        clientId: chat.clientId,
+        timeserial: message1.timeserial,
+      }),
+    ]);
+
+    // We shouldn't have a "next" link in the response
+    expect(history2!.hasNext()).toBe(false);
   });
 });
