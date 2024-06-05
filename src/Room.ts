@@ -5,6 +5,7 @@ import { Presence } from './Presence.js';
 import { DefaultSubscriptionManager } from './SubscriptionManager.js';
 import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 import { DefaultTypingIndicator, TypingIndicators } from './TypingIndicator.js';
+import { DefaultOccupancy, Occupancy } from './Occupancy.js';
 import { ClientOptions } from './config.js';
 import { RoomReactions, DefaultRoomReactions } from './RoomReactions.js';
 
@@ -19,6 +20,7 @@ export class Room {
   private readonly _typingIndicators: TypingIndicators;
   readonly presence: Presence;
   readonly reactions: RoomReactions;
+  private readonly _occupancy: Occupancy;
   private readonly realtimeChannelName: string;
 
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientOptions: ClientOptions) {
@@ -42,6 +44,7 @@ export class Room {
       realtime.channels.get(`${this._roomId}::$chat::$reactions`, DEFAULT_CHANNEL_OPTIONS),
     );
     this.reactions = new DefaultRoomReactions(roomId, reactionsManagedChannel, realtime.auth.clientId);
+    this._occupancy = new DefaultOccupancy(roomId, subscriptionManager, this.chatApi);
   }
 
   get roomId(): string {
@@ -50,5 +53,9 @@ export class Room {
 
   get typingIndicators(): TypingIndicators {
     return this._typingIndicators;
+  }
+
+  get occupancy(): Occupancy {
+    return this._occupancy;
   }
 }

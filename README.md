@@ -310,6 +310,36 @@ You can unsubscribe a listener from typing indicator events by providing the lis
 
 ```ts
 await room.typingIndicators.unsubscribe(listener);
+## Occupancy
+
+Using Occupancy, you can subscribe to regular updates regarding how many users are in the chat room.
+
+### Subscribe to Occupancy Updates
+
+To subscribe to occupancy updates, subscribe a listener to the chat rooms `occupancy` member:
+
+```ts
+  const occupancyListener = (event: OccupancyEvent) => {
+    console.log(event);
+  };
+
+  await room.occupancy.subscribe(occupancyListener)
+```
+
+To unsubscribe, call `unsubscribe:
+
+```ts
+  await room.occupancy.unsubscribe(occupancyListener)
+```
+
+Occupancy updates are delivered in near-real-time, with updates in quick succession batched together for performance.
+
+### Query Instant Occupancy
+
+To get an on-the-spot occupancy metric without subscribing to updates, you can call the `get` member:
+
+```ts
+  const occupancy = await room.occupancy.get();
 ```
 
 ## Room-level reactions

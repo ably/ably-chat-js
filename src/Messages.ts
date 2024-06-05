@@ -325,7 +325,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
         return true;
       }
       default:
-        throw new ErrorInfo(`Received illegal event="${name}"`, 50000, 500);
+        throw new ErrorInfo(`received illegal event="${name}"`, 50000, 500);
     }
   }
 
@@ -333,27 +333,32 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    * Validate the realtime message and convert it to a chat message.
    */
   private validateNewMessage(channelEventMessage: InboundMessage): Message {
-    const {
-      data: { content },
-      clientId,
-      timestamp,
-      extras: { timeserial },
-    } = channelEventMessage;
+    const { data, clientId, timestamp, extras } = channelEventMessage;
 
-    if (!content) {
-      throw new ErrorInfo(`Received message without data`, 50000, 500);
+    if (!data) {
+      throw new ErrorInfo(`received message without data`, 50000, 500);
     }
 
     if (!clientId) {
-      throw new ErrorInfo(`Received message without clientId`, 50000, 500);
-    }
-
-    if (!timeserial) {
-      throw new ErrorInfo(`Received message without timeserial`, 50000, 500);
+      throw new ErrorInfo(`received message without clientId`, 50000, 500);
     }
 
     if (!timestamp) {
-      throw new ErrorInfo(`Received message without timestamp`, 50000, 500);
+      throw new ErrorInfo(`received message without timestamp`, 50000, 500);
+    }
+
+    const { content } = data;
+    if (!content) {
+      throw new ErrorInfo(`received message without content`, 50000, 500);
+    }
+
+    if (!extras) {
+      throw new ErrorInfo(`received message without extras`, 50000, 500);
+    }
+
+    const { timeserial } = extras;
+    if (!timeserial) {
+      throw new ErrorInfo(`received message without timeserial`, 50000, 500);
     }
 
     return new ChatMessage(timeserial, clientId, this.roomId, content, timestamp);

@@ -3,6 +3,7 @@ import * as Ably from 'ably';
 import { ChatApi } from '../src/ChatApi.js';
 import { Room } from '../src/Room.js';
 import { MessageEvents } from '../src/events.js';
+import { randomRoomId } from './helper/identifier.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
@@ -69,7 +70,8 @@ describe('Messages', () => {
       new Promise<void>((done, reject) => {
         const publishTimestamp = new Date().getTime();
         const { chatApi, realtime } = context;
-        const room = new Room('sw', realtime, chatApi, { typingTimeoutMs: 300 });
+        const roomId = randomRoomId();
+        const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
         room.messages
           .subscribe(MessageEvents.created, (rawMsg) => {
             const message = rawMsg.message;
@@ -80,7 +82,7 @@ describe('Messages', () => {
                   content: 'may the fourth be with you',
                   clientId: 'yoda',
                   createdAt: publishTimestamp,
-                  roomId: 'sw',
+                  roomId: roomId,
                 }),
               );
             } catch (err) {
@@ -107,11 +109,41 @@ describe('Messages', () => {
       }));
   });
 
+  it<TestContext>('should raise an error if no data provided with incoming message', (context) =>
+    new Promise<void>((done, reject) => {
+      const publishTimestamp = new Date().getTime();
+      const { chatApi, realtime } = context;
+      const roomId = randomRoomId();
+      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
+      room.messages
+        .subscribe(MessageEvents.created, () => {
+          reject(new Error('should not have received message without data'));
+        })
+        .then(() => {
+          context.emulateBackendPublish({
+            clientId: 'yoda',
+            name: 'message.created',
+            extras: {
+              timeserial: 'abcdefghij@1672531200000-123',
+            },
+            timestamp: publishTimestamp,
+          });
+        })
+        .catch((error: Ably.ErrorInfo) => {
+          if (error.message === 'received message without data') {
+            done();
+          }
+
+          reject(`received incorrect error for message: ${error.message}`);
+        });
+    }));
+
   it<TestContext>('should raise an error if no clientId provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
       const { chatApi, realtime } = context;
-      const room = new Room('sw', realtime, chatApi, { typingTimeoutMs: 300 });
+      const roomId = randomRoomId();
+      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
         .subscribe(MessageEvents.created, () => {
           reject(new Error('should not have received message without clientId'));
@@ -128,8 +160,41 @@ describe('Messages', () => {
             timestamp: publishTimestamp,
           });
         })
-        .catch(() => {
-          done();
+        .catch((error: Ably.ErrorInfo) => {
+          if (error.message === 'received message without clientId') {
+            done();
+          }
+
+          reject(`received incorrect error for message: ${error.message}`);
+        });
+    }));
+
+  it<TestContext>('should raise an error if no extras provided with incoming message', (context) =>
+    new Promise<void>((done, reject) => {
+      const publishTimestamp = new Date().getTime();
+      const { chatApi, realtime } = context;
+      const roomId = randomRoomId();
+      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
+      room.messages
+        .subscribe(MessageEvents.created, () => {
+          reject(new Error('should not have received message without extras'));
+        })
+        .then(() => {
+          context.emulateBackendPublish({
+            name: 'message.created',
+            clientId: 'abc',
+            data: {
+              content: 'may the fourth be with you',
+            },
+            timestamp: publishTimestamp,
+          });
+        })
+        .catch((error: Ably.ErrorInfo) => {
+          if (error.message === 'received message without extras') {
+            done();
+          }
+
+          reject(`received incorrect error for message: ${error.message}`);
         });
     }));
 
@@ -137,7 +202,8 @@ describe('Messages', () => {
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
       const { chatApi, realtime } = context;
-      const room = new Room('sw', realtime, chatApi, { typingTimeoutMs: 300 });
+      const roomId = randomRoomId();
+      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
         .subscribe(MessageEvents.created, () => {
           reject(new Error('should not have received message without clientId'));
@@ -153,8 +219,12 @@ describe('Messages', () => {
             timestamp: publishTimestamp,
           });
         })
-        .catch(() => {
-          done();
+        .catch((error: Ably.ErrorInfo) => {
+          if (error.message === 'received message without timeserial') {
+            done();
+          }
+
+          reject(`received incorrect error for message: ${error.message}`);
         });
     }));
 
@@ -162,10 +232,11 @@ describe('Messages', () => {
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
       const { chatApi, realtime } = context;
-      const room = new Room('sw', realtime, chatApi, { typingTimeoutMs: 300 });
+      const roomId = randomRoomId();
+      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
         .subscribe(MessageEvents.created, () => {
-          reject(new Error('should not have received message without clientId'));
+          reject(new Error('should not have received message without content'));
         })
         .then(() => {
           context.emulateBackendPublish({
@@ -178,18 +249,23 @@ describe('Messages', () => {
             timestamp: publishTimestamp,
           });
         })
-        .catch(() => {
-          done();
+        .catch((error: Ably.ErrorInfo) => {
+          if (error.message === 'received message without content') {
+            done();
+          }
+
+          reject(`received incorrect error for message: ${error.message}`);
         });
     }));
 
   it<TestContext>('should raise an error if no timestamp provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const { chatApi, realtime } = context;
-      const room = new Room('sw', realtime, chatApi, { typingTimeoutMs: 300 });
+      const roomId = randomRoomId();
+      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
         .subscribe(MessageEvents.created, () => {
-          reject(new Error('should not have received message without clientId'));
+          reject(new Error('should not have received message without timestamp'));
         })
         .then(() => {
           context.emulateBackendPublish({
@@ -203,8 +279,12 @@ describe('Messages', () => {
             },
           });
         })
-        .catch(() => {
-          done();
+        .catch((error: Ably.ErrorInfo) => {
+          if (error.message === 'received message without timestamp') {
+            done();
+          }
+
+          reject(`received incorrect error for message: ${error.message}`);
         });
     }));
 });
