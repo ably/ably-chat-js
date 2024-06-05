@@ -3,6 +3,8 @@ import { Message as MessageComponent } from '../../components/Message';
 import { MessageInput } from '../../components/MessageInput';
 import { useMessages } from '../../hooks/useMessages';
 import { useTypingIndicators } from '../../hooks/useTypingIndicators.ts';
+import { useReactions } from '../../hooks/useReactions';
+import { ReactionInput } from '../../components/ReactionInput';
 
 export const Chat = () => {
   const { loading, clientId, messages, sendMessage } = useMessages();
@@ -11,6 +13,7 @@ export const Chat = () => {
   const { startTyping, stopTyping, subscribeToTypingIndicators } = useTypingIndicators();
   const [typingClients, setTypingClients] = useState<string[]>([]);
   const [value, setValue] = useState('');
+  const { reactions, sendReaction } = useReactions();
 
   useEffect(() => {
     subscribeToTypingIndicators((typingClients) => {
@@ -62,6 +65,10 @@ export const Chat = () => {
             onStopTyping={stopTyping}
           />
         </div>
+        <div>
+          <ReactionInput reactions={[]} onSend={sendReaction}></ReactionInput>
+        </div>
+        <div>Received reactions: { reactions.map((r, idx) => <span key={idx}>{ r.type }</span>) } </div>
       </div>
     </div>
   );
