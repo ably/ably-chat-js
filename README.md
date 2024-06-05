@@ -311,3 +311,41 @@ You can unsubscribe a listener from typing indicator events by providing the lis
 ```ts
 await room.typingIndicators.unsubscribe(listener);
 ```
+
+## Room-level reactions
+
+You can subscribe to and send ephemeral room-level reactions by using the `room.reactions` objects.
+
+### Send a reaction
+
+To send a reaction such as `"like"`:
+
+```ts
+await room.reactions.send("like")
+```
+
+You can also add any metadata to reactions:
+
+```ts
+await room.reactions.send("like", {"effect": "fireworks"})
+```
+
+### Subscribe to reactions
+
+Subscribe to receive room-level reactions:
+
+```ts
+const listener = (reaction) => {
+  console.log("received a", reaction.type, "with metadata", reaction.metadata);
+}
+
+await room.reactions.subscribe(listener);
+```
+
+### Unsubscribe from reactions
+
+If previously subscribed with `listener`, to unsubscribe use
+
+```ts
+await room.reactions.unsubscribe(listener)
+```
