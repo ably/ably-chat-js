@@ -1,4 +1,4 @@
-import Ably from 'ably';
+import * as Ably from 'ably';
 
 const MOCK_CLIENT_ID = 'MOCK_CLIENT_ID';
 

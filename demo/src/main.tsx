@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import Ably from 'ably'
+import * as Ably from 'ably';
 import { Chat } from '@ably-labs/chat';
 import { nanoid } from 'nanoid';
 import App from './App.tsx';

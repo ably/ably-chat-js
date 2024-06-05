@@ -1,6 +1,6 @@
 import EventEmitter from './utils/EventEmitter.js';
 import { TypingIndicatorEvents } from './events.js';
-import Ably, { PresenceMessage, RealtimeChannel } from 'ably';
+import * as Ably from 'ably';
 import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 import { DefaultSubscriptionManager, SubscriptionManager } from './SubscriptionManager.js';
 
@@ -69,7 +69,7 @@ export interface TypingIndicators {
    * Get the name of the realtime channel underpinning typing indicators.
    * @returns The name of the realtime channel.
    */
-  channel: RealtimeChannel;
+  channel: Ably.RealtimeChannel;
 }
 
 /**
@@ -135,7 +135,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
   /**
    * @inheritdoc TypingIndicators
    */
-  get channel(): RealtimeChannel {
+  get channel(): Ably.RealtimeChannel {
     return this._managedChannel.channel;
   }
 
@@ -203,7 +203,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * Subscribe to internal events. This will listen to presence events and convert them into associated typing events,
    * while also updating the currentlyTypingClientIds set.
    */
-  private readonly _internalSubscribeToEvents = (member: PresenceMessage) => {
+  private readonly _internalSubscribeToEvents = (member: Ably.PresenceMessage) => {
     switch (member.action) {
       case 'enter':
       case 'present':

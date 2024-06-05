@@ -1,4 +1,4 @@
-import Ably, { PresenceMessage as AblyPresenceMessage, RealtimePresenceParams } from 'ably';
+import * as Ably from 'ably';
 import { PresenceEvents } from './events.js';
 import EventEmitter, { EventListener } from './utils/EventEmitter.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
@@ -89,7 +89,7 @@ export class Presence extends EventEmitter<PresenceEventsMap> {
    * Method to get list of the current online users and returns the latest presence messages associated to it.
    * @returns {Promise<PresenceMessage[]>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
-  async get(params?: RealtimePresenceParams): Promise<PresenceMember[]> {
+  async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     const userOnPresence = await this.subscriptionManager.channel.presence.get(params);
     return userOnPresence.map((user) => ({
       clientId: user.clientId,
@@ -218,7 +218,7 @@ export class Presence extends EventEmitter<PresenceEventsMap> {
    * @returns void - Emits a transformed event to all subscribers, or upon failure,
    * the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
-  subscribeToEvents = (member: AblyPresenceMessage) => {
+  subscribeToEvents = (member: Ably.PresenceMessage) => {
     try {
       const parsedData = JSON.parse(member.data);
       this.emit(PresenceEvents[member.action], {

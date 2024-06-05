@@ -1,4 +1,4 @@
-import Ably from 'ably';
+import * as Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { Messages, DefaultMessages } from './Messages.js';
 import { Presence } from './Presence.js';

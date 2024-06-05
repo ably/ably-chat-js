@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Message, PresenceMessage, RealtimeChannel } from 'ably';
+import * as Ably from 'ably';
 import { ablyRealtimeClient } from './helper/realtimeClient.ts';
 import { DefaultSubscriptionManager } from '../src/SubscriptionManager.ts';
 import { randomString } from './helper/identifier.ts';
 
 interface TestContext {
-  channel: RealtimeChannel;
-  publishChannel: RealtimeChannel;
+  channel: Ably.RealtimeChannel;
+  publishChannel: Ably.RealtimeChannel;
   subscriptionManager: DefaultSubscriptionManager;
   defaultClientId: string;
 }
 
 // Wait for the messages to be received
-const waitForMessages = (messages: Message[], expectedCount: number) => {
+const waitForMessages = (messages: Ably.Message[], expectedCount: number) => {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       if (messages.length === expectedCount) {
@@ -73,7 +73,7 @@ describe('subscription manager', () => {
   it<TestContext>('subscribes to channel with implicit attach', async (context) => {
     const { channel, publishChannel, subscriptionManager } = context;
 
-    const receivedMessages: Message[] = [];
+    const receivedMessages: Ably.Message[] = [];
     const listener = (message) => {
       receivedMessages.push(message);
     };
@@ -93,7 +93,7 @@ describe('subscription manager', () => {
   it<TestContext>('subscribes to channel with implicit attach on all events', async (context) => {
     const { channel, publishChannel, subscriptionManager } = context;
 
-    const receivedMessages: Message[] = [];
+    const receivedMessages: Ably.Message[] = [];
     const listener = (message) => {
       receivedMessages.push(message);
     };
@@ -115,7 +115,7 @@ describe('subscription manager', () => {
   it<TestContext>('subscribes to channel with implicit attach on presence all events', async (context) => {
     const { channel, publishChannel, subscriptionManager } = context;
 
-    const receivedMessages: PresenceMessage[] = [];
+    const receivedMessages: Ably.PresenceMessage[] = [];
     const listener = (message) => {
       receivedMessages.push(message);
     };
@@ -133,7 +133,7 @@ describe('subscription manager', () => {
   it<TestContext>('subscribes to channel with implicit attach on presence select events', async (context) => {
     const { channel, publishChannel, subscriptionManager } = context;
 
-    const receivedMessages: PresenceMessage[] = [];
+    const receivedMessages: Ably.PresenceMessage[] = [];
     const listener = (message) => {
       receivedMessages.push(message);
     };
@@ -253,7 +253,7 @@ describe('subscription manager', () => {
     await waitForChannelStateChange(channel, 'attached');
   });
   it<TestContext>('should emit an enter event with supplied data when entering presence', async (context) => {
-    const receivedMessages: PresenceMessage[] = [];
+    const receivedMessages: Ably.PresenceMessage[] = [];
     const listener = (message) => {
       receivedMessages.push(message);
     };
@@ -273,7 +273,7 @@ describe('subscription manager', () => {
     await waitForChannelStateChange(channel, 'attached');
   });
   it<TestContext>('should emit an event enter when joining for the first time', async (context) => {
-    const receivedMessages: PresenceMessage[] = [];
+    const receivedMessages: Ably.PresenceMessage[] = [];
     const listener = (message) => {
       receivedMessages.push(message);
     };
@@ -287,7 +287,7 @@ describe('subscription manager', () => {
     expect(receivedMessages[0].data).toBe('test-data');
   });
   it<TestContext>('should emit an update event if already enter presence', async (context) => {
-    const receivedMessages: PresenceMessage[] = [];
+    const receivedMessages: Ably.PresenceMessage[] = [];
     const listener = (message) => {
       receivedMessages.push(message);
     };
@@ -323,7 +323,7 @@ describe('subscription manager', () => {
   });
 
   it<TestContext>('should emit a leave event with supplied data when leaving presence', async (context) => {
-    const receivedMessages: PresenceMessage[] = [];
+    const receivedMessages: Ably.PresenceMessage[] = [];
     const listener = (message) => {
       receivedMessages.push(message);
     };

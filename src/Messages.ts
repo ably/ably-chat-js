@@ -1,4 +1,4 @@
-import { RealtimeChannel, ErrorInfo, messageCallback, InboundMessage } from 'ably';
+import * as Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { Message } from './entities.js';
 import { MessageEvents } from './events.js';
@@ -152,7 +152,7 @@ export interface Messages {
    *
    * @returns the realtime channel
    */
-  get channel(): RealtimeChannel;
+  get channel(): Ably.RealtimeChannel;
 }
 
 /**
@@ -168,7 +168,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   private readonly clientId: string;
 
   private state: MessagesInternalState = MessagesInternalState.empty;
-  private eventsQueue: InboundMessage[] = [];
+  private eventsQueue: Ably.InboundMessage[] = [];
   private unsubscribeFromChannel: (() => void) | null = null;
 
   constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string) {
@@ -189,7 +189,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   /**
    * @inheritdoc Messages
    */
-  get channel(): RealtimeChannel {
+  get channel(): Ably.RealtimeChannel {
     return this._managedChannel.channel;
   }
 
@@ -274,7 +274,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   private attach() {
     if (this.state !== MessagesInternalState.empty) return Promise.resolve();
     this.state = MessagesInternalState.attaching;
-    return this.doAttach((channelEventMessage: InboundMessage) => {
+    return this.doAttach((channelEventMessage: Ably.InboundMessage) => {
       if (this.state === MessagesInternalState.idle) {
         this.processEvent(channelEventMessage);
       } else {
@@ -283,7 +283,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     });
   }
 
-  private async doAttach(channelHandler: messageCallback<InboundMessage>) {
+  private async doAttach(channelHandler: Ably.messageCallback<Ably.InboundMessage>) {
     const unsubscribeFromChannel = () => this.channel.unsubscribe(channelHandler);
     this.unsubscribeFromChannel = unsubscribeFromChannel;
     await this.channel.subscribe(channelHandler);
@@ -314,7 +314,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     }
   }
 
-  private processEvent(channelEventMessage: InboundMessage) {
+  private processEvent(channelEventMessage: Ably.InboundMessage) {
     const { name } = channelEventMessage;
 
     // Send the message to the listeners
@@ -325,40 +325,40 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
         return true;
       }
       default:
-        throw new ErrorInfo(`received illegal event="${name}"`, 50000, 500);
+        throw new Ably.ErrorInfo(`received illegal event="${name}"`, 50000, 500);
     }
   }
 
   /**
    * Validate the realtime message and convert it to a chat message.
    */
-  private validateNewMessage(channelEventMessage: InboundMessage): Message {
+  private validateNewMessage(channelEventMessage: Ably.InboundMessage): Message {
     const { data, clientId, timestamp, extras } = channelEventMessage;
 
     if (!data) {
-      throw new ErrorInfo(`received message without data`, 50000, 500);
+      throw new Ably.ErrorInfo(`received message without data`, 50000, 500);
     }
 
     if (!clientId) {
-      throw new ErrorInfo(`received message without clientId`, 50000, 500);
+      throw new Ably.ErrorInfo(`received message without clientId`, 50000, 500);
     }
 
     if (!timestamp) {
-      throw new ErrorInfo(`received message without timestamp`, 50000, 500);
+      throw new Ably.ErrorInfo(`received message without timestamp`, 50000, 500);
     }
 
     const { content } = data;
     if (!content) {
-      throw new ErrorInfo(`received message without content`, 50000, 500);
+      throw new Ably.ErrorInfo(`received message without content`, 50000, 500);
     }
 
     if (!extras) {
-      throw new ErrorInfo(`received message without extras`, 50000, 500);
+      throw new Ably.ErrorInfo(`received message without extras`, 50000, 500);
     }
 
     const { timeserial } = extras;
     if (!timeserial) {
-      throw new ErrorInfo(`received message without timeserial`, 50000, 500);
+      throw new Ably.ErrorInfo(`received message without timeserial`, 50000, 500);
     }
 
     return new ChatMessage(timeserial, clientId, this.roomId, content, timestamp);
