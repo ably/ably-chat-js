@@ -1,12 +1,12 @@
 import { beforeEach, describe, it } from 'vitest';
 import { ablyRealtimeClientWithToken } from './helper/realtimeClient.ts';
-import { Chat } from '../src/Chat.ts';
+import { ChatClient } from '../src/Chat.ts';
 import { randomRoomId } from './helper/identifier.ts';
 import { Room } from '../src/Room.ts';
 import { OccupancyEvent } from '../src/Occupancy.ts';
 
 interface TestContext {
-  chat: Chat;
+  chat: ChatClient;
 }
 
 const TEST_TIMEOUT = 20000;
@@ -59,7 +59,7 @@ const waitForExpectedInbandOccupancy = (occupancyEvents: OccupancyEvent[], expec
 
 describe('occupancy', () => {
   beforeEach<TestContext>((context) => {
-    context.chat = new Chat(ablyRealtimeClientWithToken());
+    context.chat = new ChatClient(ablyRealtimeClientWithToken());
   });
 
   it<TestContext>('should be able to get the occupancy of a chat room', { timeout: TEST_TIMEOUT }, async (context) => {

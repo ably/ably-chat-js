@@ -1,12 +1,12 @@
 import { beforeEach, describe, it, expect } from 'vitest';
 import { ablyRealtimeClientWithToken } from './helper/realtimeClient.ts';
-import { Chat } from '../src/Chat.ts';
+import { ChatClient } from '../src/Chat.ts';
 import { randomRoomId } from './helper/identifier.ts';
 import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
 import { Reaction } from '../src/RoomReactions.ts';
 
 interface TestContext {
-  chat: Chat;
+  chat: ChatClient;
 }
 
 const waitForReactions = (foundTypes: string[], expectedTypes: string[]) => {
@@ -41,7 +41,7 @@ const waitForReactions = (foundTypes: string[], expectedTypes: string[]) => {
 
 describe('room-level reactions integration test', () => {
   beforeEach<TestContext>((context) => {
-    context.chat = new Chat(ablyRealtimeClientWithToken());
+    context.chat = new ChatClient(ablyRealtimeClientWithToken());
   });
 
   it<TestContext>('sets the agent version on the channel', async (context) => {

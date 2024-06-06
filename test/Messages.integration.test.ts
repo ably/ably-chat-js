@@ -1,12 +1,12 @@
 import { beforeEach, describe, it, expect } from 'vitest';
 import { ablyRealtimeClientWithToken } from './helper/realtimeClient.ts';
-import { Chat } from '../src/Chat.ts';
+import { ChatClient } from '../src/Chat.ts';
 import { Message } from '../src/entities.ts';
 import { randomRoomId } from './helper/identifier.ts';
 import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
 
 interface TestContext {
-  chat: Chat;
+  chat: ChatClient;
 }
 
 const waitForMessages = (messages: Message[], expectedCount: number) => {
@@ -26,7 +26,7 @@ const waitForMessages = (messages: Message[], expectedCount: number) => {
 
 describe('messages integration', () => {
   beforeEach<TestContext>((context) => {
-    context.chat = new Chat(ablyRealtimeClientWithToken());
+    context.chat = new ChatClient(ablyRealtimeClientWithToken());
   });
 
   it<TestContext>('sets the agent version on the channel', async (context) => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Chat } from '../src/Chat.js';
+import { ChatClient } from '../src/Chat.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
 import { ClientOptions } from 'ably';
 import { RealtimeWithOptions } from '../src/realtimeextensions.js';
@@ -13,7 +13,7 @@ describe('Chat', () => {
     const options: OptionsWithAgent = {};
     const realtime = ablyRealtimeClient(options) as RealtimeWithOptions;
     /* eslint-disable-next-line */
-    const chat = new Chat(realtime);
+    const chat = new ChatClient(realtime);
 
     expect(realtime.options.agents).toEqual({ chat: 'chat-js/0.0.1' });
   });
