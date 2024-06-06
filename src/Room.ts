@@ -32,7 +32,7 @@ export class Room {
       realtime.channels.get(this.realtimeChannelName, DEFAULT_CHANNEL_OPTIONS),
     );
     this.messages = new DefaultMessages(roomId, subscriptionManager, this.chatApi, realtime.auth.clientId);
-    this.presence = new Presence(subscriptionManager, realtime.auth.clientId);
+    this.presence = new DefaultPresence(subscriptionManager, realtime.auth.clientId);
     this._typingIndicators = new DefaultTypingIndicator(
       roomId,
       realtime,

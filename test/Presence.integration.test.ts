@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
 import { PresenceEvents } from '../src/events.js';
 import { Room } from '../src/Room.js';
-import { Rooms } from '../src/Rooms.js';
+import { Rooms, DefaultRooms } from '../src/Rooms.js';
 import { randomRoomId } from './helper/identifier.js';
 
 // Define the test context interface
@@ -22,7 +22,7 @@ describe('UserPresence', () => {
   beforeEach<TestContext>(async (context) => {
     context.realtime = ablyRealtimeClient();
     const roomId = randomRoomId();
-    context.chat = new Rooms(context.realtime);
+    context.chat = new DefaultRooms(context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
     context.chatRoom = context.chat.get(roomId);
   });

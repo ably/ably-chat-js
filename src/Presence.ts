@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 import { PresenceEvents } from './events.js';
-import EventEmitter, { EventListener } from './utils/EventEmitter.js';
+import EventEmitter from './utils/EventEmitter.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 
 /**
@@ -15,17 +15,17 @@ interface PresenceEventsMap {
 }
 
 /**
- * Type for UserCustomData
- */
-interface UserCustomData {
-  [key: string]: any;
-}
-
-/**
  * Type for PresenceData
  */
-export interface PresenceData {
-  userCustomData: UserCustomData | undefined;
+export type PresenceData = {
+  [key: string]: any;
+};
+
+/**
+ * Type for AblyPresenceData
+ */
+interface AblyPresenceData {
+  userCustomData: PresenceData | undefined;
 
   [key: string]: any;
 }
@@ -34,41 +34,146 @@ export interface PresenceData {
  * Type for PresenceEvent
  */
 export interface PresenceEvent {
-  type:
-    | PresenceEvents.enter
-    | PresenceEvents.leave
-    | PresenceEvents.update
-    | PresenceEvents.present
-    | PresenceEvents.absent;
+  /**
+   * The type of the presence event.
+   */
+  type: PresenceEvents;
+
+  /**
+   * The clientId of the client that triggered the presence event.
+   */
   clientId: string;
+
+  /**
+   * The timestamp of the presence event.
+   */
   timestamp: number;
-  data: UserCustomData | undefined;
+
+  /**
+   * The data associated with the presence event.
+   */
+  data: PresenceData | undefined;
 }
 
 /**
  * Type for PresenceMember
  */
 export interface PresenceMember {
+  /**
+   * The clientId of the presence member.
+   */
   clientId: string;
-  data: UserCustomData | undefined;
+
+  /**
+   * The data associated with the presence member.
+   */
+  data: PresenceData | undefined;
+
+  /**
+   * The current state of the presence member.
+   */
   action: 'absent' | 'present' | 'enter' | 'leave' | 'update';
+
+  /**
+   * The extras associated with the presence member.
+   */
   extras: any;
+
+  /**
+   * The Ably message id of the associated presence message.
+   */
   id: string;
+
+  /**
+   * The timestamp of the presence message.
+   */
   timestamp: number;
 }
 
 /**
  * Type for PresenceListener
+ * @param event The presence event that was received.
  */
-export type PresenceListener = EventListener<PresenceEventsMap, keyof PresenceEventsMap>;
+export type PresenceListener = (event: PresenceEvent) => void;
 
 /**
- * This class is used to interact with presence in a chat room including subscribing,
+ * Represents parameters that can be set when fetching the presence set.
+ */
+export type PresenceParams = Ably.RealtimePresenceParams;
+
+/**
+ * This interface is used to interact with presence in a chat room including subscribing,
  * fetching presence members, or sending presence events (join,update,leave).
  *
  * Get an instance via room.presence.
  */
-export class Presence extends EventEmitter<PresenceEventsMap> {
+export interface Presence {
+  /**
+   * Method to get list of the current online users and returns the latest presence messages associated to it.
+   * @param {PresenceParams} params - Parameters that control how the presence set is retrieved.
+   * @returns {Promise<PresenceMessage[]>} or upon failure, the promise will be rejected with an [[Ably.ErrorInfo]] object which explains the error.
+   */
+  get(params?: PresenceParams): Promise<PresenceMember[]>;
+
+  /**
+   * Method to check if user with supplied clientId is online
+   * @param {string} clientId - The client ID to check if it is present in the room.
+   * @returns {Promise<{boolean}>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   */
+  userIsPresent(clientId: string): Promise<boolean>;
+
+  /**
+   * Method to join room presence, will emit an enter event to all subscribers. Repeat calls will trigger more enter events.
+   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   */
+  enter(data?: PresenceData): Promise<void>;
+
+  /**
+   * Method to update room presence, will emit an update event to all subscribers. If the user is not present, it will be treated as a join event.
+   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   */
+  update(data?: PresenceData): Promise<void>;
+
+  /**
+   * Method to leave room presence, will emit a leave event to all subscribers. If the user is not present, it will be treated as a no-op.
+   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   */
+  leave(data?: PresenceData): Promise<void>;
+
+  /**
+   * Subscribe the given listener from the given list of events.
+   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'absent' | 'present'} single event name or array of events to subscribe to
+   * @param listener listener to subscribe
+   */
+  subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
+
+  /**
+   * Subscribe the given listener to all presence events.
+   * @param listener listener to subscribe
+   */
+  subscribe(listener?: PresenceListener): Promise<void>;
+
+  /**
+   * Unsubscribe the given listener from the given list of events.
+   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present' | 'absent'} single event name or array of events to unsubscribe from
+   * @param listener listener to unsubscribe
+   */
+  unsubscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
+
+  /**
+   * Unsubscribe the given listener from all presence events.
+   * @param listener listener to unsubscribe
+   */
+  unsubscribe(listener?: PresenceListener): Promise<void>;
+}
+
+/**
+ * @inheritDoc
+ */
+export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements Presence {
   private readonly subscriptionManager: SubscriptionManager;
   private readonly clientId: string;
 
@@ -86,15 +191,14 @@ export class Presence extends EventEmitter<PresenceEventsMap> {
   }
 
   /**
-   * Method to get list of the current online users and returns the latest presence messages associated to it.
-   * @returns {Promise<PresenceMessage[]>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   * @inheritDoc
    */
-  async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
+  async get(params?: PresenceParams): Promise<PresenceMember[]> {
     const userOnPresence = await this.subscriptionManager.channel.presence.get(params);
     return userOnPresence.map((user) => ({
       clientId: user.clientId,
       action: user.action,
-      data: user.data ? (JSON.parse(user.data).userCustomData as UserCustomData) : undefined,
+      data: user.data ? (JSON.parse(user.data).userCustomData as PresenceData) : undefined,
       timestamp: user.timestamp,
       extras: user.extras,
       id: user.id,
@@ -102,8 +206,7 @@ export class Presence extends EventEmitter<PresenceEventsMap> {
   }
 
   /**
-   * Method to check if user with supplied clientId is online
-   * @returns {Promise<{boolean}>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   * @inheritDoc
    */
   async userIsPresent(clientId: string): Promise<boolean> {
     const presenceSet = await this.subscriptionManager.channel.presence.get({ clientId: clientId });
@@ -112,11 +215,11 @@ export class Presence extends EventEmitter<PresenceEventsMap> {
 
   /**
    * Method to join room presence, will emit an enter event to all subscribers. Repeat calls will trigger more enter events.
-   * @param {UserCustomData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
    * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
-  async enter(data?: UserCustomData): Promise<void> {
-    const presenceEventToSend: PresenceData = {
+  async enter(data?: PresenceData): Promise<void> {
+    const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
     return this.subscriptionManager.presenceEnterClient(this.clientId, JSON.stringify(presenceEventToSend));
@@ -124,11 +227,11 @@ export class Presence extends EventEmitter<PresenceEventsMap> {
 
   /**
    * Method to update room presence, will emit an update event to all subscribers. If the user is not present, it will be treated as a join event.
-   * @param {UserCustomData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
    * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
-  async update(data?: UserCustomData): Promise<void> {
-    const presenceEventToSend: PresenceData = {
+  async update(data?: PresenceData): Promise<void> {
+    const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
     return this.subscriptionManager.presenceUpdateClient(this.clientId, JSON.stringify(presenceEventToSend));
@@ -136,11 +239,11 @@ export class Presence extends EventEmitter<PresenceEventsMap> {
 
   /**
    * Method to leave room presence, will emit a leave event to all subscribers. If the user is not present, it will be treated as a no-op.
-   * @param {UserCustomData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
    * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
-  async leave(data?: UserCustomData): Promise<void> {
-    const presenceEventToSend: PresenceData = {
+  async leave(data?: PresenceData): Promise<void> {
+    const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
     return this.subscriptionManager.presenceLeaveClient(this.clientId, JSON.stringify(presenceEventToSend));
@@ -151,18 +254,15 @@ export class Presence extends EventEmitter<PresenceEventsMap> {
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'absent' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
    */
-  subscribe<K extends keyof PresenceEventsMap>(
-    eventOrEvents: K | K[],
-    listener?: EventListener<PresenceEventsMap, K>,
-  ): Promise<void>;
+  subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
   /**
    * Subscribe the given listener to all presence events.
    * @param listener listener to subscribe
    */
-  subscribe(listener?: EventListener<PresenceEventsMap, keyof PresenceEventsMap>): Promise<void>;
-  async subscribe<K extends keyof PresenceEventsMap>(
-    listenerOrEvents?: K | K[] | EventListener<PresenceEventsMap, K>,
-    listener?: EventListener<PresenceEventsMap, K>,
+  subscribe(listener?: PresenceListener): Promise<void>;
+  async subscribe(
+    listenerOrEvents?: PresenceEvents | PresenceEvents[] | PresenceListener,
+    listener?: PresenceListener,
   ): Promise<void> {
     if (!listenerOrEvents && !listener) {
       throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400);
@@ -184,19 +284,16 @@ export class Presence extends EventEmitter<PresenceEventsMap> {
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present' | 'absent'} single event name or array of events to unsubscribe from
    * @param listener listener to unsubscribe
    */
-  unsubscribe<K extends keyof PresenceEventsMap>(
-    eventOrEvents: K | K[],
-    listener?: EventListener<PresenceEventsMap, K>,
-  ): Promise<void>;
+  unsubscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
 
   /**
    * Unsubscribe the given listener from all presence events.
    * @param listener listener to unsubscribe
    */
-  unsubscribe(listener?: EventListener<PresenceEventsMap, keyof PresenceEventsMap>): Promise<void>;
-  async unsubscribe<K extends keyof PresenceEventsMap>(
-    listenerOrEvents?: K | K[] | EventListener<PresenceEventsMap, K>,
-    listener?: EventListener<PresenceEventsMap, K>,
+  unsubscribe(listener?: PresenceListener): Promise<void>;
+  async unsubscribe(
+    listenerOrEvents?: PresenceEvents | PresenceEvents[] | PresenceListener,
+    listener?: PresenceListener,
   ): Promise<void> {
     if (!listenerOrEvents && !listener) {
       throw new Ably.ErrorInfo('could not unsubscribe listener: invalid arguments', 40000, 400);
