@@ -61,8 +61,18 @@ export interface QueryOptions {
   direction?: keyof typeof Direction;
 }
 
-interface MessageEventPayload {
+/**
+ * Payload for a message event.
+ */
+export interface MessageEventPayload {
+  /**
+   * The type of the message event.
+   */
   type: MessageEvents;
+
+  /**
+   * The message that was received.
+   */
   message: Message;
 }
 
@@ -75,9 +85,9 @@ enum MessagesInternalState {
 
 /**
  * A listener for message events in a chat room.
+ * @param event The message event that was received.
  */
-export type MessageListener = EventListener<MessageEventsMap, keyof MessageEventsMap>;
-
+export type MessageListener = (event: MessageEventPayload) => void;
 /**
  * This class is used to interact with messages in a chat room including subscribing
  * to them, fetching history, or sending messages.
@@ -89,32 +99,26 @@ export interface Messages {
    * @param eventOrEvents single event name or array of events to listen to
    * @param listener callback that will be called when these events are received
    */
-  subscribe<K extends keyof MessageEventsMap>(
-    eventOrEvents: K | K[],
-    listener?: EventListener<MessageEventsMap, K>,
-  ): Promise<void>;
+  subscribe<K extends keyof MessageEventsMap>(eventOrEvents: K | K[], listener?: MessageListener): Promise<void>;
 
   /**
    * Subscribe to all message events in this chat room.
    * @param listener callback that will be called
    */
-  subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): Promise<void>;
+  subscribe(listener?: MessageListener): Promise<void>;
 
   /**
    * Unsubscribe the given listener from the given list of events.
    * @param eventOrEvents single event name or array of events to unsubscribe from
    * @param listener listener to unsubscribe
    */
-  unsubscribe<K extends keyof MessageEventsMap>(
-    eventOrEvents: K | K[],
-    listener?: EventListener<MessageEventsMap, K>,
-  ): void;
+  unsubscribe<K extends keyof MessageEventsMap>(eventOrEvents: K | K[], listener?: MessageListener): void;
 
   /**
    * Unsubscribe the given listener from all events.
    * @param listener listener to unsubscribe
    */
-  unsubscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): void;
+  unsubscribe(listener?: MessageListener): void;
 
   /**
    * Queries the chat room for messages, based on the provided query options.
@@ -212,19 +216,16 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   /**
    * @inheritdoc Messages
    */
-  subscribe<K extends keyof MessageEventsMap>(
-    eventOrEvents: K | K[],
-    listener?: EventListener<MessageEventsMap, K>,
-  ): Promise<void>;
+  subscribe<K extends keyof MessageEventsMap>(eventOrEvents: K | K[], listener?: MessageListener): Promise<void>;
 
   /**
    * @inheritdoc Messages
    */
-  subscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): Promise<void>;
+  subscribe(listener?: MessageListener): Promise<void>;
 
   subscribe<K extends keyof MessageEventsMap>(
-    listenerOrEvents?: K | K[] | EventListener<MessageEventsMap, K>,
-    listener?: EventListener<MessageEventsMap, K>,
+    listenerOrEvents?: K | K[] | MessageListener,
+    listener?: MessageListener,
   ): Promise<void> {
     try {
       super.on(listenerOrEvents, listener);
@@ -243,10 +244,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   /**
    * @inheritdoc Messages
    */
-  unsubscribe<K extends keyof MessageEventsMap>(
-    eventOrEvents: K | K[],
-    listener?: EventListener<MessageEventsMap, K>,
-  ): void;
+  unsubscribe<K extends keyof MessageEventsMap>(eventOrEvents: K | K[], listener?: MessageListener): void;
 
   /**
    * Unsubscribe the given listener from all events.
@@ -254,8 +252,8 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    */
   unsubscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): void;
   unsubscribe<K extends keyof MessageEventsMap>(
-    listenerOrEvents?: K | K[] | EventListener<MessageEventsMap, K>,
-    listener?: EventListener<MessageEventsMap, K>,
+    listenerOrEvents?: K | K[] | MessageListener,
+    listener?: MessageListener,
   ) {
     try {
       super.off(listenerOrEvents, listener);
