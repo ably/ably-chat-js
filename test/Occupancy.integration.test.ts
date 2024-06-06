@@ -1,9 +1,9 @@
 import { beforeEach, describe, it } from 'vitest';
-import { ablyRealtimeClientWithToken } from './helper/realtimeClient.ts';
-import { ChatClient } from '../src/Chat.ts';
-import { randomRoomId } from './helper/identifier.ts';
-import { Room } from '../src/Room.ts';
-import { OccupancyEvent } from '../src/Occupancy.ts';
+import { ablyRealtimeClientWithToken } from './helper/realtimeClient.js';
+import { ChatClient } from '../src/Chat.js';
+import { randomRoomId } from './helper/identifier.js';
+import { Room } from '../src/Room.js';
+import { OccupancyEvent } from '../src/Occupancy.js';
 
 interface TestContext {
   chat: ChatClient;
