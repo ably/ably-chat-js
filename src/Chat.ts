@@ -8,9 +8,21 @@ import { ClientOptions } from './config.js';
  * This is the core client for Ably chat. It provides access to chat rooms.
  */
 export class ChatClient {
+  /**
+   * @internal
+   */
   private readonly _realtime: Ably.Realtime;
+
+  /**
+   * @internal
+   */
   private readonly _rooms: Rooms;
 
+  /**
+   * Constructor for Chat
+   * @param realtime - The Ably Realtime client.
+   * @param clientOptions - The client options.
+   */
   constructor(realtime: Ably.Realtime, clientOptions?: ClientOptions) {
     this._realtime = realtime;
     this._rooms = new DefaultRooms(realtime, clientOptions);
@@ -45,6 +57,9 @@ export class ChatClient {
     return this._realtime.auth.clientId;
   }
 
+  /**
+   * Sets the agent string for the client.
+   */
   private setAgent(): void {
     const realtime = this._realtime as RealtimeWithOptions;
     const agent = { chat: AGENT_STRING };
