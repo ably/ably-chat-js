@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Ably from 'ably';
-import { Chat } from '@ably-labs/chat';
+import { ChatClient } from '@ably-labs/chat';
 import { nanoid } from 'nanoid';
 import App from './App.tsx';
 import './index.css';
@@ -35,7 +35,7 @@ const ablyClient = new Ably.Realtime({
 //   clientId,
 // })
 
-const chatClient = new Chat(ablyClient);
+const chatClient = new ChatClient(ablyClient);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

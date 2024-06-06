@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Ably from 'ably';
 import { Room } from '../src/Room.js';
 import { randomRoomId } from './helper/identifier.js';
-import { Chat } from '../src/Chat.js';
+import { ChatClient } from '../src/Chat.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
-  chat: Chat;
+  chat: ChatClient;
   room: Room;
   roomId: string;
 }
@@ -19,7 +19,7 @@ describe('TypingIndicators', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.roomId = randomRoomId();
-    context.chat = new Chat(context.realtime, { typingTimeoutMs: TEST_TYPING_TIMEOUT_MS });
+    context.chat = new ChatClient(context.realtime, { typingTimeoutMs: TEST_TYPING_TIMEOUT_MS });
 
     context.room = context.chat.rooms.get(context.roomId);
   });

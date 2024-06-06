@@ -7,7 +7,7 @@ import { ClientOptions } from './config.js';
 /**
  * This is the core client for Ably chat. It provides access to chat rooms.
  */
-export class Chat {
+export class ChatClient {
   private readonly _realtime: Ably.Realtime;
   private readonly _rooms: Rooms;
 
