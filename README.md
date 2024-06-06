@@ -310,6 +310,8 @@ You can unsubscribe a listener from typing indicator events by providing the lis
 
 ```ts
 await room.typingIndicators.unsubscribe(listener);
+```
+
 ## Occupancy
 
 Using Occupancy, you can subscribe to regular updates regarding how many users are in the chat room.
