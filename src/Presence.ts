@@ -98,6 +98,8 @@ export type PresenceListener = (event: PresenceEvent) => void;
 
 /**
  * Represents parameters that can be set when fetching the presence set.
+ *
+ * @see [Ably.RealtimePresenceParams](https://sdk.ably.com/builds/ably/ably-js/main/typedoc/interfaces/ably.RealtimePresenceParams.html)
  */
 export type PresenceParams = Ably.RealtimePresenceParams;
 
