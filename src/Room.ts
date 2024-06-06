@@ -1,13 +1,13 @@
 import * as Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
-import { Messages, DefaultMessages } from './Messages.js';
+import { DefaultMessages, Messages } from './Messages.js';
 import { DefaultPresence, Presence } from './Presence.js';
 import { DefaultSubscriptionManager } from './SubscriptionManager.js';
 import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 import { DefaultTypingIndicator, TypingIndicators } from './TypingIndicator.js';
 import { DefaultOccupancy, Occupancy } from './Occupancy.js';
 import { ClientOptions } from './config.js';
-import { RoomReactions, DefaultRoomReactions } from './RoomReactions.js';
+import { DefaultRoomReactions, RoomReactions } from './RoomReactions.js';
 
 /**
  * Represents a chat room.
@@ -38,7 +38,6 @@ export interface Room {
    *
    * @returns The room reactions instance for the room.
    */
-
   readonly reactions: RoomReactions;
 
   /**
@@ -46,8 +45,14 @@ export interface Room {
    *
    * @returns The typing indicators instance for the room.
    */
-
   get typingIndicators(): TypingIndicators;
+
+  /**
+   * Allows you to interact with occupancy metrics for the room.
+   *
+   * @returns The occupancy instance for the room.
+   */
+  get occupancy(): Occupancy;
 }
 
 export class DefaultRoom implements Room {
