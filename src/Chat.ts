@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { Rooms } from './Rooms.js';
+import { Rooms, DefaultRooms } from './Rooms.js';
 import { AGENT_STRING } from './version.js';
 import { RealtimeWithOptions } from './realtimeextensions.js';
 import { ClientOptions } from './config.js';
@@ -13,7 +13,7 @@ export class ChatClient {
 
   constructor(realtime: Ably.Realtime, clientOptions?: ClientOptions) {
     this._realtime = realtime;
-    this._rooms = new Rooms(realtime, clientOptions);
+    this._rooms = new DefaultRooms(realtime, clientOptions);
     this.setAgent();
   }
 
