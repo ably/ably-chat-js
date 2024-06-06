@@ -7,22 +7,37 @@ import { RoomReactionEvents } from './events.js';
  * Represents a room-level reaction.
  */
 export interface Reaction {
-  // type of the reaction, such as "like", "love", etc.
+  /**
+   * The type of the reaction, for example "like" or "love".
+   */
   type: string;
 
-  // metadata of the reaction, if any was set
+  /**
+   * metadata of the reaction, if any was set
+   */
   metadata?: any;
 
-  // timestamp of when this reaction was sent
+  /**
+   * The timestamp at which the reaction was sent.
+   */
   createdAt: Date;
 
-  // clientId of the user who sent this reaction
+  /**
+   * The clientId of the user who sent the reaction.
+   */
   clientId: string;
 
-  // true if the current user sent this reaction
+  /**
+   * Whether the reaction was sent by the current user.
+   */
   isSelf: boolean;
 }
 
+/**
+ * The listener function type for room-level reactions.
+ *
+ * @param reaction The reaction that was received.
+ */
 export type RoomReactionListener = (reaction: Reaction) => void;
 
 /**
@@ -33,14 +48,17 @@ export type RoomReactionListener = (reaction: Reaction) => void;
 export interface RoomReactions {
   /**
    * Send a reaction to the room.
+   *
    * @param type The reaction type, for example "like" or an emoji.
    */
   send(type: string): Promise<void>;
 
   /**
    * Send a reaction to the room including some metadata.
+   *
    * @param type The reaction type, for example "like" or an emoji.
    * @param metadata Any JSON-serializable data that will be attached to the reaction.
+   * @returns The returned promise resolves when the reaction was sent. Note that it is possible to receive your own reaction via the reactions listener before this promise resolves.
    */
   send(type: string, metadata?: any): Promise<void>;
 
@@ -49,14 +67,15 @@ export interface RoomReactions {
    * the room-level reactions Ably realtime channel. When the last listener is removed via unsubscribe() the SDK
    * automatically detaches from the channel.
    *
-   * @param listener
+   * @param listener The listener function to be called when a reaction is received.
    * @returns A promise that resolves when attachment completed or instantly if already attached.
    */
   subscribe(listener: RoomReactionListener): Promise<Ably.ChannelStateChange | null>;
 
   /**
    * Unsubscribe removes the given listener. If no other listeners remain the SDK detaches from the realtime channel.
-   * @param listener
+   *
+   * @param listener The listener to remove.
    * @returns Promise that resolves instantly for any but the last subscriber. When removing the last subscriber the promise resolves when detachment was successful.
    */
   unsubscribe(listener: RoomReactionListener): Promise<void>;
@@ -64,8 +83,11 @@ export interface RoomReactions {
   /** Returns the full name of the Ably realtime channel used for room-level reactions. */
   get realtimeChannelName(): string;
 
-  /** Returns an instance of the Ably realtime channel used for room-level reactions.
+  /**
+   * Returns an instance of the Ably realtime channel used for room-level reactions.
    * Avoid using this directly unless special features that cannot otherwise be implemented are needed.
+   *
+   * @returns The Ably realtime channel instance.
    */
   get channel(): Ably.RealtimeChannel;
 }
@@ -87,10 +109,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   }
 
   /**
-   * Send a room-level reaction with given type and metadata.
-   * @param type A string representing the reaction type, for example "like" or an emoji.
-   * @param metadata Any JSON serializable info to be associated with the reaction.
-   * @returns The returned promise resolves when the reaction was sent. Note that it is possible to receive your own reaction via the reactions listener before this promise resolves.
+   * @inheritDoc Reactions
    */
   send(type: string, metadata?: any): Promise<void> {
     const payload: any = { type: type };
@@ -101,12 +120,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   }
 
   /**
-   * Subscribe to receive room-level reactions. At the first subscription the SDK will automatically attach to
-   * the room-level reactions Ably realtime channel. When the last listener is removed via unsubscribe() the SDK
-   * automatically detaches from the channel.
-   *
-   * @param listener
-   * @returns A promise that resolves when attachment completed or instantly if already attached.
+   * @inheritDoc Reactions
    */
   subscribe(listener: RoomReactionListener) {
     const hasListeners = this.hasListeners();
@@ -138,9 +152,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   };
 
   /**
-   * Unsubscribe removes the given listener. If no other listeners remain the SDK detaches from the realtime channel.
-   * @param listener
-   * @returns Promise that resolves instantly for any but the last subscriber. When removing the last subscriber the promise resolves when detachment was successful.
+   * @inheritDoc Reactions
    */
   unsubscribe(listener: RoomReactionListener) {
     this.off(listener);
