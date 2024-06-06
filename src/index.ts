@@ -9,3 +9,4 @@ export type { Messages, MessageListener, QueryOptions, Direction } from './Messa
 export type { PaginatedResult } from './query.js';
 export type { Reaction, RoomReactions } from './RoomReactions.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener } from './Occupancy.js';
+export type { ErrorInfo } from './errors.js';
