@@ -62,3 +62,25 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run build
+  demo-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 20
+      - name: npm ci (lib)
+        run: npm ci
+      - name: npm build (lib)
+        run: npm run build
+      - name: npm ci (demo)
+        run: npm ci
+        working-directory: demo
+      - name: npm ci (ably-token-request)
+        run: npm ci
+        working-directory: demo/api/ably-token-request
+      - name: 'npm build (demo)'
+        run: npm run build
+        working-directory: demo
