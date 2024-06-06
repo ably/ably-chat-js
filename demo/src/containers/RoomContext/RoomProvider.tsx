@@ -1,9 +1,9 @@
 import { FC, ReactNode, useMemo } from 'react';
-import { Chat } from '@ably-labs/chat';
+import { ChatClient } from '@ably-labs/chat';
 import { RoomContext } from './RoomContext';
 
 interface RoomProviderProps {
-  client: Chat;
+  client: ChatClient;
   roomId: string;
   children: ReactNode;
 }
