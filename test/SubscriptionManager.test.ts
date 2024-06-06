@@ -60,7 +60,7 @@ const assertNoChannelStateChange = (channel, expectedState) => {
   });
 };
 
-describe('subscription manager', {timeout: 15000}, () => {
+describe('subscription manager', { timeout: 15000 }, () => {
   beforeEach<TestContext>((context) => {
     const channelName = randomString();
     const ablyRealtime = ablyRealtimeClient();

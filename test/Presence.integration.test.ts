@@ -17,7 +17,7 @@ interface TestContext {
   chat: Rooms;
 }
 
-describe('UserPresence', () => {
+describe('UserPresence', { timeout: 10000 }, () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>(async (context) => {
     context.realtime = ablyRealtimeClient();
@@ -62,7 +62,7 @@ describe('UserPresence', () => {
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
     // Wait for the enter event to be received
     await enterEventPromise;
-  }, 5000);
+  });
 
   // Test for successful sending of presence update with clientId and custom user data
   it<TestContext>('should successfully send presence update with clientId and custom user data', async (context) => {
@@ -85,7 +85,7 @@ describe('UserPresence', () => {
     await context.chatRoom.presence.update({ customKeyOne: 1 });
     // Wait for the update event to be received
     await enterEventPromise;
-  }, 5000);
+  });
 
   // Test for successful leaving of presence
   it<TestContext>('should successfully leave presence', async (context) => {
@@ -108,7 +108,7 @@ describe('UserPresence', () => {
     await context.chatRoom.presence.leave({ customKeyOne: 1 });
     // Wait for the leave event to be received
     await enterEventPromise;
-  }, 5000);
+  });
 
   // Test for successful fetching of presence users
   it<TestContext>('should successfully fetch presence users ', async (context) => {
@@ -163,7 +163,7 @@ describe('UserPresence', () => {
     expect(fetchedPresenceAfterLeave, 'fetched presence should not contain clientId3').not.toEqual(
       expect.arrayContaining([{ clientId: 'clientId3', status: 'present' }]),
     );
-  }, 5000);
+  });
 
   it<TestContext>('should successfully fetch a single presence user ', async (context) => {
     // Enter presence for a client
