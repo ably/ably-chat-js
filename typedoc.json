@@ -4,8 +4,9 @@
   "out": "typedoc/generated",
   "readme": "typedoc/landing-page.md",
   "tsconfig": "tsconfig.base.json",
-  "treatWarningsAsErrors": false,
+  "treatWarningsAsErrors": true,
   "includeVersion": true,
+  "excludeInternal": true,
   "validation": true,
   "requiredToBeDocumented": [
     "Accessor",

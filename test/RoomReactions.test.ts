@@ -1,7 +1,7 @@
 import { beforeEach, describe, vi, it, expect } from 'vitest';
 import * as Ably from 'ably';
 import { ChatApi } from '../src/ChatApi.js';
-import { Room } from '../src/Room.js';
+import { DefaultRoom } from '../src/Room.js';
 import { DefaultClientOptions } from '../src/config.js';
 
 interface TestContext {
@@ -65,7 +65,7 @@ describe('Reactions', () => {
       new Promise<void>((done, reject) => {
         const publishTimestamp = new Date().getTime();
         const { chatApi, realtime } = context;
-        const room = new Room('abcd', realtime, chatApi, DefaultClientOptions);
+        const room = new DefaultRoom('abcd', realtime, chatApi, DefaultClientOptions);
 
         room.reactions
           .subscribe((reaction) => {
@@ -102,7 +102,7 @@ describe('Reactions', () => {
       new Promise<void>((done, reject) => {
         const publishTimestamp = new Date().getTime();
         const { chatApi, realtime } = context;
-        const room = new Room('abcd', realtime, chatApi, DefaultClientOptions);
+        const room = new DefaultRoom('abcd', realtime, chatApi, DefaultClientOptions);
 
         room.reactions
           .subscribe((reaction) => {
@@ -140,7 +140,7 @@ describe('Reactions', () => {
     it<TestContext>('should be able to send a reaction and see it back on the realtime channel', (context) =>
       new Promise<void>((done, reject) => {
         const { chatApi, realtime } = context;
-        const room = new Room('abcd', realtime, chatApi, DefaultClientOptions);
+        const room = new DefaultRoom('abcd', realtime, chatApi, DefaultClientOptions);
 
         room.reactions
           .subscribe((reaction) => {

@@ -29,21 +29,21 @@ export interface Message {
 
   /**
    * Determines if this message was created before the given message.
-   * @param message
+   * @param message The message to compare against.
    * @returns true if this message was created before the given message, in global order.
    */
   before(message: Message): boolean;
 
   /**
    * Determines if this message was created after the given message.
-   * @param message
+   * @param message The message to compare against.
    * @returns true if this message was created after the given message, in global order.
    */
   after(message: Message): boolean;
 
   /**
    * Determines if this message is equal to the given message.
-   * @param message
+   * @param message The message to compare against.
    * @returns true if this message is equal to the given message.
    */
   equal(message: Message): boolean;

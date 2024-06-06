@@ -31,6 +31,8 @@ export interface SubscriptionManager {
  *
  * It ensures that when all subscriptions (messages and presence) are removed, the channel is implicitly
  * detached.
+ *
+ * @internal
  */
 export class DefaultSubscriptionManager implements SubscriptionManager {
   private readonly _channel: Ably.RealtimeChannel;

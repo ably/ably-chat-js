@@ -1,7 +1,7 @@
 import { beforeEach, describe, vi, it, expect } from 'vitest';
 import * as Ably from 'ably';
 import { ChatApi } from '../src/ChatApi.js';
-import { Room } from '../src/Room.js';
+import { DefaultRoom } from '../src/Room.js';
 import { randomRoomId } from './helper/identifier.js';
 import { OccupancyEvent } from '../src/Occupancy.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
@@ -70,7 +70,7 @@ describe('Occupancy', () => {
   it<TestContext>('registers its internal listener as subscriptions change', async (context) => {
     const { realtime, chatApi, roomId, channelLevelListeners } = context;
 
-    const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+    const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
     const listener1 = () => {};
     const listener2 = () => {};
 
@@ -97,7 +97,7 @@ describe('Occupancy', () => {
   it<TestContext>('enables channel occupancy as subscriptions change', async (context) => {
     const { realtime, chatApi, roomId } = context;
 
-    const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+    const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
     const listener1 = () => {};
     const listener2 = () => {};
 
@@ -121,7 +121,7 @@ describe('Occupancy', () => {
   it<TestContext>('receives occupancy updates', async (context) =>
     new Promise<void>((done, reject) => {
       const { realtime, chatApi, roomId } = context;
-      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
       room.occupancy
         .subscribe((event: OccupancyEvent) => {
           try {
@@ -153,7 +153,7 @@ describe('Occupancy', () => {
   it<TestContext>('receives occupancy updates zero values', async (context) =>
     new Promise<void>((done, reject) => {
       const { realtime, chatApi, roomId } = context;
-      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
       room.occupancy
         .subscribe((event: OccupancyEvent) => {
           try {
@@ -186,7 +186,7 @@ describe('Occupancy', () => {
     new Promise<void>((done, reject) => {
       ablyRealtimeClient();
       const { realtime, chatApi, roomId } = context;
-      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
       room.occupancy
         .subscribe(() => {
           reject('should not have received occupancy event without connections');
@@ -214,7 +214,7 @@ describe('Occupancy', () => {
     new Promise<void>((done, reject) => {
       ablyRealtimeClient();
       const { realtime, chatApi, roomId } = context;
-      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
       room.occupancy
         .subscribe(() => {
           reject('should not have received occupancy event without presenceMembers');
@@ -242,7 +242,7 @@ describe('Occupancy', () => {
     new Promise<void>((done, reject) => {
       ablyRealtimeClient();
       const { realtime, chatApi, roomId } = context;
-      const room = new Room(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
       room.occupancy
         .subscribe(() => {
           reject('should not have received occupancy event without metrics');

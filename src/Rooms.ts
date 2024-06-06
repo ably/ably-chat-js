@@ -1,21 +1,12 @@
 import * as Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
-import { Room } from './Room.js';
+import { DefaultRoom, Room } from './Room.js';
 import { ClientOptions, DefaultClientOptions } from './config.js';
 
-export class Rooms {
-  private readonly realtime: Ably.Realtime;
-  private readonly chatApi: ChatApi;
-  private readonly _clientOptions: ClientOptions;
-
-  private rooms: Record<string, Room> = {};
-
-  constructor(realtime: Ably.Realtime, clientOptions?: ClientOptions) {
-    this.realtime = realtime;
-    this.chatApi = new ChatApi(realtime);
-    this._clientOptions = clientOptions ? clientOptions : DefaultClientOptions;
-  }
-
+/**
+ * Manages the lifecycle of chat rooms.
+ */
+export interface Rooms {
   /**
    * Gets a room reference by ID. The Rooms class ensures that only one reference
    * exists for each room. A new reference object is created if it doesn't already
@@ -26,22 +17,7 @@ export class Rooms {
    * @param roomId The ID of the room.
    * @returns Room A new or existing Room object.
    */
-  get(roomId: string): Room {
-    if (this.rooms[roomId]) return this.rooms[roomId];
-
-    const room = new Room(roomId, this.realtime, this.chatApi, this._clientOptions);
-    this.rooms[roomId] = room;
-
-    return room;
-  }
-
-  /**
-   * Get the client options used to create the Rooms instance.
-   * @returns ClientOptions
-   */
-  get clientOptions(): ClientOptions {
-    return this._clientOptions;
-  }
+  get(roomId: string): Room;
 
   /**
    * Release the Room object if it exists. This method only releases the reference
@@ -49,7 +25,59 @@ export class Rooms {
    * events, leave the chat room or perform any other cleanup task. Those should
    * be done before calling release().
    *
-   * @param roomId
+   * @param roomId The ID of the room.
+   */
+  release(roomId: string): Promise<void>;
+
+  /**
+   * Get the client options used to create the Chat instance.
+   * @returns ClientOptions
+   */
+  get clientOptions(): ClientOptions;
+}
+
+/**
+ * Manages the chat rooms.
+ */
+export class DefaultRooms implements Rooms {
+  private readonly realtime: Ably.Realtime;
+  private readonly chatApi: ChatApi;
+  private readonly _clientOptions: ClientOptions;
+  private rooms: Record<string, Room> = {};
+
+  /**
+   * Constructs a new Rooms instance.
+   *
+   * @param realtime An instance of the Ably Realtime client.
+   * @param clientOptions The client options from the chat instance.
+   */
+  constructor(realtime: Ably.Realtime, clientOptions?: ClientOptions) {
+    this.realtime = realtime;
+    this.chatApi = new ChatApi(realtime);
+    this._clientOptions = clientOptions ? clientOptions : DefaultClientOptions;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  get(roomId: string): Room {
+    if (this.rooms[roomId]) return this.rooms[roomId];
+
+    const room = new DefaultRoom(roomId, this.realtime, this.chatApi, this._clientOptions);
+    this.rooms[roomId] = room;
+
+    return room;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  get clientOptions(): ClientOptions {
+    return this._clientOptions;
+  }
+
+  /**
+   * @inheritDoc
    */
   async release(roomId: string) {
     const room = this.rooms[roomId];

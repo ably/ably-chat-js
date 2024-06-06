@@ -58,6 +58,7 @@ export type OccupancyEvent = {
 
 /**
  * A listener that is called when the occupancy of a chat room changes.
+ * @param event The occupancy event.
  */
 export type OccupancyListener = (event: OccupancyEvent) => void;
 
