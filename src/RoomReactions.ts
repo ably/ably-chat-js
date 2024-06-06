@@ -1,4 +1,4 @@
-import Ably from 'ably';
+import * as Ably from 'ably';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 import { RoomReactionEvents } from './events.js';

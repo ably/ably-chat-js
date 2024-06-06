@@ -1,6 +1,6 @@
 import { OccupancyEvent } from './Occupancy.js';
 import { Message } from './entities.js';
-import { Realtime, ErrorInfo } from 'ably';
+import * as Ably from 'ably';
 import { PaginatedResult } from './query.js';
 
 export interface GetMessagesQueryParams {
@@ -23,9 +23,9 @@ interface CreateMessageRequest {
  * Chat SDK Backend
  */
 export class ChatApi {
-  private readonly realtime: Realtime;
+  private readonly realtime: Ably.Realtime;
 
-  constructor(realtime: Realtime) {
+  constructor(realtime: Ably.Realtime) {
     this.realtime = realtime;
   }
 
@@ -53,7 +53,7 @@ export class ChatApi {
     body?: REQ,
   ): Promise<RES> {
     const response = await this.realtime.request(method, url, 1.1, {}, body);
-    if (!response.success) throw new ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    if (!response.success) throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
     const [result] = response.items;
     return result as RES;
   }
@@ -64,7 +64,7 @@ export class ChatApi {
     body?: REQ,
   ): Promise<PaginatedResult<RES>> {
     const response = await this.realtime.request('GET', url, 1.1, params, body);
-    if (!response.success) throw new ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    if (!response.success) throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
     return response;
   }
 }
