@@ -10,7 +10,7 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import'],
-  extends: ['eslint:recommended', 'plugin:security/recommended'],
+  extends: ['eslint:recommended', 'plugin:security/recommended-legacy'],
   rules: {
     'eol-last': 'error',
     // security/detect-object-injection just gives a lot of false positives
