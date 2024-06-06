@@ -46,10 +46,10 @@ generate an ID.
 
 ## Getting a Room
 
-You can get Room with name `"abc"` this way:
+You can get Room with name `"basketball-stream"` this way:
 
 ```ts
-const room = chat.rooms.get('abc');
+const room = chat.rooms.get('basketball-stream');
 ```
 
 There is no need to create the room. You can start using it right away.
@@ -61,10 +61,10 @@ There is no need to create the room. You can start using it right away.
 To send a message, simply call `send` on the Room's `messages` property, with the text you want to send.
 
 ```ts
-const message = await room.messages.send('hello');
+const message = await room.messages.send("This was a great shot!");
 ```
 
-### Message Object
+### Message Payload
 
 ```json5
 {
@@ -146,7 +146,7 @@ room.messages.channel.on('attached', (stateChange) => {
 You can also get the realtime channel name of the chat room by calling `name` on the underlying channel
 
 ```ts
-channel.name;
+room.messages.channel.name;
 ```
 
 Note, that the SDK will automatically detach a channel whenever it isn't needed. For example if you unsubscribe all of your listeners
@@ -159,15 +159,14 @@ for room reactions, we'll automatically detach from the channel used for this pu
 You can get the complete list of current presence members, their state and data, by calling the get method.
 
 ```ts
-import { PresenceMember } from './Presence';
 // Retrieve the entire list of present members
-const presentMembers: PresenceMember[] = await room.presence.get();
+const presentMembers = await room.presence.get();
 
 // You can supply a clientId to retrieve the presence of a specific member with the given clientId
-const presentMember: PresenceMember[] = await room.presence.get({ clientId: 'client-id' });
+const presentMember = await room.presence.get({ clientId: 'client-id' });
 
 // You can call this to get a simple boolean value of whether a member is present or not
-const isPresent: boolean = await room.presence.userIsPresent('client-id');
+const isPresent = await room.presence.userIsPresent('client-id');
 ```
 
 Calls to `presence.get()` will return an array of the presence messages. Where each message contains the most recent
@@ -188,7 +187,7 @@ the users
 status or profile picture.
 
 ```ts
-await room.presence.enter({ status: 'busy' });
+await room.presence.update({ status: 'busy' });
 ```
 
 ### Leave Presence
@@ -250,7 +249,7 @@ You can get the complete set of the current typing clientIds, by calling the get
 
 ```ts
 // Retrieve the entire list of currently typing clients
-const currentlyTypingClientIds: Set<string> = await room.presence.get();
+const currentlyTypingClientIds = await room.typingIndicators.get();
 ```
 
 ### Start Typing
@@ -289,9 +288,7 @@ await room.typingIndicators.stopTyping();
 You can provide a single listener, if so, the listener will be subscribed to receive all typing indicator event types.
 
 ```ts
-import { TypingIndicatorEvent } from './TypingIndicator';
-
-await room.typingIndicators.subscribe((event: TypingIndicatorEvent) => {
+await room.typingIndicators.subscribe((event) => {
   console.log(event);
 });
 ```
@@ -299,7 +296,7 @@ await room.typingIndicators.subscribe((event: TypingIndicatorEvent) => {
 You can also provide a specific event type or types to subscribe to along with a listener.
 
 ```ts
-await room.typingIndicators.subscribe('startedTyping', (event: TypingIndicatorEvents) => {
+await room.typingIndicators.subscribe('startedTyping', (event) => {
   console.log(event);
 });
 ```
@@ -321,7 +318,7 @@ Using Occupancy, you can subscribe to regular updates regarding how many users a
 To subscribe to occupancy updates, subscribe a listener to the chat rooms `occupancy` member:
 
 ```ts
-  const occupancyListener = (event: OccupancyEvent) => {
+  const occupancyListener = (event) => {
     console.log(event);
   };
 
