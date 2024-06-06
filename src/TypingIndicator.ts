@@ -74,21 +74,32 @@ export interface TypingIndicators {
 
 /**
  * Represents a typing indicator event.
- * @property currentlyTypingClientIds - A set of clientIds that are currently typing.
- * @property change - The change in typing state of a user in the chat room.
- * @property change.clientId - The clientId of the user whose typing state has changed.
- * @property change.isTyping - A boolean indicating whether the user is typing or not.
  */
 export type TypingIndicatorEvent = {
+  /**
+   * A set of clientIds that are currently typing.
+   */
   currentlyTypingClientIds: Set<string>;
+
+  /**
+   * The change that caused the typing indicator event.
+   */
   change: {
+    /**
+     * The clientId of the client whose typing state has changed.
+     */
     clientId: string;
+
+    /**
+     * Whether the client is typing or not.
+     */
     isTyping: boolean;
   };
 };
 
 /**
  * A listener which listens for typing indicator events.
+ * @param event The typing indicator event.
  */
 export type TypingListener = (event: TypingIndicatorEvent) => void;
 
@@ -126,14 +137,14 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
   }
 
   /**
-   * @inheritdoc TypingIndicators
+   * @inheritDoc
    */
   get(): Set<string> {
     return new Set<string>(this._currentlyTypingClientIds);
   }
 
   /**
-   * @inheritdoc TypingIndicators
+   * @inheritDoc
    */
   get channel(): Ably.RealtimeChannel {
     return this._managedChannel.channel;
@@ -149,7 +160,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
   }
 
   /**
-   * @inheritdoc TypingIndicators
+   * @inheritDoc
    */
   async startTyping(): Promise<void> {
     // If the user is already typing, reset the timer
@@ -164,7 +175,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
   }
 
   /**
-   * @inheritdoc TypingIndicators
+   * @inheritDoc
    */
   async stopTyping(): Promise<void> {
     // Clear the timer and emit typingStopped event
@@ -177,7 +188,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
   }
 
   /**
-   * @inheritdoc TypingIndicators
+   * @inheritDoc
    */
   async subscribe(listener: TypingListener): Promise<void> {
     const hasListeners = this.hasListeners();
@@ -189,7 +200,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
   }
 
   /**
-   * @inheritdoc TypingIndicators
+   * @inheritDoc
    */
   async unsubscribe(listener: TypingListener): Promise<void> {
     this.off(listener);

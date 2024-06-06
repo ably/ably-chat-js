@@ -3,7 +3,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
 import { Room } from '../src/Room.js';
-import { Rooms } from '../src/Rooms.js';
+import { DefaultRooms, Rooms } from '../src/Rooms.js';
 import { randomClientId, randomRoomId } from './helper/identifier.js';
 import { TypingIndicatorEvent } from '../src/TypingIndicator.js';
 
@@ -38,7 +38,7 @@ describe('TypingIndicators', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
     context.roomId = randomRoomId();
-    context.chat = new Rooms(context.realtime, { typingTimeoutMs: 300 });
+    context.chat = new DefaultRooms(context.realtime, { typingTimeoutMs: 300 });
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = context.chat.get(context.roomId);
   });
@@ -100,9 +100,9 @@ describe('TypingIndicators', () => {
       });
       // Create new clients with new client ids
       const clientId1 = randomClientId();
-      const client1 = new Rooms(ablyRealtimeClient({ clientId: clientId1 }), { typingTimeoutMs: 1000 });
+      const client1 = new DefaultRooms(ablyRealtimeClient({ clientId: clientId1 }), { typingTimeoutMs: 1000 });
       const clientId2 = randomClientId();
-      const client2 = new Rooms(ablyRealtimeClient({ clientId: clientId2 }), { typingTimeoutMs: 1000 });
+      const client2 = new DefaultRooms(ablyRealtimeClient({ clientId: clientId2 }), { typingTimeoutMs: 1000 });
 
       // send typing indicator for client1 and client2
       await client1.get(context.roomId).typingIndicators.startTyping();
