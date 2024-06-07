@@ -88,6 +88,7 @@ enum MessagesInternalState {
  * @param event The message event that was received.
  */
 export type MessageListener = (event: MessageEventPayload) => void;
+
 /**
  * This class is used to interact with messages in a chat room including subscribing
  * to them, fetching history, or sending messages.
@@ -284,7 +285,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   private async doAttach(channelHandler: Ably.messageCallback<Ably.InboundMessage>) {
     const unsubscribeFromChannel = () => this.channel.unsubscribe(channelHandler);
     this.unsubscribeFromChannel = unsubscribeFromChannel;
-    await this.channel.subscribe(channelHandler);
+    await this.channel.subscribe(Object.values(MessageEvents), channelHandler);
 
     if (this.unsubscribeFromChannel !== unsubscribeFromChannel) return;
 
