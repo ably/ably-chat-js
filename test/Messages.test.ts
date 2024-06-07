@@ -1,4 +1,4 @@
-import { beforeEach, describe, vi, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Ably from 'ably';
 import { ChatApi } from '../src/ChatApi.js';
 import { DefaultRoom } from '../src/Room.js';
@@ -23,13 +23,14 @@ describe('Messages', () => {
     vi.spyOn(channel, 'subscribe').mockImplementation(
       // @ts-ignore
       async (
-        nameOrListener: string | Ably.messageCallback<Ably.Message>,
+        eventsOrListeners: Array<string> | Ably.messageCallback<Ably.Message>,
         listener: Ably.messageCallback<Ably.Message>,
       ) => {
-        if (typeof nameOrListener === 'string') {
+        if (Array.isArray(eventsOrListeners)) {
+          expect(eventsOrListeners, 'array should only contain MessageEvents').toEqual(Object.values(MessageEvents));
           listeners.push(listener);
         } else {
-          listeners.push(nameOrListener);
+          listeners.push(eventsOrListeners);
         }
         // @ts-ignore
         context.emulateBackendPublish = (msg) => {
