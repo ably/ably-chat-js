@@ -13,7 +13,7 @@ interface Timeserial {
  * Allows for comparison of messages based on their timeserials.
  */
 export class ChatMessage implements Message {
-  private readonly calculatedTimeserial: Timeserial;
+  private readonly _calculatedTimeserial: Timeserial;
 
   constructor(
     public readonly timeserial: string,
@@ -22,33 +22,22 @@ export class ChatMessage implements Message {
     public readonly content: string,
     public readonly createdAt: number,
   ) {
-    this.calculatedTimeserial = ChatMessage.calculateTimeserial(timeserial);
+    this._calculatedTimeserial = ChatMessage.calculateTimeserial(timeserial);
 
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
   }
 
-  before(message: ChatMessage): boolean {
-    ChatMessage.assertMessageIsChatMessage(message);
+  before(message: Message): boolean {
     return ChatMessage.timeserialCompare(this, message) < 0;
   }
 
-  after(message: ChatMessage): boolean {
-    ChatMessage.assertMessageIsChatMessage(message);
+  after(message: Message): boolean {
     return ChatMessage.timeserialCompare(this, message) > 0;
   }
 
-  equal(message: ChatMessage): boolean {
-    ChatMessage.assertMessageIsChatMessage(message);
+  equal(message: Message): boolean {
     return ChatMessage.timeserialCompare(this, message) === 0;
-  }
-
-  private static assertMessageIsChatMessage(message: Message): ChatMessage {
-    if (!(message instanceof ChatMessage)) {
-      throw new Error('Message for comparison is not a ChatMessage');
-    }
-
-    return message;
   }
 
   /**
@@ -57,10 +46,16 @@ export class ChatMessage implements Message {
    * 0 if the timeserials are equal.
    * <0 if the first timeserial is less than the second.
    * >0 if the first timeserial is greater than the second.
+   *
+   * @throws Error if timeserial of either message is invalid.
    */
-  private static timeserialCompare(first: ChatMessage, second: ChatMessage): number {
-    const firstTimeserial = first.calculatedTimeserial;
-    const secondTimeserial = second.calculatedTimeserial;
+  private static timeserialCompare(first: Message, second: Message): number {
+    const firstTimeserial = (first as ChatMessage)._calculatedTimeserial
+      ? (first as ChatMessage)._calculatedTimeserial
+      : ChatMessage.calculateTimeserial(first.timeserial);
+    const secondTimeserial = (second as ChatMessage)._calculatedTimeserial
+      ? (second as ChatMessage)._calculatedTimeserial
+      : ChatMessage.calculateTimeserial(second.timeserial);
 
     // Compare the timestamp
     const timestampDiff = firstTimeserial.timestamp - secondTimeserial.timestamp;
@@ -91,6 +86,8 @@ export class ChatMessage implements Message {
 
   /**
    * Calculate the timeserial object from a timeserial string.
+   *
+   * @throws Error if timeserial is invalid.
    */
   private static calculateTimeserial(timeserial: string): Timeserial {
     const [seriesId, rest] = timeserial.split('@');
