@@ -24,21 +24,21 @@ export interface Room {
    *
    * @returns The messages instance for the room.
    */
-  readonly messages: Messages;
+  get messages(): Messages;
 
   /**
    * Allows you to subscribe to presence events in the room.
    *
    * @returns The presence instance for the room.
    */
-  readonly presence: Presence;
+  get presence(): Presence;
 
   /**
    * Allows you to interact with room-level reactions.
    *
    * @returns The room reactions instance for the room.
    */
-  readonly reactions: RoomReactions;
+  get reactions(): RoomReactions;
 
   /**
    * Allows you to interact with typing indicators in the room.
@@ -58,10 +58,10 @@ export interface Room {
 export class DefaultRoom implements Room {
   private readonly _roomId: string;
   private readonly chatApi: ChatApi;
-  readonly messages: Messages;
+  private readonly _messages: Messages;
   private readonly _typingIndicators: TypingIndicators;
-  readonly presence: Presence;
-  readonly reactions: RoomReactions;
+  private readonly _presence: Presence;
+  private readonly _reactions: RoomReactions;
   private readonly _occupancy: Occupancy;
 
   /**
@@ -80,8 +80,8 @@ export class DefaultRoom implements Room {
     const subscriptionManager = new DefaultSubscriptionManager(
       realtime.channels.get(messagesChannelName, DEFAULT_CHANNEL_OPTIONS),
     );
-    this.messages = new DefaultMessages(roomId, subscriptionManager, this.chatApi, realtime.auth.clientId);
-    this.presence = new DefaultPresence(subscriptionManager, realtime.auth.clientId);
+    this._messages = new DefaultMessages(roomId, subscriptionManager, this.chatApi, realtime.auth.clientId);
+    this._presence = new DefaultPresence(subscriptionManager, realtime.auth.clientId);
     this._typingIndicators = new DefaultTypingIndicator(
       roomId,
       realtime,
@@ -92,24 +92,48 @@ export class DefaultRoom implements Room {
     const reactionsManagedChannel = new DefaultSubscriptionManager(
       realtime.channels.get(`${this._roomId}::$chat::$reactions`, DEFAULT_CHANNEL_OPTIONS),
     );
-    this.reactions = new DefaultRoomReactions(roomId, reactionsManagedChannel, realtime.auth.clientId);
+    this._reactions = new DefaultRoomReactions(roomId, reactionsManagedChannel, realtime.auth.clientId);
     this._occupancy = new DefaultOccupancy(roomId, subscriptionManager, this.chatApi);
   }
 
   /**
-   * @returns The room identifier.
+   * @inheritdoc Room
+   */
+  get messages(): Messages {
+    return this._messages;
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  get presence(): Presence {
+    return this._presence;
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  get reactions(): RoomReactions {
+    return this._reactions;
+  }
+
+  /**
+   * @inheritdoc Room
    */
   get roomId(): string {
     return this._roomId;
   }
 
   /**
-   * @returns The typing indicators instance for the room.
+   * @inheritdoc Room
    */
   get typingIndicators(): TypingIndicators {
     return this._typingIndicators;
   }
 
+  /**
+   * @inheritdoc Room
+   */
   get occupancy(): Occupancy {
     return this._occupancy;
   }
