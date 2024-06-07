@@ -16,13 +16,16 @@ export class ChatMessage implements Message {
   private readonly calculatedTimeserial: Timeserial;
 
   constructor(
-    public timeserial: string,
-    public clientId: string,
-    public roomId: string,
-    public content: string,
-    public createdAt: number,
+    public readonly timeserial: string,
+    public readonly clientId: string,
+    public readonly roomId: string,
+    public readonly content: string,
+    public readonly createdAt: number,
   ) {
     this.calculatedTimeserial = ChatMessage.calculateTimeserial(timeserial);
+
+    // The object is frozen after constructing to enforce readonly at runtime too
+    Object.freeze(this);
   }
 
   before(message: ChatMessage): boolean {
