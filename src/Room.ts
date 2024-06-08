@@ -1,13 +1,14 @@
 import * as Ably from 'ably';
+
 import { ChatApi } from './ChatApi.js';
-import { DefaultMessages, Messages } from './Messages.js';
-import { DefaultPresence, Presence } from './Presence.js';
-import { DefaultSubscriptionManager } from './SubscriptionManager.js';
-import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
-import { DefaultTypingIndicator, TypingIndicators } from './TypingIndicator.js';
-import { DefaultOccupancy, Occupancy } from './Occupancy.js';
 import { ClientOptions } from './config.js';
+import { DefaultMessages, Messages } from './Messages.js';
+import { DefaultOccupancy, Occupancy } from './Occupancy.js';
+import { DefaultPresence, Presence } from './Presence.js';
 import { DefaultRoomReactions, RoomReactions } from './RoomReactions.js';
+import { DefaultSubscriptionManager } from './SubscriptionManager.js';
+import { DefaultTypingIndicator, TypingIndicators } from './TypingIndicator.js';
+import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 
 /**
  * Represents a chat room.

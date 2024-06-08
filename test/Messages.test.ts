@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Ably from 'ably';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { ChatApi } from '../src/ChatApi.js';
-import { DefaultRoom } from '../src/Room.js';
 import { MessageEvents } from '../src/events.js';
+import { DefaultRoom } from '../src/Room.js';
 import { randomRoomId } from './helper/identifier.js';
 
 interface TestContext {

@@ -1,7 +1,8 @@
 import * as Ably from 'ably';
+
+import { RoomReactionEvents } from './events.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
-import { RoomReactionEvents } from './events.js';
 
 /**
  * Represents a room-level reaction.

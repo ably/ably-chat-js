@@ -85,4 +85,4 @@ class MockRealtime {
 
 class MockErrorInfo extends Ably.ErrorInfo {}
 
-export { MockRealtime as Realtime, MockErrorInfo as ErrorInfo };
+export { MockErrorInfo as ErrorInfo,MockRealtime as Realtime };

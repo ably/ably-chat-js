@@ -1,8 +1,9 @@
-import EventEmitter from './utils/EventEmitter.js';
-import { TypingIndicatorEvents } from './events.js';
 import * as Ably from 'ably';
-import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
+
+import { TypingIndicatorEvents } from './events.js';
 import { DefaultSubscriptionManager, SubscriptionManager } from './SubscriptionManager.js';
+import EventEmitter from './utils/EventEmitter.js';
+import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 
 /**
  * Represents the typing indicator events mapped to their respective event payloads.

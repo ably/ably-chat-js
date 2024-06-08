@@ -1,11 +1,12 @@
 // Import necessary modules and dependencies
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ablyRealtimeClient } from './helper/realtimeClient.js';
+
 import { Room } from '../src/Room.js';
 import { DefaultRooms, Rooms } from '../src/Rooms.js';
-import { randomClientId, randomRoomId } from './helper/identifier.js';
 import { TypingIndicatorEvent } from '../src/TypingIndicator.js';
+import { randomClientId, randomRoomId } from './helper/identifier.js';
+import { ablyRealtimeClient } from './helper/realtimeClient.js';
 
 const TEST_TIMEOUT = 10000;
 

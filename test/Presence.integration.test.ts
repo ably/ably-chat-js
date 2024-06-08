@@ -1,13 +1,14 @@
 // Import necessary modules and dependencies
-import { PresenceData, PresenceEvent } from '../src/Presence.js';
 import * as Ably from 'ably';
 import { PresenceAction, Realtime } from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ablyRealtimeClient } from './helper/realtimeClient.js';
+
 import { PresenceEvents } from '../src/events.js';
+import { PresenceData, PresenceEvent } from '../src/Presence.js';
 import { Room } from '../src/Room.js';
-import { Rooms, DefaultRooms } from '../src/Rooms.js';
+import { DefaultRooms, Rooms } from '../src/Rooms.js';
 import { randomRoomId } from './helper/identifier.js';
+import { ablyRealtimeClient } from './helper/realtimeClient.js';
 
 // Define the test context interface
 interface TestContext {

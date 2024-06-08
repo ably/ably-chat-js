@@ -1,6 +1,7 @@
-import { OccupancyEvent } from './Occupancy.js';
-import { Message } from './Message.js';
 import * as Ably from 'ably';
+
+import { Message } from './Message.js';
+import { OccupancyEvent } from './Occupancy.js';
 import { PaginatedResult } from './query.js';
 
 export interface GetMessagesQueryParams {
