@@ -139,18 +139,18 @@ export interface Messages {
  * Get an instance via room.messages.
  */
 export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages {
-  private readonly roomId: string;
+  private readonly _roomId: string;
   private readonly _managedChannel: SubscriptionManager;
-  private readonly chatApi: ChatApi;
-  private readonly clientId: string;
+  private readonly _chatApi: ChatApi;
+  private readonly _clientId: string;
   private _internalListener: Ably.messageCallback<Ably.InboundMessage> | undefined;
 
   constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string) {
     super();
-    this.roomId = roomId;
+    this._roomId = roomId;
     this._managedChannel = managedChannel;
-    this.chatApi = chatApi;
-    this.clientId = clientId;
+    this._chatApi = chatApi;
+    this._clientId = clientId;
   }
 
   /**
@@ -164,16 +164,16 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    * @inheritdoc Messages
    */
   async query(options: QueryOptions): Promise<PaginatedResult<Message>> {
-    return this.chatApi.getMessages(this.roomId, options);
+    return this._chatApi.getMessages(this._roomId, options);
   }
 
   /**
    * @inheritdoc Messages
    */
   async send(text: string): Promise<Message> {
-    const response = await this.chatApi.sendMessage(this.roomId, text);
+    const response = await this._chatApi.sendMessage(this._roomId, text);
 
-    return new DefaultMessage(response.timeserial, this.clientId, this.roomId, text, response.createdAt);
+    return new DefaultMessage(response.timeserial, this._clientId, this._roomId, text, response.createdAt);
   }
 
   /**
@@ -250,6 +250,6 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       throw new Ably.ErrorInfo(`received message without timeserial`, 50000, 500);
     }
 
-    return new DefaultMessage(timeserial, clientId, this.roomId, content, timestamp);
+    return new DefaultMessage(timeserial, clientId, this._roomId, content, timestamp);
   }
 }
