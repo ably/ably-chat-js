@@ -1,5 +1,57 @@
-import { Message } from './entities.js';
+/**
+ * Represents a single message in a chat room.
+ */
+export interface Message {
+  /**
+   * The unique identifier of the message.
+   */
+  readonly timeserial: string;
 
+  /**
+   * The clientId of the user who created the message.
+   */
+  readonly clientId: string;
+
+  /**
+   * The roomId of the chat room to which the message belongs.
+   */
+  readonly roomId: string;
+
+  /**
+   * The text content of the message.
+   */
+  readonly content: string;
+
+  /**
+   * The timestamp at which the message was created.
+   */
+  readonly createdAt: number;
+
+  /**
+   * Determines if this message was created before the given message.
+   * @param message The message to compare against.
+   * @returns true if this message was created before the given message, in global order.
+   */
+  before(message: Message): boolean;
+
+  /**
+   * Determines if this message was created after the given message.
+   * @param message The message to compare against.
+   * @returns true if this message was created after the given message, in global order.
+   */
+  after(message: Message): boolean;
+
+  /**
+   * Determines if this message is equal to the given message.
+   * @param message The message to compare against.
+   * @returns true if this message is equal to the given message.
+   */
+  equal(message: Message): boolean;
+}
+
+/**
+ * Represents a parsed timeserial.
+ */
 interface Timeserial {
   seriesId: string;
   timestamp: number;
@@ -12,7 +64,7 @@ interface Timeserial {
  *
  * Allows for comparison of messages based on their timeserials.
  */
-export class ChatMessage implements Message {
+export class DefaultMessage implements Message {
   private readonly _calculatedTimeserial: Timeserial;
 
   constructor(
@@ -22,22 +74,22 @@ export class ChatMessage implements Message {
     public readonly content: string,
     public readonly createdAt: number,
   ) {
-    this._calculatedTimeserial = ChatMessage.calculateTimeserial(timeserial);
+    this._calculatedTimeserial = DefaultMessage.calculateTimeserial(timeserial);
 
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
   }
 
   before(message: Message): boolean {
-    return ChatMessage.timeserialCompare(this, message) < 0;
+    return DefaultMessage.timeserialCompare(this, message) < 0;
   }
 
   after(message: Message): boolean {
-    return ChatMessage.timeserialCompare(this, message) > 0;
+    return DefaultMessage.timeserialCompare(this, message) > 0;
   }
 
   equal(message: Message): boolean {
-    return ChatMessage.timeserialCompare(this, message) === 0;
+    return DefaultMessage.timeserialCompare(this, message) === 0;
   }
 
   /**
@@ -50,12 +102,12 @@ export class ChatMessage implements Message {
    * @throws Error if timeserial of either message is invalid.
    */
   private static timeserialCompare(first: Message, second: Message): number {
-    const firstTimeserial = (first as ChatMessage)._calculatedTimeserial
-      ? (first as ChatMessage)._calculatedTimeserial
-      : ChatMessage.calculateTimeserial(first.timeserial);
-    const secondTimeserial = (second as ChatMessage)._calculatedTimeserial
-      ? (second as ChatMessage)._calculatedTimeserial
-      : ChatMessage.calculateTimeserial(second.timeserial);
+    const firstTimeserial = (first as DefaultMessage)._calculatedTimeserial
+      ? (first as DefaultMessage)._calculatedTimeserial
+      : DefaultMessage.calculateTimeserial(first.timeserial);
+    const secondTimeserial = (second as DefaultMessage)._calculatedTimeserial
+      ? (second as DefaultMessage)._calculatedTimeserial
+      : DefaultMessage.calculateTimeserial(second.timeserial);
 
     // Compare the timestamp
     const timestampDiff = firstTimeserial.timestamp - secondTimeserial.timestamp;

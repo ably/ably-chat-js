@@ -1,5 +1,5 @@
 import { OccupancyEvent } from './Occupancy.js';
-import { Message } from './entities.js';
+import { Message } from './Message.js';
 import * as Ably from 'ably';
 import { PaginatedResult } from './query.js';
 

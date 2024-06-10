@@ -1,9 +1,8 @@
 import * as Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
-import { Message } from './entities.js';
 import { MessageEvents } from './events.js';
 import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
-import { ChatMessage } from './ChatMessage.js';
+import { Message, DefaultMessage } from './Message.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import { PaginatedResult } from './query.js';
 
@@ -211,7 +210,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   async send(text: string): Promise<Message> {
     const response = await this.chatApi.sendMessage(this.roomId, text);
 
-    return new ChatMessage(response.timeserial, this.clientId, this.roomId, text, response.createdAt);
+    return new DefaultMessage(response.timeserial, this.clientId, this.roomId, text, response.createdAt);
   }
 
   /**
@@ -360,6 +359,6 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       throw new Ably.ErrorInfo(`received message without timeserial`, 50000, 500);
     }
 
-    return new ChatMessage(timeserial, clientId, this.roomId, content, timestamp);
+    return new DefaultMessage(timeserial, clientId, this.roomId, content, timestamp);
   }
 }
