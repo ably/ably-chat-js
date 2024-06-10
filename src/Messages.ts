@@ -76,13 +76,6 @@ export interface MessageEventPayload {
   message: Message;
 }
 
-enum MessagesInternalState {
-  empty = 'empty',
-  attaching = 'attaching',
-  idle = 'idle',
-  fetching = 'fetching',
-}
-
 /**
  * A listener for message events in a chat room.
  * @param event The message event that was received.
@@ -97,14 +90,16 @@ export interface Messages {
   /**
    * Subscribe to new messages in this chat room. This will implicitly attach the underlying Ably channel.
    * @param listener callback that will be called
+   * @returns A promise that resolves to the underlying Ably channel state change.
    */
-  subscribe(listener?: MessageListener): Promise<void>;
+  subscribe(listener?: MessageListener): Promise<Ably.ChannelStateChange | null>;
 
   /**
    * Unsubscribe the given listener from all events.
    * @param listener listener to unsubscribe
+   * @returns A promise that resolves when the listener has been unsubscribed.
    */
-  unsubscribe(listener?: MessageListener): void;
+  unsubscribe(listener?: MessageListener): Promise<void>;
 
   /**
    * Queries the chat room for messages, based on the provided query options.
@@ -156,10 +151,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   private readonly _managedChannel: SubscriptionManager;
   private readonly chatApi: ChatApi;
   private readonly clientId: string;
-
-  private state: MessagesInternalState = MessagesInternalState.empty;
-  private eventsQueue: Ably.InboundMessage[] = [];
-  private unsubscribeFromChannel: (() => void) | null = null;
+  private _internalListener: Ably.messageCallback<Ably.InboundMessage> | undefined;
 
   constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string) {
     super();
@@ -202,60 +194,28 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   /**
    * @inheritdoc Messages
    */
-  subscribe(listener: MessageListener): Promise<void> {
-    super.on(MessageEvents.created, listener);
-    return this.attach();
+  subscribe(listener: MessageListener): Promise<Ably.ChannelStateChange | null> {
+    const hasListeners = this.hasListeners();
+    super.on([MessageEvents.created], listener);
+
+    if (!hasListeners) {
+      this._internalListener = this.processEvent.bind(this);
+      return this._managedChannel.subscribe([MessageEvents.created], this._internalListener!);
+    }
+
+    return this._managedChannel.channel.attach();
   }
 
   /**
    * @inheritdoc Messages
    */
-  unsubscribe(listener: MessageListener) {
+  unsubscribe(listener: MessageListener): Promise<void> {
     super.off(listener);
-    return this.detach();
-  }
-
-  private attach() {
-    if (this.state !== MessagesInternalState.empty) return Promise.resolve();
-    this.state = MessagesInternalState.attaching;
-    return this.doAttach((channelEventMessage: Ably.InboundMessage) => {
-      if (this.state === MessagesInternalState.idle) {
-        this.processEvent(channelEventMessage);
-      } else {
-        this.eventsQueue.push(channelEventMessage);
-      }
-    });
-  }
-
-  private async doAttach(channelHandler: Ably.messageCallback<Ably.InboundMessage>) {
-    const unsubscribeFromChannel = () => this.channel.unsubscribe(channelHandler);
-    this.unsubscribeFromChannel = unsubscribeFromChannel;
-    await this.channel.subscribe(Object.values(MessageEvents), channelHandler);
-
-    if (this.unsubscribeFromChannel !== unsubscribeFromChannel) return;
-
-    this.state = MessagesInternalState.idle;
-    this.processQueue();
-  }
-
-  private detach() {
-    this.state = MessagesInternalState.empty;
-    this.unsubscribeFromChannel?.();
-    this.unsubscribeFromChannel = null;
-  }
-
-  private processQueue(): void {
-    if (this.eventsQueue.length === 0 || this.state !== MessagesInternalState.idle) return;
-    const event = this.eventsQueue[0];
-    try {
-      const processed = this.processEvent(event);
-      if (processed) {
-        this.eventsQueue.shift();
-        return this.processQueue();
-      }
-    } catch (e) {
-      console.warn(e);
+    if (this.hasListeners()) {
+      return Promise.resolve();
     }
+
+    return this._managedChannel.unsubscribe(this._internalListener!);
   }
 
   private processEvent(channelEventMessage: Ably.InboundMessage) {
