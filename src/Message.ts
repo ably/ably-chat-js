@@ -102,12 +102,10 @@ export class DefaultMessage implements Message {
    * @throws {@link ErrorInfo} if timeserial of either message is invalid.
    */
   private static timeserialCompare(first: Message, second: Message): number {
-    const firstTimeserial = (first as DefaultMessage)._calculatedTimeserial
-      ? (first as DefaultMessage)._calculatedTimeserial
-      : DefaultMessage.calculateTimeserial(first.timeserial);
-    const secondTimeserial = (second as DefaultMessage)._calculatedTimeserial
-      ? (second as DefaultMessage)._calculatedTimeserial
-      : DefaultMessage.calculateTimeserial(second.timeserial);
+    const firstTimeserial =
+      (first as DefaultMessage)._calculatedTimeserial ?? DefaultMessage.calculateTimeserial(first.timeserial);
+    const secondTimeserial =
+      (second as DefaultMessage)._calculatedTimeserial ?? DefaultMessage.calculateTimeserial(second.timeserial);
 
     // Compare the timestamp
     const timestampDiff = firstTimeserial.timestamp - secondTimeserial.timestamp;
