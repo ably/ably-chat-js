@@ -90,7 +90,7 @@ export interface Messages {
   /**
    * Subscribe to new messages in this chat room. This will implicitly attach the underlying Ably channel.
    * @param listener callback that will be called
-   * @returns A promise that resolves to the underlying Ably channel state change.
+   * @returns A promise that resolves to the underlying Ably state change.
    */
   subscribe(listener?: MessageListener): Promise<Ably.ChannelStateChange | null>;
 
