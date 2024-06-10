@@ -125,14 +125,6 @@ export interface Messages {
   send(text: string): Promise<Message>;
 
   /**
-   * Get the full name of the Ably realtime channel used for the messages in this
-   * chat room.
-   *
-   * @returns the channel name
-   */
-  get realtimeChannelName(): string;
-
-  /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
    *
    * @returns the realtime channel
@@ -159,13 +151,6 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     this._managedChannel = managedChannel;
     this.chatApi = chatApi;
     this.clientId = clientId;
-  }
-
-  /**
-   * @inheritdoc Messages
-   */
-  get realtimeChannelName(): string {
-    return `${this.roomId}::$chat::$chatMessages`;
   }
 
   /**
