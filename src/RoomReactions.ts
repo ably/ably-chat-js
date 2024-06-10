@@ -10,27 +10,27 @@ export interface Reaction {
   /**
    * The type of the reaction, for example "like" or "love".
    */
-  type: string;
+  readonly type: string;
 
   /**
    * metadata of the reaction, if any was set
    */
-  metadata?: any;
+  readonly metadata?: any;
 
   /**
    * The timestamp at which the reaction was sent.
    */
-  createdAt: Date;
+  readonly createdAt: Date;
 
   /**
    * The clientId of the user who sent the reaction.
    */
-  clientId: string;
+  readonly clientId: string;
 
   /**
    * Whether the reaction was sent by the current user.
    */
-  isSelf: boolean;
+  readonly isSelf: boolean;
 }
 
 /**
@@ -182,16 +182,24 @@ function realtimeMessageToReaction(inbound: Ably.InboundMessage, clientId: strin
     return null;
   }
 
-  const reaction: Reaction = {
-    type: inbound.data.type,
-    clientId: inbound.clientId!,
-    createdAt: new Date(inbound.timestamp),
-    isSelf: inbound.clientId === clientId,
-  };
+  return new DefaultReaction(
+    inbound.data.type,
+    inbound.clientId!,
+    new Date(inbound.timestamp),
+    inbound.clientId === clientId,
+    inbound.data.metadata,
+  );
+}
 
-  if (inbound.data.metadata) {
-    reaction.metadata = inbound.data.metadata;
+class DefaultReaction implements Reaction {
+  constructor(
+    public readonly type: string,
+    public readonly clientId: string,
+    public readonly createdAt: Date,
+    public readonly isSelf: boolean,
+    public readonly metadata: any,
+  ) {
+    // The object is frozen after constructing to enforce readonly at runtime too
+    Object.freeze(this);
   }
-
-  return reaction;
 }

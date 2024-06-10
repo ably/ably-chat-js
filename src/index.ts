@@ -1,6 +1,6 @@
 export { ChatClient } from './Chat.js';
 export { MessageEvents, PresenceEvents } from './events.js';
-export type { Message } from './entities.js';
+export type { Message } from './Message.js';
 export type { Room } from './Room.js';
 export type { Rooms } from './Rooms.js';
 export type {
