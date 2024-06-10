@@ -99,7 +99,7 @@ export class DefaultMessage implements Message {
    * <0 if the first timeserial is less than the second.
    * >0 if the first timeserial is greater than the second.
    *
-   * @throws Error if timeserial of either message is invalid.
+   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
    */
   private static timeserialCompare(first: Message, second: Message): number {
     const firstTimeserial = (first as DefaultMessage)._calculatedTimeserial
@@ -139,7 +139,7 @@ export class DefaultMessage implements Message {
   /**
    * Calculate the timeserial object from a timeserial string.
    *
-   * @throws Error if timeserial is invalid.
+   * @throws {@link ErrorInfo} if timeserial is invalid.
    */
   private static calculateTimeserial(timeserial: string): Timeserial {
     const [seriesId, rest] = timeserial.split('@');
