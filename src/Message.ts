@@ -31,6 +31,7 @@ export interface Message {
    * Determines if this message was created before the given message.
    * @param message The message to compare against.
    * @returns true if this message was created before the given message, in global order.
+   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
    */
   before(message: Message): boolean;
 
@@ -38,6 +39,7 @@ export interface Message {
    * Determines if this message was created after the given message.
    * @param message The message to compare against.
    * @returns true if this message was created after the given message, in global order.
+   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
    */
   after(message: Message): boolean;
 
@@ -45,6 +47,7 @@ export interface Message {
    * Determines if this message is equal to the given message.
    * @param message The message to compare against.
    * @returns true if this message is equal to the given message.
+   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
    */
   equal(message: Message): boolean;
 }
