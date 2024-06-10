@@ -1,4 +1,4 @@
-import { Message, MessageEvents, type MessageListener } from '@ably-labs/chat';
+import { Message, type MessageListener } from '@ably-labs/chat';
 import { useCallback, useEffect, useState } from 'react';
 import { useRoom } from './useRoom';
 
@@ -28,7 +28,7 @@ export const useMessages = () => {
     const handleAdd: MessageListener = ({ message }) => {
       setMessages((prevMessage) => [...prevMessage, message]);
     };
-    room.messages.subscribe(MessageEvents.created, handleAdd);
+    room.messages.subscribe(handleAdd);
 
     setMessages([]);
 
@@ -44,7 +44,7 @@ export const useMessages = () => {
 
     return () => {
       // mounted = false;
-      room.messages.unsubscribe(MessageEvents.created, handleAdd);
+      room.messages.unsubscribe(handleAdd);
     };
   }, [clientId, room]);
 

@@ -75,7 +75,7 @@ describe('Messages', () => {
         const roomId = randomRoomId();
         const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
         room.messages
-          .subscribe(MessageEvents.created, (rawMsg) => {
+          .subscribe((rawMsg) => {
             const message = rawMsg.message;
             try {
               expect(message).toEqual(
@@ -118,7 +118,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without data'));
         })
         .then(() => {
@@ -147,7 +147,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without clientId'));
         })
         .then(() => {
@@ -178,7 +178,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without extras'));
         })
         .then(() => {
@@ -207,7 +207,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without clientId'));
         })
         .then(() => {
@@ -237,7 +237,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without content'));
         })
         .then(() => {
@@ -266,7 +266,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without timestamp'));
         })
         .then(() => {

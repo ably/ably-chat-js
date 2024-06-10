@@ -61,7 +61,7 @@ There is no need to create the room. You can start using it right away.
 To send a message, simply call `send` on the Room's `messages` property, with the text you want to send.
 
 ```ts
-const message = await room.messages.send("This was a great shot!");
+const message = await room.messages.send('This was a great shot!');
 ```
 
 ### Message Payload
@@ -82,20 +82,7 @@ To subscribe to incoming messages, call `subscribe` with your listener.
 
 ```ts
 // Subscribe to all message events in a room
-room.messages.subscribe(({ type, message }) => {
-  switch (type) {
-    case 'message.created':
-      console.log(message);
-      break;
-  }
-});
-```
-
-Or
-
-```ts
-// Subscribe to specific event in a room
-room.messages.subscribe('message.created', ({ type, message }) => {
+room.messages.subscribe(({ message }) => {
   console.log(message);
 });
 ```

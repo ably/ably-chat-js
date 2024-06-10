@@ -3,9 +3,9 @@ import * as Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { MessageEvents } from './events.js';
 import { DefaultMessage, Message } from './Message.js';
-import { PaginatedResult } from './query.js';
+import EventEmitter from './utils/EventEmitter.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
-import EventEmitter, { EventListener, inspect, InvalidArgumentError } from './utils/EventEmitter.js';
+import { PaginatedResult } from './query.js';
 
 interface MessageEventsMap {
   [MessageEvents.created]: MessageEventPayload;
@@ -95,25 +95,10 @@ export type MessageListener = (event: MessageEventPayload) => void;
  */
 export interface Messages {
   /**
-   * Subscribe to a subset of message events in this chat room.
-   *
-   * @param eventOrEvents single event name or array of events to listen to
-   * @param listener callback that will be called when these events are received
-   */
-  subscribe<K extends keyof MessageEventsMap>(eventOrEvents: K | K[], listener?: MessageListener): Promise<void>;
-
-  /**
-   * Subscribe to all message events in this chat room.
+   * Subscribe to new messages in this chat room. This will implicitly attach the underlying Ably channel.
    * @param listener callback that will be called
    */
   subscribe(listener?: MessageListener): Promise<void>;
-
-  /**
-   * Unsubscribe the given listener from the given list of events.
-   * @param eventOrEvents single event name or array of events to unsubscribe from
-   * @param listener listener to unsubscribe
-   */
-  unsubscribe<K extends keyof MessageEventsMap>(eventOrEvents: K | K[], listener?: MessageListener): void;
 
   /**
    * Unsubscribe the given listener from all events.
@@ -217,57 +202,17 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   /**
    * @inheritdoc Messages
    */
-  subscribe<K extends keyof MessageEventsMap>(eventOrEvents: K | K[], listener?: MessageListener): Promise<void>;
-
-  /**
-   * @inheritdoc Messages
-   */
-  subscribe(listener?: MessageListener): Promise<void>;
-
-  subscribe<K extends keyof MessageEventsMap>(
-    listenerOrEvents?: K | K[] | MessageListener,
-    listener?: MessageListener,
-  ): Promise<void> {
-    try {
-      super.on(listenerOrEvents, listener);
-      return this.attach();
-    } catch (e: unknown) {
-      if (e instanceof InvalidArgumentError) {
-        throw new InvalidArgumentError(
-          'Messages.subscribe(): Invalid arguments: ' + inspect([listenerOrEvents, listener]),
-        );
-      } else {
-        throw e;
-      }
-    }
+  subscribe(listener: MessageListener): Promise<void> {
+    super.on(MessageEvents.created, listener);
+    return this.attach();
   }
 
   /**
    * @inheritdoc Messages
    */
-  unsubscribe<K extends keyof MessageEventsMap>(eventOrEvents: K | K[], listener?: MessageListener): void;
-
-  /**
-   * Unsubscribe the given listener from all events.
-   * @param listener listener to unsubscribe
-   */
-  unsubscribe(listener?: EventListener<MessageEventsMap, keyof MessageEventsMap>): void;
-  unsubscribe<K extends keyof MessageEventsMap>(
-    listenerOrEvents?: K | K[] | MessageListener,
-    listener?: MessageListener,
-  ) {
-    try {
-      super.off(listenerOrEvents, listener);
-      return this.detach();
-    } catch (e: unknown) {
-      if (e instanceof InvalidArgumentError) {
-        throw new InvalidArgumentError(
-          'Messages.unsubscribe(): Invalid arguments: ' + inspect([listenerOrEvents, listener]),
-        );
-      } else {
-        throw e;
-      }
-    }
+  unsubscribe(listener: MessageListener) {
+    super.off(listener);
+    return this.detach();
   }
 
   private attach() {
