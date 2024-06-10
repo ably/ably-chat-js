@@ -80,9 +80,6 @@ export interface RoomReactions {
    */
   unsubscribe(listener: RoomReactionListener): Promise<void>;
 
-  /** Returns the full name of the Ably realtime channel used for room-level reactions. */
-  get realtimeChannelName(): string;
-
   /**
    * Returns an instance of the Ably realtime channel used for room-level reactions.
    * Avoid using this directly unless special features that cannot otherwise be implemented are needed.
@@ -161,10 +158,6 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
       return this.onLastUnsubscribe();
     }
     return Promise.resolve();
-  }
-
-  get realtimeChannelName(): string {
-    return this._managedChannel.channel.name;
   }
 
   get channel(): Ably.RealtimeChannel {
