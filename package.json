@@ -54,5 +54,8 @@
     "typedoc-plugin-no-inherit": "^1.4.0",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "console-polyfill": "^0.3.0"
   }
 }

@@ -1,6 +1,7 @@
 export { ChatClient } from './Chat.js';
 export type { ClientOptions, DefaultClientOptions } from './config.js';
 export { MessageEvents, PresenceEvents } from './events.js';
+export type { LogHandler, LogLevel } from './logger.js';
 export type { Message } from './Message.js';
 export type { Direction, MessageEventPayload, MessageListener, Messages, QueryOptions } from './Messages.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener } from './Occupancy.js';
