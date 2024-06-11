@@ -57,7 +57,13 @@ export class ChatApi {
     body?: REQ,
   ): Promise<RES> {
     const response = await this.realtime.request(method, url, 1.1, {}, body);
-    if (!response.success) throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    if (!response.success) {
+      this._logger.error(
+        `ChatApi.makeAuthorisedRequest(); failed to make request to ${url}; errorCode ${response.errorCode}; message ${response.errorMessage}`,
+      );
+      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    }
+
     const [result] = response.items;
     return result as RES;
   }
@@ -68,7 +74,12 @@ export class ChatApi {
     body?: REQ,
   ): Promise<PaginatedResult<RES>> {
     const response = await this.realtime.request('GET', url, 1.1, params, body);
-    if (!response.success) throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    if (!response.success) {
+      this._logger.error(
+        `ChatApi.makeAuthorisedPaginatedRequest(); failed to make request to ${url}; errorCode ${response.errorCode}; message ${response.errorMessage}`,
+      );
+      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    }
     return response;
   }
 }
