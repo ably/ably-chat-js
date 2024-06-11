@@ -3,9 +3,9 @@ import * as Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { MessageEvents } from './events.js';
 import { DefaultMessage, Message } from './Message.js';
-import EventEmitter from './utils/EventEmitter.js';
-import { SubscriptionManager } from './SubscriptionManager.js';
 import { PaginatedResult } from './query.js';
+import { SubscriptionManager } from './SubscriptionManager.js';
+import EventEmitter from './utils/EventEmitter.js';
 
 interface MessageEventsMap {
   [MessageEvents.created]: MessageEventPayload;
