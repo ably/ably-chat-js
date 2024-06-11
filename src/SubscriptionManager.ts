@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import { ChannelStateChange } from 'ably';
-import { Logger } from './logger';
+
+import { Logger } from './logger.js';
 
 type Listener = Ably.messageCallback<Ably.InboundMessage>;
 type PresenceListener = Ably.messageCallback<Ably.PresenceMessage>;
