@@ -167,6 +167,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    * @inheritdoc Messages
    */
   async query(options: QueryOptions): Promise<PaginatedResult<Message>> {
+    this._logger.trace('Messages.query();');
     return this._chatApi.getMessages(this._roomId, options);
   }
 
@@ -174,6 +175,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    * @inheritdoc Messages
    */
   async send(text: string): Promise<Message> {
+    this._logger.trace('Messages.send();');
     const response = await this._chatApi.sendMessage(this._roomId, text);
 
     return new DefaultMessage(response.timeserial, this._clientId, this._roomId, text, response.createdAt);
@@ -183,10 +185,12 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    * @inheritdoc Messages
    */
   subscribe(listener: MessageListener): Promise<Ably.ChannelStateChange | null> {
+    this._logger.trace('Messages.subscribe();');
     const hasListeners = this.hasListeners();
     super.on([MessageEvents.created], listener);
 
     if (!hasListeners) {
+      this._logger.debug('Messages.subscribe(); subscribing internal listener');
       this._internalListener = this.processEvent.bind(this);
       return this._managedChannel.subscribe([MessageEvents.created], this._internalListener!);
     }
@@ -198,15 +202,20 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    * @inheritdoc Messages
    */
   unsubscribe(listener: MessageListener): Promise<void> {
+    this._logger.trace('Messages.unsubscribe();');
     super.off(listener);
     if (this.hasListeners()) {
       return Promise.resolve();
     }
 
+    this._logger.debug('Messages.unsubscribe(); unsubscribing internal listener');
     return this._managedChannel.unsubscribe(this._internalListener!);
   }
 
   private processEvent(channelEventMessage: Ably.InboundMessage) {
+    this._logger.trace(
+      `Messages.processEvent(); event="${channelEventMessage.name}"; message="${channelEventMessage}"`,
+    );
     const { name } = channelEventMessage;
 
     // Send the message to the listeners
@@ -217,6 +226,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
         return true;
       }
       default:
+        this._logger.warn(`Messages.processEvent(); received unknown event="${name}"`);
         throw new Ably.ErrorInfo(`received illegal event="${name}"`, 50000, 500);
     }
   }
@@ -228,28 +238,34 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     const { data, clientId, timestamp, extras } = channelEventMessage;
 
     if (!data) {
+      this._logger.error(`received occupancy message without data`);
       throw new Ably.ErrorInfo(`received message without data`, 50000, 500);
     }
 
     if (!clientId) {
+      this._logger.error(`received occupancy message without clientId`);
       throw new Ably.ErrorInfo(`received message without clientId`, 50000, 500);
     }
 
     if (!timestamp) {
+      this._logger.error(`received occupancy message without timestamp`);
       throw new Ably.ErrorInfo(`received message without timestamp`, 50000, 500);
     }
 
     const { content } = data;
     if (!content) {
+      this._logger.error(`received occupancy message without content`);
       throw new Ably.ErrorInfo(`received message without content`, 50000, 500);
     }
 
     if (!extras) {
+      this._logger.error(`received occupancy message without extras`);
       throw new Ably.ErrorInfo(`received message without extras`, 50000, 500);
     }
 
     const { timeserial } = extras;
     if (!timeserial) {
+      this._logger.error(`received occupancy message without timeserial`);
       throw new Ably.ErrorInfo(`received message without timeserial`, 50000, 500);
     }
 
