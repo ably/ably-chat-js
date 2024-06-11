@@ -193,6 +193,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @inheritDoc
    */
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
+    this._logger.trace(`Presence.get(); params: ${params}`);
     const userOnPresence = await this.subscriptionManager.channel.presence.get(params);
     return userOnPresence.map((user) => ({
       clientId: user.clientId,
@@ -218,6 +219,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
   async enter(data?: PresenceData): Promise<void> {
+    this._logger.trace(`Presence.enter(); data: ${data}`);
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
@@ -230,6 +232,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
   async update(data?: PresenceData): Promise<void> {
+    this._logger.trace(`Presence.update(); data: ${data}`);
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
@@ -242,6 +245,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
   async leave(data?: PresenceData): Promise<void> {
+    this._logger.trace(`Presence.leave(); data: ${data}`);
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
@@ -263,7 +267,9 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     listenerOrEvents?: PresenceEvents | PresenceEvents[] | PresenceListener,
     listener?: PresenceListener,
   ): Promise<void> {
+    this._logger.trace(`Presence.subscribe(); listenerOrEvents: ${listenerOrEvents};`);
     if (!listenerOrEvents && !listener) {
+      this._logger.error('could not subscribe to presence; invalid arguments');
       throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400);
     }
     const hasListeners = this.hasListeners();
@@ -273,6 +279,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
       this.on(listenerOrEvents, listener);
     }
     if (!hasListeners) {
+      this._logger.debug('Presence.subscribe(); adding internal listener');
       return this.subscriptionManager.presenceSubscribe(this.subscribeToEvents);
     }
     return this.subscriptionManager.channel.attach().then(() => {});
@@ -294,7 +301,9 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     listenerOrEvents?: PresenceEvents | PresenceEvents[] | PresenceListener,
     listener?: PresenceListener,
   ): Promise<void> {
+    this._logger.trace(`Presence.unsubscribe(); listenerOrEvents: ${listenerOrEvents}`);
     if (!listenerOrEvents && !listener) {
+      this._logger.error('could not unsubscribe from presence; invalid arguments');
       throw new Ably.ErrorInfo('could not unsubscribe listener: invalid arguments', 40000, 400);
     }
     if (!listener) {
@@ -303,6 +312,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
       this.off(listenerOrEvents, listener);
     }
     if (!this.hasListeners()) {
+      this._logger.debug('Presence.unsubscribe(); removing internal listener');
       return this.subscriptionManager.presenceUnsubscribe(this.subscribeToEvents);
     }
     return Promise.resolve();
@@ -324,6 +334,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
         data: parsedData.userCustomData,
       });
     } catch (error) {
+      this._logger.error(`unable to handle ${member.action} presence event: not a valid presence event`);
       throw new Ably.ErrorInfo(
         `unable to handle ${member.action} presence event: not a valid presence event`,
         50000,
