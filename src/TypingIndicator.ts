@@ -158,7 +158,9 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * Start the typing timeout timer. This will emit a typingStopped event if the timer expires.
    */
   private startTypingTimer(): void {
+    this._logger.trace(`TypingIndicator.startTypingTimer();`);
     this._timerId = setTimeout(async () => {
+      this._logger.debug(`TypingIndicator.startTypingTimer(); timeout expired`);
       await this.stopTyping();
     }, this._typingTimeoutMs);
   }
@@ -167,8 +169,10 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @inheritDoc
    */
   async startTyping(): Promise<void> {
+    this._logger.trace(`TypingIndicator.startTyping();`);
     // If the user is already typing, reset the timer
     if (this._timerId) {
+      this._logger.debug(`TypingIndicator.startTyping(); already typing, resetting timer`);
       clearTimeout(this._timerId);
       this.startTypingTimer();
       return;
@@ -182,6 +186,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @inheritDoc
    */
   async stopTyping(): Promise<void> {
+    this._logger.trace(`TypingIndicator.stopTyping();`);
     // Clear the timer and emit typingStopped event
     if (this._timerId) {
       clearTimeout(this._timerId);
@@ -195,9 +200,11 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @inheritDoc
    */
   async subscribe(listener: TypingListener): Promise<void> {
+    this._logger.trace(`TypingIndicator.subscribe();`);
     const hasListeners = this.hasListeners();
     this.on(listener);
     if (!hasListeners) {
+      this._logger.debug('TypingIndicator.subscribe(); adding internal listener');
       return this._managedChannel.presenceSubscribe(this._internalSubscribeToEvents);
     }
     return Promise.resolve();
@@ -207,8 +214,10 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @inheritDoc
    */
   async unsubscribe(listener: TypingListener): Promise<void> {
+    this._logger.trace(`TypingIndicator.unsubscribe();`);
     this.off(listener);
     if (!this.hasListeners()) {
+      this._logger.debug('TypingIndicator.unsubscribe(); removing internal listener');
       return this._managedChannel.presenceUnsubscribe(this._internalSubscribeToEvents);
     }
     return Promise.resolve();
@@ -233,6 +242,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
             },
           });
         } catch (error) {
+          this._logger.error(`unable to handle typingStarted event; not a valid typingIndicator event, error=${error}`);
           this._currentlyTypingClientIds.delete(member.clientId);
           throw new Ably.ErrorInfo(
             `unable to handle typingStarted event; not a valid typingIndicator event`,
@@ -253,6 +263,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
             },
           });
         } catch (error) {
+          this._logger.error(`unable to handle typingStopped event; not a valid typingIndicator event, error=${error}`);
           throw new Ably.ErrorInfo(
             `unable to handle typingStopped event; not a valid typingIndicator event`,
             50000,
