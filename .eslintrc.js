@@ -9,8 +9,8 @@ module.exports = {
   parserOptions: {
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import'],
-  extends: ['eslint:recommended', 'plugin:security/recommended-legacy'],
+  plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import', 'simple-import-sort'],
+  extends: ['eslint:recommended', 'plugin:security/recommended-legacy', 'plugin:import/recommended'],
   rules: {
     'eol-last': 'error',
     // security/detect-object-injection just gives a lot of false positives
@@ -18,12 +18,15 @@ module.exports = {
     'security/detect-object-injection': 'off',
     // the code problem checked by this ESLint rule is automatically checked by the TypeScript compiler
     'no-redeclare': 'off',
+    'simple-import-sort/imports': 'error',
+    'simple-import-sort/exports': 'error',
   },
   overrides: [
     {
       files: ['**/*.{ts,tsx}'],
       rules: {
         '@typescript-eslint/no-unused-vars': ['error'],
+        'import/no-unresolved': 'off',
         // TypeScript already enforces these rules better than any eslint setup can
         'no-undef': 'off',
         'no-dupe-class-members': 'off',

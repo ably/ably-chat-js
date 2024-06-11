@@ -1,8 +1,9 @@
 import * as Ably from 'ably';
-import { Rooms, DefaultRooms } from './Rooms.js';
-import { AGENT_STRING } from './version.js';
-import { RealtimeWithOptions } from './realtimeextensions.js';
+
 import { ClientOptions } from './config.js';
+import { RealtimeWithOptions } from './realtimeextensions.js';
+import { DefaultRooms, Rooms } from './Rooms.js';
+import { AGENT_STRING } from './version.js';
 
 /**
  * This is the core client for Ably chat. It provides access to chat rooms.

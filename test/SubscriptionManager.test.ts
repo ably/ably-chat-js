@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it } from 'vitest';
 import * as Ably from 'ably';
-import { ablyRealtimeClient } from './helper/realtimeClient.ts';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { DefaultSubscriptionManager } from '../src/SubscriptionManager.ts';
 import { randomString } from './helper/identifier.ts';
+import { ablyRealtimeClient } from './helper/realtimeClient.ts';
 
 interface TestContext {
   channel: Ably.RealtimeChannel;

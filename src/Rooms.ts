@@ -1,7 +1,8 @@
 import * as Ably from 'ably';
+
 import { ChatApi } from './ChatApi.js';
-import { DefaultRoom, Room } from './Room.js';
 import { ClientOptions, DefaultClientOptions } from './config.js';
+import { DefaultRoom, Room } from './Room.js';
 
 /**
  * Manages the lifecycle of chat rooms.

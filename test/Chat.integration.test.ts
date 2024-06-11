@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { ChatClient } from '../src/Chat.js';
-import { ablyRealtimeClient } from './helper/realtimeClient.js';
 import { ClientOptions } from 'ably';
+import { describe, expect, it } from 'vitest';
+
+import { ChatClient } from '../src/Chat.js';
 import { RealtimeWithOptions } from '../src/realtimeextensions.js';
+import { ablyRealtimeClient } from './helper/realtimeClient.js';
 
 interface OptionsWithAgent extends ClientOptions {
   agents?: Record<string, string | undefined>;

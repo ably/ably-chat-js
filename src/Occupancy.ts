@@ -1,7 +1,8 @@
 import * as Ably from 'ably';
-import EventEmitter from './utils/EventEmitter.js';
-import { SubscriptionManager } from './SubscriptionManager.js';
+
 import { ChatApi } from './ChatApi.js';
+import { SubscriptionManager } from './SubscriptionManager.js';
+import EventEmitter from './utils/EventEmitter.js';
 
 /**
  * Represents the occupancy (number of connections, publishers, and subscribers) of a chat room.

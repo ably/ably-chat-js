@@ -1,9 +1,10 @@
-import { beforeEach, describe, it, expect } from 'vitest';
-import { ablyRealtimeClientWithToken } from './helper/realtimeClient.ts';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { ChatClient } from '../src/Chat.ts';
-import { randomRoomId } from './helper/identifier.ts';
 import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
 import { Reaction } from '../src/RoomReactions.ts';
+import { randomRoomId } from './helper/identifier.ts';
+import { ablyRealtimeClientWithToken } from './helper/realtimeClient.ts';
 
 interface TestContext {
   chat: ChatClient;

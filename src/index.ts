@@ -1,20 +1,20 @@
 export { ChatClient } from './Chat.js';
+export type { ClientOptions, DefaultClientOptions } from './config.js';
+export type { ErrorInfo } from './errors.js';
 export { MessageEvents, PresenceEvents } from './events.js';
 export type { Message } from './Message.js';
-export type { Room } from './Room.js';
-export type { Rooms } from './Rooms.js';
+export type { Direction, MessageEventPayload, MessageListener, Messages, QueryOptions } from './Messages.js';
+export type { Occupancy, OccupancyEvent, OccupancyListener } from './Occupancy.js';
 export type {
   Presence,
+  PresenceData,
   PresenceEvent,
   PresenceListener,
   PresenceMember,
-  PresenceData,
   PresenceParams,
 } from './Presence.js';
-export type { TypingIndicators, TypingIndicatorEvent, TypingListener } from './TypingIndicator.js';
-export type { ClientOptions, DefaultClientOptions } from './config.js';
-export type { Messages, MessageListener, QueryOptions, Direction, MessageEventPayload } from './Messages.js';
 export type { PaginatedResult } from './query.js';
-export type { Reaction, RoomReactions, RoomReactionListener } from './RoomReactions.js';
-export type { Occupancy, OccupancyEvent, OccupancyListener } from './Occupancy.js';
-export type { ErrorInfo } from './errors.js';
+export type { Room } from './Room.js';
+export type { Reaction, RoomReactionListener, RoomReactions } from './RoomReactions.js';
+export type { Rooms } from './Rooms.js';
+export type { TypingIndicatorEvent, TypingIndicators, TypingListener } from './TypingIndicator.js';

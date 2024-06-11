@@ -1,10 +1,11 @@
 import * as Ably from 'ably';
+
 import { ChatApi } from './ChatApi.js';
 import { MessageEvents } from './events.js';
-import EventEmitter, { inspect, InvalidArgumentError, EventListener } from './utils/EventEmitter.js';
-import { Message, DefaultMessage } from './Message.js';
-import { SubscriptionManager } from './SubscriptionManager.js';
+import { DefaultMessage, Message } from './Message.js';
 import { PaginatedResult } from './query.js';
+import { SubscriptionManager } from './SubscriptionManager.js';
+import EventEmitter, { EventListener, inspect, InvalidArgumentError } from './utils/EventEmitter.js';
 
 interface MessageEventsMap {
   [MessageEvents.created]: MessageEventPayload;

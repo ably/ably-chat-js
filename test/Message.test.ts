@@ -1,5 +1,6 @@
+import { describe, expect, it } from 'vitest';
+
 import { DefaultMessage } from '../src/Message.js';
-import { describe, it, expect } from 'vitest';
 
 describe('ChatMessage', () => {
   it('is the same as another message', () => {

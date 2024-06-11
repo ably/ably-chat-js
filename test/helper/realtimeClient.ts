@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 import * as jwt from 'jsonwebtoken';
+
 import { ablyApiKey, isLocalEnvironment, testEnvironment } from './environment.js';
 import { randomClientId } from './identifier.js';
 
