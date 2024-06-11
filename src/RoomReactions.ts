@@ -113,6 +113,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
    * @inheritDoc Reactions
    */
   send(type: string, metadata?: any): Promise<void> {
+    this._logger.trace(`RoomReactions.send(); type=${type}; metadata=${metadata}`);
     const payload: any = { type: type };
     if (metadata) {
       payload.metadata = metadata;
@@ -124,9 +125,11 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
    * @inheritDoc Reactions
    */
   subscribe(listener: RoomReactionListener) {
+    this._logger.trace(`RoomReactions.subscribe();`);
     const hasListeners = this.hasListeners();
     this.on(listener);
     if (!hasListeners) {
+      this._logger.debug('RoomReactions.subscribe(); adding internal listener');
       return this.onFirstSubscribe();
     }
     return Promise.resolve(null);
@@ -159,6 +162,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
     this.off(listener);
     if (!this.hasListeners()) {
       // last unsubscribe, must do teardown work
+      this._logger.debug('RoomReactions.unsubscribe(); removing internal listener');
       return this.onLastUnsubscribe();
     }
     return Promise.resolve();
