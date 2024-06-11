@@ -1,9 +1,9 @@
 import * as Ably from 'ably';
 
+import { Logger } from './logger.js';
 import { Message } from './Message.js';
 import { OccupancyEvent } from './Occupancy.js';
 import { PaginatedResult } from './query.js';
-import { Logger } from './logger.js';
 
 export interface GetMessagesQueryParams {
   start?: number;

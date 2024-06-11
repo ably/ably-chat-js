@@ -64,6 +64,14 @@ export class ChatClient {
   }
 
   /**
+   * Returns the underlying Ably Realtime client.
+   * @returns The Ably Realtime client.
+   */
+  get realtime(): Ably.Realtime {
+    return this._realtime;
+  }
+
+  /**
    * Sets the agent string for the client.
    */
   private setAgent(): void {

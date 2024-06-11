@@ -1,6 +1,9 @@
-import { LogLevel, Logger, makeLogger } from '../../src/logger.js';
+import { Logger, LogLevel, makeLogger } from '../../src/logger.js';
 
+// makeTestLogger creates a logger that logs at the level specified by the VITE_TEST_LOG_LEVEL environment variable.
 export const makeTestLogger = (): Logger => {
-  const level = (process.env.VITE_TEST_LOG_LEVEL as LogLevel) ?? LogLevel.silent;
-  return makeLogger({ logLevel: level, typingTimeoutMs: 1000 });
+  return makeLogger({ logLevel: testLoggingLevel(), typingTimeoutMs: 1000 });
 };
+
+// testLoggingLevel returns the log level specified by the VITE_TEST_LOG_LEVEL environment variable.
+export const testLoggingLevel = (): LogLevel => process.env.VITE_TEST_LOG_LEVEL as LogLevel;
