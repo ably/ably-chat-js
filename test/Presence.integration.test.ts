@@ -3,11 +3,13 @@ import * as Ably from 'ably';
 import { PresenceAction, Realtime } from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { DefaultClientOptions } from '../src/config.js';
 import { PresenceEvents } from '../src/events.js';
 import { PresenceData, PresenceEvent } from '../src/Presence.js';
 import { Room } from '../src/Room.js';
 import { DefaultRooms, Rooms } from '../src/Rooms.js';
 import { randomRoomId } from './helper/identifier.js';
+import { makeTestLogger } from './helper/logger.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
 
 // Define the test context interface
@@ -23,7 +25,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
   beforeEach<TestContext>(async (context) => {
     context.realtime = ablyRealtimeClient();
     const roomId = randomRoomId();
-    context.chat = new DefaultRooms(context.realtime);
+    context.chat = new DefaultRooms(context.realtime, DefaultClientOptions, makeTestLogger());
     context.defaultTestClientId = context.realtime.auth.clientId;
     context.chatRoom = context.chat.get(roomId);
   });

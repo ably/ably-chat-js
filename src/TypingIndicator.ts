@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { TypingIndicatorEvents } from './events.js';
+import { Logger } from './logger.js';
 import { DefaultSubscriptionManager, SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
@@ -110,6 +111,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
   private readonly _currentlyTypingClientIds: Set<string>;
   private readonly _typingIndicatorsChannelName: string;
   private readonly _managedChannel: SubscriptionManager;
+  private readonly _logger: Logger;
 
   // Timeout for typing indicator
   private readonly _typingTimeoutMs: number;
@@ -122,7 +124,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @param clientId - The client ID.
    * @param typingTimeoutMs - The timeout for the typing indicator, set to 3000ms by default.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, typingTimeoutMs: number) {
+  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, typingTimeoutMs: number, logger: Logger) {
     super();
     this._roomId = roomId;
     this._clientId = clientId;
@@ -135,6 +137,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
     // Timeout for typing indicator
     this._typingTimeoutMs = typingTimeoutMs;
     this._timerId = null;
+    this._logger = logger;
   }
 
   /**

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatApi } from '../src/ChatApi.js';
 import { DefaultClientOptions } from '../src/config.js';
 import { DefaultRoom } from '../src/Room.js';
+import { makeTestLogger } from './helper/logger.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
@@ -20,7 +21,7 @@ describe('Reactions', () => {
     const clientId = 'd.vader';
 
     context.realtime = new Ably.Realtime({ clientId: clientId, key: 'key' });
-    context.chatApi = new ChatApi(context.realtime);
+    context.chatApi = new ChatApi(context.realtime, makeTestLogger());
 
     context.publishTimestamp = new Date();
     context.setPublishTimestamp = (date: Date) => {
@@ -66,7 +67,7 @@ describe('Reactions', () => {
       new Promise<void>((done, reject) => {
         const publishTimestamp = new Date().getTime();
         const { chatApi, realtime } = context;
-        const room = new DefaultRoom('abcd', realtime, chatApi, DefaultClientOptions);
+        const room = new DefaultRoom('abcd', realtime, chatApi, DefaultClientOptions, makeTestLogger());
 
         room.reactions
           .subscribe((reaction) => {
@@ -103,7 +104,7 @@ describe('Reactions', () => {
       new Promise<void>((done, reject) => {
         const publishTimestamp = new Date().getTime();
         const { chatApi, realtime } = context;
-        const room = new DefaultRoom('abcd', realtime, chatApi, DefaultClientOptions);
+        const room = new DefaultRoom('abcd', realtime, chatApi, DefaultClientOptions, makeTestLogger());
 
         room.reactions
           .subscribe((reaction) => {
@@ -141,7 +142,7 @@ describe('Reactions', () => {
     it<TestContext>('should be able to send a reaction and see it back on the realtime channel', (context) =>
       new Promise<void>((done, reject) => {
         const { chatApi, realtime } = context;
-        const room = new DefaultRoom('abcd', realtime, chatApi, DefaultClientOptions);
+        const room = new DefaultRoom('abcd', realtime, chatApi, DefaultClientOptions, makeTestLogger());
 
         room.reactions
           .subscribe((reaction) => {

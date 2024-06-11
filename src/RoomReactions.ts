@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { RoomReactionEvents } from './events.js';
+import { Logger } from './logger.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -98,12 +99,14 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   private readonly roomId: string;
   private readonly _managedChannel: SubscriptionManager;
   private readonly clientId: string;
+  private readonly _logger: Logger;
 
-  constructor(roomId: string, managedChannel: SubscriptionManager, clientId: string) {
+  constructor(roomId: string, managedChannel: SubscriptionManager, clientId: string, logger: Logger) {
     super();
     this.roomId = roomId;
     this._managedChannel = managedChannel;
     this.clientId = clientId;
+    this._logger = logger;
   }
 
   /**

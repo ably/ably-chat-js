@@ -5,6 +5,7 @@ import { ChatApi } from '../src/ChatApi.js';
 import { MessageEvents } from '../src/events.js';
 import { DefaultRoom } from '../src/Room.js';
 import { randomRoomId } from './helper/identifier.js';
+import { makeTestLogger } from './helper/logger.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
@@ -15,11 +16,15 @@ interface TestContext {
 
 vi.mock('ably');
 
+// Helper function to create a room
+const makeRoom = (context: TestContext) =>
+  new DefaultRoom(randomRoomId(), context.realtime, context.chatApi, { typingTimeoutMs: 1000 }, makeTestLogger());
+
 describe('Messages', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
-    context.chatApi = new ChatApi(context.realtime);
     context.channelLevelListeners = new Map<Ably.messageCallback<Ably.Message>, string[]>();
+    context.chatApi = new ChatApi(context.realtime, makeTestLogger());
 
     const channel = context.realtime.channels.get('roomId');
     vi.spyOn(channel, 'subscribe').mockImplementation(
@@ -66,7 +71,7 @@ describe('Messages', () => {
         createdAt: timestamp,
       });
 
-      const room = new DefaultRoom('coffee-room-chat', realtime, chatApi, { typingTimeoutMs: 300 });
+      const room = new DefaultRoom('coffee-room-chat', realtime, chatApi, { typingTimeoutMs: 300 }, makeTestLogger());
       const messagePromise = room.messages.send('hello there');
 
       const message = await messagePromise;
@@ -87,9 +92,7 @@ describe('Messages', () => {
     it<TestContext>('subscribing to messages should work live', (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = new Date().getTime();
-        const { chatApi, realtime } = context;
-        const roomId = randomRoomId();
-        const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
+        const room = makeRoom(context);
         room.messages
           .subscribe((rawMsg) => {
             const message = rawMsg.message;
@@ -100,7 +103,7 @@ describe('Messages', () => {
                   content: 'may the fourth be with you',
                   clientId: 'yoda',
                   createdAt: publishTimestamp,
-                  roomId: roomId,
+                  roomId: room.roomId,
                 }),
               );
             } catch (err) {
@@ -128,10 +131,9 @@ describe('Messages', () => {
   });
 
   it<TestContext>('attach its internal listener according to subscriptions', async (context) => {
-    const { realtime, chatApi, channelLevelListeners } = context;
+    const { channelLevelListeners } = context;
 
-    const roomId = randomRoomId();
-    const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+    const room = makeRoom(context);
     const listener1 = () => {};
     const listener2 = () => {};
 
@@ -158,9 +160,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no data provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
-      const { chatApi, realtime } = context;
-      const roomId = randomRoomId();
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
+      const room = makeRoom(context);
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without data'));
@@ -187,9 +187,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no clientId provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
-      const { chatApi, realtime } = context;
-      const roomId = randomRoomId();
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
+      const room = makeRoom(context);
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without clientId'));
@@ -218,9 +216,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no extras provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
-      const { chatApi, realtime } = context;
-      const roomId = randomRoomId();
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
+      const room = makeRoom(context);
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without extras'));
@@ -247,9 +243,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no timeserial provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
-      const { chatApi, realtime } = context;
-      const roomId = randomRoomId();
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
+      const room = makeRoom(context);
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without clientId'));
@@ -277,9 +271,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no content in incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
-      const { chatApi, realtime } = context;
-      const roomId = randomRoomId();
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
+      const room = makeRoom(context);
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without content'));
@@ -306,9 +298,7 @@ describe('Messages', () => {
 
   it<TestContext>('should raise an error if no timestamp provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
-      const { chatApi, realtime } = context;
-      const roomId = randomRoomId();
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
+      const room = makeRoom(context);
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without timestamp'));

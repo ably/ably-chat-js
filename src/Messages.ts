@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 
 import { ChatApi } from './ChatApi.js';
 import { MessageEvents } from './events.js';
+import { Logger } from './logger.js';
 import { DefaultMessage, Message } from './Message.js';
 import { PaginatedResult } from './query.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
@@ -143,14 +144,16 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   private readonly _managedChannel: SubscriptionManager;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
+  private readonly _logger: Logger;
   private _internalListener: Ably.messageCallback<Ably.InboundMessage> | undefined;
 
-  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string) {
+  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
     this._roomId = roomId;
     this._managedChannel = managedChannel;
     this._chatApi = chatApi;
     this._clientId = clientId;
+    this._logger = logger;
   }
 
   /**

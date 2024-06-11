@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { PresenceEvents } from './events.js';
+import { Logger } from './logger.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -172,6 +173,7 @@ export interface Presence {
 export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements Presence {
   private readonly subscriptionManager: SubscriptionManager;
   private readonly clientId: string;
+  private readonly _logger: Logger;
 
   /**
    * Constructor for Presence
@@ -180,10 +182,11 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @param {string} clientId - The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    */
-  constructor(subscriptionManager: SubscriptionManager, clientId: string) {
+  constructor(subscriptionManager: SubscriptionManager, clientId: string, logger: Logger) {
     super();
     this.subscriptionManager = subscriptionManager;
     this.clientId = clientId;
+    this._logger = logger;
   }
 
   /**

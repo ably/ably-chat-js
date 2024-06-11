@@ -1,9 +1,10 @@
 import * as Ably from 'ably';
 
-import { ClientOptions } from './config.js';
+import { ClientOptions, DefaultClientOptions } from './config.js';
+import { makeLogger } from './logger.js';
 import { RealtimeWithOptions } from './realtimeextensions.js';
 import { DefaultRooms, Rooms } from './Rooms.js';
-import { AGENT_STRING } from './version.js';
+import { AGENT_STRING, VERSION } from './version.js';
 
 /**
  * This is the core client for Ably chat. It provides access to chat rooms.
@@ -26,8 +27,12 @@ export class ChatClient {
    */
   constructor(realtime: Ably.Realtime, clientOptions?: ClientOptions) {
     this._realtime = realtime;
-    this._rooms = new DefaultRooms(realtime, clientOptions);
+    clientOptions = clientOptions ?? DefaultClientOptions;
+    const logger = makeLogger(clientOptions);
+
+    this._rooms = new DefaultRooms(realtime, clientOptions, logger);
     this.setAgent();
+    logger.trace(`ably chat client version ${VERSION}; initialised`);
   }
 
   /**

@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatApi } from './ChatApi.js';
+import { Logger } from './logger.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -76,12 +77,14 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
   private readonly _managedChannel: SubscriptionManager;
   private readonly _chatApi: ChatApi;
   private _internalListener: any;
+  private _logger: Logger;
 
-  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi) {
+  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, logger: Logger) {
     super();
     this.roomId = roomId;
     this._managedChannel = managedChannel;
     this._chatApi = chatApi;
+    this._logger = logger;
   }
 
   /**

@@ -3,6 +3,7 @@ import * as Ably from 'ably';
 import { Message } from './Message.js';
 import { OccupancyEvent } from './Occupancy.js';
 import { PaginatedResult } from './query.js';
+import { Logger } from './logger.js';
 
 export interface GetMessagesQueryParams {
   start?: number;
@@ -25,9 +26,11 @@ interface CreateMessageRequest {
  */
 export class ChatApi {
   private readonly realtime: Ably.Realtime;
+  private readonly _logger: Logger;
 
-  constructor(realtime: Ably.Realtime) {
+  constructor(realtime: Ably.Realtime, logger: Logger) {
     this.realtime = realtime;
+    this._logger = logger;
   }
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
