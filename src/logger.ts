@@ -90,7 +90,7 @@ export type LogHandler = (message: string, level: LogLevel) => void;
  * @param level The log level of the message.
  */
 const consoleLogger = (message: string, level: LogLevel) => {
-  const formattedMessage = `[${new Date().toISOString()}] ${LogLevel[level].toUpperCase()} ${message}`;
+  const formattedMessage = `[${new Date().toISOString()}] ${LogLevel[level].toUpperCase()} ably-chat: ${message}`;
 
   switch (level) {
     case LogLevel.trace:
