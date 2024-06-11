@@ -65,6 +65,7 @@ export class DefaultRooms implements Rooms {
    * @inheritDoc
    */
   get(roomId: string): Room {
+    this._logger.trace(`Rooms.get(); roomId=${roomId}`);
     if (this.rooms[roomId]) return this.rooms[roomId];
 
     const room = new DefaultRoom(roomId, this.realtime, this.chatApi, this._clientOptions, this._logger);
@@ -84,6 +85,7 @@ export class DefaultRooms implements Rooms {
    * @inheritDoc
    */
   async release(roomId: string) {
+    this._logger.trace(`Rooms.release(); roomId=${roomId}`);
     const room = this.rooms[roomId];
     if (!room) {
       return;
