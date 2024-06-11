@@ -98,13 +98,6 @@ export interface PresenceMember {
 export type PresenceListener = (event: PresenceEvent) => void;
 
 /**
- * Represents parameters that can be set when fetching the presence set.
- *
- * @see [Ably.RealtimePresenceParams](https://sdk.ably.com/builds/ably/ably-js/main/typedoc/interfaces/ably.RealtimePresenceParams.html)
- */
-export type PresenceParams = Ably.RealtimePresenceParams;
-
-/**
  * This interface is used to interact with presence in a chat room including subscribing,
  * fetching presence members, or sending presence events (join,update,leave).
  *
@@ -113,10 +106,10 @@ export type PresenceParams = Ably.RealtimePresenceParams;
 export interface Presence {
   /**
    * Method to get list of the current online users and returns the latest presence messages associated to it.
-   * @param {PresenceParams} params - Parameters that control how the presence set is retrieved.
+   * @param {Ably.RealtimePresenceParams} params - Parameters that control how the presence set is retrieved.
    * @returns {Promise<PresenceMessage[]>} or upon failure, the promise will be rejected with an [[Ably.ErrorInfo]] object which explains the error.
    */
-  get(params?: PresenceParams): Promise<PresenceMember[]>;
+  get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]>;
 
   /**
    * Method to check if user with supplied clientId is online
@@ -196,7 +189,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
   /**
    * @inheritDoc
    */
-  async get(params?: PresenceParams): Promise<PresenceMember[]> {
+  async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     const userOnPresence = await this.subscriptionManager.channel.presence.get(params);
     return userOnPresence.map((user) => ({
       clientId: user.clientId,

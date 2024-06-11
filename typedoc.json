@@ -8,6 +8,9 @@
   "includeVersion": true,
   "excludeInternal": true,
   "validation": true,
+  "visibilityFilters": {
+    "external": true
+  },
   "requiredToBeDocumented": [
     "Accessor",
     "Class",

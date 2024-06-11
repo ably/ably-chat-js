@@ -9,7 +9,8 @@ import { randomRoomId } from './helper/identifier.js';
 interface TestContext {
   realtime: Ably.Realtime;
   chatApi: ChatApi;
-  emulateBackendPublish: Ably.messageCallback<Partial<Ably.Message>>;
+  emulateBackendPublish: Ably.messageCallback<Partial<Ably.InboundMessage>>;
+  channelLevelListeners: Map<Ably.messageCallback<Ably.Message>, string[]>;
 }
 
 vi.mock('ably');
@@ -18,9 +19,9 @@ describe('Messages', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime);
+    context.channelLevelListeners = new Map<Ably.messageCallback<Ably.Message>, string[]>();
 
     const channel = context.realtime.channels.get('roomId');
-    const listeners: Ably.messageCallback<Ably.Message>[] = [];
     vi.spyOn(channel, 'subscribe').mockImplementation(
       // @ts-ignore
       async (
@@ -29,16 +30,31 @@ describe('Messages', () => {
       ) => {
         if (Array.isArray(eventsOrListeners)) {
           expect(eventsOrListeners, 'array should only contain MessageEvents').toEqual(Object.values(MessageEvents));
-          listeners.push(listener);
+          context.channelLevelListeners.set(listener, eventsOrListeners);
         } else {
-          listeners.push(eventsOrListeners);
+          context.channelLevelListeners.set(listener, []);
         }
         // @ts-ignore
         context.emulateBackendPublish = (msg) => {
-          listeners.forEach((listener) => listener(msg));
+          context.channelLevelListeners.forEach((_, cb) => cb(msg));
         };
       },
     );
+
+    vi.spyOn(channel, 'unsubscribe').mockImplementation(
+      // @ts-ignore
+      async (listener: Ably.messageCallback<Ably.Message>) => {
+        context.channelLevelListeners.delete(listener);
+      },
+    );
+
+    // Mock the attach
+    vi.spyOn(channel, 'attach').mockImplementation(async () => {
+      return null;
+    });
+
+    // Mock the detach
+    vi.spyOn(channel, 'detach').mockImplementation(async () => {});
   });
 
   describe('sending message', () => {
@@ -75,7 +91,7 @@ describe('Messages', () => {
         const roomId = randomRoomId();
         const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
         room.messages
-          .subscribe(MessageEvents.created, (rawMsg) => {
+          .subscribe((rawMsg) => {
             const message = rawMsg.message;
             try {
               expect(message).toEqual(
@@ -111,6 +127,34 @@ describe('Messages', () => {
       }));
   });
 
+  it<TestContext>('attach its internal listener according to subscriptions', async (context) => {
+    const { realtime, chatApi, channelLevelListeners } = context;
+
+    const roomId = randomRoomId();
+    const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+    const listener1 = () => {};
+    const listener2 = () => {};
+
+    // First listener added, internal listener should be registered
+    await room.messages.subscribe(listener1);
+    expect(channelLevelListeners).toHaveLength(1);
+    expect(channelLevelListeners.values().next().value).toEqual(['message.created']);
+
+    // A second listener added, internal listener should still be registered but not added again
+    await room.messages.subscribe(listener2);
+    expect(channelLevelListeners).toHaveLength(1);
+    expect(channelLevelListeners.values().next().value).toEqual(['message.created']);
+
+    // First listener removed, internal listener should still be registered
+    await room.messages.unsubscribe(listener1);
+    expect(channelLevelListeners).toHaveLength(1);
+    expect(channelLevelListeners.values().next().value).toEqual(['message.created']);
+
+    // Second listener removed, internal listener should be removed
+    await room.messages.unsubscribe(listener2);
+    expect(channelLevelListeners).toHaveLength(0);
+  });
+
   it<TestContext>('should raise an error if no data provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
@@ -118,7 +162,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without data'));
         })
         .then(() => {
@@ -147,7 +191,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without clientId'));
         })
         .then(() => {
@@ -178,7 +222,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without extras'));
         })
         .then(() => {
@@ -207,7 +251,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without clientId'));
         })
         .then(() => {
@@ -237,7 +281,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without content'));
         })
         .then(() => {
@@ -266,7 +310,7 @@ describe('Messages', () => {
       const roomId = randomRoomId();
       const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 300 });
       room.messages
-        .subscribe(MessageEvents.created, () => {
+        .subscribe(() => {
           reject(new Error('should not have received message without timestamp'));
         })
         .then(() => {
