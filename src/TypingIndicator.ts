@@ -132,6 +132,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
     this._typingIndicatorsChannelName = `${this._roomId}::$chat::$typingIndicators`;
     this._managedChannel = new DefaultSubscriptionManager(
       realtime.channels.get(this._typingIndicatorsChannelName, DEFAULT_CHANNEL_OPTIONS),
+      logger,
     );
 
     // Timeout for typing indicator

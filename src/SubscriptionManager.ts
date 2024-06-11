@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 import { ChannelStateChange } from 'ably';
+import { Logger } from './logger';
 
 type Listener = Ably.messageCallback<Ably.InboundMessage>;
 type PresenceListener = Ably.messageCallback<Ably.PresenceMessage>;
@@ -39,15 +40,18 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
   private readonly _listeners: Set<Listener>;
   private readonly _presenceListeners: Set<PresenceListener>;
   private _presenceEntered: boolean = false;
+  private _logger: Logger;
 
-  constructor(channel: Ably.RealtimeChannel) {
+  constructor(channel: Ably.RealtimeChannel, logger: Logger) {
     this._channel = channel;
     this._listeners = new Set();
     this._presenceListeners = new Set();
+    this._logger = logger;
 
     // Handle case where channel fails to reconnect and so presence is not entered
     this.channel.on((stateChange: ChannelStateChange) => {
       if (stateChange.resumed && stateChange.reason?.code === 91004) {
+        this._logger.error(`failed to re-enter presence on channel; channel=${this._channel.name}`);
         this._presenceEntered = false;
         this.detachChannelIfNotListening().then(() => {});
       }
@@ -59,10 +63,13 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
    * is not already attached.
    */
   subscribe(...args: unknown[]): Promise<Ably.ChannelStateChange | null> {
+    this._logger.trace(`DefaultSubscriptionManager.subscribe();`);
     if (args.length < 1 && args.length > 2) {
+      this._logger.error('invalid number of arguments for channel subscription');
       throw new Error('Invalid number of arguments');
     }
 
+    this._logger.debug(`subscribing to managed channel; channel=${this._channel.name}`);
     if (args.length === 1) {
       const listener: Listener = args[0] as Listener;
       return this._channel.subscribe(listener);
@@ -80,6 +87,7 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
    */
   unsubscribe(listener: Listener): Promise<void> {
     if (!this._listeners.has(listener)) {
+      this._logger.debug(`listener not found for unsubscribe; channel=${this._channel.name}`);
       return Promise.resolve();
     }
 
@@ -96,10 +104,13 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
    * a channel state change.
    */
   presenceSubscribe(...args: unknown[]): Promise<void> {
+    this._logger.trace(`DefaultSubscriptionManager.presenceSubscribe();`);
     if (args.length < 1 && args.length > 2) {
+      this._logger.error('invalid number of arguments for presence subscription');
       throw new Error('Invalid number of arguments');
     }
 
+    this._logger.debug(`subscribing to presence on managed channel; channel=${this._channel.name}`);
     if (args.length === 1) {
       const listener: PresenceListener = args[0] as PresenceListener;
       this._presenceListeners.add(listener);
@@ -117,7 +128,9 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
    * are no more listeners.
    */
   presenceUnsubscribe(listener: PresenceListener): Promise<void> {
+    this._logger.trace(`DefaultSubscriptionManager.presenceUnsubscribe();`);
     if (!this._presenceListeners.has(listener)) {
+      this._logger.debug(`presence listener not found for unsubscribe; channel=${this._channel.name}`);
       return Promise.resolve();
     }
 
@@ -131,20 +144,27 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
    */
   private detachChannelIfNotListening(): Promise<void> {
     if (this.hasListeners()) {
+      this._logger.debug('not detaching managed channel; still has listeners');
       return Promise.resolve();
     }
+
     if (this._presenceEntered) {
+      this._logger.debug('not detaching managed channel; presence is still entered');
       return Promise.resolve();
     }
+
+    this._logger.debug('detaching managed channel; no listeners');
     return this._channel.detach();
   }
 
   presenceEnterClient(clientId: string, data?: string): Promise<void> {
+    this._logger.trace(`DefaultSubscriptionManager.presenceEnterClient(); clientId=${clientId}`);
     this._presenceEntered = true;
     return this._channel.presence.enterClient(clientId, data);
   }
 
   async presenceLeaveClient(clientId: string, data?: string): Promise<void> {
+    this._logger.trace(`DefaultSubscriptionManager.presenceLeaveClient(); clientId=${clientId}`);
     this._presenceEntered = false;
     return this._channel.presence.leaveClient(clientId, data).finally(() => {
       return this.detachChannelIfNotListening();
@@ -152,6 +172,7 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
   }
 
   presenceUpdateClient(clientId: string, data?: string): Promise<void> {
+    this._logger.trace(`DefaultSubscriptionManager.presenceUpdateClient(); clientId=${clientId}`);
     this._presenceEntered = true;
     return this._channel.presence.updateClient(clientId, data);
   }

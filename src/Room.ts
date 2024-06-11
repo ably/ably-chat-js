@@ -82,6 +82,7 @@ export class DefaultRoom implements Room {
 
     const subscriptionManager = new DefaultSubscriptionManager(
       realtime.channels.get(messagesChannelName, DEFAULT_CHANNEL_OPTIONS),
+      logger,
     );
     this._messages = new DefaultMessages(roomId, subscriptionManager, this.chatApi, realtime.auth.clientId, logger);
     this._presence = new DefaultPresence(subscriptionManager, realtime.auth.clientId, logger);
@@ -95,6 +96,7 @@ export class DefaultRoom implements Room {
 
     const reactionsManagedChannel = new DefaultSubscriptionManager(
       realtime.channels.get(`${this._roomId}::$chat::$reactions`, DEFAULT_CHANNEL_OPTIONS),
+      logger,
     );
     this._reactions = new DefaultRoomReactions(roomId, reactionsManagedChannel, realtime.auth.clientId, logger);
     this._occupancy = new DefaultOccupancy(roomId, subscriptionManager, this.chatApi, logger);

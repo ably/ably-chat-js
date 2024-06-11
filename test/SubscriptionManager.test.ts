@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { DefaultSubscriptionManager } from '../src/SubscriptionManager.ts';
 import { randomString } from './helper/identifier.ts';
+import { makeTestLogger } from './helper/logger.ts';
 import { ablyRealtimeClient } from './helper/realtimeClient.ts';
 
 interface TestContext {
@@ -67,7 +68,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
     const ablyRealtime = ablyRealtimeClient();
     context.channel = ablyRealtime.channels.get(channelName);
     context.publishChannel = ablyRealtimeClient().channels.get(channelName);
-    context.subscriptionManager = new DefaultSubscriptionManager(context.channel);
+    context.subscriptionManager = new DefaultSubscriptionManager(context.channel, makeTestLogger());
     context.defaultClientId = ablyRealtime.auth.clientId;
   });
 
