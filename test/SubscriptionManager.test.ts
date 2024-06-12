@@ -305,9 +305,8 @@ describe('subscription manager', { timeout: 15000 }, () => {
     // update presence, triggering an enter event
     await context.subscriptionManager.presenceEnterClient(context.defaultClientId, 'test-data');
     // should receive one enter event
-    await waitForMessages(receivedMessages, 1);
-    expect(receivedMessages[0].action).toBe('enter');
-    expect(receivedMessages[0].data).toBe('test-data');
+    const presenceEvent = await waitForPresenceEvent(receivedMessages, 'enter');
+    expect(presenceEvent.data).toBe('test-data');
   });
 
   it<TestContext>('should emit an update event if already entered presence', async (context) => {
@@ -335,6 +334,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
     await subscriptionManager.presenceLeaveClient(context.defaultClientId);
     await waitForChannelStateChange(channel, 'detached');
   });
+
   it<TestContext>('should leave presence, but not detach from the channel if listeners are still subscribed', async (context) => {
     const { channel, subscriptionManager } = context;
     // Add a listener, which implicitly attaches, should prevent the channel from detaching during the leave event
@@ -352,11 +352,15 @@ describe('subscription manager', { timeout: 15000 }, () => {
     };
     // subscribe to presence events
     await context.subscriptionManager.presenceSubscribe(listener);
+
     // enter presence and wait for the event
-    await context.subscriptionManager.presenceLeaveClient(context.defaultClientId, 'test-data');
-    // should receive one enter event
-    await waitForMessages(receivedMessages, 1);
-    expect(receivedMessages[0].action).toBe('leave');
-    expect(receivedMessages[0].data).toBe('test-data');
+    await context.subscriptionManager.presenceEnterClient(context.defaultClientId, 'test-data');
+    const enterMessage = await waitForPresenceEvent(receivedMessages, 'enter');
+    expect(enterMessage.data).toBe('test-data');
+
+    // leave presence and wait for the leave event
+    await context.subscriptionManager.presenceLeaveClient(context.defaultClientId, 'test-data-leave');
+    const leaveEvent = await waitForPresenceEvent(receivedMessages, 'leave');
+    expect(leaveEvent.data).toBe('test-data-leave');
   });
 });
