@@ -274,6 +274,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
     await subscriptionManager.presenceUpdateClient(context.defaultClientId);
     await waitForChannelStateChange(channel, 'attached');
   });
+
   it<TestContext>('should emit an event enter when joining for the first time', async (context) => {
     const receivedMessages: Ably.PresenceMessage[] = [];
     const listener = (message) => {
@@ -282,12 +283,13 @@ describe('subscription manager', { timeout: 15000 }, () => {
     // subscribe to presence events
     await context.subscriptionManager.presenceSubscribe(listener);
     // update presence, triggering an enter event
-    await context.subscriptionManager.presenceUpdateClient(context.defaultClientId, 'test-data');
+    await context.subscriptionManager.presenceEnterClient(context.defaultClientId, 'test-data');
     // should receive one enter event
     await waitForMessages(receivedMessages, 1);
     expect(receivedMessages[0].action).toBe('enter');
     expect(receivedMessages[0].data).toBe('test-data');
   });
+
   it<TestContext>('should emit an update event if already enter presence', async (context) => {
     const receivedMessages: Ably.PresenceMessage[] = [];
     const listener = (message) => {
