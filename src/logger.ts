@@ -1,5 +1,3 @@
-import 'console-polyfill';
-
 import { ClientOptions } from './config.js';
 
 /**
@@ -9,32 +7,37 @@ export interface Logger {
   /**
    * Log a message at the trace level.
    * @param message The message to log.
+   * @param context The context of the log message as key-value pairs.
    */
-  trace(message: string): void;
+  trace(message: string, context?: LogContext): void;
 
   /**
    * Log a message at the debug level.
    * @param message The message to log.
+   * @param context The context of the log message as key-value pairs.
    */
-  debug(message: string): void;
+  debug(message: string, context?: LogContext): void;
 
   /**
    * Log a message at the info level.
    * @param message The message to log.
+   * @param context The context of the log message as key-value pairs.
    */
-  info(message: string): void;
+  info(message: string, context?: LogContext): void;
 
   /**
    * Log a message at the warn level.
    * @param message The message to log.
+   * @param context The context of the log message as key-value pairs.
    */
-  warn(message: string): void;
+  warn(message: string, context?: LogContext): void;
 
   /**
    * Log a message at the error level.
    * @param message The message to log.
+   * @param context The context of the log message as key-value pairs.
    */
-  error(message: string): void;
+  error(message: string, context?: LogContext): void;
 }
 
 /**
@@ -77,11 +80,20 @@ export enum LogLevel {
 }
 
 /**
+ * Represents the context of a log message.
+ * It is an object of key-value pairs that can be used to provide additional context to a log message.
+ */
+export interface LogContext {
+  [key: string]: any;
+}
+
+/**
  * A function that can be used to handle log messages.
  * @param message The message to log.
  * @param level The log level of the message.
+ * @param context The context of the log message as key-value pairs.
  */
-export type LogHandler = (message: string, level: LogLevel) => void;
+export type LogHandler = (message: string, level: LogLevel, context?: LogContext) => void;
 
 /**
  * A simple console logger that logs messages to the console.
@@ -89,8 +101,9 @@ export type LogHandler = (message: string, level: LogLevel) => void;
  * @param message The message to log.
  * @param level The log level of the message.
  */
-const consoleLogger = (message: string, level: LogLevel) => {
-  const formattedMessage = `[${new Date().toISOString()}] ${LogLevel[level].toUpperCase()} ably-chat: ${message}`;
+const consoleLogger = (message: string, level: LogLevel, context?: LogContext) => {
+  const contextString = context ? `, context: ${JSON.stringify(context)}` : '';
+  const formattedMessage = `[${new Date().toISOString()}] ${LogLevel[level].toUpperCase()} ably-chat: ${message}${contextString}`;
 
   switch (level) {
     case LogLevel.trace:
@@ -158,29 +171,29 @@ class DefaultLogger implements Logger {
     this._levelNumber = logLevelNumberMap.get(level) as LogLevelNumbers;
   }
 
-  trace(message: string): void {
-    this.write(message, LogLevel.trace, LogLevelNumbers.trace);
+  trace(message: string, context?: LogContext): void {
+    this.write(message, LogLevel.trace, LogLevelNumbers.trace, context);
   }
 
-  debug(message: string): void {
-    this.write(message, LogLevel.debug, LogLevelNumbers.debug);
+  debug(message: string, context?: LogContext): void {
+    this.write(message, LogLevel.debug, LogLevelNumbers.debug, context);
   }
 
-  info(message: string): void {
-    this.write(message, LogLevel.info, LogLevelNumbers.info);
+  info(message: string, context?: LogContext): void {
+    this.write(message, LogLevel.info, LogLevelNumbers.info, context);
   }
 
-  warn(message: string): void {
-    this.write(message, LogLevel.warn, LogLevelNumbers.warn);
+  warn(message: string, context?: LogContext): void {
+    this.write(message, LogLevel.warn, LogLevelNumbers.warn, context);
   }
 
-  error(message: string): void {
-    this.write(message, LogLevel.error, LogLevelNumbers.error);
+  error(message: string, context?: LogContext): void {
+    this.write(message, LogLevel.error, LogLevelNumbers.error, context);
   }
 
-  private write(message: string, level: LogLevel, levelNumber: LogLevelNumbers): void {
+  private write(message: string, level: LogLevel, levelNumber: LogLevelNumbers, context?: LogContext): void {
     if (levelNumber >= this._levelNumber) {
-      this._handler(message, level);
+      this._handler(message, level, context);
     }
   }
 }

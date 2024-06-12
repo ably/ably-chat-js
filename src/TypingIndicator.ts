@@ -243,7 +243,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
             },
           });
         } catch (error) {
-          this._logger.error(`unable to handle typingStarted event; not a valid typingIndicator event, error=${error}`);
+          this._logger.error(`unable to handle typingStarted event; not a valid typingIndicator event`, { error });
           this._currentlyTypingClientIds.delete(member.clientId);
           throw new Ably.ErrorInfo(
             `unable to handle typingStarted event; not a valid typingIndicator event`,
@@ -264,7 +264,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
             },
           });
         } catch (error) {
-          this._logger.error(`unable to handle typingStopped event; not a valid typingIndicator event, error=${error}`);
+          this._logger.error(`unable to handle typingStopped event; not a valid typingIndicator event`, { error });
           throw new Ably.ErrorInfo(
             `unable to handle typingStopped event; not a valid typingIndicator event`,
             50000,

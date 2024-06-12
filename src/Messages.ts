@@ -213,9 +213,9 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   }
 
   private processEvent(channelEventMessage: Ably.InboundMessage) {
-    this._logger.trace(
-      `Messages.processEvent(); event="${channelEventMessage.name}"; message="${channelEventMessage}"`,
-    );
+    this._logger.trace('Messages.processEvent();', {
+      channelEventMessage,
+    });
     const { name } = channelEventMessage;
 
     // Send the message to the listeners
@@ -226,7 +226,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
         return true;
       }
       default:
-        this._logger.warn(`Messages.processEvent(); received unknown event="${name}"`);
+        this._logger.warn('Messages.processEvent(); received unknown event', { name });
         throw new Ably.ErrorInfo(`received illegal event="${name}"`, 50000, 500);
     }
   }
@@ -238,34 +238,34 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     const { data, clientId, timestamp, extras } = channelEventMessage;
 
     if (!data) {
-      this._logger.error(`received occupancy message without data`);
+      this._logger.error(`received incoming message without data`);
       throw new Ably.ErrorInfo(`received message without data`, 50000, 500);
     }
 
     if (!clientId) {
-      this._logger.error(`received occupancy message without clientId`);
+      this._logger.error(`received incoming message without clientId`);
       throw new Ably.ErrorInfo(`received message without clientId`, 50000, 500);
     }
 
     if (!timestamp) {
-      this._logger.error(`received occupancy message without timestamp`);
+      this._logger.error(`received incoming message without timestamp`);
       throw new Ably.ErrorInfo(`received message without timestamp`, 50000, 500);
     }
 
     const { content } = data;
     if (!content) {
-      this._logger.error(`received occupancy message without content`);
+      this._logger.error(`received incoming message without content`);
       throw new Ably.ErrorInfo(`received message without content`, 50000, 500);
     }
 
     if (!extras) {
-      this._logger.error(`received occupancy message without extras`);
+      this._logger.error(`received incoming message without extras`);
       throw new Ably.ErrorInfo(`received message without extras`, 50000, 500);
     }
 
     const { timeserial } = extras;
     if (!timeserial) {
-      this._logger.error(`received occupancy message without timeserial`);
+      this._logger.error(`received incoming message without timeserial`);
       throw new Ably.ErrorInfo(`received message without timeserial`, 50000, 500);
     }
 

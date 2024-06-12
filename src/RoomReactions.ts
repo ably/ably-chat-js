@@ -113,7 +113,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
    * @inheritDoc Reactions
    */
   send(type: string, metadata?: any): Promise<void> {
-    this._logger.trace(`RoomReactions.send(); type=${type}; metadata=${metadata}`);
+    this._logger.trace('RoomReactions.send();', { type, metadata });
     const payload: any = { type: type };
     if (metadata) {
       payload.metadata = metadata;
