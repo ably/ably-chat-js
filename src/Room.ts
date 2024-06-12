@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 
 import { ChatApi } from './ChatApi.js';
 import { ClientOptions } from './config.js';
+import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './Messages.js';
 import { DefaultOccupancy, Occupancy } from './Occupancy.js';
 import { DefaultPresence, Presence } from './Presence.js';
@@ -64,6 +65,7 @@ export class DefaultRoom implements Room {
   private readonly _presence: Presence;
   private readonly _reactions: RoomReactions;
   private readonly _occupancy: Occupancy;
+  private readonly _logger: Logger;
 
   /**
    * Constructs a new Room instance.
@@ -73,28 +75,32 @@ export class DefaultRoom implements Room {
    * @param chatApi An instance of the ChatApi.
    * @param clientOptions The client options from the chat instance.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientOptions: ClientOptions) {
+  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientOptions: ClientOptions, logger: Logger) {
     this._roomId = roomId;
     this.chatApi = chatApi;
     const messagesChannelName = `${this._roomId}::$chat::$chatMessages`;
 
     const subscriptionManager = new DefaultSubscriptionManager(
       realtime.channels.get(messagesChannelName, DEFAULT_CHANNEL_OPTIONS),
+      logger,
     );
-    this._messages = new DefaultMessages(roomId, subscriptionManager, this.chatApi, realtime.auth.clientId);
-    this._presence = new DefaultPresence(subscriptionManager, realtime.auth.clientId);
+    this._messages = new DefaultMessages(roomId, subscriptionManager, this.chatApi, realtime.auth.clientId, logger);
+    this._presence = new DefaultPresence(subscriptionManager, realtime.auth.clientId, logger);
     this._typingIndicators = new DefaultTypingIndicator(
       roomId,
       realtime,
       realtime.auth.clientId,
       clientOptions.typingTimeoutMs,
+      logger,
     );
 
     const reactionsManagedChannel = new DefaultSubscriptionManager(
       realtime.channels.get(`${this._roomId}::$chat::$reactions`, DEFAULT_CHANNEL_OPTIONS),
+      logger,
     );
-    this._reactions = new DefaultRoomReactions(roomId, reactionsManagedChannel, realtime.auth.clientId);
-    this._occupancy = new DefaultOccupancy(roomId, subscriptionManager, this.chatApi);
+    this._reactions = new DefaultRoomReactions(roomId, reactionsManagedChannel, realtime.auth.clientId, logger);
+    this._occupancy = new DefaultOccupancy(roomId, subscriptionManager, this.chatApi, logger);
+    this._logger = logger;
   }
 
   /**

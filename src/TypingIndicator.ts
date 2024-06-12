@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { TypingIndicatorEvents } from './events.js';
+import { Logger } from './logger.js';
 import { DefaultSubscriptionManager, SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
@@ -110,6 +111,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
   private readonly _currentlyTypingClientIds: Set<string>;
   private readonly _typingIndicatorsChannelName: string;
   private readonly _managedChannel: SubscriptionManager;
+  private readonly _logger: Logger;
 
   // Timeout for typing indicator
   private readonly _typingTimeoutMs: number;
@@ -122,7 +124,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @param clientId - The client ID.
    * @param typingTimeoutMs - The timeout for the typing indicator, set to 3000ms by default.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, typingTimeoutMs: number) {
+  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, typingTimeoutMs: number, logger: Logger) {
     super();
     this._roomId = roomId;
     this._clientId = clientId;
@@ -130,11 +132,13 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
     this._typingIndicatorsChannelName = `${this._roomId}::$chat::$typingIndicators`;
     this._managedChannel = new DefaultSubscriptionManager(
       realtime.channels.get(this._typingIndicatorsChannelName, DEFAULT_CHANNEL_OPTIONS),
+      logger,
     );
 
     // Timeout for typing indicator
     this._typingTimeoutMs = typingTimeoutMs;
     this._timerId = null;
+    this._logger = logger;
   }
 
   /**
@@ -155,7 +159,9 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * Start the typing timeout timer. This will emit a typingStopped event if the timer expires.
    */
   private startTypingTimer(): void {
+    this._logger.trace(`TypingIndicator.startTypingTimer();`);
     this._timerId = setTimeout(async () => {
+      this._logger.debug(`TypingIndicator.startTypingTimer(); timeout expired`);
       await this.stopTyping();
     }, this._typingTimeoutMs);
   }
@@ -164,8 +170,10 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @inheritDoc
    */
   async startTyping(): Promise<void> {
+    this._logger.trace(`TypingIndicator.startTyping();`);
     // If the user is already typing, reset the timer
     if (this._timerId) {
+      this._logger.debug(`TypingIndicator.startTyping(); already typing, resetting timer`);
       clearTimeout(this._timerId);
       this.startTypingTimer();
       return;
@@ -179,6 +187,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @inheritDoc
    */
   async stopTyping(): Promise<void> {
+    this._logger.trace(`TypingIndicator.stopTyping();`);
     // Clear the timer and emit typingStopped event
     if (this._timerId) {
       clearTimeout(this._timerId);
@@ -192,9 +201,11 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @inheritDoc
    */
   async subscribe(listener: TypingListener): Promise<void> {
+    this._logger.trace(`TypingIndicator.subscribe();`);
     const hasListeners = this.hasListeners();
     this.on(listener);
     if (!hasListeners) {
+      this._logger.debug('TypingIndicator.subscribe(); adding internal listener');
       return this._managedChannel.presenceSubscribe(this._internalSubscribeToEvents);
     }
     return Promise.resolve();
@@ -204,8 +215,10 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @inheritDoc
    */
   async unsubscribe(listener: TypingListener): Promise<void> {
+    this._logger.trace(`TypingIndicator.unsubscribe();`);
     this.off(listener);
     if (!this.hasListeners()) {
+      this._logger.debug('TypingIndicator.unsubscribe(); removing internal listener');
       return this._managedChannel.presenceUnsubscribe(this._internalSubscribeToEvents);
     }
     return Promise.resolve();
@@ -230,6 +243,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
             },
           });
         } catch (error) {
+          this._logger.error(`unable to handle typingStarted event; not a valid typingIndicator event`, { error });
           this._currentlyTypingClientIds.delete(member.clientId);
           throw new Ably.ErrorInfo(
             `unable to handle typingStarted event; not a valid typingIndicator event`,
@@ -250,6 +264,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
             },
           });
         } catch (error) {
+          this._logger.error(`unable to handle typingStopped event; not a valid typingIndicator event`, { error });
           throw new Ably.ErrorInfo(
             `unable to handle typingStopped event; not a valid typingIndicator event`,
             50000,

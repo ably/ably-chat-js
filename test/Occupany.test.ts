@@ -5,7 +5,7 @@ import { ChatApi } from '../src/ChatApi.js';
 import { OccupancyEvent } from '../src/Occupancy.js';
 import { DefaultRoom } from '../src/Room.js';
 import { randomRoomId } from './helper/identifier.js';
-import { ablyRealtimeClient } from './helper/realtimeClient.js';
+import { makeTestLogger } from './helper/logger.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
@@ -18,10 +18,14 @@ interface TestContext {
 
 vi.mock('ably');
 
+// Helper function to create a room
+const makeRoom = (context: TestContext) =>
+  new DefaultRoom(context.roomId, context.realtime, context.chatApi, { typingTimeoutMs: 1000 }, makeTestLogger());
+
 describe('Occupancy', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
-    context.chatApi = new ChatApi(context.realtime);
+    context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.roomId = randomRoomId();
     context.channelLevelListeners = new Map<Ably.messageCallback<Ably.Message>, string[]>();
     context.currentChannelOptions = {};
@@ -69,9 +73,9 @@ describe('Occupancy', () => {
   });
 
   it<TestContext>('registers its internal listener as subscriptions change', async (context) => {
-    const { realtime, chatApi, roomId, channelLevelListeners } = context;
+    const { channelLevelListeners } = context;
 
-    const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+    const room = makeRoom(context);
     const listener1 = () => {};
     const listener2 = () => {};
 
@@ -96,9 +100,7 @@ describe('Occupancy', () => {
   });
 
   it<TestContext>('enables channel occupancy as subscriptions change', async (context) => {
-    const { realtime, chatApi, roomId } = context;
-
-    const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+    const room = makeRoom(context);
     const listener1 = () => {};
     const listener2 = () => {};
 
@@ -121,8 +123,7 @@ describe('Occupancy', () => {
 
   it<TestContext>('receives occupancy updates', async (context) =>
     new Promise<void>((done, reject) => {
-      const { realtime, chatApi, roomId } = context;
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+      const room = makeRoom(context);
       room.occupancy
         .subscribe((event: OccupancyEvent) => {
           try {
@@ -153,8 +154,7 @@ describe('Occupancy', () => {
 
   it<TestContext>('receives occupancy updates zero values', async (context) =>
     new Promise<void>((done, reject) => {
-      const { realtime, chatApi, roomId } = context;
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+      const room = makeRoom(context);
       room.occupancy
         .subscribe((event: OccupancyEvent) => {
           try {
@@ -185,9 +185,7 @@ describe('Occupancy', () => {
 
   it<TestContext>('raises an error if no connections in occupancy data', async (context) =>
     new Promise<void>((done, reject) => {
-      ablyRealtimeClient();
-      const { realtime, chatApi, roomId } = context;
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+      const room = makeRoom(context);
       room.occupancy
         .subscribe(() => {
           reject('should not have received occupancy event without connections');
@@ -213,9 +211,7 @@ describe('Occupancy', () => {
 
   it<TestContext>('raises an error if no presenceMembers in occupancy data', async (context) =>
     new Promise<void>((done, reject) => {
-      ablyRealtimeClient();
-      const { realtime, chatApi, roomId } = context;
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+      const room = makeRoom(context);
       room.occupancy
         .subscribe(() => {
           reject('should not have received occupancy event without presenceMembers');
@@ -241,9 +237,7 @@ describe('Occupancy', () => {
 
   it<TestContext>('raises an error if no metrics in occupancy data', async (context) =>
     new Promise<void>((done, reject) => {
-      ablyRealtimeClient();
-      const { realtime, chatApi, roomId } = context;
-      const room = new DefaultRoom(roomId, realtime, chatApi, { typingTimeoutMs: 1000 });
+      const room = makeRoom(context);
       room.occupancy
         .subscribe(() => {
           reject('should not have received occupancy event without metrics');

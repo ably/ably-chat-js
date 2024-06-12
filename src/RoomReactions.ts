@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { RoomReactionEvents } from './events.js';
+import { Logger } from './logger.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -98,18 +99,21 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   private readonly roomId: string;
   private readonly _managedChannel: SubscriptionManager;
   private readonly clientId: string;
+  private readonly _logger: Logger;
 
-  constructor(roomId: string, managedChannel: SubscriptionManager, clientId: string) {
+  constructor(roomId: string, managedChannel: SubscriptionManager, clientId: string, logger: Logger) {
     super();
     this.roomId = roomId;
     this._managedChannel = managedChannel;
     this.clientId = clientId;
+    this._logger = logger;
   }
 
   /**
    * @inheritDoc Reactions
    */
   send(type: string, metadata?: any): Promise<void> {
+    this._logger.trace('RoomReactions.send();', { type, metadata });
     const payload: any = { type: type };
     if (metadata) {
       payload.metadata = metadata;
@@ -121,9 +125,11 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
    * @inheritDoc Reactions
    */
   subscribe(listener: RoomReactionListener) {
+    this._logger.trace(`RoomReactions.subscribe();`);
     const hasListeners = this.hasListeners();
     this.on(listener);
     if (!hasListeners) {
+      this._logger.debug('RoomReactions.subscribe(); adding internal listener');
       return this.onFirstSubscribe();
     }
     return Promise.resolve(null);
@@ -156,6 +162,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
     this.off(listener);
     if (!this.hasListeners()) {
       // last unsubscribe, must do teardown work
+      this._logger.debug('RoomReactions.unsubscribe(); removing internal listener');
       return this.onLastUnsubscribe();
     }
     return Promise.resolve();

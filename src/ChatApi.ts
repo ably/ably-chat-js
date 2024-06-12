@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { Logger } from './logger.js';
 import { Message } from './Message.js';
 import { OccupancyEvent } from './Occupancy.js';
 import { PaginatedResult } from './query.js';
@@ -25,9 +26,11 @@ interface CreateMessageRequest {
  */
 export class ChatApi {
   private readonly realtime: Ably.Realtime;
+  private readonly _logger: Logger;
 
-  constructor(realtime: Ably.Realtime) {
+  constructor(realtime: Ably.Realtime, logger: Logger) {
     this.realtime = realtime;
+    this._logger = logger;
   }
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
@@ -54,7 +57,16 @@ export class ChatApi {
     body?: REQ,
   ): Promise<RES> {
     const response = await this.realtime.request(method, url, 1.1, {}, body);
-    if (!response.success) throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    if (!response.success) {
+      this._logger.error('ChatApi.makeAuthorisedRequest(); failed to make request', {
+        url,
+        statusCode: response.statusCode,
+        errorCode: response.errorCode,
+        errorMessage: response.errorMessage,
+      });
+      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    }
+
     const [result] = response.items;
     return result as RES;
   }
@@ -65,7 +77,15 @@ export class ChatApi {
     body?: REQ,
   ): Promise<PaginatedResult<RES>> {
     const response = await this.realtime.request('GET', url, 1.1, params, body);
-    if (!response.success) throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    if (!response.success) {
+      this._logger.error('ChatApi.makeAuthorisedPaginatedRequest(); failed to make request', {
+        url,
+        statusCode: response.statusCode,
+        errorCode: response.errorCode,
+        errorMessage: response.errorMessage,
+      });
+      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+    }
     return response;
   }
 }

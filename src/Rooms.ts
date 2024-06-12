@@ -1,7 +1,8 @@
 import * as Ably from 'ably';
 
 import { ChatApi } from './ChatApi.js';
-import { ClientOptions, DefaultClientOptions } from './config.js';
+import { ClientOptions } from './config.js';
+import { Logger } from './logger.js';
 import { DefaultRoom, Room } from './Room.js';
 
 /**
@@ -45,6 +46,7 @@ export class DefaultRooms implements Rooms {
   private readonly chatApi: ChatApi;
   private readonly _clientOptions: ClientOptions;
   private rooms: Record<string, Room> = {};
+  private _logger: Logger;
 
   /**
    * Constructs a new Rooms instance.
@@ -52,19 +54,21 @@ export class DefaultRooms implements Rooms {
    * @param realtime An instance of the Ably Realtime client.
    * @param clientOptions The client options from the chat instance.
    */
-  constructor(realtime: Ably.Realtime, clientOptions?: ClientOptions) {
+  constructor(realtime: Ably.Realtime, clientOptions: ClientOptions, logger: Logger) {
     this.realtime = realtime;
-    this.chatApi = new ChatApi(realtime);
-    this._clientOptions = clientOptions ? clientOptions : DefaultClientOptions;
+    this.chatApi = new ChatApi(realtime, logger);
+    this._clientOptions = clientOptions;
+    this._logger = logger;
   }
 
   /**
    * @inheritDoc
    */
   get(roomId: string): Room {
+    this._logger.trace('Rooms.get();', { roomId });
     if (this.rooms[roomId]) return this.rooms[roomId];
 
-    const room = new DefaultRoom(roomId, this.realtime, this.chatApi, this._clientOptions);
+    const room = new DefaultRoom(roomId, this.realtime, this.chatApi, this._clientOptions, this._logger);
     this.rooms[roomId] = room;
 
     return room;
@@ -81,6 +85,7 @@ export class DefaultRooms implements Rooms {
    * @inheritDoc
    */
   async release(roomId: string) {
+    this._logger.trace('Rooms.release();', { roomId });
     const room = this.rooms[roomId];
     if (!room) {
       return;

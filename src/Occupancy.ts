@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatApi } from './ChatApi.js';
+import { Logger } from './logger.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -76,22 +77,26 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
   private readonly _managedChannel: SubscriptionManager;
   private readonly _chatApi: ChatApi;
   private _internalListener: any;
+  private _logger: Logger;
 
-  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi) {
+  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, logger: Logger) {
     super();
     this.roomId = roomId;
     this._managedChannel = managedChannel;
     this._chatApi = chatApi;
+    this._logger = logger;
   }
 
   /**
    * @inheritdoc Occupancy
    */
   async subscribe(listener: OccupancyListener): Promise<Ably.ChannelStateChange | null> {
+    this._logger.trace('Occupancy.subscribe();');
     const hasListeners = this.hasListeners();
     this.on(listener);
 
     if (!hasListeners) {
+      this._logger.debug('Occupancy.subscribe(); adding internal listener');
       this._internalListener = this.internalOccupancyListener.bind(this);
       return this._managedChannel
         .subscribe(['[meta]occupancy'], this._internalListener)
@@ -111,6 +116,7 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
     this.off(listener);
 
     if (!this.hasListeners()) {
+      this._logger.debug('Occupancy.unsubscribe(); removing internal listener');
       return this._managedChannel.channel
         .setOptions({})
         .then(() => this._managedChannel.unsubscribe(this._internalListener))
@@ -126,6 +132,7 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
    * @inheritdoc Occupancy
    */
   async get(): Promise<OccupancyEvent> {
+    this._logger.trace('Occupancy.get();');
     return this._chatApi.getOccupancy(this.roomId);
   }
 
@@ -146,16 +153,19 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
     } = message;
 
     if (metrics === undefined) {
+      this._logger.error('invalid occupancy event received; metrics is missing');
       throw new Ably.ErrorInfo('invalid occupancy event received; metrics is missing', 50000, 500);
     }
 
     const { connections, presenceMembers } = metrics;
 
     if (connections === undefined) {
+      this._logger.error('invalid occupancy event received; connections is missing');
       throw new Ably.ErrorInfo('invalid occupancy event received; connections is missing', 50000, 500);
     }
 
     if (presenceMembers === undefined) {
+      this._logger.error('invalid occupancy event received; presenceMembers is missing');
       throw new Ably.ErrorInfo('invalid occupancy event received; presenceMembers is missing', 50000, 500);
     }
 
