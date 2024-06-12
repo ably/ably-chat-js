@@ -365,3 +365,68 @@ If previously subscribed with `listener`, to unsubscribe use
 ```ts
 await room.reactions.unsubscribe(listener);
 ```
+
+## Observing Connections to the Chat Room
+
+You can use the types and methods on the underlying `ably-js` library to observe client connectivity to the chat room.
+
+## Connection
+
+The Chat SDK uses a single connection to Ably, which is exposed via the `ChatClient.connection` property. You can use this
+property to observe the connection state and take action accordingly:
+
+```ts
+chatClient.connection.on((change) => {
+  // Perform some action based on the current connection state,
+  // such as showing or hiding a connection warning
+});
+```
+
+Alternatively, if you want to listen to particular connection events:
+
+```ts
+chatClient.connection.on('connected', (change) => {
+  // Connection successful
+});
+```
+
+## Channels Behind Chat Features
+
+Each feature is backed by an underlying Pub/Sub channel. The channel for each feature can be obtained via the `channel` property
+on that feature, for example, for messages:
+
+```ts
+const room = chatClient.rooms.get('my-room');
+const messagesChannel = room.messages.channel;
+```
+
+### Channels Used
+
+For a given chat room, the channels used for features are as follows:
+
+| Feature           | Channel                              |
+| ----------------- | ------------------------------------ |
+| Messages          | `<roomId>::$chat::$chatMessages`     |
+| Presence          | `<roomId>::$chat::$chatMessages`     |
+| Occupancy         | `<roomId>::$chat::$chatMessages`     |
+| Reactions         | `<roomId>::$chat::$reactions`        |
+| Typing Indicators | `<roomId>::$chat::$typingIndicators` |
+
+
+### Monitoring Attachment
+
+You can then use the channel to monitor the channels attachment status:
+
+```ts
+messagesChannel.on((stateChange) => {
+  // Perform some action in response to the channel state changing
+});
+```
+
+Or to listen for the channel entering a specific state:
+
+```ts
+messagesChannel.on('attached', (stateChange) => {
+  // Perform some action in response to the channel entering the attached state
+});
+```
