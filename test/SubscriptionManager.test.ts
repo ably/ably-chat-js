@@ -29,6 +29,26 @@ const waitForMessages = (messages: Ably.Message[], expectedCount: number) => {
   });
 };
 
+// Wait for a presence event of a given action to be received
+const waitForPresenceEvent = (
+  messages: Ably.PresenceMessage[],
+  expectedAction: string,
+): Promise<Ably.PresenceMessage> => {
+  return new Promise<Ably.PresenceMessage>((resolve, reject) => {
+    const interval = setInterval(() => {
+      const message = messages.find((m) => m.action === expectedAction);
+      if (message) {
+        clearInterval(interval);
+        resolve(message);
+      }
+    }, 100);
+    setTimeout(() => {
+      clearInterval(interval);
+      reject(new Error('Timed out waiting for presence event'));
+    }, 3000);
+  });
+};
+
 // Wait for the channel to change state to the expected state
 const waitForChannelStateChange = (channel, expectedState) => {
   return new Promise<void>((resolve, reject) => {
@@ -274,6 +294,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
     await subscriptionManager.presenceUpdateClient(context.defaultClientId);
     await waitForChannelStateChange(channel, 'attached');
   });
+
   it<TestContext>('should emit an event enter when joining for the first time', async (context) => {
     const receivedMessages: Ably.PresenceMessage[] = [];
     const listener = (message) => {
@@ -282,13 +303,13 @@ describe('subscription manager', { timeout: 15000 }, () => {
     // subscribe to presence events
     await context.subscriptionManager.presenceSubscribe(listener);
     // update presence, triggering an enter event
-    await context.subscriptionManager.presenceUpdateClient(context.defaultClientId, 'test-data');
+    await context.subscriptionManager.presenceEnterClient(context.defaultClientId, 'test-data');
     // should receive one enter event
-    await waitForMessages(receivedMessages, 1);
-    expect(receivedMessages[0].action).toBe('enter');
-    expect(receivedMessages[0].data).toBe('test-data');
+    const presenceEvent = await waitForPresenceEvent(receivedMessages, 'enter');
+    expect(presenceEvent.data).toBe('test-data');
   });
-  it<TestContext>('should emit an update event if already enter presence', async (context) => {
+
+  it<TestContext>('should emit an update event if already entered presence', async (context) => {
     const receivedMessages: Ably.PresenceMessage[] = [];
     const listener = (message) => {
       receivedMessages.push(message);
@@ -299,10 +320,9 @@ describe('subscription manager', { timeout: 15000 }, () => {
     await context.subscriptionManager.presenceSubscribe(listener);
     // update presence and wait for the event
     await context.subscriptionManager.presenceUpdateClient(context.defaultClientId, 'test-data');
-    // should receive one enter event
-    await waitForMessages(receivedMessages, 1);
-    expect(receivedMessages[0].action).toBe('update');
-    expect(receivedMessages[0].data).toBe('test-data');
+    // should receive an update event - this may come after a 'present' from  the initial enter
+    const presenceMessage = await waitForPresenceEvent(receivedMessages, 'update');
+    expect(presenceMessage.data).toBe('test-data');
   });
 
   it<TestContext>('should leave presence and detach from the channel if no listeners are subscribed', async (context) => {
@@ -314,6 +334,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
     await subscriptionManager.presenceLeaveClient(context.defaultClientId);
     await waitForChannelStateChange(channel, 'detached');
   });
+
   it<TestContext>('should leave presence, but not detach from the channel if listeners are still subscribed', async (context) => {
     const { channel, subscriptionManager } = context;
     // Add a listener, which implicitly attaches, should prevent the channel from detaching during the leave event
@@ -331,11 +352,15 @@ describe('subscription manager', { timeout: 15000 }, () => {
     };
     // subscribe to presence events
     await context.subscriptionManager.presenceSubscribe(listener);
+
     // enter presence and wait for the event
-    await context.subscriptionManager.presenceLeaveClient(context.defaultClientId, 'test-data');
-    // should receive one enter event
-    await waitForMessages(receivedMessages, 1);
-    expect(receivedMessages[0].action).toBe('leave');
-    expect(receivedMessages[0].data).toBe('test-data');
+    await context.subscriptionManager.presenceEnterClient(context.defaultClientId, 'test-data');
+    const enterMessage = await waitForPresenceEvent(receivedMessages, 'enter');
+    expect(enterMessage.data).toBe('test-data');
+
+    // leave presence and wait for the leave event
+    await context.subscriptionManager.presenceLeaveClient(context.defaultClientId, 'test-data-leave');
+    const leaveEvent = await waitForPresenceEvent(receivedMessages, 'leave');
+    expect(leaveEvent.data).toBe('test-data-leave');
   });
 });
