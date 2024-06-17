@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatApi } from './ChatApi.js';
-import { ClientOptions } from './config.js';
+import { ClientOptions, NormalisedClientOptions } from './config.js';
 import { Logger } from './logger.js';
 import { DefaultRoom, Room } from './Room.js';
 
@@ -44,7 +44,7 @@ export interface Rooms {
 export class DefaultRooms implements Rooms {
   private readonly realtime: Ably.Realtime;
   private readonly chatApi: ChatApi;
-  private readonly _clientOptions: ClientOptions;
+  private readonly _clientOptions: NormalisedClientOptions;
   private rooms: Record<string, Room> = {};
   private _logger: Logger;
 
@@ -54,7 +54,7 @@ export class DefaultRooms implements Rooms {
    * @param realtime An instance of the Ably Realtime client.
    * @param clientOptions The client options from the chat instance.
    */
-  constructor(realtime: Ably.Realtime, clientOptions: ClientOptions, logger: Logger) {
+  constructor(realtime: Ably.Realtime, clientOptions: NormalisedClientOptions, logger: Logger) {
     this.realtime = realtime;
     this.chatApi = new ChatApi(realtime, logger);
     this._clientOptions = clientOptions;
