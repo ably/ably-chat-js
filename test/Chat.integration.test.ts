@@ -7,7 +7,7 @@ import { testClientOptions } from './helper/options.js';
 describe('Chat', () => {
   it('should set the agent string', () => {
     const chat = newChatClient(testClientOptions());
-    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({ chat: 'chat-js/0.0.1' });
+    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({ 'chat-js': '0.0.1' });
   });
 
   it('should mix in the client options', () => {
