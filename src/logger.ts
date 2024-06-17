@@ -1,4 +1,4 @@
-import { ClientOptions } from './config.js';
+import { NormalisedClientOptions } from './config.js';
 
 /**
  * Interface for loggers.
@@ -124,11 +124,10 @@ const consoleLogger = (message: string, level: LogLevel, context?: LogContext) =
   }
 };
 
-export const makeLogger = (options: ClientOptions): Logger => {
-  const logLevel = options.logLevel || LogLevel.error;
+export const makeLogger = (options: NormalisedClientOptions): Logger => {
   const logHandler = options.logHandler || consoleLogger;
 
-  return new DefaultLogger(logHandler, logLevel);
+  return new DefaultLogger(logHandler, options.logLevel);
 };
 
 /**

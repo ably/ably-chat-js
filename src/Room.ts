@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatApi } from './ChatApi.js';
-import { ClientOptions } from './config.js';
+import { NormalisedClientOptions } from './config.js';
 import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './Messages.js';
 import { DefaultOccupancy, Occupancy } from './Occupancy.js';
@@ -75,7 +75,13 @@ export class DefaultRoom implements Room {
    * @param chatApi An instance of the ChatApi.
    * @param clientOptions The client options from the chat instance.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientOptions: ClientOptions, logger: Logger) {
+  constructor(
+    roomId: string,
+    realtime: Ably.Realtime,
+    chatApi: ChatApi,
+    clientOptions: NormalisedClientOptions,
+    logger: Logger,
+  ) {
     this._roomId = roomId;
     this.chatApi = chatApi;
     const messagesChannelName = `${this._roomId}::$chat::$chatMessages`;

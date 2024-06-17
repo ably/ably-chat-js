@@ -6,6 +6,7 @@ import { MessageEvents } from '../src/events.js';
 import { DefaultRoom } from '../src/Room.js';
 import { randomRoomId } from './helper/identifier.js';
 import { makeTestLogger } from './helper/logger.js';
+import { testClientOptions } from './helper/options.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
@@ -18,7 +19,7 @@ vi.mock('ably');
 
 // Helper function to create a room
 const makeRoom = (context: TestContext) =>
-  new DefaultRoom(randomRoomId(), context.realtime, context.chatApi, { typingTimeoutMs: 1000 }, makeTestLogger());
+  new DefaultRoom(randomRoomId(), context.realtime, context.chatApi, testClientOptions(), makeTestLogger());
 
 describe('Messages', () => {
   beforeEach<TestContext>((context) => {

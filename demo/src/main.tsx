@@ -35,7 +35,7 @@ const ablyClient = new Ably.Realtime({
 //   clientId,
 // })
 
-const chatClient = new ChatClient(ablyClient, {logLevel: LogLevel.debug, typingTimeoutMs: 5000});
+const chatClient = new ChatClient(ablyClient, {logLevel: LogLevel.debug });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
