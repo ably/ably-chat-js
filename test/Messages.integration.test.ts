@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ChatClient } from '../src/Chat.ts';
 import { Message } from '../src/Message.ts';
 import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
+import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 import { newChatClient } from './helper/chat.ts';
 import { randomRoomId } from './helper/identifier.ts';
 
@@ -37,7 +38,7 @@ describe('messages integration', () => {
     const room = chat.rooms.get(roomName);
     const channel = room.messages.channel as RealtimeChannelWithOptions;
 
-    expect(channel.channelOptions.params).toEqual({ agent: 'chat-js/0.0.1' });
+    expect(channel.channelOptions.params).toEqual({ agent: CHANNEL_OPTIONS_AGENT_STRING });
   });
 
   it<TestContext>('should be able to send and receive chat messages', async (context) => {

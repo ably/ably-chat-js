@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ChatClient } from '../src/Chat.ts';
 import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
 import { Reaction } from '../src/RoomReactions.ts';
+import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 import { newChatClient } from './helper/chat.ts';
 import { randomRoomId } from './helper/identifier.ts';
 
@@ -52,7 +53,7 @@ describe('room-level reactions integration test', () => {
     const room = chat.rooms.get(roomName);
     const channel = room.messages.channel as RealtimeChannelWithOptions;
 
-    expect(channel.channelOptions.params).toEqual({ agent: 'chat-js/0.0.1' });
+    expect(channel.channelOptions.params).toEqual({ agent: CHANNEL_OPTIONS_AGENT_STRING });
   });
 
   it<TestContext>('sends and receives a reaction', async (context) => {
