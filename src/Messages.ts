@@ -221,7 +221,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     // Send the message to the listeners
     switch (name) {
       case MessageEvents.created: {
-        const message = this.validateNewMessage(channelEventMessage);
+        const message = this.parseNewMessage(channelEventMessage);
         if (!message) {
           return;
         }
@@ -237,7 +237,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   /**
    * Validate the realtime message and convert it to a chat message.
    */
-  private validateNewMessage(channelEventMessage: Ably.InboundMessage): Message | undefined {
+  private parseNewMessage(channelEventMessage: Ably.InboundMessage): Message | undefined {
     const { data, clientId, timestamp, extras } = channelEventMessage;
 
     if (!data) {
