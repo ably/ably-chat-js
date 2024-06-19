@@ -3,15 +3,15 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily" # weekdays (Monday to Friday)
+      interval: "monthly"
     labels: [ ] # prevent the default `dependencies` label from being added to pull requests
   - package-ecosystem: "npm"
     directory: "/demo/"
     schedule:
-      interval: "daily" # weekdays (Monday to Friday)
+      interval: "monthly"
     labels: [ ] # prevent the default `dependencies` label from being added to pull requests
   - package-ecosystem: "npm"
     directory: "/demo/api/ably-token-request"
     schedule:
-      interval: "daily" # weekdays (Monday to Friday)
+      interval: "monthly"
     labels: [ ] # prevent the default `dependencies` label from being added to pull requests
