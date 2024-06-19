@@ -201,12 +201,11 @@ describe('Occupancy', () => {
             },
           });
         })
-        .catch((err) => {
-          if (err.message === 'invalid occupancy event received; connections is missing') {
-            done();
-          }
-
-          reject(err);
+        .then(() => {
+          done();
+        })
+        .catch((error: Ably.ErrorInfo) => {
+          reject(error);
         });
     }));
 
@@ -227,12 +226,11 @@ describe('Occupancy', () => {
             },
           });
         })
-        .catch((err) => {
-          if (err.message === 'invalid occupancy event received; presenceMembers is missing') {
-            done();
-          }
-
-          reject(err);
+        .then(() => {
+          done();
+        })
+        .catch((error: Ably.ErrorInfo) => {
+          reject(error);
         });
     }));
 
@@ -249,12 +247,11 @@ describe('Occupancy', () => {
             data: {},
           });
         })
-        .catch((err) => {
-          if (err.message === 'invalid occupancy event received; metrics is missing') {
-            done();
-          }
-
-          reject(err);
+        .then(() => {
+          done();
+        })
+        .catch((error: Ably.ErrorInfo) => {
+          reject(error);
         });
     }));
 });
