@@ -153,20 +153,20 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
     } = message;
 
     if (metrics === undefined) {
-      this._logger.error('invalid occupancy event received; metrics is missing');
-      throw new Ably.ErrorInfo('invalid occupancy event received; metrics is missing', 50000, 500);
+      this._logger.error('invalid occupancy event received; metrics is missing', message);
+      return;
     }
 
     const { connections, presenceMembers } = metrics;
 
     if (connections === undefined) {
-      this._logger.error('invalid occupancy event received; connections is missing');
-      throw new Ably.ErrorInfo('invalid occupancy event received; connections is missing', 50000, 500);
+      this._logger.error('invalid occupancy event received; connections is missing', message);
+      return;
     }
 
     if (presenceMembers === undefined) {
-      this._logger.error('invalid occupancy event received; presenceMembers is missing');
-      throw new Ably.ErrorInfo('invalid occupancy event received; presenceMembers is missing', 50000, 500);
+      this._logger.error('invalid occupancy event received; presenceMembers is missing', message);
+      return;
     }
 
     this.emit(OccupancyEvents.occupancy, {

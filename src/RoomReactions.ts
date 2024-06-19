@@ -147,7 +147,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
 
   // parses reactions from realtime channel into Reaction objects and forwards them to the EventEmitter
   private forwarder = (inbound: Ably.InboundMessage) => {
-    const reaction = this.realtimeMessageToReaction(inbound, this.clientId);
+    const reaction = this.parseNewReaction(inbound, this.clientId);
     if (!reaction) {
       // ignore non-reactions
       return;
@@ -173,11 +173,11 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
     return this._managedChannel.channel;
   }
 
-  realtimeMessageToReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | null {
+  parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {
     if (!inbound.data || !inbound.data.type || typeof inbound.data.type !== 'string') {
       // not a reaction if there's no type or type is not a string
       this._logger.error('RoomReactions.realtimeMessageToReaction(); invalid reaction message with no type', inbound);
-      return null;
+      return;
     }
 
     if (!inbound.clientId) {
@@ -186,7 +186,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
         'RoomReactions.realtimeMessageToReaction(); invalid reaction message with no clientId',
         inbound,
       );
-      return null;
+      return;
     }
 
     return new DefaultReaction(

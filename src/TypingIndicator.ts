@@ -229,49 +229,43 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * while also updating the currentlyTypingClientIds set.
    */
   private readonly _internalSubscribeToEvents = (member: Ably.PresenceMessage) => {
+    if (!member.clientId) {
+      this._logger.error(`unable to handle typingIndicator event; no clientId`, { member });
+      return;
+    }
+
     switch (member.action) {
       case 'enter':
       case 'present':
       case 'update':
-        try {
-          this._currentlyTypingClientIds.add(member.clientId);
-          this.emit(TypingIndicatorEvents.typingStarted, {
-            currentlyTypingClientIds: new Set<string>(this._currentlyTypingClientIds),
-            change: {
-              clientId: member.clientId,
-              isTyping: true,
-            },
-          });
-        } catch (error) {
-          this._logger.error(`unable to handle typingStarted event; not a valid typingIndicator event`, { error });
-          this._currentlyTypingClientIds.delete(member.clientId);
-          throw new Ably.ErrorInfo(
-            `unable to handle typingStarted event; not a valid typingIndicator event`,
-            50000,
-            500,
-            (error as Error).message,
-          );
+        if (!member.clientId) {
+          this._logger.error(`unable to handle typingStarted event; no clientId`, member);
+          return;
         }
+
+        this._currentlyTypingClientIds.add(member.clientId);
+        this.emit(TypingIndicatorEvents.typingStarted, {
+          currentlyTypingClientIds: new Set<string>(this._currentlyTypingClientIds),
+          change: {
+            clientId: member.clientId,
+            isTyping: true,
+          },
+        });
         break;
       case 'leave':
-        this._currentlyTypingClientIds.delete(member.clientId);
-        try {
-          this.emit(TypingIndicatorEvents.typingStopped, {
-            currentlyTypingClientIds: new Set<string>(this._currentlyTypingClientIds),
-            change: {
-              clientId: member.clientId,
-              isTyping: false,
-            },
-          });
-        } catch (error) {
-          this._logger.error(`unable to handle typingStopped event; not a valid typingIndicator event`, { error });
-          throw new Ably.ErrorInfo(
-            `unable to handle typingStopped event; not a valid typingIndicator event`,
-            50000,
-            500,
-            (error as Error).message,
-          );
+        if (!member.clientId) {
+          this._logger.error(`unable to handle typingStopped event; no clientId`, member);
+          return;
         }
+
+        this._currentlyTypingClientIds.delete(member.clientId);
+        this.emit(TypingIndicatorEvents.typingStopped, {
+          currentlyTypingClientIds: new Set<string>(this._currentlyTypingClientIds),
+          change: {
+            clientId: member.clientId,
+            isTyping: false,
+          },
+        });
         break;
     }
   };

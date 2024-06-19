@@ -176,12 +176,11 @@ describe('Messages', () => {
             timestamp: publishTimestamp,
           });
         })
+        .then(() => {
+          done();
+        })
         .catch((error: Ably.ErrorInfo) => {
-          if (error.message === 'received message without data') {
-            done();
-          }
-
-          reject(`received incorrect error for message: ${error.message}`);
+          reject(error);
         });
     }));
 
@@ -205,12 +204,11 @@ describe('Messages', () => {
             timestamp: publishTimestamp,
           });
         })
+        .then(() => {
+          done();
+        })
         .catch((error: Ably.ErrorInfo) => {
-          if (error.message === 'received message without clientId') {
-            done();
-          }
-
-          reject(`received incorrect error for message: ${error.message}`);
+          reject(error);
         });
     }));
 
@@ -232,12 +230,11 @@ describe('Messages', () => {
             timestamp: publishTimestamp,
           });
         })
+        .then(() => {
+          done();
+        })
         .catch((error: Ably.ErrorInfo) => {
-          if (error.message === 'received message without extras') {
-            done();
-          }
-
-          reject(`received incorrect error for message: ${error.message}`);
+          reject(error);
         });
     }));
 
@@ -260,12 +257,11 @@ describe('Messages', () => {
             timestamp: publishTimestamp,
           });
         })
+        .then(() => {
+          done();
+        })
         .catch((error: Ably.ErrorInfo) => {
-          if (error.message === 'received message without timeserial') {
-            done();
-          }
-
-          reject(`received incorrect error for message: ${error.message}`);
+          reject(error);
         });
     }));
 
@@ -288,12 +284,11 @@ describe('Messages', () => {
             timestamp: publishTimestamp,
           });
         })
+        .then(() => {
+          done();
+        })
         .catch((error: Ably.ErrorInfo) => {
-          if (error.message === 'received message without content') {
-            done();
-          }
-
-          reject(`received incorrect error for message: ${error.message}`);
+          reject(error);
         });
     }));
 
@@ -316,12 +311,11 @@ describe('Messages', () => {
             },
           });
         })
+        .then(() => {
+          done();
+        })
         .catch((error: Ably.ErrorInfo) => {
-          if (error.message === 'received message without timestamp') {
-            done();
-          }
-
-          reject(`received incorrect error for message: ${error.message}`);
+          reject(error);
         });
     }));
 });
