@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatApi } from '../src/ChatApi.js';
 import { DefaultRoom } from '../src/Room.js';
@@ -136,6 +136,37 @@ describe('Reactions', () => {
             reject(err);
           });
       }));
+  });
+
+  describe.each([
+    ['empty client id', { clientId: '', name: 'roomReaction', data: { type: 'like' }, timestamp: 123 }],
+    ['no client id', { name: 'roomReaction', data: { type: 'like' }, timestamp: 123 }],
+    ['empty type', { clientId: 'abc', name: 'roomReaction', data: { type: '' }, timestamp: 123 }],
+    ['no type', { clientId: 'abc', name: 'roomReaction', data: {}, timestamp: 123 }],
+    ['no data', { clientId: 'abc', name: 'roomReaction', timestamp: 123 }],
+  ])('invalid incoming reactions: %s', (description: string, inbound: object) => {
+    test<TestContext>(
+      'does not process invalid incoming reaction: ' + description,
+      (context) =>
+        new Promise<void>((done, reject) => {
+          const { chatApi, realtime } = context;
+          const room = new DefaultRoom('abcd', realtime, chatApi, testClientOptions(), makeTestLogger());
+
+          room.reactions
+            .subscribe(() => {
+              reject(new Error('Should not have received a reaction'));
+            })
+            .then(() => {
+              context.emulateBackendPublish(inbound);
+            })
+            .then(() => {
+              done();
+            })
+            .catch((err) => {
+              reject(err);
+            });
+        }),
+    );
   });
 
   describe('sending a reaction', () => {
