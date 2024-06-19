@@ -147,7 +147,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
 
   // parses reactions from realtime channel into Reaction objects and forwards them to the EventEmitter
   private forwarder = (inbound: Ably.InboundMessage) => {
-    const reaction = realtimeMessageToReaction(inbound, this.clientId);
+    const reaction = this.realtimeMessageToReaction(inbound, this.clientId);
     if (!reaction) {
       // ignore non-reactions
       return;
@@ -159,6 +159,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
    * @inheritDoc Reactions
    */
   unsubscribe(listener: RoomReactionListener) {
+    this._logger.trace(`RoomReactions.unsubscribe();`);
     this.off(listener);
     if (!this.hasListeners()) {
       // last unsubscribe, must do teardown work
@@ -171,25 +172,31 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   get channel(): Ably.RealtimeChannel {
     return this._managedChannel.channel;
   }
-}
 
-function realtimeMessageToReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | null {
-  if (!inbound.data || !inbound.data.type || typeof inbound.data.type !== 'string') {
-    // not a reaction if there's no type or type is not a string
-    return null;
-  }
-  if (!inbound.clientId) {
-    // not a reaction if we have no clientId
-    return null;
-  }
+  realtimeMessageToReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | null {
+    if (!inbound.data || !inbound.data.type || typeof inbound.data.type !== 'string') {
+      // not a reaction if there's no type or type is not a string
+      this._logger.error('RoomReactions.realtimeMessageToReaction(); invalid reaction message with no type', inbound);
+      return null;
+    }
 
-  return new DefaultReaction(
-    inbound.data.type,
-    inbound.clientId!,
-    new Date(inbound.timestamp),
-    inbound.clientId === clientId,
-    inbound.data.metadata,
-  );
+    if (!inbound.clientId) {
+      // not a reaction if we have no clientId
+      this._logger.error(
+        'RoomReactions.realtimeMessageToReaction(); invalid reaction message with no clientId',
+        inbound,
+      );
+      return null;
+    }
+
+    return new DefaultReaction(
+      inbound.data.type,
+      inbound.clientId!,
+      new Date(inbound.timestamp),
+      inbound.clientId === clientId,
+      inbound.data.metadata,
+    );
+  }
 }
 
 class DefaultReaction implements Reaction {
