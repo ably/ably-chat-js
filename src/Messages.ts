@@ -222,51 +222,54 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     switch (name) {
       case MessageEvents.created: {
         const message = this.validateNewMessage(channelEventMessage);
+        if (!message) {
+          return;
+        }
+
         this.emit(MessageEvents.created, { type: name, message: message });
-        return true;
+        break;
       }
       default:
         this._logger.warn('Messages.processEvent(); received unknown event', { name });
-        throw new Ably.ErrorInfo(`received illegal event="${name}"`, 50000, 500);
     }
   }
 
   /**
    * Validate the realtime message and convert it to a chat message.
    */
-  private validateNewMessage(channelEventMessage: Ably.InboundMessage): Message {
+  private validateNewMessage(channelEventMessage: Ably.InboundMessage): Message | undefined {
     const { data, clientId, timestamp, extras } = channelEventMessage;
 
     if (!data) {
-      this._logger.error(`received incoming message without data`);
-      throw new Ably.ErrorInfo(`received message without data`, 50000, 500);
+      this._logger.error(`received incoming message without data`, channelEventMessage);
+      return;
     }
 
     if (!clientId) {
-      this._logger.error(`received incoming message without clientId`);
-      throw new Ably.ErrorInfo(`received message without clientId`, 50000, 500);
+      this._logger.error(`received incoming message without clientId`, channelEventMessage);
+      return;
     }
 
     if (!timestamp) {
-      this._logger.error(`received incoming message without timestamp`);
-      throw new Ably.ErrorInfo(`received message without timestamp`, 50000, 500);
+      this._logger.error(`received incoming message without timestamp`, channelEventMessage);
+      return;
     }
 
     const { content } = data;
     if (!content) {
-      this._logger.error(`received incoming message without content`);
-      throw new Ably.ErrorInfo(`received message without content`, 50000, 500);
+      this._logger.error(`received incoming message without content`, channelEventMessage);
+      return;
     }
 
     if (!extras) {
-      this._logger.error(`received incoming message without extras`);
-      throw new Ably.ErrorInfo(`received message without extras`, 50000, 500);
+      this._logger.error(`received incoming message without extras`, channelEventMessage);
+      return;
     }
 
     const { timeserial } = extras;
     if (!timeserial) {
-      this._logger.error(`received incoming message without timeserial`);
-      throw new Ably.ErrorInfo(`received message without timeserial`, 50000, 500);
+      this._logger.error(`received incoming message without timeserial`, channelEventMessage);
+      return;
     }
 
     return new DefaultMessage(timeserial, clientId, this._roomId, content, timestamp);
