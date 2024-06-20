@@ -2,9 +2,16 @@
   "name": "@ably-labs/chat",
   "version": "0.0.1",
   "description": "The Ably Chat SDK offers a seamless and customizable API designed to facilitate diverse in-app conversations scenarios, encompassing live comments, in-app chat functionalities, and the management of real-time updates and user interactions",
-  "main": "dist/cjs/index.js",
-  "module": "dist/mjs/index.js",
-  "types": "dist/mjs/index.d.ts",
+  "main": "dist/ably-chat.umd.js",
+  "browser": "dist/ably-chat.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/ably-chat.mjs",
+      "require": "./dist/ably-chat.umd.js"
+    }
+  },
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
@@ -12,12 +19,15 @@
     "format:check": "prettier --check src test",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "build": "npm run build:mjs && npm run build:cjs",
-    "build:mjs": "tsc --project tsconfig.mjs.json && cp package.mjs.json dist/mjs/package.json",
-    "build:cjs": "tsc --project tsconfig.cjs.json && cp package.cjs.json dist/cjs/package.json",
+    "build": "vite build",
+    "prepare": "npm run build",
     "demo:reload": "npm run build && cd demo && npm i file:../",
     "docs": "typedoc"
   },
+  "files": [
+    "dist/**",
+    "src/**"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ably-labs/conversations.git"
@@ -54,6 +64,8 @@
     "typedoc": "^0.25.13",
     "typedoc-plugin-no-inherit": "^1.4.0",
     "typescript": "^5.4.5",
+    "vite": "^5.3.1",
+    "vite-plugin-dts": "^3.9.1",
     "vitest": "^1.6.0"
   }
 }
