@@ -8,8 +8,9 @@ export type { Direction, MessageEventPayload, MessageListener, Messages, QueryOp
 export type { Occupancy, OccupancyEvent, OccupancyListener } from './Occupancy.js';
 export type { Presence, PresenceData, PresenceEvent, PresenceListener, PresenceMember } from './Presence.js';
 export type { PaginatedResult } from './query.js';
+export type { Reaction } from './Reaction.js';
 export type { Room } from './Room.js';
-export type { Reaction, RoomReactionListener, RoomReactions } from './RoomReactions.js';
+export type { RoomReactionListener, RoomReactions } from './RoomReactions.js';
 export type { Rooms } from './Rooms.js';
 export type { TypingIndicatorEvent, TypingIndicators, TypingListener } from './TypingIndicator.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';

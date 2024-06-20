@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../src/Chat.ts';
+import { Reaction } from '../src/Reaction.ts';
 import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
-import { Reaction } from '../src/RoomReactions.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 import { newChatClient } from './helper/chat.ts';
 import { randomRoomId } from './helper/identifier.ts';
