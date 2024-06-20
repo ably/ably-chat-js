@@ -1,0 +1,33 @@
+name: Dependencies updated correctly
+
+on:
+  pull_request:
+    paths:
+      - package.json
+      - demo/package.json
+      - demo/api/package.json
+  push:
+    branches:
+      - main
+    paths:
+      - package.json
+      - demo/package.json
+      - demo/api/package.json
+  
+jobs:
+  check-all-package-lock-updated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 20
+      - run: npm install
+      - run: git diff --exit-code
+      - run: cd demo && npm install
+      - run: git diff --exit-code
+      - run: cd demo/api && npm install
+      - run: git diff --exit-code
+
