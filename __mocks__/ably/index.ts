@@ -4,6 +4,7 @@ const MOCK_CLIENT_ID = 'MOCK_CLIENT_ID';
 
 const mockPromisify = <T>(expectedReturnValue): Promise<T> => new Promise((resolve) => resolve(expectedReturnValue));
 const methodReturningVoidPromise = () => mockPromisify<void>((() => {})());
+const methodReturningVoid = () => {};
 
 function createMockPresence() {
   return {
@@ -47,6 +48,14 @@ function createMockChannel() {
   };
 }
 
+function createMockConnection() {
+  return {
+    state: 'connected',
+    errorReason: new Ably.ErrorInfo('error', 500, 50000),
+    on: methodReturningVoid,
+  };
+}
+
 class MockRealtime {
   public channels: {
     get: () => ReturnType<typeof createMockChannel>;
@@ -55,10 +64,7 @@ class MockRealtime {
     clientId: string;
     requestToken(): void;
   };
-  public connection: {
-    id?: string;
-    state: string;
-  };
+  public connection: ReturnType<typeof createMockConnection>;
 
   public time() {}
 
@@ -74,15 +80,11 @@ class MockRealtime {
       clientId: client_id,
       requestToken: () => {},
     };
-    this.connection = {
-      id: '1',
-      state: 'connected',
-    };
-
+    this.connection = createMockConnection();
     this['options'] = {};
   }
 }
 
 class MockErrorInfo extends Ably.ErrorInfo {}
 
-export { MockErrorInfo as ErrorInfo,MockRealtime as Realtime };
+export { MockErrorInfo as ErrorInfo, MockRealtime as Realtime };
