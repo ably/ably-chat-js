@@ -45,6 +45,8 @@ function createMockChannel() {
     publish: () => {},
     subscriptions: createMockEmitter(),
     setOptions: methodReturningVoidPromise,
+    state: 'attached',
+    errorReason: new Ably.ErrorInfo('error', 500, 50000),
   };
 }
 
