@@ -73,7 +73,7 @@ export class ChatApi {
 
   private async makeAuthorisedPaginatedRequest<RES, REQ = undefined>(
     url: string,
-    params?: any,
+    params?: unknown,
     body?: REQ,
   ): Promise<PaginatedResult<RES>> {
     const response = await this.realtime.request('GET', url, 1.1, params, body);

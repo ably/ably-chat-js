@@ -29,7 +29,7 @@ describe('Messages', () => {
 
     const channel = context.realtime.channels.get('roomId');
     vi.spyOn(channel, 'subscribe').mockImplementation(
-      // @ts-ignore
+      // @ts-expect-error overriding mock
       async (
         eventsOrListeners: Array<string> | Ably.messageCallback<Ably.Message>,
         listener: Ably.messageCallback<Ably.Message>,
@@ -40,7 +40,6 @@ describe('Messages', () => {
         } else {
           context.channelLevelListeners.set(listener, []);
         }
-        // @ts-ignore
         context.emulateBackendPublish = (msg) => {
           context.channelLevelListeners.forEach((_, cb) => cb(msg));
         };
@@ -48,7 +47,7 @@ describe('Messages', () => {
     );
 
     vi.spyOn(channel, 'unsubscribe').mockImplementation(
-      // @ts-ignore
+      // @ts-expect-error overriding mock
       async (listener: Ably.messageCallback<Ably.Message>) => {
         context.channelLevelListeners.delete(listener);
       },

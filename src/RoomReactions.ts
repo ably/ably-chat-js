@@ -33,7 +33,7 @@ export interface RoomReactions {
    * @param metadata Any JSON-serializable data that will be attached to the reaction.
    * @returns The returned promise resolves when the reaction was sent. Note that it is possible to receive your own reaction via the reactions listener before this promise resolves.
    */
-  send(type: string, metadata?: any): Promise<void>;
+  send(type: string, metadata?: unknown): Promise<void>;
 
   /**
    * Subscribe to receive room-level reactions. At the first subscription the SDK will automatically attach to
@@ -66,6 +66,11 @@ interface RoomReactionEventsMap {
   [RoomReactionEvents.reaction]: Reaction;
 }
 
+interface ReactionPayload {
+  type: string;
+  metadata?: unknown;
+}
+
 export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> implements RoomReactions {
   private readonly roomId: string;
   private readonly _managedChannel: SubscriptionManager;
@@ -83,9 +88,9 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   /**
    * @inheritDoc Reactions
    */
-  send(type: string, metadata?: any): Promise<void> {
+  send(type: string, metadata?: unknown): Promise<void> {
     this._logger.trace('RoomReactions.send();', { type, metadata });
-    const payload: any = { type: type };
+    const payload: ReactionPayload = { type: type };
     if (metadata) {
       payload.metadata = metadata;
     }

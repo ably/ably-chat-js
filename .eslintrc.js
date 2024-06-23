@@ -10,7 +10,12 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import', 'simple-import-sort'],
-  extends: ['eslint:recommended', 'plugin:security/recommended-legacy', 'plugin:import/recommended'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:security/recommended-legacy',
+    'plugin:import/recommended',
+  ],
   rules: {
     'eol-last': 'error',
     // security/detect-object-injection just gives a lot of false positives
@@ -43,7 +48,7 @@ module.exports = {
       },
     },
   ],
-  ignorePatterns: ['dist', 'node_modules', 'ably-common', 'typedoc'],
+  ignorePatterns: ['dist', 'node_modules', 'ably-common', 'typedoc', 'src/utils'],
   settings: {
     jsdoc: {
       tagNamePreference: {

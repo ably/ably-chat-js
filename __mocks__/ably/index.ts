@@ -14,7 +14,7 @@ function createMockPresence() {
     enter: methodReturningVoidPromise,
     leave: methodReturningVoidPromise,
     subscriptions: {
-      once: (_: unknown, fn: Function) => {
+      once: (_: unknown, fn: () => void) => {
         fn();
       },
     },
@@ -85,4 +85,4 @@ class MockRealtime {
 
 class MockErrorInfo extends Ably.ErrorInfo {}
 
-export { MockErrorInfo as ErrorInfo,MockRealtime as Realtime };
+export { MockErrorInfo as ErrorInfo, MockRealtime as Realtime };

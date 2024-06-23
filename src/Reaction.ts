@@ -10,7 +10,7 @@ export interface Reaction {
   /**
    * metadata of the reaction, if any was set
    */
-  readonly metadata?: any;
+  readonly metadata?: unknown;
 
   /**
    * The timestamp at which the reaction was sent.
@@ -37,7 +37,7 @@ export class DefaultReaction implements Reaction {
     public readonly clientId: string,
     public readonly createdAt: Date,
     public readonly isSelf: boolean,
-    public readonly metadata: any,
+    public readonly metadata: unknown,
   ) {
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);

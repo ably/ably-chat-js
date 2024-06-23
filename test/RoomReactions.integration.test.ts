@@ -13,7 +13,6 @@ interface TestContext {
 
 const waitForReactions = (foundTypes: string[], expectedTypes: string[]) => {
   return new Promise<void>((resolve, reject) => {
-    let timeout;
     const interval = setInterval(() => {
       if (foundTypes.length === expectedTypes.length) {
         clearInterval(interval);
@@ -34,7 +33,7 @@ const waitForReactions = (foundTypes: string[], expectedTypes: string[]) => {
         resolve();
       }
     }, 100);
-    timeout = setTimeout(() => {
+    const timeout = setTimeout(() => {
       clearInterval(interval);
       reject(new Error('Timed out waiting for reactions'));
     }, 3000);
@@ -69,7 +68,7 @@ describe('room-level reactions integration test', () => {
     };
     await room.reactions.subscribe(subscriber);
 
-    for (let reactionType of expectedReactions) {
+    for (const reactionType of expectedReactions) {
       await room.reactions.send(reactionType);
     }
 

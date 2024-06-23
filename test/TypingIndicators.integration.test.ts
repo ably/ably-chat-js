@@ -49,7 +49,7 @@ describe('TypingIndicators', () => {
   it<TestContext>(
     'successfully starts typing and then stops after the default timeout',
     async (context) => {
-      let events: TypingIndicatorEvent[] = [];
+      const events: TypingIndicatorEvent[] = [];
       // Subscribe to typing indicators
       await context.chatRoom.typingIndicators.subscribe((event) => {
         events.push(event);
@@ -71,7 +71,7 @@ describe('TypingIndicators', () => {
   it<TestContext>(
     'subscribes to all typing indicators, sent by startTyping and stopTyping',
     async (context) => {
-      let events: TypingIndicatorEvent[] = [];
+      const events: TypingIndicatorEvent[] = [];
       await context.chatRoom.typingIndicators.subscribe((event) => {
         events.push(event);
       });

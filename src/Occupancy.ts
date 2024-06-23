@@ -76,7 +76,7 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
   private readonly roomId: string;
   private readonly _managedChannel: SubscriptionManager;
   private readonly _chatApi: ChatApi;
-  private _internalListener: any;
+  private _internalListener: Ably.messageCallback<Ably.InboundMessage> | undefined;
   private _logger: Logger;
 
   constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, logger: Logger) {
@@ -99,7 +99,7 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
       this._logger.debug('Occupancy.subscribe(); adding internal listener');
       this._internalListener = this.internalOccupancyListener.bind(this);
       return this._managedChannel
-        .subscribe(['[meta]occupancy'], this._internalListener)
+        .subscribe(['[meta]occupancy'], this._internalListener as Ably.messageCallback<Ably.InboundMessage>)
         .then(async (stateChange: Ably.ChannelStateChange | null) => {
           await this._managedChannel.channel.setOptions({ params: { occupancy: 'metrics' } });
           return stateChange;
@@ -119,7 +119,9 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
       this._logger.debug('Occupancy.unsubscribe(); removing internal listener');
       return this._managedChannel.channel
         .setOptions({})
-        .then(() => this._managedChannel.unsubscribe(this._internalListener))
+        .then(() =>
+          this._managedChannel.unsubscribe(this._internalListener as Ably.messageCallback<Ably.InboundMessage>),
+        )
         .then(() => {
           this._internalListener = undefined;
         });
