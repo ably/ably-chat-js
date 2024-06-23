@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 
 import { TypingIndicatorEvents } from './events.js';
 import { Logger } from './logger.js';
+import { DefaultFeature, Feature } from './status.js';
 import { DefaultSubscriptionManager, SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
@@ -72,6 +73,13 @@ export interface TypingIndicators {
    * @returns The name of the realtime channel.
    */
   channel: Ably.RealtimeChannel;
+
+  /**
+   * Get the current status of the feature.
+   *
+   * @returns an observable that emits the current status of the feature.
+   */
+  get status(): Feature;
 }
 
 /**
@@ -112,6 +120,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
   private readonly _typingIndicatorsChannelName: string;
   private readonly _managedChannel: SubscriptionManager;
   private readonly _logger: Logger;
+  private readonly _status: Feature;
 
   // Timeout for typing indicator
   private readonly _typingTimeoutMs: number;
@@ -139,6 +148,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
     this._typingTimeoutMs = typingTimeoutMs;
     this._timerId = null;
     this._logger = logger;
+    this._status = new DefaultFeature(this._managedChannel.channel, 'TypingIndicators', logger);
   }
 
   /**
@@ -153,6 +163,13 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    */
   get channel(): Ably.RealtimeChannel {
     return this._managedChannel.channel;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  get status(): Feature {
+    return this._status;
   }
 
   /**

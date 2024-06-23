@@ -7,6 +7,8 @@ import { PresenceEvents } from '../src/events.js';
 import { PresenceData, PresenceEvent } from '../src/Presence.js';
 import { Room } from '../src/Room.js';
 import { DefaultRooms, Rooms } from '../src/Rooms.js';
+import { newChatClient } from './helper/chat.js';
+import { waitForFeatureConnected, waitForFeatureFailed } from './helper/feature.js';
 import { randomRoomId } from './helper/identifier.js';
 import { makeTestLogger } from './helper/logger.js';
 import { testClientOptions } from './helper/options.js';
@@ -45,6 +47,19 @@ describe('UserPresence', { timeout: 10000 }, () => {
       });
     });
   }
+
+  it<TestContext>('has a feature status', async () => {
+    const realtime = ablyRealtimeClient();
+    const chat = newChatClient(undefined, realtime);
+    const room = chat.rooms.get(randomRoomId());
+    await room.presence.subscribe(() => {});
+
+    await waitForFeatureConnected(room.presence);
+
+    realtime.auth.authorize(undefined, { token: 'invalid' }).catch(() => {});
+
+    await waitForFeatureFailed(room.presence);
+  });
 
   // Test for successful entering with clientId and custom user data
   it<TestContext>('successfully enter presence with clientId and custom user data', async (context) => {

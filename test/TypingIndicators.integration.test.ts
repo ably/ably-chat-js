@@ -2,9 +2,12 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { normaliseClientOptions } from '../src/config.js';
 import { Room } from '../src/Room.js';
 import { DefaultRooms, Rooms } from '../src/Rooms.js';
 import { TypingIndicatorEvent } from '../src/TypingIndicator.js';
+import { newChatClient } from './helper/chat.js';
+import { waitForFeatureConnected, waitForFeatureFailed } from './helper/feature.js';
 import { randomClientId, randomRoomId } from './helper/identifier.js';
 import { makeTestLogger } from './helper/logger.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
@@ -40,9 +43,27 @@ describe('TypingIndicators', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
     context.roomId = randomRoomId();
-    context.chat = new DefaultRooms(context.realtime, { typingTimeoutMs: 300 }, makeTestLogger());
+    context.chat = new DefaultRooms(
+      context.realtime,
+      normaliseClientOptions({ typingTimeoutMs: 300 }),
+      makeTestLogger(),
+    );
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = context.chat.get(context.roomId);
+  });
+
+  it<TestContext>('has a feature status', async () => {
+    const realtime = ablyRealtimeClient();
+    const chat = newChatClient(undefined, realtime);
+    const room = chat.rooms.get(randomRoomId());
+    await room.typingIndicators.subscribe(() => {});
+
+    await waitForFeatureConnected(room.typingIndicators);
+
+    // Change the token to force a reconnection and failure
+    realtime.auth.authorize(undefined, { token: 'invalid' }).catch(() => {});
+
+    await waitForFeatureFailed(room.typingIndicators);
   });
 
   // Test to check if the typing indicator starts and stops typing after the default timeout

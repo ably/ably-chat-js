@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 
 import { ChatApi } from './ChatApi.js';
 import { Logger } from './logger.js';
+import { DefaultFeature, Feature } from './status.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -41,6 +42,13 @@ export interface Occupancy {
    * @returns The underlying Ably channel for occupancy events.
    */
   get channel(): Ably.RealtimeChannel;
+
+  /**
+   * Get the current status of the feature.
+   *
+   * @returns an observable that emits the current status of the feature.
+   */
+  get status(): Feature;
 }
 
 /**
@@ -78,6 +86,7 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
   private readonly _chatApi: ChatApi;
   private _internalListener: any;
   private _logger: Logger;
+  private _status: Feature;
 
   constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, logger: Logger) {
     super();
@@ -85,6 +94,7 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
     this._managedChannel = managedChannel;
     this._chatApi = chatApi;
     this._logger = logger;
+    this._status = new DefaultFeature(managedChannel.channel, 'Occupancy', logger);
   }
 
   /**
@@ -141,6 +151,13 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
    */
   get channel(): Ably.RealtimeChannel {
     return this._managedChannel.channel;
+  }
+
+  /**
+   * @inheritdoc Occupancy
+   */
+  get status(): Feature {
+    return this._status;
   }
 
   /**

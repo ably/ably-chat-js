@@ -4,8 +4,9 @@ import { ChatClient } from '../src/Chat.js';
 import { OccupancyEvent } from '../src/Occupancy.js';
 import { Room } from '../src/Room.js';
 import { newChatClient } from './helper/chat.js';
+import { waitForFeatureConnected, waitForFeatureFailed } from './helper/feature.js';
 import { randomRoomId } from './helper/identifier.js';
-import { ablyRealtimeClientWithToken } from './helper/realtimeClient.js';
+import { ablyRealtimeClient, ablyRealtimeClientWithToken } from './helper/realtimeClient.js';
 
 interface TestContext {
   chat: ChatClient;
@@ -62,6 +63,20 @@ const waitForExpectedInbandOccupancy = (occupancyEvents: OccupancyEvent[], expec
 describe('occupancy', () => {
   beforeEach<TestContext>((context) => {
     context.chat = newChatClient();
+  });
+
+  it<TestContext>('has a feature status', async () => {
+    const realtime = ablyRealtimeClient();
+    const chat = newChatClient(undefined, realtime);
+    const room = chat.rooms.get(randomRoomId());
+    await room.occupancy.subscribe(() => {});
+
+    await waitForFeatureConnected(room.occupancy);
+
+    // Change the token to force a reconnection and failure
+    realtime.auth.authorize(undefined, { token: 'invalid' }).catch(() => {});
+
+    await waitForFeatureFailed(room.occupancy);
   });
 
   it<TestContext>('should be able to get the occupancy of a chat room', { timeout: TEST_TIMEOUT }, async (context) => {

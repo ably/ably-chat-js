@@ -5,7 +5,9 @@ import { Reaction } from '../src/Reaction.ts';
 import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 import { newChatClient } from './helper/chat.ts';
+import { waitForFeatureConnected, waitForFeatureFailed } from './helper/feature.ts';
 import { randomRoomId } from './helper/identifier.ts';
+import { ablyRealtimeClient } from './helper/realtimeClient.ts';
 
 interface TestContext {
   chat: ChatClient;
@@ -54,6 +56,20 @@ describe('room-level reactions integration test', () => {
     const channel = room.messages.channel as RealtimeChannelWithOptions;
 
     expect(channel.channelOptions.params).toEqual({ agent: CHANNEL_OPTIONS_AGENT_STRING });
+  });
+
+  it<TestContext>('has a feature status', async () => {
+    const realtime = ablyRealtimeClient();
+    const chat = newChatClient(undefined, realtime);
+    const room = chat.rooms.get(randomRoomId());
+    await room.reactions.subscribe(() => {});
+
+    await waitForFeatureConnected(room.reactions);
+
+    // Change the token to force a reconnection and failure
+    realtime.auth.authorize(undefined, { token: 'invalid' }).catch(() => {});
+
+    await waitForFeatureFailed(room.reactions);
   });
 
   it<TestContext>('sends and receives a reaction', async (context) => {

@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
+import { DefaultFeature, Feature } from './status.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -171,6 +172,13 @@ export interface Presence {
    * @returns The realtime channel.
    */
   get channel(): Ably.RealtimeChannel;
+
+  /**
+   * Get the current status of the feature.
+   *
+   * @returns an observable that emits the current status of the feature.
+   */
+  get status(): Feature;
 }
 
 /**
@@ -180,6 +188,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
   private readonly subscriptionManager: SubscriptionManager;
   private readonly clientId: string;
   private readonly _logger: Logger;
+  private readonly _status: Feature;
 
   /**
    * Constructor for Presence
@@ -193,14 +202,21 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     this.subscriptionManager = subscriptionManager;
     this.clientId = clientId;
     this._logger = logger;
+    this._status = new DefaultFeature(subscriptionManager.channel, 'Presence', logger);
   }
 
   /**
-   * Get the underlying Ably realtime channel used for presence in this chat room.
-   * @returns The realtime channel.
+   * @inheritdoc
    */
   get channel(): Ably.RealtimeChannel {
     return this.subscriptionManager.channel;
+  }
+
+  /**
+   * @inheritdoc
+   */
+  get status(): Feature {
+    return this._status;
   }
 
   /**

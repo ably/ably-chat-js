@@ -3,6 +3,7 @@ import * as Ably from 'ably';
 import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultReaction, Reaction } from './Reaction.js';
+import { DefaultFeature, Feature } from './status.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -60,6 +61,13 @@ export interface RoomReactions {
    * @returns The Ably realtime channel instance.
    */
   get channel(): Ably.RealtimeChannel;
+
+  /**
+   * Get the current status of the feature.
+   *
+   * @returns an observable that emits the current status of the feature.
+   */
+  get status(): Feature;
 }
 
 interface RoomReactionEventsMap {
@@ -71,6 +79,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   private readonly _managedChannel: SubscriptionManager;
   private readonly clientId: string;
   private readonly _logger: Logger;
+  private readonly _status: Feature;
 
   constructor(roomId: string, managedChannel: SubscriptionManager, clientId: string, logger: Logger) {
     super();
@@ -78,6 +87,7 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
     this._managedChannel = managedChannel;
     this.clientId = clientId;
     this._logger = logger;
+    this._status = new DefaultFeature(managedChannel.channel, 'Reactions', logger);
   }
 
   /**
@@ -142,6 +152,13 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
 
   get channel(): Ably.RealtimeChannel {
     return this._managedChannel.channel;
+  }
+
+  /**
+   * @inheritDoc Reactions
+   */
+  get status(): Feature {
+    return this._status;
   }
 
   parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {

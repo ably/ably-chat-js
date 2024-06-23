@@ -5,6 +5,7 @@ import { MessageEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message } from './Message.js';
 import { PaginatedResult } from './query.js';
+import { DefaultFeature, Feature } from './status.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -131,6 +132,13 @@ export interface Messages {
    * @returns the realtime channel
    */
   get channel(): Ably.RealtimeChannel;
+
+  /**
+   * Get the current status of the feature.
+   *
+   * @returns an observable that emits the current status of the feature.
+   */
+  get status(): Feature;
 }
 
 /**
@@ -145,6 +153,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
   private readonly _logger: Logger;
+  private readonly _status: Feature;
   private _internalListener: Ably.messageCallback<Ably.InboundMessage> | undefined;
 
   constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string, logger: Logger) {
@@ -154,6 +163,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
+    this._status = new DefaultFeature(managedChannel.channel, 'Messages', logger);
   }
 
   /**
@@ -161,6 +171,13 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    */
   get channel(): Ably.RealtimeChannel {
     return this._managedChannel.channel;
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  get status(): Feature {
+    return this._status;
   }
 
   /**
