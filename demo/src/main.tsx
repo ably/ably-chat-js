@@ -30,8 +30,8 @@ const clientId = function(){
 
 const ablyClient = new Ably.Realtime({
   authUrl: `/api/ably-token-request?clientId=${clientId}`,
-  restHost: import.meta.env.VITE_ABLY_HOST,
-  realtimeHost: import.meta.env.VITE_ABLY_HOST,
+  restHost: import.meta?.env?.VITE_ABLY_HOST ? import.meta.env.VITE_ABLY_HOST : undefined,
+  realtimeHost: import.meta?.env?.VITE_ABLY_HOST ? import.meta.env.VITE_ABLY_HOST : undefined,
   clientId,
 })
 
