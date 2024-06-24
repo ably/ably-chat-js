@@ -227,10 +227,9 @@ You can unsubscribe a listener from presence events by providing the listener to
 await room.presence.unsubscribe(listener);
 ```
 
-## Typing Indicators
+## Typing
 
-Typing Indicators allow you to subscribe to updates when other users are typing in a chat room.
-You can also inform other users that you are typing.
+Typing events allow you to inform others that a client is typing and also subscribe to others' typing status.
 
 ### Get Current Typers
 
@@ -238,7 +237,7 @@ You can get the complete set of the current typing clientIds, by calling the get
 
 ```ts
 // Retrieve the entire list of currently typing clients
-const currentlyTypingClientIds = await room.typingIndicators.get();
+const currentlyTypingClientIds = await room.typing.get();
 ```
 
 ### Start Typing
@@ -247,17 +246,17 @@ To inform other users that you are typing, you can call the startTyping method. 
 automatically stop typing after a set amount of time.
 
 ```ts
-await room.typingIndicators.startTyping();
+await room.typing.startTyping();
 ```
 
-Repeated calls to startTyping will reset the timer, so that the typing indicator will remain active.
+Repeated calls to startTyping will reset the timer, so the clients typing status will remain active.
 
 ```ts
-await room.typingIndicators.startTyping();
+await room.typing.startTyping();
 // Some short delay - still typing
-await room.typingIndicators.startTyping();
+await room.typing.startTyping();
 // Some short delay - still typing
-await room.typingIndicators.startTyping();
+await room.typing.startTyping();
 // Some long delay - timer expires, stopped typing event emitted and listeners are notified
 ```
 
@@ -266,18 +265,18 @@ await room.typingIndicators.startTyping();
 You can immediately stop typing without waiting for the timer to expire.
 
 ```ts
-await room.typingIndicators.startTyping();
+await room.typing.startTyping();
 // Some short delay - timer not yet expired
-await room.typingIndicators.stopTyping();
+await room.typing.stopTyping();
 // Timer cleared and stopped typing event emitted and listeners are notified
 ```
 
-### Subscribe To Typing Indicators
+### Subscribe To Typing
 
-You can provide a single listener, if so, the listener will be subscribed to receive all typing indicator event types.
+You can provide a single listener, if so, the listener will be subscribed to receive all typing event types.
 
 ```ts
-await room.typingIndicators.subscribe((event) => {
+await room.typing.subscribe((event) => {
   console.log(event);
 });
 ```
@@ -285,17 +284,17 @@ await room.typingIndicators.subscribe((event) => {
 You can also provide a specific event type or types to subscribe to along with a listener.
 
 ```ts
-await room.typingIndicators.subscribe('startedTyping', (event) => {
+await room.typing.subscribe('startedTyping', (event) => {
   console.log(event);
 });
 ```
 
-### Unsubscribe From Typing Indicators
+### Unsubscribe From Typing
 
-You can unsubscribe a listener from typing indicator events by providing the listener to the unsubscribe method.
+You can unsubscribe a listener from typing events by providing the listener to the unsubscribe method.
 
 ```ts
-await room.typingIndicators.unsubscribe(listener);
+await room.typing.unsubscribe(listener);
 ```
 
 ## Occupancy
@@ -412,8 +411,7 @@ For a given chat room, the channels used for features are as follows:
 | Presence          | `<roomId>::$chat::$chatMessages`     |
 | Occupancy         | `<roomId>::$chat::$chatMessages`     |
 | Reactions         | `<roomId>::$chat::$reactions`        |
-| Typing Indicators | `<roomId>::$chat::$typingIndicators` |
-
+| Typing            | `<roomId>::$chat::$typingIndicators` |
 
 ### Monitoring Attachment
 

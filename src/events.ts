@@ -35,11 +35,11 @@ export enum PresenceEvents {
   absent = 'absent',
 }
 
-export enum TypingIndicatorEvents {
+export enum TypingEvents {
   /** Event trigger when a user starts typing. */
-  typingStarted = 'typingIndicator.typingStarted',
+  typingStarted = 'typing.typingStarted',
   /** Event trigger when a user stops typing. */
-  typingStopped = 'typingIndicator.typingStopped',
+  typingStopped = 'typing.typingStopped',
 }
 
 /**
