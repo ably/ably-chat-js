@@ -84,6 +84,7 @@ export enum LogLevel {
  * It is an object of key-value pairs that can be used to provide additional context to a log message.
  */
 export interface LogContext {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 

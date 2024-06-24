@@ -36,13 +36,13 @@ const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtim
 
   // Generate the token
   // It's valid for 1 hour and has access to all channels and chat rooms
-  var header = {
+  const header = {
     typ: 'JWT',
     alg: 'HS256',
     kid: keyId,
   };
-  var currentTime = Math.round(Date.now() / 1000);
-  var claims = {
+  const currentTime = Math.round(Date.now() / 1000);
+  const claims = {
     iat: currentTime,
     exp: currentTime + 3600,
     'x-ably-capability': '{"*":["*"], "[chat]*":["*"]}',

@@ -31,11 +31,10 @@ describe('TypingIndicators', () => {
     const presence = channel.presence;
 
     vi.spyOn(presence, 'subscribe').mockImplementation(
-      // @ts-ignore
+      // @ts-expect-error overriding mock
       async (listener: Ably.messageCallback<Ably.PresenceMessage>) => {
         context.channelLevelListeners.add(listener);
 
-        // @ts-ignore
         context.emulateBackendPublish = (msg) => {
           context.channelLevelListeners.forEach((_, cb) => cb(msg));
         };
@@ -43,7 +42,7 @@ describe('TypingIndicators', () => {
     );
 
     vi.spyOn(presence, 'unsubscribe').mockImplementation(
-      // @ts-ignore
+      // @ts-expect-error overriding mock
       async (listener: Ably.messageCallback<Ably.PresenceMessage>) => {
         context.channelLevelListeners.delete(listener);
       },
@@ -61,12 +60,9 @@ describe('TypingIndicators', () => {
   it<TestContext>('delays stopTyping timeout while still typing', async (context) => {
     const { room } = context;
     // If stopTyping is called, the test should fail as the timer should not have expired
-    vi.spyOn(room.typingIndicators, 'stopTyping').mockImplementation(
-      // @ts-ignore
-      async (): Promise<void> => {
-        return Promise.resolve();
-      },
-    );
+    vi.spyOn(room.typingIndicators, 'stopTyping').mockImplementation(async (): Promise<void> => {
+      return Promise.resolve();
+    });
     // Start typing - we will wait/type a few times to ensure the timer is resetting
     await room.typingIndicators.startTyping();
     // wait for half the timers timeout
@@ -90,12 +86,9 @@ describe('TypingIndicators', () => {
     const presence = realtime.channels.get(room.typingIndicators.channel.name).presence;
 
     // If stopTyping is called, it should call leaveClient
-    vi.spyOn(presence, 'leaveClient').mockImplementation(
-      // @ts-ignore
-      async (): Promise<void> => {
-        return Promise.resolve();
-      },
-    );
+    vi.spyOn(presence, 'leaveClient').mockImplementation(async (): Promise<void> => {
+      return Promise.resolve();
+    });
 
     // Start typing and then immediately stop typing
     await room.typingIndicators.startTyping();

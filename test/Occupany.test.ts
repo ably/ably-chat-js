@@ -39,7 +39,7 @@ describe('Occupancy', () => {
     const channel = context.realtime.channels.get(`${context.roomId}::$chat::$chatMessages`);
 
     vi.spyOn(channel, 'subscribe').mockImplementation(
-      // @ts-ignore
+      // @ts-expect-error overriding mock
       async (
         nameOrListener: string[] | Ably.messageCallback<Ably.Message>,
         listener?: Ably.messageCallback<Ably.Message>,
@@ -53,7 +53,7 @@ describe('Occupancy', () => {
     );
 
     vi.spyOn(channel, 'unsubscribe').mockImplementation(
-      // @ts-ignore
+      // @ts-expect-error overriding mock
       async (listener: Ably.messageCallback<Ably.Message>) => {
         context.channelLevelListeners.delete(listener);
       },

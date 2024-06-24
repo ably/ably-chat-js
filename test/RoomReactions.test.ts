@@ -31,7 +31,7 @@ describe('Reactions', () => {
     const channel = context.realtime.channels.get('abcd::$chat::$reactions');
     const listeners: Ably.messageCallback<Ably.Message>[] = [];
     vi.spyOn(channel, 'subscribe').mockImplementation(
-      // @ts-ignore
+      // @ts-expect-error overriding mock
       async (
         nameOrListener: string | Ably.messageCallback<Ably.Message>,
         listener: Ably.messageCallback<Ably.Message>,
@@ -41,15 +41,15 @@ describe('Reactions', () => {
         } else {
           listeners.push(listener);
         }
-        // @ts-ignore
+
         context.emulateBackendPublish = (msg) => {
           listeners.forEach((listener) => listener(msg));
         };
       },
     );
     vi.spyOn(channel, 'publish').mockImplementation(
-      // @ts-ignore
-      (name: string, payload: any) => {
+      // @ts-expect-error overriding mock
+      (name: string, payload: object) => {
         context.emulateBackendPublish({
           name: name,
           data: payload,

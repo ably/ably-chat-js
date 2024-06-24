@@ -20,7 +20,7 @@ interface PresenceEventsMap {
  * Type for PresenceData
  */
 export type PresenceData = {
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 /**
@@ -29,7 +29,7 @@ export type PresenceData = {
 interface AblyPresenceData {
   userCustomData: PresenceData | undefined;
 
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -79,6 +79,7 @@ export interface PresenceMember {
   /**
    * The extras associated with the presence member.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   extras: any;
 
   /**
