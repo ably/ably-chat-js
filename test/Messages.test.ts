@@ -81,7 +81,7 @@ describe('Messages', () => {
           timeserial: 'abcdefghij@1672531200000-123',
           content: 'hello there',
           clientId: 'clientId',
-          createdAt: timestamp,
+          createdAt: new Date(timestamp),
           roomId: 'coffee-room-chat',
         }),
       );
@@ -102,7 +102,7 @@ describe('Messages', () => {
                   timeserial: 'abcdefghij@1672531200000-123',
                   content: 'may the fourth be with you',
                   clientId: 'yoda',
-                  createdAt: publishTimestamp,
+                  createdAt: new Date(publishTimestamp),
                   roomId: room.roomId,
                 }),
               );

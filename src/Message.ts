@@ -25,7 +25,7 @@ export interface Message {
   /**
    * The timestamp at which the message was created.
    */
-  readonly createdAt: number;
+  readonly createdAt: Date;
 
   /**
    * Determines if this message was created before the given message.
@@ -75,7 +75,7 @@ export class DefaultMessage implements Message {
     public readonly clientId: string,
     public readonly roomId: string,
     public readonly content: string,
-    public readonly createdAt: number,
+    public readonly createdAt: Date,
   ) {
     this._calculatedTimeserial = DefaultMessage.calculateTimeserial(timeserial);
 

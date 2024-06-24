@@ -178,7 +178,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     this._logger.trace('Messages.send();');
     const response = await this._chatApi.sendMessage(this._roomId, text);
 
-    return new DefaultMessage(response.timeserial, this._clientId, this._roomId, text, response.createdAt);
+    return new DefaultMessage(response.timeserial, this._clientId, this._roomId, text, new Date(response.createdAt));
   }
 
   /**
@@ -272,6 +272,6 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       return;
     }
 
-    return new DefaultMessage(timeserial, clientId, this._roomId, content, timestamp);
+    return new DefaultMessage(timeserial, clientId, this._roomId, content, new Date(timestamp));
   }
 }
