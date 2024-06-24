@@ -20,20 +20,20 @@ const clientId = function(){
 
 // use this for local development with local realtime
 //
-const ablyClient = new Ably.Realtime({
-  authUrl: `/api/ably-token-request?clientId=${clientId}`,
-  port: 8081,
-  environment: 'local',
-  tls: false,
-  clientId,
-});
-
 // const ablyClient = new Ably.Realtime({
 //   authUrl: `/api/ably-token-request?clientId=${clientId}`,
-//   restHost: import.meta.env.VITE_ABLY_HOST,
-//   realtimeHost: import.meta.env.VITE_ABLY_HOST,
+//   port: 8081,
+//   environment: 'local',
+//   tls: false,
 //   clientId,
-// })
+// });
+
+const ablyClient = new Ably.Realtime({
+  authUrl: `/api/ably-token-request?clientId=${clientId}`,
+  restHost: import.meta.env.VITE_ABLY_HOST,
+  realtimeHost: import.meta.env.VITE_ABLY_HOST,
+  clientId,
+})
 
 const chatClient = new ChatClient(ablyClient, {logLevel: LogLevel.debug });
 
