@@ -2,14 +2,15 @@
   "name": "@ably-labs/chat",
   "version": "0.0.1",
   "description": "The Ably Chat SDK offers a seamless and customizable API designed to facilitate diverse in-app conversations scenarios, encompassing live comments, in-app chat functionalities, and the management of real-time updates and user interactions",
-  "main": "dist/ably-chat.umd.js",
-  "browser": "dist/ably-chat.mjs",
+  "type": "module",
+  "main": "dist/ably-chat.umd.cjs",
+  "browser": "dist/ably-chat.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/ably-chat.mjs",
-      "require": "./dist/ably-chat.umd.js"
+      "import": "./dist/ably-chat.js",
+      "require": "./dist/ably-chat.umd.cjs"
     }
   },
   "scripts": {
