@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
-import { Message } from './Message.js';
+import { DefaultMessage, Message } from './Message.js';
 import { OccupancyEvent } from './Occupancy.js';
 import { PaginatedResult } from './query.js';
 
@@ -39,8 +39,13 @@ export class ChatApi {
       params,
     ).then((data) => {
       data.items = data.items.map((message) => {
-        (message as any).createdAt = new Date(message.createdAt);
-        return message;
+        return new DefaultMessage(
+          message.timeserial,
+          message.clientId,
+          message.roomId,
+          message.content,
+          new Date(message.createdAt),
+        );
       });
       return data;
     });
