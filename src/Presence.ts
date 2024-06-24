@@ -39,7 +39,7 @@ export interface PresenceEvent {
   /**
    * The type of the presence event.
    */
-  type: PresenceEvents;
+  action: PresenceEvents;
 
   /**
    * The clientId of the client that triggered the presence event.
@@ -343,7 +343,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     try {
       const parsedData = JSON.parse(member.data);
       this.emit(PresenceEvents[member.action], {
-        type: PresenceEvents[member.action],
+        action: PresenceEvents[member.action],
         clientId: member.clientId,
         timestamp: member.timestamp,
         data: parsedData.userCustomData,
