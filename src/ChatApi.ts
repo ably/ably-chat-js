@@ -34,7 +34,16 @@ export class ChatApi {
   }
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
-    return this.makeAuthorisedPaginatedRequest(`/chat/v1/rooms/${roomId}/messages`, params);
+    return this.makeAuthorisedPaginatedRequest<Message, GetMessagesQueryParams>(
+      `/chat/v1/rooms/${roomId}/messages`,
+      params,
+    ).then((data) => {
+      data.items = data.items.map((message) => {
+        (message as any).createdAt = new Date(message.createdAt);
+        return message;
+      });
+      return data;
+    });
   }
 
   async sendMessage(roomId: string, text: string): Promise<CreateMessageResponse> {
