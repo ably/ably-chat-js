@@ -86,6 +86,7 @@ export class ChatClient {
 
   /**
    * Sets the agent string for the client.
+   * @internal
    */
   private setAgent(): void {
     const realtime = this._realtime as RealtimeWithOptions;
