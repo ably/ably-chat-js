@@ -7,8 +7,20 @@ describe('ChatMessage', () => {
     const firstTimeserial = 'abcdefghij@1672531200000-123';
     const secondTimeserial = 'abcdefghij@1672531200000-123';
 
-    const firstMessage = new DefaultMessage(firstTimeserial, 'clientId', 'roomId', 'hello there', 1672531200000);
-    const secondMessage = new DefaultMessage(secondTimeserial, 'clientId', 'roomId', 'hello there', 1672531200000);
+    const firstMessage = new DefaultMessage(
+      firstTimeserial,
+      'clientId',
+      'roomId',
+      'hello there',
+      new Date(1672531200000),
+    );
+    const secondMessage = new DefaultMessage(
+      secondTimeserial,
+      'clientId',
+      'roomId',
+      'hello there',
+      new Date(1672531200000),
+    );
 
     expect(firstMessage.equal(secondMessage)).toBe(true);
   });
@@ -17,8 +29,20 @@ describe('ChatMessage', () => {
     const firstTimeserial = 'abcdefghij@1672531200000-123';
     const secondTimeserial = 'abcdefghij@1672531200000-124';
 
-    const firstMessage = new DefaultMessage(firstTimeserial, 'clientId', 'roomId', 'hello there', 1672531200000);
-    const secondMessage = new DefaultMessage(secondTimeserial, 'clientId', 'roomId', 'hello there', 1672531200000);
+    const firstMessage = new DefaultMessage(
+      firstTimeserial,
+      'clientId',
+      'roomId',
+      'hello there',
+      new Date(1672531200000),
+    );
+    const secondMessage = new DefaultMessage(
+      secondTimeserial,
+      'clientId',
+      'roomId',
+      'hello there',
+      new Date(1672531200000),
+    );
 
     expect(firstMessage.equal(secondMessage)).toBe(false);
   });
@@ -37,8 +61,20 @@ describe('ChatMessage', () => {
     ['abcdefghij@1672531200001-123', 'abcdefghij@1672531200000-123', false], // Later timestamp
     ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-123', false], // Same timestamp]
   ])(`is before another message %s, %s -> %o`, (firstTimeserial, secondTimeserial, expected) => {
-    const firstMessage = new DefaultMessage(firstTimeserial, 'clientId', 'roomId', 'hello there', 1672531200000);
-    const secondMessage = new DefaultMessage(secondTimeserial, 'clientId', 'roomId', 'hello there', 1672531200000);
+    const firstMessage = new DefaultMessage(
+      firstTimeserial,
+      'clientId',
+      'roomId',
+      'hello there',
+      new Date(1672531200000),
+    );
+    const secondMessage = new DefaultMessage(
+      secondTimeserial,
+      'clientId',
+      'roomId',
+      'hello there',
+      new Date(1672531200000),
+    );
 
     expect(firstMessage.before(secondMessage)).toBe(expected);
   });
@@ -57,8 +93,20 @@ describe('ChatMessage', () => {
     ['abcdefghij@1672531200001-123', 'abcdefghij@1672531200000-123', true], // Later timestamp
     ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-123', false], // Same timestamp
   ])('is after another message %s, %s -> %o', (firstTimeserial, secondTimeserial, expected) => {
-    const firstMessage = new DefaultMessage(firstTimeserial, 'clientId', 'roomId', 'hello there', 1672531200000);
-    const secondMessage = new DefaultMessage(secondTimeserial, 'clientId', 'roomId', 'hello there', 1672531200000);
+    const firstMessage = new DefaultMessage(
+      firstTimeserial,
+      'clientId',
+      'roomId',
+      'hello there',
+      new Date(1672531200000),
+    );
+    const secondMessage = new DefaultMessage(
+      secondTimeserial,
+      'clientId',
+      'roomId',
+      'hello there',
+      new Date(1672531200000),
+    );
 
     expect(firstMessage.after(secondMessage)).toBe(expected);
   });
@@ -68,7 +116,7 @@ describe('ChatMessage', () => {
     ['abcdefghij@'], // No timestamp
     ['abcdefghij'], // No series id
   ])('throws an error with an invalid timeserial %s', (timeserial) => {
-    expect(() => new DefaultMessage(timeserial, 'clientId', 'roomId', 'hello there', 1672531200000)).toThrow(
+    expect(() => new DefaultMessage(timeserial, 'clientId', 'roomId', 'hello there', new Date(1672531200000))).toThrow(
       new Error('Invalid timeserial'),
     );
   });

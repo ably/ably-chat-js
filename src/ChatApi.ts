@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
-import { Message } from './Message.js';
+import { DefaultMessage, Message } from './Message.js';
 import { OccupancyEvent } from './Occupancy.js';
 import { PaginatedResult } from './query.js';
 
@@ -34,7 +34,21 @@ export class ChatApi {
   }
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
-    return this.makeAuthorisedPaginatedRequest(`/chat/v1/rooms/${roomId}/messages`, params);
+    return this.makeAuthorisedPaginatedRequest<Message, GetMessagesQueryParams>(
+      `/chat/v1/rooms/${roomId}/messages`,
+      params,
+    ).then((data) => {
+      data.items = data.items.map((message) => {
+        return new DefaultMessage(
+          message.timeserial,
+          message.clientId,
+          message.roomId,
+          message.content,
+          new Date(message.createdAt),
+        );
+      });
+      return data;
+    });
   }
 
   async sendMessage(roomId: string, text: string): Promise<CreateMessageResponse> {
