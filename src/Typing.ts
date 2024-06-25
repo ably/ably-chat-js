@@ -1,26 +1,26 @@
 import * as Ably from 'ably';
 
-import { TypingIndicatorEvents } from './events.js';
+import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultSubscriptionManager, SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 
 /**
- * Represents the typing indicator events mapped to their respective event payloads.
+ * Represents the typing events mapped to their respective event payloads.
  */
-interface TypingIndicatorEventsMap {
-  [TypingIndicatorEvents.typingStarted]: TypingIndicatorEvent;
-  [TypingIndicatorEvents.typingStopped]: TypingIndicatorEvent;
+interface TypingEventsMap {
+  [TypingEvents.typingStarted]: TypingEvent;
+  [TypingEvents.typingStopped]: TypingEvent;
 }
 
 /**
- * Interface for TypingIndicators. This class is used to manage typing indicators in a chat room.
+ * Interface for Typing. This class is used to manage typing events in a chat room.
  */
-export interface TypingIndicators {
+export interface Typing {
   /**
-   * Subscribe a given listener to all typing indicator events from users in the chat room. This will implicitly attach the underlying channel
-   * and enable typingIndicators events.
+   * Subscribe a given listener to all typing events from users in the chat room. This will implicitly attach the underlying channel
+   * and enable typing events.
    *
    * @param listener A listener to be called when the typing state of a user in the room changes.
    * @returns A promise that resolves void when attach succeeds or rejects with an error if the attach fails.
@@ -28,7 +28,7 @@ export interface TypingIndicators {
   subscribe(listener: TypingListener): Promise<void>;
 
   /**
-   * Unsubscribe a given listener from all typing indicator events from users in the chat room. Will detached from the underlying
+   * Unsubscribe a given listener from all typing events from users in the chat room. Will detached from the underlying
    * channel if there are no more listeners.
    *
    * @param listener A listener to be unsubscribed from typing state changes the chat room.
@@ -49,42 +49,42 @@ export interface TypingIndicators {
   get(): Set<string>;
 
   /**
-   * StartTyping indicates that the current user is typing. This will emit a typingStarted event to inform listening clients and begin a timer,
+   * Start indicates that the current user is typing. This will emit a typingStarted event to inform listening clients and begin a timer,
    * once the timer expires, a typingStopped event will be emitted. The timout is configurable through the typingTimeoutMs parameter.
    * If the current user is already typing, it will reset the timer and being counting down again without emitting a new event.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
 
-  startTyping(): Promise<void>;
+  start(): Promise<void>;
 
   /**
-   * StopTyping indicates that the current user has stopped typing. This will emit a typingStopped event to inform listening clients,
+   * Stop indicates that the current user has stopped typing. This will emit a typingStopped event to inform listening clients,
    * and immediately clear the typing timeout timer.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
 
-  stopTyping(): Promise<void>;
+  stop(): Promise<void>;
 
   /**
-   * Get the name of the realtime channel underpinning typing indicators.
+   * Get the name of the realtime channel underpinning typing events.
    * @returns The name of the realtime channel.
    */
   channel: Ably.RealtimeChannel;
 }
 
 /**
- * Represents a typing indicator event.
+ * Represents a typing event.
  */
-export type TypingIndicatorEvent = {
+export type TypingEvent = {
   /**
    * A set of clientIds that are currently typing.
    */
   currentlyTypingClientIds: Set<string>;
 
   /**
-   * The change that caused the typing indicator event.
+   * The change that caused the typing event.
    */
   change: {
     /**
@@ -100,42 +100,42 @@ export type TypingIndicatorEvent = {
 };
 
 /**
- * A listener which listens for typing indicator events.
- * @param event The typing indicator event.
+ * A listener which listens for typing events.
+ * @param event The typing event.
  */
-export type TypingListener = (event: TypingIndicatorEvent) => void;
+export type TypingListener = (event: TypingEvent) => void;
 
-export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMap> implements TypingIndicators {
+export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
   private readonly _clientId: string;
   private readonly _roomId: string;
   private readonly _currentlyTypingClientIds: Set<string>;
-  private readonly _typingIndicatorsChannelName: string;
+  private readonly _typingChannelName: string;
   private readonly _managedChannel: SubscriptionManager;
   private readonly _logger: Logger;
 
-  // Timeout for typing indicator
+  // Timeout for typing
   private readonly _typingTimeoutMs: number;
   private _timerId: ReturnType<typeof setTimeout> | null;
 
   /**
-   * Create a new TypingIndicator.
+   * Create a new DefaultTyping.
    * @param roomId - The ID of the room.
    * @param realtime - The Ably Realtime instance.
    * @param clientId - The client ID.
-   * @param typingTimeoutMs - The timeout for the typing indicator, set to 3000ms by default.
+   * @param typingTimeoutMs - The timeout for typing events, set to 3000ms by default.
    */
   constructor(roomId: string, realtime: Ably.Realtime, clientId: string, typingTimeoutMs: number, logger: Logger) {
     super();
     this._roomId = roomId;
     this._clientId = clientId;
     this._currentlyTypingClientIds = new Set();
-    this._typingIndicatorsChannelName = `${this._roomId}::$chat::$typingIndicators`;
+    this._typingChannelName = `${this._roomId}::$chat::$typingIndicators`;
     this._managedChannel = new DefaultSubscriptionManager(
-      realtime.channels.get(this._typingIndicatorsChannelName, DEFAULT_CHANNEL_OPTIONS),
+      realtime.channels.get(this._typingChannelName, DEFAULT_CHANNEL_OPTIONS),
       logger,
     );
 
-    // Timeout for typing indicator
+    // Timeout for typing
     this._typingTimeoutMs = typingTimeoutMs;
     this._timerId = null;
     this._logger = logger;
@@ -159,21 +159,21 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * Start the typing timeout timer. This will emit a typingStopped event if the timer expires.
    */
   private startTypingTimer(): void {
-    this._logger.trace(`TypingIndicator.startTypingTimer();`);
+    this._logger.trace(`DefaultTyping.startTypingTimer();`);
     this._timerId = setTimeout(async () => {
-      this._logger.debug(`TypingIndicator.startTypingTimer(); timeout expired`);
-      await this.stopTyping();
+      this._logger.debug(`DefaultTyping.startTypingTimer(); timeout expired`);
+      await this.stop();
     }, this._typingTimeoutMs);
   }
 
   /**
    * @inheritDoc
    */
-  async startTyping(): Promise<void> {
-    this._logger.trace(`TypingIndicator.startTyping();`);
+  async start(): Promise<void> {
+    this._logger.trace(`DefaultTyping.start();`);
     // If the user is already typing, reset the timer
     if (this._timerId) {
-      this._logger.debug(`TypingIndicator.startTyping(); already typing, resetting timer`);
+      this._logger.debug(`DefaultTyping.start(); already typing, resetting timer`);
       clearTimeout(this._timerId);
       this.startTypingTimer();
       return;
@@ -186,8 +186,8 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
   /**
    * @inheritDoc
    */
-  async stopTyping(): Promise<void> {
-    this._logger.trace(`TypingIndicator.stopTyping();`);
+  async stop(): Promise<void> {
+    this._logger.trace(`DefaultTyping.stop();`);
     // Clear the timer and emit typingStopped event
     if (this._timerId) {
       clearTimeout(this._timerId);
@@ -201,11 +201,11 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @inheritDoc
    */
   async subscribe(listener: TypingListener): Promise<void> {
-    this._logger.trace(`TypingIndicator.subscribe();`);
+    this._logger.trace(`DefaultTyping.subscribe();`);
     const hasListeners = this.hasListeners();
     this.on(listener);
     if (!hasListeners) {
-      this._logger.debug('TypingIndicator.subscribe(); adding internal listener');
+      this._logger.debug('DefaultTyping.subscribe(); adding internal listener');
       return this._managedChannel.presenceSubscribe(this._internalSubscribeToEvents);
     }
     return Promise.resolve();
@@ -215,10 +215,10 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    * @inheritDoc
    */
   async unsubscribe(listener: TypingListener): Promise<void> {
-    this._logger.trace(`TypingIndicator.unsubscribe();`);
+    this._logger.trace(`DefaultTyping.unsubscribe();`);
     this.off(listener);
     if (!this.hasListeners()) {
-      this._logger.debug('TypingIndicator.unsubscribe(); removing internal listener');
+      this._logger.debug('DefaultTyping.unsubscribe(); removing internal listener');
       return this._managedChannel.presenceUnsubscribe(this._internalSubscribeToEvents);
     }
     return Promise.resolve();
@@ -230,7 +230,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
    */
   private readonly _internalSubscribeToEvents = (member: Ably.PresenceMessage) => {
     if (!member.clientId) {
-      this._logger.error(`unable to handle typingIndicator event; no clientId`, { member });
+      this._logger.error(`unable to handle typing event; no clientId`, { member });
       return;
     }
 
@@ -244,7 +244,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
         }
 
         this._currentlyTypingClientIds.add(member.clientId);
-        this.emit(TypingIndicatorEvents.typingStarted, {
+        this.emit(TypingEvents.typingStarted, {
           currentlyTypingClientIds: new Set<string>(this._currentlyTypingClientIds),
           change: {
             clientId: member.clientId,
@@ -259,7 +259,7 @@ export class DefaultTypingIndicator extends EventEmitter<TypingIndicatorEventsMa
         }
 
         this._currentlyTypingClientIds.delete(member.clientId);
-        this.emit(TypingIndicatorEvents.typingStopped, {
+        this.emit(TypingEvents.typingStopped, {
           currentlyTypingClientIds: new Set<string>(this._currentlyTypingClientIds),
           change: {
             clientId: member.clientId,

@@ -19,7 +19,7 @@ const TEST_TYPING_TIMEOUT_MS = 100;
 
 vi.mock('ably');
 
-describe('TypingIndicators', () => {
+describe('Typing', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.roomId = randomRoomId();
@@ -57,47 +57,47 @@ describe('TypingIndicators', () => {
     vi.spyOn(channel, 'detach').mockImplementation(async () => {});
   });
 
-  it<TestContext>('delays stopTyping timeout while still typing', async (context) => {
+  it<TestContext>('delays stop timeout while still typing', async (context) => {
     const { room } = context;
-    // If stopTyping is called, the test should fail as the timer should not have expired
-    vi.spyOn(room.typingIndicators, 'stopTyping').mockImplementation(async (): Promise<void> => {
+    // If stop is called, the test should fail as the timer should not have expired
+    vi.spyOn(room.typing, 'stop').mockImplementation(async (): Promise<void> => {
       return Promise.resolve();
     });
     // Start typing - we will wait/type a few times to ensure the timer is resetting
-    await room.typingIndicators.startTyping();
+    await room.typing.start();
     // wait for half the timers timeout
     await new Promise((resolve) => setTimeout(resolve, TEST_TYPING_TIMEOUT_MS / 2));
     // Start typing again to reset the timer
-    await room.typingIndicators.startTyping();
+    await room.typing.start();
     // wait for half the timers timeout
     await new Promise((resolve) => setTimeout(resolve, TEST_TYPING_TIMEOUT_MS / 2));
     // Start typing again to reset the timer
-    await room.typingIndicators.startTyping();
+    await room.typing.start();
     // wait for half the timers timeout
     await new Promise((resolve) => setTimeout(resolve, TEST_TYPING_TIMEOUT_MS / 2));
     // Should have waited 1.5x the timeout at this point
 
-    // Ensure that stopTyping was not called
-    expect(room.typingIndicators.stopTyping).not.toHaveBeenCalled();
+    // Ensure that stop was not called
+    expect(room.typing.stop).not.toHaveBeenCalled();
   });
 
-  it<TestContext>('when stopTyping is called, immediately stops typing', async (context) => {
+  it<TestContext>('when stop is called, immediately stops typing', async (context) => {
     const { realtime, room } = context;
-    const presence = realtime.channels.get(room.typingIndicators.channel.name).presence;
+    const presence = realtime.channels.get(room.typing.channel.name).presence;
 
-    // If stopTyping is called, it should call leaveClient
+    // If stop is called, it should call leaveClient
     vi.spyOn(presence, 'leaveClient').mockImplementation(async (): Promise<void> => {
       return Promise.resolve();
     });
 
     // Start typing and then immediately stop typing
-    await room.typingIndicators.startTyping();
-    await room.typingIndicators.stopTyping();
+    await room.typing.start();
+    await room.typing.stop();
 
-    // The timer should be stopped and so waiting beyond timeout should not trigger stopTyping again
+    // The timer should be stopped and so waiting beyond timeout should not trigger stop again
     await new Promise((resolve) => setTimeout(resolve, TEST_TYPING_TIMEOUT_MS * 2));
 
-    // Ensure that leaveClient was called only once by the stopTyping method and not again when the timer expires
+    // Ensure that leaveClient was called only once by the stop method and not again when the timer expires
     expect(presence.leaveClient).toHaveBeenCalledOnce();
   });
 
@@ -111,7 +111,7 @@ describe('TypingIndicators', () => {
       new Promise<void>((done, reject) => {
         const { room } = context;
 
-        room.typingIndicators
+        room.typing
           .subscribe(() => {
             reject(new Error('Should not have received a typing event'));
           })

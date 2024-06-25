@@ -8,7 +8,7 @@ import { DefaultOccupancy, Occupancy } from './Occupancy.js';
 import { DefaultPresence, Presence } from './Presence.js';
 import { DefaultRoomReactions, RoomReactions } from './RoomReactions.js';
 import { DefaultSubscriptionManager } from './SubscriptionManager.js';
-import { DefaultTypingIndicator, TypingIndicators } from './TypingIndicator.js';
+import { DefaultTyping, Typing } from './Typing.js';
 import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 
 /**
@@ -43,11 +43,11 @@ export interface Room {
   get reactions(): RoomReactions;
 
   /**
-   * Allows you to interact with typing indicators in the room.
+   * Allows you to interact with typing events in the room.
    *
-   * @returns The typing indicators instance for the room.
+   * @returns The typing instance for the room.
    */
-  get typingIndicators(): TypingIndicators;
+  get typing(): Typing;
 
   /**
    * Allows you to interact with occupancy metrics for the room.
@@ -61,7 +61,7 @@ export class DefaultRoom implements Room {
   private readonly _roomId: string;
   private readonly chatApi: ChatApi;
   private readonly _messages: Messages;
-  private readonly _typingIndicators: TypingIndicators;
+  private readonly _typing: Typing;
   private readonly _presence: Presence;
   private readonly _reactions: RoomReactions;
   private readonly _occupancy: Occupancy;
@@ -92,13 +92,7 @@ export class DefaultRoom implements Room {
     );
     this._messages = new DefaultMessages(roomId, subscriptionManager, this.chatApi, realtime.auth.clientId, logger);
     this._presence = new DefaultPresence(subscriptionManager, realtime.auth.clientId, logger);
-    this._typingIndicators = new DefaultTypingIndicator(
-      roomId,
-      realtime,
-      realtime.auth.clientId,
-      clientOptions.typingTimeoutMs,
-      logger,
-    );
+    this._typing = new DefaultTyping(roomId, realtime, realtime.auth.clientId, clientOptions.typingTimeoutMs, logger);
 
     const reactionsManagedChannel = new DefaultSubscriptionManager(
       realtime.channels.get(`${this._roomId}::$chat::$reactions`, DEFAULT_CHANNEL_OPTIONS),
@@ -140,8 +134,8 @@ export class DefaultRoom implements Room {
   /**
    * @inheritdoc Room
    */
-  get typingIndicators(): TypingIndicators {
-    return this._typingIndicators;
+  get typing(): Typing {
+    return this._typing;
   }
 
   /**
