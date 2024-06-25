@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Message as MessageComponent } from '../../components/Message';
+import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
 import { useMessages } from '../../hooks/useMessages';
 import { useTypingIndicators } from '../../hooks/useTypingIndicators.ts';
@@ -41,11 +41,8 @@ export const Chat = () => {
                 id={msg.timeserial}
                 key={msg.timeserial}
                 self={msg.clientId === clientId}
-              >
-                <div className="flex flex-col">
-                  <div>{msg.content}</div>
-                </div>
-              </MessageComponent>
+                message={msg}
+              ></MessageComponent>
             ))}
           </div>
         )}
