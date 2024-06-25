@@ -28,11 +28,6 @@ export enum PresenceEvents {
    * Event triggered when a user initially subscribes to presence.
    */
   present = 'present',
-
-  /**
-   * Event triggered while syncing if leave event received before end of sync.
-   */
-  absent = 'absent',
 }
 
 export enum TypingEvents {

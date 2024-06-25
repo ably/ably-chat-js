@@ -13,7 +13,6 @@ interface PresenceEventsMap {
   [PresenceEvents.leave]: PresenceEvent;
   [PresenceEvents.update]: PresenceEvent;
   [PresenceEvents.present]: PresenceEvent;
-  [PresenceEvents.absent]: PresenceEvent;
 }
 
 /**
@@ -74,7 +73,7 @@ export interface PresenceMember {
   /**
    * The current state of the presence member.
    */
-  action: 'absent' | 'present' | 'enter' | 'leave' | 'update';
+  action: 'present' | 'enter' | 'leave' | 'update';
 
   /**
    * The extras associated with the presence member.
@@ -143,7 +142,7 @@ export interface Presence {
 
   /**
    * Subscribe the given listener from the given list of events.
-   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'absent' | 'present'} single event name or array of events to subscribe to
+   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
    */
   subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
@@ -156,7 +155,7 @@ export interface Presence {
 
   /**
    * Unsubscribe the given listener from the given list of events.
-   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present' | 'absent'} single event name or array of events to unsubscribe from
+   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to unsubscribe from
    * @param listener listener to unsubscribe
    */
   unsubscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
@@ -210,9 +209,11 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     this._logger.trace('Presence.get()', { params });
     const userOnPresence = await this.subscriptionManager.channel.presence.get(params);
+
+    // ably-js never emits the 'absent' event, so we can safely ignore it here.
     return userOnPresence.map((user) => ({
       clientId: user.clientId,
-      action: user.action,
+      action: user.action as PresenceEvents,
       data: user.data ? (JSON.parse(user.data).userCustomData as PresenceData) : undefined,
       timestamp: user.timestamp,
       extras: user.extras,
@@ -269,7 +270,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
 
   /**
    * Subscribe the given listener from the given list of events.
-   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'absent' | 'present'} single event name or array of events to subscribe to
+   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
    */
   subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
@@ -302,7 +303,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
 
   /**
    * Unsubscribe the given listener from the given list of events.
-   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present' | 'absent'} single event name or array of events to unsubscribe from
+   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to unsubscribe from
    * @param listener listener to unsubscribe
    */
   unsubscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
@@ -342,8 +343,10 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
   subscribeToEvents = (member: Ably.PresenceMessage) => {
     try {
       const parsedData = JSON.parse(member.data);
-      this.emit(PresenceEvents[member.action], {
-        action: PresenceEvents[member.action],
+
+      // ably-js never emits the 'absent' event, so we can safely ignore it here.
+      this.emit(PresenceEvents[member.action as PresenceEvents], {
+        action: PresenceEvents[member.action as PresenceEvents],
         clientId: member.clientId,
         timestamp: member.timestamp,
         data: parsedData.userCustomData,
