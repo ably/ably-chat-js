@@ -6,11 +6,11 @@ export const useTypingIndicators = () => {
   const { room } = useRoom();
 
   const startTyping = useCallback(() => {
-    room.typing.startTyping().then(() => {});
+    room.typing.start().then(() => {});
   }, [room]);
 
   const stopTyping = useCallback(() => {
-    room.typing.stopTyping().then(() => {});
+    room.typing.stop().then(() => {});
   }, [room]);
 
   const subscribeToTypingIndicators = useCallback(

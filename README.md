@@ -242,21 +242,21 @@ const currentlyTypingClientIds = await room.typing.get();
 
 ### Start Typing
 
-To inform other users that you are typing, you can call the startTyping method. This will begin a timer that will
+To inform other users that you are typing, you can call the start method. This will begin a timer that will
 automatically stop typing after a set amount of time.
 
 ```ts
-await room.typing.startTyping();
+await room.typing.start();
 ```
 
-Repeated calls to startTyping will reset the timer, so the clients typing status will remain active.
+Repeated calls to start will reset the timer, so the clients typing status will remain active.
 
 ```ts
-await room.typing.startTyping();
+await room.typing.start();
 // Some short delay - still typing
-await room.typing.startTyping();
+await room.typing.start();
 // Some short delay - still typing
-await room.typing.startTyping();
+await room.typing.start();
 // Some long delay - timer expires, stopped typing event emitted and listeners are notified
 ```
 
@@ -265,9 +265,9 @@ await room.typing.startTyping();
 You can immediately stop typing without waiting for the timer to expire.
 
 ```ts
-await room.typing.startTyping();
+await room.typing.start();
 // Some short delay - timer not yet expired
-await room.typing.stopTyping();
+await room.typing.stop();
 // Timer cleared and stopped typing event emitted and listeners are notified
 ```
 

@@ -55,7 +55,7 @@ describe('Typing', () => {
         events.push(event);
       });
       // Start typing and emit typingStarted event
-      await context.chatRoom.typing.startTyping();
+      await context.chatRoom.typing.start();
       // Once the timout timer expires, the typingStopped event should be emitted
       await waitForMessages(events, 2);
       // Should have received a typingStarted and then typingStopped event
@@ -69,15 +69,15 @@ describe('Typing', () => {
   );
 
   it<TestContext>(
-    'subscribes to all typing events, sent by startTyping and stopTyping',
+    'subscribes to all typing events, sent by start and stop',
     async (context) => {
       const events: TypingEvent[] = [];
       await context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
       // Send typing events
-      await context.chatRoom.typing.startTyping();
-      await context.chatRoom.typing.stopTyping();
+      await context.chatRoom.typing.start();
+      await context.chatRoom.typing.stop();
 
       // Should have received a typingStarted and typingStopped event
       expect(events.length, 'typingStopped event should have been received').toEqual(2);
@@ -115,8 +115,8 @@ describe('Typing', () => {
       );
 
       // send typing event for client1 and client2
-      await client1.get(context.roomId).typing.startTyping();
-      await client2.get(context.roomId).typing.startTyping();
+      await client1.get(context.roomId).typing.start();
+      await client2.get(context.roomId).typing.start();
       // Wait for the typing events to be received
       await waitForMessages(events, 2);
       // Get the currently typing client ids
@@ -127,7 +127,7 @@ describe('Typing', () => {
 
       events = [];
       // Try stopping typing for one of the clients
-      await client1.get(context.roomId).typing.stopTyping();
+      await client1.get(context.roomId).typing.stop();
       // Wait for the typing events to be received
       await waitForMessages(events, 1);
       // Get the currently typing client ids

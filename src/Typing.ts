@@ -49,23 +49,23 @@ export interface Typing {
   get(): Set<string>;
 
   /**
-   * StartTyping indicates that the current user is typing. This will emit a typingStarted event to inform listening clients and begin a timer,
+   * Start indicates that the current user is typing. This will emit a typingStarted event to inform listening clients and begin a timer,
    * once the timer expires, a typingStopped event will be emitted. The timout is configurable through the typingTimeoutMs parameter.
    * If the current user is already typing, it will reset the timer and being counting down again without emitting a new event.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
 
-  startTyping(): Promise<void>;
+  start(): Promise<void>;
 
   /**
-   * StopTyping indicates that the current user has stopped typing. This will emit a typingStopped event to inform listening clients,
+   * Stop indicates that the current user has stopped typing. This will emit a typingStopped event to inform listening clients,
    * and immediately clear the typing timeout timer.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
 
-  stopTyping(): Promise<void>;
+  stop(): Promise<void>;
 
   /**
    * Get the name of the realtime channel underpinning typing events.
@@ -162,18 +162,18 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     this._logger.trace(`DefaultTyping.startTypingTimer();`);
     this._timerId = setTimeout(async () => {
       this._logger.debug(`DefaultTyping.startTypingTimer(); timeout expired`);
-      await this.stopTyping();
+      await this.stop();
     }, this._typingTimeoutMs);
   }
 
   /**
    * @inheritDoc
    */
-  async startTyping(): Promise<void> {
-    this._logger.trace(`DefaultTyping.startTyping();`);
+  async start(): Promise<void> {
+    this._logger.trace(`DefaultTyping.start();`);
     // If the user is already typing, reset the timer
     if (this._timerId) {
-      this._logger.debug(`DefaultTyping.startTyping(); already typing, resetting timer`);
+      this._logger.debug(`DefaultTyping.start(); already typing, resetting timer`);
       clearTimeout(this._timerId);
       this.startTypingTimer();
       return;
@@ -186,8 +186,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * @inheritDoc
    */
-  async stopTyping(): Promise<void> {
-    this._logger.trace(`DefaultTyping.stopTyping();`);
+  async stop(): Promise<void> {
+    this._logger.trace(`DefaultTyping.stop();`);
     // Clear the timer and emit typingStopped event
     if (this._timerId) {
       clearTimeout(this._timerId);
