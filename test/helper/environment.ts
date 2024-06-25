@@ -3,7 +3,7 @@ export const isNonSandboxEnvironment = () => {
 };
 
 export const testEnvironment = () => {
-  return process.env.VITE_ABLY_ENV || 'sandbox';
+  return process.env.VITE_ABLY_ENV ?? 'sandbox';
 };
 
 export const isLocalEnvironment = () => {

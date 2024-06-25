@@ -192,7 +192,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     if (!hasListeners) {
       this._logger.debug('Messages.subscribe(); subscribing internal listener');
       this._internalListener = this.processEvent.bind(this);
-      return this._managedChannel.subscribe([MessageEvents.created], this._internalListener!);
+      return this._managedChannel.subscribe([MessageEvents.created], this._internalListener);
     }
 
     return this._managedChannel.channel.attach();
@@ -209,7 +209,11 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     }
 
     this._logger.debug('Messages.unsubscribe(); unsubscribing internal listener');
-    return this._managedChannel.unsubscribe(this._internalListener!);
+    if (this._internalListener) {
+      return this._managedChannel.unsubscribe(this._internalListener);
+    }
+
+    return Promise.resolve();
   }
 
   private processEvent(channelEventMessage: Ably.InboundMessage) {
@@ -238,40 +242,54 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    * Validate the realtime message and convert it to a chat message.
    */
   private parseNewMessage(channelEventMessage: Ably.InboundMessage): Message | undefined {
-    const { data, clientId, timestamp, extras } = channelEventMessage;
+    interface MessagePayload {
+      data?: {
+        content?: string;
+      };
+      clientId?: string;
+      timestamp?: number;
+      extras?: {
+        timeserial?: string;
+      };
+    }
+    const messageCreatedMessage = channelEventMessage as MessagePayload;
 
-    if (!data) {
+    if (!messageCreatedMessage.data) {
       this._logger.error(`received incoming message without data`, channelEventMessage);
       return;
     }
 
-    if (!clientId) {
+    if (!messageCreatedMessage.clientId) {
       this._logger.error(`received incoming message without clientId`, channelEventMessage);
       return;
     }
 
-    if (!timestamp) {
+    if (!messageCreatedMessage.timestamp) {
       this._logger.error(`received incoming message without timestamp`, channelEventMessage);
       return;
     }
 
-    const { content } = data;
-    if (!content) {
+    if (messageCreatedMessage.data.content === undefined) {
       this._logger.error(`received incoming message without content`, channelEventMessage);
       return;
     }
 
-    if (!extras) {
+    if (!messageCreatedMessage.extras) {
       this._logger.error(`received incoming message without extras`, channelEventMessage);
       return;
     }
 
-    const { timeserial } = extras;
-    if (!timeserial) {
+    if (!messageCreatedMessage.extras.timeserial) {
       this._logger.error(`received incoming message without timeserial`, channelEventMessage);
       return;
     }
 
-    return new DefaultMessage(timeserial, clientId, this._roomId, content, new Date(timestamp));
+    return new DefaultMessage(
+      messageCreatedMessage.extras.timeserial,
+      messageCreatedMessage.clientId,
+      this._roomId,
+      messageCreatedMessage.data.content,
+      new Date(messageCreatedMessage.timestamp),
+    );
   }
 }

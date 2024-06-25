@@ -16,21 +16,28 @@ const TEST_TIMEOUT = 20000;
 // Wait for the occupancy of a room to reach the expected occupancy.
 // Do this with a 10s timeout.
 const waitForExpectedInstantaneousOccupancy = (room: Room, expectedOccupancy: OccupancyEvent) => {
-  return new Promise<void>((resolve) => {
-    const interval = setInterval(async () => {
-      const occupancy = await room.occupancy.get();
-      if (
-        occupancy.connections === expectedOccupancy.connections &&
-        occupancy.presenceMembers === expectedOccupancy.presenceMembers
-      ) {
-        clearInterval(interval);
-        resolve();
-      }
+  return new Promise<void>((resolve, reject) => {
+    const interval = setInterval(() => {
+      room.occupancy
+        .get()
+        .then((occupancy) => {
+          if (
+            occupancy.connections === expectedOccupancy.connections &&
+            occupancy.presenceMembers === expectedOccupancy.presenceMembers
+          ) {
+            clearInterval(interval);
+            resolve();
+          }
+        })
+        .catch((err: unknown) => {
+          clearInterval(interval);
+          reject(err as Error);
+        });
     }, 1000);
 
     setTimeout(() => {
       clearInterval(interval);
-      resolve();
+      reject(new Error('Timed out waiting for occupancy'));
     }, TEST_TIMEOUT);
   });
 };

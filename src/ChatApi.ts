@@ -78,10 +78,10 @@ export class ChatApi {
         errorCode: response.errorCode,
         errorMessage: response.errorMessage,
       });
-      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode) as unknown as Error;
     }
 
-    const [result] = response.items;
+    const [result] = response.items as RES[];
     return result as RES;
   }
 
@@ -98,7 +98,7 @@ export class ChatApi {
         errorCode: response.errorCode,
         errorMessage: response.errorMessage,
       });
-      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
+      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode) as unknown as Error;
     }
     return response;
   }

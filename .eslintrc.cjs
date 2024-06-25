@@ -8,11 +8,14 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     sourceType: 'module',
+    project: ['./tsconfig.json', './tsconfig.test.json'],
   },
   plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import', 'simple-import-sort'],
   extends: [
     'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-type-checked',
+    'plugin:@typescript-eslint/strict-type-checked',
+    'plugin:@typescript-eslint/stylistic-type-checked',
     'plugin:security/recommended-legacy',
     'plugin:import/recommended',
   ],
@@ -35,6 +38,7 @@ module.exports = {
         // TypeScript already enforces these rules better than any eslint setup can
         'no-undef': 'off',
         'no-dupe-class-members': 'off',
+        'require-await': 'off',
         // see:
         // https://github.com/ably/spaces/issues/76
         // https://github.com/microsoft/TypeScript/issues/16577#issuecomment-703190339
@@ -47,8 +51,28 @@ module.exports = {
         ],
       },
     },
+    {
+      files: ['test/**/*.{ts,tsx}'],
+      rules: {
+        '@typescript-eslint/unbound-method': 'off',
+        '@typescript-eslint/no-empty-function': 'off',
+      },
+    },
   ],
-  ignorePatterns: ['dist', 'node_modules', 'ably-common', 'typedoc', 'src/utils', 'scripts/cdn_deploy.js'],
+  ignorePatterns: [
+    '.eslintrc.cjs',
+    'dist',
+    'node_modules',
+    'ably-common',
+    'typedoc',
+    'src/utils',
+    'test/utils',
+    'scripts/cdn_deploy.js',
+    'vitest.config.ts',
+    'vite.config.ts',
+    'test/helper/testSetup.ts',
+    '__mocks__',
+  ],
   settings: {
     jsdoc: {
       tagNamePreference: {

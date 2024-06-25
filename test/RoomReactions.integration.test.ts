@@ -16,16 +16,14 @@ const waitForReactions = (foundTypes: string[], expectedTypes: string[]) => {
     const interval = setInterval(() => {
       if (foundTypes.length === expectedTypes.length) {
         clearInterval(interval);
-        if (timeout) {
-          clearTimeout(timeout);
-        }
+        clearTimeout(timeout);
 
         foundTypes.forEach((foundType, idx) => {
           const expectedType = expectedTypes[idx];
           try {
             expect(foundType).toEqual(expectedType);
-          } catch (err) {
-            reject(err);
+          } catch (err: unknown) {
+            reject(err as Error);
             return;
           }
         });
@@ -45,7 +43,7 @@ describe('room-level reactions integration test', () => {
     context.chat = newChatClient();
   });
 
-  it<TestContext>('sets the agent version on the channel', async (context) => {
+  it<TestContext>('sets the agent version on the channel', (context) => {
     const { chat } = context;
 
     const roomName = Math.random().toString(36).substring(7);

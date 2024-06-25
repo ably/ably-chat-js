@@ -49,19 +49,21 @@ describe('Occupancy', () => {
         } else {
           context.channelLevelListeners.set(nameOrListener as Ably.messageCallback<Ably.Message>, []);
         }
+
+        return Promise.resolve();
       },
     );
 
     vi.spyOn(channel, 'unsubscribe').mockImplementation(
       // @ts-expect-error overriding mock
-      async (listener: Ably.messageCallback<Ably.Message>) => {
+      (listener: Ably.messageCallback<Ably.Message>) => {
         context.channelLevelListeners.delete(listener);
       },
     );
 
     // Mock the attach
     vi.spyOn(channel, 'attach').mockImplementation(async () => {
-      return null;
+      return Promise.resolve(null);
     });
 
     // Mock the detach
@@ -70,6 +72,7 @@ describe('Occupancy', () => {
     // Mock the setOptions
     vi.spyOn(channel, 'setOptions').mockImplementation(async (options: Ably.ChannelOptions) => {
       context.currentChannelOptions = options;
+      return Promise.resolve();
     });
   });
 
@@ -133,8 +136,8 @@ describe('Occupancy', () => {
               presenceMembers: 3,
             });
             done();
-          } catch (err) {
-            reject(err);
+          } catch (err: unknown) {
+            reject(err as Error);
           }
         })
         .then(() => {
@@ -148,8 +151,8 @@ describe('Occupancy', () => {
             },
           });
         })
-        .catch((err) => {
-          reject(err);
+        .catch((err: unknown) => {
+          reject(err as Error);
         });
     }));
 
@@ -164,8 +167,8 @@ describe('Occupancy', () => {
               presenceMembers: 0,
             });
             done();
-          } catch (err) {
-            reject(err);
+          } catch (err: unknown) {
+            reject(err as Error);
           }
         })
         .then(() => {
@@ -179,8 +182,8 @@ describe('Occupancy', () => {
             },
           });
         })
-        .catch((err) => {
-          reject(err);
+        .catch((err: unknown) => {
+          reject(err as Error);
         });
     }));
 
@@ -189,7 +192,7 @@ describe('Occupancy', () => {
       const room = makeRoom(context);
       room.occupancy
         .subscribe(() => {
-          reject('should not have received occupancy event without connections');
+          reject(new Error('should not have received occupancy event without connections'));
         })
         .then(() => {
           context.emulateOccupancyUpdate({
@@ -204,8 +207,8 @@ describe('Occupancy', () => {
         .then(() => {
           done();
         })
-        .catch((error: Ably.ErrorInfo) => {
-          reject(error);
+        .catch((error: unknown) => {
+          reject(error as Error);
         });
     }));
 
@@ -214,7 +217,7 @@ describe('Occupancy', () => {
       const room = makeRoom(context);
       room.occupancy
         .subscribe(() => {
-          reject('should not have received occupancy event without presenceMembers');
+          reject(new Error('should not have received occupancy event without presenceMembers'));
         })
         .then(() => {
           context.emulateOccupancyUpdate({
@@ -229,8 +232,8 @@ describe('Occupancy', () => {
         .then(() => {
           done();
         })
-        .catch((error: Ably.ErrorInfo) => {
-          reject(error);
+        .catch((error: unknown) => {
+          reject(error as Error);
         });
     }));
 
@@ -239,7 +242,7 @@ describe('Occupancy', () => {
       const room = makeRoom(context);
       room.occupancy
         .subscribe(() => {
-          reject('should not have received occupancy event without metrics');
+          reject(new Error('should not have received occupancy event without metrics'));
         })
         .then(() => {
           context.emulateOccupancyUpdate({
@@ -250,8 +253,8 @@ describe('Occupancy', () => {
         .then(() => {
           done();
         })
-        .catch((error: Ably.ErrorInfo) => {
-          reject(error);
+        .catch((error: unknown) => {
+          reject(error as Error);
         });
     }));
 });

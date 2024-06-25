@@ -66,7 +66,8 @@ export class DefaultRooms implements Rooms {
    */
   get(roomId: string): Room {
     this._logger.trace('Rooms.get();', { roomId });
-    if (this.rooms[roomId]) return this.rooms[roomId];
+    const existing = this.rooms[roomId];
+    if (existing) return existing;
 
     const room = new DefaultRoom(roomId, this.realtime, this.chatApi, this._clientOptions, this._logger);
     this.rooms[roomId] = room;
@@ -90,6 +91,10 @@ export class DefaultRooms implements Rooms {
     if (!room) {
       return;
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete this.rooms[roomId];
+
+    return Promise.resolve();
   }
 }

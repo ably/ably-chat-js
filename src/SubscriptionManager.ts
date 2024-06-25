@@ -40,7 +40,7 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _listeners: Set<Listener>;
   private readonly _presenceListeners: Set<PresenceListener>;
-  private _presenceEntered: boolean = false;
+  private _presenceEntered = false;
   private _logger: Logger;
 
   constructor(channel: Ably.RealtimeChannel, logger: Logger) {
@@ -56,7 +56,7 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
           channel: this._channel.name,
         });
         this._presenceEntered = false;
-        this.detachChannelIfNotListening().then(() => {});
+        void this.detachChannelIfNotListening();
       }
     });
   }
@@ -170,6 +170,7 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
   async presenceLeaveClient(clientId: string, data?: string): Promise<void> {
     this._logger.trace('DefaultSubscriptionManager.presenceLeaveClient();', { clientId });
     this._presenceEntered = false;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-misused-promises
     return this._channel.presence.leaveClient(clientId, data).finally(() => {
       return this.detachChannelIfNotListening();
     });

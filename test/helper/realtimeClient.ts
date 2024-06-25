@@ -5,14 +5,18 @@ import { ablyApiKey, isLocalEnvironment, testEnvironment } from './environment.j
 import { randomClientId } from './identifier.js';
 
 const baseOptions = (options?: Ably.ClientOptions): Ably.ClientOptions => {
-  options = options || {};
-  options.clientId = options.clientId || randomClientId();
-  options.environment = options.environment || testEnvironment();
-  options.key = options.key || ablyApiKey();
+  options = options ?? {};
+  options.clientId = options.clientId ?? randomClientId();
+  options.environment = options.environment ?? testEnvironment();
+  options.key = options.key ?? ablyApiKey();
   // TODO: Support non-JSON protocol
   options.useBinaryProtocol = false;
-  options.logHandler = options.logHandler || ((msg) => console.error(msg));
-  options.logLevel = options.logLevel || 1; // error
+  options.logHandler =
+    options.logHandler ??
+    ((msg) => {
+      console.error(msg);
+    });
+  options.logLevel = options.logLevel ?? 1; // error
 
   if (isLocalEnvironment()) {
     options.port = 8081;
@@ -31,7 +35,16 @@ const ablyRealtimeClient = (options?: Ably.ClientOptions): Ably.Realtime => {
 // At the moment, chat doesn't support keys for authentication, so create a client that uses tokens
 const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtime => {
   options = baseOptions(options);
-  const [keyId, keySecret] = options!.key!.split(':');
+
+  if (!options.key) {
+    throw new Error('key must be provided when using tokens');
+  }
+
+  const [keyId, keySecret] = options.key.split(':');
+  if (!keyId || !keySecret) {
+    throw new Error('key must be in the format "keyId:key');
+  }
+
   options.useTokenAuth = true;
 
   // Generate the token
