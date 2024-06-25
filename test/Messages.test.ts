@@ -32,7 +32,7 @@ describe('Messages', () => {
     vi.spyOn(channel, 'subscribe').mockImplementation(
       // @ts-expect-error overriding mock
       async (
-        eventsOrListeners: Array<string> | Ably.messageCallback<Ably.Message>,
+        eventsOrListeners: string[] | Ably.messageCallback<Ably.Message>,
         listener: Ably.messageCallback<Ably.Message>,
       ) => {
         if (Array.isArray(eventsOrListeners)) {
@@ -42,21 +42,25 @@ describe('Messages', () => {
           context.channelLevelListeners.set(listener, []);
         }
         context.emulateBackendPublish = (msg) => {
-          context.channelLevelListeners.forEach((_, cb) => cb(msg));
+          context.channelLevelListeners.forEach((_, cb) => {
+            cb(msg);
+          });
         };
+
+        return Promise.resolve();
       },
     );
 
     vi.spyOn(channel, 'unsubscribe').mockImplementation(
       // @ts-expect-error overriding mock
-      async (listener: Ably.messageCallback<Ably.Message>) => {
+      (listener: Ably.messageCallback<Ably.Message>) => {
         context.channelLevelListeners.delete(listener);
       },
     );
 
     // Mock the attach
     vi.spyOn(channel, 'attach').mockImplementation(async () => {
-      return null;
+      return Promise.resolve(null);
     });
 
     // Mock the detach
@@ -113,8 +117,8 @@ describe('Messages', () => {
                   roomId: room.roomId,
                 }),
               );
-            } catch (err) {
-              reject(err);
+            } catch (err: unknown) {
+              reject(err as Error);
             }
             done();
           })
@@ -131,8 +135,8 @@ describe('Messages', () => {
               timestamp: publishTimestamp,
             });
           })
-          .catch((err) => {
-            reject(err);
+          .catch((err: unknown) => {
+            reject(err as Error);
           });
       }));
   });
@@ -185,8 +189,8 @@ describe('Messages', () => {
         .then(() => {
           done();
         })
-        .catch((error: Ably.ErrorInfo) => {
-          reject(error);
+        .catch((error: unknown) => {
+          reject(error as Error);
         });
     }));
 
@@ -213,8 +217,8 @@ describe('Messages', () => {
         .then(() => {
           done();
         })
-        .catch((error: Ably.ErrorInfo) => {
-          reject(error);
+        .catch((error: unknown) => {
+          reject(error as Error);
         });
     }));
 
@@ -239,8 +243,8 @@ describe('Messages', () => {
         .then(() => {
           done();
         })
-        .catch((error: Ably.ErrorInfo) => {
-          reject(error);
+        .catch((error: unknown) => {
+          reject(error as Error);
         });
     }));
 
@@ -266,8 +270,8 @@ describe('Messages', () => {
         .then(() => {
           done();
         })
-        .catch((error: Ably.ErrorInfo) => {
-          reject(error);
+        .catch((error: unknown) => {
+          reject(error as Error);
         });
     }));
 
@@ -293,8 +297,8 @@ describe('Messages', () => {
         .then(() => {
           done();
         })
-        .catch((error: Ably.ErrorInfo) => {
-          reject(error);
+        .catch((error: unknown) => {
+          reject(error as Error);
         });
     }));
 
@@ -320,8 +324,8 @@ describe('Messages', () => {
         .then(() => {
           done();
         })
-        .catch((error: Ably.ErrorInfo) => {
-          reject(error);
+        .catch((error: unknown) => {
+          reject(error as Error);
         });
     }));
 });

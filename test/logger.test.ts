@@ -39,7 +39,7 @@ describe('logger', () => {
 
         const logger = makeLogger(options);
         callMethodForLevel(logger, logLevel, logContext);
-        reject('Expected logHandler to be called');
+        reject(new Error('Expected logHandler to be called'));
       }),
   );
 
@@ -66,7 +66,7 @@ describe('logger', () => {
         const options = normaliseClientOptions({
           logLevel: configuredLevel,
           logHandler: () => {
-            reject('Expected logHandler to not be called');
+            reject(new Error('Expected logHandler to not be called'));
           },
         });
 

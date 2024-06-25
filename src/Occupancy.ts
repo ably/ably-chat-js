@@ -46,7 +46,7 @@ export interface Occupancy {
 /**
  * Represents the occupancy of a chat room.
  */
-export type OccupancyEvent = {
+export interface OccupancyEvent {
   /**
    * The number of connections to the chat room.
    */
@@ -56,7 +56,7 @@ export type OccupancyEvent = {
    * The number of presence members in the chat room - members who have entered presence.
    */
   presenceMembers: number;
-};
+}
 
 /**
  * A listener that is called when the occupancy of a chat room changes.
@@ -99,7 +99,7 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
       this._logger.debug('Occupancy.subscribe(); adding internal listener');
       this._internalListener = this.internalOccupancyListener.bind(this);
       return this._managedChannel
-        .subscribe(['[meta]occupancy'], this._internalListener as Ably.messageCallback<Ably.InboundMessage>)
+        .subscribe(['[meta]occupancy'], this._internalListener)
         .then(async (stateChange: Ably.ChannelStateChange | null) => {
           await this._managedChannel.channel.setOptions({ params: { occupancy: 'metrics' } });
           return stateChange;
@@ -119,9 +119,7 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
       this._logger.debug('Occupancy.unsubscribe(); removing internal listener');
       return this._managedChannel.channel
         .setOptions({})
-        .then(() =>
-          this._managedChannel.unsubscribe(this._internalListener as Ably.messageCallback<Ably.InboundMessage>),
-        )
+        .then(() => (this._internalListener ? this._managedChannel.unsubscribe(this._internalListener) : null))
         .then(() => {
           this._internalListener = undefined;
         });
@@ -150,9 +148,7 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
    * occupancy events for the public API.
    */
   private internalOccupancyListener(message: Ably.InboundMessage): void {
-    const {
-      data: { metrics },
-    } = message;
+    const { metrics } = message.data as { metrics?: { connections?: number; presenceMembers?: number } };
 
     if (metrics === undefined) {
       this._logger.error('invalid occupancy event received; metrics is missing', message);

@@ -11,4 +11,12 @@ export const makeTestLogger = (): Logger => {
 };
 
 // testLoggingLevel returns the log level specified by the VITE_TEST_LOG_LEVEL environment variable.
-export const testLoggingLevel = (): LogLevel => (process.env.VITE_TEST_LOG_LEVEL as LogLevel) ?? LogLevel.silent;
+export const testLoggingLevel = (): LogLevel => {
+  const level = process.env.VITE_TEST_LOG_LEVEL;
+
+  if (level) {
+    return level as LogLevel;
+  }
+
+  return LogLevel.silent;
+};

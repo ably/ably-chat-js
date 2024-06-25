@@ -23,7 +23,7 @@ export function removeListener<T>(
   listener: Function,
   eventFilter?: keyof T,
 ) {
-  let listeners: Function[] | Record<keyof T, Function[]>;
+  let listeners: Function[] | Record<keyof T, Function[]> | undefined;
   let index: number;
   let eventName: keyof T;
 

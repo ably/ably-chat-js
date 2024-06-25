@@ -36,25 +36,24 @@ describe('Typing', () => {
         context.channelLevelListeners.add(listener);
 
         context.emulateBackendPublish = (msg) => {
-          context.channelLevelListeners.forEach((_, cb) => cb(msg));
+          context.channelLevelListeners.forEach((_, cb) => {
+            cb(msg);
+          });
         };
+
+        return Promise.resolve();
       },
     );
 
     vi.spyOn(presence, 'unsubscribe').mockImplementation(
       // @ts-expect-error overriding mock
-      async (listener: Ably.messageCallback<Ably.PresenceMessage>) => {
+      (listener: Ably.messageCallback<Ably.PresenceMessage>) => {
         context.channelLevelListeners.delete(listener);
       },
     );
 
     // Mock the attach
-    vi.spyOn(channel, 'attach').mockImplementation(async () => {
-      return null;
-    });
-
-    // Mock the detach
-    vi.spyOn(channel, 'detach').mockImplementation(async () => {});
+    vi.spyOn(channel, 'attach').mockImplementation(() => Promise.resolve(null));
   });
 
   it<TestContext>('delays stop timeout while still typing', async (context) => {
@@ -124,8 +123,8 @@ describe('Typing', () => {
           .then(() => {
             done();
           })
-          .catch((err) => {
-            reject(err);
+          .catch((err: unknown) => {
+            reject(err as Error);
           });
       });
 

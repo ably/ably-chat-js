@@ -1,10 +1,13 @@
 {
     "include": [
         "test/**/*.spec.ts",
-        "test/**/*.test.ts"
+        "test/**/*.test.ts",
+        "test/helper/**/*.ts",
     ],
     "exclude": [
-      "test/utils/**/*.ts"
+      "src/**/*.ts",
+      "test/utils/**/*.ts",
+      "ably-common/**/*",
     ],
     "compilerOptions": {
         "noEmit": true,
@@ -21,6 +24,8 @@
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true,
         "allowImportingTsExtensions": true,
+        "strictNullChecks": true,
+        "noUncheckedIndexedAccess": true,
         "lib": [
             "DOM",
             "DOM.Iterable",

@@ -18,9 +18,7 @@ interface PresenceEventsMap {
 /**
  * Type for PresenceData
  */
-export type PresenceData = {
-  [key: string]: unknown;
-};
+export type PresenceData = Record<string, unknown>;
 
 /**
  * Type for AblyPresenceData
@@ -209,13 +207,27 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     this._logger.trace('Presence.get()', { params });
     const userOnPresence = await this.subscriptionManager.channel.presence.get(params);
+    const userDataToReturn = (data: string) => {
+      try {
+        const parsedData = JSON.parse(data) as AblyPresenceData;
+        if (!parsedData.userCustomData) {
+          return undefined;
+        }
+
+        return parsedData.userCustomData;
+      } catch (error) {
+        this._logger.error('Presence.get(); error parsing user data', { error });
+        return undefined;
+      }
+    };
 
     // ably-js never emits the 'absent' event, so we can safely ignore it here.
     return userOnPresence.map((user) => ({
       clientId: user.clientId,
       action: user.action as PresenceEvents,
-      data: user.data ? (JSON.parse(user.data).userCustomData as PresenceData) : undefined,
+      data: userDataToReturn(user.data as string),
       timestamp: user.timestamp,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       extras: user.extras,
       id: user.id,
     }));
@@ -286,7 +298,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     this._logger.trace('Presence.subscribe(); listenerOrEvents', { listenerOrEvents });
     if (!listenerOrEvents && !listener) {
       this._logger.error('could not subscribe to presence; invalid arguments');
-      throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400);
+      throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400) as unknown as Error;
     }
     const hasListeners = this.hasListeners();
     if (!listener) {
@@ -298,7 +310,9 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
       this._logger.debug('Presence.subscribe(); adding internal listener');
       return this.subscriptionManager.presenceSubscribe(this.subscribeToEvents);
     }
-    return this.subscriptionManager.channel.attach().then(() => {});
+    return this.subscriptionManager.channel.attach().then(() => {
+      return Promise.resolve();
+    });
   }
 
   /**
@@ -320,7 +334,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     this._logger.trace('Presence.unsubscribe(); listenerOrEvents', { listenerOrEvents });
     if (!listenerOrEvents && !listener) {
       this._logger.error('could not unsubscribe from presence; invalid arguments');
-      throw new Ably.ErrorInfo('could not unsubscribe listener: invalid arguments', 40000, 400);
+      throw new Ably.ErrorInfo('could not unsubscribe listener: invalid arguments', 40000, 400) as unknown as Error;
     }
     if (!listener) {
       this.off(listenerOrEvents);
@@ -342,11 +356,10 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    */
   subscribeToEvents = (member: Ably.PresenceMessage) => {
     try {
-      const parsedData = JSON.parse(member.data);
-
+      const parsedData = JSON.parse(member.data as string) as AblyPresenceData;
       // ably-js never emits the 'absent' event, so we can safely ignore it here.
-      this.emit(PresenceEvents[member.action as PresenceEvents], {
-        action: PresenceEvents[member.action as PresenceEvents],
+      this.emit(member.action as PresenceEvents, {
+        action: member.action as PresenceEvents,
         clientId: member.clientId,
         timestamp: member.timestamp,
         data: parsedData.userCustomData,
@@ -358,7 +371,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
         50000,
         500,
         (error as Error).message,
-      );
+      ) as unknown as Error;
     }
   };
 }

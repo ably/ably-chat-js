@@ -31,7 +31,7 @@ describe('messages integration', () => {
     context.chat = newChatClient();
   });
 
-  it<TestContext>('sets the agent version on the channel', async (context) => {
+  it<TestContext>('sets the agent version on the channel', (context) => {
     const { chat } = context;
 
     const roomName = Math.random().toString(36).substring(7);
@@ -146,7 +146,7 @@ describe('messages integration', () => {
     // Do a history request to get the next 2 messages
     const history2 = await history1.next();
 
-    expect(history2!.items).toEqual([
+    expect(history2?.items).toEqual([
       expect.objectContaining({
         content: "Don't try it!",
         clientId: chat.clientId,
@@ -155,7 +155,7 @@ describe('messages integration', () => {
     ]);
 
     // We shouldn't have a "next" link in the response
-    expect(history2!.hasNext()).toBe(false);
+    expect(history2?.hasNext()).toBe(false);
   });
 
   it<TestContext>('should be able to paginate chat history, but backwards', async (context) => {
@@ -196,7 +196,7 @@ describe('messages integration', () => {
     // Do a history request to get the next 2 messages
     const history2 = await history1.next();
 
-    expect(history2!.items).toEqual([
+    expect(history2?.items).toEqual([
       expect.objectContaining({
         content: 'Hello there!',
         clientId: chat.clientId,
@@ -205,6 +205,6 @@ describe('messages integration', () => {
     ]);
 
     // We shouldn't have a "next" link in the response
-    expect(history2!.hasNext()).toBe(false);
+    expect(history2?.hasNext()).toBe(false);
   });
 });

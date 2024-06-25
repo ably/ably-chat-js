@@ -33,6 +33,7 @@ export interface RoomReactions {
    * @param metadata Any JSON-serializable data that will be attached to the reaction.
    * @returns The returned promise resolves when the reaction was sent. Note that it is possible to receive your own reaction via the reactions listener before this promise resolves.
    */
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
   send(type: string, metadata?: unknown): Promise<void>;
 
   /**
@@ -150,7 +151,13 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   }
 
   parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {
-    if (!inbound.data || !inbound.data.type || typeof inbound.data.type !== 'string') {
+    const data = inbound.data as ReactionPayload | undefined;
+    if (!data) {
+      this._logger.error('RoomReactions.realtimeMessageToReaction(); invalid reaction message with no data', inbound);
+      return;
+    }
+
+    if (!data.type || typeof data.type !== 'string') {
       // not a reaction if there's no type or type is not a string
       this._logger.error('RoomReactions.realtimeMessageToReaction(); invalid reaction message with no type', inbound);
       return;
@@ -166,11 +173,11 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
     }
 
     return new DefaultReaction(
-      inbound.data.type,
-      inbound.clientId!,
+      data.type,
+      inbound.clientId,
       new Date(inbound.timestamp),
       inbound.clientId === clientId,
-      inbound.data.metadata,
+      data.metadata,
     );
   }
 }
