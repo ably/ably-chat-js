@@ -1,15 +1,15 @@
 // Import necessary modules and dependencies
 import * as Ably from 'ably';
 import { PresenceAction, Realtime } from 'ably';
+import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { ChatClient } from '../src/Chat.js';
 import { PresenceEvents } from '../src/events.js';
 import { PresenceData, PresenceEvent } from '../src/Presence.js';
 import { Room } from '../src/Room.js';
-import { DefaultRooms, Rooms } from '../src/Rooms.js';
+import { newChatClient } from './helper/chat.js';
 import { randomRoomId } from './helper/identifier.js';
-import { makeTestLogger } from './helper/logger.js';
-import { testClientOptions } from './helper/options.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
 
 // Define the test context interface
@@ -17,17 +17,41 @@ interface TestContext {
   realtime: Ably.Realtime;
   defaultTestClientId: string;
   chatRoom: Room;
-  chat: Rooms;
+  chat: ChatClient;
 }
+
+// Wait a maximum of 5 seconds for a particular presence event to be received
+const waitForPresenceEvent = async (
+  events: PresenceEvent[],
+  action: PresenceEvents,
+  clientId: string,
+  data: object,
+) => {
+  return new Promise<void>((resolve, reject) => {
+    const interval = setInterval(() => {
+      for (const event of events) {
+        if (event.action === action && dequal(event.data, data) && event.clientId === clientId) {
+          clearInterval(interval);
+          resolve();
+        }
+      }
+    }, 100);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      reject(new Error('Timed out waiting for presence event'));
+    }, 5000);
+  });
+};
 
 describe('UserPresence', { timeout: 10000 }, () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>(async (context) => {
     context.realtime = ablyRealtimeClient();
     const roomId = randomRoomId();
-    context.chat = new DefaultRooms(context.realtime, testClientOptions(), makeTestLogger());
+    context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
-    context.chatRoom = context.chat.get(roomId);
+    context.chatRoom = context.chat.rooms.get(roomId);
   });
 
   // Helper function to wait for an event and run an expectation function on the received message
@@ -176,60 +200,45 @@ describe('UserPresence', { timeout: 10000 }, () => {
   // Test for successful subscription to enter events
   it<TestContext>('should successfully subscribe to enter events ', async (context) => {
     // Subscribe to enter events
-    let presenceEvent: PresenceEvent;
-    const enterEventPromise = new Promise<void>((resolve) => {
-      context.chatRoom.presence.subscribe(PresenceEvents.enter, (member) => {
-        presenceEvent = member;
-        resolve();
-      });
+    const presenceEvents: PresenceEvent[] = [];
+    await context.chatRoom.presence.subscribe(PresenceEvents.enter, (event) => {
+      presenceEvents.push(event);
     });
+
     // Enter presence to trigger the enter event
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
+
     // Wait for the enter event to be received
-    await enterEventPromise;
-    expect(presenceEvent.clientId, 'client id should be equal to defaultTestClientId').toEqual(
-      context.defaultTestClientId,
-    );
-    expect(presenceEvent.data, 'data should be equal to supplied userCustomData').toEqual({ customKeyOne: 1 });
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.enter, context.chat.clientId, { customKeyOne: 1 });
   });
 
   it<TestContext>('should successfully subscribe to update events ', async (context) => {
     // Subscribe to update events
-    let presenceEvent: PresenceEvent;
-    const updateEventPromise = new Promise<void>((resolve) => {
-      context.chatRoom.presence.subscribe(PresenceEvents.update, (member) => {
-        presenceEvent = member;
-        resolve();
-      });
+    const presenceEvents: PresenceEvent[] = [];
+    await context.chatRoom.presence.subscribe(PresenceEvents.update, (event) => {
+      presenceEvents.push(event);
     });
-    // Enter presence and update presence to trigger the update event
-    await context.chatRoom.presence.enter();
-    await context.chatRoom.presence.update({ customKeyOne: 1 });
+
+    // Enter presence to trigger the enter event and then update our data
+    await context.chatRoom.presence.enter({ customKeyOne: 1 });
+    await context.chatRoom.presence.update({ customKeyOne: 2 });
+
     // Wait for the update event to be received
-    await updateEventPromise;
-    expect(presenceEvent.data, 'data should be equal to supplied userCustomData').toEqual({ customKeyOne: 1 });
-    expect(presenceEvent.clientId, 'client id should be equal to defaultTestClientId').toEqual(
-      context.defaultTestClientId,
-    );
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.update, context.chat.clientId, { customKeyOne: 2 });
   });
 
   it<TestContext>('should successfully subscribe to leave events ', async (context) => {
     // Subscribe to leave events
-    let presenceEvent: PresenceEvent;
-    const leaveEventPromise = new Promise<void>((resolve) => {
-      context.chatRoom.presence.subscribe(PresenceEvents.leave, (member) => {
-        presenceEvent = member;
-        resolve();
-      });
+    const presenceEvents: PresenceEvent[] = [];
+    await context.chatRoom.presence.subscribe(PresenceEvents.leave, (event) => {
+      presenceEvents.push(event);
     });
-    // Enter presence and leave presence to trigger the leave event
-    await context.chatRoom.presence.enter();
-    await context.chatRoom.presence.leave({ customKeyOne: 1 });
-    // Wait for the leave event to be received
-    await leaveEventPromise;
-    expect(presenceEvent.clientId, 'client id should be equal to defaultTestClientId').toEqual(
-      context.defaultTestClientId,
-    );
-    expect(presenceEvent.data, 'data should be equal to supplied userCustomData').toEqual({ customKeyOne: 1 });
+
+    // Enter presence to trigger the enter event and then update our data
+    await context.chatRoom.presence.enter({ customKeyOne: 1 });
+    await context.chatRoom.presence.leave({ customKeyOne: 3 });
+
+    // Wait for the update event to be received
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.leave, context.chat.clientId, { customKeyOne: 3 });
   });
 });
