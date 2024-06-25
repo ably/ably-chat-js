@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { normaliseClientOptions } from '../src/config.js';
-import { LogContext, LogLevel, makeLogger } from '../src/logger.js';
+import { LogContext, Logger, LogLevel, makeLogger } from '../src/logger.js';
 
 const defaultLogContext = { contextKey: 'contextValue' };
 
@@ -38,7 +38,7 @@ describe('logger', () => {
         });
 
         const logger = makeLogger(options);
-        logger[logLevel]('test', logContext);
+        callMethodForLevel(logger, logLevel, logContext);
         reject('Expected logHandler to be called');
       }),
   );
@@ -71,8 +71,28 @@ describe('logger', () => {
         });
 
         const logger = makeLogger(options);
-        logger[logLevel]('test');
+        callMethodForLevel(logger, logLevel);
         done();
       }),
   );
 });
+
+const callMethodForLevel = (log: Logger, level: Omit<LogLevel, 'silent'>, context?: object | undefined) => {
+  switch (level) {
+    case LogLevel.trace:
+      log.trace('test', context);
+      break;
+    case LogLevel.debug:
+      log.debug('test', context);
+      break;
+    case LogLevel.info:
+      log.info('test', context);
+      break;
+    case LogLevel.warn:
+      log.warn('test', context);
+      break;
+    case LogLevel.error:
+      log.error('test', context);
+      break;
+  }
+};
