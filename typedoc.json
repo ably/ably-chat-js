@@ -3,7 +3,7 @@
   "entryPoints": ["src/index.ts"],
   "out": "typedoc/generated",
   "readme": "typedoc/landing-page.md",
-  "tsconfig": "tsconfig.base.json",
+  "tsconfig": "tsconfig.json",
   "treatWarningsAsErrors": true,
   "includeVersion": true,
   "excludeInternal": true,

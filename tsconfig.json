@@ -8,8 +8,8 @@
     "./src/fakes/**/*.ts"
   ],
   "compilerOptions": {
-    "target": "es6",
     "rootDir": "./src",
+    "target": "es6",
     "sourceMap": true,
     "strict": true,
     "alwaysStrict": true,

@@ -48,7 +48,7 @@ module.exports = {
       },
     },
   ],
-  ignorePatterns: ['dist', 'node_modules', 'ably-common', 'typedoc', 'src/utils'],
+  ignorePatterns: ['dist', 'node_modules', 'ably-common', 'typedoc', 'src/utils', 'scripts/cdn_deploy.js'],
   settings: {
     jsdoc: {
       tagNamePreference: {
