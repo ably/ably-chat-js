@@ -25,7 +25,7 @@ const waitForPresenceEvent = async (
   events: PresenceEvent[],
   action: PresenceEvents,
   clientId: string,
-  data: object,
+  data: unknown,
 ) => {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
@@ -80,13 +80,13 @@ describe('UserPresence', { timeout: 10000 }, () => {
       context.realtime,
       'enter',
       context.chatRoom.messages.channel.name,
-      (member) => {
+      (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
         );
-        expect(member.data, 'data should be equal to supplied userCustomData').toEqual(
-          '{"userCustomData":{"customKeyOne":1}}',
-        );
+        expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
+          userCustomData: { customKeyOne: 1 },
+        });
       },
     );
     // Enter with custom user data
@@ -105,9 +105,9 @@ describe('UserPresence', { timeout: 10000 }, () => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
         );
-        expect(member.data, 'data should be equal to supplied userCustomData').toEqual(
-          '{"userCustomData":{"customKeyOne":1}}',
-        );
+        expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
+          userCustomData: { customKeyOne: 1 },
+        });
       },
     );
     // Enter with custom user data
@@ -124,13 +124,13 @@ describe('UserPresence', { timeout: 10000 }, () => {
       context.realtime,
       'leave',
       context.chatRoom.messages.channel.name,
-      (member) => {
+      (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
         );
-        expect(member.data, 'data should be equal to supplied userCustomData').toEqual(
-          '{"userCustomData":{"customKeyOne":1}}',
-        );
+        expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
+          userCustomData: { customKeyOne: 1 },
+        });
       },
     );
     // Enter with custom user data
@@ -155,7 +155,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
     // Enter presence for each client
     await client1.presence.enterClient('clientId1');
-    await client2.presence.enterClient('clientId2', JSON.stringify(testData));
+    await client2.presence.enterClient('clientId2', testData);
     await client3.presence.enterClient('clientId3');
 
     // Check if all clients are present
@@ -244,5 +244,27 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
     // Wait for the update event to be received
     await waitForPresenceEvent(presenceEvents, PresenceEvents.leave, context.chat.clientId, { customKeyOne: 3 });
+  });
+  it<TestContext>('should successfully handle multiple data types', async (context) => {
+    // Subscribe to leave events
+    const presenceEvents: PresenceEvent[] = [];
+    await context.chatRoom.presence.subscribe((event) => {
+      presenceEvents.push(event);
+    });
+    // Enter presence to trigger the enter event with undefined data
+    await context.chatRoom.presence.enter();
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.enter, context.chat.clientId, undefined);
+    // Update with string
+    await context.chatRoom.presence.update('string');
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.update, context.chat.clientId, 'string');
+    // Update with number
+    await context.chatRoom.presence.update(1);
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.update, context.chat.clientId, 1);
+    // Update with boolean
+    await context.chatRoom.presence.update(true);
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.update, context.chat.clientId, true);
+    // Update with object
+    await context.chatRoom.presence.update({ key: 'value' });
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.update, context.chat.clientId, { key: 'value' });
   });
 });

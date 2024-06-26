@@ -18,13 +18,13 @@ interface PresenceEventsMap {
 /**
  * Type for PresenceData
  */
-export type PresenceData = Record<string, unknown>;
+export type PresenceData = unknown;
 
 /**
  * Type for AblyPresenceData
  */
 interface AblyPresenceData {
-  userCustomData: PresenceData | undefined;
+  userCustomData: PresenceData;
 
   [key: string]: unknown;
 }
@@ -51,7 +51,7 @@ export interface PresenceEvent {
   /**
    * The data associated with the presence event.
    */
-  data: PresenceData | undefined;
+  data: PresenceData;
 }
 
 /**
@@ -66,7 +66,7 @@ export interface PresenceMember {
   /**
    * The data associated with the presence member.
    */
-  data: PresenceData | undefined;
+  data: PresenceData;
 
   /**
    * The current state of the presence member.
@@ -185,6 +185,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * (messages and presence) are removed, the channel is implicitly detached.
    * @param {string} clientId - The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
+   * @param logger - The logger instance.
    */
   constructor(subscriptionManager: SubscriptionManager, clientId: string, logger: Logger) {
     super();
@@ -207,25 +208,13 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     this._logger.trace('Presence.get()', { params });
     const userOnPresence = await this.subscriptionManager.channel.presence.get(params);
-    const userDataToReturn = (data: string) => {
-      try {
-        const parsedData = JSON.parse(data) as AblyPresenceData;
-        if (!parsedData.userCustomData) {
-          return undefined;
-        }
-
-        return parsedData.userCustomData;
-      } catch (error) {
-        this._logger.error('Presence.get(); error parsing user data', { error });
-        return undefined;
-      }
-    };
 
     // ably-js never emits the 'absent' event, so we can safely ignore it here.
     return userOnPresence.map((user) => ({
       clientId: user.clientId,
       action: user.action as PresenceEvents,
-      data: userDataToReturn(user.data as string),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      data: user.data?.userCustomData as PresenceData,
       timestamp: user.timestamp,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       extras: user.extras,
@@ -251,7 +240,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-    return this.subscriptionManager.presenceEnterClient(this.clientId, JSON.stringify(presenceEventToSend));
+    return this.subscriptionManager.presenceEnterClient(this.clientId, presenceEventToSend);
   }
 
   /**
@@ -264,7 +253,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-    return this.subscriptionManager.presenceUpdateClient(this.clientId, JSON.stringify(presenceEventToSend));
+    return this.subscriptionManager.presenceUpdateClient(this.clientId, presenceEventToSend);
   }
 
   /**
@@ -277,7 +266,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-    return this.subscriptionManager.presenceLeaveClient(this.clientId, JSON.stringify(presenceEventToSend));
+    return this.subscriptionManager.presenceLeaveClient(this.clientId, presenceEventToSend);
   }
 
   /**
@@ -356,13 +345,13 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    */
   subscribeToEvents = (member: Ably.PresenceMessage) => {
     try {
-      const parsedData = JSON.parse(member.data as string) as AblyPresenceData;
-      // ably-js never emits the 'absent' event, so we can safely ignore it here.
-      this.emit(member.action as PresenceEvents, {
-        action: member.action as PresenceEvents,
+      // Ably-js never emits the 'absent' event, so we can safely ignore it here.
+      this.emit(PresenceEvents[member.action as PresenceEvents], {
+        action: PresenceEvents[member.action as PresenceEvents],
         clientId: member.clientId,
         timestamp: member.timestamp,
-        data: parsedData.userCustomData,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        data: member.data?.userCustomData as PresenceData,
       });
     } catch (error) {
       this._logger.error(`unable to handle presence event: not a valid presence event`, { action: member.action });

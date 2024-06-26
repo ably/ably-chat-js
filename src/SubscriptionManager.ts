@@ -19,11 +19,11 @@ export interface SubscriptionManager {
 
   presenceUnsubscribe(listener: PresenceListener): Promise<void>;
 
-  presenceEnterClient(clientId: string, data?: string): Promise<void>;
+  presenceEnterClient(clientId: string, data?: unknown): Promise<void>;
 
-  presenceUpdateClient(clientId: string, data?: string): Promise<void>;
+  presenceUpdateClient(clientId: string, data?: unknown): Promise<void>;
 
-  presenceLeaveClient(clientId: string, data?: string): Promise<void>;
+  presenceLeaveClient(clientId: string, data?: unknown): Promise<void>;
 
   get channel(): Ably.RealtimeChannel;
 }
@@ -161,13 +161,13 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
     return this._channel.detach();
   }
 
-  presenceEnterClient(clientId: string, data?: string): Promise<void> {
+  presenceEnterClient(clientId: string, data?: unknown): Promise<void> {
     this._logger.trace('DefaultSubscriptionManager.presenceEnterClient();', { clientId });
     this._presenceEntered = true;
     return this._channel.presence.enterClient(clientId, data);
   }
 
-  async presenceLeaveClient(clientId: string, data?: string): Promise<void> {
+  async presenceLeaveClient(clientId: string, data?: unknown): Promise<void> {
     this._logger.trace('DefaultSubscriptionManager.presenceLeaveClient();', { clientId });
     this._presenceEntered = false;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-misused-promises
@@ -176,7 +176,7 @@ export class DefaultSubscriptionManager implements SubscriptionManager {
     });
   }
 
-  presenceUpdateClient(clientId: string, data?: string): Promise<void> {
+  presenceUpdateClient(clientId: string, data?: unknown): Promise<void> {
     this._logger.trace('DefaultSubscriptionManager.presenceUpdateClient();', { clientId });
     this._presenceEntered = true;
     return this._channel.presence.updateClient(clientId, data);
