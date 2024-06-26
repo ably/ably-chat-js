@@ -70,7 +70,7 @@ export class ChatApi {
     method: 'POST' | 'GET' | ' PUT' | 'DELETE' | 'PATCH',
     body?: REQ,
   ): Promise<RES> {
-    const response = await this.realtime.request(method, url, 1.1, {}, body);
+    const response = await this.realtime.request<RES>(method, url, 1.1, {}, body);
     if (!response.success) {
       this._logger.error('ChatApi.makeAuthorisedRequest(); failed to make request', {
         url,
@@ -81,8 +81,7 @@ export class ChatApi {
       throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode) as unknown as Error;
     }
 
-    const [result] = response.items as RES[];
-    return result as RES;
+    return response.items[0] as RES;
   }
 
   private async makeAuthorisedPaginatedRequest<RES, REQ = undefined>(
