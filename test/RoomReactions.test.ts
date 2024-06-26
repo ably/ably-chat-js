@@ -43,8 +43,12 @@ describe('Reactions', () => {
         }
 
         context.emulateBackendPublish = (msg) => {
-          listeners.forEach((listener) => listener(msg));
+          listeners.forEach((listener) => {
+            listener(msg);
+          });
         };
+
+        return Promise.resolve();
       },
     );
     vi.spyOn(channel, 'publish').mockImplementation(
@@ -80,8 +84,8 @@ describe('Reactions', () => {
                   type: 'like',
                 }),
               );
-            } catch (err) {
-              reject(err);
+            } catch (err: unknown) {
+              reject(err as Error);
             }
             done();
           })
@@ -95,8 +99,8 @@ describe('Reactions', () => {
               timestamp: publishTimestamp,
             });
           })
-          .catch((err) => {
-            reject(err);
+          .catch((err: unknown) => {
+            reject(err as Error);
           });
       }));
 
@@ -117,8 +121,8 @@ describe('Reactions', () => {
                   type: 'hate',
                 }),
               );
-            } catch (err) {
-              reject(err);
+            } catch (err: unknown) {
+              reject(err as Error);
             }
             done();
           })
@@ -132,8 +136,8 @@ describe('Reactions', () => {
               timestamp: publishTimestamp,
             });
           })
-          .catch((err) => {
-            reject(err);
+          .catch((err: unknown) => {
+            reject(err as Error);
           });
       }));
   });
@@ -162,8 +166,8 @@ describe('Reactions', () => {
             .then(() => {
               done();
             })
-            .catch((err) => {
-              reject(err);
+            .catch((err: unknown) => {
+              reject(err as Error);
             });
         }),
     );
@@ -186,16 +190,16 @@ describe('Reactions', () => {
                   type: 'love',
                 }),
               );
-            } catch (err) {
-              reject(err);
+            } catch (err: unknown) {
+              reject(err as Error);
             }
             done();
           })
           .then(() => {
             return room.reactions.send('love');
           })
-          .catch((err) => {
-            reject(err);
+          .catch((err: unknown) => {
+            reject(err as Error);
           });
       }));
   });

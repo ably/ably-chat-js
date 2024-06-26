@@ -46,7 +46,7 @@ const waitForPresenceEvent = async (
 
 describe('UserPresence', { timeout: 10000 }, () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
-  beforeEach<TestContext>(async (context) => {
+  beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
     const roomId = randomRoomId();
     context.chat = newChatClient(undefined, context.realtime);
@@ -61,12 +61,16 @@ describe('UserPresence', { timeout: 10000 }, () => {
     realtimeChannelName: string,
     expectationFn: (member: Ably.PresenceMessage) => void,
   ) {
-    return new Promise<void>((resolve) => {
+    return new Promise<void>((resolve, reject) => {
       const presence = realtimeClient.channels.get(realtimeChannelName).presence;
-      presence.subscribe(event, (member) => {
-        expectationFn(member);
-        resolve();
-      });
+      presence
+        .subscribe(event, (member) => {
+          expectationFn(member);
+          resolve();
+        })
+        .catch((err: unknown) => {
+          reject(err as Error);
+        });
     });
   }
 

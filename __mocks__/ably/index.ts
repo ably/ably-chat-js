@@ -2,7 +2,10 @@ import * as Ably from 'ably';
 
 const MOCK_CLIENT_ID = 'MOCK_CLIENT_ID';
 
-const mockPromisify = <T>(expectedReturnValue): Promise<T> => new Promise((resolve) => resolve(expectedReturnValue));
+const mockPromisify = <T>(expectedReturnValue): Promise<T> =>
+  new Promise((resolve) => {
+    resolve(expectedReturnValue);
+  });
 const methodReturningVoidPromise = () => mockPromisify<void>((() => {})());
 
 function createMockPresence() {
@@ -18,8 +21,8 @@ function createMockPresence() {
         fn();
       },
     },
-    subscribe: () => {},
-    unsubscribe: () => {},
+    subscribe: methodReturningVoidPromise,
+    unsubscribe: methodReturningVoidPromise,
   };
 }
 
@@ -37,8 +40,8 @@ function createMockChannel() {
     attach: methodReturningVoidPromise,
     detach: methodReturningVoidPromise,
     presence: createMockPresence(),
-    subscribe: () => {},
-    unsubscribe: () => {},
+    subscribe: methodReturningVoidPromise,
+    unsubscribe: methodReturningVoidPromise,
     on: () => {},
     off: () => {},
     publish: () => {},
@@ -79,7 +82,7 @@ class MockRealtime {
       state: 'connected',
     };
 
-    this['options'] = {};
+    this.options = {};
   }
 }
 

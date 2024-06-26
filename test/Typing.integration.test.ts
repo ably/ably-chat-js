@@ -64,11 +64,11 @@ describe('Typing', () => {
       // Once the timout timer expires, the typingStopped event should be emitted
       await waitForMessages(events, 2);
       // Should have received a typingStarted and then typingStopped event
-      expect(events[0].change.clientId, 'client ids should match').toEqual(context.clientId);
-      expect(events[0].change.isTyping, 'isTyping should be true').toEqual(true);
+      expect(events[0]?.change.clientId, 'client ids should match').toEqual(context.clientId);
+      expect(events[0]?.change.isTyping, 'isTyping should be true').toEqual(true);
       // Wait for the typing timeout to expire and the stop typing event to be received
-      expect(events[1].change.clientId, 'client ids should match').toEqual(context.clientId);
-      expect(events[1].change.isTyping, 'isTyping should be false').toEqual(false);
+      expect(events[1]?.change.clientId, 'client ids should match').toEqual(context.clientId);
+      expect(events[1]?.change.isTyping, 'isTyping should be false').toEqual(false);
     },
     TEST_TIMEOUT,
   );
@@ -88,12 +88,12 @@ describe('Typing', () => {
       expect(events.length, 'typingStopped event should have been received').toEqual(2);
 
       // First event should be typingStarted
-      expect(events[0].currentlyTypingClientIds.has(context.clientId)).toEqual(true);
-      expect(events[0].change.isTyping, 'first event should be typingStarted').toEqual(true);
+      expect(events[0]?.currentlyTypingClientIds.has(context.clientId)).toEqual(true);
+      expect(events[0]?.change.isTyping, 'first event should be typingStarted').toEqual(true);
 
       // Last event should be typingStopped
-      expect(events[1].change.isTyping, 'second event should be typingStopped').toEqual(false);
-      expect(events[1].currentlyTypingClientIds.has(context.clientId)).toEqual(false);
+      expect(events[1]?.change.isTyping, 'second event should be typingStopped').toEqual(false);
+      expect(events[1]?.currentlyTypingClientIds.has(context.clientId)).toEqual(false);
     },
     TEST_TIMEOUT,
   );

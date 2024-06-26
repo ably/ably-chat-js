@@ -83,10 +83,8 @@ export enum LogLevel {
  * Represents the context of a log message.
  * It is an object of key-value pairs that can be used to provide additional context to a log message.
  */
-export interface LogContext {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type LogContext = Record<string, any>;
 
 /**
  * A function that can be used to handle log messages.
@@ -126,7 +124,7 @@ const consoleLogger = (message: string, level: LogLevel, context?: LogContext) =
 };
 
 export const makeLogger = (options: NormalisedClientOptions): Logger => {
-  const logHandler = options.logHandler || consoleLogger;
+  const logHandler = options.logHandler ?? consoleLogger;
 
   return new DefaultLogger(logHandler, options.logLevel);
 };
@@ -164,11 +162,13 @@ class DefaultLogger implements Logger {
 
   constructor(handler: LogHandler, level: LogLevel) {
     this._handler = handler;
-    if (!logLevelNumberMap.has(level)) {
+
+    const levelNumber = logLevelNumberMap.get(level);
+    if (levelNumber === undefined) {
       throw new Error(`Invalid log level: ${level}`);
     }
 
-    this._levelNumber = logLevelNumberMap.get(level) as LogLevelNumbers;
+    this._levelNumber = levelNumber;
   }
 
   trace(message: string, context?: LogContext): void {

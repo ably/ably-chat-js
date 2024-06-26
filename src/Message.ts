@@ -106,9 +106,13 @@ export class DefaultMessage implements Message {
    */
   private static timeserialCompare(first: Message, second: Message): number {
     const firstTimeserial =
-      (first as DefaultMessage)._calculatedTimeserial ?? DefaultMessage.calculateTimeserial(first.timeserial);
+      first instanceof DefaultMessage
+        ? first._calculatedTimeserial
+        : DefaultMessage.calculateTimeserial(first.timeserial);
     const secondTimeserial =
-      (second as DefaultMessage)._calculatedTimeserial ?? DefaultMessage.calculateTimeserial(second.timeserial);
+      second instanceof DefaultMessage
+        ? second._calculatedTimeserial
+        : DefaultMessage.calculateTimeserial(second.timeserial);
 
     // Compare the timestamp
     const timestampDiff = firstTimeserial.timestamp - secondTimeserial.timestamp;

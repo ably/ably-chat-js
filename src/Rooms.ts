@@ -45,8 +45,8 @@ export class DefaultRooms implements Rooms {
   private readonly realtime: Ably.Realtime;
   private readonly chatApi: ChatApi;
   private readonly _clientOptions: NormalisedClientOptions;
-  private rooms: Record<string, Room> = {};
-  private _logger: Logger;
+  private readonly _rooms: Map<string, Room> = new Map<string, Room>();
+  private readonly _logger: Logger;
 
   /**
    * Constructs a new Rooms instance.
@@ -66,10 +66,12 @@ export class DefaultRooms implements Rooms {
    */
   get(roomId: string): Room {
     this._logger.trace('Rooms.get();', { roomId });
-    if (this.rooms[roomId]) return this.rooms[roomId];
+
+    const existing = this._rooms.get(roomId);
+    if (existing) return existing;
 
     const room = new DefaultRoom(roomId, this.realtime, this.chatApi, this._clientOptions, this._logger);
-    this.rooms[roomId] = room;
+    this._rooms.set(roomId, room);
 
     return room;
   }
@@ -86,10 +88,11 @@ export class DefaultRooms implements Rooms {
    */
   async release(roomId: string) {
     this._logger.trace('Rooms.release();', { roomId });
-    const room = this.rooms[roomId];
-    if (!room) {
-      return;
-    }
-    delete this.rooms[roomId];
+
+    const room = this._rooms.get(roomId);
+    if (!room) return;
+
+    this._rooms.delete(roomId);
+    return Promise.resolve();
   }
 }

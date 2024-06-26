@@ -109,7 +109,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
     await waitForMessages(receivedMessages, 1);
 
     expect(receivedMessages.length).toBe(1);
-    expect(receivedMessages[0].data).toBe('test-message');
+    expect(receivedMessages[0]?.data).toBe('test-message');
   });
 
   it<TestContext>('subscribes to channel with implicit attach on all events', async (context) => {
@@ -130,8 +130,8 @@ describe('subscription manager', { timeout: 15000 }, () => {
     await waitForMessages(receivedMessages, 2);
 
     expect(receivedMessages.length).toBe(2);
-    expect(receivedMessages[0].data).toBe('test-message');
-    expect(receivedMessages[1].data).toBe('another-message');
+    expect(receivedMessages[0]?.data).toBe('test-message');
+    expect(receivedMessages[1]?.data).toBe('another-message');
   });
 
   it<TestContext>('subscribes to channel with implicit attach on presence all events', async (context) => {
@@ -171,8 +171,8 @@ describe('subscription manager', { timeout: 15000 }, () => {
     // Wait for the message to be received in the receivedMessages
     await waitForMessages(receivedMessages, 1);
     expect(receivedMessages.length).toBe(1);
-    expect(receivedMessages[0].action).toBe('update');
-    expect(receivedMessages[0].data).toBe('test-message-2');
+    expect(receivedMessages[0]?.action).toBe('update');
+    expect(receivedMessages[0]?.data).toBe('test-message-2');
   });
 
   it<TestContext>('unsubscribes from channel with implicit detach if last messages listener', async (context) => {
@@ -285,8 +285,8 @@ describe('subscription manager', { timeout: 15000 }, () => {
     await context.subscriptionManager.presenceEnterClient(context.defaultClientId, 'test-data');
     // should receive one enter event
     await waitForMessages(receivedMessages, 1);
-    expect(receivedMessages[0].action).toBe('enter');
-    expect(receivedMessages[0].data).toBe('test-data');
+    expect(receivedMessages[0]?.action).toBe('enter');
+    expect(receivedMessages[0]?.data).toBe('test-data');
   });
   it<TestContext>('should attach to the channel when updating presence', async (context) => {
     const { channel, subscriptionManager } = context;
