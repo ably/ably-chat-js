@@ -40,3 +40,19 @@ body {
     scale: 1.4;
     transform: rotate(7deg);
 }
+
+.sent-at-time > .short {
+    display: inline;
+}
+
+.sent-at-time > .long {
+    display: none;
+}
+
+.sent-at-time:hover > .long {
+    display: inline;
+}
+
+.sent-at-time:hover > .short {
+    display: none;
+}
