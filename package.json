@@ -22,6 +22,7 @@
     "test:watch": "vitest watch",
     "build": "vite build",
     "prepare": "npm run build",
+    "test:typescript": "tsc --project tsconfig.test.json",
     "demo:reload": "npm run build && cd demo && npm i file:../",
     "docs": "typedoc",
     "modulereport": "tsc --noEmit --esModuleInterop scripts/moduleReport.ts && esr scripts/moduleReport.ts"

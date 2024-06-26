@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../src/ChatApi.js';
+import { normaliseClientOptions } from '../src/config.js';
 import { MessageEvents } from '../src/events.js';
 import { DefaultRoom } from '../src/Room.js';
 import { randomRoomId } from './helper/identifier.js';
@@ -71,7 +72,13 @@ describe('Messages', () => {
         createdAt: timestamp,
       });
 
-      const room = new DefaultRoom('coffee-room-chat', realtime, chatApi, { typingTimeoutMs: 300 }, makeTestLogger());
+      const room = new DefaultRoom(
+        'coffee-room-chat',
+        realtime,
+        chatApi,
+        normaliseClientOptions({ typingTimeoutMs: 300 }),
+        makeTestLogger(),
+      );
       const messagePromise = room.messages.send('hello there');
 
       const message = await messagePromise;

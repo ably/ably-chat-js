@@ -40,6 +40,17 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run lint
+  test-typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run test:typescript
   test:
     runs-on: ubuntu-latest
     steps:

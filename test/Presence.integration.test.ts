@@ -59,7 +59,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     realtimeClient: Realtime,
     event: PresenceAction | PresenceAction[],
     realtimeChannelName: string,
-    expectationFn: (member: object) => void,
+    expectationFn: (member: Ably.PresenceMessage) => void,
   ) {
     return new Promise<void>((resolve) => {
       const presence = realtimeClient.channels.get(realtimeChannelName).presence;

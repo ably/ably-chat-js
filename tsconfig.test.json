@@ -1,0 +1,33 @@
+{
+    "include": [
+        "test/**/*.spec.ts",
+        "test/**/*.test.ts"
+    ],
+    "exclude": [
+      "test/utils/**/*.ts"
+    ],
+    "compilerOptions": {
+        "noEmit": true,
+        "target": "es6",
+        "sourceMap": true,
+        "strict": true,
+        "alwaysStrict": true,
+        "noImplicitThis": true,
+        "esModuleInterop": true,
+        "declaration": true,
+        "moduleResolution": "node",
+        "skipLibCheck": true,
+        "allowJs": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "allowImportingTsExtensions": true,
+        "lib": [
+            "DOM",
+            "DOM.Iterable",
+            "ESNext"
+        ],
+        "types": [
+            "node"
+        ]
+    }
+}

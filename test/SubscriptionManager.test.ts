@@ -50,7 +50,7 @@ const waitForPresenceEvent = (
 };
 
 // Wait for the channel to change state to the expected state
-const waitForChannelStateChange = (channel, expectedState) => {
+const waitForChannelStateChange = (channel: Ably.RealtimeChannel, expectedState: Ably.ChannelState) => {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       if (channel.state === expectedState) {
@@ -67,7 +67,7 @@ const waitForChannelStateChange = (channel, expectedState) => {
 
 // Assert that a channel does not enter the expected state
 // during the interval
-const assertNoChannelStateChange = (channel, expectedState) => {
+const assertNoChannelStateChange = (channel: Ably.RealtimeChannel, expectedState: Ably.ChannelState) => {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       if (channel.state === expectedState) {
@@ -96,7 +96,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
     const { channel, publishChannel, subscriptionManager } = context;
 
     const receivedMessages: Ably.Message[] = [];
-    const listener = (message) => {
+    const listener = (message: Ably.Message) => {
       receivedMessages.push(message);
     };
     await subscriptionManager.subscribe(['test-event'], listener);
@@ -116,7 +116,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
     const { channel, publishChannel, subscriptionManager } = context;
 
     const receivedMessages: Ably.Message[] = [];
-    const listener = (message) => {
+    const listener = (message: Ably.Message) => {
       receivedMessages.push(message);
     };
     await subscriptionManager.subscribe(listener);
@@ -138,7 +138,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
     const { channel, publishChannel, subscriptionManager } = context;
 
     const receivedMessages: Ably.PresenceMessage[] = [];
-    const listener = (message) => {
+    const listener = (message: Ably.PresenceMessage) => {
       receivedMessages.push(message);
     };
     await subscriptionManager.presenceSubscribe(listener);
@@ -156,7 +156,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
     const { channel, publishChannel, subscriptionManager } = context;
 
     const receivedMessages: Ably.PresenceMessage[] = [];
-    const listener = (message) => {
+    const listener = (message: Ably.PresenceMessage) => {
       receivedMessages.push(message);
     };
     await subscriptionManager.presenceSubscribe('update', listener);
@@ -276,7 +276,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
   });
   it<TestContext>('should emit an enter event with supplied data when entering presence', async (context) => {
     const receivedMessages: Ably.PresenceMessage[] = [];
-    const listener = (message) => {
+    const listener = (message: Ably.PresenceMessage) => {
       receivedMessages.push(message);
     };
     // subscribe to presence events
@@ -297,7 +297,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
 
   it<TestContext>('should emit an event enter when joining for the first time', async (context) => {
     const receivedMessages: Ably.PresenceMessage[] = [];
-    const listener = (message) => {
+    const listener = (message: Ably.PresenceMessage) => {
       receivedMessages.push(message);
     };
     // subscribe to presence events
@@ -311,7 +311,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
 
   it<TestContext>('should emit an update event if already entered presence', async (context) => {
     const receivedMessages: Ably.PresenceMessage[] = [];
-    const listener = (message) => {
+    const listener = (message: Ably.PresenceMessage) => {
       receivedMessages.push(message);
     };
     // Join presence first
@@ -347,7 +347,7 @@ describe('subscription manager', { timeout: 15000 }, () => {
 
   it<TestContext>('should emit a leave event with supplied data when leaving presence', async (context) => {
     const receivedMessages: Ably.PresenceMessage[] = [];
-    const listener = (message) => {
+    const listener = (message: Ably.PresenceMessage) => {
       receivedMessages.push(message);
     };
     // subscribe to presence events

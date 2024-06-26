@@ -2,6 +2,7 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { normaliseClientOptions } from '../src/config.js';
 import { Room } from '../src/Room.js';
 import { DefaultRooms, Rooms } from '../src/Rooms.js';
 import { TypingEvent } from '../src/Typing.js';
@@ -40,7 +41,11 @@ describe('Typing', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
     context.roomId = randomRoomId();
-    context.chat = new DefaultRooms(context.realtime, { typingTimeoutMs: 300 }, makeTestLogger());
+    context.chat = new DefaultRooms(
+      context.realtime,
+      normaliseClientOptions({ typingTimeoutMs: 300 }),
+      makeTestLogger(),
+    );
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = context.chat.get(context.roomId);
   });
@@ -104,13 +109,13 @@ describe('Typing', () => {
       const clientId1 = randomClientId();
       const client1 = new DefaultRooms(
         ablyRealtimeClient({ clientId: clientId1 }),
-        { typingTimeoutMs: 1000 },
+        normaliseClientOptions({ typingTimeoutMs: 1000 }),
         makeTestLogger(),
       );
       const clientId2 = randomClientId();
       const client2 = new DefaultRooms(
         ablyRealtimeClient({ clientId: clientId2 }),
-        { typingTimeoutMs: 1000 },
+        normaliseClientOptions({ typingTimeoutMs: 1000 }),
         makeTestLogger(),
       );
 
