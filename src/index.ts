@@ -1,5 +1,12 @@
 export { ChatClient } from './Chat.js';
 export type { ClientOptions } from './config.js';
+export type {
+  Connection,
+  ConnectionStatus,
+  ConnectionStatusChange,
+  ConnectionStatusListener,
+  OnConnectionStatusChangeResponse,
+} from './Connection.js';
 export { MessageEvents, PresenceEvents } from './events.js';
 export type { Headers } from './Headers.js';
 export type { LogContext, LogHandler } from './logger.js';

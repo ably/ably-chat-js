@@ -7,6 +7,7 @@ const mockPromisify = <T>(expectedReturnValue): Promise<T> =>
     resolve(expectedReturnValue);
   });
 const methodReturningVoidPromise = () => mockPromisify<void>((() => {})());
+const methodReturningVoid = () => {};
 
 function createMockPresence() {
   return {
@@ -52,7 +53,16 @@ function createMockChannel() {
       attachSerial: '',
       channelSerial: '',
     },
-    state: '',
+    state: 'attached',
+    errorReason: new Ably.ErrorInfo('error', 500, 50000),
+  };
+}
+
+function createMockConnection() {
+  return {
+    state: 'connected',
+    errorReason: new Ably.ErrorInfo('error', 500, 50000),
+    on: methodReturningVoid,
   };
 }
 
@@ -64,10 +74,7 @@ class MockRealtime {
     clientId: string;
     requestToken(): void;
   };
-  public connection: {
-    id?: string;
-    state: string;
-  };
+  public connection: ReturnType<typeof createMockConnection>;
 
   public time() {}
 
@@ -83,10 +90,7 @@ class MockRealtime {
       clientId: client_id,
       requestToken: () => {},
     };
-    this.connection = {
-      id: '1',
-      state: 'connected',
-    };
+    this.connection = createMockConnection();
 
     this.options = {};
   }
