@@ -10,7 +10,7 @@ const baseOptions = (options?: Ably.ClientOptions): Ably.ClientOptions => {
   options.environment = options.environment ?? testEnvironment();
   options.key = options.key ?? ablyApiKey();
   // TODO: Support non-JSON protocol
-  options.useBinaryProtocol = false;
+  options.useBinaryProtocol = options.useBinaryProtocol ?? false;
   options.logHandler =
     options.logHandler ??
     ((msg) => {

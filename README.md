@@ -34,7 +34,7 @@ Chat constructor:
 import ChatClient from '@ably/chat';
 import * as Ably from 'ably';
 
-const ably = new Ably.Realtime({ key: '<API-key>', clientId: '<client-ID>', useBinaryProtocol: false });
+const ably = new Ably.Realtime({ key: '<API-key>', clientId: '<client-ID>' });
 const chat = new ChatClient(ably);
 ```
 

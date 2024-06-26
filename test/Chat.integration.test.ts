@@ -28,4 +28,17 @@ describe('Chat', () => {
     // Request history, and expect it to succeed
     await chat.rooms.get('test').messages.query({ limit: 1 });
   });
+
+  it('should work using msgpack', async () => {
+    const chat = newChatClient(undefined, ablyRealtimeClient({ useBinaryProtocol: true }));
+
+    // Send a message, and expect it to succeed
+    await chat.rooms.get('test').messages.send('my message');
+
+    // Request occupancy, and expect it to succeed
+    await chat.rooms.get('test').occupancy.get();
+
+    // Request history, and expect it to succeed
+    await chat.rooms.get('test').messages.query({ limit: 1 });
+  });
 });
