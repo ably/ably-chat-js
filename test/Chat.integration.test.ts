@@ -17,15 +17,38 @@ describe('Chat', () => {
   });
 
   it('should work using basic auth', async () => {
-    const chat = newChatClient(undefined, ablyRealtimeClient({}));
+    const chat = newChatClient({}, ablyRealtimeClient({}));
 
     // Send a message, and expect it to succeed
-    await chat.rooms.get('test').messages.send('my message');
+    const message = await chat.rooms.get('test').messages.send('my message');
+    expect(message).toEqual(expect.objectContaining({ content: 'my message', clientId: chat.clientId }));
 
     // Request occupancy, and expect it to succeed
-    await chat.rooms.get('test').occupancy.get();
+    const occupancy = await chat.rooms.get('test').occupancy.get();
+    expect(occupancy).toEqual(expect.objectContaining({ connections: 0, presenceMembers: 0 }));
 
     // Request history, and expect it to succeed
-    await chat.rooms.get('test').messages.query({ limit: 1 });
+    const history = (await chat.rooms.get('test').messages.query({ limit: 1 })).items;
+    expect(history).toEqual(
+      expect.arrayContaining([expect.objectContaining({ content: 'my message', clientId: chat.clientId })]),
+    );
+  });
+
+  it('should work using msgpack', async () => {
+    const chat = newChatClient(undefined, ablyRealtimeClient({ useBinaryProtocol: true }));
+
+    // Send a message, and expect it to succeed
+    const message = await chat.rooms.get('test').messages.send('my message');
+    expect(message).toEqual(expect.objectContaining({ content: 'my message', clientId: chat.clientId }));
+
+    // Request occupancy, and expect it to succeed
+    const occupancy = await chat.rooms.get('test').occupancy.get();
+    expect(occupancy).toEqual(expect.objectContaining({ connections: 0, presenceMembers: 0 }));
+
+    // Request history, and expect it to succeed
+    const history = (await chat.rooms.get('test').messages.query({ limit: 1 })).items;
+    expect(history).toEqual(
+      expect.arrayContaining([expect.objectContaining({ content: 'my message', clientId: chat.clientId })]),
+    );
   });
 });
