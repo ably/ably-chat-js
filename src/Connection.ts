@@ -52,6 +52,11 @@ export interface ConnectionStatusChange {
    * entered the new status, if applicable.
    */
   error?: Ably.ErrorInfo;
+
+  /**
+   * The time in milliseconds that the client will wait before attempting to reconnect.
+   */
+  retryIn?: number;
 }
 
 /**
@@ -110,6 +115,8 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
   private _error?: Ably.ErrorInfo;
   private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
+  private _transientTimeout?: ReturnType<typeof setTimeout>;
+  private readonly TRANSIENT_TIMEOUT = 5000;
 
   /**
    * Constructs a new `DefaultConnection` instance.
@@ -128,16 +135,28 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
     this._connection = ably.connection;
     this._connection.on((change: Ably.ConnectionStateChange) => {
       const chatState = this.mapAblyStatusToChat(change.current);
-      this._error = change.reason;
       if (chatState === this._status) {
         return;
       }
 
-      this._status = chatState;
+      const stateChange = { status: chatState, error: change.reason, retryIn: change.retryIn };
 
-      const stateChange = { status: chatState, error: change.reason };
-      this._logger.info(`Connection state is now ${chatState}`, change.reason ? { error: change.reason } : undefined);
-      this.emit(chatState, stateChange);
+      // If we're in the disconnected state, assume it's transient and set a timeout to propagate the change
+      if (chatState === ConnectionStatus.Disconnected && !this._transientTimeout) {
+        this._transientTimeout = setTimeout(() => {
+          this._transientTimeout = undefined;
+          this.applyStatusChange(stateChange);
+        }, this.TRANSIENT_TIMEOUT);
+        return;
+      }
+
+      // If we're in any state other than disconnected, and we have a transient timeout, clear it
+      if (this._transientTimeout) {
+        clearTimeout(this._transientTimeout);
+        this._transientTimeout = undefined;
+      }
+
+      this.applyStatusChange(stateChange);
     });
   }
 
@@ -173,6 +192,13 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
    */
   offAll(): void {
     this.off();
+  }
+
+  private applyStatusChange(change: ConnectionStatusChange): void {
+    this._status = change.status;
+    this._error = change.error;
+    this._logger.info(`Connection state is now ${change.status}`, { error: change.error, retryIn: change.retryIn });
+    this.emit(change.status, change);
   }
 
   private mapAblyStatusToChat(status: Ably.ConnectionState): ConnectionStatus {
