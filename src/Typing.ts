@@ -160,10 +160,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    */
   private startTypingTimer(): void {
     this._logger.trace(`DefaultTyping.startTypingTimer();`);
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    this._timerId = setTimeout(async () => {
+    this._timerId = setTimeout(() => {
       this._logger.debug(`DefaultTyping.startTypingTimer(); timeout expired`);
-      await this.stop();
+      void this.stop();
     }, this._typingTimeoutMs);
   }
 
