@@ -27,7 +27,7 @@ describe('Typing', () => {
     context.room = context.chat.rooms.get(context.roomId);
     context.channelLevelListeners = new Set();
 
-    const channel = context.realtime.channels.get('roomId');
+    const channel = context.realtime.channels.get(context.room.typing.channel.name);
     const presence = channel.presence;
 
     vi.spyOn(presence, 'subscribe').mockImplementation(

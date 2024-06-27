@@ -36,8 +36,9 @@ function createMockEmitter() {
   };
 }
 
-function createMockChannel() {
+function createMockChannel(name: string) {
   return {
+    name,
     attach: methodReturningVoidPromise,
     detach: methodReturningVoidPromise,
     presence: createMockPresence(),
@@ -68,7 +69,7 @@ function createMockConnection() {
 
 class MockRealtime {
   public channels: {
-    get: () => ReturnType<typeof createMockChannel>;
+    get: (name: string) => ReturnType<typeof createMockChannel>;
   };
   public auth: {
     clientId: string;
@@ -80,11 +81,20 @@ class MockRealtime {
 
   constructor(data) {
     const client_id = data.clientId || MOCK_CLIENT_ID;
+
+    const channelMap = new Map<string, ReturnType<typeof createMockChannel>>();
+
     this.channels = {
-      get: (() => {
-        const mockChannel = createMockChannel();
-        return () => mockChannel;
-      })(),
+      get: (name: string): ReturnType<typeof createMockChannel> => {
+        const existing = channelMap.get(name);
+        if (existing) {
+          return existing;
+        }
+
+        const newChannel = createMockChannel(name);
+        channelMap.set(name, newChannel);
+        return newChannel;
+      },
     };
     this.auth = {
       clientId: client_id,

@@ -17,6 +17,7 @@ interface TestContext {
   emulateBackendStateChange: (event: string, cb: Ably.ChannelStateChange) => void;
   channelStateListeners: Map<string, Ably.channelEventCallback[]>;
   channelLevelListeners: Map<Ably.messageCallback<Ably.Message>, string[]>;
+  room: DefaultRoom;
 }
 
 vi.mock('ably');
@@ -31,8 +32,9 @@ describe('Messages', () => {
     context.channelLevelListeners = new Map<Ably.messageCallback<Ably.Message>, string[]>();
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.channelStateListeners = new Map<string, Ably.channelEventCallback[]>();
+    context.room = makeRoom(context);
 
-    const channel = context.realtime.channels.get('roomId');
+    const channel = context.realtime.channels.get(context.room.messages.channel.name);
     vi.spyOn(channel, 'subscribe').mockImplementation(
       // @ts-expect-error overriding mock
       async (
@@ -94,21 +96,14 @@ describe('Messages', () => {
 
   describe('sending message', () => {
     it<TestContext>('should be able to send message and get it back from response', async (context) => {
-      const { chatApi, realtime } = context;
+      const { chatApi } = context;
       const timestamp = new Date().getTime();
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         timeserial: 'abcdefghij@1672531200000-123',
         createdAt: timestamp,
       });
 
-      const room = new DefaultRoom(
-        'coffee-room-chat',
-        realtime,
-        chatApi,
-        normaliseClientOptions({ typingTimeoutMs: 300 }),
-        makeTestLogger(),
-      );
-      const messagePromise = room.messages.send({ text: 'hello there' });
+      const messagePromise = context.room.messages.send({ text: 'hello there' });
 
       const message = await messagePromise;
 
@@ -118,7 +113,7 @@ describe('Messages', () => {
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
-          roomId: 'coffee-room-chat',
+          roomId: context.room.roomId,
         }),
       );
     });
@@ -239,8 +234,7 @@ describe('Messages', () => {
     it<TestContext>('subscribing to messages should work live', (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = new Date().getTime();
-        const room = makeRoom(context);
-        room.messages
+        context.room.messages
           .subscribe((rawMsg) => {
             const message = rawMsg.message;
             try {
@@ -250,7 +244,7 @@ describe('Messages', () => {
                   text: 'may the fourth be with you',
                   clientId: 'yoda',
                   createdAt: new Date(publishTimestamp),
-                  roomId: room.roomId,
+                  roomId: context.room.roomId,
                 }),
               );
             } catch (err: unknown) {
@@ -280,7 +274,7 @@ describe('Messages', () => {
   it<TestContext>('attach its internal listener according to subscriptions', async (context) => {
     const { channelLevelListeners } = context;
 
-    const room = makeRoom(context);
+    const room = context.room;
     const listener1 = () => {};
     const listener2 = () => {};
 
@@ -307,7 +301,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no data provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
-      const room = makeRoom(context);
+      const room = context.room;
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without data'));
@@ -333,7 +327,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no clientId provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
-      const room = makeRoom(context);
+      const room = context.room;
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without clientId'));
@@ -361,7 +355,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no extras provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
-      const room = makeRoom(context);
+      const room = context.room;
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without extras'));
@@ -387,7 +381,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no timeserial provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
-      const room = makeRoom(context);
+      const room = context.room;
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without clientId'));
@@ -414,7 +408,7 @@ describe('Messages', () => {
   it<TestContext>('should raise an error if no text in incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
-      const room = makeRoom(context);
+      const room = context.room;
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without text'));
@@ -440,7 +434,7 @@ describe('Messages', () => {
 
   it<TestContext>('should raise an error if no timestamp provided with incoming message', (context) =>
     new Promise<void>((done, reject) => {
-      const room = makeRoom(context);
+      const room = context.room;
       room.messages
         .subscribe(() => {
           reject(new Error('should not have received message without timestamp'));
