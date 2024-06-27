@@ -292,24 +292,18 @@ export default class EventEmitter<T> {
    *
    * @typeParam K A type which allows a name of one of the properties of {@link T}. TypeScript will infer this type based on the {@link event} argument.
    */
-  once<K extends keyof T>(event: K, listener?: EventListener<T, K>): void | Promise<any>;
+  once<K extends keyof T>(event: K, listener?: EventListener<T, K>): void;
   /**
    * Listen for a single occurrence of an event of any event type.
    * @param listener An event listener.
    */
-  once(listener?: EventListener<T, keyof T>): void | Promise<any>;
+  once(listener?: EventListener<T, keyof T>): void;
   /**
    * @internal
    * We add the implementation signature as an overload signature (but mark it as internal so that it does not appear in documentation) so that it can be called by subclasses.
    */
-  once<K extends keyof T>(
-    listenerOrEvent: K | EventListener<T, K>,
-    listener?: EventListener<T, K>,
-  ): void | Promise<any>;
-  once<K extends keyof T>(
-    listenerOrEvent: K | EventListener<T, K>,
-    listener?: EventListener<T, K>,
-  ): void | Promise<any> {
+  once<K extends keyof T>(listenerOrEvent: K | EventListener<T, K>, listener?: EventListener<T, K>): void;
+  once<K extends keyof T>(listenerOrEvent: K | EventListener<T, K>, listener?: EventListener<T, K>): void {
     // .once("eventName", () => {})
     if (isString(listenerOrEvent) && isFunction(listener)) {
       const listeners = this.eventsOnce[listenerOrEvent] || (this.eventsOnce[listenerOrEvent] = []);
