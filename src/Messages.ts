@@ -3,7 +3,7 @@ import * as Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { MessageEvents } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultMessage, Message } from './Message.js';
+import { AcceptableHeaderValue, DefaultMessage, Message } from './Message.js';
 import { PaginatedResult } from './query.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
@@ -60,6 +60,15 @@ export interface QueryOptions {
    * @defaultValue forwards
    */
   direction?: keyof typeof Direction;
+}
+
+/**
+ * Params for sending a text message. Only `text` is mandatory.
+ */
+interface SendMessageParams {
+  text: string;
+  metadata?: Record<string, unknown>;
+  headers?: Record<string, number | string | boolean>;
 }
 
 /**
@@ -123,7 +132,7 @@ export interface Messages {
    * @param text text of the message
    * @returns A promise that resolves when the message was published.
    */
-  send(text: string): Promise<Message>;
+  send(params: SendMessageParams): Promise<Message>;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -173,12 +182,45 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
 
   /**
    * @inheritdoc Messages
+   * @throws Ably.ErrorInfo if metadata defines reserved keys.
+   * @throws Ably.ErrorInfo if headers defines any headers prefixed with reserved words.
    */
-  async send(text: string): Promise<Message> {
+  async send(params: SendMessageParams): Promise<Message> {
     this._logger.trace('Messages.send();');
-    const response = await this._chatApi.sendMessage(this._roomId, text);
 
-    return new DefaultMessage(response.timeserial, this._clientId, this._roomId, text, new Date(response.createdAt));
+    const { text, metadata, headers } = params;
+
+    if (metadata && metadata['ably-chat'] !== undefined) {
+      throw new Ably.ErrorInfo(
+        "unable to send message; metadata cannot use reserved key 'ably-chat'",
+        40001,
+        400,
+      ) as unknown as Error;
+    }
+
+    if (headers) {
+      for (const key in headers) {
+        if (key.startsWith('ably-chat')) {
+          throw new Ably.ErrorInfo(
+            "unable to send message; headers cannot have any key starting with reserved prefix 'ably-chat'",
+            40001,
+            400,
+          ) as unknown as Error;
+        }
+      }
+    }
+
+    const response = await this._chatApi.sendMessage(this._roomId, { text: text });
+
+    return new DefaultMessage(
+      response.timeserial,
+      this._clientId,
+      this._roomId,
+      text,
+      new Date(response.createdAt),
+      params.metadata ?? {},
+      params.headers ?? {},
+    );
   }
 
   /**
@@ -245,11 +287,13 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     interface MessagePayload {
       data?: {
         text?: string;
+        metadata?: Record<string, unknown>;
       };
       clientId?: string;
       timestamp?: number;
       extras?: {
         timeserial?: string;
+        headers?: Record<string, AcceptableHeaderValue>;
       };
     }
 
@@ -291,6 +335,8 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       this._roomId,
       messageCreatedMessage.data.text,
       new Date(messageCreatedMessage.timestamp),
+      messageCreatedMessage.data.metadata ?? {},
+      messageCreatedMessage.extras.headers ?? {},
     );
   }
 }
