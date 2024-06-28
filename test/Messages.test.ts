@@ -90,7 +90,7 @@ describe('Messages', () => {
       expect(message).toEqual(
         expect.objectContaining({
           timeserial: 'abcdefghij@1672531200000-123',
-          content: 'hello there',
+          text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
           roomId: 'coffee-room-chat',
@@ -111,7 +111,7 @@ describe('Messages', () => {
               expect(message).toEqual(
                 expect.objectContaining({
                   timeserial: 'abcdefghij@1672531200000-123',
-                  content: 'may the fourth be with you',
+                  text: 'may the fourth be with you',
                   clientId: 'yoda',
                   createdAt: new Date(publishTimestamp),
                   roomId: room.roomId,
@@ -127,7 +127,7 @@ describe('Messages', () => {
               clientId: 'yoda',
               name: 'message.created',
               data: {
-                content: 'may the fourth be with you',
+                text: 'may the fourth be with you',
               },
               extras: {
                 timeserial: 'abcdefghij@1672531200000-123',
@@ -206,7 +206,7 @@ describe('Messages', () => {
           context.emulateBackendPublish({
             name: 'message.created',
             data: {
-              content: 'may the fourth be with you',
+              text: 'may the fourth be with you',
             },
             extras: {
               timeserial: 'abcdefghij@1672531200000-123',
@@ -235,7 +235,7 @@ describe('Messages', () => {
             name: 'message.created',
             clientId: 'abc',
             data: {
-              content: 'may the fourth be with you',
+              text: 'may the fourth be with you',
             },
             timestamp: publishTimestamp,
           });
@@ -261,7 +261,7 @@ describe('Messages', () => {
             name: 'message.created',
             clientId: 'abc',
             data: {
-              content: 'may the fourth be with you',
+              text: 'may the fourth be with you',
             },
             extras: {},
             timestamp: publishTimestamp,
@@ -275,13 +275,13 @@ describe('Messages', () => {
         });
     }));
 
-  it<TestContext>('should raise an error if no content in incoming message', (context) =>
+  it<TestContext>('should raise an error if no text in incoming message', (context) =>
     new Promise<void>((done, reject) => {
       const publishTimestamp = new Date().getTime();
       const room = makeRoom(context);
       room.messages
         .subscribe(() => {
-          reject(new Error('should not have received message without content'));
+          reject(new Error('should not have received message without text'));
         })
         .then(() => {
           context.emulateBackendPublish({
@@ -314,7 +314,7 @@ describe('Messages', () => {
             name: 'message.created',
             clientId: 'abc',
             data: {
-              content: 'may the fourth be with you',
+              text: 'may the fourth be with you',
             },
             extras: {
               timeserial: 'abcdefghij@1672531200000-123',

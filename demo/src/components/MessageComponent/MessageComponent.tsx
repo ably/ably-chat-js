@@ -68,7 +68,7 @@ export const MessageComponent: React.FC<MessageProps> = ({ id, self = false, mes
               ['rounded-bl justify-start bg-gray-300 text-gray-600']: !self,
             })}
           >
-            {message.content}
+            {message.text}
           </div>
         </div>
       </div>

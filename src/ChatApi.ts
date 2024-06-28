@@ -18,7 +18,7 @@ export interface CreateMessageResponse {
 }
 
 interface CreateMessageRequest {
-  content: string;
+  text: string;
 }
 
 /**
@@ -43,7 +43,7 @@ export class ChatApi {
           message.timeserial,
           message.clientId,
           message.roomId,
-          message.content,
+          message.text,
           new Date(message.createdAt),
         );
       });
@@ -56,7 +56,7 @@ export class ChatApi {
       `/chat/v1/rooms/${roomId}/messages`,
       'POST',
       {
-        content: text,
+        text: text,
       },
     );
   }

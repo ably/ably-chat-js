@@ -21,7 +21,7 @@ describe('Chat', () => {
 
     // Send a message, and expect it to succeed
     const message = await chat.rooms.get('test').messages.send('my message');
-    expect(message).toEqual(expect.objectContaining({ content: 'my message', clientId: chat.clientId }));
+    expect(message).toEqual(expect.objectContaining({ text: 'my message', clientId: chat.clientId }));
 
     // Request occupancy, and expect it to succeed
     const occupancy = await chat.rooms.get('test').occupancy.get();
@@ -30,7 +30,7 @@ describe('Chat', () => {
     // Request history, and expect it to succeed
     const history = (await chat.rooms.get('test').messages.query({ limit: 1 })).items;
     expect(history).toEqual(
-      expect.arrayContaining([expect.objectContaining({ content: 'my message', clientId: chat.clientId })]),
+      expect.arrayContaining([expect.objectContaining({ text: 'my message', clientId: chat.clientId })]),
     );
   });
 
@@ -39,7 +39,7 @@ describe('Chat', () => {
 
     // Send a message, and expect it to succeed
     const message = await chat.rooms.get('test').messages.send('my message');
-    expect(message).toEqual(expect.objectContaining({ content: 'my message', clientId: chat.clientId }));
+    expect(message).toEqual(expect.objectContaining({ text: 'my message', clientId: chat.clientId }));
 
     // Request occupancy, and expect it to succeed
     const occupancy = await chat.rooms.get('test').occupancy.get();
@@ -48,7 +48,7 @@ describe('Chat', () => {
     // Request history, and expect it to succeed
     const history = (await chat.rooms.get('test').messages.query({ limit: 1 })).items;
     expect(history).toEqual(
-      expect.arrayContaining([expect.objectContaining({ content: 'my message', clientId: chat.clientId })]),
+      expect.arrayContaining([expect.objectContaining({ text: 'my message', clientId: chat.clientId })]),
     );
   });
 });

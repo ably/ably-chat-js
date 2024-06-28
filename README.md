@@ -73,7 +73,7 @@ const message = await room.messages.send('This was a great shot!');
   timeserial: 'string',
   clientId: 'string',
   roomId: 'string',
-  content: 'string',
+  text: 'string',
   createdAt: 'number',
 }
 ```
