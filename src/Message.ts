@@ -18,9 +18,9 @@ export interface Message {
   readonly roomId: string;
 
   /**
-   * The text content of the message.
+   * The text of the message.
    */
-  readonly content: string;
+  readonly text: string;
 
   /**
    * The timestamp at which the message was created.
@@ -74,7 +74,7 @@ export class DefaultMessage implements Message {
     public readonly timeserial: string,
     public readonly clientId: string,
     public readonly roomId: string,
-    public readonly content: string,
+    public readonly text: string,
     public readonly createdAt: Date,
   ) {
     this._calculatedTimeserial = DefaultMessage.calculateTimeserial(timeserial);

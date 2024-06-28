@@ -61,12 +61,12 @@ describe('messages integration', () => {
     // Check that the messages were received
     expect(messages).toEqual([
       expect.objectContaining({
-        content: 'Hello there!',
+        text: 'Hello there!',
         clientId: chat.clientId,
         timeserial: message1.timeserial,
       }),
       expect.objectContaining({
-        content: 'I have the high ground!',
+        text: 'I have the high ground!',
         clientId: chat.clientId,
         timeserial: message2.timeserial,
       }),
@@ -88,17 +88,17 @@ describe('messages integration', () => {
 
     expect(history.items).toEqual([
       expect.objectContaining({
-        content: 'Hello there!',
+        text: 'Hello there!',
         clientId: chat.clientId,
         timeserial: message1.timeserial,
       }),
       expect.objectContaining({
-        content: 'I have the high ground!',
+        text: 'I have the high ground!',
         clientId: chat.clientId,
         timeserial: message2.timeserial,
       }),
       expect.objectContaining({
-        content: 'You underestimate my power!',
+        text: 'You underestimate my power!',
         clientId: chat.clientId,
         timeserial: message3.timeserial,
       }),
@@ -124,17 +124,17 @@ describe('messages integration', () => {
 
     expect(history1.items).toEqual([
       expect.objectContaining({
-        content: 'Hello there!',
+        text: 'Hello there!',
         clientId: chat.clientId,
         timeserial: message1.timeserial,
       }),
       expect.objectContaining({
-        content: 'I have the high ground!',
+        text: 'I have the high ground!',
         clientId: chat.clientId,
         timeserial: message2.timeserial,
       }),
       expect.objectContaining({
-        content: 'You underestimate my power!',
+        text: 'You underestimate my power!',
         clientId: chat.clientId,
         timeserial: message3.timeserial,
       }),
@@ -148,7 +148,7 @@ describe('messages integration', () => {
 
     expect(history2?.items).toEqual([
       expect.objectContaining({
-        content: "Don't try it!",
+        text: "Don't try it!",
         clientId: chat.clientId,
         timeserial: message4.timeserial,
       }),
@@ -174,17 +174,17 @@ describe('messages integration', () => {
 
     expect(history1.items).toEqual([
       expect.objectContaining({
-        content: "Don't try it!",
+        text: "Don't try it!",
         clientId: chat.clientId,
         timeserial: message4.timeserial,
       }),
       expect.objectContaining({
-        content: 'You underestimate my power!',
+        text: 'You underestimate my power!',
         clientId: chat.clientId,
         timeserial: message3.timeserial,
       }),
       expect.objectContaining({
-        content: 'I have the high ground!',
+        text: 'I have the high ground!',
         clientId: chat.clientId,
         timeserial: message2.timeserial,
       }),
@@ -198,7 +198,7 @@ describe('messages integration', () => {
 
     expect(history2?.items).toEqual([
       expect.objectContaining({
-        content: 'Hello there!',
+        text: 'Hello there!',
         clientId: chat.clientId,
         timeserial: message1.timeserial,
       }),

@@ -120,7 +120,7 @@ export interface Messages {
    * from the realtime channel. This means you may see the message that was just
    * sent in a callback to `subscribe` before the returned promise resolves.
    *
-   * @param text content of the message
+   * @param text text of the message
    * @returns A promise that resolves when the message was published.
    */
   send(text: string): Promise<Message>;
@@ -244,7 +244,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   private parseNewMessage(channelEventMessage: Ably.InboundMessage): Message | undefined {
     interface MessagePayload {
       data?: {
-        content?: string;
+        text?: string;
       };
       clientId?: string;
       timestamp?: number;
@@ -252,6 +252,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
         timeserial?: string;
       };
     }
+
     const messageCreatedMessage = channelEventMessage as MessagePayload;
 
     if (!messageCreatedMessage.data) {
@@ -269,8 +270,8 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       return;
     }
 
-    if (messageCreatedMessage.data.content === undefined) {
-      this._logger.error(`received incoming message without content`, channelEventMessage);
+    if (messageCreatedMessage.data.text === undefined) {
+      this._logger.error(`received incoming message without text`, channelEventMessage);
       return;
     }
 
@@ -288,7 +289,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       messageCreatedMessage.extras.timeserial,
       messageCreatedMessage.clientId,
       this._roomId,
-      messageCreatedMessage.data.content,
+      messageCreatedMessage.data.text,
       new Date(messageCreatedMessage.timestamp),
     );
   }
