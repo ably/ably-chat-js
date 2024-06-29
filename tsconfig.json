@@ -17,7 +17,7 @@
     "noImplicitThis": true,
     "esModuleInterop": true,
     "declaration": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     "skipLibCheck": true,
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
@@ -30,7 +30,7 @@
       "ESNext"
     ],
     "types": [
-      "node"
+      "node",
     ]
   }
 }
