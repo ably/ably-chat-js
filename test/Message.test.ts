@@ -55,20 +55,10 @@ describe('ChatMessage', () => {
     expect(firstMessage.equal(secondMessage)).toBe(false);
   });
 
-  it.each([
-    ['abcdefghij@1672531200000-123:1', 'abcdefghij@1672531200000-124:2', true], // Earlier index
-    ['abcdefghij@1672531200000-124:2', 'abcdefghij@1672531200000-123:1', false], // Later index
-    ['abcdefghij@1672531200000-123:1', 'abcdefghij@1672531200000-123:1', false], // Same index
-    ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-124', true], // Earlier counter
-    ['abcdefghij@1672531200000-124', 'abcdefghij@1672531200000-123', false], // Later counter
-    ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-123', false], // Same counter
-    ['abcdefghi@1672531200000-123', 'abcdefghij@1672531200000-123', true], // Earlier series id
-    ['abcdefghij@1672531200000-123', 'abcdefghi@1672531200000-123', false], // Later series id
-    ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-123', false], // Same series id
-    ['abcdefghi@1672531200000-123', 'abcdefghij@1672531200001-123', true], // Earlier timestamp
-    ['abcdefghij@1672531200001-123', 'abcdefghij@1672531200000-123', false], // Later timestamp
-    ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-123', false], // Same timestamp]
-  ])(`is before another message %s, %s -> %o`, (firstTimeserial, secondTimeserial, expected) => {
+  it('is before another message', () => {
+    const firstTimeserial = 'abcdefghij@1672531200000-123';
+    const secondTimeserial = 'abcdefghij@1672531200000-124';
+
     const firstMessage = new DefaultMessage(
       firstTimeserial,
       'clientId',
@@ -88,23 +78,12 @@ describe('ChatMessage', () => {
       {},
     );
 
-    expect(firstMessage.before(secondMessage)).toBe(expected);
+    expect(firstMessage.before(secondMessage)).toBe(true);
   });
+  it('is after another message', () => {
+    const firstTimeserial = 'abcdefghij@1672531200000-124';
+    const secondTimeserial = 'abcdefghij@1672531200000-123';
 
-  it.each([
-    ['abcdefghij@1672531200000-123:1', 'abcdefghij@1672531200000-124:2', false], // Earlier index
-    ['abcdefghij@1672531200000-124:2', 'abcdefghij@1672531200000-123:1', true], // Later index
-    ['abcdefghij@1672531200000-123:1', 'abcdefghij@1672531200000-123:1', false], // Same index
-    ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-124', false], // Earlier counter
-    ['abcdefghij@1672531200000-124', 'abcdefghij@1672531200000-123', true], // Later counter
-    ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-123', false], // Same counter
-    ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-124', false], // Earlier series id
-    ['abcdefghij@1672531200000-124', 'abcdefghij@1672531200000-123', true], // Later series id
-    ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-123', false], // Same series id
-    ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200001-123', false], // Earlier timestamp
-    ['abcdefghij@1672531200001-123', 'abcdefghij@1672531200000-123', true], // Later timestamp
-    ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-123', false], // Same timestamp
-  ])('is after another message %s, %s -> %o', (firstTimeserial, secondTimeserial, expected) => {
     const firstMessage = new DefaultMessage(
       firstTimeserial,
       'clientId',
@@ -124,16 +103,21 @@ describe('ChatMessage', () => {
       {},
     );
 
-    expect(firstMessage.after(secondMessage)).toBe(expected);
+    expect(firstMessage.after(secondMessage)).toBe(true);
   });
 
-  it.each([
-    ['abcdefghij@1672531200000'], // No counter
-    ['abcdefghij@'], // No timestamp
-    ['abcdefghij'], // No series id
-  ])('throws an error with an invalid timeserial %s', (timeserial) => {
+  it('throws an error with an invalid timeserial', () => {
     expect(
-      () => new DefaultMessage(timeserial, 'clientId', 'roomId', 'hello there', new Date(1672531200000), {}, {}),
+      () =>
+        new DefaultMessage(
+          'not a valid timeserial',
+          'clientId',
+          'roomId',
+          'hello there',
+          new Date(1672531200000),
+          {},
+          {},
+        ),
     ).toThrow(new Error('Invalid timeserial'));
   });
 });

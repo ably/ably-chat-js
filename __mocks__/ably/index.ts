@@ -47,6 +47,12 @@ function createMockChannel() {
     publish: () => {},
     subscriptions: createMockEmitter(),
     setOptions: methodReturningVoidPromise,
+    whenState: methodReturningVoidPromise,
+    properties: {
+      attachSerial: '',
+      channelSerial: '',
+    },
+    state: '',
   };
 }
 
