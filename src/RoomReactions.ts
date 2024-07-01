@@ -3,12 +3,7 @@ import * as Ably from 'ably';
 import { getChannel } from './channel.js';
 import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
-<<<<<<< HEAD
 import { DefaultReaction, Reaction, ReactionHeaders, ReactionMetadata } from './Reaction.js';
-import { SubscriptionManager } from './SubscriptionManager.js';
-=======
-import { DefaultReaction, Reaction } from './Reaction.js';
->>>>>>> f0fe63a (room: add unified status and explicit lifecycle)
 import EventEmitter from './utils/EventEmitter.js';
 
 /**

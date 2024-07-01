@@ -27,25 +27,100 @@ function createMockPresence() {
   };
 }
 
+type anyType = ((_) => void)[];
+type eventType = { [event: string]: ((_) => void)[] };
+
 function createMockEmitter() {
-  return {
-    any: [],
-    events: {},
-    anyOnce: [],
-    eventsOnce: {},
+  const emitter = {
+    on: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
+      console.error('on', eventsOrListener, listener);
+      if (listener) {
+        if (typeof eventsOrListener === 'string') {
+          eventsOrListener = [eventsOrListener];
+        }
+
+        for (const event of eventsOrListener as string[]) {
+          if (!emitter.events[event]) {
+            emitter.events[event] = [];
+          }
+
+          emitter.events[event].push(listener);
+        }
+        return;
+      }
+
+      emitter.any.push(eventsOrListener as (_) => void);
+    },
+    once: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
+      console.error('once', eventsOrListener, listener);
+      if (listener) {
+        if (typeof eventsOrListener === 'string') {
+          eventsOrListener = [eventsOrListener];
+        }
+
+        for (const event of eventsOrListener as string[]) {
+          if (!emitter.eventsOnce[event]) {
+            emitter.eventsOnce[event] = [];
+          }
+
+          emitter.eventsOnce[event].push(listener);
+        }
+        return;
+      }
+
+      emitter.anyOnce.push(eventsOrListener as (_) => void);
+    },
+    emit: (event: string, arg: unknown) => {
+      console.error('emit', event, arg);
+      console.error('events for event', emitter.events[event], emitter.eventsOnce[event], emitter.any, emitter.anyOnce);
+      if (emitter.events[event]) {
+        emitter.events[event].forEach((element) => {
+          element(arg);
+        });
+      }
+
+      for (const listener of emitter.any) {
+        listener(arg);
+      }
+
+      if (emitter.eventsOnce[event]) {
+        emitter.eventsOnce[event].forEach((element) => {
+          element(arg);
+        });
+        emitter.eventsOnce[event] = [];
+      }
+
+      for (const listener of emitter.anyOnce) {
+        listener(arg);
+      }
+      emitter.anyOnce = [];
+    },
+    any: [] as anyType,
+    events: {} as eventType,
+    anyOnce: [] as anyType,
+    eventsOnce: {} as eventType,
   };
+
+  return emitter;
 }
 
 function createMockChannel(name: string) {
-  return {
+  const mock = {
     name,
     attach: methodReturningVoidPromise,
     detach: methodReturningVoidPromise,
     presence: createMockPresence(),
     subscribe: methodReturningVoidPromise,
     unsubscribe: methodReturningVoidPromise,
-    on: () => {},
-    off: () => {},
+    on: (eventsOrListener: string[] | (() => void), listener?: (client_id) => void) => {
+      mock.attachmentStateEmitter.on(eventsOrListener, listener);
+    },
+    once: (eventsOrListener: string[] | (() => void), listener?: (client_id) => void) => {
+      mock.attachmentStateEmitter.once(eventsOrListener, listener);
+    },
+    emit: (event: string, arg: unknown) => {
+      mock.attachmentStateEmitter.emit(event, arg);
+    },
     publish: () => {},
     subscriptions: createMockEmitter(),
     setOptions: methodReturningVoidPromise,
@@ -54,9 +129,11 @@ function createMockChannel(name: string) {
       attachSerial: '',
       channelSerial: '',
     },
-    state: 'attached',
+    state: 'initialized',
+    attachmentStateEmitter: createMockEmitter(),
     errorReason: new Ably.ErrorInfo('error', 500, 50000),
   };
+  return mock;
 }
 
 function createMockConnection() {

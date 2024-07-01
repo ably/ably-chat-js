@@ -17,6 +17,7 @@ export type {
   MessageEventPayload,
   MessageListener,
   Messages,
+  MessageSubscriptionResponse,
   QueryOptions,
   SendMessageParams,
 } from './Messages.js';

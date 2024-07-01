@@ -1,11 +1,18 @@
 import * as Ably from 'ably';
-import { ErrorInfo, RealtimeChannel } from 'ably';
+import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../src/ChatApi.js';
 import { normaliseClientOptions } from '../src/config.js';
-import { MessageEvents } from '../src/events.js';
+import { Message } from '../src/Message.js';
+import { MessageEventPayload } from '../src/Messages.js';
 import { DefaultRoom } from '../src/Room.js';
+import {
+  channelEventEmitter,
+  ChannelEventEmitterReturnType,
+  channelStateEventEmitter,
+  ChannelStateEventEmitterReturnType,
+} from './helper/channel.js';
 import { randomRoomId } from './helper/identifier.js';
 import { makeTestLogger } from './helper/logger.js';
 import { testClientOptions } from './helper/options.js';
@@ -13,12 +20,31 @@ import { testClientOptions } from './helper/options.js';
 interface TestContext {
   realtime: Ably.Realtime;
   chatApi: ChatApi;
-  emulateBackendPublish: Ably.messageCallback<Partial<Ably.InboundMessage>>;
-  emulateBackendStateChange: (event: string, cb: Ably.ChannelStateChange) => void;
+  emulateBackendStateChange: ChannelStateEventEmitterReturnType;
+  emulateBackendPublish: ChannelEventEmitterReturnType<Partial<Ably.InboundMessage>>;
   channelStateListeners: Map<string, Ably.channelEventCallback[]>;
-  channelLevelListeners: Map<Ably.messageCallback<Ably.Message>, string[]>;
   room: DefaultRoom;
 }
+
+interface MockPaginatedResult {
+  items: Message[];
+  first(): Promise<Ably.PaginatedResult<Message>>;
+  next(): Promise<Ably.PaginatedResult<Message> | null>;
+  current(): Promise<Ably.PaginatedResult<Message>>;
+  hasNext(): boolean;
+  isLast(): boolean;
+}
+
+const mockPaginatedResultWithItems = (items: Message[]): MockPaginatedResult => {
+  return {
+    items,
+    first: () => Promise.resolve(mockPaginatedResultWithItems(items)),
+    next: () => Promise.resolve(null),
+    current: () => Promise.resolve(mockPaginatedResultWithItems(items)),
+    hasNext: () => false,
+    isLast: () => true,
+  };
+};
 
 vi.mock('ably');
 
@@ -29,69 +55,11 @@ const makeRoom = (context: TestContext) =>
 describe('Messages', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
-    context.channelLevelListeners = new Map<Ably.messageCallback<Ably.Message>, string[]>();
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.channelStateListeners = new Map<string, Ably.channelEventCallback[]>();
     context.room = makeRoom(context);
-
-    const channel = context.realtime.channels.get(context.room.messages.channel.name);
-    vi.spyOn(channel, 'subscribe').mockImplementation(
-      // @ts-expect-error overriding mock
-      async (
-        eventsOrListeners: string[] | Ably.messageCallback<Ably.Message>,
-        listener: Ably.messageCallback<Ably.Message>,
-      ) => {
-        if (Array.isArray(eventsOrListeners)) {
-          expect(eventsOrListeners, 'array should only contain MessageEvents').toEqual(Object.values(MessageEvents));
-          context.channelLevelListeners.set(listener, eventsOrListeners);
-        } else {
-          context.channelLevelListeners.set(listener, []);
-        }
-        context.emulateBackendPublish = (msg) => {
-          context.channelLevelListeners.forEach((_, cb) => {
-            cb(msg);
-          });
-        };
-
-        return Promise.resolve();
-      },
-    );
-
-    vi.spyOn(channel, 'on').mockImplementation(
-      // @ts-expect-error overriding mock
-      (event: Ably.ChannelEvent, callback: Ably.channelEventCallback) => {
-        if (!context.channelStateListeners.has(event)) {
-          context.channelStateListeners.set(event, []);
-        }
-        // Add the callback to the list of listeners for this event
-        context.channelStateListeners.get(event)?.push(callback);
-        context.emulateBackendStateChange = (event, stateChange) => {
-          context.channelStateListeners.get(event)?.forEach((cb) => {
-            cb(stateChange);
-          });
-        };
-      },
-    );
-
-    vi.spyOn(channel, 'unsubscribe').mockImplementation(
-      // @ts-expect-error overriding mock
-      (listener: Ably.messageCallback<Ably.Message>) => {
-        context.channelLevelListeners.delete(listener);
-      },
-    );
-
-    // Return a non-resolving promise for whenState as we aren't attached to the channel yet
-    vi.spyOn(channel, 'whenState').mockImplementation(async () => {
-      return new Promise(() => {});
-    });
-
-    // Mock the attach
-    vi.spyOn(channel, 'attach').mockImplementation(async () => {
-      return Promise.resolve(null);
-    });
-
-    // Mock the detach
-    vi.spyOn(channel, 'detach').mockImplementation(async () => {});
+    context.emulateBackendPublish = channelEventEmitter(context.room.messages.channel);
+    context.emulateBackendStateChange = channelStateEventEmitter(context.room.messages.channel);
   });
 
   describe('sending message', () => {
@@ -231,272 +199,281 @@ describe('Messages', () => {
   });
 
   describe('subscribing to updates', () => {
-    it<TestContext>('subscribing to messages should work live', (context) =>
+    it<TestContext>('subscribing to messages', (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = new Date().getTime();
-        context.room.messages
-          .subscribe((rawMsg) => {
-            const message = rawMsg.message;
-            try {
-              expect(message).toEqual(
-                expect.objectContaining({
-                  timeserial: 'abcdefghij@1672531200000-123',
-                  text: 'may the fourth be with you',
-                  clientId: 'yoda',
-                  createdAt: new Date(publishTimestamp),
-                  roomId: context.room.roomId,
-                }),
-              );
-            } catch (err: unknown) {
-              reject(err as Error);
-            }
-            done();
-          })
-          .then(() => {
-            context.emulateBackendPublish({
-              clientId: 'yoda',
-              name: 'message.created',
-              data: {
-                text: 'may the fourth be with you',
-              },
-              extras: {
+        context.room.messages.subscribe((rawMsg) => {
+          const message = rawMsg.message;
+          try {
+            expect(message).toEqual(
+              expect.objectContaining({
                 timeserial: 'abcdefghij@1672531200000-123',
-              },
-              timestamp: publishTimestamp,
-            });
-          })
-          .catch((err: unknown) => {
+                text: 'may the fourth be with you',
+                clientId: 'yoda',
+                createdAt: new Date(publishTimestamp),
+                roomId: context.room.roomId,
+              }),
+            );
+          } catch (err: unknown) {
             reject(err as Error);
-          });
+          }
+          done();
+        });
+
+        context.emulateBackendPublish({
+          clientId: 'yoda',
+          name: 'message.created',
+          data: {
+            text: 'may the fourth be with you',
+          },
+          extras: {
+            timeserial: 'abcdefghij@1672531200000-123',
+          },
+          timestamp: publishTimestamp,
+        });
       }));
   });
 
-  it<TestContext>('attach its internal listener according to subscriptions', async (context) => {
-    const { channelLevelListeners } = context;
+  it<TestContext>('unsubscribing from messages', (context) => {
+    const { room } = context;
 
-    const room = context.room;
-    const listener1 = () => {};
-    const listener2 = () => {};
+    const receivedMessages: Message[] = [];
+    const listener = (message: MessageEventPayload) => {
+      receivedMessages.push(message.message);
+    };
 
-    // First listener added, internal listener should be registered
-    await room.messages.subscribe(listener1);
-    expect(channelLevelListeners).toHaveLength(1);
-    expect(channelLevelListeners.values().next().value).toEqual(['message.created']);
+    const { unsubscribe } = room.messages.subscribe(listener);
+    context.emulateBackendPublish({
+      clientId: 'yoda',
+      name: 'message.created',
+      data: {
+        text: 'may the fourth be with you',
+      },
+      extras: {
+        timeserial: 'abcdefghij@1672531200000-123',
+      },
+      timestamp: new Date().getTime(),
+    });
 
-    // A second listener added, internal listener should still be registered but not added again
-    await room.messages.subscribe(listener2);
-    expect(channelLevelListeners).toHaveLength(1);
-    expect(channelLevelListeners.values().next().value).toEqual(['message.created']);
+    unsubscribe();
 
-    // First listener removed, internal listener should still be registered
-    await room.messages.unsubscribe(listener1);
-    expect(channelLevelListeners).toHaveLength(1);
-    expect(channelLevelListeners.values().next().value).toEqual(['message.created']);
+    context.emulateBackendPublish({
+      clientId: 'yoda2',
+      name: 'message.created',
+      data: {
+        text: 'may the fourth be with you',
+      },
+      extras: {
+        timeserial: 'abcdefghij@1672531200000-123',
+      },
+      timestamp: new Date().getTime(),
+    });
 
-    // Second listener removed, internal listener should be removed
-    await room.messages.unsubscribe(listener2);
-    expect(channelLevelListeners).toHaveLength(0);
+    // We should have only received one message
+    expect(receivedMessages).toHaveLength(1);
+    expect(receivedMessages[0].clientId).toEqual('yoda');
+
+    // A double off should not throw
+    unsubscribe();
   });
 
-  it<TestContext>('should raise an error if no data provided with incoming message', (context) =>
-    new Promise<void>((done, reject) => {
-      const publishTimestamp = new Date().getTime();
-      const room = context.room;
-      room.messages
-        .subscribe(() => {
-          reject(new Error('should not have received message without data'));
-        })
-        .then(() => {
-          context.emulateBackendPublish({
-            clientId: 'yoda',
-            name: 'message.created',
-            extras: {
-              timeserial: 'abcdefghij@1672531200000-123',
-            },
-            timestamp: publishTimestamp,
-          });
-        })
-        .then(() => {
-          done();
-        })
-        .catch((error: unknown) => {
-          reject(error as Error);
-        });
-    }));
+  it<TestContext>('unsubscribing from all messages', (context) => {
+    const { room } = context;
 
-  it<TestContext>('should raise an error if no clientId provided with incoming message', (context) =>
-    new Promise<void>((done, reject) => {
-      const publishTimestamp = new Date().getTime();
-      const room = context.room;
-      room.messages
-        .subscribe(() => {
-          reject(new Error('should not have received message without clientId'));
-        })
-        .then(() => {
-          context.emulateBackendPublish({
-            name: 'message.created',
-            data: {
-              text: 'may the fourth be with you',
-            },
-            extras: {
-              timeserial: 'abcdefghij@1672531200000-123',
-            },
-            timestamp: publishTimestamp,
-          });
-        })
-        .then(() => {
-          done();
-        })
-        .catch((error: unknown) => {
-          reject(error as Error);
-        });
-    }));
+    const receivedMessages: Message[] = [];
+    const listener = (message: MessageEventPayload) => {
+      receivedMessages.push(message.message);
+    };
 
-  it<TestContext>('should raise an error if no extras provided with incoming message', (context) =>
-    new Promise<void>((done, reject) => {
-      const publishTimestamp = new Date().getTime();
-      const room = context.room;
-      room.messages
-        .subscribe(() => {
-          reject(new Error('should not have received message without extras'));
-        })
-        .then(() => {
-          context.emulateBackendPublish({
-            name: 'message.created',
-            clientId: 'abc',
-            data: {
-              text: 'may the fourth be with you',
-            },
-            timestamp: publishTimestamp,
-          });
-        })
-        .then(() => {
-          done();
-        })
-        .catch((error: unknown) => {
-          reject(error as Error);
-        });
-    }));
+    const receivedMessages2: Message[] = [];
+    const listener2 = (message: MessageEventPayload) => {
+      receivedMessages2.push(message.message);
+    };
 
-  it<TestContext>('should raise an error if no timeserial provided with incoming message', (context) =>
-    new Promise<void>((done, reject) => {
-      const publishTimestamp = new Date().getTime();
-      const room = context.room;
-      room.messages
-        .subscribe(() => {
-          reject(new Error('should not have received message without clientId'));
-        })
-        .then(() => {
-          context.emulateBackendPublish({
-            name: 'message.created',
-            clientId: 'abc',
-            data: {
-              text: 'may the fourth be with you',
-            },
-            extras: {},
-            timestamp: publishTimestamp,
-          });
-        })
-        .then(() => {
-          done();
-        })
-        .catch((error: unknown) => {
-          reject(error as Error);
-        });
-    }));
+    const { unsubscribe } = room.messages.subscribe(listener);
+    const { unsubscribe: unsubscribe2 } = room.messages.subscribe(listener2);
+    context.emulateBackendPublish({
+      clientId: 'yoda',
+      name: 'message.created',
+      data: {
+        text: 'may the fourth be with you',
+      },
+      extras: {
+        timeserial: 'abcdefghij@1672531200000-123',
+      },
+      timestamp: new Date().getTime(),
+    });
 
-  it<TestContext>('should raise an error if no text in incoming message', (context) =>
-    new Promise<void>((done, reject) => {
-      const publishTimestamp = new Date().getTime();
-      const room = context.room;
-      room.messages
-        .subscribe(() => {
-          reject(new Error('should not have received message without text'));
-        })
-        .then(() => {
-          context.emulateBackendPublish({
-            name: 'message.created',
-            clientId: 'abc',
-            data: {},
-            extras: {
-              timeserial: 'abcdefghij@1672531200000-123',
-            },
-            timestamp: publishTimestamp,
-          });
-        })
-        .then(() => {
-          done();
-        })
-        .catch((error: unknown) => {
-          reject(error as Error);
-        });
-    }));
+    room.messages.unsubscribeAll();
 
-  it<TestContext>('should raise an error if no timestamp provided with incoming message', (context) =>
-    new Promise<void>((done, reject) => {
+    context.emulateBackendPublish({
+      clientId: 'yoda2',
+      name: 'message.created',
+      data: {
+        text: 'may the fourth be with you',
+      },
+      extras: {
+        timeserial: 'abcdefghij@1672531200000-123',
+      },
+      timestamp: new Date().getTime(),
+    });
+
+    // We should have only received one message
+    expect(receivedMessages).toHaveLength(1);
+    expect(receivedMessages[0].clientId).toEqual('yoda');
+    expect(receivedMessages2).toHaveLength(1);
+    expect(receivedMessages2[0].clientId).toEqual('yoda');
+
+    // A double off should not throw
+    unsubscribe();
+    unsubscribe2();
+  });
+
+  describe.each([
+    [
+      'unknown event name',
+      {
+        clientId: 'yoda2',
+        name: 'message.foo',
+        data: {
+          text: 'may the fourth be with you',
+        },
+        extras: {
+          timeserial: 'abcdefghij@1672531200000-123',
+        },
+        timestamp: new Date().getTime(),
+      },
+    ],
+    [
+      'no data',
+      {
+        clientId: 'yoda2',
+        name: 'message.created',
+        extras: {
+          timeserial: 'abcdefghij@1672531200000-123',
+        },
+        timestamp: new Date().getTime(),
+      },
+    ],
+    [
+      'no text',
+      {
+        clientId: 'yoda2',
+        name: 'message.created',
+        data: {},
+        extras: {
+          timeserial: 'abcdefghij@1672531200000-123',
+        },
+        timestamp: new Date().getTime(),
+      },
+    ],
+    [
+      'no client id',
+      {
+        name: 'message.created',
+        data: {
+          text: 'may the fourth be with you',
+        },
+        extras: {
+          timeserial: 'abcdefghij@1672531200000-123',
+        },
+        timestamp: new Date().getTime(),
+      },
+    ],
+    [
+      'no extras',
+      {
+        clientId: 'yoda2',
+        name: 'message.created',
+        data: {
+          text: 'may the fourth be with you',
+        },
+        timestamp: new Date().getTime(),
+      },
+    ],
+
+    [
+      'no extras.timeserial',
+      {
+        clientId: 'yoda2',
+        name: 'message.created',
+        data: {
+          text: 'may the fourth be with you',
+        },
+        extras: {},
+        timestamp: new Date().getTime(),
+      },
+    ],
+    [
+      'extras.timeserial invalid',
+      {
+        clientId: 'yoda2',
+        name: 'message.created',
+        data: {
+          text: 'may the fourth be with you',
+        },
+        extras: {
+          timeserial: 'abc',
+        },
+        timestamp: new Date().getTime(),
+      },
+    ],
+    [
+      'no timestamp',
+      {
+        clientId: 'yoda2',
+        name: 'message.created',
+        data: {
+          text: 'may the fourth be with you',
+        },
+        extras: {
+          timeserial: 'abcdefghij@1672531200000-123',
+        },
+      },
+    ],
+  ])('invalid incoming messages', (name: string, inboundMessage: Partial<Ably.InboundMessage>) => {
+    it<TestContext>('should handle invalid inbound messages: ' + name, (context) => {
       const room = context.room;
-      room.messages
-        .subscribe(() => {
-          reject(new Error('should not have received message without timestamp'));
-        })
-        .then(() => {
-          context.emulateBackendPublish({
-            name: 'message.created',
-            clientId: 'abc',
-            data: {
-              text: 'may the fourth be with you',
-            },
-            extras: {
-              timeserial: 'abcdefghij@1672531200000-123',
-            },
-          });
-        })
-        .then(() => {
-          done();
-        })
-        .catch((error: unknown) => {
-          reject(error as Error);
-        });
-    }));
+      let listenerCalled = false;
+      room.messages.subscribe(() => {
+        listenerCalled = true;
+      });
+
+      context.emulateBackendPublish(inboundMessage);
+      expect(listenerCalled).toBe(false);
+    });
+  });
 
   // Tests for getBeforeSubscriptionStart
   it<TestContext>('should throw an error for listener history if not subscribed', async (context) => {
     // Create a room instance
     const room = makeRoom(context);
 
-    let caughtError: ErrorInfo | undefined;
+    const { unsubscribe, getPreviousMessages } = room.messages.subscribe(() => {});
 
-    try {
-      // Attempt to query message history before subscribing a listener
-      await room.messages.getBeforeSubscriptionStart(() => {}, { limit: 50 });
-    } catch (e: unknown) {
-      // Expect an error to be thrown since no listener has been subscribed
-      caughtError = e as ErrorInfo;
-    }
+    // Unsubscribe the listener
+    unsubscribe();
 
-    // Assert that an error was caught
-    expect(caughtError).toBeDefined();
-    expect(caughtError?.message).toEqual('cannot query history; listener has not been subscribed yet');
+    await expect(getPreviousMessages({ limit: 50 })).rejects.toBeErrorInfo({
+      code: 40000,
+      message: 'cannot query history; listener has not been subscribed yet',
+    });
   });
 
   it<TestContext>('should query listener history with the attachment serial after attaching', async (context) => {
     const testAttachSerial = 'abcdefghij@1672531200000-123';
-    const testRoomId = 'roomId';
     const testDirection = 'backwards';
     const testLimit = 50;
 
-    // Mock the chat api call used by listener history query
-    const mockChatApi = {
-      getMessages: function (roomId: string, params: GetMessagesQueryParams): void {
-        expect(roomId).toEqual(testRoomId);
-        expect(params.direction).toEqual(testDirection);
-        expect(params.limit).toEqual(testLimit);
-        expect(params.fromSerial).toEqual(testAttachSerial);
-      },
-    } as unknown as ChatApi;
+    const { room, chatApi } = context;
 
-    // Create a room with the mock chat api so we can check query params
-    const room = new DefaultRoom('roomId', context.realtime, mockChatApi, testClientOptions(), makeTestLogger());
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
+      expect(roomId).toEqual(room.roomId);
+      expect(params.direction).toEqual(testDirection);
+      expect(params.limit).toEqual(testLimit);
+      expect(params.fromSerial).toEqual(testAttachSerial);
+      return Promise.resolve(mockPaginatedResultWithItems([]));
+    });
 
     // Force ts to recognize the channel properties
     const channel = room.messages.channel as RealtimeChannel & {
@@ -512,46 +489,38 @@ describe('Messages', () => {
       return Promise.resolve(null);
     });
 
-    // Create a test listener
-    const listener1 = () => {};
-
     // Subscribe to the messages
-    await room.messages.subscribe(listener1);
+    const { getPreviousMessages } = room.messages.subscribe(() => {});
 
     // Mock the channel state to be attached
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
 
     // Initiate an attach state change to resolve the listeners attach point
-    context.emulateBackendStateChange('attached', {
+    context.emulateBackendStateChange({
       current: 'attached',
       previous: 'detached',
-      resumed: false,
+      resumed: true,
     });
 
     // Run a history query for the listener and check the chat api call is made with the channel attachment serial
-    await room.messages.getBeforeSubscriptionStart(listener1, { limit: 50 });
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('should query listener history with latest channel serial if already attached to the channel', async (context) => {
     // We should use the latest channel serial if we are already attached to the channel
     const latestChannelSerial = 'abcdefghij@1672531200000-123';
-
-    const testRoomId = 'roomId';
     const testDirection = 'backwards';
     const testLimit = 50;
 
-    // Mock the chat api call used by listener history query, using latest channel serial
-    const mockChatApi = {
-      getMessages: function (roomId: string, params: GetMessagesQueryParams): void {
-        expect(roomId).toEqual(testRoomId);
-        expect(params.direction).toEqual(testDirection);
-        expect(params.limit).toEqual(testLimit);
-        expect(params.fromSerial).toEqual(latestChannelSerial);
-      },
-    } as unknown as ChatApi;
+    const { room, chatApi } = context;
 
-    // Create a room with the mock chat api
-    const room = new DefaultRoom('roomId', context.realtime, mockChatApi, testClientOptions(), makeTestLogger());
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
+      expect(roomId).toEqual(room.roomId);
+      expect(params.direction).toEqual(testDirection);
+      expect(params.limit).toEqual(testLimit);
+      expect(params.fromSerial).toEqual(latestChannelSerial);
+      return Promise.resolve(mockPaginatedResultWithItems([]));
+    });
 
     // Force ts to recognize the channel properties
     const channel = room.messages.channel as RealtimeChannel & {
@@ -567,34 +536,26 @@ describe('Messages', () => {
     // Set the timeserial of the channel (attachment serial)
     channel.properties.channelSerial = latestChannelSerial;
 
-    // Create a test listener
-    const listener1 = () => {};
-
-    // Subscribe the listener to messages
-    await room.messages.subscribe(listener1);
+    // Subscribe to the messages
+    const { getPreviousMessages } = room.messages.subscribe(() => {});
 
     // Run a history query for the listener and check the chat api call is made with the channel timeserial
-    await room.messages.getBeforeSubscriptionStart(listener1, { limit: 50 });
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('when attach occurs, should query with correct params if listener registered before attach', async (context) => {
     const firstAttachmentSerial = '108uyDJAgBOihn12345678@1772531200000-1';
-
-    const testRoomId = 'roomId';
     const testDirection = 'backwards';
     const testLimit = 50;
 
     let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
 
-    // Mock the chat api call used by listener history query
-    const mockChatApi = {
-      getMessages: function (roomId: string, params: GetMessagesQueryParams): void {
-        expectFunction(roomId, params);
-      },
-    } as unknown as ChatApi;
+    const { room, chatApi } = context;
 
-    // Create a room with the mock chat api
-    const room = new DefaultRoom('roomId', context.realtime, mockChatApi, testClientOptions(), makeTestLogger());
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
+      expectFunction(roomId, params);
+      return Promise.resolve(mockPaginatedResultWithItems([]));
+    });
 
     const channel = room.messages.channel as RealtimeChannel & {
       properties: {
@@ -606,17 +567,13 @@ describe('Messages', () => {
     // Set the timeserials for before attachment testing
     channel.properties.attachSerial = firstAttachmentSerial;
 
-    // Create a test listener
-    const listenerBeforeAttach = () => {};
-
-    // Subscribe to the messages, should receive the attachSerial
-    await room.messages.subscribe(listenerBeforeAttach);
+    const { getPreviousMessages } = room.messages.subscribe(() => {});
 
     // Mock the channel state to be attached
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
 
     // Initiate an attach state change to resolve the listeners attach point
-    context.emulateBackendStateChange('attached', {
+    context.emulateBackendStateChange({
       current: 'attached',
       previous: 'detached',
       resumed: false,
@@ -624,23 +581,23 @@ describe('Messages', () => {
 
     // Check we are using the attachSerial
     expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
-      expect(roomId).toEqual(testRoomId);
+      expect(roomId).toEqual(room.roomId);
       expect(params.direction).toEqual(testDirection);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstAttachmentSerial);
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel attachment serial
-    await room.messages.getBeforeSubscriptionStart(listenerBeforeAttach, { limit: 50 });
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
 
     // Now update the attach serial
     const secondAttachmentserial = '108hhDJ2dBOihn12345678@1992531200000-1';
     channel.properties.attachSerial = secondAttachmentserial;
 
     // Initiate a re-attach without resume, should cause all listener points to reset to new attach serial
-    context.emulateBackendStateChange('attached', {
-      current: 'detached',
-      previous: 'attached',
+    context.emulateBackendStateChange({
+      current: 'attached',
+      previous: 'detached',
       resumed: false,
     });
 
@@ -649,8 +606,8 @@ describe('Messages', () => {
       expect(params.fromSerial).toEqual(secondAttachmentserial);
     };
 
-    // Run a history query for the listener and check the chat api call is made with the new attach serial
-    await room.messages.getBeforeSubscriptionStart(listenerBeforeAttach, { limit: 50 });
+    // Run a history query for the listener and check the chat api call is made with the channel attachment serial
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
 
     // Test the case where we receive an attached state change with resume.
 
@@ -658,9 +615,9 @@ describe('Messages', () => {
     channel.properties.attachSerial = '108hhDJ2dBOihn12345678@1122531200000-1';
 
     // Initiate a re-attach this time with resume, should not cause listener points to reset to new attach serial
-    context.emulateBackendStateChange('attached', {
-      current: 'detached',
-      previous: 'attached',
+    context.emulateBackendStateChange({
+      current: 'attached',
+      previous: 'detached',
       resumed: true,
     });
 
@@ -670,29 +627,24 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the previous attach serial
-    await room.messages.getBeforeSubscriptionStart(listenerBeforeAttach, { limit: 50 });
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('when attach occurs, should query with correct params if listener register after attach', async (context) => {
     // Testing the case where the channel is already attached and we have a channel serial set
     const firstChannelSerial = 'abghhDJ2dBOihn12345678@1992531200000-1';
     const firstAttachSerial = 'ackhhDJ2dBOihn12345678@1992531200000-1';
-
-    const testRoomId = 'roomId';
     const testDirection = 'backwards';
     const testLimit = 50;
 
     let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
 
-    // Mock the chat api call used by listener history query
-    const mockChatApi = {
-      getMessages: function (roomId: string, params: GetMessagesQueryParams): void {
-        expectFunction(roomId, params);
-      },
-    } as unknown as ChatApi;
+    const { room, chatApi } = context;
 
-    // Create a room with the mock chat api
-    const room = new DefaultRoom('roomId', context.realtime, mockChatApi, testClientOptions(), makeTestLogger());
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
+      expectFunction(roomId, params);
+      return Promise.resolve(mockPaginatedResultWithItems([]));
+    });
 
     const channel = room.messages.channel as RealtimeChannel & {
       properties: {
@@ -712,22 +664,19 @@ describe('Messages', () => {
     // Mock the channel state to be attached
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
 
-    // Create a test listener
-    const listenerAfterAttach = () => {};
-
-    // Subscribe the listener to messages
-    await room.messages.subscribe(listenerAfterAttach);
+    // Subscribe to the messages
+    const { getPreviousMessages } = room.messages.subscribe(() => {});
 
     // Check we are using the channel serial
     expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
-      expect(roomId).toEqual(testRoomId);
+      expect(roomId).toEqual(room.roomId);
       expect(params.direction).toEqual(testDirection);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstChannelSerial);
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel serial
-    await room.messages.getBeforeSubscriptionStart(listenerAfterAttach, { limit: 50 });
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
 
     // Change the attach and channel serials
     const secondChannelSerial = '108hhDJ2hpOihn12345678@1992531200000-1';
@@ -736,7 +685,7 @@ describe('Messages', () => {
     channel.properties.attachSerial = secondAttachSerial;
 
     // Initiate a re-attach this time with resume, should not cause listener points to reset to new attach serial
-    context.emulateBackendStateChange('attached', {
+    context.emulateBackendStateChange({
       current: 'attached',
       previous: 'attached',
       resumed: true,
@@ -748,10 +697,10 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the first channel serial
-    await room.messages.getBeforeSubscriptionStart(listenerAfterAttach, { limit: 50 });
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
 
     // Initiate a re-attach this time without resume, should cause listener points to reset to new attach serial
-    context.emulateBackendStateChange('attached', {
+    context.emulateBackendStateChange({
       current: 'attached',
       previous: 'attached',
       resumed: false,
@@ -763,7 +712,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the attach serial
-    await room.messages.getBeforeSubscriptionStart(listenerAfterAttach, { limit: 50 });
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('when update occurs, should query with correct params', async (context) => {
@@ -772,22 +721,17 @@ describe('Messages', () => {
 
     const firstChannelSerial = '108hhDJ2hpInKn12345678@1992531200000-1';
     const firstAttachSerial = '108hhDJBiKOihn12345678@1992531200000-1';
-
-    const testRoomId = 'roomId';
     const testDirection = 'backwards';
     const testLimit = 50;
 
     let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
 
-    // Mock the chat api call used by listener history query
-    const mockChatApi = {
-      getMessages: function (roomId: string, params: GetMessagesQueryParams): void {
-        expectFunction(roomId, params);
-      },
-    } as unknown as ChatApi;
+    const { room, chatApi } = context;
 
-    // Create a room with the mock chat api
-    const room = new DefaultRoom('roomId', context.realtime, mockChatApi, testClientOptions(), makeTestLogger());
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
+      expectFunction(roomId, params);
+      return Promise.resolve(mockPaginatedResultWithItems([]));
+    });
 
     const channel = room.messages.channel as RealtimeChannel & {
       properties: {
@@ -808,22 +752,19 @@ describe('Messages', () => {
     // Mock the channel state to be attached
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
 
-    // Create a test listener
-    const listenerAfterAttach = () => {};
-
-    // Subscribe the listener to messages
-    await room.messages.subscribe(listenerAfterAttach);
+    // Subscribe to the messages
+    const { getPreviousMessages } = room.messages.subscribe(() => {});
 
     // Check we are using the channel serial
     expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
-      expect(roomId).toEqual(testRoomId);
+      expect(roomId).toEqual(room.roomId);
       expect(params.direction).toEqual(testDirection);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstChannelSerial);
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel serial
-    await room.messages.getBeforeSubscriptionStart(listenerAfterAttach, { limit: 50 });
+    await getPreviousMessages({ limit: 50 });
 
     // Change the attach and channel serials
     const secondChannelSerial = '108StIJ2hpOihn12345678@1992531200000-1';
@@ -832,11 +773,14 @@ describe('Messages', () => {
     channel.properties.attachSerial = secondAttachSerial;
 
     // Initiate a re-attach this time with resume, should not cause listener points to reset to new attach serial
-    context.emulateBackendStateChange('update', {
-      current: 'attached',
-      previous: 'attached',
-      resumed: true,
-    });
+    context.emulateBackendStateChange(
+      {
+        current: 'attached',
+        previous: 'attached',
+        resumed: true,
+      },
+      true,
+    );
 
     // Check we are using the previous channel serial
     expectFunction = (_: string, params: GetMessagesQueryParams) => {
@@ -844,14 +788,17 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the previous channel serial
-    await room.messages.getBeforeSubscriptionStart(listenerAfterAttach, { limit: 50 });
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
 
     // Initiate a re-attach this time without resume, should cause listener points to reset to new attach serial
-    context.emulateBackendStateChange('update', {
-      current: 'attached',
-      previous: 'attached',
-      resumed: false,
-    });
+    context.emulateBackendStateChange(
+      {
+        current: 'attached',
+        previous: 'attached',
+        resumed: false,
+      },
+      true,
+    );
 
     // Check we are using the new attach serial
     expectFunction = (_: string, params: GetMessagesQueryParams) => {
@@ -859,33 +806,34 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the new attach serial
-    await room.messages.getBeforeSubscriptionStart(listenerAfterAttach, { limit: 50 });
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
 
     // Change the attach serial again
     channel.properties.attachSerial = '108DrInRiKGihn12345678@1992531200000-1';
 
     // Initiate a update this time without matching previous and current states, should not trigger
     // listener points to reset to new attach serial
-    context.emulateBackendStateChange('update', {
-      current: 'detaching',
-      previous: 'attached',
-      resumed: false,
-    });
+    context.emulateBackendStateChange(
+      {
+        current: 'attached',
+        previous: 'attached',
+        resumed: false,
+      },
+      true,
+    );
 
     // Check we are using the new attach serial
     expectFunction = (_: string, params: GetMessagesQueryParams) => {
-      expect(params.fromSerial).toEqual(secondAttachSerial);
+      expect(params.fromSerial).toEqual(channel.properties.attachSerial);
     };
 
     // Run a history query for the listener and check the chat api call is made with the previous attach serial
-    await room.messages.getBeforeSubscriptionStart(listenerAfterAttach, { limit: 50 });
+    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('should throw an error if listener query end time is later than query timeserial', async (context) => {
     // Create a room instance
     const room = makeRoom(context);
-
-    let caughtError: ErrorInfo | undefined;
 
     const channel = room.messages.channel as RealtimeChannel & {
       properties: {
@@ -901,24 +849,11 @@ describe('Messages', () => {
     // Mock the channel state to be attached
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
 
-    // Create a test listener
-    const listener1 = () => {};
+    const { getPreviousMessages } = room.messages.subscribe(() => {});
 
-    // Subscribe to the messages
-    await room.messages.subscribe(listener1);
-
-    try {
-      // Attempt to query message history before subscribing a listener
-      await room.messages.getBeforeSubscriptionStart(listener1, { limit: 50, end: 1992531200000 });
-    } catch (e: unknown) {
-      // Expect an error to be thrown since no listener has been subscribed
-      caughtError = e as ErrorInfo;
-    }
-
-    // Assert that an error was caught
-    expect(caughtError).toBeDefined();
-    expect(caughtError?.message).toEqual(
-      'cannot query history; end time is after the subscription point of the listener',
-    );
+    await expect(getPreviousMessages({ limit: 50, end: 1992531200000 })).rejects.toBeErrorInfo({
+      code: 40000,
+      message: 'cannot query history; end time is after the subscription point of the listener',
+    });
   });
 });

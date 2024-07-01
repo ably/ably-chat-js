@@ -34,7 +34,7 @@ interface RealtimeChannelSubscriptions<EventType, CallbackType> {
 /**
  * Represents a RealtimeChannel with pure subscriptions that do not cause any side-effects.
  */
-interface RealtimeChannelWithPureSubscriptions {
+export interface RealtimeChannelWithPureSubscriptions {
   subscriptions: RealtimeChannelSubscriptions<string, Ably.InboundMessage>;
   presence: {
     subscriptions: RealtimeChannelSubscriptions<PresenceEvents, Ably.PresenceMessage>;

@@ -1,5 +1,3 @@
-import * as Ably from 'ably';
-
 import { Headers } from './Headers.js';
 import { Metadata } from './Metadata.js';
 import { DefaultTimeserial, Timeserial } from './Timeserial.js';
