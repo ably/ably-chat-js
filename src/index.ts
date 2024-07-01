@@ -7,6 +7,7 @@ export type {
   ConnectionStatusListener,
   OnConnectionStatusChangeResponse,
 } from './Connection.js';
+export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { MessageEvents, PresenceEvents } from './events.js';
 export type { Headers } from './Headers.js';
 export type { LogContext, LogHandler } from './logger.js';

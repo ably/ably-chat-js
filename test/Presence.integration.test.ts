@@ -8,9 +8,11 @@ import { ChatClient } from '../src/Chat.js';
 import { PresenceEvents } from '../src/events.js';
 import { PresenceData, PresenceEvent } from '../src/Presence.js';
 import { Room } from '../src/Room.js';
+import { RoomStatus } from '../src/RoomStatus.js';
 import { newChatClient } from './helper/chat.js';
 import { randomRoomId } from './helper/identifier.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
+import { waitForRoomStatus } from './helper/room.js';
 
 // Define the test context interface
 interface TestContext {
@@ -358,5 +360,54 @@ describe('UserPresence', { timeout: 10000 }, () => {
     // Update with object
     await context.chatRoom.presence.update({ key: 'value' });
     await waitForPresenceEvent(presenceEvents, PresenceEvents.update, context.chat.clientId, { key: 'value' });
+  });
+
+  it<TestContext>('handles discontinuities', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId());
+
+    // Attach the room
+    await room.attach();
+
+    // Subscribe discontinuity events
+    const discontinuityErrors: (Ably.ErrorInfo | undefined)[] = [];
+    const { off } = room.presence.onDiscontinuity((error: Ably.ErrorInfo | undefined) => {
+      discontinuityErrors.push(error);
+    });
+
+    const channelSuspendable = room.presence.channel as Ably.RealtimeChannel & {
+      notifyState(state: 'suspended'): void;
+    };
+
+    // Simulate a discontinuity by forcing a channel into suspended state
+    channelSuspendable.notifyState('suspended');
+
+    // Wait for the room to go into suspended
+    await waitForRoomStatus(room.status, RoomStatus.Suspended);
+
+    // Now attach the room again
+    await room.attach();
+
+    // Wait for the room to go into attached
+    await waitForRoomStatus(room.status, RoomStatus.Attached);
+
+    // Wait for a discontinuity event to be received
+    expect(discontinuityErrors.length).toBe(1);
+
+    // Unsubscribe from discontinuity events
+    off();
+
+    // Simulate a discontinuity by forcing a channel into suspended state
+    channelSuspendable.notifyState('suspended');
+
+    // Wait for the room to go into suspended
+    await waitForRoomStatus(room.status, RoomStatus.Suspended);
+
+    // We shouldn't get any more discontinuity events
+    expect(discontinuityErrors.length).toBe(1);
+
+    // Calling off again should be a no-op
+    off();
   });
 });

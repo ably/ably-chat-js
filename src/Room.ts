@@ -116,12 +116,8 @@ export class DefaultRoom implements Room {
     this._reactions = new DefaultRoomReactions(roomId, realtime, realtime.auth.clientId, logger);
     this._occupancy = new DefaultOccupancy(roomId, realtime, this.chatApi, logger);
 
-    this._lifecycleManager = new RoomLifecycleManager(
-      this._status,
-      [this._messages, this._presence, this._typing, this._reactions, this._occupancy],
-      logger,
-      5000,
-    );
+    const features = [this._messages, this._presence, this._typing, this._reactions, this._occupancy];
+    this._lifecycleManager = new RoomLifecycleManager(this._status, features, logger, 5000);
   }
 
   /**

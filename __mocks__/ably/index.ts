@@ -108,10 +108,10 @@ function createMockChannel(name: string) {
     presence: createMockPresence(),
     subscribe: methodReturningVoidPromise,
     unsubscribe: methodReturningVoidPromise,
-    on: (eventsOrListener: string[] | (() => void), listener?: (client_id) => void) => {
+    on: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
       mock.attachmentStateEmitter.on(eventsOrListener, listener);
     },
-    once: (eventsOrListener: string[] | (() => void), listener?: (client_id) => void) => {
+    once: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
       mock.attachmentStateEmitter.once(eventsOrListener, listener);
     },
     emit: (event: string, arg: unknown) => {

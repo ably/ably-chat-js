@@ -1,0 +1,62 @@
+import * as Ably from 'ably';
+
+import EventEmitter from './utils/EventEmitter.js';
+
+/**
+ * Represents an object that has a channel and therefore may care about discontinuities.
+ */
+export interface HandlesDiscontinuity {
+  /**
+   * The channel that this object is associated with.
+   */
+  get channel(): Ably.RealtimeChannel;
+
+  /**
+   * Called when a discontinuity is detected on the channel.
+   * @param error The error that caused the discontinuity.
+   */
+  discontinuityDetected(error?: Ably.ErrorInfo): void;
+}
+
+/**
+ * A response to subscribing to discontinuity events that allows control of the subscription.
+ */
+export interface OnDiscontinuitySubscriptionResponse {
+  /**
+   * Unsubscribe from discontinuity events.
+   */
+  off(): void;
+}
+
+/**
+ * A listener that can be registered for discontinuity events.
+ * @param error The error that caused the discontinuity.
+ */
+export type DiscontinuityListener = (error?: Ably.ErrorInfo) => void;
+
+/**
+ * An interface to be implemented by objects that can emit discontinuities to listeners.
+ */
+export interface EmitsDiscontinuities {
+  /**
+   * Register a listener to be called when a discontinuity is detected.
+   * @param listener The listener to be called when a discontinuity is detected.
+   * @returns A response that allows control of the subscription.
+   */
+  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse;
+}
+
+interface DiscontinuityEventMap {
+  ['discontinuity']: Ably.ErrorInfo | undefined;
+}
+
+/**
+ * An event emitter specialisation for discontinuity events.
+ */
+export type DiscontinuityEmitter = EventEmitter<DiscontinuityEventMap>;
+
+/**
+ * Creates a new discontinuity emitter.
+ * @returns A new discontinuity emitter.
+ */
+export const newDiscontinuityEmitter = (): DiscontinuityEmitter => new EventEmitter();

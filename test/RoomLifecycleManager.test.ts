@@ -2,8 +2,9 @@ import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { RoomLifecycleManager } from '../src/RoomLifecycleManager.ts';
-import { DefaultStatus, RoomStatus, Status } from '../src/RoomStatus.ts';
+import { DefaultStatus, RoomStatus } from '../src/RoomStatus.ts';
 import { makeTestLogger } from './helper/logger.ts';
+import { waitForRoomStatus } from './helper/room.ts';
 
 interface TestContext {
   realtime: Ably.Realtime;
@@ -16,9 +17,8 @@ vi.mock('ably');
 
 interface MockContributor {
   channel: Ably.RealtimeChannel;
-  channelStateListeners: Set<Ably.channelEventCallback>;
-  discontinuity(): void;
-  emulateStateChange: Ably.channelEventCallback;
+  discontinuityDetected(): void;
+  emulateStateChange: (change: Ably.ChannelStateChange, update?: boolean) => void;
 }
 
 const baseError = new Ably.ErrorInfo('error', 500, 50000);
@@ -38,6 +38,26 @@ const mockChannelAttachSuccess = (channel: Ably.RealtimeChannel): void => {
   vi.spyOn(channel, 'attach').mockImplementation(() => {
     vi.spyOn(channel, 'state', 'get').mockReturnValue(AblyChannelState.Attached);
     vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(baseError);
+
+    return Promise.resolve(null);
+  });
+};
+
+const mockChannelAttachSuccessWithResumeFailure = (channel: Ably.RealtimeChannel, error?: Ably.ErrorInfo): void => {
+  vi.spyOn(channel, 'attach').mockImplementation(() => {
+    vi.spyOn(channel, 'state', 'get').mockReturnValue(AblyChannelState.Attached);
+    vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(baseError);
+
+    (
+      channel as Ably.RealtimeChannel & {
+        emulateStateChange: (event: keyof ChannelStateListenersMap, change: Ably.ChannelStateChange) => void;
+      }
+    ).emulateStateChange('attached', {
+      current: AblyChannelState.Attached,
+      previous: 'initialized',
+      resumed: false,
+      reason: error ?? baseError,
+    });
 
     return Promise.resolve(null);
   });
@@ -107,33 +127,38 @@ const mockChannelDetachFailure = (
   });
 };
 
-// Wait 3 seconds for the room to reach the expected status
-const waitForRoomStatus = async (status: Status, expectedStatus: RoomStatus) => {
-  return vi.waitUntil(() => status.currentStatus === expectedStatus, 3000);
-};
+type ChannelStateListenersMap = Record<AblyChannelState & 'update', Set<Ably.channelEventCallback>>;
 
 const makeMockContributor = (channel: Ably.RealtimeChannel): MockContributor => {
   const contributor = {
     channel: channel,
-    channelStateListeners: new Set<Ably.channelEventCallback>(),
-    discontinuity() {},
-    emulateStateChange(change: Ably.ChannelStateChange) {
+    discontinuityDetected() {},
+    emulateStateChange(change: Ably.ChannelStateChange, update?: boolean) {
       vi.spyOn(contributor.channel, 'state', 'get').mockReturnValue(change.current);
       vi.spyOn(contributor.channel, 'errorReason', 'get').mockReturnValue(change.reason ?? baseError);
-      contributor.channelStateListeners.forEach((listener: Ably.channelEventCallback) => {
-        listener(change);
-      });
+
+      (
+        contributor.channel as Ably.RealtimeChannel & {
+          emulateStateChange: (event: keyof ChannelStateListenersMap, change: Ably.ChannelStateChange) => void;
+        }
+      ).emulateStateChange(update ? 'update' : change.current, change);
     },
   };
-  vi.spyOn(channel, 'on').mockImplementation((listener: Ably.channelEventCallback) => {
-    contributor.channelStateListeners.add(listener);
-  });
-  vi.spyOn(channel, 'state', 'get').mockReturnValue('detached');
+  vi.spyOn(
+    channel as Ably.RealtimeChannel & {
+      on: (events: (AblyChannelState & 'update')[], listener: Ably.channelEventCallback) => void;
+    },
+    'on',
+  );
+  vi.spyOn(channel, 'state', 'get').mockReturnValue('initialized');
   vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(new Ably.ErrorInfo('error', 500, 50000));
+  vi.spyOn(contributor, 'discontinuityDetected');
 
   return contributor;
 };
 
+// TODO: Make initial setup (into attached) and initial listener setup a method
+// TODO: Put the monitor on the context, so we don't have to repeat ourselves.
 describe('room lifecycle manager', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
@@ -976,7 +1001,7 @@ describe('room lifecycle manager', () => {
       expect(status.currentStatus).toEqual(RoomStatus.Attached);
     });
 
-    test<TestContext>('transitions to detached when transient detach times out', (context) => {
+    test<TestContext>('transitions to detached when transient detach times out', async (context) => {
       // Force our status and contributors into attached
       const status = new DefaultStatus(makeTestLogger());
       context.firstContributor.emulateStateChange({
@@ -1010,17 +1035,17 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Attached);
+      await waitForRoomStatus(status, RoomStatus.Attached);
 
       // Expire any fake timers
       vi.advanceTimersToNextTimer();
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Detached);
+      await waitForRoomStatus(status, RoomStatus.Detached);
       expect(status.error).toEqual(baseError);
     });
 
-    test<TestContext>('transitions to attaching with original error if transient detach times out', (context) => {
+    test<TestContext>('transitions to attaching with original error if transient detach times out', async (context) => {
       // Force our status and contributors into attached
       const status = new DefaultStatus(makeTestLogger());
       context.firstContributor.emulateStateChange({
@@ -1028,12 +1053,6 @@ describe('room lifecycle manager', () => {
         previous: 'initialized',
         resumed: false,
         reason: baseError,
-      });
-      context.secondContributor.emulateStateChange({
-        current: AblyChannelState.Attached,
-        previous: 'initialized',
-        resumed: false,
-        reason: baseError2,
       });
       status.setStatus({ status: RoomStatus.Attached });
 
@@ -1061,10 +1080,10 @@ describe('room lifecycle manager', () => {
       });
 
       // Expire any fake timers
-      vi.advanceTimersToNextTimer();
+      void vi.advanceTimersToNextTimerAsync();
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Attaching);
+      await waitForRoomStatus(status, RoomStatus.Attaching);
       expect(status.error).toEqual(detachedError);
     });
   });
@@ -1372,6 +1391,422 @@ describe('room lifecycle manager', () => {
 
       // We should have seen feature 2's error come through during the attach sequence
       expect(feature2AttachError).toBeErrorInfoWithCode(1001);
+    });
+  });
+
+  describe('discontinuity handling', () => {
+    describe('via update', () => {
+      it<TestContext>('ignores a discontinuity event if the channel never made it to attached', async (context) => {
+        // Force our status and contributors into initialized
+        const status = new DefaultStatus(makeTestLogger());
+        context.firstContributor.emulateStateChange({
+          current: AblyChannelState.Initialized,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        status.setStatus({ status: RoomStatus.Initialized });
+
+        const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+
+        // Send the monitor through the attach cycle, but lets fail the attach
+        mockChannelAttachFailure(context.firstContributor.channel, AblyChannelState.Detached, 1001);
+        mockChannelDetachSuccess(context.firstContributor.channel);
+
+        await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(1001);
+
+        // Emit an update / discontinuity event on the first contributor (for arguments sake)
+        context.firstContributor.emulateStateChange(
+          {
+            current: AblyChannelState.Attached,
+            previous: AblyChannelState.Initialized,
+            resumed: false,
+            reason: baseError,
+          },
+          true,
+        );
+
+        // Our status should be detached
+        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+
+        // We should not have seen a discontinuity event
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+
+        // Now try to attach again
+        mockChannelAttachSuccess(context.firstContributor.channel);
+        await monitor.attach();
+
+        // Our status should be attached
+        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+
+        // But we still shouldn't have seen a discontinuity event
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+      });
+
+      it<TestContext>('registers a discontinuty event immediately if fully attached and an update event is received', async (context) => {
+        // Force our status and contributors into attached
+        const status = new DefaultStatus(makeTestLogger());
+        context.firstContributor.emulateStateChange({
+          current: AblyChannelState.Attached,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        context.secondContributor.emulateStateChange({
+          current: AblyChannelState.Attached,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError2,
+        });
+        context.thirdContributor.emulateStateChange({
+          current: AblyChannelState.Attached,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        status.setStatus({ status: RoomStatus.Initialized });
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const monitor = new RoomLifecycleManager(
+          status,
+          [context.firstContributor, context.secondContributor, context.thirdContributor],
+          makeTestLogger(),
+          5,
+        );
+
+        // Sent the monitor through the attach cycle
+        mockChannelAttachSuccess(context.firstContributor.channel);
+        mockChannelAttachSuccess(context.secondContributor.channel);
+        mockChannelAttachSuccess(context.thirdContributor.channel);
+
+        await monitor.attach();
+
+        // Emit an update / discontinuity event on the first contributor
+        context.firstContributor.emulateStateChange(
+          {
+            current: AblyChannelState.Attached,
+            previous: AblyChannelState.Attached,
+            resumed: false,
+            reason: baseError,
+          },
+          true,
+        );
+
+        // Our first contributor should have registered a discontinuity event
+        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
+      });
+
+      it<TestContext>('registers a discontinuity after re-attachment if room is detached at the time', async (context) => {
+        // Force our status and contributors into attached
+        const status = new DefaultStatus(makeTestLogger());
+        context.firstContributor.emulateStateChange({
+          current: AblyChannelState.Attached,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        context.secondContributor.emulateStateChange({
+          current: AblyChannelState.Attached,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError2,
+        });
+        context.thirdContributor.emulateStateChange({
+          current: AblyChannelState.Attached,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        status.setStatus({ status: RoomStatus.Initialized });
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const monitor = new RoomLifecycleManager(
+          status,
+          [context.firstContributor, context.secondContributor, context.thirdContributor],
+          makeTestLogger(),
+          5,
+        );
+
+        // Send the monitor through the attach cycle
+        mockChannelAttachSuccess(context.firstContributor.channel);
+        mockChannelAttachSuccess(context.secondContributor.channel);
+        mockChannelAttachSuccess(context.thirdContributor.channel);
+
+        await monitor.attach();
+
+        // Send the monitor through the detach cycle
+        mockChannelDetachSuccess(context.firstContributor.channel);
+        mockChannelDetachSuccess(context.secondContributor.channel);
+        mockChannelDetachSuccess(context.thirdContributor.channel);
+
+        await monitor.detach();
+
+        // Emit an update / discontinuity event on the first contributor during the detached state for whatever reason
+        context.firstContributor.emulateStateChange(
+          {
+            current: AblyChannelState.Attached,
+            previous: AblyChannelState.Attached,
+            resumed: false,
+            reason: baseError,
+          },
+          true,
+        );
+
+        // We shouldn't have registered a discontinuity event yet
+        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+
+        // Now re-attach the room
+        await monitor.attach();
+
+        // Our first contributor should have registered a discontinuity event now
+        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
+      });
+
+      it<TestContext>('should prefer the first discontinuity event if multiple are received', async (context) => {
+        // Force our status and contributors into attached
+        const status = new DefaultStatus(makeTestLogger());
+        context.firstContributor.emulateStateChange({
+          current: AblyChannelState.Attached,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        context.secondContributor.emulateStateChange({
+          current: AblyChannelState.Attached,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError2,
+        });
+        context.thirdContributor.emulateStateChange({
+          current: AblyChannelState.Attached,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        status.setStatus({ status: RoomStatus.Initialized });
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const monitor = new RoomLifecycleManager(
+          status,
+          [context.firstContributor, context.secondContributor, context.thirdContributor],
+          makeTestLogger(),
+          5,
+        );
+
+        // Send the monitor through the attach cycle
+        mockChannelAttachSuccess(context.firstContributor.channel);
+        mockChannelAttachSuccess(context.secondContributor.channel);
+        mockChannelAttachSuccess(context.thirdContributor.channel);
+
+        await monitor.attach();
+
+        // Send the monitor through the detach cycle
+        mockChannelDetachSuccess(context.firstContributor.channel);
+        mockChannelDetachSuccess(context.secondContributor.channel);
+        mockChannelDetachSuccess(context.thirdContributor.channel);
+
+        await monitor.detach();
+
+        // Emit an update / discontinuity event on the first contributor during the detached state for whatever reason
+        const error1 = new Ably.ErrorInfo('first', 1, 1);
+        context.firstContributor.emulateStateChange(
+          {
+            current: AblyChannelState.Attached,
+            previous: AblyChannelState.Attached,
+            resumed: false,
+            reason: error1,
+          },
+          true,
+        );
+
+        // Now do another
+        context.firstContributor.emulateStateChange(
+          {
+            current: AblyChannelState.Attached,
+            previous: AblyChannelState.Attached,
+            resumed: false,
+            reason: baseError,
+          },
+          true,
+        );
+
+        // We shouldn't have registered a discontinuity event yet
+        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+
+        // Now re-attach the room
+        await monitor.attach();
+
+        // Our first contributor should have registered a discontinuity event now
+        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(error1);
+      });
+    });
+
+    describe('via attach event', () => {
+      it<TestContext>('doesnt register a discontinuity event on initial attach', async (context) => {
+        const status = new DefaultStatus(makeTestLogger());
+        context.firstContributor.emulateStateChange({
+          current: AblyChannelState.Initialized,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        status.setStatus({ status: RoomStatus.Initialized });
+
+        const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+
+        // Send the monitor through the attach cycle
+        mockChannelAttachSuccess(context.firstContributor.channel);
+
+        await monitor.attach();
+
+        // We shouldn't have registered a discontinuity event
+        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+      });
+
+      it<TestContext>('registers a discontinuity immediately post-attach if one of the attach events was a failed resume', async (context) => {
+        // Force our status and contributors into initialized
+        const status = new DefaultStatus(makeTestLogger());
+        context.firstContributor.emulateStateChange({
+          current: AblyChannelState.Initialized,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        context.secondContributor.emulateStateChange({
+          current: AblyChannelState.Initialized,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError2,
+        });
+        context.thirdContributor.emulateStateChange({
+          current: AblyChannelState.Initialized,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        status.setStatus({ status: RoomStatus.Initialized });
+
+        const monitor = new RoomLifecycleManager(
+          status,
+          [context.firstContributor, context.secondContributor, context.thirdContributor],
+          makeTestLogger(),
+          5,
+        );
+
+        // Send the monitor through the attach cycle
+        mockChannelAttachSuccess(context.firstContributor.channel);
+        mockChannelAttachSuccess(context.secondContributor.channel);
+        mockChannelAttachSuccess(context.thirdContributor.channel);
+
+        await monitor.attach();
+
+        // Send the monitor through the detach cycle
+        mockChannelDetachSuccess(context.firstContributor.channel);
+        mockChannelDetachSuccess(context.secondContributor.channel);
+        mockChannelDetachSuccess(context.thirdContributor.channel);
+
+        await monitor.detach();
+
+        // There should be no discontinuity event yet
+        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+
+        // Now do a re-attach, but make the first channel fail to resume
+        mockChannelAttachSuccessWithResumeFailure(context.firstContributor.channel);
+
+        // Now re-attach the room
+        await monitor.attach();
+
+        // Our first contributor should have registered a discontinuity event now
+        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
+      });
+
+      it<TestContext>('prefers the first discontinuity event if multiple are received', async (context) => {
+        // Force our status and contributors into initialized
+        const status = new DefaultStatus(makeTestLogger());
+        context.firstContributor.emulateStateChange({
+          current: AblyChannelState.Initialized,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        context.secondContributor.emulateStateChange({
+          current: AblyChannelState.Initialized,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError2,
+        });
+        context.thirdContributor.emulateStateChange({
+          current: AblyChannelState.Initialized,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        status.setStatus({ status: RoomStatus.Initialized });
+
+        const monitor = new RoomLifecycleManager(
+          status,
+          [context.firstContributor, context.secondContributor, context.thirdContributor],
+          makeTestLogger(),
+          5,
+        );
+
+        // Send the monitor through the attach cycle
+        mockChannelAttachSuccess(context.firstContributor.channel);
+        mockChannelAttachSuccess(context.secondContributor.channel);
+        mockChannelAttachSuccess(context.thirdContributor.channel);
+
+        await monitor.attach();
+
+        // Send the monitor through the detach cycle
+        mockChannelDetachSuccess(context.firstContributor.channel);
+        mockChannelDetachSuccess(context.secondContributor.channel);
+        mockChannelDetachSuccess(context.thirdContributor.channel);
+
+        await monitor.detach();
+
+        // There should be no discontinuity event yet
+        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+
+        // Now we attach again, but fail the second channel so we get a detach event
+        const firstError = new Ably.ErrorInfo('first', 1, 1);
+        mockChannelAttachSuccessWithResumeFailure(context.firstContributor.channel, firstError);
+        mockChannelAttachFailure(context.secondContributor.channel, AblyChannelState.Detached, 1001);
+        mockChannelAttachSuccess(context.thirdContributor.channel);
+
+        // Now re-attach the room, it should reject with the error
+        await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(1001);
+
+        // We should be detached
+        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+
+        // And still no discontinuity event
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+
+        // Now we attach in full with a second resume fail
+        const secondError = new Ably.ErrorInfo('second', 2, 2);
+        mockChannelAttachSuccessWithResumeFailure(context.firstContributor.channel, secondError);
+        mockChannelAttachSuccess(context.secondContributor.channel);
+        mockChannelAttachSuccess(context.thirdContributor.channel);
+
+        // Now re-attach the room
+        await monitor.attach();
+
+        // We should be attached
+        await waitForRoomStatus(status, RoomStatus.Attached);
+
+        // Our first contributor should have registered a discontinuity event now
+        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(firstError);
+      });
     });
   });
 });

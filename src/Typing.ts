@@ -1,6 +1,14 @@
 import * as Ably from 'ably';
 
 import { getChannel } from './channel.js';
+import {
+  DiscontinuityEmitter,
+  DiscontinuityListener,
+  EmitsDiscontinuities,
+  HandlesDiscontinuity,
+  newDiscontinuityEmitter,
+  OnDiscontinuitySubscriptionResponse,
+} from './discontinuity.js';
 import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
@@ -17,7 +25,7 @@ interface TypingEventsMap {
 /**
  * Interface for Typing. This class is used to manage typing events in a chat room.
  */
-export interface Typing {
+export interface Typing extends EmitsDiscontinuities {
   /**
    * Subscribe a given listener to all typing events from users in the chat room.
    *
@@ -109,12 +117,13 @@ export interface TypingSubscriptionResponse {
   unsubscribe: () => void;
 }
 
-export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
+export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing, HandlesDiscontinuity {
   private readonly _clientId: string;
   private readonly _roomId: string;
   private readonly _currentlyTyping: Set<string>;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
+  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   // Timeout for typing
   private readonly _typingTimeoutMs: number;
@@ -270,4 +279,20 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         break;
     }
   };
+
+  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
+    this._logger.trace(`DefaultTyping.onDiscontinuity();`);
+    this._discontinuityEmitter.on(listener);
+
+    return {
+      off: () => {
+        this._discontinuityEmitter.off(listener);
+      },
+    };
+  }
+
+  discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
+    this._logger.warn(`DefaultTyping.discontinuityDetected();`, { error });
+    this._discontinuityEmitter.emit('discontinuity', error);
+  }
 }

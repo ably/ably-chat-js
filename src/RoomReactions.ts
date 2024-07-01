@@ -1,6 +1,14 @@
 import * as Ably from 'ably';
 
 import { getChannel } from './channel.js';
+import {
+  DiscontinuityEmitter,
+  DiscontinuityListener,
+  EmitsDiscontinuities,
+  HandlesDiscontinuity,
+  newDiscontinuityEmitter,
+  OnDiscontinuitySubscriptionResponse,
+} from './discontinuity.js';
 import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultReaction, Reaction, ReactionHeaders, ReactionMetadata } from './Reaction.js';
@@ -65,7 +73,7 @@ export type RoomReactionListener = (reaction: Reaction) => void;
  *
  * Get an instance via room.reactions.
  */
-export interface RoomReactions {
+export interface RoomReactions extends EmitsDiscontinuities {
   /**
    * Send a reaction to the room including some metadata.
    *
@@ -121,11 +129,15 @@ export interface RoomReactionsSubscriptionResponse {
   unsubscribe: () => void;
 }
 
-export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> implements RoomReactions {
+export class DefaultRoomReactions
+  extends EventEmitter<RoomReactionEventsMap>
+  implements RoomReactions, HandlesDiscontinuity
+{
   private readonly roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly clientId: string;
   private readonly _logger: Logger;
+  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
@@ -257,5 +269,21 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
       data.metadata ?? {},
       extras?.headers ?? {},
     );
+  }
+
+  discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
+    this._logger.warn('RoomReactions.discontinuityDetected();', { error });
+    this._discontinuityEmitter.emit('discontinuity', error);
+  }
+
+  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
+    this._logger.trace('RoomReactions.onDiscontinuity();');
+    this._discontinuityEmitter.on(listener);
+
+    return {
+      off: () => {
+        this._discontinuityEmitter.off(listener);
+      },
+    };
   }
 }

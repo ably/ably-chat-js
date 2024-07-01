@@ -1,6 +1,14 @@
 import * as Ably from 'ably';
 
 import { getChannel } from './channel.js';
+import {
+  DiscontinuityEmitter,
+  DiscontinuityListener,
+  EmitsDiscontinuities,
+  HandlesDiscontinuity,
+  newDiscontinuityEmitter,
+  OnDiscontinuitySubscriptionResponse,
+} from './discontinuity.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
@@ -108,7 +116,7 @@ export interface PresenceSubscriptionResponse {
  *
  * Get an instance via room.presence.
  */
-export interface Presence {
+export interface Presence extends EmitsDiscontinuities {
   /**
    * Method to get list of the current online users and returns the latest presence messages associated to it.
    * @param {Ably.RealtimePresenceParams} params - Parameters that control how the presence set is retrieved.
@@ -175,10 +183,11 @@ export interface Presence {
 /**
  * @inheritDoc
  */
-export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements Presence {
+export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements Presence, HandlesDiscontinuity {
   private readonly _channel: Ably.RealtimeChannel;
   private readonly clientId: string;
   private readonly _logger: Logger;
+  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   /**
    * Constructor for Presence
@@ -352,4 +361,19 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
       );
     }
   };
+
+  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
+    this._logger.trace('Presence.onDiscontinuity();');
+    this._discontinuityEmitter.on(listener);
+
+    return {
+      off: () => {
+        this._discontinuityEmitter.off(listener);
+      },
+    };
+  }
+  discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
+    this._logger.warn('Presence.discontinuityDetected();', { error });
+    this._discontinuityEmitter.emit('discontinuity', error);
+  }
 }

@@ -2,6 +2,14 @@ import * as Ably from 'ably';
 
 import { getChannel } from './channel.js';
 import { ChatApi } from './ChatApi.js';
+import {
+  DiscontinuityEmitter,
+  DiscontinuityListener,
+  EmitsDiscontinuities,
+  HandlesDiscontinuity,
+  newDiscontinuityEmitter,
+  OnDiscontinuitySubscriptionResponse,
+} from './discontinuity.js';
 import { Logger } from './logger.js';
 import { addListenerToChannelWithoutAttach } from './realtimeextensions.js';
 import EventEmitter from './utils/EventEmitter.js';
@@ -9,7 +17,7 @@ import EventEmitter from './utils/EventEmitter.js';
 /**
  * Represents the occupancy (number of connections, publishers, and subscribers) of a chat room.
  */
-export interface Occupancy {
+export interface Occupancy extends EmitsDiscontinuities {
   /**
    * Subscribe a given listener to occupancy updates of the chat room.
    *
@@ -77,12 +85,12 @@ interface OccupancyEventsMap {
   [OccupancyEvents.occupancy]: OccupancyEvent;
 }
 
-export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implements Occupancy {
+export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implements Occupancy, HandlesDiscontinuity {
   private readonly roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
-  private _internalListener: Ably.messageCallback<Ably.InboundMessage> | undefined;
   private _logger: Logger;
+  private _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
     super();
@@ -177,5 +185,20 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
       connections: connections,
       presenceMembers: presenceMembers,
     });
+  }
+
+  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
+    this._logger.trace('Occupancy.onDiscontinuity();');
+    this._discontinuityEmitter.on(listener);
+
+    return {
+      off: () => {
+        this._discontinuityEmitter.off(listener);
+      },
+    };
+  }
+  discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
+    this._logger.warn('Occupancy.discontinuityDetected();', { error });
+    this._discontinuityEmitter.emit('discontinuity', error);
   }
 }

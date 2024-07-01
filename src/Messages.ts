@@ -3,6 +3,14 @@ import { ErrorInfo, RealtimeChannel } from 'ably';
 
 import { getChannel } from './channel.js';
 import { ChatApi } from './ChatApi.js';
+import {
+  DiscontinuityEmitter,
+  DiscontinuityListener,
+  EmitsDiscontinuities,
+  HandlesDiscontinuity,
+  newDiscontinuityEmitter,
+  OnDiscontinuitySubscriptionResponse,
+} from './discontinuity.js';
 import { MessageEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './Message.js';
@@ -152,7 +160,7 @@ export interface MessageSubscriptionResponse {
  * This class is used to interact with messages in a chat room including subscribing
  * to them, fetching history, or sending messages.
  */
-export interface Messages {
+export interface Messages extends EmitsDiscontinuities {
   /**
    * Subscribe to new messages in this chat room.
    * @param listener callback that will be called
@@ -206,7 +214,7 @@ export interface Messages {
  *
  * Get an instance via room.messages.
  */
-export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages {
+export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages, HandlesDiscontinuity {
   private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
@@ -218,6 +226,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     }>
   >;
   private readonly _logger: Logger;
+  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
@@ -548,5 +557,27 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       });
       return;
     }
+  }
+
+  /**
+   * @inheritdoc HandlesDiscontinuity
+   */
+  discontinuityDetected(error?: Ably.ErrorInfo): void {
+    this._logger.warn('Messages.discontinuityDetected();', { error });
+    this._discontinuityEmitter.emit('discontinuity', error);
+  }
+
+  /**
+   * @inheritdoc EmitsDiscontinuities
+   */
+  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
+    this._logger.trace('Messages.onDiscontinuity();');
+    this._discontinuityEmitter.on(listener);
+
+    return {
+      off: () => {
+        this._discontinuityEmitter.off(listener);
+      },
+    };
   }
 }
