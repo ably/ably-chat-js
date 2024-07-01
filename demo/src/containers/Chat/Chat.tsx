@@ -17,7 +17,7 @@ export const Chat = () => {
 
   useEffect(() => {
     subscribeToTypingIndicators((typingClients) => {
-      setTypingClients([...typingClients.currentlyTypingClientIds.values()]);
+      setTypingClients([...typingClients.currentlyTyping.values()]);
     });
   }, [subscribeToTypingIndicators]);
 

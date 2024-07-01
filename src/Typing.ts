@@ -79,9 +79,9 @@ export interface Typing {
  */
 export interface TypingEvent {
   /**
-   * A set of clientIds that are currently typing.
+   * Get a set of clientIds that are currently typing.
    */
-  currentlyTypingClientIds: Set<string>;
+  get currentlyTyping(): Set<string>;
 
   /**
    * The change that caused the typing event.
@@ -108,7 +108,7 @@ export type TypingListener = (event: TypingEvent) => void;
 export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
   private readonly _clientId: string;
   private readonly _roomId: string;
-  private readonly _currentlyTypingClientIds: Set<string>;
+  private readonly _currentlyTyping: Set<string>;
   private readonly _typingChannelName: string;
   private readonly _managedChannel: SubscriptionManager;
   private readonly _logger: Logger;
@@ -123,12 +123,13 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @param realtime - The Ably Realtime instance.
    * @param clientId - The client ID.
    * @param typingTimeoutMs - The timeout for typing events, set to 3000ms by default.
+   * @param logger - The logger instance.
    */
   constructor(roomId: string, realtime: Ably.Realtime, clientId: string, typingTimeoutMs: number, logger: Logger) {
     super();
     this._roomId = roomId;
     this._clientId = clientId;
-    this._currentlyTypingClientIds = new Set();
+    this._currentlyTyping = new Set();
     this._typingChannelName = `${this._roomId}::$chat::$typingIndicators`;
     this._managedChannel = new DefaultSubscriptionManager(
       realtime.channels.get(this._typingChannelName, DEFAULT_CHANNEL_OPTIONS),
@@ -145,7 +146,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @inheritDoc
    */
   get(): Set<string> {
-    return new Set<string>(this._currentlyTypingClientIds);
+    return new Set<string>(this._currentlyTyping);
   }
 
   /**
@@ -243,9 +244,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
           return;
         }
 
-        this._currentlyTypingClientIds.add(member.clientId);
+        this._currentlyTyping.add(member.clientId);
         this.emit(TypingEvents.typingStarted, {
-          currentlyTypingClientIds: new Set<string>(this._currentlyTypingClientIds),
+          currentlyTyping: new Set<string>(this._currentlyTyping),
           change: {
             clientId: member.clientId,
             isTyping: true,
@@ -258,9 +259,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
           return;
         }
 
-        this._currentlyTypingClientIds.delete(member.clientId);
+        this._currentlyTyping.delete(member.clientId);
         this.emit(TypingEvents.typingStopped, {
-          currentlyTypingClientIds: new Set<string>(this._currentlyTypingClientIds),
+          currentlyTyping: new Set<string>(this._currentlyTyping),
           change: {
             clientId: member.clientId,
             isTyping: false,
