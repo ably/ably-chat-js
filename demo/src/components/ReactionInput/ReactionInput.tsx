@@ -8,14 +8,18 @@ interface ReactionInputProps {
 export const ReactionInput: FC<ReactionInputProps> = ({ reactions, onSend }) => {
   // set default reactions if empty or not set
   if (!reactions || reactions.length === 0) {
-    reactions = ["👍", "❤️", "💥", "🚀", "👎", "💔"];
+    reactions = ['👍', '❤️', '💥', '🚀', '👎', '💔'];
   }
 
-  const buttons = reactions.map(r => <a key={r} onClick={ () => onSend(r) } href="#">{r}</a>)
+  const buttons = reactions.map((r) => (
+    <a
+      key={r}
+      onClick={() => onSend(r)}
+      href="#"
+    >
+      {r}
+    </a>
+  ));
 
-  return (
-    <div className="reactions-picker">
-      { buttons }
-    </div>
-  );
+  return <div className="reactions-picker">{buttons}</div>;
 };
