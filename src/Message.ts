@@ -1,7 +1,5 @@
-/**
- * Message headers are a flat map where values can only be one of the ones defined here.
- */
-export type AcceptableHeaderValue = number | string | boolean | null | undefined;
+import { Headers } from './Headers.js';
+import { Metadata } from './Metadata.js';
 
 /**
  * Represents a single message in a chat room.
@@ -44,7 +42,7 @@ export interface Message {
    * Do not use metadata for authoritative information. There is no server-side
    * validation. When reading the metadata treat it like user input.
    */
-  readonly metadata: Record<string, unknown>;
+  readonly metadata: Metadata;
 
   /**
    * The headers of a chat message. Headers enable attaching extra info to a message,
@@ -59,7 +57,7 @@ export interface Message {
    * Do not use the headers for authoritative information. There is no server-side
    * validation. When reading the headers treat them like user input.
    */
-  readonly headers: Record<string, AcceptableHeaderValue>;
+  readonly headers: Headers;
 
   /**
    * Determines if this message was created before the given message.
@@ -110,8 +108,8 @@ export class DefaultMessage implements Message {
     public readonly roomId: string,
     public readonly text: string,
     public readonly createdAt: Date,
-    public readonly metadata: Record<string, unknown>,
-    public readonly headers: Record<string, AcceptableHeaderValue>,
+    public readonly metadata: Metadata,
+    public readonly headers: Headers,
   ) {
     this._calculatedTimeserial = DefaultMessage.calculateTimeserial(timeserial);
 

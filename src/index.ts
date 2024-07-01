@@ -3,7 +3,7 @@ export type { ClientOptions } from './config.js';
 export { MessageEvents, PresenceEvents } from './events.js';
 export type { LogContext, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
-export type { AcceptableHeaderValue, Message } from './Message.js';
+export type { Message } from './Message.js';
 export type {
   Direction,
   MessageEventPayload,
@@ -21,3 +21,5 @@ export type { RoomReactionListener, RoomReactions } from './RoomReactions.js';
 export type { Rooms } from './Rooms.js';
 export type { Typing, TypingEvent, TypingListener } from './Typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';
+export type { Headers } from './Headers.js';
+export type { Metadata } from './Metadata.js';

@@ -2,8 +2,10 @@ import * as Ably from 'ably';
 
 import { ChatApi } from './ChatApi.js';
 import { MessageEvents } from './events.js';
+import { Headers } from './Headers.js';
 import { Logger } from './logger.js';
-import { AcceptableHeaderValue, DefaultMessage, Message } from './Message.js';
+import { DefaultMessage, Message } from './Message.js';
+import { Metadata } from './Metadata.js';
 import { PaginatedResult } from './query.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
@@ -86,7 +88,7 @@ export interface SendMessageParams {
    * The key `ably-chat` is reserved and cannot be used. Ably may populate
    * this with different values in the future.
    */
-  metadata?: Record<string, unknown>;
+  metadata?: Metadata;
 
   /**
    * Optional headers of the message.
@@ -104,7 +106,7 @@ export interface SendMessageParams {
    * The key prefix `ably-chat` is reserved and cannot be used. Ably may add
    * headers prefixed with `ably-chat` in the future.
    */
-  headers?: Record<string, AcceptableHeaderValue>;
+  headers?: Headers;
 }
 
 /**
@@ -324,13 +326,13 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     interface MessagePayload {
       data?: {
         text?: string;
-        metadata?: Record<string, unknown>;
+        metadata?: Metadata;
       };
       clientId?: string;
       timestamp?: number;
       extras?: {
         timeserial?: string;
-        headers?: Record<string, AcceptableHeaderValue>;
+        headers?: Headers;
       };
     }
 

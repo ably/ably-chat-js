@@ -1,7 +1,9 @@
 import * as Ably from 'ably';
 
+import { Headers } from './Headers.js';
 import { Logger } from './logger.js';
-import { AcceptableHeaderValue, DefaultMessage, Message } from './Message.js';
+import { DefaultMessage, Message } from './Message.js';
+import { Metadata } from './Metadata.js';
 import { OccupancyEvent } from './Occupancy.js';
 import { PaginatedResult } from './query.js';
 
@@ -23,8 +25,8 @@ interface CreateMessageRequest {
 
 interface SendMessageParams {
   text: string;
-  metadata?: Record<string, unknown>;
-  headers?: Record<string, AcceptableHeaderValue>;
+  metadata?: Metadata;
+  headers?: Headers;
 }
 
 /**
@@ -45,8 +47,8 @@ export class ChatApi {
       params,
     ).then((data) => {
       data.items = data.items.map((message) => {
-        const metadata = message.metadata as Record<string, unknown> | undefined;
-        const headers = message.headers as Record<string, AcceptableHeaderValue> | undefined;
+        const metadata = message.metadata as Metadata | undefined;
+        const headers = message.headers as Headers | undefined;
         return new DefaultMessage(
           message.timeserial,
           message.clientId,
@@ -64,8 +66,8 @@ export class ChatApi {
   async sendMessage(roomId: string, params: SendMessageParams): Promise<CreateMessageResponse> {
     const body: {
       text: string;
-      metadata?: Record<string, unknown>;
-      headers?: Record<string, AcceptableHeaderValue>;
+      metadata?: Metadata;
+      headers?: Headers;
     } = { text: params.text };
     if (params.metadata) {
       body.metadata = params.metadata;
