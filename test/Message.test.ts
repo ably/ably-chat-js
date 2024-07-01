@@ -13,6 +13,8 @@ describe('ChatMessage', () => {
       'roomId',
       'hello there',
       new Date(1672531200000),
+      {},
+      {},
     );
     const secondMessage = new DefaultMessage(
       secondTimeserial,
@@ -20,6 +22,8 @@ describe('ChatMessage', () => {
       'roomId',
       'hello there',
       new Date(1672531200000),
+      {},
+      {},
     );
 
     expect(firstMessage.equal(secondMessage)).toBe(true);
@@ -35,6 +39,8 @@ describe('ChatMessage', () => {
       'roomId',
       'hello there',
       new Date(1672531200000),
+      {},
+      {},
     );
     const secondMessage = new DefaultMessage(
       secondTimeserial,
@@ -42,6 +48,8 @@ describe('ChatMessage', () => {
       'roomId',
       'hello there',
       new Date(1672531200000),
+      {},
+      {},
     );
 
     expect(firstMessage.equal(secondMessage)).toBe(false);
@@ -67,6 +75,8 @@ describe('ChatMessage', () => {
       'roomId',
       'hello there',
       new Date(1672531200000),
+      {},
+      {},
     );
     const secondMessage = new DefaultMessage(
       secondTimeserial,
@@ -74,6 +84,8 @@ describe('ChatMessage', () => {
       'roomId',
       'hello there',
       new Date(1672531200000),
+      {},
+      {},
     );
 
     expect(firstMessage.before(secondMessage)).toBe(expected);
@@ -99,6 +111,8 @@ describe('ChatMessage', () => {
       'roomId',
       'hello there',
       new Date(1672531200000),
+      {},
+      {},
     );
     const secondMessage = new DefaultMessage(
       secondTimeserial,
@@ -106,6 +120,8 @@ describe('ChatMessage', () => {
       'roomId',
       'hello there',
       new Date(1672531200000),
+      {},
+      {},
     );
 
     expect(firstMessage.after(secondMessage)).toBe(expected);
@@ -116,8 +132,8 @@ describe('ChatMessage', () => {
     ['abcdefghij@'], // No timestamp
     ['abcdefghij'], // No series id
   ])('throws an error with an invalid timeserial %s', (timeserial) => {
-    expect(() => new DefaultMessage(timeserial, 'clientId', 'roomId', 'hello there', new Date(1672531200000))).toThrow(
-      new Error('Invalid timeserial'),
-    );
+    expect(
+      () => new DefaultMessage(timeserial, 'clientId', 'roomId', 'hello there', new Date(1672531200000), {}, {}),
+    ).toThrow(new Error('Invalid timeserial'));
   });
 });

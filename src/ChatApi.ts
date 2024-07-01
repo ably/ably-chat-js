@@ -24,7 +24,7 @@ interface CreateMessageRequest {
 interface SendMessageParams {
   text: string;
   metadata?: Record<string, unknown>;
-  headers?: Record<string, number | string | boolean>;
+  headers?: Record<string, AcceptableHeaderValue>;
 }
 
 /**
@@ -65,7 +65,7 @@ export class ChatApi {
     const body: {
       text: string;
       metadata?: Record<string, unknown>;
-      headers?: Record<string, number | string | boolean>;
+      headers?: Record<string, AcceptableHeaderValue>;
     } = { text: params.text };
     if (params.metadata) {
       body.metadata = params.metadata;

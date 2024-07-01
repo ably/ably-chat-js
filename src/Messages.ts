@@ -68,7 +68,7 @@ export interface QueryOptions {
 interface SendMessageParams {
   text: string;
   metadata?: Record<string, unknown>;
-  headers?: Record<string, number | string | boolean>;
+  headers?: Record<string, AcceptableHeaderValue>;
 }
 
 /**
@@ -199,7 +199,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     }
 
     if (headers) {
-      Object.keys(headers).forEach(key => {
+      Object.keys(headers).forEach((key) => {
         if (key.startsWith('ably-chat')) {
           throw new Ably.ErrorInfo(
             "unable to send message; headers cannot have any key starting with reserved prefix 'ably-chat'",
@@ -210,7 +210,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       });
     }
 
-    const response = await this._chatApi.sendMessage(this._roomId, { text: text });
+    const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
 
     return new DefaultMessage(
       response.timeserial,
@@ -218,8 +218,8 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       this._roomId,
       text,
       new Date(response.createdAt),
-      params.metadata ?? {},
-      params.headers ?? {},
+      metadata ?? {},
+      headers ?? {},
     );
   }
 

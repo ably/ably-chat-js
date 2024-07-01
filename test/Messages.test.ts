@@ -83,7 +83,7 @@ describe('Messages', () => {
         normaliseClientOptions({ typingTimeoutMs: 300 }),
         makeTestLogger(),
       );
-      const messagePromise = room.messages.send('hello there');
+      const messagePromise = room.messages.send({ text: 'hello there' });
 
       const message = await messagePromise;
 
@@ -96,6 +96,117 @@ describe('Messages', () => {
           roomId: 'coffee-room-chat',
         }),
       );
+    });
+  });
+
+  describe('headers and metadata', () => {
+    it<TestContext>('should be able to send message with headers and metadata and get it back from response', async (context) => {
+      const { chatApi, realtime } = context;
+      const timestamp = new Date().getTime();
+      vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
+        timeserial: 'abcdefghij@1672531200000-123',
+        createdAt: timestamp,
+      });
+
+      const room = new DefaultRoom(
+        'coffee-room-chat',
+        realtime,
+        chatApi,
+        normaliseClientOptions({ typingTimeoutMs: 300 }),
+        makeTestLogger(),
+      );
+      const messagePromise = room.messages.send({
+        text: 'hello there',
+        headers: { something: 'else', abc: 123, def: true, bla: null },
+        metadata: { hello: { name: 'world', more: ['nested', true] }, 'meta-abc': 'abc', '123': 456, pi: 3.14 },
+      });
+
+      const message = await messagePromise;
+
+      expect(message).toEqual(
+        expect.objectContaining({
+          timeserial: 'abcdefghij@1672531200000-123',
+          text: 'hello there',
+          clientId: 'clientId',
+          createdAt: new Date(timestamp),
+          roomId: 'coffee-room-chat',
+          headers: {
+            something: 'else',
+            abc: 123,
+            def: true,
+            bla: null,
+          },
+          metadata: { hello: { name: 'world', more: ['nested', true] }, 'meta-abc': 'abc', '123': 456, pi: 3.14 },
+        }),
+      );
+    });
+
+    it<TestContext>('should be not be able to set reserved header prefix', (context) => {
+      return new Promise<void>((accept, reject) => {
+        const { chatApi, realtime } = context;
+        const timestamp = new Date().getTime();
+        vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
+          timeserial: 'abcdefghij@1672531200000-123',
+          createdAt: timestamp,
+        });
+
+        const room = new DefaultRoom(
+          'coffee-room-chat',
+          realtime,
+          chatApi,
+          normaliseClientOptions({ typingTimeoutMs: 300 }),
+          makeTestLogger(),
+        );
+
+        const messagePromise = room.messages.send({
+          text: 'hello there',
+          headers: { 'ably-chat.you': 'shall not pass' },
+        });
+
+        messagePromise
+          .then(() => {
+            reject(new Error('message should have not been sent successfully'));
+          })
+          .catch((err: unknown) => {
+            expect(err).toBeTruthy();
+            expect((err as Error).message).toMatch(/reserved prefix/);
+            accept();
+          });
+      });
+    });
+
+    it<TestContext>('should be not be able to set reserved metadata key', (context) => {
+      return new Promise<void>((accept, reject) => {
+        const { chatApi, realtime } = context;
+        const timestamp = new Date().getTime();
+        vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
+          timeserial: 'abcdefghij@1672531200000-123',
+          createdAt: timestamp,
+        });
+
+        const room = new DefaultRoom(
+          'coffee-room-chat',
+          realtime,
+          chatApi,
+          normaliseClientOptions({ typingTimeoutMs: 300 }),
+          makeTestLogger(),
+        );
+
+        const messagePromise = room.messages.send({
+          text: 'hello there',
+          metadata: { 'ably-chat': 'shall not pass' },
+        });
+
+        messagePromise
+          .then(() => {
+            reject(new Error('message should have not been sent successfully'));
+          })
+          .catch((err: unknown) => {
+            expect(err).toBeTruthy();
+            expect((err as Error).message).toMatch(/reserved key/);
+            accept();
+          });
+      });
     });
   });
 

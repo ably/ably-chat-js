@@ -38,7 +38,7 @@ export interface Message {
    * Metadata is part of the Ably Pub/sub message content and is not read by Ably.
    *
    * This value is always set. If there is no metadata, this is an empty object.
-   * 
+   *
    * Do not use metadata for authoritative information. There is no server-side
    * validation. When reading the metadata treat it like user input.
    */
@@ -53,7 +53,7 @@ export interface Message {
    * for Filtered Subscriptions and similar.
    *
    * This value is always set. If there are no headers, this is an empty object.
-   * 
+   *
    * Do not use the headers for authoritative information. There is no server-side
    * validation. When reading the headers treat them like user input.
    */

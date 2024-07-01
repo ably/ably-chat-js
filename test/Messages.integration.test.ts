@@ -52,10 +52,10 @@ describe('messages integration', () => {
       messages.push(messageEvent.message);
     });
 
-    const message1 = await room.messages.send('Hello there!');
-    const message2 = await room.messages.send('I have the high ground!');
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const message2 = await room.messages.send({ text: 'I have the high ground!' });
 
-    // Wait up to 5 seconds for the messagesPromise to resolve
+    // Wait up to 5 seconds for the messagesPromise to resolven
     await waitForMessages(messages, 2);
 
     // Check that the messages were received
@@ -79,9 +79,9 @@ describe('messages integration', () => {
     const room = chat.rooms.get(randomRoomId());
 
     // Publish 3 messages
-    const message1 = await room.messages.send('Hello there!');
-    const message2 = await room.messages.send('I have the high ground!');
-    const message3 = await room.messages.send('You underestimate my power!');
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const message2 = await room.messages.send({ text: 'I have the high ground!' });
+    const message3 = await room.messages.send({ text: 'You underestimate my power!' });
 
     // Do a history request to get all 3 messages
     const history = await room.messages.query({ limit: 3, direction: 'forwards' });
@@ -114,10 +114,10 @@ describe('messages integration', () => {
     const room = chat.rooms.get(randomRoomId());
 
     // Publish 4 messages
-    const message1 = await room.messages.send('Hello there!');
-    const message2 = await room.messages.send('I have the high ground!');
-    const message3 = await room.messages.send('You underestimate my power!');
-    const message4 = await room.messages.send("Don't try it!");
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const message2 = await room.messages.send({ text: 'I have the high ground!' });
+    const message3 = await room.messages.send({ text: 'You underestimate my power!' });
+    const message4 = await room.messages.send({ text: "Don't try it!" });
 
     // Do a history request to get the first 3 messages
     const history1 = await room.messages.query({ limit: 3, direction: 'forwards' });
@@ -164,10 +164,10 @@ describe('messages integration', () => {
     const room = chat.rooms.get(randomRoomId());
 
     // Publish 4 messages
-    const message1 = await room.messages.send('Hello there!');
-    const message2 = await room.messages.send('I have the high ground!');
-    const message3 = await room.messages.send('You underestimate my power!');
-    const message4 = await room.messages.send("Don't try it!");
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const message2 = await room.messages.send({ text: 'I have the high ground!' });
+    const message3 = await room.messages.send({ text: 'You underestimate my power!' });
+    const message4 = await room.messages.send({ text: "Don't try it!" });
 
     // Do a history request to get the last 3 messages
     const history1 = await room.messages.query({ limit: 3, direction: 'backwards' });
@@ -206,5 +206,62 @@ describe('messages integration', () => {
 
     // We shouldn't have a "next" link in the response
     expect(history2?.hasNext()).toBe(false);
+  });
+
+  it<TestContext>('should be able to send, receive and query chat messages with metadata and headers', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId());
+
+    // Subscribe to messages and add them to a list when they arive
+    const messages: Message[] = [];
+    await room.messages.subscribe((messageEvent) => {
+      messages.push(messageEvent.message);
+    });
+
+    const message1 = await room.messages.send({
+      text: 'Hello there!',
+      headers: { key1: 'val1', key2: 22 },
+      metadata: { hello: { name: 'world' } },
+    });
+    const message2 = await room.messages.send({
+      text: 'I have the high ground!',
+      headers: { key1: 'second key 1 value', key2: 99, greeting: 'yo' },
+      metadata: { hello: { name: 'second' } },
+    });
+
+    // Wait up to 5 seconds for the messagesPromise to resolven
+    await waitForMessages(messages, 2);
+
+    const expectedMessages = [
+      {
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        timeserial: message1.timeserial,
+        headers: { key1: 'val1', key2: 22 },
+        metadata: { hello: { name: 'world' } },
+      },
+      {
+        text: 'I have the high ground!',
+        clientId: chat.clientId,
+        timeserial: message2.timeserial,
+        headers: { key1: 'second key 1 value', key2: 99, greeting: 'yo' },
+        metadata: { hello: { name: 'second' } },
+      },
+    ];
+
+    // Check that the messages were received
+    expect(messages, 'realtime messages to match').toEqual([
+      expect.objectContaining(expectedMessages[0]),
+      expect.objectContaining(expectedMessages[1]),
+    ]);
+
+    const history = await room.messages.query({ limit: 2, direction: 'forwards' });
+
+    expect(history.items.length).toEqual(2);
+    expect(history.items, 'history messages to match').toEqual([
+      expect.objectContaining(expectedMessages[0]),
+      expect.objectContaining(expectedMessages[1]),
+    ]);
   });
 });
