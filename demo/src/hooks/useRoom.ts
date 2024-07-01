@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import {RoomContext } from '../containers/RoomContext';
+import { RoomContext } from '../containers/RoomContext';
 
 export const useRoom = () => {
   const context = useContext(RoomContext);

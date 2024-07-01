@@ -13,7 +13,7 @@ export const useReactions = () => {
   );
 
   useEffect(() => {
-    const reactionReceived = (reaction : Reaction) => {
+    const reactionReceived = (reaction: Reaction) => {
       setReactions((prevReactions) => [...prevReactions, reaction]);
     };
     room.reactions.subscribe(reactionReceived);
