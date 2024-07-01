@@ -199,7 +199,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     }
 
     if (headers) {
-      for (const key in headers) {
+      Object.keys(headers).forEach(key => {
         if (key.startsWith('ably-chat')) {
           throw new Ably.ErrorInfo(
             "unable to send message; headers cannot have any key starting with reserved prefix 'ably-chat'",
@@ -207,7 +207,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
             400,
           ) as unknown as Error;
         }
-      }
+      });
     }
 
     const response = await this._chatApi.sendMessage(this._roomId, { text: text });
