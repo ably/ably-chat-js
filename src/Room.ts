@@ -6,10 +6,10 @@ import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './Messages.js';
 import { DefaultOccupancy, Occupancy } from './Occupancy.js';
 import { DefaultPresence, Presence } from './Presence.js';
+import { RoomLifecycleManager } from './RoomLifecycleManager.js';
 import { DefaultRoomReactions, RoomReactions } from './RoomReactions.js';
-import { DefaultSubscriptionManager } from './SubscriptionManager.js';
+import { DefaultStatus, Status } from './RoomStatus.js';
 import { DefaultTyping, Typing } from './Typing.js';
-import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 
 /**
  * Represents a chat room.
@@ -55,6 +55,27 @@ export interface Room {
    * @returns The occupancy instance for the room.
    */
   get occupancy(): Occupancy;
+
+  /**
+   * Returns an object that can be used to observe the status of the room.
+   *
+   * @returns The status observable.
+   */
+  get status(): Status;
+
+  /**
+   * Attaches to the room to receive events in realtime.
+   *
+   * @returns A promise that resolves when the room is attached.
+   */
+  attach(): Promise<void>;
+
+  /**
+   * Detaches from the room to stop receiving events in realtime.
+   *
+   * @returns A promise that resolves when the room is detached.
+   */
+  detach(): Promise<void>;
 }
 
 export class DefaultRoom implements Room {
@@ -66,6 +87,8 @@ export class DefaultRoom implements Room {
   private readonly _reactions: RoomReactions;
   private readonly _occupancy: Occupancy;
   private readonly _logger: Logger;
+  private readonly _status: DefaultStatus;
+  private readonly _lifecycleManager: RoomLifecycleManager;
 
   /**
    * Constructs a new Room instance.
@@ -84,23 +107,21 @@ export class DefaultRoom implements Room {
   ) {
     this._roomId = roomId;
     this.chatApi = chatApi;
-    const messagesChannelName = `${this._roomId}::$chat::$chatMessages`;
-
-    const subscriptionManager = new DefaultSubscriptionManager(
-      realtime.channels.get(messagesChannelName, DEFAULT_CHANNEL_OPTIONS),
-      logger,
-    );
-    this._messages = new DefaultMessages(roomId, subscriptionManager, this.chatApi, realtime.auth.clientId, logger);
-    this._presence = new DefaultPresence(subscriptionManager, realtime.auth.clientId, logger);
-    this._typing = new DefaultTyping(roomId, realtime, realtime.auth.clientId, clientOptions.typingTimeoutMs, logger);
-
-    const reactionsManagedChannel = new DefaultSubscriptionManager(
-      realtime.channels.get(`${this._roomId}::$chat::$reactions`, DEFAULT_CHANNEL_OPTIONS),
-      logger,
-    );
-    this._reactions = new DefaultRoomReactions(roomId, reactionsManagedChannel, realtime.auth.clientId, logger);
-    this._occupancy = new DefaultOccupancy(roomId, subscriptionManager, this.chatApi, logger);
     this._logger = logger;
+    this._status = new DefaultStatus(logger);
+
+    this._messages = new DefaultMessages(roomId, realtime, this.chatApi, realtime.auth.clientId, logger);
+    this._presence = new DefaultPresence(roomId, realtime, realtime.auth.clientId, logger);
+    this._typing = new DefaultTyping(roomId, realtime, realtime.auth.clientId, clientOptions.typingTimeoutMs, logger);
+    this._reactions = new DefaultRoomReactions(roomId, realtime, realtime.auth.clientId, logger);
+    this._occupancy = new DefaultOccupancy(roomId, realtime, this.chatApi, logger);
+
+    this._lifecycleManager = new RoomLifecycleManager(
+      this._status,
+      [this._messages, this._presence, this._typing, this._reactions, this._occupancy],
+      logger,
+      5000,
+    );
   }
 
   /**
@@ -143,5 +164,28 @@ export class DefaultRoom implements Room {
    */
   get occupancy(): Occupancy {
     return this._occupancy;
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  get status(): Status {
+    return this._status;
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  async attach(): Promise<void> {
+    this._logger.trace('Room.attach();');
+    return this._lifecycleManager.attach();
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  async detach(): Promise<void> {
+    this._logger.trace('Room.detach();');
+    return this._lifecycleManager.detach();
   }
 }

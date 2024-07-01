@@ -1,12 +1,12 @@
 import * as Ably from 'ably';
 import { ErrorInfo, RealtimeChannel } from 'ably';
 
+import { getChannel } from './channel.js';
 import { ChatApi } from './ChatApi.js';
 import { MessageEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './Message.js';
 import { PaginatedResult } from './query.js';
-import { SubscriptionManager } from './SubscriptionManager.js';
 import { DefaultTimeserial } from './Timeserial.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -200,7 +200,7 @@ export interface Messages {
  */
 export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages {
   private readonly _roomId: string;
-  private readonly _managedChannel: SubscriptionManager;
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
   private readonly _listenerSubscriptionPoints: Map<
@@ -213,10 +213,10 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
 
   private _internalListener: Ably.messageCallback<Ably.InboundMessage> | undefined;
 
-  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string, logger: Logger) {
+  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
     this._roomId = roomId;
-    this._managedChannel = managedChannel;
+    this._channel = getChannel(`${roomId}::$chat::$chatMessages`, realtime);
     this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
@@ -362,7 +362,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    * @inheritdoc Messages
    */
   get channel(): Ably.RealtimeChannel {
-    return this._managedChannel.channel;
+    return this._channel;
   }
 
   /**
@@ -426,10 +426,10 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     if (!hasListeners) {
       this._logger.debug('Messages.subscribe(); subscribing internal listener');
       this._internalListener = this.processEvent.bind(this);
-      return this._managedChannel.subscribe([MessageEvents.created], this._internalListener);
+      return this._channel.subscribe([MessageEvents.created], this._internalListener);
     }
 
-    return this._managedChannel.channel.attach();
+    return this.channel.attach();
   }
 
   /**
@@ -448,7 +448,8 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
 
     this._logger.debug('Messages.unsubscribe(); unsubscribing internal listener');
     if (this._internalListener) {
-      return this._managedChannel.unsubscribe(this._internalListener);
+      this._channel.unsubscribe(this._internalListener);
+      return Promise.resolve();
     }
 
     return Promise.resolve();

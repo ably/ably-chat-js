@@ -1,10 +1,9 @@
 import * as Ably from 'ably';
 
+import { getChannel } from './channel.js';
 import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultSubscriptionManager, SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
-import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 
 /**
  * Represents the typing events mapped to their respective event payloads.
@@ -109,8 +108,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   private readonly _clientId: string;
   private readonly _roomId: string;
   private readonly _currentlyTyping: Set<string>;
-  private readonly _typingChannelName: string;
-  private readonly _managedChannel: SubscriptionManager;
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
 
   // Timeout for typing
@@ -120,7 +118,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * Create a new DefaultTyping.
    * @param roomId - The ID of the room.
-   * @param realtime - The Ably Realtime instance.
+   * @param channel - The channel to use for typing events.
    * @param clientId - The client ID.
    * @param typingTimeoutMs - The timeout for typing events, set to 3000ms by default.
    * @param logger - The logger instance.
@@ -130,11 +128,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     this._roomId = roomId;
     this._clientId = clientId;
     this._currentlyTyping = new Set();
-    this._typingChannelName = `${this._roomId}::$chat::$typingIndicators`;
-    this._managedChannel = new DefaultSubscriptionManager(
-      realtime.channels.get(this._typingChannelName, DEFAULT_CHANNEL_OPTIONS),
-      logger,
-    );
+    this._channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
 
     // Timeout for typing
     this._typingTimeoutMs = typingTimeoutMs;
@@ -153,7 +147,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @inheritDoc
    */
   get channel(): Ably.RealtimeChannel {
-    return this._managedChannel.channel;
+    return this._channel;
   }
 
   /**
@@ -179,9 +173,10 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       this.startTypingTimer();
       return;
     }
+
     // Start typing and emit typingStarted event
     this.startTypingTimer();
-    return this._managedChannel.presenceEnterClient(this._clientId).then();
+    return this._channel.presence.enterClient(this._clientId).then();
   }
 
   /**
@@ -194,8 +189,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       clearTimeout(this._timerId);
       this._timerId = null;
     }
+
     // Will throw an error if the user is not typing
-    return this._managedChannel.presenceLeaveClient(this._clientId);
+    return this._channel.presence.leaveClient(this._clientId);
   }
 
   /**
@@ -207,7 +203,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     this.on(listener);
     if (!hasListeners) {
       this._logger.debug('DefaultTyping.subscribe(); adding internal listener');
-      return this._managedChannel.presenceSubscribe(this._internalSubscribeToEvents);
+      return this._channel.presence.subscribe(this._internalSubscribeToEvents);
     }
     return Promise.resolve();
   }
@@ -220,7 +216,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     this.off(listener);
     if (!this.hasListeners()) {
       this._logger.debug('DefaultTyping.unsubscribe(); removing internal listener');
-      return this._managedChannel.presenceUnsubscribe(this._internalSubscribeToEvents);
+      return this._channel.presence.subscribe(this._internalSubscribeToEvents);
     }
     return Promise.resolve();
   }

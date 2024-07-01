@@ -1,8 +1,8 @@
 import * as Ably from 'ably';
 
+import { getChannel } from './channel.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
-import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
@@ -170,21 +170,21 @@ export interface Presence {
  * @inheritDoc
  */
 export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements Presence {
-  private readonly subscriptionManager: SubscriptionManager;
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly clientId: string;
   private readonly _logger: Logger;
 
   /**
    * Constructor for Presence
-   * @param subscriptionManager - Internal class that wraps a Realtime channel and ensures that when all subscriptions
+   * @param channel - Internal class that wraps a Realtime channel and ensures that when all subscriptions
    * (messages and presence) are removed, the channel is implicitly detached.
    * @param {string} clientId - The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    * @param logger - The logger instance.
    */
-  constructor(subscriptionManager: SubscriptionManager, clientId: string, logger: Logger) {
+  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
-    this.subscriptionManager = subscriptionManager;
+    this._channel = getChannel(`${roomId}::$chat::$chatMessages`, realtime);
     this.clientId = clientId;
     this._logger = logger;
   }
@@ -194,7 +194,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @returns The realtime channel.
    */
   get channel(): Ably.RealtimeChannel {
-    return this.subscriptionManager.channel;
+    return this._channel;
   }
 
   /**
@@ -202,7 +202,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    */
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     this._logger.trace('Presence.get()', { params });
-    const userOnPresence = await this.subscriptionManager.channel.presence.get(params);
+    const userOnPresence = await this._channel.presence.get(params);
 
     // ably-js never emits the 'absent' event, so we can safely ignore it here.
     return userOnPresence.map((user) => ({
@@ -220,7 +220,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @inheritDoc
    */
   async isUserPresent(clientId: string): Promise<boolean> {
-    const presenceSet = await this.subscriptionManager.channel.presence.get({ clientId: clientId });
+    const presenceSet = await this._channel.presence.get({ clientId: clientId });
     return presenceSet.length > 0;
   }
 
@@ -234,7 +234,8 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-    return this.subscriptionManager.presenceEnterClient(this.clientId, presenceEventToSend);
+
+    return this._channel.presence.enterClient(this.clientId, presenceEventToSend);
   }
 
   /**
@@ -247,7 +248,8 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-    return this.subscriptionManager.presenceUpdateClient(this.clientId, presenceEventToSend);
+
+    return this._channel.presence.updateClient(this.clientId, presenceEventToSend);
   }
 
   /**
@@ -260,7 +262,8 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-    return this.subscriptionManager.presenceLeaveClient(this.clientId, presenceEventToSend);
+
+    return this._channel.presence.leaveClient(this.clientId, presenceEventToSend);
   }
 
   /**
@@ -291,9 +294,9 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     }
     if (!hasListeners) {
       this._logger.debug('Presence.subscribe(); adding internal listener');
-      return this.subscriptionManager.presenceSubscribe(this.subscribeToEvents);
+      return this._channel.presence.subscribe(this.subscribeToEvents);
     }
-    return this.subscriptionManager.channel.attach().then(() => {
+    return this._channel.attach().then(() => {
       return Promise.resolve();
     });
   }
@@ -326,7 +329,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     }
     if (!this.hasListeners()) {
       this._logger.debug('Presence.unsubscribe(); removing internal listener');
-      return this.subscriptionManager.presenceUnsubscribe(this.subscribeToEvents);
+      return this._channel.presence.subscribe(this.subscribeToEvents);
     }
     return Promise.resolve();
   }

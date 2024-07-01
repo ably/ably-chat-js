@@ -1,8 +1,8 @@
 import * as Ably from 'ably';
 
+import { getChannel } from './channel.js';
 import { ChatApi } from './ChatApi.js';
 import { Logger } from './logger.js';
-import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
@@ -74,15 +74,15 @@ interface OccupancyEventsMap {
 
 export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implements Occupancy {
   private readonly roomId: string;
-  private readonly _managedChannel: SubscriptionManager;
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private _internalListener: Ably.messageCallback<Ably.InboundMessage> | undefined;
   private _logger: Logger;
 
-  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, logger: Logger) {
+  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
     super();
     this.roomId = roomId;
-    this._managedChannel = managedChannel;
+    this._channel = getChannel(`${roomId}::$chat::$chatMessages`, realtime);
     this._chatApi = chatApi;
     this._logger = logger;
   }
@@ -98,15 +98,15 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
     if (!hasListeners) {
       this._logger.debug('Occupancy.subscribe(); adding internal listener');
       this._internalListener = this.internalOccupancyListener.bind(this);
-      return this._managedChannel
+      return this._channel
         .subscribe(['[meta]occupancy'], this._internalListener)
         .then(async (stateChange: Ably.ChannelStateChange | null) => {
-          await this._managedChannel.channel.setOptions({ params: { occupancy: 'metrics' } });
+          await this._channel.setOptions({ params: { occupancy: 'metrics' } });
           return stateChange;
         });
     }
 
-    return this._managedChannel.channel.attach();
+    return this._channel.attach();
   }
 
   /**
@@ -117,12 +117,10 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
 
     if (!this.hasListeners()) {
       this._logger.debug('Occupancy.unsubscribe(); removing internal listener');
-      return this._managedChannel.channel
-        .setOptions({})
-        .then(() => (this._internalListener ? this._managedChannel.unsubscribe(this._internalListener) : null))
-        .then(() => {
-          this._internalListener = undefined;
-        });
+      return this._channel.setOptions({}).then(() => {
+        this._internalListener ? this._channel.unsubscribe(this._internalListener) : null;
+        this._internalListener = undefined;
+      });
     }
 
     return Promise.resolve();
@@ -140,7 +138,7 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
    * @inheritdoc Occupancy
    */
   get channel(): Ably.RealtimeChannel {
-    return this._managedChannel.channel;
+    return this._channel;
   }
 
   /**
