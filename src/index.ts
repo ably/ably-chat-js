@@ -34,7 +34,12 @@ export type {
 export type { PaginatedResult } from './query.js';
 export type { Reaction } from './Reaction.js';
 export type { Room } from './Room.js';
-export type { RoomReactionListener, RoomReactions, SendReactionParams } from './RoomReactions.js';
+export type {
+  RoomReactionListener,
+  RoomReactions,
+  RoomReactionsSubscriptionResponse,
+  SendReactionParams,
+} from './RoomReactions.js';
 export type { Rooms } from './Rooms.js';
 export type {
   OnRoomStatusChangeResponse,

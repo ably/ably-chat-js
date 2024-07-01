@@ -61,16 +61,19 @@ describe('room-level reactions integration test', () => {
     const expectedReactions = ['like', 'like', 'love', 'hate'];
     const reactions: string[] = [];
 
-    const subscriber = (reaction: Reaction) => {
+    room.reactions.subscribe((reaction: Reaction) => {
       reactions.push(reaction.type);
-    };
-    await room.reactions.subscribe(subscriber);
+    });
+
+    // Attach the room
+    await room.attach();
+
+    // Send reactions
 
     for (const type of expectedReactions) {
       await room.reactions.send({ type });
     }
 
     await waitForReactions(reactions, expectedReactions);
-    await room.reactions.unsubscribe(subscriber);
   });
 });
