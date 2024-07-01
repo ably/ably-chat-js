@@ -65,9 +65,45 @@ export interface QueryOptions {
 /**
  * Params for sending a text message. Only `text` is mandatory.
  */
-interface SendMessageParams {
+export interface SendMessageParams {
+  /**
+   * The text of the message.
+   */
   text: string;
+
+  /**
+   * Optional metadata of the message.
+   *
+   * The metadata is a map of extra information that can be attached to chat
+   * messages. It is not used by Ably and is sent as part of the realtime
+   * message payload. Example use cases are setting custom styling like
+   * background or text colours or fonts, adding links to external images,
+   * emojis, etc.
+   *
+   * Do not use metadata for authoritative information. There is no server-side
+   * validation. When reading the metadata treat it like user input.
+   *
+   * The key `ably-chat` is reserved and cannot be used. Ably may populate
+   * this with different values in the future.
+   */
   metadata?: Record<string, unknown>;
+
+  /**
+   * Optional headers of the message.
+   *
+   * The headers are a flat key-value map and are sent as part of the realtime
+   * message's extras inside the `headers` property. They can serve similar
+   * purposes as the metadata but they are read by Ably and can be used for
+   * features such as
+   * [subscription filters](https://faqs.ably.com/subscription-filters).
+   *
+   * Do not use the headers for authoritative information. There is no
+   * server-side validation. When reading the headers treat them like user
+   * input.
+   *
+   * The key prefix `ably-chat` is reserved and cannot be used. Ably may add
+   * headers prefixed with `ably-chat` in the future.
+   */
   headers?: Record<string, AcceptableHeaderValue>;
 }
 
@@ -129,7 +165,8 @@ export interface Messages {
    * from the realtime channel. This means you may see the message that was just
    * sent in a callback to `subscribe` before the returned promise resolves.
    *
-   * @param text text of the message
+   * @param params an object containing {text, headers, metadata} for the message
+   * to be sent. Text is required, metadata and headers are optional.
    * @returns A promise that resolves when the message was published.
    */
   send(params: SendMessageParams): Promise<Message>;

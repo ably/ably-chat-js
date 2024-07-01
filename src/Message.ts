@@ -1,4 +1,6 @@
-/** Message headers are a flat map where values can only be one of the ones defined here. */
+/**
+ * Message headers are a flat map where values can only be one of the ones defined here.
+ */
 export type AcceptableHeaderValue = number | string | boolean | null | undefined;
 
 /**
