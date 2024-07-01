@@ -3,6 +3,7 @@ import * as Ably from 'ably';
 import { getChannel } from './channel.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
+import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
@@ -92,6 +93,16 @@ export interface PresenceMember {
 export type PresenceListener = (event: PresenceEvent) => void;
 
 /**
+ * A response object that allows you to control a presence subscription.
+ */
+export interface PresenceSubscriptionResponse {
+  /**
+   * Unsubscribe the listener registered with {@link Presence.subscribe} from all presence events.
+   */
+  unsubscribe: () => void;
+}
+
+/**
  * This interface is used to interact with presence in a chat room including subscribing,
  * fetching presence members, or sending presence events (join,update,leave).
  *
@@ -138,26 +149,21 @@ export interface Presence {
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
    */
-  subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
+  subscribe(
+    eventOrEvents: PresenceEvents | PresenceEvents[],
+    listener?: PresenceListener,
+  ): PresenceSubscriptionResponse;
 
   /**
    * Subscribe the given listener to all presence events.
    * @param listener listener to subscribe
    */
-  subscribe(listener?: PresenceListener): Promise<void>;
+  subscribe(listener?: PresenceListener): PresenceSubscriptionResponse;
 
   /**
-   * Unsubscribe the given listener from the given list of events.
-   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to unsubscribe from
-   * @param listener listener to unsubscribe
+   * Unsubscribe all listeners from all presence events.
    */
-  unsubscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
-
-  /**
-   * Unsubscribe the given listener from all presence events.
-   * @param listener listener to unsubscribe
-   */
-  unsubscribe(listener?: PresenceListener): Promise<void>;
+  unsubscribeAll(): void;
 
   /**
    * Get the underlying Ably realtime channel used for presence in this chat room.
@@ -185,6 +191,10 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
   constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
     this._channel = getChannel(`${roomId}::$chat::$chatMessages`, realtime);
+    addListenerToChannelPresenceWithoutAttach({
+      listener: this.subscribeToEvents.bind(this),
+      channel: this._channel,
+    });
     this.clientId = clientId;
     this._logger = logger;
   }
@@ -271,67 +281,49 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
    */
-  subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
+  subscribe(
+    eventOrEvents: PresenceEvents | PresenceEvents[],
+    listener?: PresenceListener,
+  ): PresenceSubscriptionResponse;
   /**
    * Subscribe the given listener to all presence events.
    * @param listener listener to subscribe
    */
-  subscribe(listener?: PresenceListener): Promise<void>;
-  async subscribe(
+  subscribe(listener?: PresenceListener): PresenceSubscriptionResponse;
+  subscribe(
     listenerOrEvents?: PresenceEvents | PresenceEvents[] | PresenceListener,
     listener?: PresenceListener,
-  ): Promise<void> {
+  ): PresenceSubscriptionResponse {
     this._logger.trace('Presence.subscribe(); listenerOrEvents', { listenerOrEvents });
     if (!listenerOrEvents && !listener) {
       this._logger.error('could not subscribe to presence; invalid arguments');
       throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400);
     }
-    const hasListeners = this.hasListeners();
+
+    // Add listener to all events
     if (!listener) {
-      this.on(listenerOrEvents);
+      this.on(listenerOrEvents as PresenceListener);
+      return {
+        unsubscribe: () => {
+          this.off(listenerOrEvents as PresenceListener);
+        },
+      };
     } else {
-      this.on(listenerOrEvents, listener);
+      this.on(listenerOrEvents as PresenceEvents, listener);
+      return {
+        unsubscribe: () => {
+          this.off(listener);
+        },
+      };
     }
-    if (!hasListeners) {
-      this._logger.debug('Presence.subscribe(); adding internal listener');
-      return this._channel.presence.subscribe(this.subscribeToEvents);
-    }
-    return this._channel.attach().then(() => {
-      return Promise.resolve();
-    });
   }
 
   /**
-   * Unsubscribe the given listener from the given list of events.
-   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to unsubscribe from
-   * @param listener listener to unsubscribe
+   * Unsubscribe all listeners from all presence events.
    */
-  unsubscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
-
-  /**
-   * Unsubscribe the given listener from all presence events.
-   * @param listener listener to unsubscribe
-   */
-  unsubscribe(listener?: PresenceListener): Promise<void>;
-  async unsubscribe(
-    listenerOrEvents?: PresenceEvents | PresenceEvents[] | PresenceListener,
-    listener?: PresenceListener,
-  ): Promise<void> {
-    this._logger.trace('Presence.unsubscribe(); listenerOrEvents', { listenerOrEvents });
-    if (!listenerOrEvents && !listener) {
-      this._logger.error('could not unsubscribe from presence; invalid arguments');
-      throw new Ably.ErrorInfo('could not unsubscribe listener: invalid arguments', 40000, 400);
-    }
-    if (!listener) {
-      this.off(listenerOrEvents);
-    } else {
-      this.off(listenerOrEvents, listener);
-    }
-    if (!this.hasListeners()) {
-      this._logger.debug('Presence.unsubscribe(); removing internal listener');
-      return this._channel.presence.subscribe(this.subscribeToEvents);
-    }
-    return Promise.resolve();
+  unsubscribeAll(): void {
+    this._logger.trace('Presence.unsubscribeAll()');
+    this.off();
   }
 
   /**

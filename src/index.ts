@@ -23,7 +23,14 @@ export type {
 } from './Messages.js';
 export type { Metadata } from './Metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener, OccupancySubscriptionResponse } from './Occupancy.js';
-export type { Presence, PresenceData, PresenceEvent, PresenceListener, PresenceMember } from './Presence.js';
+export type {
+  Presence,
+  PresenceData,
+  PresenceEvent,
+  PresenceListener,
+  PresenceMember,
+  PresenceSubscriptionResponse,
+} from './Presence.js';
 export type { PaginatedResult } from './query.js';
 export type { Reaction } from './Reaction.js';
 export type { Room } from './Room.js';

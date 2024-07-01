@@ -17,11 +17,7 @@ function createMockPresence() {
     leaveClient: methodReturningVoidPromise,
     enter: methodReturningVoidPromise,
     leave: methodReturningVoidPromise,
-    subscriptions: {
-      once: (_: unknown, fn: () => void) => {
-        fn();
-      },
-    },
+    subscriptions: createMockEmitter(),
     subscribe: methodReturningVoidPromise,
     unsubscribe: methodReturningVoidPromise,
   };
