@@ -526,14 +526,22 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       return;
     }
 
-    return new DefaultMessage(
-      messageCreatedMessage.extras.timeserial,
-      messageCreatedMessage.clientId,
-      this._roomId,
-      messageCreatedMessage.data.text,
-      new Date(messageCreatedMessage.timestamp),
-      messageCreatedMessage.data.metadata ?? {},
-      messageCreatedMessage.extras.headers ?? {},
-    );
+    try {
+      return new DefaultMessage(
+        messageCreatedMessage.extras.timeserial,
+        messageCreatedMessage.clientId,
+        this._roomId,
+        messageCreatedMessage.data.text,
+        new Date(messageCreatedMessage.timestamp),
+        messageCreatedMessage.data.metadata ?? {},
+        messageCreatedMessage.extras.headers ?? {},
+      );
+    } catch (error: unknown) {
+      this._logger.error(`failed to parse incoming message`, {
+        channelEventMessage,
+        error: error as Ably.ErrorInfo,
+      });
+      return;
+    }
   }
 }
