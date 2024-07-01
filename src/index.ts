@@ -48,5 +48,5 @@ export type {
   RoomStatusListener,
   Status,
 } from './RoomStatus.js';
-export type { Typing, TypingEvent, TypingListener } from './Typing.js';
+export type { Typing, TypingEvent, TypingListener, TypingSubscriptionResponse } from './Typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';

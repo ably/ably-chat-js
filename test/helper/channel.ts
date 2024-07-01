@@ -39,3 +39,21 @@ export const channelStateEventEmitter = (channel: Ably.RealtimeChannel): Channel
     channelWithEmitter.emit(arg.current, arg);
   };
 };
+
+export const channelPresenceEventEmitter = (
+  channel: Ably.RealtimeChannel,
+): ChannelEventEmitterReturnType<Partial<Ably.PresenceMessage>> => {
+  const channelWithEmitter = channel as Ably.RealtimeChannel & {
+    presence: {
+      subscriptions: Emitter;
+    };
+  };
+
+  return (arg: Partial<Ably.PresenceMessage>) => {
+    if (!arg.action) {
+      throw new Error('Event name is required');
+    }
+
+    channelWithEmitter.presence.subscriptions.emit(arg.action, arg);
+  };
+};

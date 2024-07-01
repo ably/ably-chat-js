@@ -56,9 +56,11 @@ describe('Typing', () => {
     async (context) => {
       const events: TypingEvent[] = [];
       // Subscribe to typing events
-      await context.chatRoom.typing.subscribe((event) => {
+      context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
+      // Attach the room
+      await context.chatRoom.attach();
       // Start typing and emit typingStarted event
       await context.chatRoom.typing.start();
       // Once the timout timer expires, the typingStopped event should be emitted
@@ -77,9 +79,11 @@ describe('Typing', () => {
     'subscribes to all typing events, sent by start and stop',
     async (context) => {
       const events: TypingEvent[] = [];
-      await context.chatRoom.typing.subscribe((event) => {
+      context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
+      // Attach the room
+      await context.chatRoom.attach();
       // Send typing events
       await context.chatRoom.typing.start();
       await context.chatRoom.typing.stop();
@@ -102,7 +106,7 @@ describe('Typing', () => {
     async (context) => {
       let events: TypingEvent[] = [];
       // Subscribe to typing events
-      await context.chatRoom.typing.subscribe((event) => {
+      context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
       // Create new clients with new client ids
@@ -118,6 +122,11 @@ describe('Typing', () => {
         normaliseClientOptions({ typingTimeoutMs: 1000 }),
         makeTestLogger(),
       );
+
+      // Attach the rooms
+      await context.chatRoom.attach();
+      await client1.get(context.roomId).attach();
+      await client2.get(context.roomId).attach();
 
       // send typing event for client1 and client2
       await client1.get(context.roomId).typing.start();

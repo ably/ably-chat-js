@@ -3,6 +3,7 @@ import * as Ably from 'ably';
 import { getChannel } from './channel.js';
 import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
+import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
@@ -18,23 +19,17 @@ interface TypingEventsMap {
  */
 export interface Typing {
   /**
-   * Subscribe a given listener to all typing events from users in the chat room. This will implicitly attach the underlying channel
-   * and enable typing events.
+   * Subscribe a given listener to all typing events from users in the chat room.
    *
    * @param listener A listener to be called when the typing state of a user in the room changes.
-   * @returns A promise that resolves void when attach succeeds or rejects with an error if the attach fails.
+   * @returns A response object that allows you to control the subscription to typing events.
    */
-  subscribe(listener: TypingListener): Promise<void>;
+  subscribe(listener: TypingListener): TypingSubscriptionResponse;
 
   /**
-   * Unsubscribe a given listener from all typing events from users in the chat room. Will detached from the underlying
-   * channel if there are no more listeners.
-   *
-   * @param listener A listener to be unsubscribed from typing state changes the chat room.
-   * @returns A promise that resolves when the implicit channel detach operation completes, or immediately if there
-   * are still other listeners.
+   * Unsubscribe all listeners from receiving typing events.
    */
-  unsubscribe(listener: TypingListener): Promise<void>;
+  unsubscribeAll(): void;
 
   /**
    * Get the set of clientIds that are currently typing.
@@ -104,6 +99,16 @@ export interface TypingEvent {
  */
 export type TypingListener = (event: TypingEvent) => void;
 
+/**
+ * A response object that allows you to control the subscription to typing events.
+ */
+export interface TypingSubscriptionResponse {
+  /**
+   * Unsubscribe the listener registered with {@link Typing.subscribe} from typing events.
+   */
+  unsubscribe: () => void;
+}
+
 export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
   private readonly _clientId: string;
   private readonly _roomId: string;
@@ -129,6 +134,10 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     this._clientId = clientId;
     this._currentlyTyping = new Set();
     this._channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
+    addListenerToChannelPresenceWithoutAttach({
+      listener: this._internalSubscribeToEvents.bind(this),
+      channel: this._channel,
+    });
 
     // Timeout for typing
     this._typingTimeoutMs = typingTimeoutMs;
@@ -197,28 +206,23 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * @inheritDoc
    */
-  async subscribe(listener: TypingListener): Promise<void> {
+  subscribe(listener: TypingListener): TypingSubscriptionResponse {
     this._logger.trace(`DefaultTyping.subscribe();`);
-    const hasListeners = this.hasListeners();
     this.on(listener);
-    if (!hasListeners) {
-      this._logger.debug('DefaultTyping.subscribe(); adding internal listener');
-      return this._channel.presence.subscribe(this._internalSubscribeToEvents);
-    }
-    return Promise.resolve();
+
+    return {
+      unsubscribe: () => {
+        this.off(listener);
+      },
+    };
   }
 
   /**
    * @inheritDoc
    */
-  async unsubscribe(listener: TypingListener): Promise<void> {
-    this._logger.trace(`DefaultTyping.unsubscribe();`);
-    this.off(listener);
-    if (!this.hasListeners()) {
-      this._logger.debug('DefaultTyping.unsubscribe(); removing internal listener');
-      return this._channel.presence.subscribe(this._internalSubscribeToEvents);
-    }
-    return Promise.resolve();
+  unsubscribeAll(): void {
+    this._logger.trace(`DefaultTyping.unsubscribeAll();`);
+    this.off();
   }
 
   /**
