@@ -106,18 +106,21 @@ describe('ChatMessage', () => {
     expect(firstMessage.after(secondMessage)).toBe(true);
   });
 
-  it('throws an error with an invalid timeserial', () => {
-    expect(
-      () =>
-        new DefaultMessage(
-          'not a valid timeserial',
-          'clientId',
-          'roomId',
-          'hello there',
-          new Date(1672531200000),
-          {},
-          {},
-        ),
-    ).toThrow(new Error('Invalid timeserial'));
+  it('throws an error with an invalid timeserial', async () => {
+    await expect(async () => {
+      new DefaultMessage(
+        'not a valid timeserial',
+        'clientId',
+        'roomId',
+        'hello there',
+        new Date(1672531200000),
+        {},
+        {},
+      );
+      return Promise.resolve();
+    }).rejects.toBeErrorInfo({
+      code: 50000,
+      message: 'invalid timeserial',
+    });
   });
 });
