@@ -22,7 +22,7 @@ export type {
   SendMessageParams,
 } from './Messages.js';
 export type { Metadata } from './Metadata.js';
-export type { Occupancy, OccupancyEvent, OccupancyListener } from './Occupancy.js';
+export type { Occupancy, OccupancyEvent, OccupancyListener, OccupancySubscriptionResponse } from './Occupancy.js';
 export type { Presence, PresenceData, PresenceEvent, PresenceListener, PresenceMember } from './Presence.js';
 export type { PaginatedResult } from './query.js';
 export type { Reaction } from './Reaction.js';

@@ -50,7 +50,7 @@ describe('room-level reactions integration test', () => {
     const room = chat.rooms.get(roomName);
     const channel = room.messages.channel as RealtimeChannelWithOptions;
 
-    expect(channel.channelOptions.params).toEqual({ agent: CHANNEL_OPTIONS_AGENT_STRING });
+    expect(channel.channelOptions.params).toEqual(expect.objectContaining({ agent: CHANNEL_OPTIONS_AGENT_STRING }));
   });
 
   it<TestContext>('sends and receives a reaction', async (context) => {

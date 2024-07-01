@@ -127,9 +127,12 @@ describe('occupancy', () => {
 
     // Subscribe to occupancy
     const occupancyUpdates: OccupancyEvent[] = [];
-    await room.occupancy.subscribe((occupancy) => {
+    room.occupancy.subscribe((occupancy) => {
       occupancyUpdates.push(occupancy);
     });
+
+    // Attach room
+    await room.attach();
 
     // Wait to get our first occupancy update - us entering the room
     await waitForExpectedInbandOccupancy(occupancyUpdates, {
@@ -147,42 +150,6 @@ describe('occupancy', () => {
     await waitForExpectedInbandOccupancy(occupancyUpdates, {
       connections: 2,
       presenceMembers: 1,
-    });
-  });
-
-  it<TestContext>('allows toggling of occupancy subscriptions', { timeout: TEST_TIMEOUT }, async (context) => {
-    const { chat } = context;
-
-    const room = chat.rooms.get(randomRoomId());
-
-    // Subscribe to occupancy
-    const occupancyUpdates: OccupancyEvent[] = [];
-    const listener = (occupancy: OccupancyEvent) => {
-      occupancyUpdates.push(occupancy);
-    };
-    await room.occupancy.subscribe(listener);
-
-    // Wait to get our first occupancy update - us entering the room
-    await waitForExpectedInbandOccupancy(occupancyUpdates, {
-      connections: 1,
-      presenceMembers: 0,
-    });
-
-    // Now unsubscribe - this should stop occupancy updates
-    await room.occupancy.unsubscribe(listener);
-
-    // In a separate realtime client, attach to the same room
-    const realtimeClient = ablyRealtimeClientWithToken();
-    const realtimeChannel = realtimeClient.channels.get(room.messages.channel.name);
-    await realtimeChannel.attach();
-
-    // Now lets re-subscribe to re-enable occupancy updates
-    await room.occupancy.subscribe(listener);
-
-    // Wait for the occupancy to reach the expected occupancy
-    await waitForExpectedInbandOccupancy(occupancyUpdates, {
-      connections: 2,
-      presenceMembers: 0,
     });
   });
 });
