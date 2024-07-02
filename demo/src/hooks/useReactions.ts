@@ -7,7 +7,7 @@ export const useReactions = () => {
 
   const sendReaction = useCallback(
     (reaction: string) => {
-      room.reactions.send(reaction);
+      room.reactions.send({ type: reaction });
     },
     [room],
   );

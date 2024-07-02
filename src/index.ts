@@ -19,7 +19,7 @@ export type { Presence, PresenceData, PresenceEvent, PresenceListener, PresenceM
 export type { PaginatedResult } from './query.js';
 export type { Reaction } from './Reaction.js';
 export type { Room } from './Room.js';
-export type { RoomReactionListener, RoomReactions } from './RoomReactions.js';
+export type { RoomReactionListener, RoomReactions, SendReactionParams } from './RoomReactions.js';
 export type { Rooms } from './Rooms.js';
 export type { Typing, TypingEvent, TypingListener } from './Typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';

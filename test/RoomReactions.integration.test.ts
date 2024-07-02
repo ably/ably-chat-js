@@ -66,8 +66,8 @@ describe('room-level reactions integration test', () => {
     };
     await room.reactions.subscribe(subscriber);
 
-    for (const reactionType of expectedReactions) {
-      await room.reactions.send(reactionType);
+    for (const type of expectedReactions) {
+      await room.reactions.send({ type });
     }
 
     await waitForReactions(reactions, expectedReactions);
