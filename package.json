@@ -48,7 +48,7 @@
   },
   "homepage": "https://github.com/ably-labs/conversations#readme",
   "peerDependencies": {
-    "ably": "^2.1.0"
+    "ably": "^2.2.1"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.6",
