@@ -1,9 +1,7 @@
 import * as Ably from 'ably';
 
-import { Headers } from './Headers.js';
 import { Logger } from './logger.js';
-import { DefaultMessage, Message } from './Message.js';
-import { Metadata } from './Metadata.js';
+import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './Message.js';
 import { OccupancyEvent } from './Occupancy.js';
 import { PaginatedResult } from './query.js';
 
@@ -25,8 +23,8 @@ interface CreateMessageRequest {
 
 interface SendMessageParams {
   text: string;
-  metadata?: Metadata;
-  headers?: Headers;
+  metadata?: MessageMetadata;
+  headers?: MessageHeaders;
 }
 
 /**
@@ -47,8 +45,8 @@ export class ChatApi {
       params,
     ).then((data) => {
       data.items = data.items.map((message) => {
-        const metadata = message.metadata as Metadata | undefined;
-        const headers = message.headers as Headers | undefined;
+        const metadata = message.metadata as MessageMetadata | undefined;
+        const headers = message.headers as MessageHeaders | undefined;
         return new DefaultMessage(
           message.timeserial,
           message.clientId,
@@ -66,8 +64,8 @@ export class ChatApi {
   async sendMessage(roomId: string, params: SendMessageParams): Promise<CreateMessageResponse> {
     const body: {
       text: string;
-      metadata?: Metadata;
-      headers?: Headers;
+      metadata?: MessageMetadata;
+      headers?: MessageHeaders;
     } = { text: params.text };
     if (params.metadata) {
       body.metadata = params.metadata;

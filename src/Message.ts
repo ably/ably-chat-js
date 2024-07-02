@@ -2,6 +2,16 @@ import { Headers } from './Headers.js';
 import { Metadata } from './Metadata.js';
 
 /**
+ * {@link Headers} type for chat messages.
+ */
+export type MessageHeaders = Headers;
+
+/**
+ * {@link Metadata} type for chat messages.
+ */
+export type MessageMetadata = Metadata;
+
+/**
  * Represents a single message in a chat room.
  */
 export interface Message {
@@ -42,7 +52,7 @@ export interface Message {
    * Do not use metadata for authoritative information. There is no server-side
    * validation. When reading the metadata treat it like user input.
    */
-  readonly metadata: Metadata;
+  readonly metadata: MessageMetadata;
 
   /**
    * The headers of a chat message. Headers enable attaching extra info to a message,
@@ -57,7 +67,7 @@ export interface Message {
    * Do not use the headers for authoritative information. There is no server-side
    * validation. When reading the headers treat them like user input.
    */
-  readonly headers: Headers;
+  readonly headers: MessageHeaders;
 
   /**
    * Determines if this message was created before the given message.
@@ -108,8 +118,8 @@ export class DefaultMessage implements Message {
     public readonly roomId: string,
     public readonly text: string,
     public readonly createdAt: Date,
-    public readonly metadata: Metadata,
-    public readonly headers: Headers,
+    public readonly metadata: MessageMetadata,
+    public readonly headers: MessageHeaders,
   ) {
     this._calculatedTimeserial = DefaultMessage.calculateTimeserial(timeserial);
 
