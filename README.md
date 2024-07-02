@@ -181,7 +181,7 @@ const presentMembers = await room.presence.get();
 const presentMember = await room.presence.get({ clientId: 'client-id' });
 
 // You can call this to get a simple boolean value of whether a member is present or not
-const isPresent = await room.presence.userIsPresent('client-id');
+const isPresent = await room.presence.isUserPresent('client-id');
 ```
 
 Calls to `presence.get()` will return an array of the presence messages. Where each message contains the most recent

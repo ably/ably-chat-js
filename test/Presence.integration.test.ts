@@ -194,10 +194,10 @@ describe('UserPresence', { timeout: 10000 }, () => {
     // Enter presence for a client
     await context.chatRoom.presence.enter();
     // Fetch the presence list and check if the client is present
-    const userIsPresent = await context.chatRoom.presence.userIsPresent(context.defaultTestClientId);
+    const userIsPresent = await context.chatRoom.presence.isUserPresent(context.defaultTestClientId);
     expect(userIsPresent, 'user with clientId should be present').toEqual(true);
     // Ensure that a user that has not entered presence is not present
-    const userIsNotPresent = await context.chatRoom.presence.userIsPresent('clientId2');
+    const userIsNotPresent = await context.chatRoom.presence.isUserPresent('clientId2');
     expect(userIsNotPresent, 'user with clientId1 should not be present').toEqual(false);
   });
 
