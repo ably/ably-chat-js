@@ -88,12 +88,12 @@ describe('Typing', () => {
       expect(events.length, 'typingStopped event should have been received').toEqual(2);
 
       // First event should be typingStarted
-      expect(events[0]?.currentlyTypingClientIds.has(context.clientId)).toEqual(true);
+      expect(events[0]?.currentlyTyping.has(context.clientId)).toEqual(true);
       expect(events[0]?.change.isTyping, 'first event should be typingStarted').toEqual(true);
 
       // Last event should be typingStopped
       expect(events[1]?.change.isTyping, 'second event should be typingStopped').toEqual(false);
-      expect(events[1]?.currentlyTypingClientIds.has(context.clientId)).toEqual(false);
+      expect(events[1]?.currentlyTyping.has(context.clientId)).toEqual(false);
     },
     TEST_TIMEOUT,
   );
