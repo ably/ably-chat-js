@@ -115,7 +115,7 @@ export interface Presence {
    * @param {string} clientId - The client ID to check if it is present in the room.
    * @returns {Promise<{boolean}>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
-  userIsPresent(clientId: string): Promise<boolean>;
+  isUserPresent(clientId: string): Promise<boolean>;
 
   /**
    * Method to join room presence, will emit an enter event to all subscribers. Repeat calls will trigger more enter events.
@@ -225,7 +225,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
   /**
    * @inheritDoc
    */
-  async userIsPresent(clientId: string): Promise<boolean> {
+  async isUserPresent(clientId: string): Promise<boolean> {
     const presenceSet = await this.subscriptionManager.channel.presence.get({ clientId: clientId });
     return presenceSet.length > 0;
   }
