@@ -80,14 +80,9 @@ export interface PresenceMember {
   extras: any;
 
   /**
-   * The Ably message id of the associated presence message.
+   * The timestamp of when the last change in state occurred for this presence member.
    */
-  id: string;
-
-  /**
-   * The timestamp of the presence message.
-   */
-  timestamp: number;
+  updatedAt: number;
 }
 
 /**
@@ -215,10 +210,9 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
       action: user.action as PresenceEvents,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       data: user.data?.userCustomData as PresenceData,
-      timestamp: user.timestamp,
+      updatedAt: user.timestamp,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       extras: user.extras,
-      id: user.id,
     }));
   }
 
