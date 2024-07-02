@@ -35,6 +35,13 @@ export type {
 export type { PaginatedResult } from './query.js';
 export type { Reaction } from './Reaction.js';
 export type { Room } from './Room.js';
+export type { OccupancyOptions, PresenceOptions, ReactionsOptions, RoomOptions, TypingOptions } from './RoomOptions.js';
+export {
+  DefaultOccupancyOptions,
+  DefaultPresenceOptions,
+  DefaultReactionsOptions,
+  DefaultTypingOptions,
+} from './RoomOptions.js';
 export type {
   RoomReactionListener,
   RoomReactions,

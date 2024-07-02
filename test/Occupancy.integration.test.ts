@@ -6,9 +6,8 @@ import { OccupancyEvent } from '../src/Occupancy.js';
 import { Room } from '../src/Room.js';
 import { RoomStatus } from '../src/RoomStatus.js';
 import { newChatClient } from './helper/chat.js';
-import { randomRoomId } from './helper/identifier.js';
 import { ablyRealtimeClientWithToken } from './helper/realtimeClient.js';
-import { waitForRoomStatus } from './helper/room.js';
+import { getRandomRoom, waitForRoomStatus } from './helper/room.js';
 
 interface TestContext {
   chat: ChatClient;
@@ -77,7 +76,7 @@ describe('occupancy', () => {
   it<TestContext>('should be able to get the occupancy of a chat room', { timeout: TEST_TIMEOUT }, async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Get the occupancy of the room
     await waitForExpectedInstantaneousOccupancy(room, {
@@ -126,7 +125,7 @@ describe('occupancy', () => {
   it<TestContext>('allows subscriptions to inband occupancy', { timeout: TEST_TIMEOUT }, async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Subscribe to occupancy
     const occupancyUpdates: OccupancyEvent[] = [];
@@ -159,7 +158,7 @@ describe('occupancy', () => {
   it<TestContext>('handles discontinuities', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Attach the room
     await room.attach();

@@ -3,27 +3,24 @@ import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../src/ChatApi.js';
-import { normaliseClientOptions } from '../src/config.js';
 import { Message } from '../src/Message.js';
 import { MessageEventPayload } from '../src/Messages.js';
-import { DefaultRoom } from '../src/Room.js';
+import { Room } from '../src/Room.js';
 import {
   channelEventEmitter,
   ChannelEventEmitterReturnType,
   channelStateEventEmitter,
   ChannelStateEventEmitterReturnType,
 } from './helper/channel.js';
-import { randomRoomId } from './helper/identifier.js';
 import { makeTestLogger } from './helper/logger.js';
-import { testClientOptions } from './helper/options.js';
+import { makeRandomRoom } from './helper/room.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
   chatApi: ChatApi;
   emulateBackendStateChange: ChannelStateEventEmitterReturnType;
   emulateBackendPublish: ChannelEventEmitterReturnType<Partial<Ably.InboundMessage>>;
-  channelStateListeners: Map<string, Ably.channelEventCallback[]>;
-  room: DefaultRoom;
+  room: Room;
 }
 
 interface MockPaginatedResult {
@@ -48,16 +45,11 @@ const mockPaginatedResultWithItems = (items: Message[]): MockPaginatedResult => 
 
 vi.mock('ably');
 
-// Helper function to create a room
-const makeRoom = (context: TestContext) =>
-  new DefaultRoom(randomRoomId(), context.realtime, context.chatApi, testClientOptions(), makeTestLogger());
-
 describe('Messages', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
-    context.channelStateListeners = new Map<string, Ably.channelEventCallback[]>();
-    context.room = makeRoom(context);
+    context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
     context.emulateBackendPublish = channelEventEmitter(context.room.messages.channel);
     context.emulateBackendStateChange = channelStateEventEmitter(context.room.messages.channel);
   });
@@ -96,13 +88,7 @@ describe('Messages', () => {
         createdAt: timestamp,
       });
 
-      const room = new DefaultRoom(
-        'coffee-room-chat',
-        realtime,
-        chatApi,
-        normaliseClientOptions({ typingTimeoutMs: 300 }),
-        makeTestLogger(),
-      );
+      const room = makeRandomRoom({ chatApi, realtime });
       const messagePromise = room.messages.send({
         text: 'hello there',
         headers: { something: 'else', abc: 123, def: true, bla: null },
@@ -117,7 +103,7 @@ describe('Messages', () => {
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
-          roomId: 'coffee-room-chat',
+          roomId: room.roomId,
           headers: {
             something: 'else',
             abc: 123,
@@ -138,14 +124,7 @@ describe('Messages', () => {
           createdAt: timestamp,
         });
 
-        const room = new DefaultRoom(
-          'coffee-room-chat',
-          realtime,
-          chatApi,
-          normaliseClientOptions({ typingTimeoutMs: 300 }),
-          makeTestLogger(),
-        );
-
+        const room = makeRandomRoom({ chatApi, realtime });
         const messagePromise = room.messages.send({
           text: 'hello there',
           headers: { 'ably-chat.you': 'shall not pass' },
@@ -172,14 +151,7 @@ describe('Messages', () => {
           createdAt: timestamp,
         });
 
-        const room = new DefaultRoom(
-          'coffee-room-chat',
-          realtime,
-          chatApi,
-          normaliseClientOptions({ typingTimeoutMs: 300 }),
-          makeTestLogger(),
-        );
-
+        const room = makeRandomRoom({ chatApi, realtime });
         const messagePromise = room.messages.send({
           text: 'hello there',
           metadata: { 'ably-chat': 'shall not pass' },
@@ -446,8 +418,7 @@ describe('Messages', () => {
 
   // Tests for getBeforeSubscriptionStart
   it<TestContext>('should throw an error for listener history if not subscribed', async (context) => {
-    // Create a room instance
-    const room = makeRoom(context);
+    const { room } = context;
 
     const { unsubscribe, getPreviousMessages } = room.messages.subscribe(() => {});
 

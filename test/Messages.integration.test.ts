@@ -7,8 +7,7 @@ import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
 import { RoomStatus } from '../src/RoomStatus.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 import { newChatClient } from './helper/chat.ts';
-import { randomRoomId } from './helper/identifier.ts';
-import { waitForRoomStatus } from './helper/room.ts';
+import { getRandomRoom, waitForRoomStatus } from './helper/room.ts';
 
 interface TestContext {
   chat: ChatClient;
@@ -37,8 +36,7 @@ describe('messages integration', () => {
   it<TestContext>('sets the agent version on the channel', (context) => {
     const { chat } = context;
 
-    const roomName = Math.random().toString(36).substring(7);
-    const room = chat.rooms.get(roomName);
+    const room = getRandomRoom(chat);
     const channel = room.messages.channel as RealtimeChannelWithOptions;
 
     expect(channel.channelOptions.params).toEqual(expect.objectContaining({ agent: CHANNEL_OPTIONS_AGENT_STRING }));
@@ -47,7 +45,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to send and receive chat messages', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Attach the room
     await room.attach();
@@ -82,7 +80,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to retrieve chat history', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Publish 3 messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -117,7 +115,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to paginate chat history', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Publish 4 messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -167,7 +165,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to paginate chat history, but backwards', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Publish 4 messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -217,7 +215,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to send, receive and query chat messages with metadata and headers', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Subscribe to messages and add them to a list when they arive
     const messages: Message[] = [];
@@ -398,7 +396,7 @@ describe('messages integration', () => {
   it<TestContext>('handles discontinuities', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Attach the room
     await room.attach();

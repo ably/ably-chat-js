@@ -12,6 +12,7 @@ import {
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
+import { RoomOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
@@ -197,9 +198,20 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * A channel can have multiple connections using the same clientId.
    * @param logger - The logger instance.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
+  constructor(roomId: string, roomOptions: RoomOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
-    this._channel = getChannel(`${roomId}::$chat::$chatMessages`, realtime);
+
+    // Set our channel modes based on the room options
+    const channelModes = ['PUBLISH', 'SUBSCRIBE'] as Ably.ChannelMode[];
+    if (roomOptions.presence?.enter === undefined || roomOptions.presence.enter) {
+      channelModes.push('PRESENCE');
+    }
+
+    if (roomOptions.presence?.subscribe === undefined || roomOptions.presence.subscribe) {
+      channelModes.push('PRESENCE_SUBSCRIBE');
+    }
+
+    this._channel = getChannel(`${roomId}::$chat::$chatMessages`, realtime, { modes: channelModes });
     addListenerToChannelPresenceWithoutAttach({
       listener: this.subscribeToEvents.bind(this),
       channel: this._channel,

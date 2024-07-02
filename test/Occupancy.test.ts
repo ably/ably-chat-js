@@ -5,9 +5,8 @@ import { ChatApi } from '../src/ChatApi.js';
 import { OccupancyEvent } from '../src/Occupancy.js';
 import { DefaultRoom } from '../src/Room.js';
 import { channelEventEmitter } from './helper/channel.js';
-import { randomRoomId } from './helper/identifier.js';
 import { makeTestLogger } from './helper/logger.js';
-import { testClientOptions } from './helper/options.js';
+import { makeRandomRoom } from './helper/room.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
@@ -19,15 +18,11 @@ interface TestContext {
 
 vi.mock('ably');
 
-// Helper function to create a room
-const makeRoom = (context: TestContext) =>
-  new DefaultRoom(randomRoomId(), context.realtime, context.chatApi, testClientOptions(), makeTestLogger());
-
 describe('Occupancy', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
-    context.room = makeRoom(context);
+    context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
     context.emulateOccupancyUpdate = channelEventEmitter(context.room.occupancy.channel);
   });
 

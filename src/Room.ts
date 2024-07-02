@@ -6,7 +6,8 @@ import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './Messages.js';
 import { DefaultOccupancy, Occupancy } from './Occupancy.js';
 import { DefaultPresence, Presence } from './Presence.js';
-import { RoomLifecycleManager } from './RoomLifecycleManager.js';
+import { ContributesToRoomLifecycle, RoomLifecycleManager } from './RoomLifecycleManager.js';
+import { RoomOptions } from './RoomOptions.js';
 import { DefaultRoomReactions, RoomReactions } from './RoomReactions.js';
 import { DefaultStatus, Status } from './RoomStatus.js';
 import { DefaultTyping, Typing } from './Typing.js';
@@ -31,6 +32,7 @@ export interface Room {
   /**
    * Allows you to subscribe to presence events in the room.
    *
+   * @throws {@link ErrorInfo}} if presence is not enabled for the room.
    * @returns The presence instance for the room.
    */
   get presence(): Presence;
@@ -38,6 +40,7 @@ export interface Room {
   /**
    * Allows you to interact with room-level reactions.
    *
+   * @throws {@link ErrorInfo} if reactions are not enabled for the room.
    * @returns The room reactions instance for the room.
    */
   get reactions(): RoomReactions;
@@ -45,6 +48,7 @@ export interface Room {
   /**
    * Allows you to interact with typing events in the room.
    *
+   * @throws {@link ErrorInfo} if typing is not enabled for the room.
    * @returns The typing instance for the room.
    */
   get typing(): Typing;
@@ -52,6 +56,7 @@ export interface Room {
   /**
    * Allows you to interact with occupancy metrics for the room.
    *
+   * @throws {@link ErrorInfo} if occupancy is not enabled for the room.
    * @returns The occupancy instance for the room.
    */
   get occupancy(): Occupancy;
@@ -76,16 +81,24 @@ export interface Room {
    * @returns A promise that resolves when the room is detached.
    */
   detach(): Promise<void>;
+
+  /**
+   * Returns the room options.
+   *
+   * @returns A copy of the options used to create the room.
+   */
+  options(): RoomOptions;
 }
 
 export class DefaultRoom implements Room {
   private readonly _roomId: string;
+  private readonly _options: RoomOptions;
   private readonly chatApi: ChatApi;
-  private readonly _messages: Messages;
-  private readonly _typing: Typing;
-  private readonly _presence: Presence;
-  private readonly _reactions: RoomReactions;
-  private readonly _occupancy: Occupancy;
+  private readonly _messages: DefaultMessages;
+  private readonly _typing?: DefaultTyping;
+  private readonly _presence?: DefaultPresence;
+  private readonly _reactions?: DefaultRoomReactions;
+  private readonly _occupancy?: DefaultOccupancy;
   private readonly _logger: Logger;
   private readonly _status: DefaultStatus;
   private readonly _lifecycleManager: RoomLifecycleManager;
@@ -94,30 +107,64 @@ export class DefaultRoom implements Room {
    * Constructs a new Room instance.
    *
    * @param roomId The unique identifier of the room.
+   * @param options The options for the room.
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
    * @param clientOptions The client options from the chat instance.
    */
   constructor(
     roomId: string,
+    options: RoomOptions,
     realtime: Ably.Realtime,
     chatApi: ChatApi,
     clientOptions: NormalisedClientOptions,
     logger: Logger,
   ) {
     this._roomId = roomId;
+    this._options = options;
     this.chatApi = chatApi;
     this._logger = logger;
     this._status = new DefaultStatus(logger);
 
+    // Setup features
     this._messages = new DefaultMessages(roomId, realtime, this.chatApi, realtime.auth.clientId, logger);
-    this._presence = new DefaultPresence(roomId, realtime, realtime.auth.clientId, logger);
-    this._typing = new DefaultTyping(roomId, realtime, realtime.auth.clientId, clientOptions.typingTimeoutMs, logger);
-    this._reactions = new DefaultRoomReactions(roomId, realtime, realtime.auth.clientId, logger);
-    this._occupancy = new DefaultOccupancy(roomId, realtime, this.chatApi, logger);
+    const features: ContributesToRoomLifecycle[] = [this._messages];
+    if (options.presence) {
+      this._presence = new DefaultPresence(roomId, options, realtime, realtime.auth.clientId, logger);
+      features.push(this._presence);
+    }
 
-    const features = [this._messages, this._presence, this._typing, this._reactions, this._occupancy];
+    if (options.typing) {
+      this._typing = new DefaultTyping(roomId, realtime, realtime.auth.clientId, clientOptions.typingTimeoutMs, logger);
+      features.push(this._typing);
+    }
+
+    if (options.reactions) {
+      this._reactions = new DefaultRoomReactions(roomId, realtime, realtime.auth.clientId, logger);
+      features.push(this._reactions);
+    }
+
+    if (options.occupancy) {
+      this._occupancy = new DefaultOccupancy(roomId, realtime, this.chatApi, logger);
+      features.push(this._occupancy);
+    }
+
+    // Setup lifecycle manager
     this._lifecycleManager = new RoomLifecycleManager(this._status, features, logger, 5000);
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  get roomId(): string {
+    return this._roomId;
+  }
+
+  /**
+   * @inheritDoc Room
+   */
+  options(): RoomOptions {
+    return structuredClone(this._options);
   }
 
   /**
@@ -131,6 +178,11 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get presence(): Presence {
+    if (!this._presence) {
+      this._logger.error('Presence is not enabled for this room');
+      throw new Ably.ErrorInfo('Presence is not enabled for this room', 40000, 400) as unknown as Error;
+    }
+
     return this._presence;
   }
 
@@ -138,20 +190,23 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get reactions(): RoomReactions {
+    if (!this._reactions) {
+      this._logger.error('Reactions are not enabled for this room');
+      throw new Ably.ErrorInfo('Reactions are not enabled for this room', 40000, 400) as unknown as Error;
+    }
+
     return this._reactions;
   }
 
   /**
    * @inheritdoc Room
    */
-  get roomId(): string {
-    return this._roomId;
-  }
-
-  /**
-   * @inheritdoc Room
-   */
   get typing(): Typing {
+    if (!this._typing) {
+      this._logger.error('Typing is not enabled for this room');
+      throw new Ably.ErrorInfo('Typing is not enabled for this room', 40000, 400) as unknown as Error;
+    }
+
     return this._typing;
   }
 
@@ -159,6 +214,11 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get occupancy(): Occupancy {
+    if (!this._occupancy) {
+      this._logger.error('Occupancy is not enabled for this room');
+      throw new Ably.ErrorInfo('Occupancy is not enabled for this room', 40000, 400) as unknown as Error;
+    }
+
     return this._occupancy;
   }
 

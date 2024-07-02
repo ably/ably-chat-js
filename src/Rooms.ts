@@ -1,9 +1,11 @@
 import * as Ably from 'ably';
+import { dequal } from 'dequal';
 
 import { ChatApi } from './ChatApi.js';
 import { ClientOptions, NormalisedClientOptions } from './config.js';
 import { Logger } from './logger.js';
 import { DefaultRoom, Room } from './Room.js';
+import { RoomOptions } from './RoomOptions.js';
 
 /**
  * Manages the lifecycle of chat rooms.
@@ -17,9 +19,11 @@ export interface Rooms {
    * Always call `release(roomId)` after the Room object is no longer needed.
    *
    * @param roomId The ID of the room.
+   * @param options The options for the room.
+   * @throws {@link ErrorInfo} if a room with the same ID but different options already exists.
    * @returns Room A new or existing Room object.
    */
-  get(roomId: string): Room;
+  get(roomId: string, options: RoomOptions): Room;
 
   /**
    * Release the Room object if it exists. This method only releases the reference
@@ -64,13 +68,19 @@ export class DefaultRooms implements Rooms {
   /**
    * @inheritDoc
    */
-  get(roomId: string): Room {
+  get(roomId: string, options: RoomOptions): Room {
     this._logger.trace('Rooms.get();', { roomId });
 
     const existing = this._rooms.get(roomId);
-    if (existing) return existing;
+    if (existing) {
+      if (!dequal(existing.options(), options)) {
+        throw new Ably.ErrorInfo('Room already exists with different options', 40000, 400) as unknown as Error;
+      }
 
-    const room = new DefaultRoom(roomId, this.realtime, this.chatApi, this._clientOptions, this._logger);
+      return existing;
+    }
+
+    const room = new DefaultRoom(roomId, options, this.realtime, this.chatApi, this._clientOptions, this._logger);
     this._rooms.set(roomId, room);
 
     return room;

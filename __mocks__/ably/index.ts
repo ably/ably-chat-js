@@ -29,7 +29,6 @@ type eventType = { [event: string]: ((_) => void)[] };
 function createMockEmitter() {
   const emitter = {
     on: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
-      console.error('on', eventsOrListener, listener);
       if (listener) {
         if (typeof eventsOrListener === 'string') {
           eventsOrListener = [eventsOrListener];
@@ -48,7 +47,6 @@ function createMockEmitter() {
       emitter.any.push(eventsOrListener as (_) => void);
     },
     once: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
-      console.error('once', eventsOrListener, listener);
       if (listener) {
         if (typeof eventsOrListener === 'string') {
           eventsOrListener = [eventsOrListener];
@@ -67,8 +65,6 @@ function createMockEmitter() {
       emitter.anyOnce.push(eventsOrListener as (_) => void);
     },
     emit: (event: string, arg: unknown) => {
-      console.error('emit', event, arg);
-      console.error('events for event', emitter.events[event], emitter.eventsOnce[event], emitter.any, emitter.anyOnce);
       if (emitter.events[event]) {
         emitter.events[event].forEach((element) => {
           element(arg);

@@ -3,26 +3,21 @@ import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatApi } from '../src/ChatApi.js';
 import { Reaction } from '../src/Reaction.js';
-import { DefaultRoom } from '../src/Room.js';
+import { Room } from '../src/Room.js';
 import { channelEventEmitter } from './helper/channel.js';
-import { randomRoomId } from './helper/identifier.js';
 import { makeTestLogger } from './helper/logger.js';
-import { testClientOptions } from './helper/options.js';
+import { makeRandomRoom } from './helper/room.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
   chatApi: ChatApi;
   publishTimestamp: Date;
-  room: DefaultRoom;
+  room: Room;
   setPublishTimestamp: (d: Date) => void;
   emulateBackendPublish: Ably.messageCallback<Partial<Ably.Message>>;
 }
 
 vi.mock('ably');
-
-// Helper function to create a room
-const makeRoom = (context: TestContext) =>
-  new DefaultRoom(randomRoomId(), context.realtime, context.chatApi, testClientOptions(), makeTestLogger());
 
 describe('Reactions', () => {
   beforeEach<TestContext>((context) => {
@@ -36,7 +31,7 @@ describe('Reactions', () => {
       context.publishTimestamp = date;
     };
 
-    context.room = makeRoom(context);
+    context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
     context.emulateBackendPublish = channelEventEmitter(context.room.reactions.channel);
 
     vi.spyOn(context.room.reactions.channel, 'publish').mockImplementation((message: Ably.Message) => {

@@ -3,12 +3,11 @@ import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatClient } from '../src/Chat.js';
 import { ChatApi } from '../src/ChatApi.js';
-import { DefaultRoom, Room } from '../src/Room.js';
+import { Room } from '../src/Room.js';
 import { TypingEvent } from '../src/Typing.js';
 import { ChannelEventEmitterReturnType, channelPresenceEventEmitter } from './helper/channel.js';
-import { randomRoomId } from './helper/identifier.js';
 import { makeTestLogger } from './helper/logger.js';
-import { testClientOptions } from './helper/options.js';
+import { makeRandomRoom } from './helper/room.js';
 
 interface TestContext {
   realtime: Ably.Realtime;
@@ -22,15 +21,11 @@ const TEST_TYPING_TIMEOUT_MS = 100;
 
 vi.mock('ably');
 
-// Helper function to create a room
-const makeRoom = (context: TestContext) =>
-  new DefaultRoom(randomRoomId(), context.realtime, context.chatApi, testClientOptions(), makeTestLogger());
-
 describe('Typing', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
-    context.room = makeRoom(context);
+    context.room = makeRandomRoom(context);
     context.emulateBackendPublish = channelPresenceEventEmitter(context.room.typing.channel);
   });
 

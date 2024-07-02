@@ -1,20 +1,23 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../src/Chat.ts';
+import { Room } from '../src/Room.ts';
 import { RoomStatus } from '../src/RoomStatus.ts';
 import { newChatClient } from './helper/chat.ts';
+import { getRandomRoom } from './helper/room.ts';
 
 interface TestContext {
   chat: ChatClient;
+  room: Room;
 }
 
 describe('Room', () => {
   beforeEach<TestContext>((context) => {
     context.chat = newChatClient();
+    context.room = getRandomRoom(context.chat);
   });
 
-  it<TestContext>('should be attachable', async ({ chat }) => {
-    const room = chat.rooms.get('room-1');
+  it<TestContext>('should be attachable', async ({ room }) => {
     await room.attach();
 
     // We should be attached
@@ -28,8 +31,7 @@ describe('Room', () => {
     expect(room.occupancy.channel.state).toEqual('attached');
   });
 
-  it<TestContext>('should be detachable', async ({ chat }) => {
-    const room = chat.rooms.get('room-1');
+  it<TestContext>('should be detachable', async ({ room }) => {
     await room.attach();
     await room.detach();
 

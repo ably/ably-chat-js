@@ -8,6 +8,7 @@ import { ChatClient } from '../src/Chat.js';
 import { PresenceEvents } from '../src/events.js';
 import { PresenceData, PresenceEvent } from '../src/Presence.js';
 import { Room } from '../src/Room.js';
+import { DefaultPresenceOptions } from '../src/RoomOptions.js';
 import { RoomStatus } from '../src/RoomStatus.js';
 import { newChatClient } from './helper/chat.js';
 import { randomRoomId } from './helper/identifier.js';
@@ -74,7 +75,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     const roomId = randomRoomId();
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
-    context.chatRoom = context.chat.rooms.get(roomId);
+    context.chatRoom = context.chat.rooms.get(roomId, { presence: DefaultPresenceOptions });
   });
 
   // Helper function to wait for an event and run an expectation function on the received message
@@ -363,9 +364,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
   });
 
   it<TestContext>('handles discontinuities', async (context) => {
-    const { chat } = context;
-
-    const room = chat.rooms.get(randomRoomId());
+    const { chatRoom: room } = context;
 
     // Attach the room
     await room.attach();
@@ -409,5 +408,41 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
     // Calling off again should be a no-op
     off();
+  });
+
+  it<TestContext>('prevents presence entry if room option prevents it', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId(), { presence: { enter: false } });
+
+    await room.attach();
+
+    // Entering presence should reject
+    await expect(room.presence.enter()).rejects.toBeErrorInfoWithCode(40160);
+  });
+
+  it<TestContext>('does not receive presence events if room option prevents it', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId(), { presence: { subscribe: false } });
+
+    await room.attach();
+
+    // Subscribe to presence
+    const presenceEvents: PresenceEvent[] = [];
+    room.presence.subscribe((event) => {
+      presenceEvents.push(event);
+    });
+
+    // We need to create another chat client and enter presence on the same room
+    const chat2 = newChatClient();
+    const room2 = chat2.rooms.get(room.roomId, { presence: { enter: true } });
+
+    // Entering presence
+    await room2.attach();
+    await room2.presence.enter();
+
+    // Assert we didn't receive any presence events
+    await assertNoPresenceEvent(presenceEvents, PresenceEvents.enter, context.chat.clientId);
   });
 });

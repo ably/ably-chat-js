@@ -7,8 +7,7 @@ import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
 import { RoomStatus } from '../src/RoomStatus.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 import { newChatClient } from './helper/chat.ts';
-import { randomRoomId } from './helper/identifier.ts';
-import { waitForRoomStatus } from './helper/room.ts';
+import { getRandomRoom, waitForRoomStatus } from './helper/room.ts';
 
 interface TestContext {
   chat: ChatClient;
@@ -49,8 +48,7 @@ describe('room-level reactions integration test', () => {
   it<TestContext>('sets the agent version on the channel', (context) => {
     const { chat } = context;
 
-    const roomName = Math.random().toString(36).substring(7);
-    const room = chat.rooms.get(roomName);
+    const room = getRandomRoom(chat);
     const channel = room.messages.channel as RealtimeChannelWithOptions;
 
     expect(channel.channelOptions.params).toEqual(expect.objectContaining({ agent: CHANNEL_OPTIONS_AGENT_STRING }));
@@ -59,7 +57,7 @@ describe('room-level reactions integration test', () => {
   it<TestContext>('sends and receives a reaction', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     const expectedReactions = ['like', 'like', 'love', 'hate'];
     const reactions: string[] = [];
@@ -83,7 +81,7 @@ describe('room-level reactions integration test', () => {
   it<TestContext>('handles discontinuities', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Attach the room
     await room.attach();
