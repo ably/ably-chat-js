@@ -84,7 +84,7 @@ describe('messages integration', () => {
     const message3 = await room.messages.send({ text: 'You underestimate my power!' });
 
     // Do a history request to get all 3 messages
-    const history = await room.messages.query({ limit: 3, direction: 'forwards' });
+    const history = await room.messages.get({ limit: 3, direction: 'forwards' });
 
     expect(history.items).toEqual([
       expect.objectContaining({
@@ -120,7 +120,7 @@ describe('messages integration', () => {
     const message4 = await room.messages.send({ text: "Don't try it!" });
 
     // Do a history request to get the first 3 messages
-    const history1 = await room.messages.query({ limit: 3, direction: 'forwards' });
+    const history1 = await room.messages.get({ limit: 3, direction: 'forwards' });
 
     expect(history1.items).toEqual([
       expect.objectContaining({
@@ -170,7 +170,7 @@ describe('messages integration', () => {
     const message4 = await room.messages.send({ text: "Don't try it!" });
 
     // Do a history request to get the last 3 messages
-    const history1 = await room.messages.query({ limit: 3, direction: 'backwards' });
+    const history1 = await room.messages.get({ limit: 3, direction: 'backwards' });
 
     expect(history1.items).toEqual([
       expect.objectContaining({
@@ -256,7 +256,7 @@ describe('messages integration', () => {
       expect.objectContaining(expectedMessages[1]),
     ]);
 
-    const history = await room.messages.query({ limit: 2, direction: 'forwards' });
+    const history = await room.messages.get({ limit: 2, direction: 'forwards' });
 
     expect(history.items.length).toEqual(2);
     expect(history.items, 'history messages to match').toEqual([

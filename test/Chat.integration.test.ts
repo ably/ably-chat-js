@@ -28,7 +28,7 @@ describe('Chat', () => {
     expect(occupancy).toEqual(expect.objectContaining({ connections: 0, presenceMembers: 0 }));
 
     // Request history, and expect it to succeed
-    const history = (await chat.rooms.get('test').messages.query({ limit: 1 })).items;
+    const history = (await chat.rooms.get('test').messages.get({ limit: 1 })).items;
     expect(history).toEqual(
       expect.arrayContaining([expect.objectContaining({ text: 'my message', clientId: chat.clientId })]),
     );
@@ -46,7 +46,7 @@ describe('Chat', () => {
     expect(occupancy).toEqual(expect.objectContaining({ connections: 0, presenceMembers: 0 }));
 
     // Request history, and expect it to succeed
-    const history = (await chat.rooms.get('test').messages.query({ limit: 1 })).items;
+    const history = (await chat.rooms.get('test').messages.get({ limit: 1 })).items;
     expect(history).toEqual(
       expect.arrayContaining([expect.objectContaining({ text: 'my message', clientId: chat.clientId })]),
     );

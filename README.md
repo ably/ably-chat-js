@@ -120,11 +120,12 @@ so you must pass in the same reference that you subscribed.
 
 ### Query message history
 
-The messages object also exposes the `query` method which can be used to return historical messages in the chat room, according
+The messages object also exposes the `get` method which can be used to return historical messages in the chat room,
+according
 to the given criteria. It returns a paginated response that can be used to query for more messages.
 
 ```typescript
-const historicalMessages = await room.messages.query({ direction: 'backwards', limit: 50 });
+const historicalMessages = await room.messages.get({ direction: 'backwards', limit: 50 });
 console.log(historicalMessages.items);
 if (historicalMessages.hasNext()) {
   const next = await historicalMessages.next();
