@@ -15,6 +15,7 @@ import { ErrorCodes } from './errors.js';
 import { MessageEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
+import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
@@ -504,67 +505,10 @@ export class DefaultMessages
    * Validate the realtime message and convert it to a chat message.
    */
   private _parseNewMessage(channelEventMessage: Ably.InboundMessage): Message | undefined {
-    interface MessagePayload {
-      data?: {
-        text?: string;
-        metadata?: MessageMetadata;
-      };
-      clientId?: string;
-      timestamp?: number;
-      extras?: {
-        timeserial?: string;
-        headers?: MessageHeaders;
-      };
-    }
-
-    const messageCreatedMessage = channelEventMessage as MessagePayload;
-
-    if (!messageCreatedMessage.data) {
-      this._logger.error(`received incoming message without data`, channelEventMessage);
-      return;
-    }
-
-    if (!messageCreatedMessage.clientId) {
-      this._logger.error(`received incoming message without clientId`, channelEventMessage);
-      return;
-    }
-
-    if (!messageCreatedMessage.timestamp) {
-      this._logger.error(`received incoming message without timestamp`, channelEventMessage);
-      return;
-    }
-
-    if (messageCreatedMessage.data.text === undefined) {
-      this._logger.error(`received incoming message without text`, channelEventMessage);
-      return;
-    }
-
-    if (!messageCreatedMessage.extras) {
-      this._logger.error(`received incoming message without extras`, channelEventMessage);
-      return;
-    }
-
-    if (!messageCreatedMessage.extras.timeserial) {
-      this._logger.error(`received incoming message without timeserial`, channelEventMessage);
-      return;
-    }
-
     try {
-      return new DefaultMessage(
-        messageCreatedMessage.extras.timeserial,
-        messageCreatedMessage.clientId,
-        this._roomId,
-        messageCreatedMessage.data.text,
-        new Date(messageCreatedMessage.timestamp),
-        messageCreatedMessage.data.metadata ?? {},
-        messageCreatedMessage.extras.headers ?? {},
-      );
+      return parseMessage(this._roomId, channelEventMessage);
     } catch (error: unknown) {
-      this._logger.error(`failed to parse incoming message`, {
-        channelEventMessage,
-        error: error as Ably.ErrorInfo,
-      });
-      return;
+      this._logger.error(`failed to parse incoming message;`, { channelEventMessage, error: error as Ably.ErrorInfo });
     }
   }
 

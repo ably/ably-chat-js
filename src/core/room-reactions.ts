@@ -13,7 +13,8 @@ import {
 import { ErrorCodes } from './errors.js';
 import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultReaction, Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
+import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
+import { parseReaction } from './reaction-parser.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 
@@ -236,7 +237,7 @@ export class DefaultRoomReactions
 
   // parses reactions from realtime channel into Reaction objects and forwards them to the EventEmitter
   private _forwarder = (inbound: Ably.InboundMessage) => {
-    const reaction = this.parseNewReaction(inbound, this._clientId);
+    const reaction = this._parseNewReaction(inbound, this._clientId);
     if (!reaction) {
       // ignore non-reactions
       return;
@@ -248,38 +249,12 @@ export class DefaultRoomReactions
     return this._channel;
   }
 
-  parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {
-    const data = inbound.data as ReactionPayload | undefined;
-    if (!data) {
-      this._logger.error('RoomReactions.realtimeMessageToReaction(); invalid reaction message with no data', inbound);
-      return;
+  private _parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {
+    try {
+      return parseReaction(inbound, clientId);
+    } catch (error: unknown) {
+      this._logger.error(`failed to parse incoming reaction;`, { inbound, error: error as Ably.ErrorInfo });
     }
-
-    if (!data.type || typeof data.type !== 'string') {
-      // not a reaction if there's no type or type is not a string
-      this._logger.error('RoomReactions.realtimeMessageToReaction(); invalid reaction message with no type', inbound);
-      return;
-    }
-
-    if (!inbound.clientId) {
-      // not a reaction if we have no clientId
-      this._logger.error(
-        'RoomReactions.realtimeMessageToReaction(); invalid reaction message with no clientId',
-        inbound,
-      );
-      return;
-    }
-
-    const extras = inbound.extras as { headers?: ReactionHeaders } | undefined;
-
-    return new DefaultReaction(
-      data.type,
-      inbound.clientId,
-      new Date(inbound.timestamp),
-      inbound.clientId === clientId,
-      data.metadata ?? {},
-      extras?.headers ?? {},
-    );
   }
 
   discontinuityDetected(reason?: Ably.ErrorInfo | undefined): void {
