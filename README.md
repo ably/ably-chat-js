@@ -63,7 +63,7 @@ There is no need to create the room. You can start using it right away.
 To send a message, simply call `send` on the Room's `messages` property, with the text you want to send.
 
 ```ts
-const message = await room.messages.send('This was a great shot!');
+const message = await room.messages.send({text: 'This was a great shot!'});
 ```
 
 ### Message Payload
@@ -75,8 +75,34 @@ const message = await room.messages.send('This was a great shot!');
   roomId: 'string',
   text: 'string',
   createdAt: 'number',
+  metadata: 'Record<string, unknown>',
+  headers: 'Record<string, number | string | boolean | null | undefined>',
 }
 ```
+
+### Metadata and headers for chat messages
+
+**Metadata** is a map of extra information that can be attached to chat messages. Metadata is not used by Ably and is sent as part of the realtime message payload. Example use cases are setting custom styling (like background or text colours or fonts), adding links to external images, emojis, etc.
+
+**Headers** are a flat key-value map and are sent as part of the realtime message's extras inside the headers property. They can serve similar purposes as metadata but they are read by Ably and can be used for things such as [subscription filters](https://faqs.ably.com/subscription-filters).
+
+To pass headers and/or metadata when sending a chat message:
+```typescript
+const message = await room.messages.send({
+  text: 'This was a great shot!',
+  metadata: {
+    "effect": {
+      "name": "fireworks",
+      "fullScreen": true,
+      "duration": 500,
+    },
+  },
+  headers: {
+    "hasEffects": true
+  },
+});
+```
+
 
 ### Subscribe to incoming messages
 

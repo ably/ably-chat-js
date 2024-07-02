@@ -17,7 +17,7 @@ export const useMessages = () => {
 
   const sendMessage = useCallback(
     (text: string) => {
-      room.messages.send(text);
+      room.messages.send({ text });
     },
     [room],
   );

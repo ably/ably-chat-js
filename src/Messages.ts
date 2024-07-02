@@ -3,7 +3,7 @@ import * as Ably from 'ably';
 import { ChatApi } from './ChatApi.js';
 import { MessageEvents } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultMessage, Message } from './Message.js';
+import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './Message.js';
 import { PaginatedResult } from './query.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
@@ -60,6 +60,51 @@ export interface QueryOptions {
    * @defaultValue forwards
    */
   direction?: keyof typeof Direction;
+}
+
+/**
+ * Params for sending a text message. Only `text` is mandatory.
+ */
+export interface SendMessageParams {
+  /**
+   * The text of the message.
+   */
+  text: string;
+
+  /**
+   * Optional metadata of the message.
+   *
+   * The metadata is a map of extra information that can be attached to chat
+   * messages. It is not used by Ably and is sent as part of the realtime
+   * message payload. Example use cases are setting custom styling like
+   * background or text colours or fonts, adding links to external images,
+   * emojis, etc.
+   *
+   * Do not use metadata for authoritative information. There is no server-side
+   * validation. When reading the metadata treat it like user input.
+   *
+   * The key `ably-chat` is reserved and cannot be used. Ably may populate
+   * this with different values in the future.
+   */
+  metadata?: MessageMetadata;
+
+  /**
+   * Optional headers of the message.
+   *
+   * The headers are a flat key-value map and are sent as part of the realtime
+   * message's extras inside the `headers` property. They can serve similar
+   * purposes as the metadata but they are read by Ably and can be used for
+   * features such as
+   * [subscription filters](https://faqs.ably.com/subscription-filters).
+   *
+   * Do not use the headers for authoritative information. There is no
+   * server-side validation. When reading the headers treat them like user
+   * input.
+   *
+   * The key prefix `ably-chat` is reserved and cannot be used. Ably may add
+   * headers prefixed with `ably-chat` in the future.
+   */
+  headers?: MessageHeaders;
 }
 
 /**
@@ -120,10 +165,11 @@ export interface Messages {
    * from the realtime channel. This means you may see the message that was just
    * sent in a callback to `subscribe` before the returned promise resolves.
    *
-   * @param text text of the message
+   * @param params an object containing {text, headers, metadata} for the message
+   * to be sent. Text is required, metadata and headers are optional.
    * @returns A promise that resolves when the message was published.
    */
-  send(text: string): Promise<Message>;
+  send(params: SendMessageParams): Promise<Message>;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -173,12 +219,45 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
 
   /**
    * @inheritdoc Messages
+   * @throws Ably.ErrorInfo if metadata defines reserved keys.
+   * @throws Ably.ErrorInfo if headers defines any headers prefixed with reserved words.
    */
-  async send(text: string): Promise<Message> {
+  async send(params: SendMessageParams): Promise<Message> {
     this._logger.trace('Messages.send();');
-    const response = await this._chatApi.sendMessage(this._roomId, text);
 
-    return new DefaultMessage(response.timeserial, this._clientId, this._roomId, text, new Date(response.createdAt));
+    const { text, metadata, headers } = params;
+
+    if (metadata && metadata['ably-chat'] !== undefined) {
+      throw new Ably.ErrorInfo(
+        "unable to send message; metadata cannot use reserved key 'ably-chat'",
+        40001,
+        400,
+      ) as unknown as Error;
+    }
+
+    if (headers) {
+      Object.keys(headers).forEach((key) => {
+        if (key.startsWith('ably-chat')) {
+          throw new Ably.ErrorInfo(
+            "unable to send message; headers cannot have any key starting with reserved prefix 'ably-chat'",
+            40001,
+            400,
+          ) as unknown as Error;
+        }
+      });
+    }
+
+    const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
+
+    return new DefaultMessage(
+      response.timeserial,
+      this._clientId,
+      this._roomId,
+      text,
+      new Date(response.createdAt),
+      metadata ?? {},
+      headers ?? {},
+    );
   }
 
   /**
@@ -245,11 +324,13 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     interface MessagePayload {
       data?: {
         text?: string;
+        metadata?: MessageMetadata;
       };
       clientId?: string;
       timestamp?: number;
       extras?: {
         timeserial?: string;
+        headers?: MessageHeaders;
       };
     }
 
@@ -291,6 +372,8 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       this._roomId,
       messageCreatedMessage.data.text,
       new Date(messageCreatedMessage.timestamp),
+      messageCreatedMessage.data.metadata ?? {},
+      messageCreatedMessage.extras.headers ?? {},
     );
   }
 }

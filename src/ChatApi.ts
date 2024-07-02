@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
-import { DefaultMessage, Message } from './Message.js';
+import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './Message.js';
 import { OccupancyEvent } from './Occupancy.js';
 import { PaginatedResult } from './query.js';
 
@@ -19,6 +19,12 @@ export interface CreateMessageResponse {
 
 interface CreateMessageRequest {
   text: string;
+}
+
+interface SendMessageParams {
+  text: string;
+  metadata?: MessageMetadata;
+  headers?: MessageHeaders;
 }
 
 /**
@@ -39,25 +45,39 @@ export class ChatApi {
       params,
     ).then((data) => {
       data.items = data.items.map((message) => {
+        const metadata = message.metadata as MessageMetadata | undefined;
+        const headers = message.headers as MessageHeaders | undefined;
         return new DefaultMessage(
           message.timeserial,
           message.clientId,
           message.roomId,
           message.text,
           new Date(message.createdAt),
+          metadata ?? {},
+          headers ?? {},
         );
       });
       return data;
     });
   }
 
-  async sendMessage(roomId: string, text: string): Promise<CreateMessageResponse> {
+  async sendMessage(roomId: string, params: SendMessageParams): Promise<CreateMessageResponse> {
+    const body: {
+      text: string;
+      metadata?: MessageMetadata;
+      headers?: MessageHeaders;
+    } = { text: params.text };
+    if (params.metadata) {
+      body.metadata = params.metadata;
+    }
+    if (params.headers) {
+      body.headers = params.headers;
+    }
+
     return this.makeAuthorisedRequest<CreateMessageResponse, CreateMessageRequest>(
       `/chat/v1/rooms/${roomId}/messages`,
       'POST',
-      {
-        text: text,
-      },
+      body,
     );
   }
 

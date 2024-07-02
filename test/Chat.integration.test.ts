@@ -20,7 +20,7 @@ describe('Chat', () => {
     const chat = newChatClient({}, ablyRealtimeClient({}));
 
     // Send a message, and expect it to succeed
-    const message = await chat.rooms.get('test').messages.send('my message');
+    const message = await chat.rooms.get('test').messages.send({ text: 'my message' });
     expect(message).toEqual(expect.objectContaining({ text: 'my message', clientId: chat.clientId }));
 
     // Request occupancy, and expect it to succeed
@@ -38,7 +38,7 @@ describe('Chat', () => {
     const chat = newChatClient(undefined, ablyRealtimeClient({ useBinaryProtocol: true }));
 
     // Send a message, and expect it to succeed
-    const message = await chat.rooms.get('test').messages.send('my message');
+    const message = await chat.rooms.get('test').messages.send({ text: 'my message' });
     expect(message).toEqual(expect.objectContaining({ text: 'my message', clientId: chat.clientId }));
 
     // Request occupancy, and expect it to succeed
