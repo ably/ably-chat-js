@@ -154,7 +154,7 @@ export interface Messages {
    * @returns A promise that resolves with the paginated result of messages. This paginated result can
    * be used to fetch more messages if available.
    */
-  query(options: QueryOptions): Promise<PaginatedResult<Message>>;
+  get(options: QueryOptions): Promise<PaginatedResult<Message>>;
 
   /**
    * Send a message in the chat room.
@@ -212,7 +212,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   /**
    * @inheritdoc Messages
    */
-  async query(options: QueryOptions): Promise<PaginatedResult<Message>> {
+  async get(options: QueryOptions): Promise<PaginatedResult<Message>> {
     this._logger.trace('Messages.query();');
     return this._chatApi.getMessages(this._roomId, options);
   }

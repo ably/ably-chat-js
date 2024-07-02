@@ -34,7 +34,7 @@ export const useMessages = () => {
 
     const mounted = true;
     const initMessages = async () => {
-      const lastMessages = await room.messages.query({ limit: 100 });
+      const lastMessages = await room.messages.get({ limit: 100 });
       if (mounted) {
         setMessages((prevMessages) => combineMessages(prevMessages, lastMessages.items).reverse());
         setLoading(false);
