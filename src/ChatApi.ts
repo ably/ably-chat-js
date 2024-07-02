@@ -98,7 +98,7 @@ export class ChatApi {
         errorCode: response.errorCode,
         errorMessage: response.errorMessage,
       });
-      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode) as unknown as Error;
+      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
     }
 
     return response.items[0] as RES;
@@ -117,7 +117,7 @@ export class ChatApi {
         errorCode: response.errorCode,
         errorMessage: response.errorMessage,
       });
-      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode) as unknown as Error;
+      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
     }
     return response;
   }

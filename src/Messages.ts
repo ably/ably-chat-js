@@ -228,11 +228,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     const { text, metadata, headers } = params;
 
     if (metadata && metadata['ably-chat'] !== undefined) {
-      throw new Ably.ErrorInfo(
-        "unable to send message; metadata cannot use reserved key 'ably-chat'",
-        40001,
-        400,
-      ) as unknown as Error;
+      throw new Ably.ErrorInfo("unable to send message; metadata cannot use reserved key 'ably-chat'", 40001, 400);
     }
 
     if (headers) {
@@ -242,7 +238,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
             "unable to send message; headers cannot have any key starting with reserved prefix 'ably-chat'",
             40001,
             400,
-          ) as unknown as Error;
+          );
         }
       });
     }

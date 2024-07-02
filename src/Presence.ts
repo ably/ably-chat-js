@@ -281,7 +281,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     this._logger.trace('Presence.subscribe(); listenerOrEvents', { listenerOrEvents });
     if (!listenerOrEvents && !listener) {
       this._logger.error('could not subscribe to presence; invalid arguments');
-      throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400) as unknown as Error;
+      throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400);
     }
     const hasListeners = this.hasListeners();
     if (!listener) {
@@ -317,7 +317,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     this._logger.trace('Presence.unsubscribe(); listenerOrEvents', { listenerOrEvents });
     if (!listenerOrEvents && !listener) {
       this._logger.error('could not unsubscribe from presence; invalid arguments');
-      throw new Ably.ErrorInfo('could not unsubscribe listener: invalid arguments', 40000, 400) as unknown as Error;
+      throw new Ably.ErrorInfo('could not unsubscribe listener: invalid arguments', 40000, 400);
     }
     if (!listener) {
       this.off(listenerOrEvents);
@@ -354,7 +354,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
         50000,
         500,
         (error as Error).message,
-      ) as unknown as Error;
+      );
     }
   };
 }
