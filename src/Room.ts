@@ -7,7 +7,7 @@ import { DefaultMessages, Messages } from './Messages.js';
 import { DefaultOccupancy, Occupancy } from './Occupancy.js';
 import { DefaultPresence, Presence } from './Presence.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './RoomLifecycleManager.js';
-import { RoomOptions } from './RoomOptions.js';
+import { RoomOptions, validateRoomOptions } from './RoomOptions.js';
 import { DefaultRoomReactions, RoomReactions } from './RoomReactions.js';
 import { DefaultStatus, Status } from './RoomStatus.js';
 import { DefaultTyping, Typing } from './Typing.js';
@@ -120,6 +120,8 @@ export class DefaultRoom implements Room {
     clientOptions: NormalisedClientOptions,
     logger: Logger,
   ) {
+    validateRoomOptions(options);
+
     this._roomId = roomId;
     this._options = options;
     this.chatApi = chatApi;
@@ -135,7 +137,7 @@ export class DefaultRoom implements Room {
     }
 
     if (options.typing) {
-      this._typing = new DefaultTyping(roomId, realtime, realtime.auth.clientId, clientOptions.typingTimeoutMs, logger);
+      this._typing = new DefaultTyping(roomId, options.typing, realtime, realtime.auth.clientId, logger);
       features.push(this._typing);
     }
 

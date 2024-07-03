@@ -2,7 +2,6 @@ import { ClientOptions, normaliseClientOptions, NormalisedClientOptions } from '
 import { LogLevel } from '../../src/logger.js';
 
 const defaults: NormalisedClientOptions = {
-  typingTimeoutMs: 5000,
   logLevel: LogLevel.error,
 };
 

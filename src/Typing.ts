@@ -12,6 +12,7 @@ import {
 import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
+import { TypingOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
@@ -132,12 +133,12 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * Create a new DefaultTyping.
    * @param roomId - The ID of the room.
-   * @param channel - The channel to use for typing events.
+   * @param options - The typing options.
+   * @param realtime - The Ably Realtime instance.
    * @param clientId - The client ID.
-   * @param typingTimeoutMs - The timeout for typing events, set to 3000ms by default.
-   * @param logger - The logger instance.
+   * @param logger - The logger.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, typingTimeoutMs: number, logger: Logger) {
+  constructor(roomId: string, options: TypingOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
     this._roomId = roomId;
     this._clientId = clientId;
@@ -149,7 +150,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     });
 
     // Timeout for typing
-    this._typingTimeoutMs = typingTimeoutMs;
+    this._typingTimeoutMs = options.timeoutMs;
     this._timerId = null;
     this._logger = logger;
   }
@@ -294,5 +295,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
     this._logger.warn(`DefaultTyping.discontinuityDetected();`, { error });
     this._discontinuityEmitter.emit('discontinuity', error);
+  }
+
+  get timeoutMs(): number {
+    return this._typingTimeoutMs;
   }
 }

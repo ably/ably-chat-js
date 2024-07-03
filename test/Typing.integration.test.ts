@@ -42,13 +42,9 @@ describe('Typing', () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient({ logLevel: 5 });
-    context.chat = new DefaultRooms(
-      context.realtime,
-      normaliseClientOptions({ typingTimeoutMs: 300 }),
-      makeTestLogger(),
-    );
+    context.chat = new DefaultRooms(context.realtime, normaliseClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
-    context.chatRoom = context.chat.get(randomRoomId(), { typing: {} });
+    context.chatRoom = context.chat.get(randomRoomId(), { typing: { timeoutMs: 300 } });
   });
 
   // Test to check if typing starts and then stops typing after the default timeout
@@ -114,24 +110,26 @@ describe('Typing', () => {
       const clientId1 = randomClientId();
       const client1 = new DefaultRooms(
         ablyRealtimeClient({ clientId: clientId1 }),
-        normaliseClientOptions({ typingTimeoutMs: 1000 }),
+        normaliseClientOptions({}),
         makeTestLogger(),
       );
       const clientId2 = randomClientId();
       const client2 = new DefaultRooms(
         ablyRealtimeClient({ clientId: clientId2 }),
-        normaliseClientOptions({ typingTimeoutMs: 1000 }),
+        normaliseClientOptions({}),
         makeTestLogger(),
       );
 
+      const roomOptions = { typing: { timeoutMs: 1000 } };
+
       // Attach the rooms
       await context.chatRoom.attach();
-      await client1.get(context.chatRoom.roomId, defaultRoomOptions).attach();
-      await client2.get(context.chatRoom.roomId, defaultRoomOptions).attach();
+      await client1.get(context.chatRoom.roomId, roomOptions).attach();
+      await client2.get(context.chatRoom.roomId, roomOptions).attach();
 
       // send typing event for client1 and client2
-      await client1.get(context.chatRoom.roomId, defaultRoomOptions).typing.start();
-      await client2.get(context.chatRoom.roomId, defaultRoomOptions).typing.start();
+      await client1.get(context.chatRoom.roomId, roomOptions).typing.start();
+      await client2.get(context.chatRoom.roomId, roomOptions).typing.start();
       // Wait for the typing events to be received
       await waitForMessages(events, 2);
       // Get the currently typing client ids
@@ -142,7 +140,7 @@ describe('Typing', () => {
 
       events = [];
       // Try stopping typing for one of the clients
-      await client1.get(context.chatRoom.roomId, defaultRoomOptions).typing.stop();
+      await client1.get(context.chatRoom.roomId, roomOptions).typing.stop();
       // Wait for the typing events to be received
       await waitForMessages(events, 1);
       // Get the currently typing client ids

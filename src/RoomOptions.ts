@@ -1,3 +1,5 @@
+import * as Ably from 'ably';
+
 /**
  * Represents the presence options for a chat room.
  */
@@ -31,12 +33,21 @@ export const DefaultPresenceOptions: PresenceOptions = {
  * Represents the typing options for a chat room.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface TypingOptions {}
+export interface TypingOptions {
+  /**
+   * The timeout for typing events in milliseconds. If a user stops typing and this duration elapses, the typing
+   * event will be removed. This value must be greater than 0.
+   * @defaultValue 3000
+   */
+  timeoutMs: number;
+}
 
 /**
  * The default typing options.
  */
-export const DefaultTypingOptions: TypingOptions = {};
+export const DefaultTypingOptions: TypingOptions = {
+  timeoutMs: 3000,
+};
 
 /**
  * Represents the reactions options for a chat room.
@@ -89,3 +100,20 @@ export interface RoomOptions {
    */
   occupancy?: OccupancyOptions;
 }
+
+/**
+ * Creates an errorinfo for invalid room configuration.
+ *
+ * @param reason The reason for the invalid room configuration.
+ * @returns An ErrorInfo.
+ */
+const invalidRoomConfiguration = (reason: string): Error =>
+  new Ably.ErrorInfo(`invalid room configuration: ${reason}`, 40001, 400) as unknown as Error;
+
+export const validateRoomOptions = (options: RoomOptions): void => {
+  if (options.typing) {
+    if (options.typing.timeoutMs <= 0) {
+      throw invalidRoomConfiguration('typing timeout must be greater than 0');
+    }
+  }
+};

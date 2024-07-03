@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../src/Chat.js';
 import { ConnectionStatus } from '../src/Connection.js';
+import { LogLevel } from '../src/logger.js';
 import { RealtimeWithOptions } from '../src/realtimeextensions.js';
 import { newChatClient } from './helper/chat.js';
 import { testClientOptions } from './helper/options.js';
@@ -32,8 +33,8 @@ describe('Chat', () => {
   });
 
   it('should mix in the client options', () => {
-    const chat = newChatClient(testClientOptions({ typingTimeoutMs: 1000 }));
-    expect(chat.clientOptions.typingTimeoutMs).toBe(1000);
+    const chat = newChatClient(testClientOptions({ logLevel: LogLevel.warn }));
+    expect(chat.clientOptions.logLevel).toBe(LogLevel.warn);
   });
 
   it('should work using basic auth', async () => {

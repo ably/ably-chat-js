@@ -8,7 +8,7 @@ import { ablyRealtimeClientWithToken } from './realtimeClient.js';
 export const newChatClient = (options?: ClientOptions, realtimeClient?: Ably.Realtime): ChatClient => {
   const normalisedOptions = normaliseClientOptions({
     ...options,
-    logLevel: testLoggingLevel(),
+    logLevel: options?.logLevel ?? testLoggingLevel(),
   });
   realtimeClient = realtimeClient ?? ablyRealtimeClientWithToken();
 

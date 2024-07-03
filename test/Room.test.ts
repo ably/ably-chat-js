@@ -10,6 +10,7 @@ import {
   DefaultTypingOptions,
   RoomOptions,
 } from '../src/RoomOptions.ts';
+import { DefaultTyping } from '../src/Typing.ts';
 import { randomRoomId } from './helper/identifier.ts';
 import { makeTestLogger } from './helper/logger.ts';
 import { ablyRealtimeClient } from './helper/realtimeClient.ts';
@@ -55,6 +56,29 @@ describe('Room', () => {
     it<TestContext>(`should not throw an error when trying to access ${description} whilst enabled`, (context) => {
       const room = context.getRoom(options);
       featureLoader(room);
+    });
+  });
+
+  describe.each([
+    ['typing timeout <0', 'typing timeout must be greater than 0', { typing: { timeoutMs: -1 } }],
+    ['typing timeout =0', 'typing timeout must be greater than 0', { typing: { timeoutMs: 0 } }],
+  ])('feature configured', (description: string, reason: string, options: RoomOptions) => {
+    it<TestContext>(`should throw an error when passed invalid options: ${description}`, async (context) => {
+      await expect(async () => {
+        context.getRoom(options);
+        return Promise.resolve();
+      }).rejects.toBeErrorInfo({
+        code: 40001,
+        message: `invalid room configuration: ${reason}`,
+      });
+    });
+  });
+
+  describe.each([
+    ['typing timeout', { typing: { timeoutMs: 5 } }, (room: Room) => (room.typing as DefaultTyping).timeoutMs === 5],
+  ])('feature configured', (description: string, options: RoomOptions, checkFunc: (room: Room) => boolean) => {
+    it<TestContext>(`should apply room options: ${description}`, (context) => {
+      expect(checkFunc(context.getRoom(options))).toBe(true);
     });
   });
 });
