@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../src/ChatApi.js';
 import { OccupancyEvent } from '../src/Occupancy.js';
-import { DefaultRoom } from '../src/Room.js';
+import { Room } from '../src/Room.js';
 import { channelEventEmitter } from './helper/channel.js';
 import { makeTestLogger } from './helper/logger.js';
 import { makeRandomRoom } from './helper/room.js';
@@ -11,7 +11,7 @@ import { makeRandomRoom } from './helper/room.js';
 interface TestContext {
   realtime: Ably.Realtime;
   chatApi: ChatApi;
-  room: DefaultRoom;
+  room: Room;
   currentChannelOptions: Ably.ChannelOptions;
   emulateOccupancyUpdate: Ably.messageCallback<Partial<Ably.Message>>;
 }

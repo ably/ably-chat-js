@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 
 const MOCK_CLIENT_ID = 'MOCK_CLIENT_ID';
 
-const mockPromisify = <T>(expectedReturnValue): Promise<T> =>
+const mockPromisify = <T>(expectedReturnValue: T): Promise<T> =>
   new Promise((resolve) => {
     resolve(expectedReturnValue);
   });
@@ -23,12 +23,21 @@ function createMockPresence() {
   };
 }
 
+<<<<<<< HEAD
 type anyType = ((_) => void)[];
 type eventType = { [event: string]: ((_) => void)[] };
 
 function createMockEmitter() {
   const emitter = {
     on: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
+=======
+type anyType = ((unknown: unknown) => void)[];
+type eventType = { [event: string]: (unknown: unknown) => void };
+
+function createMockEmitter() {
+  const emitter = {
+    on: (eventsOrListener: string[] | (() => void), listener?: (arg: unknown) => void) => {
+>>>>>>> b9114c8 (test: fix typescript errors)
       if (listener) {
         if (typeof eventsOrListener === 'string') {
           eventsOrListener = [eventsOrListener];
@@ -44,7 +53,7 @@ function createMockEmitter() {
         return;
       }
 
-      emitter.any.push(eventsOrListener as (_) => void);
+      emitter.any.push(eventsOrListener as () => void);
     },
     once: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
       if (listener) {
@@ -148,7 +157,7 @@ class MockRealtime {
 
   public time() {}
 
-  constructor(data) {
+  constructor(data: { clientId?: string }) {
     const client_id = data.clientId || MOCK_CLIENT_ID;
 
     const channelMap = new Map<string, ReturnType<typeof createMockChannel>>();
@@ -170,8 +179,6 @@ class MockRealtime {
       requestToken: () => {},
     };
     this.connection = createMockConnection();
-
-    this.options = {};
   }
 }
 

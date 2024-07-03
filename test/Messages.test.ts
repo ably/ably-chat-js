@@ -243,7 +243,7 @@ describe('Messages', () => {
 
     // We should have only received one message
     expect(receivedMessages).toHaveLength(1);
-    expect(receivedMessages[0].clientId).toEqual('yoda');
+    expect(receivedMessages[0]?.clientId).toEqual('yoda');
 
     // A double off should not throw
     unsubscribe();
@@ -292,9 +292,9 @@ describe('Messages', () => {
 
     // We should have only received one message
     expect(receivedMessages).toHaveLength(1);
-    expect(receivedMessages[0].clientId).toEqual('yoda');
+    expect(receivedMessages[0]?.clientId).toEqual('yoda');
     expect(receivedMessages2).toHaveLength(1);
-    expect(receivedMessages2[0].clientId).toEqual('yoda');
+    expect(receivedMessages2[0]?.clientId).toEqual('yoda');
 
     // A double off should not throw
     unsubscribe();

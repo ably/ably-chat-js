@@ -50,9 +50,9 @@ const mockChannelAttachSuccessWithResumeFailure = (channel: Ably.RealtimeChannel
 
     (
       channel as Ably.RealtimeChannel & {
-        emulateStateChange: (event: keyof ChannelStateListenersMap, change: Ably.ChannelStateChange) => void;
+        emulateStateChange: (event: AblyChannelState | 'update', change: Ably.ChannelStateChange) => void;
       }
-    ).emulateStateChange('attached', {
+    ).emulateStateChange(AblyChannelState.Attached, {
       current: AblyChannelState.Attached,
       previous: 'initialized',
       resumed: false,
@@ -127,8 +127,6 @@ const mockChannelDetachFailure = (
   });
 };
 
-type ChannelStateListenersMap = Record<AblyChannelState & 'update', Set<Ably.channelEventCallback>>;
-
 const makeMockContributor = (channel: Ably.RealtimeChannel): MockContributor => {
   const contributor = {
     channel: channel,
@@ -139,9 +137,9 @@ const makeMockContributor = (channel: Ably.RealtimeChannel): MockContributor => 
 
       (
         contributor.channel as Ably.RealtimeChannel & {
-          emulateStateChange: (event: keyof ChannelStateListenersMap, change: Ably.ChannelStateChange) => void;
+          emulateStateChange: (event: AblyChannelState | 'update', change: Ably.ChannelStateChange) => void;
         }
-      ).emulateStateChange(update ? 'update' : change.current, change);
+      ).emulateStateChange(update ? 'update' : (change.current as AblyChannelState), change);
     },
   };
   vi.spyOn(
