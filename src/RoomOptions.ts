@@ -108,7 +108,7 @@ export interface RoomOptions {
  * @returns An ErrorInfo.
  */
 const invalidRoomConfiguration = (reason: string): Error =>
-  new Ably.ErrorInfo(`invalid room configuration: ${reason}`, 40001, 400) as unknown as Error;
+  new Ably.ErrorInfo(`invalid room configuration: ${reason}`, 40001, 400);
 
 export const validateRoomOptions = (options: RoomOptions): void => {
   if (options.typing) {

@@ -273,7 +273,7 @@ export class RoomLifecycleManager {
 
             if (change.current === RoomStatus.Failed) {
               contributor.channel.off(listener);
-              reject(change.reason as unknown as Error);
+              reject(change.reason ?? new Ably.ErrorInfo('Unknown error', 50000, 500));
             }
           };
           contributor.channel.on(listener);
@@ -325,7 +325,7 @@ export class RoomLifecycleManager {
             resolve();
           }
 
-          reject(change.error as unknown as Error);
+          reject(change.error ?? new Ably.ErrorInfo('Unknown error', 50000, 500));
         });
       });
     }
@@ -409,7 +409,7 @@ export class RoomLifecycleManager {
 
       // If its an error, we should throw it so the promise rejects
       if (attachResult.error) {
-        throw attachResult.error as unknown as Error;
+        throw attachResult.error;
       }
     });
   }
@@ -430,7 +430,7 @@ export class RoomLifecycleManager {
     // If we're in failed, we should not attempt to detach
     if (this._status.currentStatus === RoomStatus.Failed) {
       // TODO: Give it a specific error code
-      return Promise.reject(new Ably.ErrorInfo('Room is in a failed state', 50000, 500) as unknown as Error);
+      return Promise.reject(new Ably.ErrorInfo('Room is in a failed state', 50000, 500));
     }
 
     // If we're in the process of detaching, we should wait for the detachment to complete
@@ -445,7 +445,7 @@ export class RoomLifecycleManager {
           this._logger.error(`RoomLifecycleManager.detach(); expected detached but got ${change.status}`, {
             error: change.error,
           });
-          reject(change.error as unknown as Error);
+          reject(change.error ?? new Ably.ErrorInfo('Unknown error', 50000, 500));
         });
       });
     }
@@ -495,7 +495,7 @@ export class RoomLifecycleManager {
     }
 
     if (detachError) {
-      throw detachError as unknown as Error;
+      throw detachError;
     }
   }
 }

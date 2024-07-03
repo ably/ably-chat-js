@@ -78,7 +78,7 @@ const mockChannelAttachFailureThenSuccess = (
       });
       vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(error);
 
-      return Promise.reject(error as unknown as Error);
+      return Promise.reject(error);
     })
     .mockImplementationOnce(() => {
       vi.spyOn(channel, 'state', 'get').mockReturnValue(AblyChannelState.Attached);
@@ -98,7 +98,7 @@ const mockChannelAttachFailure = (
     vi.spyOn(channel, 'state', 'get').mockReturnValue(status);
     vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(error);
 
-    return Promise.reject(error as unknown as Error);
+    return Promise.reject(error);
   });
 };
 
@@ -123,7 +123,7 @@ const mockChannelDetachFailure = (
     const error = new Ably.ErrorInfo('error', sequenceNumber, 500);
     vi.spyOn(channel, 'state', 'get').mockReturnValue(status);
     vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(error);
-    return Promise.reject(error as unknown as Error);
+    return Promise.reject(error);
   });
 };
 

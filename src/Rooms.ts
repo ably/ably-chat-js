@@ -74,7 +74,7 @@ export class DefaultRooms implements Rooms {
     const existing = this._rooms.get(roomId);
     if (existing) {
       if (!dequal(existing.options(), options)) {
-        throw new Ably.ErrorInfo('Room already exists with different options', 40000, 400) as unknown as Error;
+        throw new Ably.ErrorInfo('Room already exists with different options', 40000, 400);
       }
 
       return existing;
