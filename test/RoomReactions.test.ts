@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatApi } from '../src/ChatApi.js';
+import { Reaction } from '../src/Reaction.js';
 import { DefaultRoom } from '../src/Room.js';
 import { makeTestLogger } from './helper/logger.js';
 import { testClientOptions } from './helper/options.js';
@@ -51,19 +52,15 @@ describe('Reactions', () => {
         return Promise.resolve();
       },
     );
-    vi.spyOn(channel, 'publish').mockImplementation(
-      // @ts-expect-error overriding mock
-      (name: string, payload: object) => {
-        context.emulateBackendPublish({
-          name: name,
-          data: payload,
-          clientId: clientId,
-          timestamp: context.publishTimestamp.getTime(),
-          encoding: 'json',
-        });
-        return Promise.resolve();
-      },
-    );
+    vi.spyOn(channel, 'publish').mockImplementation((message: Ably.Message) => {
+      context.emulateBackendPublish({
+        ...message,
+        clientId: clientId,
+        timestamp: context.publishTimestamp.getTime(),
+        encoding: 'json',
+      });
+      return Promise.resolve();
+    });
   });
 
   describe('receiving a reaction', () => {
@@ -196,7 +193,115 @@ describe('Reactions', () => {
             done();
           })
           .then(() => {
-            return room.reactions.send('love');
+            return room.reactions.send({ type: 'love' });
+          })
+          .catch((err: unknown) => {
+            reject(err as Error);
+          });
+      }));
+
+    it<TestContext>('should be able to send a reaction and receive a reaction with metadata and headers', (context) =>
+      new Promise<void>((done, reject) => {
+        const { chatApi, realtime } = context;
+        const room = new DefaultRoom('abcd', realtime, chatApi, testClientOptions(), makeTestLogger());
+
+        room.reactions
+          .subscribe((reaction) => {
+            try {
+              expect(reaction).toEqual(
+                expect.objectContaining({
+                  clientId: 'd.vader',
+                  isSelf: true,
+                  createdAt: context.publishTimestamp,
+                  type: 'love',
+                  headers: {
+                    action: 'strike back',
+                    number: 1980,
+                  },
+                  metadata: {
+                    side: 'empire',
+                    bla: {
+                      abc: true,
+                      xyz: 3.14,
+                    },
+                  },
+                } as Reaction),
+              );
+            } catch (err: unknown) {
+              reject(err as Error);
+            }
+            done();
+          })
+          .then(() => {
+            return room.reactions.send({
+              type: 'love',
+              metadata: { side: 'empire', bla: { abc: true, xyz: 3.14 } },
+              headers: { action: 'strike back', number: 1980 },
+            });
+          })
+          .catch((err: unknown) => {
+            reject(err as Error);
+          });
+      }));
+
+    it<TestContext>('should not be able to use reserved prefix in reaction headers', (context) =>
+      new Promise<void>((done, reject) => {
+        const { chatApi, realtime } = context;
+        const room = new DefaultRoom('abcd', realtime, chatApi, testClientOptions(), makeTestLogger());
+
+        room.reactions
+          .subscribe(() => {
+            reject(new Error("should not receive reaction, sending must've failed"));
+          })
+          .then(() => {
+            const sendPromise = room.reactions.send({
+              type: 'love',
+              headers: { 'ably-chat-hello': true }, // "ably-chat" prefix is the reserved
+            });
+
+            sendPromise
+              .then(() => {
+                reject(new Error('send should not succeed'));
+              })
+              .catch((err: unknown) => {
+                const errInfo = err as Ably.ErrorInfo;
+                expect(errInfo).toBeTruthy();
+                expect(errInfo.message).toMatch(/reserved prefix/);
+                expect(errInfo.code).toEqual(40001);
+                done();
+              });
+          })
+          .catch((err: unknown) => {
+            reject(err as Error);
+          });
+      }));
+
+    it<TestContext>('should not be able to use reserved key in reaction metadata', (context) =>
+      new Promise<void>((done, reject) => {
+        const { chatApi, realtime } = context;
+        const room = new DefaultRoom('abcd', realtime, chatApi, testClientOptions(), makeTestLogger());
+
+        room.reactions
+          .subscribe(() => {
+            reject(new Error("should not receive reaction, sending must've failed"));
+          })
+          .then(() => {
+            const sendPromise = room.reactions.send({
+              type: 'love',
+              metadata: { 'ably-chat': { value: 1 } }, // "ably-chat" is reserved
+            });
+
+            sendPromise
+              .then(() => {
+                reject(new Error('send should not succeed'));
+              })
+              .catch((err: unknown) => {
+                const errInfo = err as Ably.ErrorInfo;
+                expect(errInfo).toBeTruthy();
+                expect(errInfo.message).toMatch(/reserved key/);
+                expect(errInfo.code).toEqual(40001);
+                done();
+              });
           })
           .catch((err: unknown) => {
             reject(err as Error);

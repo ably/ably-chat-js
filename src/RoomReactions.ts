@@ -2,9 +2,55 @@ import * as Ably from 'ably';
 
 import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultReaction, Reaction } from './Reaction.js';
+import { DefaultReaction, Reaction, ReactionHeaders, ReactionMetadata } from './Reaction.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
 import EventEmitter from './utils/EventEmitter.js';
+
+/**
+ * Params for sending a room-level reactions. Only `type` is mandatory.
+ */
+export interface SendReactionParams {
+  /**
+   * The type of the reaction, for example an emoji or a short string such as
+   * "like".
+   *
+   * It is the only mandatory parameter to send a room-level reaction.
+   */
+  type: string;
+
+  /**
+   * Optional metadata of the reaction.
+   *
+   * The metadata is a map of extra information that can be attached to the
+   * room reaction. It is not used by Ably and is sent as part of the realtime
+   * message payload. Example use cases are custom animations or other effects.
+   *
+   * Do not use metadata for authoritative information. There is no server-side
+   * validation. When reading the metadata treat it like user input.
+   *
+   * The key `ably-chat` is reserved and cannot be used. Ably may populate this
+   * with different values in the future.
+   */
+  metadata?: ReactionMetadata;
+
+  /**
+   * Optional headers of the room reaction.
+   *
+   * The headers are a flat key-value map and are sent as part of the realtime
+   * message's `extras` inside the `headers` property. They can serve similar
+   * purposes as the metadata but they are read by Ably and can be used for
+   * features such as
+   * [subscription filters](https://faqs.ably.com/subscription-filters).
+   *
+   * Do not use the headers for authoritative information. There is no
+   * server-side validation. When reading the headers treat them like user
+   * input.
+   *
+   * The key prefix `ably-chat` is reserved and cannot be used. Ably may add
+   * headers prefixed with `ably-chat` in the future.
+   */
+  headers?: ReactionHeaders;
+}
 
 /**
  * The listener function type for room-level reactions.
@@ -20,21 +66,18 @@ export type RoomReactionListener = (reaction: Reaction) => void;
  */
 export interface RoomReactions {
   /**
-   * Send a reaction to the room.
-   *
-   * @param type The reaction type, for example "like" or an emoji.
-   */
-  send(type: string): Promise<void>;
-
-  /**
    * Send a reaction to the room including some metadata.
    *
-   * @param type The reaction type, for example "like" or an emoji.
-   * @param metadata Any JSON-serializable data that will be attached to the reaction.
-   * @returns The returned promise resolves when the reaction was sent. Note that it is possible to receive your own reaction via the reactions listener before this promise resolves.
+   * This method accepts parameters for a room-level reaction. It accepts an object
+   *
+   *
+   * @param params an object containing {type, headers, metadata} for the room
+   * reaction to be sent. Type is required, metadata and headers are optional.
+   * @returns The returned promise resolves when the reaction was sent. Note
+   * that it is possible to receive your own reaction via the reactions
+   * listener before this promise resolves.
    */
-  // eslint-disable-next-line @typescript-eslint/unified-signatures
-  send(type: string, metadata?: unknown): Promise<void>;
+  send(params: SendReactionParams): Promise<void>;
 
   /**
    * Subscribe to receive room-level reactions. At the first subscription the SDK will automatically attach to
@@ -69,7 +112,7 @@ interface RoomReactionEventsMap {
 
 interface ReactionPayload {
   type: string;
-  metadata?: unknown;
+  metadata?: ReactionMetadata;
 }
 
 export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> implements RoomReactions {
@@ -89,13 +132,49 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
   /**
    * @inheritDoc Reactions
    */
-  send(type: string, metadata?: unknown): Promise<void> {
-    this._logger.trace('RoomReactions.send();', { type, metadata });
-    const payload: ReactionPayload = { type: type };
-    if (metadata) {
-      payload.metadata = metadata;
+  send(params: SendReactionParams): Promise<void> {
+    this._logger.trace('RoomReactions.send();', params);
+
+    const { type, metadata, headers } = params;
+
+    if (!type) {
+      return Promise.reject(new Ably.ErrorInfo('unable to send reaction; type not set and it is required', 40001, 400));
     }
-    return this._managedChannel.channel.publish(RoomReactionEvents.reaction, payload);
+
+    if (metadata && metadata['ably-chat'] !== undefined) {
+      return Promise.reject(
+        new Ably.ErrorInfo("unable to send reaction; metadata cannot use reserved key 'ably-chat'", 40001, 400),
+      );
+    }
+
+    if (headers) {
+      for (const key of Object.keys(headers)) {
+        if (key.startsWith('ably-chat')) {
+          return Promise.reject(
+            new Ably.ErrorInfo(
+              "unable to send reaction; headers cannot have any key starting with reserved prefix 'ably-chat'",
+              40001,
+              400,
+            ),
+          );
+        }
+      }
+    }
+
+    const payload: ReactionPayload = {
+      type: type,
+      metadata: metadata ?? {},
+    };
+
+    const realtimeMessage: Ably.Message = {
+      name: RoomReactionEvents.reaction,
+      data: payload,
+      extras: {
+        headers: headers ?? {},
+      },
+    };
+
+    return this._managedChannel.channel.publish(realtimeMessage);
   }
 
   /**
@@ -172,12 +251,15 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
       return;
     }
 
+    const extras = inbound.extras as { headers?: ReactionHeaders } | undefined;
+
     return new DefaultReaction(
       data.type,
       inbound.clientId,
       new Date(inbound.timestamp),
       inbound.clientId === clientId,
-      data.metadata,
+      data.metadata ?? {},
+      extras?.headers ?? {},
     );
   }
 }
