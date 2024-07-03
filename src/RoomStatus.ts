@@ -107,15 +107,22 @@ export interface Status {
   onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse;
 
   /**
+   * Removes all listeners that were added by the `onStatusChange` method.
+   */
+  offAll(): void;
+}
+
+/**
+ * An internal interface for the status of a room, which can be used to separate critical
+ * internal functionality from user listeners.
+ * @internal
+ */
+export interface InternalRoomStatus extends Status {
+  /**
    * Registers a listener that will be called once when the room status changes.
    * @param listener The function to call when the status changes.
    */
   onStatusChangeOnce(listener: RoomStatusListener): void;
-
-  /**
-   * Removes all listeners that were added by the `onStatusChange` method.
-   */
-  offAll(): void;
 }
 
 type RoomStatusEventsMap = {
@@ -126,10 +133,11 @@ type RoomStatusEventsMap = {
  * An implementation of the `Status` interface.
  * @internal
  */
-export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements Status {
+export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements Status, InternalRoomStatus {
   private _status: RoomStatus = RoomStatus.Initialized;
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
+  private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
 
   /**
    * Constructs a new `DefaultStatus` instance.
@@ -169,9 +177,8 @@ export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements 
     };
   }
 
-  // TODO: Split internal and external listeners
   onStatusChangeOnce(listener: RoomStatusListener): void {
-    this.once(listener);
+    this._internalEmitter.once(listener);
   }
 
   /**
@@ -185,6 +192,7 @@ export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements 
     this._status = change.status;
     this._error = change.error;
     this._logger.info(`Room status is now ${change.status}`, { error: change.error });
+    this._internalEmitter.emit(change.status, change);
     this.emit(change.status, change);
   }
 }
