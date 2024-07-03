@@ -41,6 +41,16 @@ export enum RoomStatus {
    * The room is currently detached and will not attempt to re-attach. User intervention is required.
    */
   Failed = 'failed',
+
+  /**
+   * The room is in the process of releasing. Attempting to use a room in this state may result in undefined behaviour.
+   */
+  Releasing = 'releasing',
+
+  /**
+   * The room has been released and is no longer usable.
+   */
+  Released = 'released',
 }
 
 /**

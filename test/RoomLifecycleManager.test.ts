@@ -127,6 +127,23 @@ const mockChannelDetachFailure = (
   });
 };
 
+const mockChannelDetachFailureThenSuccess = (channel: Ably.RealtimeChannel, sequenceNumber: number): void => {
+  vi.spyOn(channel, 'detach')
+    .mockImplementationOnce(() => {
+      const error = new Ably.ErrorInfo('error', sequenceNumber, 500);
+      vi.spyOn(channel, 'state', 'get').mockReturnValue(AblyChannelState.Attached);
+      vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(error);
+
+      return Promise.reject(error);
+    })
+    .mockImplementationOnce(() => {
+      vi.spyOn(channel, 'state', 'get').mockReturnValue(AblyChannelState.Detached);
+      vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(baseError);
+
+      return Promise.resolve();
+    });
+};
+
 const makeMockContributor = (channel: Ably.RealtimeChannel): MockContributor => {
   const contributor = {
     channel: channel,
@@ -225,6 +242,44 @@ describe('room lifecycle manager', () => {
         completionTriggered = true;
         status.setStatus({ status: RoomStatus.Attached });
       }));
+
+    it<TestContext>('fails if the room is in the released state', async (context) => {
+      // Force our status into released
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Detached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Released });
+      vi.spyOn(context.firstContributor.channel, 'attach');
+
+      const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+
+      await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(50000);
+      expect(status.currentStatus).toEqual(RoomStatus.Released);
+      expect(context.firstContributor.channel.attach).not.toHaveBeenCalled();
+    });
+
+    it<TestContext>('fails if the room is in the releasing state', async (context) => {
+      // Force our status into released
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Detached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Releasing });
+      vi.spyOn(context.firstContributor.channel, 'attach');
+
+      const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+
+      await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(50000);
+      expect(status.currentStatus).toEqual(RoomStatus.Releasing);
+      expect(context.firstContributor.channel.attach).not.toHaveBeenCalled();
+    });
 
     it<TestContext>('goes via the attaching state', async (context) => {
       // Force our status and contributors into attached
@@ -645,6 +700,44 @@ describe('room lifecycle manager', () => {
         completionTriggered = true;
         status.setStatus({ status: RoomStatus.Detached });
       }));
+
+    it<TestContext>('fails if the room is in the released state', async (context) => {
+      // Force our status into released
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Released });
+      vi.spyOn(context.firstContributor.channel, 'detach');
+
+      const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+
+      await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(50000);
+      expect(status.currentStatus).toEqual(RoomStatus.Released);
+      expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
+    });
+
+    it<TestContext>('fails if the room is in the releasing state', async (context) => {
+      // Force our status into released
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Releasing });
+      vi.spyOn(context.firstContributor.channel, 'detach');
+
+      const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+
+      await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(50000);
+      expect(status.currentStatus).toEqual(RoomStatus.Releasing);
+      expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
+    });
 
     it<TestContext>('goes via the detaching state', async (context) => {
       // Force our status and contributors into detached
@@ -1805,6 +1898,329 @@ describe('room lifecycle manager', () => {
         expect(status.currentStatus).toEqual(RoomStatus.Attached);
         expect(context.firstContributor.discontinuityDetected).toBeCalledWith(firstError);
       });
+    });
+  });
+
+  describe('release lifecycle', () => {
+    it<TestContext>('resolves immediately if the room is already released', async (context) => {
+      const status = new DefaultStatus(makeTestLogger());
+      status.setStatus({ status: RoomStatus.Released });
+
+      const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+
+      await expect(monitor.release()).resolves.toBeUndefined();
+    });
+
+    it<TestContext>('resolves immediately and transitions to released if the room is detached', async (context) => {
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Detached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Detached });
+
+      const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+
+      await expect(monitor.release()).resolves.toBeUndefined();
+
+      await waitForRoomStatus(status, RoomStatus.Released);
+    });
+
+    it<TestContext>('resolves to released if existing attempt completes', (context) =>
+      new Promise<void>((resolve, reject) => {
+        vi.useFakeTimers();
+
+        // Force our status and contributors into detached
+        const status = new DefaultStatus(makeTestLogger());
+        context.firstContributor.emulateStateChange({
+          current: AblyChannelState.Detached,
+          previous: 'initialized',
+          resumed: false,
+          reason: baseError,
+        });
+        status.setStatus({ status: RoomStatus.Releasing });
+        vi.spyOn(context.firstContributor.channel, 'detach');
+
+        const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+        let completionTriggered = false;
+
+        // Make it so that the first contributor only detaches when a timer expires
+        vi.spyOn(context.firstContributor.channel, 'detach').mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              setTimeout(() => {
+                resolve();
+              }, 100);
+            }),
+        );
+
+        // Release the room
+        void monitor.release();
+
+        monitor
+          .release()
+          .then(() => {
+            expect(completionTriggered).toBeTruthy();
+            expect(status.currentStatus).toEqual(RoomStatus.Released);
+            expect(context.firstContributor.channel.detach).toHaveBeenCalledOnce();
+            resolve();
+          })
+          .catch((error: unknown) => {
+            reject(error as Error);
+          });
+
+        // Expire the fake timer to trigger the completion
+        completionTriggered = true;
+        vi.advanceTimersToNextTimer();
+
+        vi.useRealTimers();
+      }));
+
+    it<TestContext>('transitions via releasing', (context) => {
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Attached });
+
+      const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+
+      const releasePromise = monitor.release();
+
+      expect(status.currentStatus).toEqual(RoomStatus.Releasing);
+
+      return releasePromise.then(() => {
+        expect(status.currentStatus).toEqual(RoomStatus.Released);
+      });
+    });
+
+    it<TestContext>('detaches all contributors during release', async (context) => {
+      // Force our status and contributors into attached
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError2,
+      });
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Attached });
+
+      // Mock channel detachment results
+      mockChannelDetachSuccess(context.firstContributor.channel);
+      mockChannelDetachSuccess(context.secondContributor.channel);
+      mockChannelDetachSuccess(context.thirdContributor.channel);
+
+      const monitor = new RoomLifecycleManager(
+        status,
+        [context.firstContributor, context.secondContributor, context.thirdContributor],
+        makeTestLogger(),
+        5,
+      );
+
+      await expect(monitor.release()).resolves.toBeUndefined();
+
+      expect(context.firstContributor.channel.detach).toHaveBeenCalled();
+      expect(context.secondContributor.channel.detach).toHaveBeenCalled();
+      expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
+
+      expect(status.currentStatus).toEqual(RoomStatus.Released);
+    });
+
+    it<TestContext>('allows channels detaching into failed', async (context) => {
+      // Force our status and contributors into attached
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError2,
+      });
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Attached });
+
+      // Mock channel detachment results
+      mockChannelDetachSuccess(context.firstContributor.channel);
+      mockChannelDetachFailure(context.secondContributor.channel, AblyChannelState.Failed, 1001);
+      mockChannelDetachSuccess(context.thirdContributor.channel);
+
+      const monitor = new RoomLifecycleManager(
+        status,
+        [context.firstContributor, context.secondContributor, context.thirdContributor],
+        makeTestLogger(),
+        5,
+      );
+
+      await expect(monitor.release()).resolves.toBeUndefined();
+
+      expect(context.firstContributor.channel.detach).toHaveBeenCalled();
+      expect(context.secondContributor.channel.detach).toHaveBeenCalled();
+      expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
+
+      expect(status.currentStatus).toEqual(RoomStatus.Released);
+    });
+
+    it<TestContext>('allows channels detaching into suspended', async (context) => {
+      // Force our status and contributors into attached
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError2,
+      });
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Attached });
+
+      // Mock channel detachment results
+      mockChannelDetachSuccess(context.firstContributor.channel);
+      mockChannelDetachFailure(context.secondContributor.channel, AblyChannelState.Suspended, 1001);
+      mockChannelDetachSuccess(context.thirdContributor.channel);
+
+      const monitor = new RoomLifecycleManager(
+        status,
+        [context.firstContributor, context.secondContributor, context.thirdContributor],
+        makeTestLogger(),
+        5,
+      );
+
+      await expect(monitor.release()).resolves.toBeUndefined();
+
+      expect(context.firstContributor.channel.detach).toHaveBeenCalled();
+      expect(context.secondContributor.channel.detach).toHaveBeenCalled();
+      expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
+
+      expect(status.currentStatus).toEqual(RoomStatus.Released);
+    });
+
+    it<TestContext>('rejects if a channel fails to detach', async (context) => {
+      // Force our status and contributors into attached
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError2,
+      });
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Attached });
+
+      // Mock channel detachment results
+      mockChannelDetachSuccess(context.firstContributor.channel);
+      mockChannelDetachFailure(context.secondContributor.channel, AblyChannelState.Attached, 1001);
+      mockChannelDetachSuccess(context.thirdContributor.channel);
+
+      const monitor = new RoomLifecycleManager(
+        status,
+        [context.firstContributor, context.secondContributor, context.thirdContributor],
+        makeTestLogger(),
+        5,
+      );
+
+      await expect(monitor.release()).rejects.toBeErrorInfoWithCode(1001);
+
+      expect(context.firstContributor.channel.detach).toHaveBeenCalled();
+      expect(context.secondContributor.channel.detach).toHaveBeenCalled();
+      expect(context.thirdContributor.channel.detach).not.toHaveBeenCalled();
+
+      expect(status.currentStatus).toEqual(RoomStatus.Releasing);
+    });
+
+    it<TestContext>('allows a multiple attempts at releasing', async (context) => {
+      // Force our status and contributors into attached
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError2,
+      });
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Attached });
+
+      // Mock channel detachment results
+      mockChannelDetachSuccess(context.firstContributor.channel);
+      mockChannelDetachFailureThenSuccess(context.secondContributor.channel, 1001);
+      mockChannelDetachSuccess(context.thirdContributor.channel);
+
+      const monitor = new RoomLifecycleManager(
+        status,
+        [context.firstContributor, context.secondContributor, context.thirdContributor],
+        makeTestLogger(),
+        5,
+      );
+
+      await expect(monitor.release()).rejects.toBeErrorInfoWithCode(1001);
+
+      expect(status.currentStatus).toEqual(RoomStatus.Releasing);
+
+      await expect(monitor.release()).resolves.toBeUndefined();
+
+      expect(context.firstContributor.channel.detach).toHaveBeenCalledTimes(2);
+      expect(context.secondContributor.channel.detach).toHaveBeenCalledTimes(2);
+      expect(context.thirdContributor.channel.detach).toHaveBeenCalledOnce();
+
+      expect(status.currentStatus).toEqual(RoomStatus.Released);
     });
   });
 });

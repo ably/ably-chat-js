@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../src/Chat.ts';
-import { Room } from '../src/Room.ts';
+import { DefaultRoom, Room } from '../src/Room.ts';
 import { RoomStatus } from '../src/RoomStatus.ts';
 import { newChatClient } from './helper/chat.ts';
 import { getRandomRoom } from './helper/room.ts';
@@ -44,5 +44,33 @@ describe('Room', () => {
     expect(room.typing.channel.state).toEqual('detached');
     expect(room.presence.channel.state).toEqual('detached');
     expect(room.occupancy.channel.state).toEqual('detached');
+  });
+
+  it<TestContext>('should be releasable', async ({ room }) => {
+    await room.attach();
+
+    // We should be attached
+    expect(room.status.currentStatus).toEqual(RoomStatus.Attached);
+
+    // Release the room
+    await (room as DefaultRoom).release();
+
+    // We should be released
+    expect(room.status.currentStatus).toEqual(RoomStatus.Released);
+  });
+
+  it<TestContext>('releasing a room multiple times is idempotent', async ({ room }) => {
+    await room.attach();
+
+    // We should be attached
+    expect(room.status.currentStatus).toEqual(RoomStatus.Attached);
+
+    // Release the room multiple times
+    await (room as DefaultRoom).release();
+    await (room as DefaultRoom).release();
+    await (room as DefaultRoom).release();
+
+    // We should be released
+    expect(room.status.currentStatus).toEqual(RoomStatus.Released);
   });
 });

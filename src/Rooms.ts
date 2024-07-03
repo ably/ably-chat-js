@@ -27,9 +27,11 @@ export interface Rooms {
 
   /**
    * Release the Room object if it exists. This method only releases the reference
-   * to the Room object from the Rooms instance. It does not unsubscribe to any
-   * events, leave the chat room or perform any other cleanup task. Those should
-   * be done before calling release().
+   * to the Room object from the Rooms instance and detaches the room from Ably. It does not unsubscribe to any
+   * events.
+   *
+   * After calling this function, the room object is no-longer usable. If you wish to get the room object again,
+   * you must call {@link Rooms.get}.
    *
    * @param roomId The ID of the room.
    */
@@ -49,7 +51,7 @@ export class DefaultRooms implements Rooms {
   private readonly realtime: Ably.Realtime;
   private readonly chatApi: ChatApi;
   private readonly _clientOptions: NormalisedClientOptions;
-  private readonly _rooms: Map<string, Room> = new Map<string, Room>();
+  private readonly _rooms: Map<string, DefaultRoom> = new Map<string, DefaultRoom>();
   private readonly _logger: Logger;
 
   /**
@@ -96,13 +98,15 @@ export class DefaultRooms implements Rooms {
   /**
    * @inheritDoc
    */
-  async release(roomId: string) {
+  release(roomId: string): Promise<void> {
     this._logger.trace('Rooms.release();', { roomId });
 
     const room = this._rooms.get(roomId);
-    if (!room) return;
+    if (!room) return Promise.resolve();
 
-    this._rooms.delete(roomId);
-    return Promise.resolve();
+    return room.release().then(() => {
+      this._logger.debug('Rooms.release(); room released', { roomId });
+      this._rooms.delete(roomId);
+    });
   }
 }

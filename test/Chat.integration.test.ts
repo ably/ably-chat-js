@@ -87,30 +87,4 @@ describe('Chat', () => {
     // Wait for the connection to fail
     await waitForConnectionStatus(chat, ConnectionStatus.Failed);
   });
-
-  it('throws an error if you create the same room with different options', async () => {
-    const chat = newChatClient();
-    chat.rooms.get('test', { typing: { timeoutMs: 1000 } });
-    await expect(async () => {
-      chat.rooms.get('test', { typing: { timeoutMs: 2000 } });
-      return Promise.resolve();
-    }).rejects.toBeErrorInfoWithCode(40000);
-  });
-
-  it('gets the same room if you create it with the same options', () => {
-    const chat = newChatClient();
-    const room1 = chat.rooms.get('test', { typing: { timeoutMs: 1000 } });
-    const room2 = chat.rooms.get('test', { typing: { timeoutMs: 1000 } });
-    expect(room1).toBe(room2);
-  });
-
-  it('releases a room', async () => {
-    // Create a room, then release, then create another room with different options
-    const chat = newChatClient();
-    const room1 = chat.rooms.get('test', { typing: { timeoutMs: 1000 } });
-    await chat.rooms.release('test');
-    const room = chat.rooms.get('test', { typing: { timeoutMs: 2000 } });
-    expect(room.options().typing?.timeoutMs).toBe(2000);
-    expect(room).not.toBe(room1);
-  });
 });

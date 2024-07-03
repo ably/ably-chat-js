@@ -102,6 +102,7 @@ export class DefaultRoom implements Room {
   private readonly _logger: Logger;
   private readonly _status: DefaultStatus;
   private readonly _lifecycleManager: RoomLifecycleManager;
+  private readonly _finalizer: () => Promise<void>;
 
   /**
    * Constructs a new Room instance.
@@ -153,6 +154,24 @@ export class DefaultRoom implements Room {
 
     // Setup lifecycle manager
     this._lifecycleManager = new RoomLifecycleManager(this._status, features, logger, 5000);
+
+    // Setup a finalization function to clean up resources
+    let finalized = false;
+    this._finalizer = async () => {
+      // Cycle the channels in the feature and release them from the realtime client
+      if (finalized) {
+        this._logger.debug('Room.finalizer(); already finalized');
+        return;
+      }
+
+      await this._lifecycleManager.release();
+
+      features.forEach((feature: ContributesToRoomLifecycle) => {
+        realtime.channels.release(feature.channel.name);
+      });
+
+      finalized = true;
+    };
   }
 
   /**
@@ -245,5 +264,21 @@ export class DefaultRoom implements Room {
   async detach(): Promise<void> {
     this._logger.trace('Room.detach();');
     return this._lifecycleManager.detach();
+  }
+
+  /**
+   * Releases resources associated with the room.
+   * We guarantee that this does not throw an error.
+   */
+  release(): Promise<void> {
+    this._logger.trace('Room.release();');
+    return this._finalizer();
+  }
+
+  /**
+   * @internal
+   */
+  get lifecycleManager(): RoomLifecycleManager {
+    return this._lifecycleManager;
   }
 }

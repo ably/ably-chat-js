@@ -1,3 +1,4 @@
+import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../src/ChatApi.ts';
@@ -14,20 +15,22 @@ import { DefaultTyping } from '../src/Typing.ts';
 import { randomRoomId } from './helper/identifier.ts';
 import { makeTestLogger } from './helper/logger.ts';
 import { ablyRealtimeClient } from './helper/realtimeClient.ts';
+import { defaultRoomOptions } from './helper/room.ts';
 
 vi.mock('ably');
 
 interface TestContext {
+  realtime: Ably.Realtime;
   getRoom: (options: RoomOptions) => Room;
 }
 
 describe('Room', () => {
   beforeEach<TestContext>((context) => {
-    const realtime = ablyRealtimeClient();
+    context.realtime = ablyRealtimeClient();
     const logger = makeTestLogger();
-    const chatApi = new ChatApi(realtime, logger);
+    const chatApi = new ChatApi(context.realtime, logger);
     context.getRoom = (options: RoomOptions) => {
-      return new DefaultRoom(randomRoomId(), options, realtime, chatApi, normaliseClientOptions({}), logger);
+      return new DefaultRoom(randomRoomId(), options, context.realtime, chatApi, normaliseClientOptions({}), logger);
     };
   });
 
@@ -79,6 +82,70 @@ describe('Room', () => {
   ])('feature configured', (description: string, options: RoomOptions, checkFunc: (room: Room) => boolean) => {
     it<TestContext>(`should apply room options: ${description}`, (context) => {
       expect(checkFunc(context.getRoom(options))).toBe(true);
+    });
+  });
+
+  describe('room release', () => {
+    it<TestContext>('should release the room', async (context) => {
+      const room = context.getRoom(defaultRoomOptions) as DefaultRoom;
+
+      // Setup spies on the realtime client and the room lifecycle manager
+      vi.spyOn(context.realtime.channels, 'release');
+      vi.spyOn(room.lifecycleManager, 'release');
+
+      // Release the room
+      await room.release();
+
+      // The room lifecycle manager should have been released
+      expect(room.lifecycleManager.release).toHaveBeenCalledTimes(1);
+
+      // Every underlying feature channel should have been released
+      expect(context.realtime.channels.release).toHaveBeenCalledTimes(5);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(room.messages.channel.name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(room.presence.channel.name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(room.typing.channel.name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(room.reactions.channel.name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(room.occupancy.channel.name);
+    });
+
+    it<TestContext>('should only release with enabled features', async (context) => {
+      const room = context.getRoom({ typing: DefaultTypingOptions }) as DefaultRoom;
+
+      // Setup spies on the realtime client and the room lifecycle manager
+      vi.spyOn(context.realtime.channels, 'release');
+      vi.spyOn(room.lifecycleManager, 'release');
+
+      // Release the room
+      await room.release();
+
+      // The room lifecycle manager should have been released
+      expect(room.lifecycleManager.release).toHaveBeenCalledTimes(1);
+
+      // Every underlying feature channel should have been released
+      expect(context.realtime.channels.release).toHaveBeenCalledTimes(2);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(room.messages.channel.name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(room.typing.channel.name);
+    });
+
+    it<TestContext>('releasing multiple times is idempotent', async (context) => {
+      const room = context.getRoom(defaultRoomOptions) as DefaultRoom;
+
+      // Setup spies on the realtime client and the room lifecycle manager
+      vi.spyOn(context.realtime.channels, 'release');
+      vi.spyOn(room.lifecycleManager, 'release');
+      // Setup spies on the realtime client
+      vi.spyOn(context.realtime.channels, 'release');
+
+      // Release the room
+      await room.release();
+      await room.release();
+      await room.release();
+
+      // Every underlying feature channel should have been released
+      expect(context.realtime.channels.release).toHaveBeenCalledTimes(5);
+
+      // The room lifecycle manager should have been released only once
+      expect(room.lifecycleManager.release).toHaveBeenCalledTimes(1);
     });
   });
 });

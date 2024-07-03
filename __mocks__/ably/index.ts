@@ -148,6 +148,7 @@ function createMockConnection() {
 class MockRealtime {
   public channels: {
     get: (name: string) => ReturnType<typeof createMockChannel>;
+    release: (id: string) => void;
   };
   public auth: {
     clientId: string;
@@ -172,6 +173,9 @@ class MockRealtime {
         const newChannel = createMockChannel(name);
         channelMap.set(name, newChannel);
         return newChannel;
+      },
+      release: (id: string) => {
+        channelMap.delete(id);
       },
     };
     this.auth = {

@@ -11,7 +11,7 @@ import { TypingEvent } from '../src/Typing.js';
 import { randomClientId, randomRoomId } from './helper/identifier.js';
 import { makeTestLogger } from './helper/logger.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
-import { defaultRoomOptions, waitForRoomStatus } from './helper/room.js';
+import { waitForRoomStatus } from './helper/room.js';
 
 const TEST_TIMEOUT = 10000;
 

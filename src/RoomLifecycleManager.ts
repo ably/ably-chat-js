@@ -41,6 +41,7 @@ export class RoomLifecycleManager {
   private _ignoreContributorDetachments = false;
   private _pendingDiscontinuityEvents: DiscontinutyEventMap = new Map();
   private _firstAttachesCompleted = new Map<ContributesToRoomLifecycle, boolean>();
+  private _releaseInProgress = false;
 
   /**
    * Constructs a new `RoomLifecycleManager` instance.
@@ -312,6 +313,12 @@ export class RoomLifecycleManager {
       return Promise.resolve();
     }
 
+    // If the room is released, we can't attach
+    if (this._status.currentStatus === RoomStatus.Released || this._status.currentStatus === RoomStatus.Releasing) {
+      // TODO: Error code
+      return Promise.reject(new Ably.ErrorInfo('Room is released', 50000, 500));
+    }
+
     // If we're in the process of attaching, we should wait for the attachment to complete
     if (this._status.currentStatus === RoomStatus.Attaching) {
       return new Promise<void>((resolve, reject) => {
@@ -427,6 +434,12 @@ export class RoomLifecycleManager {
       return Promise.resolve();
     }
 
+    // If the room is released or in the process of doing so, we should not attempt to detach
+    if (this._status.currentStatus === RoomStatus.Released || this._status.currentStatus === RoomStatus.Releasing) {
+      // TODO: Give it a specific error code
+      return Promise.reject(new Ably.ErrorInfo('Room is released', 50000, 500));
+    }
+
     // If we're in failed, we should not attempt to detach
     if (this._status.currentStatus === RoomStatus.Failed) {
       // TODO: Give it a specific error code
@@ -452,6 +465,7 @@ export class RoomLifecycleManager {
 
     // We force the room status to be detaching
     this._ignoreContributorDetachments = true;
+    this.clearAllTransientDetachTimeouts();
     this._status.setStatus({ status: RoomStatus.Detaching });
 
     // Cycle each channel in series and detach it. If all channels are detached, we set the room status to detached
@@ -497,5 +511,74 @@ export class RoomLifecycleManager {
     if (detachError) {
       throw detachError;
     }
+  }
+
+  /**
+   * Releases the room. If the room is already released, this is a no-op.
+   * Any channel that detaches into the failed state is ok. But any channel that fails to detach
+   * will cause the room status to be set to failed.
+   *
+   * @returns Returns a promise that resolves when the room is released. If a channel detaches into a non-terminated
+   * state (e.g. attached), the promise will reject.
+   */
+  release(): Promise<void> {
+    this._logger.trace('RoomLifecycleManager.release();');
+
+    // If we're already released, this is a no-op
+    if (this._status.currentStatus === RoomStatus.Released) {
+      return Promise.resolve();
+    }
+
+    // If we're already detached, then we can transitiont to released immediately
+    if (this._status.currentStatus === RoomStatus.Detached) {
+      this._status.setStatus({ status: RoomStatus.Released });
+      return Promise.resolve();
+    }
+
+    // If we're in the process of releasing, we should wait for it to complete
+    if (this._releaseInProgress) {
+      return new Promise<void>((resolve, reject) => {
+        this._status.onStatusChangeOnce((change: RoomStatusChange) => {
+          if (change.status === RoomStatus.Released) {
+            resolve();
+            return;
+          }
+
+          this._logger.error(`RoomLifecycleManager.release(); expected released but got ${change.status}`, {
+            error: change.error,
+          });
+          reject(change.error ?? new Ably.ErrorInfo('Unknown error', 50000, 500));
+        });
+      });
+    }
+
+    // We force the room status to be releasing
+    this.clearAllTransientDetachTimeouts();
+    this._ignoreContributorDetachments = true;
+    this._releaseInProgress = true;
+    this._status.setStatus({ status: RoomStatus.Releasing });
+
+    // Cycle each channel in series and detach it.
+    // If the detach fails, we don't change the room status we do rethrow the error.
+    // Failed channels are ok to ignore - we're releasing the room anyway.
+    return this._mtx.runExclusive(async () => {
+      for (const contributor of this._contributors) {
+        try {
+          this._logger.debug('RoomLifecycleManager.release(); detaching', { channel: contributor.channel.name });
+          await contributor.channel.detach();
+        } catch (error: unknown) {
+          // If our channel state is failed or suspended, that's ok, we're releasing the room anyway
+          if (contributor.channel.state === 'failed' || contributor.channel.state === 'suspended') {
+            continue;
+          }
+
+          this._logger.error('RoomLifecycleManager.release(); failed to detach', { error: error as Error });
+          this._releaseInProgress = false;
+          throw error;
+        }
+      }
+
+      this._status.setStatus({ status: RoomStatus.Released });
+    });
   }
 }
