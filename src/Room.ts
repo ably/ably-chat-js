@@ -9,7 +9,7 @@ import { DefaultPresence, Presence } from './Presence.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './RoomLifecycleManager.js';
 import { RoomOptions, validateRoomOptions } from './RoomOptions.js';
 import { DefaultRoomReactions, RoomReactions } from './RoomReactions.js';
-import { DefaultStatus, Status } from './RoomStatus.js';
+import { DefaultStatus, RoomStatus } from './RoomStatus.js';
 import { DefaultTyping, Typing } from './Typing.js';
 
 /**
@@ -66,7 +66,7 @@ export interface Room {
    *
    * @returns The status observable.
    */
-  get status(): Status;
+  get status(): RoomStatus;
 
   /**
    * Attaches to the room to receive events in realtime.
@@ -246,7 +246,7 @@ export class DefaultRoom implements Room {
   /**
    * @inheritdoc Room
    */
-  get status(): Status {
+  get status(): RoomStatus {
     return this._status;
   }
 

@@ -4,9 +4,9 @@ import { Logger } from './logger.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
- * The different states that the room can be in.
+ * The different states that a room can be in throughout its lifecycle.
  */
-export enum RoomStatus {
+export enum RoomLifecycle {
   /**
    * A temporary state for when the library is first initialised.
    */
@@ -60,7 +60,12 @@ export interface RoomStatusChange {
   /**
    * The new status of the room.
    */
-  status: RoomStatus;
+  current: RoomLifecycle;
+
+  /**
+   * The previous status of the room.
+   */
+  previous: RoomLifecycle;
 
   /**
    * An error that provides a reason why the room has
@@ -88,11 +93,11 @@ export interface OnRoomStatusChangeResponse {
 /**
  * Represents the status of a Room.
  */
-export interface Status {
+export interface RoomStatus {
   /**
    * The current status of the room.
    */
-  get currentStatus(): RoomStatus;
+  get current(): RoomLifecycle;
 
   /**
    * The current error, if any, that caused the room to enter the current status.
@@ -117,24 +122,47 @@ export interface Status {
  * internal functionality from user listeners.
  * @internal
  */
-export interface InternalRoomStatus extends Status {
+export interface InternalRoomStatus extends RoomStatus {
   /**
    * Registers a listener that will be called once when the room status changes.
    * @param listener The function to call when the status changes.
    */
   onChangeOnce(listener: RoomStatusListener): void;
+
+  /**
+   * Sets the status of the room.
+   *
+   * @param params The new status of the room.
+   */
+  setStatus(params: NewRoomStatus): void;
+}
+
+/**
+ * A new room status that can be set.
+ */
+export interface NewRoomStatus {
+  /**
+   * The new status of the room.
+   */
+  status: RoomLifecycle;
+
+  /**
+   * An error that provides a reason why the room has
+   * entered the new status, if applicable.
+   */
+  error?: Ably.ErrorInfo;
 }
 
 type RoomStatusEventsMap = {
-  [key in RoomStatus]: RoomStatusChange;
+  [key in RoomLifecycle]: RoomStatusChange;
 };
 
 /**
  * An implementation of the `Status` interface.
  * @internal
  */
-export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements Status, InternalRoomStatus {
-  private _status: RoomStatus = RoomStatus.Initialized;
+export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements InternalRoomStatus {
+  private _state: RoomLifecycle = RoomLifecycle.Initialized;
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
   private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
@@ -146,15 +174,15 @@ export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements 
   constructor(logger: Logger) {
     super();
     this._logger = logger;
-    this._status = RoomStatus.Initialized;
+    this._state = RoomLifecycle.Initialized;
     this._error = undefined;
   }
 
   /**
    * @inheritdoc
    */
-  get currentStatus(): RoomStatus {
-    return this._status;
+  get current(): RoomLifecycle {
+    return this._state;
   }
 
   /**
@@ -188,11 +216,17 @@ export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements 
     this.off();
   }
 
-  setStatus(change: RoomStatusChange): void {
-    this._status = change.status;
+  setStatus(params: NewRoomStatus): void {
+    const change: RoomStatusChange = {
+      current: params.status,
+      error: params.error,
+      previous: this._state,
+    };
+
+    this._state = change.current;
     this._error = change.error;
-    this._logger.info(`Room status is now ${change.status}`, { error: change.error });
-    this._internalEmitter.emit(change.status, change);
-    this.emit(change.status, change);
+    this._logger.info(`Room status changed`, change);
+    this._internalEmitter.emit(change.current, change);
+    this.emit(change.current, change);
   }
 }

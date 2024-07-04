@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ErrorCodes } from '../src/errors.ts';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from '../src/RoomLifecycleManager.ts';
-import { DefaultStatus, RoomStatus } from '../src/RoomStatus.ts';
+import { DefaultStatus, RoomLifecycle } from '../src/RoomStatus.ts';
 import { makeTestLogger } from './helper/logger.ts';
 import { waitForRoomStatus } from './helper/room.ts';
 
@@ -212,7 +212,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Attached });
+        status.setStatus({ status: RoomLifecycle.Attached });
         vi.spyOn(context.firstContributor.channel, 'attach');
 
         const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
@@ -220,7 +220,7 @@ describe('room lifecycle manager', () => {
         monitor
           .attach()
           .then(() => {
-            expect(status.currentStatus).toEqual(RoomStatus.Attached);
+            expect(status.current).toEqual(RoomLifecycle.Attached);
             expect(context.firstContributor.channel.attach).not.toHaveBeenCalled();
             resolve();
           })
@@ -239,7 +239,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Attaching });
+        status.setStatus({ status: RoomLifecycle.Attaching });
         vi.spyOn(context.firstContributor.channel, 'attach');
 
         const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
@@ -249,7 +249,7 @@ describe('room lifecycle manager', () => {
           .attach()
           .then(() => {
             expect(completionTriggered).toBeTruthy();
-            expect(status.currentStatus).toEqual(RoomStatus.Attached);
+            expect(status.current).toEqual(RoomLifecycle.Attached);
             expect(context.firstContributor.channel.attach).not.toHaveBeenCalled();
             resolve();
           })
@@ -258,7 +258,7 @@ describe('room lifecycle manager', () => {
           });
 
         completionTriggered = true;
-        status.setStatus({ status: RoomStatus.Attached });
+        status.setStatus({ status: RoomLifecycle.Attached });
       }));
 
     it<TestContext>('fails if the room is in the released state', async (context) => {
@@ -270,13 +270,13 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Released });
+      status.setStatus({ status: RoomLifecycle.Released });
       vi.spyOn(context.firstContributor.channel, 'attach');
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
       await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomIsReleased);
-      expect(status.currentStatus).toEqual(RoomStatus.Released);
+      expect(status.current).toEqual(RoomLifecycle.Released);
       expect(context.firstContributor.channel.attach).not.toHaveBeenCalled();
     });
 
@@ -289,13 +289,13 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Releasing });
+      status.setStatus({ status: RoomLifecycle.Releasing });
       vi.spyOn(context.firstContributor.channel, 'attach');
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
       await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomIsReleasing);
-      expect(status.currentStatus).toEqual(RoomStatus.Releasing);
+      expect(status.current).toEqual(RoomLifecycle.Releasing);
       expect(context.firstContributor.channel.attach).not.toHaveBeenCalled();
     });
 
@@ -326,9 +326,9 @@ describe('room lifecycle manager', () => {
       mockChannelAttachSuccess(context.secondContributor.channel);
       mockChannelAttachSuccess(context.thirdContributor.channel);
 
-      const observedStatuses: RoomStatus[] = [];
+      const observedStatuses: RoomLifecycle[] = [];
       status.onChange((newStatus) => {
-        observedStatuses.push(newStatus.status);
+        observedStatuses.push(newStatus.current);
       });
 
       const monitor = new RoomLifecycleManager(
@@ -340,7 +340,7 @@ describe('room lifecycle manager', () => {
       await monitor.attach();
 
       // We should have gone through attaching
-      expect(observedStatuses).toEqual([RoomStatus.Attaching, RoomStatus.Attached]);
+      expect(observedStatuses).toEqual([RoomLifecycle.Attaching, RoomLifecycle.Attached]);
     });
 
     it<TestContext>('attaches channels in sequence', async (context) => {
@@ -379,7 +379,7 @@ describe('room lifecycle manager', () => {
       const attachResult = monitor.attach();
 
       // We should be in the attached state
-      await waitForRoomStatus(status, RoomStatus.Attached);
+      await waitForRoomStatus(status, RoomLifecycle.Attached);
 
       // The channel attach methods should have been called
       expect(context.firstContributor.channel.attach).toHaveBeenCalled();
@@ -437,7 +437,7 @@ describe('room lifecycle manager', () => {
       });
 
       // We should be in the detached state because the second channel failed to attach
-      await waitForRoomStatus(status, RoomStatus.Detached);
+      await waitForRoomStatus(status, RoomLifecycle.Detached);
 
       // The third channel should not have been called as the second channel failed to attach
       expect(context.firstContributor.channel.attach).toHaveBeenCalled();
@@ -496,7 +496,7 @@ describe('room lifecycle manager', () => {
       });
 
       // We should be in the detached state because the second channel failed to attach
-      await waitForRoomStatus(status, RoomStatus.Failed);
+      await waitForRoomStatus(status, RoomLifecycle.Failed);
 
       // All channels should have been called
       expect(context.firstContributor.channel.attach).toHaveBeenCalled();
@@ -555,7 +555,7 @@ describe('room lifecycle manager', () => {
       });
 
       // We should be in the detached state because the second channel failed its rollback
-      await waitForRoomStatus(status, RoomStatus.Failed);
+      await waitForRoomStatus(status, RoomLifecycle.Failed);
 
       // All channels should have been called
       expect(context.firstContributor.channel.attach).toHaveBeenCalled();
@@ -601,9 +601,9 @@ describe('room lifecycle manager', () => {
       mockChannelAttachSuccess(context.secondContributor.channel);
 
       // Observe the statuses that go by
-      const observedStatuses: RoomStatus[] = [];
+      const observedStatuses: RoomLifecycle[] = [];
       status.onChange((newStatus) => {
-        observedStatuses.push(newStatus.status);
+        observedStatuses.push(newStatus.current);
       });
 
       const monitor = new RoomLifecycleManager(
@@ -644,10 +644,10 @@ describe('room lifecycle manager', () => {
       await expect(attachPromise).resolves.toBeUndefined();
 
       // We should be in the attached state now
-      await waitForRoomStatus(status, RoomStatus.Attached);
+      await waitForRoomStatus(status, RoomLifecycle.Attached);
 
       // The states we should have seen are attaching and attached
-      expect(observedStatuses).toEqual([RoomStatus.Attaching, RoomStatus.Attached]);
+      expect(observedStatuses).toEqual([RoomLifecycle.Attaching, RoomLifecycle.Attached]);
 
       // But if we suspend now, the room should go into suspended
       context.secondContributor.emulateStateChange({
@@ -657,7 +657,7 @@ describe('room lifecycle manager', () => {
         reason: baseError,
       });
 
-      await waitForRoomStatus(status, RoomStatus.Suspended);
+      await waitForRoomStatus(status, RoomLifecycle.Suspended);
 
       vi.useRealTimers();
     });
@@ -673,13 +673,13 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Detached });
+      status.setStatus({ status: RoomLifecycle.Detached });
       vi.spyOn(context.firstContributor.channel, 'detach');
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
       await monitor.detach();
-      expect(status.currentStatus).toEqual(RoomStatus.Detached);
+      expect(status.current).toEqual(RoomLifecycle.Detached);
       expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
     });
 
@@ -692,13 +692,13 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Failed });
+      status.setStatus({ status: RoomLifecycle.Failed });
       vi.spyOn(context.firstContributor.channel, 'detach');
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
       await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomInFailedState);
-      expect(status.currentStatus).toEqual(RoomStatus.Failed);
+      expect(status.current).toEqual(RoomLifecycle.Failed);
       expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
     });
 
@@ -712,7 +712,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Detaching });
+        status.setStatus({ status: RoomLifecycle.Detaching });
         vi.spyOn(context.firstContributor.channel, 'detach');
 
         const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
@@ -722,7 +722,7 @@ describe('room lifecycle manager', () => {
           .detach()
           .then(() => {
             expect(completionTriggered).toBeTruthy();
-            expect(status.currentStatus).toEqual(RoomStatus.Detached);
+            expect(status.current).toEqual(RoomLifecycle.Detached);
             expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
             resolve();
           })
@@ -731,7 +731,7 @@ describe('room lifecycle manager', () => {
           });
 
         completionTriggered = true;
-        status.setStatus({ status: RoomStatus.Detached });
+        status.setStatus({ status: RoomLifecycle.Detached });
       }));
 
     it<TestContext>('fails if the room is in the released state', async (context) => {
@@ -743,13 +743,13 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Released });
+      status.setStatus({ status: RoomLifecycle.Released });
       vi.spyOn(context.firstContributor.channel, 'detach');
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
       await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomIsReleased);
-      expect(status.currentStatus).toEqual(RoomStatus.Released);
+      expect(status.current).toEqual(RoomLifecycle.Released);
       expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
     });
 
@@ -762,13 +762,13 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Releasing });
+      status.setStatus({ status: RoomLifecycle.Releasing });
       vi.spyOn(context.firstContributor.channel, 'detach');
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
       await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomIsReleasing);
-      expect(status.currentStatus).toEqual(RoomStatus.Releasing);
+      expect(status.current).toEqual(RoomLifecycle.Releasing);
       expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
     });
 
@@ -799,9 +799,9 @@ describe('room lifecycle manager', () => {
       mockChannelDetachSuccess(context.secondContributor.channel);
       mockChannelDetachSuccess(context.thirdContributor.channel);
 
-      const observedStatuses: RoomStatus[] = [];
+      const observedStatuses: RoomLifecycle[] = [];
       status.onChange((newStatus) => {
-        observedStatuses.push(newStatus.status);
+        observedStatuses.push(newStatus.current);
       });
 
       const monitor = new RoomLifecycleManager(
@@ -813,7 +813,7 @@ describe('room lifecycle manager', () => {
       await monitor.detach();
 
       // We should have gone through detaching
-      expect(observedStatuses).toEqual([RoomStatus.Detaching, RoomStatus.Detached]);
+      expect(observedStatuses).toEqual([RoomLifecycle.Detaching, RoomLifecycle.Detached]);
     });
 
     it<TestContext>('detaches channels in sequence', async (context) => {
@@ -852,7 +852,7 @@ describe('room lifecycle manager', () => {
       await expect(monitor.detach()).resolves.toBeUndefined();
 
       // We should be in the detached state
-      await waitForRoomStatus(status, RoomStatus.Detached);
+      await waitForRoomStatus(status, RoomLifecycle.Detached);
 
       // The channel detach methods should have been called
       expect(context.firstContributor.channel.detach).toHaveBeenCalled();
@@ -902,7 +902,7 @@ describe('room lifecycle manager', () => {
       });
 
       // We should be in the failed state
-      await waitForRoomStatus(status, RoomStatus.Failed);
+      await waitForRoomStatus(status, RoomLifecycle.Failed);
 
       // The channel detach methods should have been called
       expect(context.firstContributor.channel.detach).toHaveBeenCalled();
@@ -944,9 +944,9 @@ describe('room lifecycle manager', () => {
       mockChannelDetachSuccess(context.secondContributor.channel);
 
       // Observe the statuses that go by
-      const observedStatuses: RoomStatus[] = [];
+      const observedStatuses: RoomLifecycle[] = [];
       status.onChange((newStatus) => {
-        observedStatuses.push(newStatus.status);
+        observedStatuses.push(newStatus.current);
       });
 
       const monitor = new RoomLifecycleManager(
@@ -987,10 +987,10 @@ describe('room lifecycle manager', () => {
       await expect(detachPromise).resolves.toBeUndefined();
 
       // We should be in the detached state now
-      await waitForRoomStatus(status, RoomStatus.Detached);
+      await waitForRoomStatus(status, RoomLifecycle.Detached);
 
       // The states we should have seen are detaching and detached
-      expect(observedStatuses).toEqual([RoomStatus.Detaching, RoomStatus.Detached]);
+      expect(observedStatuses).toEqual([RoomLifecycle.Detaching, RoomLifecycle.Detached]);
 
       // Now if we try to attach again, we should be able to
       mockChannelAttachSuccess(context.firstContributor.channel);
@@ -999,7 +999,7 @@ describe('room lifecycle manager', () => {
       await expect(monitor.attach()).resolves.toBeUndefined();
 
       // We should be in the attached state now
-      await waitForRoomStatus(status, RoomStatus.Attached);
+      await waitForRoomStatus(status, RoomLifecycle.Attached);
 
       vi.useRealTimers();
     });
@@ -1023,7 +1023,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const manager = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
@@ -1037,7 +1037,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Attached);
+      expect(status.current).toEqual(RoomLifecycle.Attached);
 
       // Transition the contributor to attached again
       context.firstContributor.emulateStateChange({
@@ -1051,7 +1051,7 @@ describe('room lifecycle manager', () => {
       vi.advanceTimersToNextTimer();
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Attached);
+      expect(status.current).toEqual(RoomLifecycle.Attached);
     });
 
     it<TestContext>('handles transient detaches with multiple contributors', (context) => {
@@ -1069,7 +1069,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError2,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const manager = new RoomLifecycleManager(
@@ -1088,7 +1088,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Attached);
+      expect(status.current).toEqual(RoomLifecycle.Attached);
 
       // Transition the second contributor to detached
       context.secondContributor.emulateStateChange({
@@ -1099,7 +1099,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Attached);
+      expect(status.current).toEqual(RoomLifecycle.Attached);
 
       // Transition the first contributor to attached again
       context.firstContributor.emulateStateChange({
@@ -1110,7 +1110,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Attached);
+      expect(status.current).toEqual(RoomLifecycle.Attached);
 
       // Transition the second contributor to attached again
       context.secondContributor.emulateStateChange({
@@ -1121,13 +1121,13 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Attached);
+      expect(status.current).toEqual(RoomLifecycle.Attached);
 
       // Expire any fake timers
       vi.advanceTimersToNextTimer();
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Attached);
+      expect(status.current).toEqual(RoomLifecycle.Attached);
     });
 
     test<TestContext>('transitions to detached when transient detach times out', async (context) => {
@@ -1145,7 +1145,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError2,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const monitor = new RoomLifecycleManager(
@@ -1164,13 +1164,13 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomStatus.Attached);
+      await waitForRoomStatus(status, RoomLifecycle.Attached);
 
       // Expire any fake timers
       vi.advanceTimersToNextTimer();
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomStatus.Detached);
+      await waitForRoomStatus(status, RoomLifecycle.Detached);
       expect(status.error).toEqual(baseError);
     });
 
@@ -1183,7 +1183,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
@@ -1198,7 +1198,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Attached);
+      expect(status.current).toEqual(RoomLifecycle.Attached);
 
       // Now send it into attaching again
       context.firstContributor.emulateStateChange({
@@ -1212,7 +1212,7 @@ describe('room lifecycle manager', () => {
       void vi.advanceTimersToNextTimerAsync();
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomStatus.Attaching);
+      await waitForRoomStatus(status, RoomLifecycle.Attaching);
       expect(status.error).toEqual(detachedError);
     });
   });
@@ -1241,7 +1241,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError2,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // Mock channel detachment results
       mockChannelDetachSuccess(context.firstContributor.channel);
@@ -1272,7 +1272,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      expect(status.currentStatus).toEqual(RoomStatus.Failed);
+      expect(status.current).toEqual(RoomLifecycle.Failed);
       expect(status.error).toEqual(baseError);
 
       // Only the second contributor should have been detached
@@ -1283,7 +1283,7 @@ describe('room lifecycle manager', () => {
       vi.advanceTimersToNextTimer();
 
       // The transient timeout timer for the second contributor should have been cleared, so we should still be in the failed state
-      expect(status.currentStatus).toEqual(RoomStatus.Failed);
+      expect(status.current).toEqual(RoomLifecycle.Failed);
     });
 
     it<TestContext>('recovers from an underlying channel entering the suspended state', async (context) => {
@@ -1307,7 +1307,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // Mock channel detachment results
       mockChannelDetachNotCalled(context.firstContributor.channel);
@@ -1336,7 +1336,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomStatus.Suspended);
+      await waitForRoomStatus(status, RoomLifecycle.Suspended);
 
       // Now transition the first contributor to attached again
       context.firstContributor.emulateStateChange({
@@ -1347,7 +1347,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomStatus.Attached);
+      await waitForRoomStatus(status, RoomLifecycle.Attached);
 
       // The second and third contributors should have been detached
       expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
@@ -1381,7 +1381,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // Mock channel detachment results
       mockChannelDetachNotCalled(context.firstContributor.channel);
@@ -1410,7 +1410,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomStatus.Detached);
+      await waitForRoomStatus(status, RoomLifecycle.Detached);
 
       // Now transition the first contributor to attached again
       context.firstContributor.emulateStateChange({
@@ -1421,7 +1421,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomStatus.Attached);
+      await waitForRoomStatus(status, RoomLifecycle.Attached);
 
       // The second and third contributors should have been detached
       expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
@@ -1455,7 +1455,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // Mock channel detachment results
       mockChannelDetachSuccess(context.firstContributor.channel);
@@ -1484,11 +1484,11 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomStatus.Detached);
+      await waitForRoomStatus(status, RoomLifecycle.Detached);
 
       let feature2AttachError: Ably.ErrorInfo | undefined;
       status.onChange((newStatus) => {
-        if (newStatus.status === RoomStatus.Detached) {
+        if (newStatus.current === RoomLifecycle.Detached) {
           feature2AttachError = newStatus.error;
         }
       });
@@ -1502,7 +1502,7 @@ describe('room lifecycle manager', () => {
       });
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomStatus.Attached);
+      await waitForRoomStatus(status, RoomLifecycle.Attached);
 
       // The first feature got detached when feature 2 failed to attach
       // The second feature got detached when feature 1 failed
@@ -1539,7 +1539,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Initialized });
+        status.setStatus({ status: RoomLifecycle.Initialized });
 
         const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
@@ -1564,7 +1564,7 @@ describe('room lifecycle manager', () => {
         );
 
         // Our status should be detached
-        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+        expect(status.current).toEqual(RoomLifecycle.Detached);
 
         // We should not have seen a discontinuity event
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
@@ -1574,7 +1574,7 @@ describe('room lifecycle manager', () => {
         await monitor.attach();
 
         // Our status should be attached
-        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(status.current).toEqual(RoomLifecycle.Attached);
 
         // But we still shouldn't have seen a discontinuity event
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
@@ -1601,7 +1601,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Initialized });
+        status.setStatus({ status: RoomLifecycle.Initialized });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const monitor = new RoomLifecycleManager(
@@ -1630,7 +1630,7 @@ describe('room lifecycle manager', () => {
         );
 
         // Our first contributor should have registered a discontinuity event
-        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(status.current).toEqual(RoomLifecycle.Attached);
         expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
       });
 
@@ -1655,7 +1655,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Initialized });
+        status.setStatus({ status: RoomLifecycle.Initialized });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const monitor = new RoomLifecycleManager(
@@ -1691,14 +1691,14 @@ describe('room lifecycle manager', () => {
         );
 
         // We shouldn't have registered a discontinuity event yet
-        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+        expect(status.current).toEqual(RoomLifecycle.Detached);
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now re-attach the room
         await monitor.attach();
 
         // Our first contributor should have registered a discontinuity event now
-        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(status.current).toEqual(RoomLifecycle.Attached);
         expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
       });
 
@@ -1723,7 +1723,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Initialized });
+        status.setStatus({ status: RoomLifecycle.Initialized });
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const monitor = new RoomLifecycleManager(
@@ -1771,14 +1771,14 @@ describe('room lifecycle manager', () => {
         );
 
         // We shouldn't have registered a discontinuity event yet
-        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+        expect(status.current).toEqual(RoomLifecycle.Detached);
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now re-attach the room
         await monitor.attach();
 
         // Our first contributor should have registered a discontinuity event now
-        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(status.current).toEqual(RoomLifecycle.Attached);
         expect(context.firstContributor.discontinuityDetected).toBeCalledWith(error1);
       });
     });
@@ -1792,7 +1792,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Initialized });
+        status.setStatus({ status: RoomLifecycle.Initialized });
 
         const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
@@ -1802,7 +1802,7 @@ describe('room lifecycle manager', () => {
         await monitor.attach();
 
         // We shouldn't have registered a discontinuity event
-        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(status.current).toEqual(RoomLifecycle.Attached);
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
       });
 
@@ -1827,7 +1827,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Initialized });
+        status.setStatus({ status: RoomLifecycle.Initialized });
 
         const monitor = new RoomLifecycleManager(
           status,
@@ -1851,7 +1851,7 @@ describe('room lifecycle manager', () => {
         await monitor.detach();
 
         // There should be no discontinuity event yet
-        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+        expect(status.current).toEqual(RoomLifecycle.Detached);
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now do a re-attach, but make the first channel fail to resume
@@ -1861,7 +1861,7 @@ describe('room lifecycle manager', () => {
         await monitor.attach();
 
         // Our first contributor should have registered a discontinuity event now
-        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(status.current).toEqual(RoomLifecycle.Attached);
         expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
       });
 
@@ -1886,7 +1886,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Initialized });
+        status.setStatus({ status: RoomLifecycle.Initialized });
 
         const monitor = new RoomLifecycleManager(
           status,
@@ -1910,7 +1910,7 @@ describe('room lifecycle manager', () => {
         await monitor.detach();
 
         // There should be no discontinuity event yet
-        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+        expect(status.current).toEqual(RoomLifecycle.Detached);
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now we attach again, but fail the second channel so we get a detach event
@@ -1928,7 +1928,7 @@ describe('room lifecycle manager', () => {
         });
 
         // We should be detached
-        expect(status.currentStatus).toEqual(RoomStatus.Detached);
+        expect(status.current).toEqual(RoomLifecycle.Detached);
 
         // And still no discontinuity event
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
@@ -1943,10 +1943,10 @@ describe('room lifecycle manager', () => {
         await monitor.attach();
 
         // We should be attached
-        await waitForRoomStatus(status, RoomStatus.Attached);
+        await waitForRoomStatus(status, RoomLifecycle.Attached);
 
         // Our first contributor should have registered a discontinuity event now
-        expect(status.currentStatus).toEqual(RoomStatus.Attached);
+        expect(status.current).toEqual(RoomLifecycle.Attached);
         expect(context.firstContributor.discontinuityDetected).toBeCalledWith(firstError);
       });
     });
@@ -1955,7 +1955,7 @@ describe('room lifecycle manager', () => {
   describe('release lifecycle', () => {
     it<TestContext>('resolves immediately if the room is already released', async (context) => {
       const status = new DefaultStatus(makeTestLogger());
-      status.setStatus({ status: RoomStatus.Released });
+      status.setStatus({ status: RoomLifecycle.Released });
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
@@ -1970,13 +1970,13 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Detached });
+      status.setStatus({ status: RoomLifecycle.Detached });
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
       await expect(monitor.release()).resolves.toBeUndefined();
 
-      await waitForRoomStatus(status, RoomStatus.Released);
+      await waitForRoomStatus(status, RoomLifecycle.Released);
     });
 
     it<TestContext>('resolves to released if existing attempt completes', (context) =>
@@ -1991,7 +1991,7 @@ describe('room lifecycle manager', () => {
           resumed: false,
           reason: baseError,
         });
-        status.setStatus({ status: RoomStatus.Releasing });
+        status.setStatus({ status: RoomLifecycle.Releasing });
         vi.spyOn(context.firstContributor.channel, 'detach');
 
         const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
@@ -2014,7 +2014,7 @@ describe('room lifecycle manager', () => {
           .release()
           .then(() => {
             expect(completionTriggered).toBeTruthy();
-            expect(status.currentStatus).toEqual(RoomStatus.Released);
+            expect(status.current).toEqual(RoomLifecycle.Released);
             expect(context.firstContributor.channel.detach).toHaveBeenCalledOnce();
             resolve();
           })
@@ -2037,16 +2037,16 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
       const releasePromise = monitor.release();
 
-      expect(status.currentStatus).toEqual(RoomStatus.Releasing);
+      expect(status.current).toEqual(RoomLifecycle.Releasing);
 
       return releasePromise.then(() => {
-        expect(status.currentStatus).toEqual(RoomStatus.Released);
+        expect(status.current).toEqual(RoomLifecycle.Released);
       });
     });
 
@@ -2071,7 +2071,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // Mock channel detachment results
       mockChannelDetachSuccess(context.firstContributor.channel);
@@ -2091,7 +2091,7 @@ describe('room lifecycle manager', () => {
       expect(context.secondContributor.channel.detach).toHaveBeenCalled();
       expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
 
-      expect(status.currentStatus).toEqual(RoomStatus.Released);
+      expect(status.current).toEqual(RoomLifecycle.Released);
     });
 
     it<TestContext>('allows channels detaching into failed', async (context) => {
@@ -2115,7 +2115,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // Mock channel detachment results
       mockChannelDetachSuccess(context.firstContributor.channel);
@@ -2135,7 +2135,7 @@ describe('room lifecycle manager', () => {
       expect(context.secondContributor.channel.detach).toHaveBeenCalled();
       expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
 
-      expect(status.currentStatus).toEqual(RoomStatus.Released);
+      expect(status.current).toEqual(RoomLifecycle.Released);
     });
 
     it<TestContext>('allows channels detaching into suspended', async (context) => {
@@ -2159,7 +2159,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // Mock channel detachment results
       mockChannelDetachSuccess(context.firstContributor.channel);
@@ -2179,7 +2179,7 @@ describe('room lifecycle manager', () => {
       expect(context.secondContributor.channel.detach).toHaveBeenCalled();
       expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
 
-      expect(status.currentStatus).toEqual(RoomStatus.Released);
+      expect(status.current).toEqual(RoomLifecycle.Released);
     });
 
     it<TestContext>('rejects if a channel fails to detach', async (context) => {
@@ -2203,7 +2203,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // Mock channel detachment results
       mockChannelDetachSuccess(context.firstContributor.channel);
@@ -2228,7 +2228,7 @@ describe('room lifecycle manager', () => {
       expect(context.secondContributor.channel.detach).toHaveBeenCalled();
       expect(context.thirdContributor.channel.detach).not.toHaveBeenCalled();
 
-      expect(status.currentStatus).toEqual(RoomStatus.Releasing);
+      expect(status.current).toEqual(RoomLifecycle.Releasing);
     });
 
     it<TestContext>('allows a multiple attempts at releasing', async (context) => {
@@ -2252,7 +2252,7 @@ describe('room lifecycle manager', () => {
         resumed: false,
         reason: baseError,
       });
-      status.setStatus({ status: RoomStatus.Attached });
+      status.setStatus({ status: RoomLifecycle.Attached });
 
       // Mock channel detachment results
       mockChannelDetachSuccess(context.firstContributor.channel);
@@ -2273,7 +2273,7 @@ describe('room lifecycle manager', () => {
         },
       });
 
-      expect(status.currentStatus).toEqual(RoomStatus.Releasing);
+      expect(status.current).toEqual(RoomLifecycle.Releasing);
 
       await expect(monitor.release()).resolves.toBeUndefined();
 
@@ -2281,7 +2281,7 @@ describe('room lifecycle manager', () => {
       expect(context.secondContributor.channel.detach).toHaveBeenCalledTimes(2);
       expect(context.thirdContributor.channel.detach).toHaveBeenCalledOnce();
 
-      expect(status.currentStatus).toEqual(RoomStatus.Released);
+      expect(status.current).toEqual(RoomLifecycle.Released);
     });
   });
 });

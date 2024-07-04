@@ -9,7 +9,7 @@ import { PresenceEvents } from '../src/events.js';
 import { PresenceData, PresenceEvent } from '../src/Presence.js';
 import { Room } from '../src/Room.js';
 import { DefaultPresenceOptions } from '../src/RoomOptions.js';
-import { RoomStatus } from '../src/RoomStatus.js';
+import { RoomLifecycle } from '../src/RoomStatus.js';
 import { newChatClient } from './helper/chat.js';
 import { randomRoomId } from './helper/identifier.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
@@ -383,13 +383,13 @@ describe('UserPresence', { timeout: 10000 }, () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomStatus.Suspended);
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
 
     // Now attach the room again
     await room.attach();
 
     // Wait for the room to go into attached
-    await waitForRoomStatus(room.status, RoomStatus.Attached);
+    await waitForRoomStatus(room.status, RoomLifecycle.Attached);
 
     // Wait for a discontinuity event to be received
     expect(discontinuityErrors.length).toBe(1);
@@ -401,7 +401,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomStatus.Suspended);
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
 
     // We shouldn't get any more discontinuity events
     expect(discontinuityErrors.length).toBe(1);

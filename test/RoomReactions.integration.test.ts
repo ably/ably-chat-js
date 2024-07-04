@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ChatClient } from '../src/Chat.ts';
 import { Reaction } from '../src/Reaction.ts';
 import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
-import { RoomStatus } from '../src/RoomStatus.ts';
+import { RoomLifecycle } from '../src/RoomStatus.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 import { newChatClient } from './helper/chat.ts';
 import { getRandomRoom, waitForRoomStatus } from './helper/room.ts';
@@ -100,13 +100,13 @@ describe('room-level reactions integration test', () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomStatus.Suspended);
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
 
     // Now attach the room again
     await room.attach();
 
     // Wait for the room to go into attached
-    await waitForRoomStatus(room.status, RoomStatus.Attached);
+    await waitForRoomStatus(room.status, RoomLifecycle.Attached);
 
     // Wait for a discontinuity event to be received
     expect(discontinuityErrors.length).toBe(1);
@@ -118,7 +118,7 @@ describe('room-level reactions integration test', () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomStatus.Suspended);
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
 
     // We shouldn't get any more discontinuity events
     expect(discontinuityErrors.length).toBe(1);

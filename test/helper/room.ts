@@ -12,14 +12,14 @@ import {
   DefaultTypingOptions,
   RoomOptions,
 } from '../../src/RoomOptions.ts';
-import { RoomStatus, Status } from '../../src/RoomStatus.ts';
+import { RoomState, RoomStatus } from '../../src/RoomStatus.ts';
 import { randomRoomId } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
 import { ablyRealtimeClient } from './realtimeClient.ts';
 
 // Wait 3 seconds for the room to reach the expected status
-export const waitForRoomStatus = async (status: Status, expectedStatus: RoomStatus) => {
-  return vi.waitUntil(() => status.currentStatus === expectedStatus, 3000);
+export const waitForRoomStatus = async (status: RoomStatus, expected: RoomState) => {
+  return vi.waitUntil(() => status.current === expected, 3000);
 };
 
 // Gets a random room with default options from the chat client

@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
-import { RoomStatus } from '../src/RoomStatus.js';
+import { RoomLifecycle } from '../src/RoomStatus.js';
 import { newChatClient } from './helper/chat.js';
 import { waitForRoomStatus } from './helper/room.js';
 
@@ -43,7 +43,7 @@ describe('Rooms', () => {
     channelFailable.notifyState('failed');
 
     // Wait for room to enter failed state
-    await waitForRoomStatus(room.status, RoomStatus.Failed);
+    await waitForRoomStatus(room.status, RoomLifecycle.Failed);
 
     // Release the room
     await chat.rooms.release('test');

@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
-import { DefaultStatus, RoomStatus } from '../src/RoomStatus.ts';
+import { DefaultStatus, RoomLifecycle } from '../src/RoomStatus.ts';
 import { makeTestLogger } from './helper/logger.ts';
 
 const baseError = new Ably.ErrorInfo('error', 500, 50000);
@@ -9,7 +9,7 @@ const baseError = new Ably.ErrorInfo('error', 500, 50000);
 describe('room status', () => {
   it('defaults to initialized', () => {
     const status = new DefaultStatus(makeTestLogger());
-    expect(status.currentStatus).toEqual(RoomStatus.Initialized);
+    expect(status.current).toEqual(RoomLifecycle.Initialized);
     expect(status.error).toBeUndefined();
   });
 
@@ -17,12 +17,12 @@ describe('room status', () => {
     new Promise<void>((done, reject) => {
       const status = new DefaultStatus(makeTestLogger());
       status.onChange((status) => {
-        expect(status.status).toEqual(RoomStatus.Attached);
+        expect(status.current).toEqual(RoomLifecycle.Attached);
         expect(status.error).toEqual(baseError);
         done();
       });
 
-      status.setStatus({ status: RoomStatus.Attached, error: baseError });
+      status.setStatus({ status: RoomLifecycle.Attached, error: baseError });
       reject(new Error('Expected onChange to be called'));
     }));
 
@@ -34,7 +34,7 @@ describe('room status', () => {
       });
 
       off();
-      status.setStatus({ status: RoomStatus.Attached, error: baseError });
+      status.setStatus({ status: RoomLifecycle.Attached, error: baseError });
       done();
     }));
 
@@ -50,7 +50,7 @@ describe('room status', () => {
       });
 
       status.offAll();
-      status.setStatus({ status: RoomStatus.Attached, error: baseError });
+      status.setStatus({ status: RoomLifecycle.Attached, error: baseError });
       done();
     }));
 });

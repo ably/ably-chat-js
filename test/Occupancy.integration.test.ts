@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ChatClient } from '../src/Chat.js';
 import { OccupancyEvent } from '../src/Occupancy.js';
 import { Room } from '../src/Room.js';
-import { RoomStatus } from '../src/RoomStatus.js';
+import { RoomLifecycle } from '../src/RoomStatus.js';
 import { newChatClient } from './helper/chat.js';
 import { ablyRealtimeClientWithToken } from './helper/realtimeClient.js';
 import { getRandomRoom, waitForRoomStatus } from './helper/room.js';
@@ -177,13 +177,13 @@ describe('occupancy', () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomStatus.Suspended);
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
 
     // Now attach the room again
     await room.attach();
 
     // Wait for the room to go into attached
-    await waitForRoomStatus(room.status, RoomStatus.Attached);
+    await waitForRoomStatus(room.status, RoomLifecycle.Attached);
 
     // Wait for a discontinuity event to be received
     expect(discontinuityErrors.length).toBe(1);
@@ -195,7 +195,7 @@ describe('occupancy', () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomStatus.Suspended);
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
 
     // We shouldn't get any more discontinuity events
     expect(discontinuityErrors.length).toBe(1);

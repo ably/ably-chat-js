@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../src/Chat.ts';
 import { DefaultRoom, Room } from '../src/Room.ts';
-import { RoomStatus } from '../src/RoomStatus.ts';
+import { RoomLifecycle } from '../src/RoomStatus.ts';
 import { newChatClient } from './helper/chat.ts';
 import { getRandomRoom } from './helper/room.ts';
 
@@ -21,7 +21,7 @@ describe('Room', () => {
     await room.attach();
 
     // We should be attached
-    expect(room.status.currentStatus).toEqual(RoomStatus.Attached);
+    expect(room.status.current).toEqual(RoomLifecycle.Attached);
 
     // If we check the underlying channels, they should be attached too
     expect(room.messages.channel.state).toEqual('attached');
@@ -36,7 +36,7 @@ describe('Room', () => {
     await room.detach();
 
     // We should be detached
-    expect(room.status.currentStatus).toEqual(RoomStatus.Detached);
+    expect(room.status.current).toEqual(RoomLifecycle.Detached);
 
     // If we check the underlying channels, they should be detached too
     expect(room.messages.channel.state).toEqual('detached');
@@ -50,20 +50,20 @@ describe('Room', () => {
     await room.attach();
 
     // We should be attached
-    expect(room.status.currentStatus).toEqual(RoomStatus.Attached);
+    expect(room.status.current).toEqual(RoomLifecycle.Attached);
 
     // Release the room
     await (room as DefaultRoom).release();
 
     // We should be released
-    expect(room.status.currentStatus).toEqual(RoomStatus.Released);
+    expect(room.status.current).toEqual(RoomLifecycle.Released);
   });
 
   it<TestContext>('releasing a room multiple times is idempotent', async ({ room }) => {
     await room.attach();
 
     // We should be attached
-    expect(room.status.currentStatus).toEqual(RoomStatus.Attached);
+    expect(room.status.current).toEqual(RoomLifecycle.Attached);
 
     // Release the room multiple times
     await (room as DefaultRoom).release();
@@ -71,6 +71,6 @@ describe('Room', () => {
     await (room as DefaultRoom).release();
 
     // We should be released
-    expect(room.status.currentStatus).toEqual(RoomStatus.Released);
+    expect(room.status.current).toEqual(RoomLifecycle.Released);
   });
 });
