@@ -3,9 +3,12 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 import type { Assertion, AsymmetricMatchersContaining } from 'vitest';
 
+import type { errorInfoCompareType } from './expectations.ts';
+
 interface CustomMatchers<R = unknown> {
   toBeErrorInfoWithCode: (code: number) => R;
-  toBeErrorInfo: (params: { code?: number; statusCode?: number; message?: string }) => R;
+  toBeErrorInfoWithCauseCode: (code: number) => R;
+  toBeErrorInfo: (params: errorInfoCompareType) => R;
 }
 
 declare module 'vitest' {

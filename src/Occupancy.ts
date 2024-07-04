@@ -10,8 +10,10 @@ import {
   newDiscontinuityEmitter,
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
+import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
 import { addListenerToChannelWithoutAttach } from './realtimeextensions.js';
+import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
@@ -85,7 +87,10 @@ interface OccupancyEventsMap {
   [OccupancyEvents.occupancy]: OccupancyEvent;
 }
 
-export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implements Occupancy, HandlesDiscontinuity {
+export class DefaultOccupancy
+  extends EventEmitter<OccupancyEventsMap>
+  implements Occupancy, HandlesDiscontinuity, ContributesToRoomLifecycle
+{
   private readonly roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
@@ -200,5 +205,19 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
   discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
     this._logger.warn('Occupancy.discontinuityDetected();', { error });
     this._discontinuityEmitter.emit('discontinuity', error);
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get attachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.OccupancyAttachmentFailed;
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get detachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.OccupancyDetachmentFailed;
   }
 }

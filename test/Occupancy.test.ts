@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../src/ChatApi.js';
-import { OccupancyEvent } from '../src/Occupancy.js';
+import { DefaultOccupancy, OccupancyEvent } from '../src/Occupancy.js';
 import { Room } from '../src/Room.js';
 import { channelEventEmitter } from './helper/channel.js';
 import { makeTestLogger } from './helper/logger.js';
@@ -206,5 +206,13 @@ describe('Occupancy', () => {
       context.emulateOccupancyUpdate(event);
       expect(listenerCalled).toBe(false);
     });
+  });
+
+  it<TestContext>('has an attachment error code', (context) => {
+    expect((context.room.occupancy as DefaultOccupancy).attachmentErrorCode).toBe(102004);
+  });
+
+  it<TestContext>('has a detachment error code', (context) => {
+    expect((context.room.occupancy as DefaultOccupancy).detachmentErrorCode).toBe(102053);
   });
 });

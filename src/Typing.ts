@@ -9,9 +9,11 @@ import {
   newDiscontinuityEmitter,
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
+import { ErrorCodes } from './errors.js';
 import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
+import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { TypingOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -118,7 +120,10 @@ export interface TypingSubscriptionResponse {
   unsubscribe: () => void;
 }
 
-export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing, HandlesDiscontinuity {
+export class DefaultTyping
+  extends EventEmitter<TypingEventsMap>
+  implements Typing, HandlesDiscontinuity, ContributesToRoomLifecycle
+{
   private readonly _clientId: string;
   private readonly _roomId: string;
   private readonly _currentlyTyping: Set<string>;
@@ -299,5 +304,19 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
   get timeoutMs(): number {
     return this._typingTimeoutMs;
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get attachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.TypingAttachmentFailed;
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get detachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.TypingDetachmentFailed;
   }
 }

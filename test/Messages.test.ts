@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../src/ChatApi.js';
 import { Message } from '../src/Message.js';
-import { MessageEventPayload } from '../src/Messages.js';
+import { DefaultMessages, MessageEventPayload } from '../src/Messages.js';
 import { Room } from '../src/Room.js';
 import {
   channelEventEmitter,
@@ -416,7 +416,7 @@ describe('Messages', () => {
     });
   });
 
-  // Tests for getBeforeSubscriptionStart
+  // Tests for previous messages
   it<TestContext>('should throw an error for listener history if not subscribed', async (context) => {
     const { room } = context;
 
@@ -804,7 +804,7 @@ describe('Messages', () => {
 
   it<TestContext>('should throw an error if listener query end time is later than query timeserial', async (context) => {
     // Create a room instance
-    const room = makeRoom(context);
+    const { room } = context;
 
     const channel = room.messages.channel as RealtimeChannel & {
       properties: {
@@ -826,5 +826,13 @@ describe('Messages', () => {
       code: 40000,
       message: 'cannot query history; end time is after the subscription point of the listener',
     });
+  });
+
+  it<TestContext>('has an attachment error code', (context) => {
+    expect((context.room.messages as DefaultMessages).attachmentErrorCode).toBe(102001);
+  });
+
+  it<TestContext>('has a detachment error code', (context) => {
+    expect((context.room.messages as DefaultMessages).detachmentErrorCode).toBe(102050);
   });
 });

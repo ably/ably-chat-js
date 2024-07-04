@@ -9,9 +9,11 @@ import {
   newDiscontinuityEmitter,
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
+import { ErrorCodes } from './errors.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
+import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { RoomOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -184,7 +186,10 @@ export interface Presence extends EmitsDiscontinuities {
 /**
  * @inheritDoc
  */
-export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements Presence, HandlesDiscontinuity {
+export class DefaultPresence
+  extends EventEmitter<PresenceEventsMap>
+  implements Presence, HandlesDiscontinuity, ContributesToRoomLifecycle
+{
   private readonly _channel: Ably.RealtimeChannel;
   private readonly clientId: string;
   private readonly _logger: Logger;
@@ -387,5 +392,19 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
   discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
     this._logger.warn('Presence.discontinuityDetected();', { error });
     this._discontinuityEmitter.emit('discontinuity', error);
+  }
+
+  /**
+   * @inheritDoc ContributesToRoomLifecycle
+   */
+  get attachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.PresenceAttachmentFailed;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  get detachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.PresenceDetachmentFailed;
   }
 }

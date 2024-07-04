@@ -11,11 +11,13 @@ import {
   newDiscontinuityEmitter,
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
+import { ErrorCodes } from './errors.js';
 import { MessageEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './Message.js';
 import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtimeextensions.js';
+import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { DefaultTimeserial } from './Timeserial.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -214,7 +216,10 @@ export interface Messages extends EmitsDiscontinuities {
  *
  * Get an instance via room.messages.
  */
-export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages, HandlesDiscontinuity {
+export class DefaultMessages
+  extends EventEmitter<MessageEventsMap>
+  implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
+{
   private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
@@ -579,5 +584,19 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
         this._discontinuityEmitter.off(listener);
       },
     };
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get attachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.MessagesAttachmentFailed;
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get detachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.MessagesDetachmentFailed;
   }
 }

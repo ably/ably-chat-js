@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { ChatApi } from '../src/ChatApi.js';
 import { Reaction } from '../src/Reaction.js';
 import { Room } from '../src/Room.js';
+import { DefaultRoomReactions } from '../src/RoomReactions.js';
 import { channelEventEmitter } from './helper/channel.js';
 import { makeTestLogger } from './helper/logger.js';
 import { makeRandomRoom } from './helper/room.js';
@@ -349,5 +350,13 @@ describe('Reactions', () => {
             done();
           });
       }));
+  });
+
+  it<TestContext>('has an attachment error code', (context) => {
+    expect((context.room.reactions as DefaultRoomReactions).attachmentErrorCode).toBe(102003);
+  });
+
+  it<TestContext>('has a detachment error code', (context) => {
+    expect((context.room.reactions as DefaultRoomReactions).detachmentErrorCode).toBe(102052);
   });
 });

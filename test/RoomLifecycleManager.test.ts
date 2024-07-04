@@ -1,7 +1,8 @@
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
-import { RoomLifecycleManager } from '../src/RoomLifecycleManager.ts';
+import { ErrorCodes } from '../src/errors.ts';
+import { ContributesToRoomLifecycle, RoomLifecycleManager } from '../src/RoomLifecycleManager.ts';
 import { DefaultStatus, RoomStatus } from '../src/RoomStatus.ts';
 import { makeTestLogger } from './helper/logger.ts';
 import { waitForRoomStatus } from './helper/room.ts';
@@ -15,7 +16,7 @@ interface TestContext {
 
 vi.mock('ably');
 
-interface MockContributor {
+interface MockContributor extends ContributesToRoomLifecycle {
   channel: Ably.RealtimeChannel;
   discontinuityDetected(): void;
   emulateStateChange: (change: Ably.ChannelStateChange, update?: boolean) => void;
@@ -144,7 +145,11 @@ const mockChannelDetachFailureThenSuccess = (channel: Ably.RealtimeChannel, sequ
     });
 };
 
-const makeMockContributor = (channel: Ably.RealtimeChannel): MockContributor => {
+const makeMockContributor = (
+  channel: Ably.RealtimeChannel,
+  attachmentErrorCode: ErrorCodes,
+  detachmentErrorCode: ErrorCodes,
+): MockContributor => {
   const contributor = {
     channel: channel,
     discontinuityDetected() {},
@@ -158,6 +163,8 @@ const makeMockContributor = (channel: Ably.RealtimeChannel): MockContributor => 
         }
       ).emulateStateChange(update ? 'update' : (change.current as AblyChannelState), change);
     },
+    attachmentErrorCode,
+    detachmentErrorCode,
   };
   vi.spyOn(
     channel as Ably.RealtimeChannel & {
@@ -173,14 +180,25 @@ const makeMockContributor = (channel: Ably.RealtimeChannel): MockContributor => 
 };
 
 // TODO: Make initial setup (into attached) and initial listener setup a method
-// TODO: Put the monitor on the context, so we don't have to repeat ourselves.
 describe('room lifecycle manager', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
 
-    context.firstContributor = makeMockContributor(context.realtime.channels.get('foo1'));
-    context.secondContributor = makeMockContributor(context.realtime.channels.get('foo2'));
-    context.thirdContributor = makeMockContributor(context.realtime.channels.get('foo3'));
+    context.firstContributor = makeMockContributor(
+      context.realtime.channels.get('foo1'),
+      ErrorCodes.MessagesAttachmentFailed,
+      ErrorCodes.MessagesDetachmentFailed,
+    );
+    context.secondContributor = makeMockContributor(
+      context.realtime.channels.get('foo2'),
+      ErrorCodes.PresenceAttachmentFailed,
+      ErrorCodes.PresenceDetachmentFailed,
+    );
+    context.thirdContributor = makeMockContributor(
+      context.realtime.channels.get('foo3'),
+      ErrorCodes.OccupancyAttachmentFailed,
+      ErrorCodes.OccupancyDetachmentFailed,
+    );
   });
 
   describe('attachment lifecycle', () => {
@@ -257,7 +275,7 @@ describe('room lifecycle manager', () => {
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
-      await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(50000);
+      await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomIsReleased);
       expect(status.currentStatus).toEqual(RoomStatus.Released);
       expect(context.firstContributor.channel.attach).not.toHaveBeenCalled();
     });
@@ -276,7 +294,7 @@ describe('room lifecycle manager', () => {
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
-      await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(50000);
+      await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomIsReleasing);
       expect(status.currentStatus).toEqual(RoomStatus.Releasing);
       expect(context.firstContributor.channel.attach).not.toHaveBeenCalled();
     });
@@ -411,7 +429,12 @@ describe('room lifecycle manager', () => {
       );
 
       // Attach result should reject
-      await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(1001);
+      await expect(monitor.attach()).rejects.toBeErrorInfo({
+        code: ErrorCodes.PresenceAttachmentFailed,
+        cause: {
+          code: 1001,
+        },
+      });
 
       // We should be in the detached state because the second channel failed to attach
       await waitForRoomStatus(status, RoomStatus.Detached);
@@ -465,7 +488,12 @@ describe('room lifecycle manager', () => {
       );
 
       // Attach result should reject
-      await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(1003);
+      await expect(monitor.attach()).rejects.toBeErrorInfo({
+        code: ErrorCodes.OccupancyAttachmentFailed,
+        cause: {
+          code: 1003,
+        },
+      });
 
       // We should be in the detached state because the second channel failed to attach
       await waitForRoomStatus(status, RoomStatus.Failed);
@@ -519,7 +547,12 @@ describe('room lifecycle manager', () => {
       );
 
       // Attach result should reject - we should still get the error from the third channel
-      await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(1003);
+      await expect(monitor.attach()).rejects.toBeErrorInfo({
+        code: ErrorCodes.OccupancyAttachmentFailed,
+        cause: {
+          code: 1003,
+        },
+      });
 
       // We should be in the detached state because the second channel failed its rollback
       await waitForRoomStatus(status, RoomStatus.Failed);
@@ -664,7 +697,7 @@ describe('room lifecycle manager', () => {
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
-      await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(50000);
+      await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomInFailedState);
       expect(status.currentStatus).toEqual(RoomStatus.Failed);
       expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
     });
@@ -715,7 +748,7 @@ describe('room lifecycle manager', () => {
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
-      await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(50000);
+      await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomIsReleased);
       expect(status.currentStatus).toEqual(RoomStatus.Released);
       expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
     });
@@ -734,7 +767,7 @@ describe('room lifecycle manager', () => {
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
-      await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(50000);
+      await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomIsReleasing);
       expect(status.currentStatus).toEqual(RoomStatus.Releasing);
       expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
     });
@@ -861,7 +894,12 @@ describe('room lifecycle manager', () => {
         5,
       );
 
-      await expect(monitor.detach()).rejects.toBeErrorInfoWithCode(1004);
+      await expect(monitor.detach()).rejects.toBeErrorInfo({
+        code: ErrorCodes.PresenceDetachmentFailed,
+        cause: {
+          code: 1004,
+        },
+      });
 
       // We should be in the failed state
       await waitForRoomStatus(status, RoomStatus.Failed);
@@ -1481,7 +1519,12 @@ describe('room lifecycle manager', () => {
       expect(context.thirdContributor.channel.attach).toHaveBeenCalled();
 
       // We should have seen feature 2's error come through during the attach sequence
-      expect(feature2AttachError).toBeErrorInfoWithCode(1001);
+      expect(feature2AttachError).toBeErrorInfo({
+        code: ErrorCodes.PresenceAttachmentFailed,
+        cause: {
+          code: 1001,
+        },
+      });
     });
   });
 
@@ -1504,7 +1547,10 @@ describe('room lifecycle manager', () => {
         mockChannelAttachFailure(context.firstContributor.channel, AblyChannelState.Detached, 1001);
         mockChannelDetachSuccess(context.firstContributor.channel);
 
-        await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(1001);
+        await expect(monitor.attach()).rejects.toBeErrorInfo({
+          code: ErrorCodes.MessagesAttachmentFailed,
+          cause: { code: 1001 },
+        });
 
         // Emit an update / discontinuity event on the first contributor (for arguments sake)
         context.firstContributor.emulateStateChange(
@@ -1874,7 +1920,12 @@ describe('room lifecycle manager', () => {
         mockChannelAttachSuccess(context.thirdContributor.channel);
 
         // Now re-attach the room, it should reject with the error
-        await expect(monitor.attach()).rejects.toBeErrorInfoWithCode(1001);
+        await expect(monitor.attach()).rejects.toBeErrorInfo({
+          code: ErrorCodes.PresenceAttachmentFailed,
+          cause: {
+            code: 1001,
+          },
+        });
 
         // We should be detached
         expect(status.currentStatus).toEqual(RoomStatus.Detached);
@@ -2166,7 +2217,12 @@ describe('room lifecycle manager', () => {
         5,
       );
 
-      await expect(monitor.release()).rejects.toBeErrorInfoWithCode(1001);
+      await expect(monitor.release()).rejects.toBeErrorInfo({
+        code: ErrorCodes.PresenceDetachmentFailed,
+        cause: {
+          code: 1001,
+        },
+      });
 
       expect(context.firstContributor.channel.detach).toHaveBeenCalled();
       expect(context.secondContributor.channel.detach).toHaveBeenCalled();
@@ -2210,7 +2266,12 @@ describe('room lifecycle manager', () => {
         5,
       );
 
-      await expect(monitor.release()).rejects.toBeErrorInfoWithCode(1001);
+      await expect(monitor.release()).rejects.toBeErrorInfo({
+        code: ErrorCodes.PresenceDetachmentFailed,
+        cause: {
+          code: 1001,
+        },
+      });
 
       expect(status.currentStatus).toEqual(RoomStatus.Releasing);
 

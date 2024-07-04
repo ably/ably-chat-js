@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { ChatClient } from '../src/Chat.js';
 import { ChatApi } from '../src/ChatApi.js';
 import { Room } from '../src/Room.js';
-import { TypingEvent } from '../src/Typing.js';
+import { DefaultTyping, TypingEvent } from '../src/Typing.js';
 import { ChannelEventEmitterReturnType, channelPresenceEventEmitter } from './helper/channel.js';
 import { makeTestLogger } from './helper/logger.js';
 import { makeRandomRoom } from './helper/room.js';
@@ -208,5 +208,13 @@ describe('Typing', () => {
         invalidPresenceTest(context, presenceAction);
       });
     });
+  });
+
+  it<TestContext>('has an attachment error code', (context) => {
+    expect((context.room.typing as DefaultTyping).attachmentErrorCode).toBe(102005);
+  });
+
+  it<TestContext>('has a detachment error code', (context) => {
+    expect((context.room.typing as DefaultTyping).detachmentErrorCode).toBe(102054);
   });
 });

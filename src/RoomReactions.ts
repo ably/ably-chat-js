@@ -9,10 +9,12 @@ import {
   newDiscontinuityEmitter,
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
+import { ErrorCodes } from './errors.js';
 import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultReaction, Reaction, ReactionHeaders, ReactionMetadata } from './Reaction.js';
 import { addListenerToChannelWithoutAttach } from './realtimeextensions.js';
+import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
@@ -131,7 +133,7 @@ export interface RoomReactionsSubscriptionResponse {
 
 export class DefaultRoomReactions
   extends EventEmitter<RoomReactionEventsMap>
-  implements RoomReactions, HandlesDiscontinuity
+  implements RoomReactions, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
@@ -285,5 +287,19 @@ export class DefaultRoomReactions
         this._discontinuityEmitter.off(listener);
       },
     };
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get attachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.ReactionsAttachmentFailed;
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get detachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.ReactionsDetachmentFailed;
   }
 }
