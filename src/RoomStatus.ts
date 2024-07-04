@@ -76,11 +76,11 @@ export interface RoomStatusChange {
 export type RoomStatusListener = (change: RoomStatusChange) => void;
 
 /**
- * The response from the `onStatusChange` method.
+ * The response from the `onChange` method.
  */
 export interface OnRoomStatusChangeResponse {
   /**
-   * Unregisters the listener that was added by the `onStatusChange` method.
+   * Unregisters the listener that was added by the `onChange` method.
    */
   off: () => void;
 }
@@ -104,10 +104,10 @@ export interface Status {
    * @param listener The function to call when the status changes.
    * @returns An object that can be used to unregister the listener.
    */
-  onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse;
+  onChange(listener: RoomStatusListener): OnRoomStatusChangeResponse;
 
   /**
-   * Removes all listeners that were added by the `onStatusChange` method.
+   * Removes all listeners that were added by the `onChange` method.
    */
   offAll(): void;
 }
@@ -122,7 +122,7 @@ export interface InternalRoomStatus extends Status {
    * Registers a listener that will be called once when the room status changes.
    * @param listener The function to call when the status changes.
    */
-  onStatusChangeOnce(listener: RoomStatusListener): void;
+  onChangeOnce(listener: RoomStatusListener): void;
 }
 
 type RoomStatusEventsMap = {
@@ -167,7 +167,7 @@ export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements 
   /**
    * @inheritdoc
    */
-  onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse {
+  onChange(listener: RoomStatusListener): OnRoomStatusChangeResponse {
     this.on(listener);
 
     return {
@@ -177,7 +177,7 @@ export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements 
     };
   }
 
-  onStatusChangeOnce(listener: RoomStatusListener): void {
+  onChangeOnce(listener: RoomStatusListener): void {
     this._internalEmitter.once(listener);
   }
 

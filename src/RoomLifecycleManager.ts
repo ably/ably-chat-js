@@ -347,7 +347,7 @@ export class RoomLifecycleManager {
           return;
         }
 
-        this._status.onStatusChangeOnce((change: RoomStatusChange) => {
+        this._status.onChangeOnce((change: RoomStatusChange) => {
           if (change.status === RoomStatus.Attached) {
             resolve();
           }
@@ -488,7 +488,7 @@ export class RoomLifecycleManager {
     // If we're in the process of detaching, we should wait for the detachment to complete
     if (this._status.currentStatus === RoomStatus.Detaching) {
       return new Promise<void>((resolve, reject) => {
-        this._status.onStatusChangeOnce((change: RoomStatusChange) => {
+        this._status.onChangeOnce((change: RoomStatusChange) => {
           if (change.status === RoomStatus.Detached) {
             resolve();
             return;
@@ -582,7 +582,7 @@ export class RoomLifecycleManager {
     // If we're in the process of releasing, we should wait for it to complete
     if (this._releaseInProgress) {
       return new Promise<void>((resolve, reject) => {
-        this._status.onStatusChangeOnce((change: RoomStatusChange) => {
+        this._status.onChangeOnce((change: RoomStatusChange) => {
           if (change.status === RoomStatus.Released) {
             resolve();
             return;

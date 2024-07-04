@@ -327,7 +327,7 @@ describe('room lifecycle manager', () => {
       mockChannelAttachSuccess(context.thirdContributor.channel);
 
       const observedStatuses: RoomStatus[] = [];
-      status.onStatusChange((newStatus) => {
+      status.onChange((newStatus) => {
         observedStatuses.push(newStatus.status);
       });
 
@@ -602,7 +602,7 @@ describe('room lifecycle manager', () => {
 
       // Observe the statuses that go by
       const observedStatuses: RoomStatus[] = [];
-      status.onStatusChange((newStatus) => {
+      status.onChange((newStatus) => {
         observedStatuses.push(newStatus.status);
       });
 
@@ -800,7 +800,7 @@ describe('room lifecycle manager', () => {
       mockChannelDetachSuccess(context.thirdContributor.channel);
 
       const observedStatuses: RoomStatus[] = [];
-      status.onStatusChange((newStatus) => {
+      status.onChange((newStatus) => {
         observedStatuses.push(newStatus.status);
       });
 
@@ -945,7 +945,7 @@ describe('room lifecycle manager', () => {
 
       // Observe the statuses that go by
       const observedStatuses: RoomStatus[] = [];
-      status.onStatusChange((newStatus) => {
+      status.onChange((newStatus) => {
         observedStatuses.push(newStatus.status);
       });
 
@@ -1487,7 +1487,7 @@ describe('room lifecycle manager', () => {
       await waitForRoomStatus(status, RoomStatus.Detached);
 
       let feature2AttachError: Ably.ErrorInfo | undefined;
-      status.onStatusChange((newStatus) => {
+      status.onChange((newStatus) => {
         if (newStatus.status === RoomStatus.Detached) {
           feature2AttachError = newStatus.error;
         }

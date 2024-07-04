@@ -16,21 +16,21 @@ describe('room status', () => {
   it('listeners can be added', () =>
     new Promise<void>((done, reject) => {
       const status = new DefaultStatus(makeTestLogger());
-      status.onStatusChange((status) => {
+      status.onChange((status) => {
         expect(status.status).toEqual(RoomStatus.Attached);
         expect(status.error).toEqual(baseError);
         done();
       });
 
       status.setStatus({ status: RoomStatus.Attached, error: baseError });
-      reject(new Error('Expected onStatusChange to be called'));
+      reject(new Error('Expected onChange to be called'));
     }));
 
   it('listeners can be removed', () =>
     new Promise<void>((done, reject) => {
       const status = new DefaultStatus(makeTestLogger());
-      const { off } = status.onStatusChange(() => {
-        reject(new Error('Expected onStatusChange to not be called'));
+      const { off } = status.onChange(() => {
+        reject(new Error('Expected onChange to not be called'));
       });
 
       off();
@@ -41,12 +41,12 @@ describe('room status', () => {
   it('listeners can all be removed', () =>
     new Promise<void>((done, reject) => {
       const status = new DefaultStatus(makeTestLogger());
-      status.onStatusChange(() => {
-        reject(new Error('Expected onStatusChange to not be called'));
+      status.onChange(() => {
+        reject(new Error('Expected onChange to not be called'));
       });
 
-      status.onStatusChange(() => {
-        reject(new Error('Expected onStatusChange to not be called'));
+      status.onChange(() => {
+        reject(new Error('Expected onChange to not be called'));
       });
 
       status.offAll();
