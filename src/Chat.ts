@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { ClientOptions, normaliseClientOptions, NormalisedClientOptions } from './config.js';
-import { Connection, DefaultConnection } from './Connection.js';
+import { Connection, DefaultConnection } from './ConnectionStatus.js';
 import { makeLogger } from './logger.js';
 import { RealtimeWithOptions } from './realtimeextensions.js';
 import { DefaultRooms, Rooms } from './Rooms.js';

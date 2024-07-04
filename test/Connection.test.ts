@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ErrorInfo } from '../__mocks__/ably/index.ts';
-import { ConnectionStatus, DefaultConnection } from '../src/Connection.ts';
+import { ConnectionStatus, DefaultConnection } from '../src/ConnectionStatus.ts';
 import { makeTestLogger } from './helper/logger.ts';
 
 interface TestContext {
@@ -73,21 +73,21 @@ describe('connection', () => {
   it<TestContext>('listeners can be added', (context) =>
     new Promise<void>((done, reject) => {
       const connection = new DefaultConnection(context.realtime, makeTestLogger());
-      connection.onStatusChange((status) => {
+      connection.onChange((status) => {
         expect(status.status).toEqual(ConnectionStatus.Connected);
         expect(status.error).toBeUndefined();
         done();
       });
 
       context.emulateStateChange({ current: 'connected', previous: 'disconnected' });
-      reject(new Error('Expected onStatusChange to be called'));
+      reject(new Error('Expected onChange to be called'));
     }));
 
   it<TestContext>('listeners can be removed', (context) =>
     new Promise<void>((done, reject) => {
       const connection = new DefaultConnection(context.realtime, makeTestLogger());
-      const { off } = connection.onStatusChange(() => {
-        reject(new Error('Expected onStatusChange to not be called'));
+      const { off } = connection.onChange(() => {
+        reject(new Error('Expected onChange to not be called'));
       });
 
       off();
@@ -98,11 +98,11 @@ describe('connection', () => {
   it<TestContext>('listeners can all be removed', (context) =>
     new Promise<void>((done, reject) => {
       const connection = new DefaultConnection(context.realtime, makeTestLogger());
-      connection.onStatusChange(() => {
-        reject(new Error('Expected onStatusChange to not be called'));
+      connection.onChange(() => {
+        reject(new Error('Expected onChange to not be called'));
       });
-      connection.onStatusChange(() => {
-        reject(new Error('Expected onStatusChange to not be called'));
+      connection.onChange(() => {
+        reject(new Error('Expected onChange to not be called'));
       });
 
       connection.offAll();
@@ -173,7 +173,7 @@ describe('connection', () => {
           expect(connection.currentStatus).toEqual(mapAblyStatusToChat(previousRealtimeState));
           expect(connection.error).toEqual(error ?? baseError);
 
-          connection.onStatusChange((status) => {
+          connection.onChange((status) => {
             expect(status.status).toEqual(expectedStatus);
             expect(status.error).toEqual(error);
             expect(connection.currentStatus).toEqual(expectedStatus);
@@ -182,7 +182,7 @@ describe('connection', () => {
           });
 
           context.emulateStateChange({ current: newRealtimeState, previous: previousRealtimeState, reason: error });
-          reject(new Error('Expected onStatusChange to be called'));
+          reject(new Error('Expected onChange to be called'));
         }));
     },
   );
@@ -200,7 +200,7 @@ describe('connection', () => {
 
       // Set a listener that stores the state change
       const stateChanges: ConnectionStatus[] = [];
-      connection.onStatusChange((status) => {
+      connection.onChange((status) => {
         stateChanges.push(status.status);
       });
 
@@ -234,7 +234,7 @@ describe('connection', () => {
 
         // Set a listener that stores the state change
         const stateChanges: ConnectionStatus[] = [];
-        connection.onStatusChange((status) => {
+        connection.onChange((status) => {
           stateChanges.push(status.status);
         });
 

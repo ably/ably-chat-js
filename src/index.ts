@@ -6,7 +6,7 @@ export type {
   ConnectionStatusChange,
   ConnectionStatusListener,
   OnConnectionStatusChangeResponse,
-} from './Connection.js';
+} from './ConnectionStatus.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export type { ErrorCodes } from './errors.js';
 export { MessageEvents, PresenceEvents } from './events.js';

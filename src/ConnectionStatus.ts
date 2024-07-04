@@ -66,11 +66,11 @@ export interface ConnectionStatusChange {
 export type ConnectionStatusListener = (change: ConnectionStatusChange) => void;
 
 /**
- * The response from the `onStatusChange` method.
+ * The response from the `onChange` method.
  */
 export interface OnConnectionStatusChangeResponse {
   /**
-   * Unregisters the listener that was added by the `onStatusChange` method.
+   * Unregisters the listener that was added by the `onChange` method.
    */
   off: () => void;
 }
@@ -94,10 +94,10 @@ export interface Connection {
    * @param listener The function to call when the status changes.
    * @returns An object that can be used to unregister the listener.
    */
-  onStatusChange(listener: ConnectionStatusListener): OnConnectionStatusChangeResponse;
+  onChange(listener: ConnectionStatusListener): OnConnectionStatusChangeResponse;
 
   /**
-   * Removes all listeners that were added by the `onStatusChange` method.
+   * Removes all listeners that were added by the `onChange` method.
    */
   offAll(): void;
 }
@@ -177,7 +177,7 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
   /**
    * @inheritdoc
    */
-  onStatusChange(listener: ConnectionStatusListener): OnConnectionStatusChangeResponse {
+  onChange(listener: ConnectionStatusListener): OnConnectionStatusChangeResponse {
     this.on(listener);
 
     return {

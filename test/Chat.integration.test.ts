@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../src/Chat.js';
-import { ConnectionStatus } from '../src/Connection.js';
+import { ConnectionStatus } from '../src/ConnectionStatus.js';
 import { LogLevel } from '../src/logger.js';
 import { RealtimeWithOptions } from '../src/realtimeextensions.js';
 import { newChatClient } from './helper/chat.js';
@@ -11,7 +11,7 @@ import { getRandomRoom } from './helper/room.js';
 
 const waitForConnectionStatus = (chat: ChatClient, status: ConnectionStatus) => {
   return new Promise<void>((resolve, reject) => {
-    const { off } = chat.connection.onStatusChange((change) => {
+    const { off } = chat.connection.onChange((change) => {
       if (change.status === status) {
         off();
         resolve();
