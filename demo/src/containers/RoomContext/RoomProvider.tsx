@@ -1,5 +1,5 @@
 import { FC, ReactNode, useMemo } from 'react';
-import { ChatClient } from '@ably-labs/chat';
+import { ChatClient, DefaultPresenceOptions, DefaultReactionsOptions, DefaultTypingOptions } from '@ably-labs/chat';
 import { RoomContext } from './RoomContext';
 
 interface RoomProviderProps {
@@ -11,7 +11,7 @@ export const RoomProvider: FC<RoomProviderProps> = ({ client, roomId: roomId, ch
   const value = useMemo(
     () => ({
       client,
-      room: client.rooms.get(roomId),
+      room: client.rooms.get(roomId, {presence: DefaultPresenceOptions, reactions: DefaultReactionsOptions, typing: DefaultTypingOptions}),
     }),
     [client, roomId],
   );

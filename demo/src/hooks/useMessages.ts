@@ -28,7 +28,7 @@ export const useMessages = () => {
     const handleAdd: MessageListener = ({ message }) => {
       setMessages((prevMessage) => [...prevMessage, message]);
     };
-    room.messages.subscribe(handleAdd);
+    const { unsubscribe } = room.messages.subscribe(handleAdd);
 
     setMessages([]);
 
@@ -44,7 +44,7 @@ export const useMessages = () => {
 
     return () => {
       // mounted = false;
-      room.messages.unsubscribe(handleAdd);
+      unsubscribe();
     };
   }, [clientId, room]);
 
