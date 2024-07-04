@@ -6,7 +6,7 @@ import EventEmitter from './utils/EventEmitter.js';
 /**
  * The different states that the connection can be in.
  */
-export enum ConnectionStatus {
+export enum ConnectionState {
   /**
    * A temporary state for when the library is first initialised.
    */
@@ -45,7 +45,7 @@ export interface ConnectionStatusChange {
   /**
    * The new status of the connection.
    */
-  status: ConnectionStatus;
+  state: ConnectionState;
 
   /**
    * An error that provides a reason why the connection has
@@ -78,11 +78,11 @@ export interface OnConnectionStatusChangeResponse {
 /**
  * Represents a connection to Ably.
  */
-export interface Connection {
+export interface ConnectionStatus {
   /**
    * The current status of the connection.
    */
-  get currentStatus(): ConnectionStatus;
+  get current(): ConnectionState;
 
   /**
    * The current error, if any, that caused the connection to enter the current status.
@@ -103,15 +103,15 @@ export interface Connection {
 }
 
 type ConnectionEventsMap = {
-  [key in ConnectionStatus]: ConnectionStatusChange;
+  [key in ConnectionState]: ConnectionStatusChange;
 };
 
 /**
  * An implementation of the `Connection` interface.
  * @internal
  */
-export class DefaultConnection extends EventEmitter<ConnectionEventsMap> implements Connection {
-  private _status: ConnectionStatus = ConnectionStatus.Initialized;
+export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> implements ConnectionStatus {
+  private _state: ConnectionState = ConnectionState.Initialized;
   private _error?: Ably.ErrorInfo;
   private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
@@ -128,21 +128,21 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
     this._logger = logger;
 
     // Set our initial status and error
-    this._status = this.mapAblyStatusToChat(ably.connection.state);
+    this._state = this.mapAblyStatusToChat(ably.connection.state);
     this._error = ably.connection.errorReason;
 
     // Listen for changes to the connection status
     this._connection = ably.connection;
     this._connection.on((change: Ably.ConnectionStateChange) => {
       const chatState = this.mapAblyStatusToChat(change.current);
-      if (chatState === this._status) {
+      if (chatState === this._state) {
         return;
       }
 
-      const stateChange = { status: chatState, error: change.reason, retryIn: change.retryIn };
+      const stateChange = { state: chatState, error: change.reason, retryIn: change.retryIn };
 
       // If we're in the disconnected state, assume it's transient and set a timeout to propagate the change
-      if (chatState === ConnectionStatus.Disconnected && !this._transientTimeout) {
+      if (chatState === ConnectionState.Disconnected && !this._transientTimeout) {
         this._transientTimeout = setTimeout(() => {
           this._transientTimeout = undefined;
           this.applyStatusChange(stateChange);
@@ -163,8 +163,8 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
   /**
    * @inheritdoc
    */
-  get currentStatus(): ConnectionStatus {
-    return this._status;
+  get current(): ConnectionState {
+    return this._state;
   }
 
   /**
@@ -195,19 +195,19 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
   }
 
   private applyStatusChange(change: ConnectionStatusChange): void {
-    this._status = change.status;
+    this._state = change.state;
     this._error = change.error;
-    this._logger.info(`Connection state is now ${change.status}`, { error: change.error, retryIn: change.retryIn });
-    this.emit(change.status, change);
+    this._logger.info(`Connection state is now ${change.state}`, { error: change.error, retryIn: change.retryIn });
+    this.emit(change.state, change);
   }
 
-  private mapAblyStatusToChat(status: Ably.ConnectionState): ConnectionStatus {
+  private mapAblyStatusToChat(status: Ably.ConnectionState): ConnectionState {
     switch (status) {
       case 'closing':
       case 'closed':
-        return ConnectionStatus.Failed;
+        return ConnectionState.Failed;
       default:
-        return status as ConnectionStatus;
+        return status as ConnectionState;
     }
   }
 }

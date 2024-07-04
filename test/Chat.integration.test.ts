@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../src/Chat.js';
-import { ConnectionStatus } from '../src/ConnectionStatus.js';
+import { ConnectionState } from '../src/ConnectionStatus.js';
 import { LogLevel } from '../src/logger.js';
 import { RealtimeWithOptions } from '../src/realtimeextensions.js';
 import { newChatClient } from './helper/chat.js';
@@ -9,10 +9,10 @@ import { testClientOptions } from './helper/options.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
 import { getRandomRoom } from './helper/room.js';
 
-const waitForConnectionStatus = (chat: ChatClient, status: ConnectionStatus) => {
+const waitForConnectionState = (chat: ChatClient, state: ConnectionState) => {
   return new Promise<void>((resolve, reject) => {
-    const { off } = chat.connection.onChange((change) => {
-      if (change.status === status) {
+    const { off } = chat.connection.status.onChange((change) => {
+      if (change.state === state) {
         off();
         resolve();
       }
@@ -79,12 +79,12 @@ describe('Chat', () => {
     const realtime = ablyRealtimeClient();
     const chat = newChatClient(undefined, realtime);
 
-    await waitForConnectionStatus(chat, ConnectionStatus.Connected);
+    await waitForConnectionState(chat, ConnectionState.Connected);
 
     // Fail the connection by disconnecting
     realtime.close();
 
     // Wait for the connection to fail
-    await waitForConnectionStatus(chat, ConnectionStatus.Failed);
+    await waitForConnectionState(chat, ConnectionState.Failed);
   });
 });

@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ErrorInfo } from '../__mocks__/ably/index.ts';
-import { ConnectionStatus, DefaultConnection } from '../src/ConnectionStatus.ts';
+import { ConnectionState, DefaultConnectionStatus } from '../src/ConnectionStatus.ts';
 import { makeTestLogger } from './helper/logger.ts';
 
 interface TestContext {
@@ -22,22 +22,22 @@ enum AblyConnectionState {
   Failed = 'failed',
 }
 
-const mapAblyStatusToChat = (status: Ably.ConnectionState): ConnectionStatus => {
+const mapAblyStatusToChat = (status: Ably.ConnectionState): ConnectionState => {
   switch (status) {
     case 'connected':
-      return ConnectionStatus.Connected;
+      return ConnectionState.Connected;
     case 'disconnected':
-      return ConnectionStatus.Disconnected;
+      return ConnectionState.Disconnected;
     case 'suspended':
-      return ConnectionStatus.Suspended;
+      return ConnectionState.Suspended;
     case 'connecting':
-      return ConnectionStatus.Connecting;
+      return ConnectionState.Connecting;
     case 'failed':
     case 'closing':
     case 'closed':
-      return ConnectionStatus.Failed;
+      return ConnectionState.Failed;
     default:
-      return ConnectionStatus.Initialized;
+      return ConnectionState.Initialized;
   }
 };
 
@@ -64,17 +64,17 @@ describe('connection', () => {
   });
 
   it<TestContext>('should set the initial channel state from the connection', (context) => {
-    const connection = new DefaultConnection(context.realtime, makeTestLogger());
+    const connection = new DefaultConnectionStatus(context.realtime, makeTestLogger());
 
-    expect(connection.currentStatus).toEqual(ConnectionStatus.Disconnected);
+    expect(connection.current).toEqual(ConnectionState.Disconnected);
     expect(connection.error).toEqual(new Ably.ErrorInfo('error', 500, 50000));
   });
 
   it<TestContext>('listeners can be added', (context) =>
     new Promise<void>((done, reject) => {
-      const connection = new DefaultConnection(context.realtime, makeTestLogger());
+      const connection = new DefaultConnectionStatus(context.realtime, makeTestLogger());
       connection.onChange((status) => {
-        expect(status.status).toEqual(ConnectionStatus.Connected);
+        expect(status.state).toEqual(ConnectionState.Connected);
         expect(status.error).toBeUndefined();
         done();
       });
@@ -85,7 +85,7 @@ describe('connection', () => {
 
   it<TestContext>('listeners can be removed', (context) =>
     new Promise<void>((done, reject) => {
-      const connection = new DefaultConnection(context.realtime, makeTestLogger());
+      const connection = new DefaultConnectionStatus(context.realtime, makeTestLogger());
       const { off } = connection.onChange(() => {
         reject(new Error('Expected onChange to not be called'));
       });
@@ -97,7 +97,7 @@ describe('connection', () => {
 
   it<TestContext>('listeners can all be removed', (context) =>
     new Promise<void>((done, reject) => {
-      const connection = new DefaultConnection(context.realtime, makeTestLogger());
+      const connection = new DefaultConnectionStatus(context.realtime, makeTestLogger());
       connection.onChange(() => {
         reject(new Error('Expected onChange to not be called'));
       });
@@ -111,53 +111,53 @@ describe('connection', () => {
     }));
 
   describe.each([
-    [ConnectionStatus.Connecting, AblyConnectionState.Initialised, AblyConnectionState.Connecting, undefined],
-    [ConnectionStatus.Connected, AblyConnectionState.Connecting, AblyConnectionState.Connected, undefined],
-    [ConnectionStatus.Connected, AblyConnectionState.Disconnected, AblyConnectionState.Connected, undefined],
-    [ConnectionStatus.Connected, AblyConnectionState.Suspended, AblyConnectionState.Connected, undefined],
-    [ConnectionStatus.Connecting, AblyConnectionState.Connected, AblyConnectionState.Connecting, undefined],
-    [ConnectionStatus.Suspended, AblyConnectionState.Connecting, AblyConnectionState.Suspended, undefined],
+    [ConnectionState.Connecting, AblyConnectionState.Initialised, AblyConnectionState.Connecting, undefined],
+    [ConnectionState.Connected, AblyConnectionState.Connecting, AblyConnectionState.Connected, undefined],
+    [ConnectionState.Connected, AblyConnectionState.Disconnected, AblyConnectionState.Connected, undefined],
+    [ConnectionState.Connected, AblyConnectionState.Suspended, AblyConnectionState.Connected, undefined],
+    [ConnectionState.Connecting, AblyConnectionState.Connected, AblyConnectionState.Connecting, undefined],
+    [ConnectionState.Suspended, AblyConnectionState.Connecting, AblyConnectionState.Suspended, undefined],
     [
-      ConnectionStatus.Failed,
+      ConnectionState.Failed,
       AblyConnectionState.Connecting,
       AblyConnectionState.Failed,
       new Ably.ErrorInfo('error', 500, 99998),
     ],
     [
-      ConnectionStatus.Failed,
+      ConnectionState.Failed,
       AblyConnectionState.Connected,
       AblyConnectionState.Failed,
       new Ably.ErrorInfo('error', 500, 99998),
     ],
     [
-      ConnectionStatus.Failed,
+      ConnectionState.Failed,
       AblyConnectionState.Disconnected,
       AblyConnectionState.Failed,
       new Ably.ErrorInfo('error', 500, 99998),
     ],
 
     [
-      ConnectionStatus.Failed,
+      ConnectionState.Failed,
       AblyConnectionState.Connecting,
       AblyConnectionState.Failed,
       new Ably.ErrorInfo('error', 500, 99999),
     ],
     [
-      ConnectionStatus.Failed,
+      ConnectionState.Failed,
       AblyConnectionState.Connected,
       AblyConnectionState.Closed,
       new Ably.ErrorInfo('error', 500, 99999),
     ],
     [
-      ConnectionStatus.Failed,
+      ConnectionState.Failed,
       AblyConnectionState.Connected,
       AblyConnectionState.Closing,
       new Ably.ErrorInfo('error', 500, 99999),
     ],
   ])(
-    `processes state changes`,
+    'processes state changes',
     (
-      expectedStatus: ConnectionStatus,
+      expectedStatus: ConnectionState,
       previousRealtimeState: AblyConnectionState,
       newRealtimeState: AblyConnectionState,
       error: ErrorInfo | undefined,
@@ -168,15 +168,15 @@ describe('connection', () => {
         new Promise<void>((done, reject) => {
           vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(previousRealtimeState);
           vi.spyOn(context.realtime.connection, 'errorReason', 'get').mockReturnValue(error ?? baseError);
-          const connection = new DefaultConnection(context.realtime, makeTestLogger());
+          const connection = new DefaultConnectionStatus(context.realtime, makeTestLogger());
 
-          expect(connection.currentStatus).toEqual(mapAblyStatusToChat(previousRealtimeState));
+          expect(connection.current).toEqual(mapAblyStatusToChat(previousRealtimeState));
           expect(connection.error).toEqual(error ?? baseError);
 
           connection.onChange((status) => {
-            expect(status.status).toEqual(expectedStatus);
+            expect(status.state).toEqual(expectedStatus);
             expect(status.error).toEqual(error);
-            expect(connection.currentStatus).toEqual(expectedStatus);
+            expect(connection.current).toEqual(expectedStatus);
             expect(connection.error).toEqual(error);
             done();
           });
@@ -195,13 +195,13 @@ describe('connection', () => {
         new Ably.ErrorInfo('error', 500, 99999),
       );
 
-      const connection = new DefaultConnection(context.realtime, makeTestLogger());
-      expect(connection.currentStatus).toEqual(ConnectionStatus.Connected);
+      const connection = new DefaultConnectionStatus(context.realtime, makeTestLogger());
+      expect(connection.current).toEqual(ConnectionState.Connected);
 
       // Set a listener that stores the state change
-      const stateChanges: ConnectionStatus[] = [];
+      const stateChanges: ConnectionState[] = [];
       connection.onChange((status) => {
-        stateChanges.push(status.status);
+        stateChanges.push(status.state);
       });
 
       // Transition to a disconnected state
@@ -229,13 +229,13 @@ describe('connection', () => {
           new Ably.ErrorInfo('error', 500, 99999),
         );
 
-        const connection = new DefaultConnection(context.realtime, makeTestLogger());
-        expect(connection.currentStatus).toEqual(ConnectionStatus.Connected);
+        const connection = new DefaultConnectionStatus(context.realtime, makeTestLogger());
+        expect(connection.current).toEqual(ConnectionState.Connected);
 
         // Set a listener that stores the state change
-        const stateChanges: ConnectionStatus[] = [];
+        const stateChanges: ConnectionState[] = [];
         connection.onChange((status) => {
-          stateChanges.push(status.status);
+          stateChanges.push(status.state);
         });
 
         // Transition to a disconnected state
@@ -247,7 +247,7 @@ describe('connection', () => {
           context.emulateStateChange({ current: 'connected', previous: 'disconnected' });
 
           // Assert that we have only seen the connected state
-          expect(stateChanges).toEqual([ConnectionStatus.Disconnected, ConnectionStatus.Connected]);
+          expect(stateChanges).toEqual([ConnectionState.Disconnected, ConnectionState.Connected]);
 
           done();
         });
