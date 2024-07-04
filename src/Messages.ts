@@ -458,6 +458,7 @@ export class DefaultMessages
       unsubscribe: () => {
         // Remove the listener from the subscription points
         this._listenerSubscriptionPoints.delete(listener);
+        this._logger.trace('Messages.unsubscribe();');
         super.off(listener);
       },
       getPreviousMessages: (params: Omit<QueryOptions, 'direction'>) =>

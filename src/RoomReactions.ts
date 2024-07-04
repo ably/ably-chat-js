@@ -212,6 +212,7 @@ export class DefaultRoomReactions
 
     return {
       unsubscribe: () => {
+        this._logger.trace('RoomReactions.unsubscribe();');
         this.off(listener);
       },
     };

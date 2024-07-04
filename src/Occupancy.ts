@@ -119,6 +119,7 @@ export class DefaultOccupancy
 
     return {
       unsubscribe: () => {
+        this._logger.trace('Occupancy.unsubscribe();');
         this.off(listener);
       },
     };

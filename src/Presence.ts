@@ -331,6 +331,7 @@ export class DefaultPresence
       this.on(listenerOrEvents as PresenceListener);
       return {
         unsubscribe: () => {
+          this._logger.trace('Presence.unsubscribe();');
           this.off(listenerOrEvents as PresenceListener);
         },
       };
@@ -338,6 +339,7 @@ export class DefaultPresence
       this.on(listenerOrEvents as PresenceEvents, listener);
       return {
         unsubscribe: () => {
+          this._logger.trace('Presence.unsubscribe();', { events: listenerOrEvents });
           this.off(listener);
         },
       };

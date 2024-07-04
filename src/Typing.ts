@@ -227,6 +227,7 @@ export class DefaultTyping
 
     return {
       unsubscribe: () => {
+        this._logger.trace('DefaultTyping.unsubscribe();');
         this.off(listener);
       },
     };
