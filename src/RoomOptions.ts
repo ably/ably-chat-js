@@ -34,8 +34,8 @@ export const DefaultPresenceOptions: PresenceOptions = {
  */
 export interface TypingOptions {
   /**
-   * The timeout for typing events in milliseconds. If a user stops typing and this duration elapses, the typing
-   * event will be removed. This value must be greater than 0.
+   * The timeout for typing events in milliseconds. If typing.start() is not called for this amount of time, a stop
+   * typing event will be fired, resulting in the user being removed from the currently typing set.
    * @defaultValue 10000
    */
   timeoutMs: number;
