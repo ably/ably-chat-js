@@ -41,7 +41,7 @@ const waitForMessages = (messages: TypingEvent[], expectedCount: number) => {
 describe('Typing', () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>((context) => {
-    context.realtime = ablyRealtimeClient({ logLevel: 5 });
+    context.realtime = ablyRealtimeClient();
     context.chat = new DefaultRooms(context.realtime, normaliseClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = context.chat.get(randomRoomId(), { typing: { timeoutMs: 300 } });
