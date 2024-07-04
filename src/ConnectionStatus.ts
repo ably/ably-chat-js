@@ -4,9 +4,9 @@ import { Logger } from './logger.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
- * The different states that the connection can be in.
+ * The different states that the connection can be in through its lifecycle.
  */
-export enum ConnectionState {
+export enum ConnectionLifecycle {
   /**
    * A temporary state for when the library is first initialised.
    */
@@ -45,7 +45,12 @@ export interface ConnectionStatusChange {
   /**
    * The new status of the connection.
    */
-  state: ConnectionState;
+  current: ConnectionLifecycle;
+
+  /**
+   * The previous status of the connection.
+   */
+  previous: ConnectionLifecycle;
 
   /**
    * An error that provides a reason why the connection has
@@ -82,7 +87,7 @@ export interface ConnectionStatus {
   /**
    * The current status of the connection.
    */
-  get current(): ConnectionState;
+  get current(): ConnectionLifecycle;
 
   /**
    * The current error, if any, that caused the connection to enter the current status.
@@ -103,7 +108,7 @@ export interface ConnectionStatus {
 }
 
 type ConnectionEventsMap = {
-  [key in ConnectionState]: ConnectionStatusChange;
+  [key in ConnectionLifecycle]: ConnectionStatusChange;
 };
 
 /**
@@ -111,7 +116,7 @@ type ConnectionEventsMap = {
  * @internal
  */
 export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> implements ConnectionStatus {
-  private _state: ConnectionState = ConnectionState.Initialized;
+  private _state: ConnectionLifecycle = ConnectionLifecycle.Initialized;
   private _error?: Ably.ErrorInfo;
   private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
@@ -139,10 +144,15 @@ export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> i
         return;
       }
 
-      const stateChange = { state: chatState, error: change.reason, retryIn: change.retryIn };
+      const stateChange: ConnectionStatusChange = {
+        current: chatState,
+        previous: this._state,
+        error: change.reason,
+        retryIn: change.retryIn,
+      };
 
       // If we're in the disconnected state, assume it's transient and set a timeout to propagate the change
-      if (chatState === ConnectionState.Disconnected && !this._transientTimeout) {
+      if (chatState === ConnectionLifecycle.Disconnected && !this._transientTimeout) {
         this._transientTimeout = setTimeout(() => {
           this._transientTimeout = undefined;
           this.applyStatusChange(stateChange);
@@ -163,7 +173,7 @@ export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> i
   /**
    * @inheritdoc
    */
-  get current(): ConnectionState {
+  get current(): ConnectionLifecycle {
     return this._state;
   }
 
@@ -195,19 +205,19 @@ export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> i
   }
 
   private applyStatusChange(change: ConnectionStatusChange): void {
-    this._state = change.state;
+    this._state = change.current;
     this._error = change.error;
-    this._logger.info(`Connection state is now ${change.state}`, { error: change.error, retryIn: change.retryIn });
-    this.emit(change.state, change);
+    this._logger.info(`Connection state changed`, change);
+    this.emit(change.current, change);
   }
 
-  private mapAblyStatusToChat(status: Ably.ConnectionState): ConnectionState {
+  private mapAblyStatusToChat(status: Ably.ConnectionState): ConnectionLifecycle {
     switch (status) {
       case 'closing':
       case 'closed':
-        return ConnectionState.Failed;
+        return ConnectionLifecycle.Failed;
       default:
-        return status as ConnectionState;
+        return status as ConnectionLifecycle;
     }
   }
 }
