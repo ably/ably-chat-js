@@ -48,7 +48,7 @@ export const MessageInput: FC<MessageInputProps> = ({
         className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-2 pr-2 bg-gray-200 rounded-l-md py-1"
         autoFocus
       />
-      <div className="items-center inset-y-0 hidden sm:flex">
+      <div className="items-center inset-y-0 flex">
         <button
           disabled={disabled}
           type="submit"
