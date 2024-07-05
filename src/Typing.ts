@@ -51,7 +51,7 @@ export interface Typing extends EmitsDiscontinuities {
    * Get the current typers, a unique set of clientIds.
    * @returns A set of clientIds that are currently typing.
    */
-  get(): Set<string>;
+  get(): Promise<Set<string>>;
 
   /**
    * Start indicates that the current user is typing. This will emit a typingStarted event to inform listening clients and begin a timer,
@@ -126,7 +126,6 @@ export class DefaultTyping
 {
   private readonly _clientId: string;
   private readonly _roomId: string;
-  private readonly _currentlyTyping: Set<string>;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -147,7 +146,6 @@ export class DefaultTyping
     super();
     this._roomId = roomId;
     this._clientId = clientId;
-    this._currentlyTyping = new Set();
     this._channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
     addListenerToChannelPresenceWithoutAttach({
       listener: this._internalSubscribeToEvents.bind(this),
@@ -163,8 +161,8 @@ export class DefaultTyping
   /**
    * @inheritDoc
    */
-  get(): Set<string> {
-    return new Set<string>(this._currentlyTyping);
+  get(): Promise<Set<string>> {
+    return this._channel.presence.get().then((members) => new Set<string>(members.map((m) => m.clientId)));
   }
 
   /**
@@ -260,14 +258,11 @@ export class DefaultTyping
           return;
         }
 
-        this._currentlyTyping.add(member.clientId);
-        this.emit(TypingEvents.TypingStarted, {
-          currentlyTyping: new Set<string>(this._currentlyTyping),
-          change: {
-            clientId: member.clientId,
-            isTyping: true,
-          },
+        this.emitEventWithCurrentlyTyping(TypingEvents.TypingStarted, {
+          clientId: member.clientId,
+          isTyping: true,
         });
+
         break;
       case 'leave':
         if (!member.clientId) {
@@ -275,14 +270,11 @@ export class DefaultTyping
           return;
         }
 
-        this._currentlyTyping.delete(member.clientId);
-        this.emit(TypingEvents.TypingStopped, {
-          currentlyTyping: new Set<string>(this._currentlyTyping),
-          change: {
-            clientId: member.clientId,
-            isTyping: false,
-          },
+        this.emitEventWithCurrentlyTyping(TypingEvents.TypingStopped, {
+          clientId: member.clientId,
+          isTyping: false,
         });
+
         break;
     }
   };
@@ -319,5 +311,21 @@ export class DefaultTyping
    */
   get detachmentErrorCode(): ErrorCodes {
     return ErrorCodes.TypingDetachmentFailed;
+  }
+  private emitEventWithCurrentlyTyping(event: TypingEvents, change: { clientId: string; isTyping: boolean }) {
+    this.get()
+      .then((typers) => {
+        this.emit(event, {
+          change: change,
+          currentlyTyping: typers,
+        });
+      })
+      .catch((err: unknown) => {
+        this._logger.error('failed to fetch typing presence set to emit a typing event', {
+          event: event,
+          change: change,
+          error: err,
+        });
+      });
   }
 }

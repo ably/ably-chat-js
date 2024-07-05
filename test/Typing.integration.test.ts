@@ -75,15 +75,27 @@ describe('Typing', () => {
   it<TestContext>(
     'subscribes to all typing events, sent by start and stop',
     async (context) => {
-      const events: TypingEvent[] = [];
-      context.chatRoom.typing.subscribe((event) => {
-        events.push(event);
-      });
-      // Attach the room
       await context.chatRoom.attach();
+
+      const twoEvents = new Promise<TypingEvent[]>((accept, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('timed out'));
+        }, 3000);
+        const events: TypingEvent[] = [];
+        context.chatRoom.typing.subscribe((event) => {
+          events.push(event);
+          if (events.length === 2) {
+            clearTimeout(timeout);
+            accept(events);
+          }
+        });
+      });
+
       // Send typing events
       await context.chatRoom.typing.start();
       await context.chatRoom.typing.stop();
+
+      const events = await twoEvents;
 
       // Should have received a typingStarted and typingStopped event
       expect(events.length, 'typingStopped event should have been received').toEqual(2);
@@ -133,7 +145,7 @@ describe('Typing', () => {
       // Wait for the typing events to be received
       await waitForMessages(events, 2);
       // Get the currently typing client ids
-      const currentlyTypingClientIds = context.chatRoom.typing.get();
+      const currentlyTypingClientIds = await context.chatRoom.typing.get();
       // Ensure that the client ids are correct
       expect(currentlyTypingClientIds.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIds.has(clientId1), 'client1 should be typing').toEqual(true);
@@ -144,7 +156,7 @@ describe('Typing', () => {
       // Wait for the typing events to be received
       await waitForMessages(events, 1);
       // Get the currently typing client ids
-      const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.get();
+      const currentlyTypingClientIdsAfterStop = await context.chatRoom.typing.get();
       // Ensure that the client ids are correct and client1 is no longer typing
       expect(currentlyTypingClientIdsAfterStop.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIdsAfterStop.has(clientId1), 'client1 should not be typing').toEqual(false);
