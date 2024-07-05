@@ -10,6 +10,14 @@ export interface GetMessagesQueryParams {
   end?: number;
   direction?: 'forwards' | 'backwards';
   limit?: number;
+  /**
+   * Timeserial indicating the starting point for message retrieval.
+   * This timeserial is specific to the region of the channel the client is connected to. Messages published within
+   * the same region of the channel are guaranteed to be received in increasing timeserial order.
+   *
+   * @defaultValue undefined (not used if not specified)
+   */
+  fromSerial?: string;
 }
 
 export interface CreateMessageResponse {

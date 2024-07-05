@@ -1,5 +1,6 @@
 import { Headers } from './Headers.js';
 import { Metadata } from './Metadata.js';
+import { DefaultTimeserial, Timeserial } from './Timeserial.js';
 
 /**
  * {@link Headers} type for chat messages.
@@ -95,16 +96,6 @@ export interface Message {
 }
 
 /**
- * Represents a parsed timeserial.
- */
-interface Timeserial {
-  seriesId: string;
-  timestamp: number;
-  counter: number;
-  index?: number;
-}
-
-/**
  * An implementation of the Message interface for chat messages.
  *
  * Allows for comparison of messages based on their timeserials.
@@ -121,96 +112,21 @@ export class DefaultMessage implements Message {
     public readonly metadata: MessageMetadata,
     public readonly headers: MessageHeaders,
   ) {
-    this._calculatedTimeserial = DefaultMessage.calculateTimeserial(timeserial);
+    this._calculatedTimeserial = DefaultTimeserial.calculateTimeserial(timeserial);
 
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
   }
 
   before(message: Message): boolean {
-    return DefaultMessage.timeserialCompare(this, message) < 0;
+    return this._calculatedTimeserial.before(message.timeserial);
   }
 
   after(message: Message): boolean {
-    return DefaultMessage.timeserialCompare(this, message) > 0;
+    return this._calculatedTimeserial.after(message.timeserial);
   }
 
   equal(message: Message): boolean {
-    return DefaultMessage.timeserialCompare(this, message) === 0;
-  }
-
-  /**
-   * Compares two timeserials and returns a number indicating their order.
-   *
-   * 0 if the timeserials are equal.
-   * <0 if the first timeserial is less than the second.
-   * >0 if the first timeserial is greater than the second.
-   *
-   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
-   */
-  private static timeserialCompare(first: Message, second: Message): number {
-    const firstTimeserial =
-      first instanceof DefaultMessage
-        ? first._calculatedTimeserial
-        : DefaultMessage.calculateTimeserial(first.timeserial);
-    const secondTimeserial =
-      second instanceof DefaultMessage
-        ? second._calculatedTimeserial
-        : DefaultMessage.calculateTimeserial(second.timeserial);
-
-    // Compare the timestamp
-    const timestampDiff = firstTimeserial.timestamp - secondTimeserial.timestamp;
-    if (timestampDiff) {
-      return timestampDiff;
-    }
-
-    // Compare the counter
-    const counterDiff = firstTimeserial.counter - secondTimeserial.counter;
-    if (counterDiff) {
-      return counterDiff;
-    }
-
-    // Compare the seriesId lexicographically
-    const seriesIdDiff =
-      firstTimeserial.seriesId !== secondTimeserial.seriesId &&
-      (firstTimeserial.seriesId < secondTimeserial.seriesId ? -1 : 1);
-
-    if (seriesIdDiff) {
-      return seriesIdDiff;
-    }
-
-    // Compare the index, if present
-    return firstTimeserial.index !== undefined && secondTimeserial.index !== undefined
-      ? firstTimeserial.index - secondTimeserial.index
-      : 0;
-  }
-
-  /**
-   * Calculate the timeserial object from a timeserial string.
-   *
-   * @throws {@link ErrorInfo} if timeserial is invalid.
-   */
-  private static calculateTimeserial(timeserial: string): Timeserial {
-    const [seriesId, rest] = timeserial.split('@');
-    if (!seriesId || !rest) {
-      throw new Error('Invalid timeserial');
-    }
-
-    const [timestamp, counterAndIndex] = rest.split('-');
-    if (!timestamp || !counterAndIndex) {
-      throw new Error('Invalid timeserial');
-    }
-
-    const [counter, index] = counterAndIndex.split(':');
-    if (!counter) {
-      throw new Error('Invalid timeserial');
-    }
-
-    return {
-      seriesId,
-      timestamp: Number(timestamp),
-      counter: Number(counter),
-      index: index ? Number(index) : undefined,
-    };
+    return this._calculatedTimeserial.equal(message.timeserial);
   }
 }

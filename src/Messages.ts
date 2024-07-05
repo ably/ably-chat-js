@@ -1,4 +1,5 @@
 import * as Ably from 'ably';
+import { ErrorInfo, RealtimeChannel } from 'ably';
 
 import { ChatApi } from './ChatApi.js';
 import { MessageEvents } from './events.js';
@@ -6,6 +7,7 @@ import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './Message.js';
 import { PaginatedResult } from './query.js';
 import { SubscriptionManager } from './SubscriptionManager.js';
+import { DefaultTimeserial } from './Timeserial.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 interface MessageEventsMap {
@@ -141,6 +143,17 @@ export interface Messages {
   subscribe(listener?: MessageListener): Promise<Ably.ChannelStateChange | null>;
 
   /**
+   * Get messages that may have been sent to the room before the listener was subscribed.
+   * @param listener listener to get historical messages for
+   * @param Params - Options for the query.
+   * @returns A promise that resolves to a paginated result of messages, messages are ordered from newest to oldest.
+   **/
+  getBeforeSubscriptionStart(
+    listener: MessageListener,
+    Params?: Omit<QueryOptions, 'direction'>,
+  ): Promise<PaginatedResult<Message>>;
+
+  /**
    * Unsubscribe the given listener from all events.
    * @param listener listener to unsubscribe
    * @returns A promise that resolves when the listener has been unsubscribed.
@@ -190,7 +203,14 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   private readonly _managedChannel: SubscriptionManager;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
+  private readonly _listenerSubscriptionPoints: Map<
+    MessageListener,
+    Promise<{
+      fromSerial: string;
+    }>
+  >;
   private readonly _logger: Logger;
+
   private _internalListener: Ably.messageCallback<Ably.InboundMessage> | undefined;
 
   constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string, logger: Logger) {
@@ -200,6 +220,142 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
+    this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
+
+    // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
+    // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
+    this._managedChannel.channel.on('attached', (message) => {
+      this.handleAttach(message.resumed);
+    });
+    // Handles the case where an update message is received from a channel after a detach and reattach.
+    this._managedChannel.channel.on('update', (message) => {
+      if (message.current === 'attached' && message.previous === 'attached') {
+        this.handleAttach(message.resumed);
+      }
+    });
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  async getBeforeSubscriptionStart(
+    listener: MessageListener,
+    params: Omit<QueryOptions, 'direction'>,
+  ): Promise<PaginatedResult<Message>> {
+    this._logger.trace(`DefaultSubscriptionManager.getBeforeSubscriptionStart();`);
+
+    const subscriptionPoint = this._listenerSubscriptionPoints.get(listener);
+
+    if (subscriptionPoint === undefined) {
+      this._logger.error(
+        `DefaultSubscriptionManager.getBeforeSubscriptionStart(); listener has not been subscribed yet`,
+      );
+      throw new ErrorInfo('cannot query history; listener has not been subscribed yet', 40000, 400) as unknown as Error;
+    }
+
+    // Get the subscription point of the listener
+    const subscriptionPointParams = await subscriptionPoint;
+
+    // Check the end time does not occur after the fromSerial time
+    const parseSerial = DefaultTimeserial.calculateTimeserial(subscriptionPointParams.fromSerial);
+    if (params.end && params.end > parseSerial.timestamp) {
+      this._logger.error(
+        `DefaultSubscriptionManager.getBeforeSubscriptionStart(); end time is after the subscription point of the listener`,
+        {
+          endTime: params.end,
+          subscriptionTime: parseSerial.timestamp,
+        },
+      );
+      throw new ErrorInfo(
+        'cannot query history; end time is after the subscription point of the listener',
+        40000,
+        400,
+      ) as unknown as Error;
+    }
+
+    // Query messages from the subscription point to the start of the time window
+    return this._chatApi.getMessages(this._roomId, {
+      ...params,
+      direction: 'backwards',
+      ...subscriptionPointParams,
+    });
+  }
+
+  /**
+   * Handle the case where the channel experiences a detach and reattaches.
+   */
+  private handleAttach(fromResume: boolean) {
+    this._logger.trace(`DefaultSubscriptionManager.handleAttach();`);
+
+    // Do nothing if we have resumed as there is no discontinuity in the message stream
+    if (fromResume) return;
+
+    // Reset subscription points for all listeners
+    const newSubscriptionStartResolver = this.subscribeAtChannelAttach();
+    this._listenerSubscriptionPoints.forEach((_, listener) => {
+      this._listenerSubscriptionPoints.set(listener, newSubscriptionStartResolver);
+    });
+  }
+
+  /**
+   * Create a promise that resolves with the attachSerial of the channel or the timeserial of the latest message.
+   */
+  private async resolveSubscriptionStart(): Promise<{
+    fromSerial: string;
+  }> {
+    const channelWithProperties = this.getChannelProperties();
+
+    // If we are attached, we can resolve with the channelSerial
+    if (this._managedChannel.channel.state === 'attached') {
+      if (channelWithProperties.properties.channelSerial) {
+        return Promise.resolve({ fromSerial: channelWithProperties.properties.channelSerial });
+      }
+      this._logger.error(`DefaultSubscriptionManager.handleAttach(); channelSerial is undefined`);
+      throw new ErrorInfo('channel is attached, but channelSerial is not defined', 40000, 400) as unknown as Error;
+    }
+
+    return this.subscribeAtChannelAttach();
+  }
+
+  private getChannelProperties(): RealtimeChannel & {
+    properties: { attachSerial: string | undefined; channelSerial: string | undefined };
+  } {
+    // Get the attachSerial from the channel properties
+    return this._managedChannel.channel as RealtimeChannel & {
+      properties: {
+        attachSerial: string | undefined;
+        channelSerial: string | undefined;
+      };
+    };
+  }
+
+  private async subscribeAtChannelAttach(): Promise<{ fromSerial: string }> {
+    return new Promise((resolve, reject) => {
+      // Check if the state is now attached
+      if (this._managedChannel.channel.state === 'attached') {
+        // Get the attachSerial from the channel properties
+        const channelWithProperties = this.getChannelProperties();
+        // AttachSerial should always be defined at this point, but we check just in case
+        if (channelWithProperties.properties.attachSerial) {
+          resolve({ fromSerial: channelWithProperties.properties.attachSerial });
+        } else {
+          this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
+          reject(new ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error);
+        }
+      }
+
+      this._managedChannel.channel.on('attached', () => {
+        // Get the attachSerial from the channel properties
+        const channelWithProperties = this.getChannelProperties();
+        // AttachSerial should always be defined at this point, but we check just in case
+        if (channelWithProperties.properties.attachSerial) {
+          resolve({ fromSerial: channelWithProperties.properties.attachSerial });
+        } else {
+          this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
+          reject(new ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error);
+        }
+      });
+    });
   }
 
   /**
@@ -264,6 +420,9 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     const hasListeners = this.hasListeners();
     super.on([MessageEvents.created], listener);
 
+    // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
+    this._listenerSubscriptionPoints.set(listener, this.resolveSubscriptionStart());
+
     if (!hasListeners) {
       this._logger.debug('Messages.subscribe(); subscribing internal listener');
       this._internalListener = this.processEvent.bind(this);
@@ -279,6 +438,10 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   unsubscribe(listener: MessageListener): Promise<void> {
     this._logger.trace('Messages.unsubscribe();');
     super.off(listener);
+
+    // Remove the listener from the subscription points
+    this._listenerSubscriptionPoints.delete(listener);
+
     if (this.hasListeners()) {
       return Promise.resolve();
     }

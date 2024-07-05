@@ -135,6 +135,27 @@ if (historicalMessages.hasNext()) {
 }
 ```
 
+### Query message history for a subscribed listener
+
+Another useful method the messages object exposes is the `getBeforeSubscriptionStart` method. It can be used to return
+historical messages in the chat room that were sent up to the point a particular listener was subscribed. It returns a
+paginated response that can be used to query for more messages.
+
+```typescript
+const listener = () => {
+  console.log('New message received');
+};
+room.messages.subscribe(listener);
+const historicalMessages = await room.messages.getBeforeSubscriptionStart(listener, { limit: 50 });
+console.log(historicalMessages.items);
+if (historicalMessages.hasNext()) {
+  const next = await historicalMessages.next();
+  console.log(next);
+} else {
+  console.log('End of messages');
+}
+```
+
 ## Connection and Ably channels statuses
 
 You can monitor the status of the overall connection to Ably using the `connection` member of the Realtime client that you

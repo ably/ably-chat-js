@@ -264,4 +264,124 @@ describe('messages integration', () => {
       expect.objectContaining(expectedMessages[1]),
     ]);
   });
+
+  it<TestContext>('should be able to get history for listener from attached timeserial', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId());
+
+    // Publish some messages
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const message2 = await room.messages.send({ text: 'I have the high ground!' });
+
+    const listener = () => {};
+    // Subscribe to messages, which will also set up the listener subscription point and attach to channel
+    await room.messages.subscribe(listener);
+
+    // Do a history request to get the messages before up
+    const historyPreSubscription1 = await room.messages.getBeforeSubscriptionStart(listener, { limit: 50 });
+
+    // Check the items in the history
+    expect(historyPreSubscription1.items).toEqual([
+      expect.objectContaining({
+        text: 'I have the high ground!',
+        clientId: chat.clientId,
+        timeserial: message2.timeserial,
+      }),
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        timeserial: message1.timeserial,
+      }),
+    ]);
+
+    // Send some more messages
+    await room.messages.send({ text: 'You underestimate my power!' });
+    await room.messages.send({ text: "Don't try it!" });
+
+    // Try and get history again
+    const historyPreSubscription2 = await room.messages.getBeforeSubscriptionStart(listener, { limit: 50 });
+
+    // It should not contain the new messages since we should be getting messages based on initial attach timeserial
+    expect(historyPreSubscription2.items).toEqual([
+      expect.objectContaining({
+        text: 'I have the high ground!',
+        clientId: chat.clientId,
+        timeserial: message2.timeserial,
+      }),
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        timeserial: message1.timeserial,
+      }),
+    ]);
+  });
+  it<TestContext>('should be able to get history for listener with latest message timeserial', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId());
+
+    const listener1 = () => {};
+    // Subscribe to messages, which will also set up the listener subscription point and attach to channel
+    await room.messages.subscribe(listener1);
+
+    // Publish some messages
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const message2 = await room.messages.send({ text: 'I have the high ground!' });
+
+    // Do a history request which should use attach timeserial
+    const historyPreSubscription1 = await room.messages.getBeforeSubscriptionStart(listener1, { limit: 50 });
+
+    // Should have no items since we are using attach timeserial
+    expect(historyPreSubscription1.items).toEqual([]);
+
+    // Setup new listener
+    const listener2 = () => {};
+    // Subscribe to messages, since we are already attached, subscription point should be set to latest message timeserial
+    await room.messages.subscribe(listener2);
+
+    // Check we see the latest messages
+    const historyPreSubscription2 = await room.messages.getBeforeSubscriptionStart(listener2, { limit: 50 });
+
+    // Should have the latest messages
+    expect(historyPreSubscription2.items).toEqual([
+      expect.objectContaining({
+        text: 'I have the high ground!',
+        clientId: chat.clientId,
+        timeserial: message2.timeserial,
+      }),
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        timeserial: message1.timeserial,
+      }),
+    ]);
+  });
+
+  it<TestContext>('should be able to get history for multiple listeners', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId());
+
+    await room.messages.send({ text: 'Hello there!' });
+    await room.messages.send({ text: 'I have the high ground!' });
+    await room.messages.send({ text: 'You underestimate my power!' });
+
+    const listener1 = () => {};
+    const listener2 = () => {};
+    const listener3 = () => {};
+    // Subscribe to messages, which will also set up the listener subscription point and attach to channel
+    await room.messages.subscribe(listener1);
+    await room.messages.subscribe(listener2);
+    await room.messages.subscribe(listener3);
+
+    // Do a history request to get the messages before up
+    const historyPreSubscription1 = await room.messages.getBeforeSubscriptionStart(listener1, { limit: 50 });
+    const historyPreSubscription2 = await room.messages.getBeforeSubscriptionStart(listener2, { limit: 50 });
+    const historyPreSubscription3 = await room.messages.getBeforeSubscriptionStart(listener3, { limit: 50 });
+
+    // Expect all listeners to have the same history
+    expect(historyPreSubscription1.items).toEqual(historyPreSubscription2.items);
+    expect(historyPreSubscription2.items).toEqual(historyPreSubscription3.items);
+  });
 });
