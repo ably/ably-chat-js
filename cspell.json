@@ -1,0 +1,24 @@
+{
+  "language": "en_US",
+  "ignorePaths": [
+    "node_modules/**",
+    "**/dist/**"
+  ],
+  "useGitignore": true,
+  "maxNumberOfProblems": 100,
+  "words": [
+    "realtime",
+    "timeserial",
+    "timeserials",
+    "inband",
+    "typers",
+    "msgpack",
+    "dequal",
+    "Unregisters",
+    "Suspendable",
+    "Failable"
+  ],
+  "ignoreRegExpList": [
+    "/.*@\\d{13}-/"
+  ]
+}

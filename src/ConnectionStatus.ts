@@ -13,7 +13,7 @@ const TRANSIENT_TIMEOUT = 5000;
  */
 export enum ConnectionLifecycle {
   /**
-   * A temporary state for when the library is first initialised.
+   * A temporary state for when the library is first initialized.
    */
   Initialized = 'initialized',
 

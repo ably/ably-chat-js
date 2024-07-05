@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../src/ChatApi.ts';
-import { normaliseClientOptions } from '../src/config.ts';
+import { normalizeClientOptions } from '../src/config.ts';
 import { DefaultRoom, Room } from '../src/Room.ts';
 import { RoomOptions, RoomOptionsDefaults } from '../src/RoomOptions.ts';
 import { DefaultTyping } from '../src/Typing.ts';
@@ -24,7 +24,7 @@ describe('Room', () => {
     const logger = makeTestLogger();
     const chatApi = new ChatApi(context.realtime, logger);
     context.getRoom = (options: RoomOptions) => {
-      return new DefaultRoom(randomRoomId(), options, context.realtime, chatApi, normaliseClientOptions({}), logger);
+      return new DefaultRoom(randomRoomId(), options, context.realtime, chatApi, normalizeClientOptions({}), logger);
     };
   });
 

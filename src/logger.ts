@@ -1,4 +1,4 @@
-import { NormalisedClientOptions } from './config.js';
+import { NormalizedClientOptions } from './config.js';
 
 /**
  * Interface for loggers.
@@ -51,7 +51,7 @@ export enum LogLevel {
   Trace = 'trace',
 
   /**
-   * Development information, messages that are useful when trying to debug library behaviour,
+   * Development information, messages that are useful when trying to debug library behavior,
    * but superfluous to normal operation.
    */
   Debug = 'debug',
@@ -62,7 +62,7 @@ export enum LogLevel {
   Info = 'info',
 
   /**
-   * Anything that is not immediately an error, but could cause unexpected behaviour in the future. For example,
+   * Anything that is not immediately an error, but could cause unexpected behavior in the future. For example,
    * passing an invalid value to an option. Indicates that some action should be taken to prevent future errors.
    */
   Warn = 'warn',
@@ -123,7 +123,7 @@ const consoleLogger = (message: string, level: LogLevel, context?: LogContext) =
   }
 };
 
-export const makeLogger = (options: NormalisedClientOptions): Logger => {
+export const makeLogger = (options: NormalizedClientOptions): Logger => {
   const logHandler = options.logHandler ?? consoleLogger;
 
   return new DefaultLogger(logHandler, options.logLevel);

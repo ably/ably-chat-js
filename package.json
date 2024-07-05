@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint . && cspell '{src,test}/**' './*.md'",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write src test __mocks__ demo/src",
     "format:check": "prettier --check src test __mocks__ demo/src",
@@ -68,10 +68,12 @@
     "typescript": "^5.5.2",
     "vite": "^5.3.2",
     "vite-plugin-dts": "^3.9.1",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "cspell": "^8.10.1"
   },
   "dependencies": {
     "async-mutex": "^0.5.0",
     "dequal": "^2.0.3"
+
   }
 }

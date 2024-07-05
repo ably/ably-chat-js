@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ChatClient } from '../src/Chat.js';
 import { ConnectionLifecycle } from '../src/ConnectionStatus.js';
 import { LogLevel } from '../src/logger.js';
-import { RealtimeWithOptions } from '../src/realtimeextensions.js';
+import { RealtimeWithOptions } from '../src/realtimeExtensions.js';
 import { newChatClient } from './helper/chat.js';
 import { testClientOptions } from './helper/options.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';

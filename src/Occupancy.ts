@@ -12,7 +12,7 @@ import {
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
-import { addListenerToChannelWithoutAttach } from './realtimeextensions.js';
+import { addListenerToChannelWithoutAttach } from './realtimeExtensions.js';
 import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -64,7 +64,7 @@ export interface OccupancyEvent {
 }
 
 /**
- * A response object that allows you to control an occupany update subscription.
+ * A response object that allows you to control an occupancy update subscription.
  */
 export interface OccupancySubscriptionResponse {
   /**

@@ -12,7 +12,7 @@ interface TestContext {
 }
 
 enum AblyConnectionState {
-  Initialised = 'initialized',
+  Initialized = 'initialized',
   Connected = 'connected',
   Disconnected = 'disconnected',
   Suspended = 'suspended',
@@ -112,7 +112,7 @@ describe('connection', () => {
     }));
 
   describe.each([
-    [ConnectionLifecycle.Connecting, AblyConnectionState.Initialised, AblyConnectionState.Connecting, undefined],
+    [ConnectionLifecycle.Connecting, AblyConnectionState.Initialized, AblyConnectionState.Connecting, undefined],
     [ConnectionLifecycle.Connected, AblyConnectionState.Connecting, AblyConnectionState.Connected, undefined],
     [ConnectionLifecycle.Connected, AblyConnectionState.Disconnected, AblyConnectionState.Connected, undefined],
     [ConnectionLifecycle.Connected, AblyConnectionState.Suspended, AblyConnectionState.Connected, undefined],

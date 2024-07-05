@@ -12,7 +12,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
-import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
+import { addListenerToChannelPresenceWithoutAttach } from './realtimeExtensions.js';
 import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { RoomOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';

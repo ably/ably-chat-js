@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normaliseClientOptions } from '../src/config.js';
+import { normalizeClientOptions } from '../src/config.js';
 import { LogContext, Logger, LogLevel, makeLogger } from '../src/logger.js';
 
 const defaultLogContext = { contextKey: 'contextValue' };
@@ -27,7 +27,7 @@ describe('logger', () => {
     `logs %s when configured level %s`,
     (logLevel: LogLevel, configuredLevel: LogLevel, logContext?: LogContext) =>
       new Promise((done, reject) => {
-        const options = normaliseClientOptions({
+        const options = normalizeClientOptions({
           logLevel: configuredLevel,
           logHandler: (message: string, level: LogLevel, context?: LogContext) => {
             expect(message).toBe('test');
@@ -63,7 +63,7 @@ describe('logger', () => {
     'does not log below the log level',
     (configuredLevel: LogLevel, logLevel: LogLevel) =>
       new Promise((done, reject) => {
-        const options = normaliseClientOptions({
+        const options = normalizeClientOptions({
           logLevel: configuredLevel,
           logHandler: () => {
             reject(new Error('Expected logHandler to not be called'));

@@ -5,7 +5,7 @@ import { PresenceEvents } from '../src/events.ts';
 import {
   addListenerToChannelPresenceWithoutAttach,
   addListenerToChannelWithoutAttach,
-} from '../src/realtimeextensions.ts';
+} from '../src/realtimeExtensions.ts';
 import { randomRoomId } from './helper/identifier.ts';
 import { ablyRealtimeClient } from './helper/realtimeClient.ts';
 
@@ -79,7 +79,7 @@ describe('realtime extensions', () => {
     new Promise<void>((done) => {
       const { channel } = context;
       const listener = (message: Ably.PresenceMessage) => {
-        expect(message.data).toEqual('foodata');
+        expect(message.data).toEqual('foo-data');
         done();
       };
 
@@ -97,7 +97,7 @@ describe('realtime extensions', () => {
       void otherRealtime.channels
         .get(channel.name)
         .attach()
-        .then(() => void channel.presence.enter('foodata'));
+        .then(() => void channel.presence.enter('foo-data'));
 
       // Attach our channel
       void channel.attach();
@@ -147,7 +147,7 @@ describe('realtime extensions', () => {
         void otherRealtime.channels
           .get(channel.name)
           .attach()
-          .then(() => void channel.presence.enter('foodata'));
+          .then(() => void channel.presence.enter('foo-data'));
 
         // Attach our channel
         void channel.attach();

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../src/Chat.ts';
 import { Reaction } from '../src/Reaction.ts';
-import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
+import { RealtimeChannelWithOptions } from '../src/realtimeExtensions.ts';
 import { RoomLifecycle } from '../src/RoomStatus.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 import { newChatClient } from './helper/chat.ts';

@@ -51,7 +51,7 @@ interface DiscontinuityEventMap {
 }
 
 /**
- * An event emitter specialisation for discontinuity events.
+ * An event emitter specialization for discontinuity events.
  */
 export type DiscontinuityEmitter = EventEmitter<DiscontinuityEventMap>;
 

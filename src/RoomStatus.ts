@@ -8,7 +8,7 @@ import EventEmitter from './utils/EventEmitter.js';
  */
 export enum RoomLifecycle {
   /**
-   * A temporary state for when the library is first initialised.
+   * A temporary state for when the library is first initialized.
    */
   Initialized = 'initialized',
 
@@ -43,7 +43,7 @@ export enum RoomLifecycle {
   Failed = 'failed',
 
   /**
-   * The room is in the process of releasing. Attempting to use a room in this state may result in undefined behaviour.
+   * The room is in the process of releasing. Attempting to use a room in this state may result in undefined behavior.
    */
   Releasing = 'releasing',
 

@@ -48,7 +48,7 @@ export class ChatApi {
   }
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
-    return this._makeAuthorisedPaginatedRequest<Message, GetMessagesQueryParams>(
+    return this._makeAuthorizedPaginatedRequest<Message, GetMessagesQueryParams>(
       `/chat/v1/rooms/${roomId}/messages`,
       params,
     ).then((data) => {
@@ -82,7 +82,7 @@ export class ChatApi {
       body.headers = params.headers;
     }
 
-    return this._makeAuthorisedRequest<CreateMessageResponse, CreateMessageRequest>(
+    return this._makeAuthorizedRequest<CreateMessageResponse, CreateMessageRequest>(
       `/chat/v1/rooms/${roomId}/messages`,
       'POST',
       body,
@@ -90,17 +90,17 @@ export class ChatApi {
   }
 
   async getOccupancy(roomId: string): Promise<OccupancyEvent> {
-    return this._makeAuthorisedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
+    return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
   }
 
-  private async _makeAuthorisedRequest<RES, REQ = undefined>(
+  private async _makeAuthorizedRequest<RES, REQ = undefined>(
     url: string,
     method: 'POST' | 'GET' | ' PUT' | 'DELETE' | 'PATCH',
     body?: REQ,
   ): Promise<RES> {
     const response = await this._realtime.request<RES>(method, url, 1.1, {}, body);
     if (!response.success) {
-      this._logger.error('ChatApi._makeAuthorisedRequest(); failed to make request', {
+      this._logger.error('ChatApi._makeAuthorizedRequest(); failed to make request', {
         url,
         statusCode: response.statusCode,
         errorCode: response.errorCode,
@@ -112,14 +112,14 @@ export class ChatApi {
     return response.items[0] as RES;
   }
 
-  private async _makeAuthorisedPaginatedRequest<RES, REQ = undefined>(
+  private async _makeAuthorizedPaginatedRequest<RES, REQ = undefined>(
     url: string,
     params?: unknown,
     body?: REQ,
   ): Promise<PaginatedResult<RES>> {
     const response = await this._realtime.request('GET', url, 1.1, params, body);
     if (!response.success) {
-      this._logger.error('ChatApi._makeAuthorisedPaginatedRequest(); failed to make request', {
+      this._logger.error('ChatApi._makeAuthorizedPaginatedRequest(); failed to make request', {
         url,
         statusCode: response.statusCode,
         errorCode: response.errorCode,

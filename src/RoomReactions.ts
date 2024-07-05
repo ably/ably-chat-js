@@ -13,7 +13,7 @@ import { ErrorCodes } from './errors.js';
 import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultReaction, Reaction, ReactionHeaders, ReactionMetadata } from './Reaction.js';
-import { addListenerToChannelWithoutAttach } from './realtimeextensions.js';
+import { addListenerToChannelWithoutAttach } from './realtimeExtensions.js';
 import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 

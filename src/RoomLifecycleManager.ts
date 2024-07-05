@@ -41,7 +41,7 @@ enum LifecycleOperationPrecedence {
 /**
  * A map of contributors to pending discontinuity events.
  */
-type DiscontinutyEventMap = Map<ContributesToRoomLifecycle, Ably.ErrorInfo | undefined>;
+type DiscontinuityEventMap = Map<ContributesToRoomLifecycle, Ably.ErrorInfo | undefined>;
 
 /**
  * An internal interface that represents the result of a room attachment operation.
@@ -95,7 +95,7 @@ export class RoomLifecycleManager {
    * When a discontinuity happens due to a failed resume, we don't want to surface that until the room is consistently
    * attached again. This map allows us to queue up discontinuity events until we're ready to process them.
    */
-  private _pendingDiscontinuityEvents: DiscontinutyEventMap = new Map();
+  private _pendingDiscontinuityEvents: DiscontinuityEventMap = new Map();
 
   /**
    * A map of contributors to whether their first attach has completed.
@@ -112,18 +112,18 @@ export class RoomLifecycleManager {
   /**
    * Constructs a new `RoomLifecycleManager` instance.
    * @param status The status to update.
-   * @param contributers The features that contribute to the room status.
+   * @param contributors The features that contribute to the room status.
    * @param logger The logger to use.
    * @param transientDetachTimeout The number of milliseconds to consider a detach to be "transient"
    */
   constructor(
     status: DefaultStatus,
-    contributers: ContributesToRoomLifecycle[],
+    contributors: ContributesToRoomLifecycle[],
     logger: Logger,
     transientDetachTimeout: number,
   ) {
     this._logger = logger;
-    this._contributors = contributers;
+    this._contributors = contributors;
     this._transientDetachTimeouts = new Map();
     this._status = status;
 
@@ -172,7 +172,7 @@ export class RoomLifecycleManager {
           }
 
           this._logger.debug(
-            'RoomLifecycleManager(); queing pending update event for feature as operation in progress',
+            'RoomLifecycleManager(); queuing pending update event for feature as operation in progress',
             {
               channel: contributor.channel.name,
               change,
@@ -588,7 +588,7 @@ export class RoomLifecycleManager {
       }
     }
 
-    // We succesfully attached all the channels - set our status to attached, start listening changes in channel status
+    // We successfully attached all the channels - set our status to attached, start listening changes in channel status
     this._status.setStatus(attachResult);
     this._operationInProgress = false;
     this._pendingDiscontinuityEvents.forEach(
@@ -796,7 +796,7 @@ export class RoomLifecycleManager {
         return Promise.resolve();
       }
 
-      // If we're already detached, then we can transitiont to released immediately
+      // If we're already detached, then we can transition to released immediately
       if (this._status.current === RoomLifecycle.Detached) {
         this._status.setStatus({ status: RoomLifecycle.Released });
         return Promise.resolve();
@@ -815,7 +815,7 @@ export class RoomLifecycleManager {
             reject(
               new Ably.ErrorInfo(
                 'failed to release room; existing attempt failed',
-                ErrorCodes.PreviousOperationfailed,
+                ErrorCodes.PreviousOperationFailed,
                 500,
                 change.error,
               ),
