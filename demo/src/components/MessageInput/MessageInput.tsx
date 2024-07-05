@@ -23,7 +23,11 @@ export const MessageInput: FC<MessageInputProps> = ({
 }) => {
   const handleValueChange: ChangeEventHandler<HTMLInputElement> = ({ target }) => {
     onValueChange(target.value);
-    onStartTyping();
+    if (target.value && target.value.length > 0) {
+      onStartTyping();
+    } else {
+      onStopTyping();
+    }
   };
 
   const handleFormSubmit: FormEventHandler<HTMLFormElement> = (event) => {
