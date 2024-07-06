@@ -1,6 +1,6 @@
 {
-  "include": ["./src/**/*.ts"],
-  "exclude": ["./test/**/*.test.tsx", "./test/**/*.test.ts"],
+  "include": ["./test/**/*.test.tsx", "./test/**/*.test.ts"],
+  "exclude": ["./src/**/*.ts"],
   "compilerOptions": {
     "rootDir": "./src",
     "target": "es6",

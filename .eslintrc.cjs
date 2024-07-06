@@ -8,7 +8,7 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.test.json']
+    project: ['./tsconfig.json', './tsconfig.test.json', './src/react/tsconfig.json', './src/react/tsconfig.test.json'],
   },
   plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import', 'simple-import-sort'],
   extends: [
@@ -89,9 +89,20 @@ module.exports = {
       files: ['test/**/*.{ts,tsx}'],
       rules: {
         '@typescript-eslint/unbound-method': 'off',
-        '@typescript-eslint/no-empty-function': 'off'
-      }
-    }
+        '@typescript-eslint/no-empty-function': 'off',
+      },
+    },
+    // For everything React, use additional rules and plugins
+    {
+      files: ['src/react/**/*.{ts,tsx}'],
+      extends: ['plugin:react/recommended', 'plugin:react-hooks/recommended'],
+      plugins: ['react', 'react-hooks'],
+      settings: {
+        react: {
+          version: 'detect',
+        },
+      },
+    },
   ],
   ignorePatterns: [
     '.eslintrc.cjs',
@@ -104,6 +115,7 @@ module.exports = {
     'scripts/cdn_deploy.js',
     'vitest.config.ts',
     'vite.config.ts',
+    'vitest.workspace.ts',
     'test/helper/testSetup.ts',
     '__mocks__'
   ],

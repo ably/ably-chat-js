@@ -12,7 +12,7 @@ const TestComponent = () => {
     <div>
       <button onClick={counter.increment}>Increment</button>
       <button onClick={counter.decrement}>Decrement</button>
-      <p>{'Count :' + counter.count}</p>
+      <p>{'Count :' + counter.count.toString()}</p>
     </div>
   );
 };
