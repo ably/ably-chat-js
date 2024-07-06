@@ -28,13 +28,13 @@ export const useMessages = () => {
     const handleAdd: MessageListener = ({ message }) => {
       setMessages((prevMessage) => [...prevMessage, message]);
     };
-    const { unsubscribe } = room.messages.subscribe(handleAdd);
+    const { unsubscribe, getPreviousMessages } = room.messages.subscribe(handleAdd);
 
     setMessages([]);
 
     const mounted = true;
     const initMessages = async () => {
-      const lastMessages = await room.messages.get({ limit: 100 });
+      const lastMessages = await getPreviousMessages({ limit: 100 });
       if (mounted) {
         setMessages((prevMessages) => combineMessages(prevMessages, lastMessages.items).reverse());
         setLoading(false);
