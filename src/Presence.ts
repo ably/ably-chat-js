@@ -197,9 +197,10 @@ export class DefaultPresence
 
   /**
    * Constructor for Presence
-   * @param channel - Internal class that wraps a Realtime channel and ensures that when all subscriptions
-   * (messages and presence) are removed, the channel is implicitly detached.
-   * @param {string} clientId - The client ID, attached to presences messages as an identifier of the sender.
+   * @param roomId - The room ID.
+   * @param roomOptions - The room options.
+   * @param realtime - The Ably Realtime instance.
+   * @param clientId - The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    * @param logger - The logger instance.
    */
