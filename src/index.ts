@@ -53,10 +53,10 @@ export type {
 export type { Rooms } from './Rooms.js';
 export type {
   OnRoomStatusChangeResponse,
+  RoomLifecycle,
   RoomStatus,
   RoomStatusChange,
   RoomStatusListener,
-  Status,
 } from './RoomStatus.js';
 export type { Typing, TypingEvent, TypingListener, TypingSubscriptionResponse } from './Typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';

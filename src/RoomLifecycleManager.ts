@@ -383,7 +383,7 @@ export class RoomLifecycleManager {
         if (result.status === RoomLifecycle.Suspended) {
           const failedFeature = result.failedFeature;
           if (!failedFeature) {
-            throw new Ably.ErrorInfo('no failed feature', 50000, 500);
+            throw new Ably.ErrorInfo('no failed feature in doRetry', ErrorCodes.RoomLifecycleError, 500);
           }
 
           this._logger.debug('RoomLifecycleManager.doAttachWithRetry(); feature suspended, retrying attach', {
@@ -437,7 +437,7 @@ export class RoomLifecycleManager {
         if (change.current === RoomLifecycle.Failed) {
           contributor.channel.off(listener);
           this._status.setStatus({ status: RoomLifecycle.Failed, error: change.reason });
-          throw change.reason ?? new Ably.ErrorInfo('Unknown error', 50000, 500);
+          throw change.reason ?? new Ably.ErrorInfo('unknown error in doRetry', ErrorCodes.RoomLifecycleError, 500);
         }
       };
       contributor.channel.on(listener);
@@ -502,7 +502,7 @@ export class RoomLifecycleManager {
             LifecycleOperationPrecedence.Internal,
           );
 
-          throw result.error ?? new Ably.ErrorInfo('unknown error', 50000, 500);
+          throw result.error ?? new Ably.ErrorInfo('unknown error in attach', ErrorCodes.RoomLifecycleError, 500);
         }
 
         // If we're in suspended, then this attach should fail, but we'll retry after a short delay async
@@ -513,12 +513,14 @@ export class RoomLifecycleManager {
           });
           const failedFeature = result.failedFeature;
           if (!failedFeature) {
-            throw new Ably.ErrorInfo('no failed feature', 50000, 500);
+            throw new Ably.ErrorInfo('no failed feature in attach', ErrorCodes.RoomLifecycleError, 500);
           }
 
           void this._mtx.runExclusive(() => this.doRetry(failedFeature).catch(), LifecycleOperationPrecedence.Internal);
 
-          throw result.error ?? new Ably.ErrorInfo('unknown error', 50000, 500);
+          throw (
+            result.error ?? new Ably.ErrorInfo('unknown error in attach then block', ErrorCodes.RoomLifecycleError, 500)
+          );
         }
 
         // We attached, huzzah!
@@ -565,7 +567,11 @@ export class RoomLifecycleManager {
             break;
           default:
             this._logger.error(`Unexpected channel state ${feature.channel.state}`);
-            throw new Ably.ErrorInfo(`unexpected channel state ${feature.channel.state}`, 50000, 500);
+            throw new Ably.ErrorInfo(
+              `unexpected channel state in doAttach ${feature.channel.state}`,
+              ErrorCodes.RoomLifecycleError,
+              500,
+            );
         }
 
         // Regardless of whether we're suspended or failed, run-down the other channels
@@ -766,7 +772,7 @@ export class RoomLifecycleManager {
     }
 
     // If we're in the failed state, then we need to throw the error
-    throw detachError ?? new Ably.ErrorInfo('unknown error', 50000, 500);
+    throw detachError ?? new Ably.ErrorInfo('unknown error in doDetach', ErrorCodes.RoomLifecycleError, 500);
   }
 
   /**
@@ -801,7 +807,14 @@ export class RoomLifecycleManager {
             }
 
             this._logger.error('RoomLifecycleManager.release(); expected a non-attached state', change);
-            reject(new Ably.ErrorInfo('failed to release room; existing attempt failed', 50000, 500, change.error));
+            reject(
+              new Ably.ErrorInfo(
+                'failed to release room; existing attempt failed',
+                ErrorCodes.PreviousOperationfailed,
+                500,
+                change.error,
+              ),
+            );
           });
         });
       }
