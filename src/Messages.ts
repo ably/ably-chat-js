@@ -171,7 +171,7 @@ export interface Messages extends EmitsDiscontinuities {
   subscribe(listener: MessageListener): MessageSubscriptionResponse;
 
   /**
-   * Unsubscribe all listeners to new messages in from chat room.
+   * Unsubscribe all listeners from new messages in from chat room.
    */
   unsubscribeAll(): void;
 
