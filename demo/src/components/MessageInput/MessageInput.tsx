@@ -1,5 +1,5 @@
 import { FC, ChangeEventHandler, FormEventHandler } from 'react';
-import {useCounter} from '@ably-labs/chat/react';
+import { useCounter } from '@ably-labs/chat/react';
 
 interface MessageInputProps {
   disabled: boolean;
@@ -22,7 +22,7 @@ export const MessageInput: FC<MessageInputProps> = ({
   onStartTyping,
   onStopTyping,
 }) => {
-  const {increment} = useCounter();
+  const { increment } = useCounter();
   const handleValueChange: ChangeEventHandler<HTMLInputElement> = ({ target }) => {
     onValueChange(target.value);
     if (target.value && target.value.length > 0) {
