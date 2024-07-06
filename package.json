@@ -3,14 +3,19 @@
   "version": "0.0.1",
   "description": "The Ably Chat SDK offers a seamless and customizable API designed to facilitate diverse in-app conversations scenarios, encompassing live comments, in-app chat functionalities, and the management of real-time updates and user interactions",
   "type": "module",
-  "main": "dist/ably-chat.umd.cjs",
-  "browser": "dist/ably-chat.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/chat/ably-chat.umd.cjs",
+  "browser": "dist/chat/ably-chat.js",
+  "types": "dist/chat/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/ably-chat.js",
-      "require": "./dist/ably-chat.umd.cjs"
+      "types": "./dist/chat/index.d.ts",
+      "import": "./dist/chat/ably-chat.js",
+      "require": "./dist/chat/ably-chat.umd.cjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/ably-chat-react.js",
+      "require": "./dist/react/ably-chat-react.umd.cjs"
     }
   },
   "scripts": {
@@ -19,8 +24,12 @@
     "format": "prettier --write src test __mocks__ demo/src",
     "format:check": "prettier --check src test __mocks__ demo/src",
     "test": "vitest run",
+    "test:chat": "vitest run --project chat",
+    "test:react": "vitest run --project react-hooks",
     "test:watch": "vitest watch",
-    "build": "vite build",
+    "build": "npm run build:chat && npm run build:react",
+    "build:chat": "vite build",
+    "build:react": "vite build --config ./src/react/vite.config.ts --emptyOutDir",
     "prepare": "npm run build",
     "test:typescript": "tsc --project tsconfig.test.json",
     "demo:reload": "npm run build && cd demo && npm i file:../",
@@ -33,7 +42,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ably-labs/conversations.git"
+    "url": "git+https://github.com/ably-labs/ably-chat-js.git"
   },
   "keywords": [
     "chat",
@@ -51,19 +60,26 @@
     "ably": "^2.2.1"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.0.0",
     "@types/jsonwebtoken": "^9.0.6",
+    "@types/react": "^18.3.3",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.14.1",
+    "@vitejs/plugin-react": "^4.3.1",
     "dequal": "^2.0.3",
     "eslint": "^8.57.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsdoc": "^48.5.0",
+    "eslint-plugin-react": "^7.34.3",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
     "eslint-plugin-security": "^3.0.1",
     "eslint-plugin-simple-import-sort": "^12.1.0",
+    "jsdom": "^24.1.0",
     "jsonwebtoken": "^9.0.2",
     "prettier": "^3.3.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "typedoc": "^0.26.3",
     "typedoc-plugin-no-inherit": "^1.4.0",
     "typescript": "^5.5.2",

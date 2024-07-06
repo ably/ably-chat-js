@@ -6,7 +6,9 @@
     "./src/utils/**/*.ts",
     "./test/**/*.test.tsx",
     "./test/**/*.test.ts",
-    "./src/fakes/**/*.ts"
+    "./src/fakes/**/*.ts",
+    "./src/react/**/*.ts",
+    "./src/react/**/*.tsx",
   ],
   "compilerOptions": {
     "rootDir": "./src",

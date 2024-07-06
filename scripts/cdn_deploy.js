@@ -21,7 +21,7 @@ async function run() {
     // Comma separated directories (relative to `path`) to exclude from upload
     excludeDirs: 'node_modules,.git',
     // Regex to match files against for upload
-    fileRegex: '^ably-chat?\\.(umd\\.c)?js$',
+    fileRegex: '^(ably-chat(-react)?)?\\.(umd\\.c)?js$',
     ...argv,
   };
 
