@@ -71,6 +71,13 @@ export interface Room {
   /**
    * Attaches to the room to receive events in realtime.
    *
+   * If a room fails to attach, it will enter either the {@link RoomLifecycle.Suspended} or {@link RoomLifecycle.Failed} state.
+   *
+   * If the room enters the failed state, then it will not automatically retry attaching and intervention is required.
+   *
+   * If the room enters the suspended state, then the call to attach will reject with the {@link ErrorInfo} that caused the suspension. However,
+   * the room will automatically retry attaching after a delay.
+   *
    * @returns A promise that resolves when the room is attached.
    */
   attach(): Promise<void>;
