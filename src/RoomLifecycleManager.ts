@@ -35,8 +35,7 @@ export interface ContributesToRoomLifecycle extends HandlesDiscontinuity {
 enum LifecycleOperationPrecedence {
   Internal = 0,
   Release = 1,
-  Detach = 2,
-  Attach = 3,
+  AttachOrDetach = 2,
 }
 
 /**
@@ -526,7 +525,7 @@ export class RoomLifecycleManager {
 
         // We attached, huzzah!
       });
-    }, LifecycleOperationPrecedence.Attach);
+    }, LifecycleOperationPrecedence.AttachOrDetach);
   }
 
   private async doAttach(): Promise<RoomAttachmentResult> {
@@ -723,7 +722,7 @@ export class RoomLifecycleManager {
       // We now perform an all-channel wind down.
       // We keep trying until we reach a suitable conclusion.
       return this.doDetach();
-    }, LifecycleOperationPrecedence.Detach);
+    }, LifecycleOperationPrecedence.AttachOrDetach);
   }
 
   /**
