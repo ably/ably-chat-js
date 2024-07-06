@@ -369,6 +369,7 @@ export class RoomLifecycleManager {
         this._logger.debug('RoomLifecycleManager.doAttachWithRetry(); attach result', {
           status: result.status,
           error: result.error,
+          failedFeature: result.failedFeature?.channel.name,
         });
         // If we're in failed, then we should wind down all the channels, eventually - but we're done here
         if (result.status === RoomLifecycle.Failed) {
