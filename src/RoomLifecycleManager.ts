@@ -183,7 +183,7 @@ export class RoomLifecycleManager {
           return;
         }
 
-        // If we're notignoring contirbutor detachments, we should process the event
+        // If we're not ignoring contirbutor detachments, we should process the event
         this._logger.debug('RoomLifecycleManager(); update event received', {
           channel: contributor.channel.name,
           change,
