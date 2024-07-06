@@ -37,6 +37,9 @@ describe('Rooms', () => {
     const chat = newChatClient();
     const room = chat.rooms.get('test', { typing: { timeoutMs: 1000 } });
 
+    // Make sure our room is attached
+    await room.attach();
+
     const channelFailable = room.messages.channel as Ably.RealtimeChannel & {
       notifyState(state: 'failed'): void;
     };

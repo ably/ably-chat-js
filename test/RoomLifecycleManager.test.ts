@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, test, vi } from 'vitest';
 
 import { ErrorCodes } from '../src/errors.ts';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from '../src/RoomLifecycleManager.ts';
@@ -128,21 +128,37 @@ const mockChannelDetachFailure = (
   });
 };
 
-const mockChannelDetachFailureThenSuccess = (channel: Ably.RealtimeChannel, sequenceNumber: number): void => {
-  vi.spyOn(channel, 'detach')
-    .mockImplementationOnce(() => {
+const mockChannelDetachFailureSucceedAfter = (
+  channel: Ably.RealtimeChannel,
+  status: AblyChannelState,
+  sequenceNumber: number,
+  succeedAfter: number,
+): MockInstance => {
+  // For some reason, typescript can't tell that attempts is being used
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let attempts = 0;
+  const spy = vi.spyOn(channel, 'detach');
+
+  // Mock a number of failures before we succeed
+  for (let i = 0; i < succeedAfter; i++) {
+    spy.mockImplementationOnce(async () => {
+      attempts++;
       const error = new Ably.ErrorInfo('error', sequenceNumber, 500);
-      vi.spyOn(channel, 'state', 'get').mockReturnValue(AblyChannelState.Attached);
+      vi.spyOn(channel, 'state', 'get').mockReturnValue(status);
       vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(error);
-
       return Promise.reject(error);
-    })
-    .mockImplementationOnce(() => {
-      vi.spyOn(channel, 'state', 'get').mockReturnValue(AblyChannelState.Detached);
-      vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(baseError);
-
-      return Promise.resolve();
     });
+  }
+
+  // Mock the success
+  spy.mockImplementationOnce(async () => {
+    attempts++;
+    vi.spyOn(channel, 'state', 'get').mockReturnValue(AblyChannelState.Detached);
+    vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(baseError);
+    return Promise.resolve();
+  });
+
+  return spy;
 };
 
 const makeMockContributor = (
@@ -390,7 +406,7 @@ describe('room lifecycle manager', () => {
       await attachResult;
     });
 
-    it<TestContext>('rolls back channel attachments on channel suspending', async (context) => {
+    it<TestContext>('rolls back channel attachments on channel suspending and retries', async (context) => {
       // Force our status and contributors into attached
       const status = new DefaultStatus(makeTestLogger());
       context.firstContributor.emulateStateChange({
@@ -437,16 +453,39 @@ describe('room lifecycle manager', () => {
       });
 
       // We should be in the detached state because the second channel failed to attach
-      await waitForRoomStatus(status, RoomLifecycle.Detached);
+      await waitForRoomStatus(status, RoomLifecycle.Suspended);
 
       // The third channel should not have been called as the second channel failed to attach
       expect(context.firstContributor.channel.attach).toHaveBeenCalled();
       expect(context.secondContributor.channel.attach).toHaveBeenCalled();
       expect(context.thirdContributor.channel.attach).not.toHaveBeenCalled();
 
-      // We expect both first and second channels to have had detach called
+      // We expect the first channels detach to have been called
       expect(context.firstContributor.channel.detach).toHaveBeenCalled();
-      expect(context.secondContributor.channel.detach).toHaveBeenCalled();
+
+      // Retry is expecting the second contributor to become attached, so we mock that - but lets make the third fail
+      mockChannelAttachFailure(context.thirdContributor.channel, AblyChannelState.Suspended, 1002);
+      mockChannelAttachSuccess(context.secondContributor.channel);
+
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+      });
+
+      // We should be back in suspended
+      await waitForRoomStatus(status, RoomLifecycle.Suspended);
+
+      // Now let the third channel succeed
+      mockChannelAttachSuccess(context.thirdContributor.channel);
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+      });
+
+      // Now we wait for ourselves to enter the attached state
+      await waitForRoomStatus(status, RoomLifecycle.Attached);
     });
 
     it<TestContext>('rolls back channel attachments on channel failure', async (context) => {
@@ -495,7 +534,7 @@ describe('room lifecycle manager', () => {
         },
       });
 
-      // We should be in the detached state because the second channel failed to attach
+      // We should be in the failed state because the second channel failed to attach
       await waitForRoomStatus(status, RoomLifecycle.Failed);
 
       // All channels should have been called
@@ -506,6 +545,76 @@ describe('room lifecycle manager', () => {
       // We expect both first and second channels to have had detach called
       expect(context.firstContributor.channel.detach).toHaveBeenCalled();
       expect(context.secondContributor.channel.detach).toHaveBeenCalled();
+    });
+
+    it<TestContext>('rolls back until everything completes', async (context) => {
+      // Force our status and contributors into attached
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Initialized,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Initialized,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Initialized,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+
+      // Mock channel attachment results
+      mockChannelAttachSuccess(context.firstContributor.channel);
+      mockChannelAttachSuccess(context.secondContributor.channel);
+      mockChannelAttachFailure(context.thirdContributor.channel, AblyChannelState.Failed, 1003);
+
+      // As the third channel will enter suspened, we expect a call to detach on the first channel and the second
+      // But lets have the second detach fail
+      mockChannelDetachSuccess(context.firstContributor.channel);
+      const contributor2DetachSpy = mockChannelDetachFailureSucceedAfter(
+        context.secondContributor.channel,
+        AblyChannelState.Attached,
+        1004,
+        5,
+      );
+      mockChannelDetachSuccess(context.thirdContributor.channel);
+
+      const monitor = new RoomLifecycleManager(
+        status,
+        [context.firstContributor, context.secondContributor, context.thirdContributor],
+        makeTestLogger(),
+        5,
+      );
+
+      // Attach result should reject
+      await expect(monitor.attach()).rejects.toBeErrorInfo({
+        code: ErrorCodes.OccupancyAttachmentFailed,
+        cause: {
+          code: 1003,
+        },
+      });
+
+      // We should be in the failed state
+      await waitForRoomStatus(status, RoomLifecycle.Failed);
+
+      // Wait until we've had a couple of attempts to detach the second channel
+      await vi.waitUntil(() => contributor2DetachSpy.mock.calls.length > 5, { timeout: 5000, interval: 50 });
+
+      // We should still be in the failed state
+      await waitForRoomStatus(status, RoomLifecycle.Failed);
+
+      // But the function calls should be correct
+      expect(context.firstContributor.channel.attach).toHaveBeenCalled();
+      expect(context.secondContributor.channel.attach).toHaveBeenCalled();
+      expect(context.thirdContributor.channel.attach).toHaveBeenCalled();
+      expect(context.firstContributor.channel.detach).toHaveBeenCalled();
+      expect(context.thirdContributor.channel.detach).not.toHaveBeenCalled();
     });
 
     it<TestContext>('sets status to failed if rollback fails', async (context) => {
@@ -533,7 +642,7 @@ describe('room lifecycle manager', () => {
       // Mock channel attachment results
       mockChannelAttachSuccess(context.firstContributor.channel);
       mockChannelAttachSuccess(context.secondContributor.channel);
-      mockChannelAttachFailure(context.thirdContributor.channel, AblyChannelState.Detached, 1003);
+      mockChannelAttachFailure(context.thirdContributor.channel, AblyChannelState.Suspended, 1003);
 
       // As the third channel will enter failed, we expect a call to detach on the first channel and the second
       mockChannelDetachSuccess(context.firstContributor.channel);
@@ -910,6 +1019,60 @@ describe('room lifecycle manager', () => {
       expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
     });
 
+    it<TestContext>('keeps detaching until everything completes', async (context) => {
+      // Force our status and contributors into attached
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+
+      // Mock channel detachment results
+      mockChannelDetachSuccess(context.firstContributor.channel);
+      const secondContributorSpy = mockChannelDetachFailureSucceedAfter(
+        context.secondContributor.channel,
+        AblyChannelState.Attached,
+        1004,
+        5,
+      );
+      mockChannelDetachSuccess(context.thirdContributor.channel);
+
+      const monitor = new RoomLifecycleManager(
+        status,
+        [context.firstContributor, context.secondContributor, context.thirdContributor],
+        makeTestLogger(),
+        5,
+      );
+
+      await expect(monitor.detach()).resolves.toBeUndefined();
+
+      // We should be in the detached state
+      await waitForRoomStatus(status, RoomLifecycle.Detached);
+
+      // Wait for our second channel to have had a few attempts to detach
+      await vi.waitUntil(() => secondContributorSpy.mock.calls.length > 5, { timeout: 5000, interval: 50 });
+
+      // The channel detach methods should have been called
+      expect(context.firstContributor.channel.detach).toHaveBeenCalled();
+      // 5 + the final success
+      expect(context.secondContributor.channel.detach).toHaveBeenCalledTimes(6);
+      expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
+    });
+
     it<TestContext>('ignores channel status changes during the detach cycle', async (context) => {
       vi.useFakeTimers();
 
@@ -1130,7 +1293,8 @@ describe('room lifecycle manager', () => {
       expect(status.current).toEqual(RoomLifecycle.Attached);
     });
 
-    test<TestContext>('transitions to detached when transient detach times out', async (context) => {
+    // Transient detach is where the channel goes back to attaching as a result of a DETACHED protocol message
+    test<TestContext>('transitions to attaching when transient detach times out', async (context) => {
       // Force our status and contributors into attached
       const status = new DefaultStatus(makeTestLogger());
       context.firstContributor.emulateStateChange({
@@ -1157,63 +1321,21 @@ describe('room lifecycle manager', () => {
 
       // Transition the contributor to detached
       context.firstContributor.emulateStateChange({
-        current: AblyChannelState.Detached,
+        current: AblyChannelState.Attaching,
         previous: 'initialized',
         resumed: false,
         reason: baseError,
       });
 
-      // Check that the status is as expected
-      await waitForRoomStatus(status, RoomLifecycle.Attached);
+      // We should still be in the attached state
+      expect(status.current).toEqual(RoomLifecycle.Attached);
 
       // Expire any fake timers
       vi.advanceTimersToNextTimer();
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomLifecycle.Detached);
-      expect(status.error).toEqual(baseError);
-    });
-
-    test<TestContext>('transitions to attaching with original error if transient detach times out', async (context) => {
-      // Force our status and contributors into attached
-      const status = new DefaultStatus(makeTestLogger());
-      context.firstContributor.emulateStateChange({
-        current: AblyChannelState.Attached,
-        previous: 'initialized',
-        resumed: false,
-        reason: baseError,
-      });
-      status.setStatus({ status: RoomLifecycle.Attached });
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
-
-      // Transition the contributor to detached
-      const detachedError = new Ably.ErrorInfo('detached', 500, 50000);
-      context.firstContributor.emulateStateChange({
-        current: AblyChannelState.Detached,
-        previous: 'initialized',
-        resumed: false,
-        reason: detachedError,
-      });
-
-      // Check that the status is as expected
-      expect(status.current).toEqual(RoomLifecycle.Attached);
-
-      // Now send it into attaching again
-      context.firstContributor.emulateStateChange({
-        current: AblyChannelState.Attaching,
-        previous: 'detached',
-        resumed: false,
-        reason: baseError,
-      });
-
-      // Expire any fake timers
-      void vi.advanceTimersToNextTimerAsync();
-
-      // Check that the status is as expected
       await waitForRoomStatus(status, RoomLifecycle.Attaching);
-      expect(status.error).toEqual(detachedError);
+      expect(status.error).toEqual(baseError);
     });
   });
 
@@ -1360,7 +1482,7 @@ describe('room lifecycle manager', () => {
       expect(context.thirdContributor.channel.attach).toHaveBeenCalled();
     });
 
-    it<TestContext>('recovers from an extended period of detachment', async (context) => {
+    it<TestContext>('recovers from a re-attachment cycle without detaching channels', async (context) => {
       // Force our status and contributors into attached
       const status = new DefaultStatus(makeTestLogger());
       context.firstContributor.emulateStateChange({
@@ -1401,16 +1523,16 @@ describe('room lifecycle manager', () => {
       mockChannelAttachSuccess(context.secondContributor.channel);
       mockChannelAttachSuccess(context.thirdContributor.channel);
 
-      // Transition the first contributor to detached
+      // Transition the first contributor to attaching
       context.firstContributor.emulateStateChange({
-        current: AblyChannelState.Detached,
+        current: AblyChannelState.Attaching,
         previous: 'attached',
         resumed: false,
         reason: baseError,
       });
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomLifecycle.Detached);
+      await waitForRoomStatus(status, RoomLifecycle.Attaching);
 
       // Now transition the first contributor to attached again
       context.firstContributor.emulateStateChange({
@@ -1423,18 +1545,18 @@ describe('room lifecycle manager', () => {
       // Check that the status is as expected
       await waitForRoomStatus(status, RoomLifecycle.Attached);
 
-      // The second and third contributors should have been detached
+      // We shouldn't have detached anything, as we're actively trying to re-attach
       expect(context.firstContributor.channel.detach).not.toHaveBeenCalled();
-      expect(context.secondContributor.channel.detach).toHaveBeenCalled();
-      expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
+      expect(context.secondContributor.channel.detach).not.toHaveBeenCalled();
+      expect(context.thirdContributor.channel.detach).not.toHaveBeenCalled();
 
-      // All contributors should have been attached
-      expect(context.firstContributor.channel.attach).toHaveBeenCalled();
-      expect(context.secondContributor.channel.attach).toHaveBeenCalled();
-      expect(context.thirdContributor.channel.attach).toHaveBeenCalled();
+      // We also shouldn't have attached anything, as we're already attached
+      expect(context.firstContributor.channel.attach).not.toHaveBeenCalled();
+      expect(context.secondContributor.channel.attach).not.toHaveBeenCalled();
+      expect(context.thirdContributor.channel.attach).not.toHaveBeenCalled();
     });
 
-    it<TestContext>('recovers from a failure to re-attach other channels', async (context) => {
+    it<TestContext>('recovers from a suspended channel via retries', async (context) => {
       // Force our status and contributors into attached
       const status = new DefaultStatus(makeTestLogger());
       context.firstContributor.emulateStateChange({
@@ -1472,26 +1594,30 @@ describe('room lifecycle manager', () => {
 
       // Mock channel re-attachment results
       mockChannelAttachSuccess(context.firstContributor.channel);
-      mockChannelAttachFailureThenSuccess(context.secondContributor.channel, AblyChannelState.Detached, 1001);
+      mockChannelAttachFailureThenSuccess(context.secondContributor.channel, AblyChannelState.Suspended, 1001);
       mockChannelAttachSuccess(context.thirdContributor.channel);
+
+      // Observations
+      let feature2AttachError: Ably.ErrorInfo | undefined;
+      const observedStatuses: RoomLifecycle[] = [];
+      status.onChange((newStatus) => {
+        if (newStatus.current === RoomLifecycle.Suspended) {
+          feature2AttachError = newStatus.error;
+        }
+
+        observedStatuses.push(newStatus.current);
+      });
 
       // Transition the first contributor to detached
       context.firstContributor.emulateStateChange({
-        current: AblyChannelState.Detached,
+        current: AblyChannelState.Suspended,
         previous: 'attached',
         resumed: false,
         reason: baseError,
       });
 
       // Check that the status is as expected
-      await waitForRoomStatus(status, RoomLifecycle.Detached);
-
-      let feature2AttachError: Ably.ErrorInfo | undefined;
-      status.onChange((newStatus) => {
-        if (newStatus.current === RoomLifecycle.Detached) {
-          feature2AttachError = newStatus.error;
-        }
-      });
+      await waitForRoomStatus(status, RoomLifecycle.Suspended);
 
       // Now transition the first contributor to attached again
       context.firstContributor.emulateStateChange({
@@ -1501,7 +1627,7 @@ describe('room lifecycle manager', () => {
         reason: baseError,
       });
 
-      // Check that the status is as expected
+      // We should be in attached state
       await waitForRoomStatus(status, RoomLifecycle.Attached);
 
       // The first feature got detached when feature 2 failed to attach
@@ -1525,6 +1651,206 @@ describe('room lifecycle manager', () => {
           code: 1001,
         },
       });
+
+      // We should have seen a sequence of statuses
+      expect(observedStatuses).toEqual([
+        RoomLifecycle.Suspended,
+        RoomLifecycle.Attaching,
+        RoomLifecycle.Suspended,
+        RoomLifecycle.Attaching,
+        RoomLifecycle.Attached,
+      ]);
+    });
+
+    it<TestContext>('recovers from a suspended channel via many retries', async (context) => {
+      // Force our status and contributors into attached
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError2,
+      });
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomLifecycle.Attached });
+
+      // Mock channel detachment results
+      mockChannelDetachSuccess(context.firstContributor.channel);
+      mockChannelDetachSuccess(context.secondContributor.channel);
+      mockChannelDetachSuccess(context.thirdContributor.channel);
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const monitor = new RoomLifecycleManager(
+        status,
+        [context.firstContributor, context.secondContributor, context.thirdContributor],
+        makeTestLogger(),
+        5,
+      );
+
+      // Mock channel re-attachment results
+      mockChannelAttachSuccess(context.firstContributor.channel);
+      mockChannelAttachFailure(context.secondContributor.channel, AblyChannelState.Suspended, 1001);
+      mockChannelAttachSuccess(context.thirdContributor.channel);
+
+      // Observations
+      let feature1AttachError: Ably.ErrorInfo | undefined;
+      let feature2AttachError: Ably.ErrorInfo | undefined;
+      let feature3AttachError: Ably.ErrorInfo | undefined;
+      const observedStatuses: RoomLifecycle[] = [];
+      status.onChange((newStatus) => {
+        observedStatuses.push(newStatus.current);
+
+        if (newStatus.current === RoomLifecycle.Suspended && !feature1AttachError) {
+          feature1AttachError = newStatus.error;
+          return;
+        }
+
+        if (newStatus.current === RoomLifecycle.Suspended && !feature2AttachError) {
+          feature2AttachError = newStatus.error;
+          return;
+        }
+
+        if (newStatus.current === RoomLifecycle.Suspended && !feature3AttachError) {
+          feature3AttachError = newStatus.error;
+          return;
+        }
+      });
+
+      // Transition the first contributor to suspended
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Suspended,
+        previous: 'attached',
+        resumed: false,
+        reason: baseError,
+      });
+
+      // Check that the status is as expected
+      await waitForRoomStatus(status, RoomLifecycle.Suspended);
+
+      const seenAttaching = new Promise<void>((resolve, reject) => {
+        status.onChangeOnce((newStatus) => {
+          if (newStatus.current === RoomLifecycle.Attaching) {
+            resolve();
+          }
+
+          if (newStatus.current === RoomLifecycle.Failed) {
+            reject(new Error('Failed to transition to attaching'));
+          }
+        });
+      });
+
+      // Now transition the first contributor to attached again
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'suspended',
+        resumed: false,
+        reason: baseError,
+      });
+
+      await seenAttaching;
+
+      // We should be in suspended state, because the  second contributor failed to attach
+      await waitForRoomStatus(status, RoomLifecycle.Suspended);
+
+      // Now for arguments sake, the third contributor fails to attach
+      mockChannelAttachFailure(context.thirdContributor.channel, AblyChannelState.Suspended, 1001);
+      mockChannelAttachSuccess(context.secondContributor.channel);
+
+      const seenAttachingAgain = new Promise<void>((resolve, reject) => {
+        status.onChangeOnce((newStatus) => {
+          if (newStatus.current === RoomLifecycle.Attaching) {
+            resolve();
+          }
+
+          if (newStatus.current === RoomLifecycle.Failed) {
+            reject(new Error('Failed to transition to attaching'));
+          }
+        });
+      });
+
+      // Now transition the second contributor to attached again
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'suspended',
+        resumed: false,
+        reason: baseError2,
+      });
+
+      await seenAttachingAgain;
+
+      // We should still suspended, because the third contributor failed to attach
+      await waitForRoomStatus(status, RoomLifecycle.Suspended);
+
+      // One last time, the third contributor will succeed
+      mockChannelAttachSuccess(context.thirdContributor.channel);
+
+      // Now transition the third contributor to attached again
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'suspended',
+        resumed: false,
+        reason: baseError,
+      });
+
+      // We should be in attached state
+      await waitForRoomStatus(status, RoomLifecycle.Attached);
+
+      // The first feature got detached when feature 2 failed to attach and when feature 3 failed to attach
+      // The second feature got detached when feature 1 failed to attach and when feature 3 failed to attach
+      // The third feature got detached when feature 1 failed to attach and when feature 2 failed to attach
+      expect(context.firstContributor.channel.detach).toHaveBeenCalledTimes(2);
+      expect(context.secondContributor.channel.detach).toHaveBeenCalledTimes(2);
+      expect(context.thirdContributor.channel.detach).toHaveBeenCalledTimes(2);
+
+      // Feature 1 would have had attach called after feature 2's failure, feature 3's failure, and in the final run
+      // Feature 2 would have had attach called after in its own failure, and feature 3's failure (feature 1's is hidden by a mock reset)
+      // Feature 3 would have had attach called after feature 1 failed and also after feature 2 failed to attach
+      expect(context.firstContributor.channel.attach).toHaveBeenCalledTimes(3);
+      expect(context.secondContributor.channel.attach).toHaveBeenCalledTimes(2);
+      expect(context.thirdContributor.channel.attach).toHaveBeenCalledOnce();
+
+      // Feature 1's error should be the first one we saw
+      expect(feature1AttachError).toBeErrorInfo({
+        code: 500,
+      });
+
+      // We should have seen feature 2's error come through during the attach sequence
+      expect(feature2AttachError).toBeErrorInfo({
+        code: ErrorCodes.PresenceAttachmentFailed,
+        cause: {
+          code: 1001,
+        },
+      });
+
+      // We should have seen feature 3's error come through during the attach sequence
+      expect(feature3AttachError).toBeErrorInfo({
+        code: ErrorCodes.OccupancyAttachmentFailed,
+        cause: {
+          code: 1001,
+        },
+      });
+
+      // We should have seen a sequence of statuses
+      expect(observedStatuses).toEqual([
+        RoomLifecycle.Suspended,
+        RoomLifecycle.Attaching,
+        RoomLifecycle.Suspended,
+        RoomLifecycle.Attaching,
+        RoomLifecycle.Suspended,
+        RoomLifecycle.Attaching,
+        RoomLifecycle.Attached,
+      ]);
     });
   });
 
@@ -1544,7 +1870,7 @@ describe('room lifecycle manager', () => {
         const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
         // Send the monitor through the attach cycle, but lets fail the attach
-        mockChannelAttachFailure(context.firstContributor.channel, AblyChannelState.Detached, 1001);
+        mockChannelAttachFailure(context.firstContributor.channel, AblyChannelState.Suspended, 1001);
         mockChannelDetachSuccess(context.firstContributor.channel);
 
         await expect(monitor.attach()).rejects.toBeErrorInfo({
@@ -1564,7 +1890,7 @@ describe('room lifecycle manager', () => {
         );
 
         // Our status should be detached
-        expect(status.current).toEqual(RoomLifecycle.Detached);
+        expect(status.current).toEqual(RoomLifecycle.Suspended);
 
         // We should not have seen a discontinuity event
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
@@ -1916,7 +2242,7 @@ describe('room lifecycle manager', () => {
         // Now we attach again, but fail the second channel so we get a detach event
         const firstError = new Ably.ErrorInfo('first', 1, 1);
         mockChannelAttachSuccessWithResumeFailure(context.firstContributor.channel, firstError);
-        mockChannelAttachFailure(context.secondContributor.channel, AblyChannelState.Detached, 1001);
+        mockChannelAttachFailure(context.secondContributor.channel, AblyChannelState.Suspended, 1001);
         mockChannelAttachSuccess(context.thirdContributor.channel);
 
         // Now re-attach the room, it should reject with the error
@@ -1927,8 +2253,8 @@ describe('room lifecycle manager', () => {
           },
         });
 
-        // We should be detached
-        expect(status.current).toEqual(RoomLifecycle.Detached);
+        // We should be suspended
+        expect(status.current).toEqual(RoomLifecycle.Suspended);
 
         // And still no discontinuity event
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
@@ -1939,8 +2265,13 @@ describe('room lifecycle manager', () => {
         mockChannelAttachSuccess(context.secondContributor.channel);
         mockChannelAttachSuccess(context.thirdContributor.channel);
 
-        // Now re-attach the room
-        await monitor.attach();
+        // Now we'll transition channel 2 back into attached to complete the attach
+        context.secondContributor.emulateStateChange({
+          current: AblyChannelState.Attached,
+          previous: AblyChannelState.Initialized,
+          resumed: false,
+          reason: baseError2,
+        });
 
         // We should be attached
         await waitForRoomStatus(status, RoomLifecycle.Attached);
@@ -1986,7 +2317,7 @@ describe('room lifecycle manager', () => {
         // Force our status and contributors into detached
         const status = new DefaultStatus(makeTestLogger());
         context.firstContributor.emulateStateChange({
-          current: AblyChannelState.Detached,
+          current: AblyChannelState.Attached,
           previous: 'initialized',
           resumed: false,
           reason: baseError,
@@ -2029,7 +2360,7 @@ describe('room lifecycle manager', () => {
         vi.useRealTimers();
       }));
 
-    it<TestContext>('transitions via releasing', (context) => {
+    it<TestContext>('transitions via releasing', async (context) => {
       const status = new DefaultStatus(makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
@@ -2041,13 +2372,14 @@ describe('room lifecycle manager', () => {
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
 
-      const releasePromise = monitor.release();
-
-      expect(status.current).toEqual(RoomLifecycle.Releasing);
-
-      return releasePromise.then(() => {
-        expect(status.current).toEqual(RoomLifecycle.Released);
+      const observedStatuses: RoomLifecycle[] = [];
+      status.onChange((newStatus) => {
+        observedStatuses.push(newStatus.current);
       });
+
+      await monitor.release();
+
+      expect(observedStatuses).toEqual([RoomLifecycle.Releasing, RoomLifecycle.Released]);
     });
 
     it<TestContext>('detaches all contributors during release', async (context) => {
@@ -2163,7 +2495,15 @@ describe('room lifecycle manager', () => {
 
       // Mock channel detachment results
       mockChannelDetachSuccess(context.firstContributor.channel);
-      mockChannelDetachFailure(context.secondContributor.channel, AblyChannelState.Suspended, 1001);
+      vi.spyOn(context.secondContributor.channel, 'detach')
+        .mockImplementationOnce(() => {
+          vi.spyOn(context.secondContributor.channel, 'state', 'get').mockReturnValue(AblyChannelState.Suspended);
+          return Promise.reject(new Ably.ErrorInfo('failed', 1001, 1001));
+        })
+        .mockImplementationOnce(() => {
+          vi.spyOn(context.secondContributor.channel, 'state', 'get').mockReturnValue(AblyChannelState.Detached);
+          return Promise.resolve();
+        });
       mockChannelDetachSuccess(context.thirdContributor.channel);
 
       const monitor = new RoomLifecycleManager(
@@ -2175,14 +2515,14 @@ describe('room lifecycle manager', () => {
 
       await expect(monitor.release()).resolves.toBeUndefined();
 
-      expect(context.firstContributor.channel.detach).toHaveBeenCalled();
-      expect(context.secondContributor.channel.detach).toHaveBeenCalled();
-      expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
+      expect(context.firstContributor.channel.detach).toHaveBeenCalledOnce();
+      expect(context.secondContributor.channel.detach).toHaveBeenCalledTimes(2);
+      expect(context.thirdContributor.channel.detach).toHaveBeenCalledOnce();
 
       expect(status.current).toEqual(RoomLifecycle.Released);
     });
 
-    it<TestContext>('rejects if a channel fails to detach', async (context) => {
+    it<TestContext>('continues to run the detach cycle until a resolution is reached', async (context) => {
       // Force our status and contributors into attached
       const status = new DefaultStatus(makeTestLogger());
       context.firstContributor.emulateStateChange({
@@ -2207,7 +2547,7 @@ describe('room lifecycle manager', () => {
 
       // Mock channel detachment results
       mockChannelDetachSuccess(context.firstContributor.channel);
-      mockChannelDetachFailure(context.secondContributor.channel, AblyChannelState.Attached, 1001);
+      mockChannelDetachFailureSucceedAfter(context.secondContributor.channel, AblyChannelState.Attached, 1001, 5);
       mockChannelDetachSuccess(context.thirdContributor.channel);
 
       const monitor = new RoomLifecycleManager(
@@ -2216,70 +2556,12 @@ describe('room lifecycle manager', () => {
         makeTestLogger(),
         5,
       );
-
-      await expect(monitor.release()).rejects.toBeErrorInfo({
-        code: ErrorCodes.PresenceDetachmentFailed,
-        cause: {
-          code: 1001,
-        },
-      });
-
-      expect(context.firstContributor.channel.detach).toHaveBeenCalled();
-      expect(context.secondContributor.channel.detach).toHaveBeenCalled();
-      expect(context.thirdContributor.channel.detach).not.toHaveBeenCalled();
-
-      expect(status.current).toEqual(RoomLifecycle.Releasing);
-    });
-
-    it<TestContext>('allows a multiple attempts at releasing', async (context) => {
-      // Force our status and contributors into attached
-      const status = new DefaultStatus(makeTestLogger());
-      context.firstContributor.emulateStateChange({
-        current: AblyChannelState.Attached,
-        previous: 'initialized',
-        resumed: false,
-        reason: baseError,
-      });
-      context.secondContributor.emulateStateChange({
-        current: AblyChannelState.Attached,
-        previous: 'initialized',
-        resumed: false,
-        reason: baseError2,
-      });
-      context.thirdContributor.emulateStateChange({
-        current: AblyChannelState.Attached,
-        previous: 'initialized',
-        resumed: false,
-        reason: baseError,
-      });
-      status.setStatus({ status: RoomLifecycle.Attached });
-
-      // Mock channel detachment results
-      mockChannelDetachSuccess(context.firstContributor.channel);
-      mockChannelDetachFailureThenSuccess(context.secondContributor.channel, 1001);
-      mockChannelDetachSuccess(context.thirdContributor.channel);
-
-      const monitor = new RoomLifecycleManager(
-        status,
-        [context.firstContributor, context.secondContributor, context.thirdContributor],
-        makeTestLogger(),
-        5,
-      );
-
-      await expect(monitor.release()).rejects.toBeErrorInfo({
-        code: ErrorCodes.PresenceDetachmentFailed,
-        cause: {
-          code: 1001,
-        },
-      });
-
-      expect(status.current).toEqual(RoomLifecycle.Releasing);
 
       await expect(monitor.release()).resolves.toBeUndefined();
 
-      expect(context.firstContributor.channel.detach).toHaveBeenCalledTimes(2);
-      expect(context.secondContributor.channel.detach).toHaveBeenCalledTimes(2);
-      expect(context.thirdContributor.channel.detach).toHaveBeenCalledOnce();
+      expect(context.firstContributor.channel.detach).toHaveBeenCalled();
+      expect(context.secondContributor.channel.detach).toHaveBeenCalledTimes(6);
+      expect(context.thirdContributor.channel.detach).toHaveBeenCalled();
 
       expect(status.current).toEqual(RoomLifecycle.Released);
     });

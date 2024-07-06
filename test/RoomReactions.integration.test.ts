@@ -93,7 +93,7 @@ describe('room-level reactions integration test', () => {
     });
 
     const channelSuspendable = room.reactions.channel as Ably.RealtimeChannel & {
-      notifyState(state: 'suspended'): void;
+      notifyState(state: 'suspended' | 'attached'): void;
     };
 
     // Simulate a discontinuity by forcing a channel into suspended state
@@ -102,8 +102,8 @@ describe('room-level reactions integration test', () => {
     // Wait for the room to go into suspended
     await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
 
-    // Now attach the room again
-    await room.attach();
+    // Force the channel back into attached state - to simulate recovery
+    channelSuspendable.notifyState('attached');
 
     // Wait for the room to go into attached
     await waitForRoomStatus(room.status, RoomLifecycle.Attached);

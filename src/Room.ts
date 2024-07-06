@@ -152,8 +152,8 @@ export class DefaultRoom implements Room {
       features.push(this._occupancy);
     }
 
-    // Setup lifecycle manager
-    this._lifecycleManager = new RoomLifecycleManager(this._status, features, logger, 5000);
+    // Setup lifecycle manager - reverse the features so messages always comes in last
+    this._lifecycleManager = new RoomLifecycleManager(this._status, features.toReversed(), logger, 5000);
 
     // Setup a finalization function to clean up resources
     let finalized = false;

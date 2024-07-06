@@ -11,7 +11,11 @@ export const RoomProvider: FC<RoomProviderProps> = ({ client, roomId: roomId, ch
   const value = useMemo(
     () => ({
       client,
-      room: client.rooms.get(roomId, {presence: DefaultPresenceOptions, reactions: DefaultReactionsOptions, typing: DefaultTypingOptions}),
+      room: client.rooms.get(roomId, {
+        presence: DefaultPresenceOptions,
+        reactions: DefaultReactionsOptions,
+        typing: DefaultTypingOptions,
+      }),
     }),
     [client, roomId],
   );

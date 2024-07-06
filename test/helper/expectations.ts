@@ -62,9 +62,6 @@ const toBeErrorInfo = (received: unknown, expected: errorInfoCompareType): check
   const messageMatch = expected.message === undefined || received.message === expected.message;
   const causeMatch = expected.cause === undefined || toBeErrorInfo(received.cause, expected.cause).pass;
 
-  console.error('actual', actualErrorInfo(received, expected));
-  console.error('expected', expectedErrorInfo(received, expected));
-
   return {
     pass: causeMatch && codeMatch && statusCodeMatch && messageMatch,
     message: () => {
