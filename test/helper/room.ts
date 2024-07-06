@@ -12,13 +12,13 @@ import {
   DefaultTypingOptions,
   RoomOptions,
 } from '../../src/RoomOptions.ts';
-import { RoomState, RoomStatus } from '../../src/RoomStatus.ts';
+import { RoomLifecycle, RoomStatus } from '../../src/RoomStatus.ts';
 import { randomRoomId } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
 import { ablyRealtimeClient } from './realtimeClient.ts';
 
 // Wait 3 seconds for the room to reach the expected status
-export const waitForRoomStatus = async (status: RoomStatus, expected: RoomState) => {
+export const waitForRoomStatus = async (status: RoomStatus, expected: RoomLifecycle) => {
   return vi.waitUntil(() => status.current === expected, 3000);
 };
 

@@ -274,7 +274,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to get history for listener from attached timeserial', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Publish some messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -329,7 +329,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to get history for listener with latest message timeserial', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Subscribe to messages, which will also set up the listener subscription point
     const { getPreviousMessages } = room.messages.subscribe(() => {});
@@ -370,7 +370,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to get history for multiple listeners', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     await room.messages.send({ text: 'Hello there!' });
     await room.messages.send({ text: 'I have the high ground!' });

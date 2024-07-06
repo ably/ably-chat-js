@@ -23,21 +23,12 @@ function createMockPresence() {
   };
 }
 
-<<<<<<< HEAD
-type anyType = ((_) => void)[];
-type eventType = { [event: string]: ((_) => void)[] };
+type anyType = ((arg: unknown) => void)[];
+type eventType = { [event: string]: ((arg: unknown) => void)[] };
 
 function createMockEmitter() {
   const emitter = {
-    on: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
-=======
-type anyType = ((unknown: unknown) => void)[];
-type eventType = { [event: string]: (unknown: unknown) => void };
-
-function createMockEmitter() {
-  const emitter = {
-    on: (eventsOrListener: string[] | (() => void), listener?: (arg: unknown) => void) => {
->>>>>>> b9114c8 (test: fix typescript errors)
+    on: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
       if (listener) {
         if (typeof eventsOrListener === 'string') {
           eventsOrListener = [eventsOrListener];
@@ -53,9 +44,9 @@ function createMockEmitter() {
         return;
       }
 
-      emitter.any.push(eventsOrListener as () => void);
+      emitter.any.push(eventsOrListener as (arg: unknown) => void);
     },
-    once: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
+    once: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
       if (listener) {
         if (typeof eventsOrListener === 'string') {
           eventsOrListener = [eventsOrListener];
@@ -71,7 +62,7 @@ function createMockEmitter() {
         return;
       }
 
-      emitter.anyOnce.push(eventsOrListener as (_) => void);
+      emitter.anyOnce.push(eventsOrListener as (arg: unknown) => void);
     },
     emit: (event: string, arg: unknown) => {
       if (emitter.events[event]) {
@@ -96,6 +87,27 @@ function createMockEmitter() {
       }
       emitter.anyOnce = [];
     },
+    off: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
+      if (listener) {
+        if (typeof eventsOrListener === 'string') {
+          eventsOrListener = [eventsOrListener];
+        }
+
+        for (const event of eventsOrListener as string[]) {
+          if (emitter.events[event]) {
+            emitter.events[event] = emitter.events[event].filter((l) => l !== listener);
+          }
+          if (emitter.eventsOnce[event]) {
+            emitter.eventsOnce[event] = emitter.eventsOnce[event].filter((l) => l !== listener);
+          }
+        }
+        return;
+      }
+
+      // Remove from any
+      emitter.any = emitter.any.filter((l) => l !== eventsOrListener);
+      emitter.anyOnce = emitter.anyOnce.filter((l) => l !== eventsOrListener);
+    },
     any: [] as anyType,
     events: {} as eventType,
     anyOnce: [] as anyType,
@@ -113,14 +125,17 @@ function createMockChannel(name: string) {
     presence: createMockPresence(),
     subscribe: methodReturningVoidPromise,
     unsubscribe: methodReturningVoidPromise,
-    on: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
+    on: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
       mock.attachmentStateEmitter.on(eventsOrListener, listener);
     },
-    once: (eventsOrListener: string[] | string | (() => void), listener?: (client_id) => void) => {
+    once: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
       mock.attachmentStateEmitter.once(eventsOrListener, listener);
     },
     emit: (event: string, arg: unknown) => {
       mock.attachmentStateEmitter.emit(event, arg);
+    },
+    off: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
+      mock.attachmentStateEmitter.off(eventsOrListener, listener);
     },
     publish: () => {},
     subscriptions: createMockEmitter(),

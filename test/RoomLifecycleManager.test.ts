@@ -51,9 +51,9 @@ const mockChannelAttachSuccessWithResumeFailure = (channel: Ably.RealtimeChannel
 
     (
       channel as Ably.RealtimeChannel & {
-        emulateStateChange: (event: AblyChannelState | 'update', change: Ably.ChannelStateChange) => void;
+        emit: (event: AblyChannelState | 'update', change: Ably.ChannelStateChange) => void;
       }
-    ).emulateStateChange(AblyChannelState.Attached, {
+    ).emit(AblyChannelState.Attached, {
       current: AblyChannelState.Attached,
       previous: 'initialized',
       resumed: false,
@@ -175,9 +175,9 @@ const makeMockContributor = (
 
       (
         contributor.channel as Ably.RealtimeChannel & {
-          emulateStateChange: (event: AblyChannelState | 'update', change: Ably.ChannelStateChange) => void;
+          emit: (event: AblyChannelState | 'update', change: Ably.ChannelStateChange) => void;
         }
-      ).emulateStateChange(update ? 'update' : (change.current as AblyChannelState), change);
+      ).emit(update ? 'update' : (change.current as AblyChannelState), change);
     },
     attachmentErrorCode,
     detachmentErrorCode,
