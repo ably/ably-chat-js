@@ -327,6 +327,7 @@ export class RoomLifecycleManager {
     this.clearAllTransientDetachTimeouts();
 
     // We enter the protected block with priority Internal, so take precedence over user-driven actions
+    // This process is looping and will continue until a conclusion is reached.
     void this._mtx
       .runExclusive(() => {
         this._logger.error('RoomLifecycleManager.onChannelSuspension(); setting room status to contributor status', {
@@ -340,7 +341,9 @@ export class RoomLifecycleManager {
 
         return this.doRetry(contributor);
       }, LifecycleOperationPrecedence.Internal)
-      .catch();
+      .catch((error: unknown) => {
+        this._logger.error('RoomLifecycleManager.onChannelSuspension(); unexpected error thrown', { error });
+      });
   }
 
   /**
