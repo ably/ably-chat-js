@@ -203,9 +203,9 @@ export class DefaultOccupancy
       },
     };
   }
-  discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
-    this._logger.warn('Occupancy.discontinuityDetected();', { error });
-    this._discontinuityEmitter.emit('discontinuity', error);
+  discontinuityDetected(reason?: Ably.ErrorInfo | undefined): void {
+    this._logger.warn('Occupancy.discontinuityDetected();', { reason });
+    this._discontinuityEmitter.emit('discontinuity', reason);
   }
 
   /**

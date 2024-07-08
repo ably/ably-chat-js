@@ -165,15 +165,15 @@ room.status.offAll();
 ## Handling Discontinuity
 
 There may be instances where the connection to Ably is lost for a period of time, for example, when the user enters a tunnel. In many circumstances, the connection will recover and operation
-will continue with no discontinuity of messages. However, during extended periods of disconnection, continuity cannot be guaranteed.
+will continue with no discontinuity of messages. However, during extended periods of disconnection, continuity cannot be guaranteed and you'll need to take steps to recover
+messages you might have missed.
 
-Each feature of the Chat SDK provides an `onDiscontinuity` handler. Here you can register a listener that will be notified whenever a discontinuity in that feature has been observed, allowing
-you to react accordingly: e.g. fetch previously missed messages.
+Each feature of the Chat SDK provides an `onDiscontinuity` handler. Here you can register a listener that will be notified whenever a discontinuity in that feature has been observed.
 
 Taking messages as an example, you can listen for discontinuities like so:
 
 ```ts
-const { off } = room.messages.onDiscontinuity((error?: ErrorInfo) => {
+const { off } = room.messages.onDiscontinuity((reason?: ErrorInfo) => {
   // Recover from the discontinuity
 });
 ```
