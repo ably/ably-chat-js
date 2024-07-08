@@ -329,7 +329,7 @@ export class DefaultMessages
     const channelWithProperties = this.getChannelProperties();
 
     // If we are attached, we can resolve with the channelSerial
-    if (this.channel.state === 'attached') {
+    if (this._channel.state === 'attached') {
       if (channelWithProperties.properties.channelSerial) {
         return Promise.resolve({ fromSerial: channelWithProperties.properties.channelSerial });
       }
@@ -355,7 +355,7 @@ export class DefaultMessages
   private async subscribeAtChannelAttach(): Promise<{ fromSerial: string }> {
     return new Promise((resolve, reject) => {
       // Check if the state is now attached
-      if (this.channel.state === 'attached') {
+      if (this._channel.state === 'attached') {
         // Get the attachSerial from the channel properties
         const channelWithProperties = this.getChannelProperties();
         // AttachSerial should always be defined at this point, but we check just in case
