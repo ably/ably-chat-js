@@ -129,6 +129,7 @@ export class DefaultRoom implements Room {
     logger: Logger,
   ) {
     validateRoomOptions(options);
+    logger.debug('Room();', { roomId, options });
 
     this._roomId = roomId;
     this._options = options;
@@ -140,21 +141,25 @@ export class DefaultRoom implements Room {
     this._messages = new DefaultMessages(roomId, realtime, this.chatApi, realtime.auth.clientId, logger);
     const features: ContributesToRoomLifecycle[] = [this._messages];
     if (options.presence) {
+      this._logger.debug('enabling presence on room', { roomId });
       this._presence = new DefaultPresence(roomId, options, realtime, realtime.auth.clientId, logger);
       features.push(this._presence);
     }
 
     if (options.typing) {
+      this._logger.debug('enabling typing on room', { roomId });
       this._typing = new DefaultTyping(roomId, options.typing, realtime, realtime.auth.clientId, logger);
       features.push(this._typing);
     }
 
     if (options.reactions) {
+      this._logger.debug('enabling reactions on room', { roomId });
       this._reactions = new DefaultRoomReactions(roomId, realtime, realtime.auth.clientId, logger);
       features.push(this._reactions);
     }
 
     if (options.occupancy) {
+      this._logger.debug('enabling occupancy on room', { roomId });
       this._occupancy = new DefaultOccupancy(roomId, realtime, this.chatApi, logger);
       features.push(this._occupancy);
     }
