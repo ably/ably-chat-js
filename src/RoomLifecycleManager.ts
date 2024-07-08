@@ -87,7 +87,7 @@ export class RoomLifecycleManager {
    * It is used to prevent the room status from being changed by individual channel state changes and ignore
    * underlying channel events until we reach a consistent state.
    */
-  private _operationInProgress = true;
+  private _operationInProgress = false;
 
   /**
    * A map of pending discontinuity events.
@@ -129,8 +129,8 @@ export class RoomLifecycleManager {
 
     // This shouldn't be the case except in testing, but if we're already attached, then we should consider
     // ourselves not in the middle of an operation and thus consider channel events.
-    if (this._status.current === RoomLifecycle.Attached) {
-      this._operationInProgress = false;
+    if (this._status.current !== RoomLifecycle.Attached) {
+      this._operationInProgress = true;
     }
 
     this.setupContributorListeners(transientDetachTimeout);
