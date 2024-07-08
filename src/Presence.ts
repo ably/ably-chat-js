@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { getChannel } from './channel.js';
+import { getChannel, messagesChannelName } from './channel.js';
 import {
   DiscontinuityEmitter,
   DiscontinuityListener,
@@ -217,7 +217,7 @@ export class DefaultPresence
       channelModes.push('PRESENCE_SUBSCRIBE');
     }
 
-    this._channel = getChannel(`${roomId}::$chat::$chatMessages`, realtime, { modes: channelModes });
+    this._channel = getChannel(messagesChannelName(roomId), realtime, { modes: channelModes });
     addListenerToChannelPresenceWithoutAttach({
       listener: this.subscribeToEvents.bind(this),
       channel: this._channel,

@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { ErrorInfo, RealtimeChannel } from 'ably';
 
-import { getChannel } from './channel.js';
+import { getChannel, messagesChannelName } from './channel.js';
 import { ChatApi } from './ChatApi.js';
 import {
   DiscontinuityEmitter,
@@ -233,7 +233,7 @@ export class DefaultMessages
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
     this._roomId = roomId;
-    this._channel = getChannel(`${roomId}::$chat::$chatMessages`, realtime);
+    this._channel = getChannel(messagesChannelName(roomId), realtime);
     addListenerToChannelWithoutAttach({
       listener: this.processEvent.bind(this),
       events: [MessageEvents.created],

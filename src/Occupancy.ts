@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { getChannel } from './channel.js';
+import { getChannel, messagesChannelName } from './channel.js';
 import { ChatApi } from './ChatApi.js';
 import {
   DiscontinuityEmitter,
@@ -100,7 +100,7 @@ export class DefaultOccupancy
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
     super();
     this.roomId = roomId;
-    this._channel = getChannel(`${roomId}::$chat::$chatMessages`, realtime, { params: { occupancy: 'metrics' } });
+    this._channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });
     addListenerToChannelWithoutAttach({
       listener: this.internalOccupancyListener.bind(this),
       events: ['[meta]occupancy'],
