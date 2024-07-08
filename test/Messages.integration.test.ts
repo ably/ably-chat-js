@@ -1,11 +1,13 @@
+import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../src/Chat.ts';
 import { Message } from '../src/Message.ts';
 import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
+import { RoomLifecycle } from '../src/RoomStatus.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 import { newChatClient } from './helper/chat.ts';
-import { randomRoomId } from './helper/identifier.ts';
+import { getRandomRoom, waitForRoomStatus } from './helper/room.ts';
 
 interface TestContext {
   chat: ChatClient;
@@ -34,21 +36,23 @@ describe('messages integration', () => {
   it<TestContext>('sets the agent version on the channel', (context) => {
     const { chat } = context;
 
-    const roomName = Math.random().toString(36).substring(7);
-    const room = chat.rooms.get(roomName);
+    const room = getRandomRoom(chat);
     const channel = room.messages.channel as RealtimeChannelWithOptions;
 
-    expect(channel.channelOptions.params).toEqual({ agent: CHANNEL_OPTIONS_AGENT_STRING });
+    expect(channel.channelOptions.params).toEqual(expect.objectContaining({ agent: CHANNEL_OPTIONS_AGENT_STRING }));
   });
 
   it<TestContext>('should be able to send and receive chat messages', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
+
+    // Attach the room
+    await room.attach();
 
     // Subscribe to messages and add them to a list when they arive
     const messages: Message[] = [];
-    await room.messages.subscribe((messageEvent) => {
+    room.messages.subscribe((messageEvent) => {
       messages.push(messageEvent.message);
     });
 
@@ -76,7 +80,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to retrieve chat history', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Publish 3 messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -111,7 +115,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to paginate chat history', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Publish 4 messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -161,7 +165,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to paginate chat history, but backwards', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Publish 4 messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -211,13 +215,15 @@ describe('messages integration', () => {
   it<TestContext>('should be able to send, receive and query chat messages with metadata and headers', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Subscribe to messages and add them to a list when they arive
     const messages: Message[] = [];
-    await room.messages.subscribe((messageEvent) => {
+    room.messages.subscribe((messageEvent) => {
       messages.push(messageEvent.message);
     });
+
+    await room.attach();
 
     const message1 = await room.messages.send({
       text: 'Hello there!',
@@ -268,18 +274,22 @@ describe('messages integration', () => {
   it<TestContext>('should be able to get history for listener from attached timeserial', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     // Publish some messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
     const message2 = await room.messages.send({ text: 'I have the high ground!' });
 
-    const listener = () => {};
-    // Subscribe to messages, which will also set up the listener subscription point and attach to channel
-    await room.messages.subscribe(listener);
+    // Subscribe to messages and add them to a list when they arive
+    const messages: Message[] = [];
+    const { getPreviousMessages } = room.messages.subscribe((messageEvent) => {
+      messages.push(messageEvent.message);
+    });
+
+    await room.attach();
 
     // Do a history request to get the messages before up
-    const historyPreSubscription1 = await room.messages.getBeforeSubscriptionStart(listener, { limit: 50 });
+    const historyPreSubscription1 = await getPreviousMessages({ limit: 50 });
 
     // Check the items in the history
     expect(historyPreSubscription1.items).toEqual([
@@ -300,7 +310,7 @@ describe('messages integration', () => {
     await room.messages.send({ text: "Don't try it!" });
 
     // Try and get history again
-    const historyPreSubscription2 = await room.messages.getBeforeSubscriptionStart(listener, { limit: 50 });
+    const historyPreSubscription2 = await getPreviousMessages({ limit: 50 });
 
     // It should not contain the new messages since we should be getting messages based on initial attach timeserial
     expect(historyPreSubscription2.items).toEqual([
@@ -319,29 +329,28 @@ describe('messages integration', () => {
   it<TestContext>('should be able to get history for listener with latest message timeserial', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
-    const listener1 = () => {};
-    // Subscribe to messages, which will also set up the listener subscription point and attach to channel
-    await room.messages.subscribe(listener1);
+    // Subscribe to messages, which will also set up the listener subscription point
+    const { getPreviousMessages } = room.messages.subscribe(() => {});
+
+    // Attach the room
+    await room.attach();
 
     // Publish some messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
     const message2 = await room.messages.send({ text: 'I have the high ground!' });
 
     // Do a history request which should use attach timeserial
-    const historyPreSubscription1 = await room.messages.getBeforeSubscriptionStart(listener1, { limit: 50 });
+    const historyPreSubscription1 = await getPreviousMessages({ limit: 50 });
 
     // Should have no items since we are using attach timeserial
     expect(historyPreSubscription1.items).toEqual([]);
 
-    // Setup new listener
-    const listener2 = () => {};
-    // Subscribe to messages, since we are already attached, subscription point should be set to latest message timeserial
-    await room.messages.subscribe(listener2);
+    const { getPreviousMessages: getPreviousMessagesListener2 } = room.messages.subscribe(() => {});
 
     // Check we see the latest messages
-    const historyPreSubscription2 = await room.messages.getBeforeSubscriptionStart(listener2, { limit: 50 });
+    const historyPreSubscription2 = await getPreviousMessagesListener2({ limit: 50 });
 
     // Should have the latest messages
     expect(historyPreSubscription2.items).toEqual([
@@ -361,27 +370,75 @@ describe('messages integration', () => {
   it<TestContext>('should be able to get history for multiple listeners', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId());
+    const room = getRandomRoom(chat);
 
     await room.messages.send({ text: 'Hello there!' });
     await room.messages.send({ text: 'I have the high ground!' });
     await room.messages.send({ text: 'You underestimate my power!' });
 
-    const listener1 = () => {};
-    const listener2 = () => {};
-    const listener3 = () => {};
-    // Subscribe to messages, which will also set up the listener subscription point and attach to channel
-    await room.messages.subscribe(listener1);
-    await room.messages.subscribe(listener2);
-    await room.messages.subscribe(listener3);
+    // Attach the room
+    await room.attach();
+
+    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { getPreviousMessages: getPreviousMessages2 } = room.messages.subscribe(() => {});
+    const { getPreviousMessages: getPreviousMessages3 } = room.messages.subscribe(() => {});
 
     // Do a history request to get the messages before up
-    const historyPreSubscription1 = await room.messages.getBeforeSubscriptionStart(listener1, { limit: 50 });
-    const historyPreSubscription2 = await room.messages.getBeforeSubscriptionStart(listener2, { limit: 50 });
-    const historyPreSubscription3 = await room.messages.getBeforeSubscriptionStart(listener3, { limit: 50 });
+    const historyPreSubscription1 = await getPreviousMessages({ limit: 50 });
+    const historyPreSubscription2 = await getPreviousMessages2({ limit: 50 });
+    const historyPreSubscription3 = await getPreviousMessages3({ limit: 50 });
 
     // Expect all listeners to have the same history
     expect(historyPreSubscription1.items).toEqual(historyPreSubscription2.items);
     expect(historyPreSubscription2.items).toEqual(historyPreSubscription3.items);
+  });
+
+  it<TestContext>('handles discontinuities', async (context) => {
+    const { chat } = context;
+
+    const room = getRandomRoom(chat);
+
+    // Attach the room
+    await room.attach();
+
+    // Subscribe discontinuity events
+    const discontinuityErrors: (Ably.ErrorInfo | undefined)[] = [];
+    const { off } = room.messages.onDiscontinuity((error: Ably.ErrorInfo | undefined) => {
+      discontinuityErrors.push(error);
+    });
+
+    const channelSuspendable = room.messages.channel as Ably.RealtimeChannel & {
+      notifyState(state: 'suspended' | 'attached'): void;
+    };
+
+    // Simulate a discontinuity by forcing a channel into suspended state
+    channelSuspendable.notifyState('suspended');
+
+    // Wait for the room to go into suspended
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
+
+    // Force the channel back into attached state - to simulate recovery
+    channelSuspendable.notifyState('attached');
+
+    // Wait for the room to go into attached
+    await waitForRoomStatus(room.status, RoomLifecycle.Attached);
+
+    // Wait for a discontinuity event to be received
+    expect(discontinuityErrors.length).toBe(1);
+
+    // Unsubscribe from discontinuity events
+    off();
+
+    // Simulate a discontinuity by forcing a channel into suspended state
+    channelSuspendable.notifyState('suspended');
+
+    // Wait for the room to go into suspended
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
+
+    // We shouldn't get any more discontinuity events
+    expect(discontinuityErrors.length).toBe(1);
+
+    // Calling off again should be a no-op
+    off();
   });
 });

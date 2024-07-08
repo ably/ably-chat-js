@@ -8,9 +8,12 @@ import { ChatClient } from '../src/Chat.js';
 import { PresenceEvents } from '../src/events.js';
 import { PresenceData, PresenceEvent } from '../src/Presence.js';
 import { Room } from '../src/Room.js';
+import { DefaultPresenceOptions } from '../src/RoomOptions.js';
+import { RoomLifecycle } from '../src/RoomStatus.js';
 import { newChatClient } from './helper/chat.js';
 import { randomRoomId } from './helper/identifier.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
+import { waitForRoomStatus } from './helper/room.js';
 
 // Define the test context interface
 interface TestContext {
@@ -44,6 +47,27 @@ const waitForPresenceEvent = async (
   });
 };
 
+// Wait a maximum of 3 seconds to assert that a presence event has not been received
+const assertNoPresenceEvent = async (events: PresenceEvent[], action: PresenceEvents, clientId: string) => {
+  return new Promise<void>((resolve, reject) => {
+    const interval = setInterval(() => {
+      for (const event of events) {
+        if (event.action === action && event.clientId === clientId) {
+          clearInterval(interval);
+          reject(new Error('Presence event was received'));
+        }
+      }
+      clearInterval(interval);
+      resolve();
+    }, 100);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      resolve();
+    }, 3000);
+  });
+};
+
 describe('UserPresence', { timeout: 10000 }, () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>((context) => {
@@ -51,7 +75,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     const roomId = randomRoomId();
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
-    context.chatRoom = context.chat.rooms.get(roomId);
+    context.chatRoom = context.chat.rooms.get(roomId, { presence: DefaultPresenceOptions });
   });
 
   // Helper function to wait for an event and run an expectation function on the received message
@@ -205,7 +229,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
   it<TestContext>('should successfully subscribe to enter events ', async (context) => {
     // Subscribe to enter events
     const presenceEvents: PresenceEvent[] = [];
-    await context.chatRoom.presence.subscribe(PresenceEvents.enter, (event) => {
+    context.chatRoom.presence.subscribe(PresenceEvents.enter, (event) => {
       presenceEvents.push(event);
     });
 
@@ -216,10 +240,81 @@ describe('UserPresence', { timeout: 10000 }, () => {
     await waitForPresenceEvent(presenceEvents, PresenceEvents.enter, context.chat.clientId, { customKeyOne: 1 });
   });
 
+  it<TestContext>('doesnt send unrelated presence events', async (context) => {
+    // Subscribe to enter events
+    const presenceEvents: PresenceEvent[] = [];
+    context.chatRoom.presence.subscribe(PresenceEvents.leave, (event) => {
+      presenceEvents.push(event);
+    });
+
+    // Enter presence to trigger the enter event
+    await context.chatRoom.presence.update({ customKeyOne: 1 });
+
+    // Wait for the enter event to be received
+    await assertNoPresenceEvent(presenceEvents, PresenceEvents.enter, context.chat.clientId);
+  });
+
+  it<TestContext>('should unsubscribe from presence events', async (context) => {
+    const presenceEvents: PresenceEvent[] = [];
+    const { unsubscribe } = context.chatRoom.presence.subscribe(
+      [PresenceEvents.enter, PresenceEvents.update],
+      (event) => {
+        presenceEvents.push(event);
+      },
+    );
+
+    // Enter presence to trigger the enter event
+    await context.chatRoom.presence.enter({ customKeyOne: 1 });
+
+    // Wait for the enter event to be received
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.enter, context.chat.clientId, { customKeyOne: 1 });
+
+    // Unsubscribe from presence events
+    unsubscribe();
+
+    // Trigger an update event
+    await context.chatRoom.presence.update({ customKeyOne: 2 });
+
+    // Assert that the update event was not received
+    await assertNoPresenceEvent(presenceEvents, PresenceEvents.update, context.chat.clientId);
+
+    // A second call to unsubscribe should not throw an error
+    unsubscribe();
+  });
+
+  it<TestContext>('should unsubscribe all listeners from presence events', async (context) => {
+    const presenceEvents: PresenceEvent[] = [];
+    context.chatRoom.presence.subscribe([PresenceEvents.enter, PresenceEvents.update], (event) => {
+      presenceEvents.push(event);
+    });
+
+    const presenceEvents2: PresenceEvent[] = [];
+    context.chatRoom.presence.subscribe([PresenceEvents.enter, PresenceEvents.update], (event) => {
+      presenceEvents2.push(event);
+    });
+
+    // Enter presence to trigger the enter event
+    await context.chatRoom.presence.enter({ customKeyOne: 1 });
+
+    // Wait for the enter event to be received
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.enter, context.chat.clientId, { customKeyOne: 1 });
+    await waitForPresenceEvent(presenceEvents2, PresenceEvents.enter, context.chat.clientId, { customKeyOne: 1 });
+
+    // Unsuscribe all listeners
+    context.chatRoom.presence.unsubscribeAll();
+
+    // Trigger an update event
+    await context.chatRoom.presence.update({ customKeyOne: 2 });
+
+    // Assert that the update event was not received
+    await assertNoPresenceEvent(presenceEvents, PresenceEvents.update, context.chat.clientId);
+    await assertNoPresenceEvent(presenceEvents2, PresenceEvents.update, context.chat.clientId);
+  });
+
   it<TestContext>('should successfully subscribe to update events ', async (context) => {
     // Subscribe to update events
     const presenceEvents: PresenceEvent[] = [];
-    await context.chatRoom.presence.subscribe(PresenceEvents.update, (event) => {
+    context.chatRoom.presence.subscribe(PresenceEvents.update, (event) => {
       presenceEvents.push(event);
     });
 
@@ -234,7 +329,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
   it<TestContext>('should successfully subscribe to leave events ', async (context) => {
     // Subscribe to leave events
     const presenceEvents: PresenceEvent[] = [];
-    await context.chatRoom.presence.subscribe(PresenceEvents.leave, (event) => {
+    context.chatRoom.presence.subscribe(PresenceEvents.leave, (event) => {
       presenceEvents.push(event);
     });
 
@@ -248,7 +343,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
   it<TestContext>('should successfully handle multiple data types', async (context) => {
     // Subscribe to leave events
     const presenceEvents: PresenceEvent[] = [];
-    await context.chatRoom.presence.subscribe((event) => {
+    context.chatRoom.presence.subscribe((event) => {
       presenceEvents.push(event);
     });
     // Enter presence to trigger the enter event with undefined data
@@ -266,5 +361,88 @@ describe('UserPresence', { timeout: 10000 }, () => {
     // Update with object
     await context.chatRoom.presence.update({ key: 'value' });
     await waitForPresenceEvent(presenceEvents, PresenceEvents.update, context.chat.clientId, { key: 'value' });
+  });
+
+  it<TestContext>('handles discontinuities', async (context) => {
+    const { chatRoom: room } = context;
+
+    // Attach the room
+    await room.attach();
+
+    // Subscribe discontinuity events
+    const discontinuityErrors: (Ably.ErrorInfo | undefined)[] = [];
+    const { off } = room.presence.onDiscontinuity((error: Ably.ErrorInfo | undefined) => {
+      discontinuityErrors.push(error);
+    });
+
+    const channelSuspendable = room.presence.channel as Ably.RealtimeChannel & {
+      notifyState(state: 'suspended' | 'attached'): void;
+    };
+
+    // Simulate a discontinuity by forcing a channel into suspended state
+    channelSuspendable.notifyState('suspended');
+
+    // Wait for the room to go into suspended
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
+
+    // Force the channel back into attached state - to simulate recovery
+    channelSuspendable.notifyState('attached');
+
+    // Wait for the room to go into attached
+    await waitForRoomStatus(room.status, RoomLifecycle.Attached);
+
+    // Wait for a discontinuity event to be received
+    expect(discontinuityErrors.length).toBe(1);
+
+    // Unsubscribe from discontinuity events
+    off();
+
+    // Simulate a discontinuity by forcing a channel into suspended state
+    channelSuspendable.notifyState('suspended');
+
+    // Wait for the room to go into suspended
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
+
+    // We shouldn't get any more discontinuity events
+    expect(discontinuityErrors.length).toBe(1);
+
+    // Calling off again should be a no-op
+    off();
+  });
+
+  it<TestContext>('prevents presence entry if room option prevents it', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId(), { presence: { enter: false } });
+
+    await room.attach();
+
+    // Entering presence should reject
+    await expect(room.presence.enter()).rejects.toBeErrorInfoWithCode(40160);
+  });
+
+  it<TestContext>('does not receive presence events if room option prevents it', async (context) => {
+    const { chat } = context;
+
+    const room = chat.rooms.get(randomRoomId(), { presence: { subscribe: false } });
+
+    await room.attach();
+
+    // Subscribe to presence
+    const presenceEvents: PresenceEvent[] = [];
+    room.presence.subscribe((event) => {
+      presenceEvents.push(event);
+    });
+
+    // We need to create another chat client and enter presence on the same room
+    const chat2 = newChatClient();
+    const room2 = chat2.rooms.get(room.roomId, { presence: { enter: true } });
+
+    // Entering presence
+    await room2.attach();
+    await room2.presence.enter();
+
+    // Assert we didn't receive any presence events
+    await assertNoPresenceEvent(presenceEvents, PresenceEvents.enter, context.chat.clientId);
   });
 });

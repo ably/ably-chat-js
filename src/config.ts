@@ -5,12 +5,6 @@ import { LogHandler, LogLevel } from './logger.js';
  */
 export interface ClientOptions {
   /**
-   * The time in milliseconds after which the client will emit a stopped typing event, if the user has not typed anything.
-   * @defaultValue 3000
-   */
-  typingTimeoutMs?: number;
-
-  /**
    * A custom log handler that will be used to log messages from the client.
    * @defaultValue The client will log messages to the console.
    */
@@ -27,7 +21,6 @@ export interface ClientOptions {
  * Default configuration options for the chat client.
  */
 const defaultClientOptions = {
-  typingTimeoutMs: 3000,
   logLevel: LogLevel.error,
 };
 
@@ -43,7 +36,6 @@ type Modify<T, R> = Omit<T, keyof R> & R;
 export type NormalisedClientOptions = Modify<
   ClientOptions,
   {
-    typingTimeoutMs: number;
     logLevel: LogLevel;
   }
 >;
@@ -53,7 +45,6 @@ export const normaliseClientOptions = (options?: ClientOptions): NormalisedClien
 
   return {
     ...options,
-    typingTimeoutMs: options.typingTimeoutMs ?? defaultClientOptions.typingTimeoutMs,
     logLevel: options.logLevel ?? defaultClientOptions.logLevel,
   };
 };

@@ -46,15 +46,122 @@ To use Chat you must also set a [`clientId`](https://ably.com/docs/auth/identifi
 identifiable. If you are prototyping, you can use a package like [nanoid](https://www.npmjs.com/package/nanoid) to
 generate an ID.
 
+## Connections
+
+The Chat SDK uses a single connection to Ably, which is exposed via the `ChatClient.connection` property. You can use this
+property to observe the connection state and take action accordingly.
+
+## Current Connection Status
+
+You can view the current connection status at any time:
+
+```ts
+const connectionStatus = chat.connection.status.current;
+const connectionError = chat.connection.status.error;
+```
+
+## Subscribing to Connection Status Changes
+
+You can subscribe to connection status changes by registering a listener, like so:
+
+```ts
+const { off } = chat.connection.status.onChange((change) => console.log(change));
+```
+
+To stop listening to changes, call the provided `off` method:
+
+```ts
+off();
+```
+
+To remove all listeners at the same time, you can call `offAll`:
+
+```ts
+chat.connection.status.offAll();
+```
+
 ## Getting a Room
 
 You can get Room with name `"basketball-stream"` this way:
 
 ```ts
-const room = chat.rooms.get('basketball-stream');
+const room = chat.rooms.get('basketball-stream', {reactions: DefaultRoomReactionsOptions});
 ```
 
-There is no need to create the room. You can start using it right away.
+A room does not need to be created explicitly in the backend before it can be used.
+
+The second argument to `rooms.get` is a `RoomOptions` argument, which tells the Chat SDK what features you would like your
+room to use and they should be configured. For example, you can set the timeout between keystrokes for typing events.
+
+## Attaching a Room
+
+To start receiving events on a room, it must first be attached. This can be done using the `attach` method.
+
+```ts
+// Add a listener so it's ready at attach time (see below for more information on listeners)
+room.messages.subscribe((msg) => console.log(msg));
+
+await room.attach();
+```
+
+## Detaching a Room
+
+To stop receiving events on a room, it must be detached, which can be acheived by using the `detach` method.
+
+```ts
+await room.detach();
+```
+
+Note, this does not remove any event listeners you have registered and they will begin to receive events again in the
+event that the room is re-attached.
+
+## Releasing a Room
+
+Depending on your application, you may have multiple rooms that come and go over time (e.g. if you are running 1:1 support chat). When you are completely finished with a room, you may `release` it which allows the underlying resources to be collected.
+
+```ts
+await rooms.release('basketball-stream');
+```
+
+Once `release` is called, the room will become unusable and you will need to get a new instance using `rooms.get` should you wish to re-start the room.
+
+Note that releasing a room may be optional for many applications.
+
+## Monitoring Room Status
+
+Monitoring the status of the room is key to a number of common chat features. For example, you might want to display a warning when the room has become detached.
+
+Various aspects of the room's status can be found at the `room.status` property.
+
+### Current Status
+
+To get the current status, you can use the `current` property:
+
+```ts
+const roomStatus = room.status.current;
+const roomError = room.status.error;
+```
+
+### Listen to Status Changes
+
+You can also subscribe to changes in the room status and be notified whenever they happen by registering a listener:
+
+```ts
+const { off } = room.status.onChange((change) => console.log(change));
+```
+
+To stop listening to changes, you can call the provided `off` function:
+
+```ts
+off();
+```
+
+Or you can remove all listeners at once:
+
+```ts
+room.status.offAll();
+```
+
 
 ## Messaging
 
@@ -109,14 +216,27 @@ const message = await room.messages.send({
 To subscribe to incoming messages, call `subscribe` with your listener.
 
 ```ts
-// Subscribe to all message events in a room
-room.messages.subscribe(({ message }) => {
-  console.log(message);
-});
+const { unsubscribe } = room.messages.subscribe((msg) => console.log(msg));
 ```
 
-To unsubscribe, call `unsubscribe`, passing in the same listener you did when subscribing. Note that listeners are removed by reference equality,
-so you must pass in the same reference that you subscribed.
+### Unsubscribing from incoming messages
+
+When you're done with the listener, call `unsubscribe` to remove that listeners subscription and prevent it from receiving
+any more events.
+
+
+```ts
+const { unsubscribe } = room.messages.subscribe((msg) => console.log(msg));
+
+// Time passes...
+unsubscribe();
+```
+
+You can remove all of your listeners in one go like so:
+
+```ts
+  room.messages.unsubscribeAll();
+```
 
 ### Query message history
 
@@ -137,16 +257,16 @@ if (historicalMessages.hasNext()) {
 
 ### Query message history for a subscribed listener
 
-Another useful method the messages object exposes is the `getBeforeSubscriptionStart` method. It can be used to return
+In addition to being able to unsubscribe from messages, the return value from `messages.subscribe` also includes the `getPreviousMessages` method. It can be used to return
 historical messages in the chat room that were sent up to the point a particular listener was subscribed. It returns a
 paginated response that can be used to query for more messages.
 
-```typescript
-const listener = () => {
+```ts
+const { getPreviousMessages } = room.messages.subscribe(() => {
   console.log('New message received');
-};
-room.messages.subscribe(listener);
-const historicalMessages = await room.messages.getBeforeSubscriptionStart(listener, { limit: 50 });
+});
+
+const historicalMessages = await getPreviousMessages({ limit: 50 });
 console.log(historicalMessages.items);
 if (historicalMessages.hasNext()) {
   const next = await historicalMessages.next();
@@ -155,39 +275,6 @@ if (historicalMessages.hasNext()) {
   console.log('End of messages');
 }
 ```
-
-## Connection and Ably channels statuses
-
-You can monitor the status of the overall connection to Ably using the `connection` member of the Realtime client that you
-passed into the Chat SDK, like so:
-
-```ts
-ably.connection.on('connected', (stateChange) => {
-  console.log('Ably is connected');
-});
-
-ably.connection.on((stateChange) => {
-  console.log('New connection state is ' + stateChange.current);
-});
-```
-
-Different features in the Chat SDK often use separate channels, to give you more flexible permission control as well as more predictable scalability.
-You can retrieve the channel used by each feature and listen for state events to determine the attachment status by calling the `channel` property on the feature. For example:
-
-```ts
-room.messages.channel.on('attached', (stateChange) => {
-  console.log('channel ' + channel.name + ' is now attached');
-});
-```
-
-You can also get the realtime channel name of the chat room by calling `name` on the underlying channel
-
-```ts
-room.messages.channel.name;
-```
-
-Note, that the SDK will automatically detach a channel whenever it isn't needed. For example if you unsubscribe all of your listeners
-for room reactions, we'll automatically detach from the channel used for this purpose.
 
 ## Presence
 
@@ -240,7 +327,7 @@ await room.presence.leave({ status: 'Be back later!' });
 You can provide a single listener, if so, the listener will be subscribed to receive all presence event types.
 
 ```ts
-await room.presence.subscribe((event: PresenceEvent) => {
+const { unsubscribe } = room.presence.subscribe((event: PresenceEvent) => {
   switch (event.action) {
     case 'enter':
       console.log(`${event.clientId} entered with data: ${event.data}`);
@@ -258,22 +345,29 @@ await room.presence.subscribe((event: PresenceEvent) => {
 You can also provide a specific event type or types to subscribe to along with a listener.
 
 ```ts
-await room.presence.subscribe('enter', (event: PresenceEvent) => {
+const { unsubscribe } = room.presence.subscribe('enter', (event: PresenceEvent) => {
   console.log(`${event.clientId} entered with data: ${event.data}`);
 });
 
-await room.presence.subscribe(['update', 'leave'], (event: PresenceEvent) => {
+const { unsubscribe } = room.presence.subscribe(['update', 'leave'], (event: PresenceEvent) => {
   console.log(`${event.clientId} updated with data: ${event.data}`);
 });
 ```
 
 ### Unsubscribe from presence
 
-You can unsubscribe a listener from presence events by providing the listener to the unsubscribe method.
+To unsubscribe a specific listener from presence events, you can call the `unsubscribe` method provided in the response to the `subscribe` call.
 
 ```ts
-await room.presence.unsubscribe(listener);
+const { unsubscribe } = room.presence.subscribe((event: PresenceEvent) => {
+  // Handle events
+});
+
+// Unsubscribe
+unsubscribe();
 ```
+
+Similarly to messages, you can call `presence.unsubscribeAll` to remove all listeners at once.
 
 ## Typing
 
@@ -321,29 +415,28 @@ await room.typing.stop();
 
 ### Subscribe To Typing
 
-You can provide a single listener, if so, the listener will be subscribed to receive all typing event types.
+To subscribe to typing events, provide a listener to the `subscribe` method.
 
 ```ts
-await room.typing.subscribe((event) => {
-  console.log(event);
-});
-```
-
-You can also provide a specific event type or types to subscribe to along with a listener.
-
-```ts
-await room.typing.subscribe('startedTyping', (event) => {
+const {unsubscribe} = room.typing.subscribe((event) => {
   console.log(event);
 });
 ```
 
 ### Unsubscribe From Typing
 
-You can unsubscribe a listener from typing events by providing the listener to the unsubscribe method.
+To unsubscribe the listener, you can call the corresponding `unsubscribe` method returned by the `subscribe` call:
 
 ```ts
-await room.typing.unsubscribe(listener);
+const {unsubscribe} = room.typing.subscribe((event) => {
+  console.log(event);
+});
+
+// Time passes
+unsubscribe();
 ```
+
+You can remove all listeners at once by calling `typing.unsubscribeAll()`.
 
 ## Occupancy
 
@@ -354,18 +447,25 @@ Using Occupancy, you can subscribe to regular updates regarding how many users a
 To subscribe to occupancy updates, subscribe a listener to the chat rooms `occupancy` member:
 
 ```ts
-const occupancyListener = (event) => {
+const { unsubscribe } = room.occupancy.subscribe((event) => {
   console.log(event);
-};
-
-await room.occupancy.subscribe(occupancyListener);
+});
 ```
 
-To unsubscribe, call `unsubscribe:
+### Unsubscribing from Occupancy Updates
+
+To unsubscribe, call the corresponding `unsubscribe` method:
 
 ```ts
-await room.occupancy.unsubscribe(occupancyListener);
+const { unsubscribe } = room.occupancy.subscribe((event) => {
+  console.log(event);
+});
+
+// Time passes...
+unsubscribe();
 ```
+
+You can remove all listeners at once by calling `occupancy.unsubscribeAll()`.
 
 Occupancy updates are delivered in near-real-time, with updates in quick succession batched together for performance.
 
@@ -395,59 +495,42 @@ You can also add any metadata to reactions:
 await room.reactions.send('like', { effect: 'fireworks' });
 ```
 
-### Subscribe to reactions
+### Subscribe to Reactions
 
 Subscribe to receive room-level reactions:
 
 ```ts
-const listener = (reaction) => {
+const { unsubscribe } = room.reactions.subscribe((reaction) => {
   console.log('received a', reaction.type, 'with metadata', reaction.metadata);
-};
-
-await room.reactions.subscribe(listener);
-```
-
-### Unsubscribe from reactions
-
-If previously subscribed with `listener`, to unsubscribe use
-
-```ts
-await room.reactions.unsubscribe(listener);
-```
-
-## Observing Connections to the Chat Room
-
-You can use the types and methods on the underlying `ably-js` library to observe client connectivity to the chat room.
-
-## Connection
-
-The Chat SDK uses a single connection to Ably, which is exposed via the `ChatClient.connection` property. You can use this
-property to observe the connection state and take action accordingly:
-
-```ts
-chatClient.connection.on((change) => {
-  // Perform some action based on the current connection state,
-  // such as showing or hiding a connection warning
 });
 ```
 
-Alternatively, if you want to listen to particular connection events:
+### Unsubscribe from Reactions
+
+To unsubscribe, call the corresponding `unsubscribe` method:
 
 ```ts
-chatClient.connection.on('connected', (change) => {
-  // Connection successful
+const { unsubscribe } = room.reactions.subscribe((reaction) => {
+  console.log('received a', reaction.type, 'with metadata', reaction.metadata);
 });
+
+// Time passes...
+unsubscribe();
 ```
+
+You can remove all listeners at once by calling `reactions.unsubscribeAll()`.
 
 ## Channels Behind Chat Features
 
 Each feature is backed by an underlying Pub/Sub channel. The channel for each feature can be obtained via the `channel` property
-on that feature, for example, for messages:
+on that feature, if required.
 
 ```ts
 const room = chatClient.rooms.get('my-room');
 const messagesChannel = room.messages.channel;
 ```
+
+**Warning**: You should not attempt to change the state of a channel directly. Doing so may cause unintended side-effects in the Chat SDK.
 
 ### Channels Used
 
@@ -460,21 +543,3 @@ For a given chat room, the channels used for features are as follows:
 | Occupancy         | `<roomId>::$chat::$chatMessages`     |
 | Reactions         | `<roomId>::$chat::$reactions`        |
 | Typing            | `<roomId>::$chat::$typingIndicators` |
-
-### Monitoring Attachment
-
-You can then use the channel to monitor the channels attachment status:
-
-```ts
-messagesChannel.on((stateChange) => {
-  // Perform some action in response to the channel state changing
-});
-```
-
-Or to listen for the channel entering a specific state:
-
-```ts
-messagesChannel.on('attached', (stateChange) => {
-  // Perform some action in response to the channel entering the attached state
-});
-```

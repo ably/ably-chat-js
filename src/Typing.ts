@@ -1,10 +1,21 @@
 import * as Ably from 'ably';
 
+import { getChannel } from './channel.js';
+import {
+  DiscontinuityEmitter,
+  DiscontinuityListener,
+  EmitsDiscontinuities,
+  HandlesDiscontinuity,
+  newDiscontinuityEmitter,
+  OnDiscontinuitySubscriptionResponse,
+} from './discontinuity.js';
+import { ErrorCodes } from './errors.js';
 import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultSubscriptionManager, SubscriptionManager } from './SubscriptionManager.js';
+import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
+import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
+import { TypingOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';
-import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
 
 /**
  * Represents the typing events mapped to their respective event payloads.
@@ -17,25 +28,19 @@ interface TypingEventsMap {
 /**
  * Interface for Typing. This class is used to manage typing events in a chat room.
  */
-export interface Typing {
+export interface Typing extends EmitsDiscontinuities {
   /**
-   * Subscribe a given listener to all typing events from users in the chat room. This will implicitly attach the underlying channel
-   * and enable typing events.
+   * Subscribe a given listener to all typing events from users in the chat room.
    *
    * @param listener A listener to be called when the typing state of a user in the room changes.
-   * @returns A promise that resolves void when attach succeeds or rejects with an error if the attach fails.
+   * @returns A response object that allows you to control the subscription to typing events.
    */
-  subscribe(listener: TypingListener): Promise<void>;
+  subscribe(listener: TypingListener): TypingSubscriptionResponse;
 
   /**
-   * Unsubscribe a given listener from all typing events from users in the chat room. Will detached from the underlying
-   * channel if there are no more listeners.
-   *
-   * @param listener A listener to be unsubscribed from typing state changes the chat room.
-   * @returns A promise that resolves when the implicit channel detach operation completes, or immediately if there
-   * are still other listeners.
+   * Unsubscribe all listeners from receiving typing events.
    */
-  unsubscribe(listener: TypingListener): Promise<void>;
+  unsubscribeAll(): void;
 
   /**
    * Get the set of clientIds that are currently typing.
@@ -105,13 +110,26 @@ export interface TypingEvent {
  */
 export type TypingListener = (event: TypingEvent) => void;
 
-export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
+/**
+ * A response object that allows you to control the subscription to typing events.
+ */
+export interface TypingSubscriptionResponse {
+  /**
+   * Unsubscribe the listener registered with {@link Typing.subscribe} from typing events.
+   */
+  unsubscribe: () => void;
+}
+
+export class DefaultTyping
+  extends EventEmitter<TypingEventsMap>
+  implements Typing, HandlesDiscontinuity, ContributesToRoomLifecycle
+{
   private readonly _clientId: string;
   private readonly _roomId: string;
   private readonly _currentlyTyping: Set<string>;
-  private readonly _typingChannelName: string;
-  private readonly _managedChannel: SubscriptionManager;
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
+  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   // Timeout for typing
   private readonly _typingTimeoutMs: number;
@@ -120,24 +138,24 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * Create a new DefaultTyping.
    * @param roomId - The ID of the room.
+   * @param options - The typing options.
    * @param realtime - The Ably Realtime instance.
    * @param clientId - The client ID.
-   * @param typingTimeoutMs - The timeout for typing events, set to 3000ms by default.
-   * @param logger - The logger instance.
+   * @param logger - The logger.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, typingTimeoutMs: number, logger: Logger) {
+  constructor(roomId: string, options: TypingOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
     this._roomId = roomId;
     this._clientId = clientId;
     this._currentlyTyping = new Set();
-    this._typingChannelName = `${this._roomId}::$chat::$typingIndicators`;
-    this._managedChannel = new DefaultSubscriptionManager(
-      realtime.channels.get(this._typingChannelName, DEFAULT_CHANNEL_OPTIONS),
-      logger,
-    );
+    this._channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
+    addListenerToChannelPresenceWithoutAttach({
+      listener: this._internalSubscribeToEvents.bind(this),
+      channel: this._channel,
+    });
 
     // Timeout for typing
-    this._typingTimeoutMs = typingTimeoutMs;
+    this._typingTimeoutMs = options.timeoutMs;
     this._timerId = null;
     this._logger = logger;
   }
@@ -153,7 +171,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @inheritDoc
    */
   get channel(): Ably.RealtimeChannel {
-    return this._managedChannel.channel;
+    return this._channel;
   }
 
   /**
@@ -179,9 +197,10 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       this.startTypingTimer();
       return;
     }
+
     // Start typing and emit typingStarted event
     this.startTypingTimer();
-    return this._managedChannel.presenceEnterClient(this._clientId).then();
+    return this._channel.presence.enterClient(this._clientId).then();
   }
 
   /**
@@ -194,35 +213,32 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       clearTimeout(this._timerId);
       this._timerId = null;
     }
+
     // Will throw an error if the user is not typing
-    return this._managedChannel.presenceLeaveClient(this._clientId);
+    return this._channel.presence.leaveClient(this._clientId);
   }
 
   /**
    * @inheritDoc
    */
-  async subscribe(listener: TypingListener): Promise<void> {
+  subscribe(listener: TypingListener): TypingSubscriptionResponse {
     this._logger.trace(`DefaultTyping.subscribe();`);
-    const hasListeners = this.hasListeners();
     this.on(listener);
-    if (!hasListeners) {
-      this._logger.debug('DefaultTyping.subscribe(); adding internal listener');
-      return this._managedChannel.presenceSubscribe(this._internalSubscribeToEvents);
-    }
-    return Promise.resolve();
+
+    return {
+      unsubscribe: () => {
+        this._logger.trace('DefaultTyping.unsubscribe();');
+        this.off(listener);
+      },
+    };
   }
 
   /**
    * @inheritDoc
    */
-  async unsubscribe(listener: TypingListener): Promise<void> {
-    this._logger.trace(`DefaultTyping.unsubscribe();`);
-    this.off(listener);
-    if (!this.hasListeners()) {
-      this._logger.debug('DefaultTyping.unsubscribe(); removing internal listener');
-      return this._managedChannel.presenceUnsubscribe(this._internalSubscribeToEvents);
-    }
-    return Promise.resolve();
+  unsubscribeAll(): void {
+    this._logger.trace(`DefaultTyping.unsubscribeAll();`);
+    this.off();
   }
 
   /**
@@ -270,4 +286,38 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         break;
     }
   };
+
+  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
+    this._logger.trace(`DefaultTyping.onDiscontinuity();`);
+    this._discontinuityEmitter.on(listener);
+
+    return {
+      off: () => {
+        this._discontinuityEmitter.off(listener);
+      },
+    };
+  }
+
+  discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
+    this._logger.warn(`DefaultTyping.discontinuityDetected();`, { error });
+    this._discontinuityEmitter.emit('discontinuity', error);
+  }
+
+  get timeoutMs(): number {
+    return this._typingTimeoutMs;
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get attachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.TypingAttachmentFailed;
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get detachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.TypingDetachmentFailed;
+  }
 }

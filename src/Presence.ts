@@ -1,8 +1,20 @@
 import * as Ably from 'ably';
 
+import { getChannel, messagesChannelName } from './channel.js';
+import {
+  DiscontinuityEmitter,
+  DiscontinuityListener,
+  EmitsDiscontinuities,
+  HandlesDiscontinuity,
+  newDiscontinuityEmitter,
+  OnDiscontinuitySubscriptionResponse,
+} from './discontinuity.js';
+import { ErrorCodes } from './errors.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
-import { SubscriptionManager } from './SubscriptionManager.js';
+import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
+import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
+import { RoomOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
@@ -92,12 +104,22 @@ export interface PresenceMember {
 export type PresenceListener = (event: PresenceEvent) => void;
 
 /**
+ * A response object that allows you to control a presence subscription.
+ */
+export interface PresenceSubscriptionResponse {
+  /**
+   * Unsubscribe the listener registered with {@link Presence.subscribe} from all presence events.
+   */
+  unsubscribe: () => void;
+}
+
+/**
  * This interface is used to interact with presence in a chat room including subscribing,
  * fetching presence members, or sending presence events (join,update,leave).
  *
  * Get an instance via room.presence.
  */
-export interface Presence {
+export interface Presence extends EmitsDiscontinuities {
   /**
    * Method to get list of the current online users and returns the latest presence messages associated to it.
    * @param {Ably.RealtimePresenceParams} params - Parameters that control how the presence set is retrieved.
@@ -138,26 +160,21 @@ export interface Presence {
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
    */
-  subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
+  subscribe(
+    eventOrEvents: PresenceEvents | PresenceEvents[],
+    listener?: PresenceListener,
+  ): PresenceSubscriptionResponse;
 
   /**
    * Subscribe the given listener to all presence events.
    * @param listener listener to subscribe
    */
-  subscribe(listener?: PresenceListener): Promise<void>;
+  subscribe(listener?: PresenceListener): PresenceSubscriptionResponse;
 
   /**
-   * Unsubscribe the given listener from the given list of events.
-   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to unsubscribe from
-   * @param listener listener to unsubscribe
+   * Unsubscribe all listeners from all presence events.
    */
-  unsubscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
-
-  /**
-   * Unsubscribe the given listener from all presence events.
-   * @param listener listener to unsubscribe
-   */
-  unsubscribe(listener?: PresenceListener): Promise<void>;
+  unsubscribeAll(): void;
 
   /**
    * Get the underlying Ably realtime channel used for presence in this chat room.
@@ -169,22 +186,42 @@ export interface Presence {
 /**
  * @inheritDoc
  */
-export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements Presence {
-  private readonly subscriptionManager: SubscriptionManager;
+export class DefaultPresence
+  extends EventEmitter<PresenceEventsMap>
+  implements Presence, HandlesDiscontinuity, ContributesToRoomLifecycle
+{
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly clientId: string;
   private readonly _logger: Logger;
+  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   /**
    * Constructor for Presence
-   * @param subscriptionManager - Internal class that wraps a Realtime channel and ensures that when all subscriptions
-   * (messages and presence) are removed, the channel is implicitly detached.
-   * @param {string} clientId - The client ID, attached to presences messages as an identifier of the sender.
+   * @param roomId - The room ID.
+   * @param roomOptions - The room options.
+   * @param realtime - The Ably Realtime instance.
+   * @param clientId - The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    * @param logger - The logger instance.
    */
-  constructor(subscriptionManager: SubscriptionManager, clientId: string, logger: Logger) {
+  constructor(roomId: string, roomOptions: RoomOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
-    this.subscriptionManager = subscriptionManager;
+
+    // Set our channel modes based on the room options
+    const channelModes = ['PUBLISH', 'SUBSCRIBE'] as Ably.ChannelMode[];
+    if (roomOptions.presence?.enter === undefined || roomOptions.presence.enter) {
+      channelModes.push('PRESENCE');
+    }
+
+    if (roomOptions.presence?.subscribe === undefined || roomOptions.presence.subscribe) {
+      channelModes.push('PRESENCE_SUBSCRIBE');
+    }
+
+    this._channel = getChannel(messagesChannelName(roomId), realtime, { modes: channelModes });
+    addListenerToChannelPresenceWithoutAttach({
+      listener: this.subscribeToEvents.bind(this),
+      channel: this._channel,
+    });
     this.clientId = clientId;
     this._logger = logger;
   }
@@ -194,7 +231,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @returns The realtime channel.
    */
   get channel(): Ably.RealtimeChannel {
-    return this.subscriptionManager.channel;
+    return this._channel;
   }
 
   /**
@@ -202,7 +239,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    */
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     this._logger.trace('Presence.get()', { params });
-    const userOnPresence = await this.subscriptionManager.channel.presence.get(params);
+    const userOnPresence = await this._channel.presence.get(params);
 
     // ably-js never emits the 'absent' event, so we can safely ignore it here.
     return userOnPresence.map((user) => ({
@@ -220,7 +257,7 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @inheritDoc
    */
   async isUserPresent(clientId: string): Promise<boolean> {
-    const presenceSet = await this.subscriptionManager.channel.presence.get({ clientId: clientId });
+    const presenceSet = await this._channel.presence.get({ clientId: clientId });
     return presenceSet.length > 0;
   }
 
@@ -234,7 +271,8 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-    return this.subscriptionManager.presenceEnterClient(this.clientId, presenceEventToSend);
+
+    return this._channel.presence.enterClient(this.clientId, presenceEventToSend);
   }
 
   /**
@@ -247,7 +285,8 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-    return this.subscriptionManager.presenceUpdateClient(this.clientId, presenceEventToSend);
+
+    return this._channel.presence.updateClient(this.clientId, presenceEventToSend);
   }
 
   /**
@@ -260,7 +299,8 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-    return this.subscriptionManager.presenceLeaveClient(this.clientId, presenceEventToSend);
+
+    return this._channel.presence.leaveClient(this.clientId, presenceEventToSend);
   }
 
   /**
@@ -268,67 +308,51 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
    */
-  subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
+  subscribe(
+    eventOrEvents: PresenceEvents | PresenceEvents[],
+    listener?: PresenceListener,
+  ): PresenceSubscriptionResponse;
   /**
    * Subscribe the given listener to all presence events.
    * @param listener listener to subscribe
    */
-  subscribe(listener?: PresenceListener): Promise<void>;
-  async subscribe(
+  subscribe(listener?: PresenceListener): PresenceSubscriptionResponse;
+  subscribe(
     listenerOrEvents?: PresenceEvents | PresenceEvents[] | PresenceListener,
     listener?: PresenceListener,
-  ): Promise<void> {
+  ): PresenceSubscriptionResponse {
     this._logger.trace('Presence.subscribe(); listenerOrEvents', { listenerOrEvents });
     if (!listenerOrEvents && !listener) {
       this._logger.error('could not subscribe to presence; invalid arguments');
       throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400);
     }
-    const hasListeners = this.hasListeners();
+
+    // Add listener to all events
     if (!listener) {
-      this.on(listenerOrEvents);
+      this.on(listenerOrEvents as PresenceListener);
+      return {
+        unsubscribe: () => {
+          this._logger.trace('Presence.unsubscribe();');
+          this.off(listenerOrEvents as PresenceListener);
+        },
+      };
     } else {
-      this.on(listenerOrEvents, listener);
+      this.on(listenerOrEvents as PresenceEvents, listener);
+      return {
+        unsubscribe: () => {
+          this._logger.trace('Presence.unsubscribe();', { events: listenerOrEvents });
+          this.off(listener);
+        },
+      };
     }
-    if (!hasListeners) {
-      this._logger.debug('Presence.subscribe(); adding internal listener');
-      return this.subscriptionManager.presenceSubscribe(this.subscribeToEvents);
-    }
-    return this.subscriptionManager.channel.attach().then(() => {
-      return Promise.resolve();
-    });
   }
 
   /**
-   * Unsubscribe the given listener from the given list of events.
-   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to unsubscribe from
-   * @param listener listener to unsubscribe
+   * Unsubscribe all listeners from all presence events.
    */
-  unsubscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Promise<void>;
-
-  /**
-   * Unsubscribe the given listener from all presence events.
-   * @param listener listener to unsubscribe
-   */
-  unsubscribe(listener?: PresenceListener): Promise<void>;
-  async unsubscribe(
-    listenerOrEvents?: PresenceEvents | PresenceEvents[] | PresenceListener,
-    listener?: PresenceListener,
-  ): Promise<void> {
-    this._logger.trace('Presence.unsubscribe(); listenerOrEvents', { listenerOrEvents });
-    if (!listenerOrEvents && !listener) {
-      this._logger.error('could not unsubscribe from presence; invalid arguments');
-      throw new Ably.ErrorInfo('could not unsubscribe listener: invalid arguments', 40000, 400);
-    }
-    if (!listener) {
-      this.off(listenerOrEvents);
-    } else {
-      this.off(listenerOrEvents, listener);
-    }
-    if (!this.hasListeners()) {
-      this._logger.debug('Presence.unsubscribe(); removing internal listener');
-      return this.subscriptionManager.presenceUnsubscribe(this.subscribeToEvents);
-    }
-    return Promise.resolve();
+  unsubscribeAll(): void {
+    this._logger.trace('Presence.unsubscribeAll()');
+    this.off();
   }
 
   /**
@@ -357,4 +381,33 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
       );
     }
   };
+
+  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
+    this._logger.trace('Presence.onDiscontinuity();');
+    this._discontinuityEmitter.on(listener);
+
+    return {
+      off: () => {
+        this._discontinuityEmitter.off(listener);
+      },
+    };
+  }
+  discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
+    this._logger.warn('Presence.discontinuityDetected();', { error });
+    this._discontinuityEmitter.emit('discontinuity', error);
+  }
+
+  /**
+   * @inheritDoc ContributesToRoomLifecycle
+   */
+  get attachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.PresenceAttachmentFailed;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  get detachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.PresenceDetachmentFailed;
+  }
 }

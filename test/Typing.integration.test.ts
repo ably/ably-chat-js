@@ -4,11 +4,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { normaliseClientOptions } from '../src/config.js';
 import { Room } from '../src/Room.js';
+import { DefaultTypingOptions } from '../src/RoomOptions.js';
 import { DefaultRooms, Rooms } from '../src/Rooms.js';
+import { RoomLifecycle } from '../src/RoomStatus.js';
 import { TypingEvent } from '../src/Typing.js';
 import { randomClientId, randomRoomId } from './helper/identifier.js';
 import { makeTestLogger } from './helper/logger.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
+import { waitForRoomStatus } from './helper/room.js';
 
 const TEST_TIMEOUT = 10000;
 
@@ -16,7 +19,6 @@ const TEST_TIMEOUT = 10000;
 interface TestContext {
   realtime: Ably.Realtime;
   clientId: string;
-  roomId: string;
   chatRoom: Room;
   chat: Rooms;
 }
@@ -40,14 +42,9 @@ describe('Typing', () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
-    context.roomId = randomRoomId();
-    context.chat = new DefaultRooms(
-      context.realtime,
-      normaliseClientOptions({ typingTimeoutMs: 300 }),
-      makeTestLogger(),
-    );
+    context.chat = new DefaultRooms(context.realtime, normaliseClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
-    context.chatRoom = context.chat.get(context.roomId);
+    context.chatRoom = context.chat.get(randomRoomId(), { typing: { timeoutMs: 300 } });
   });
 
   // Test to check if typing starts and then stops typing after the default timeout
@@ -56,9 +53,11 @@ describe('Typing', () => {
     async (context) => {
       const events: TypingEvent[] = [];
       // Subscribe to typing events
-      await context.chatRoom.typing.subscribe((event) => {
+      context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
+      // Attach the room
+      await context.chatRoom.attach();
       // Start typing and emit typingStarted event
       await context.chatRoom.typing.start();
       // Once the timout timer expires, the typingStopped event should be emitted
@@ -77,9 +76,11 @@ describe('Typing', () => {
     'subscribes to all typing events, sent by start and stop',
     async (context) => {
       const events: TypingEvent[] = [];
-      await context.chatRoom.typing.subscribe((event) => {
+      context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
+      // Attach the room
+      await context.chatRoom.attach();
       // Send typing events
       await context.chatRoom.typing.start();
       await context.chatRoom.typing.stop();
@@ -102,26 +103,33 @@ describe('Typing', () => {
     async (context) => {
       let events: TypingEvent[] = [];
       // Subscribe to typing events
-      await context.chatRoom.typing.subscribe((event) => {
+      context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
       // Create new clients with new client ids
       const clientId1 = randomClientId();
       const client1 = new DefaultRooms(
         ablyRealtimeClient({ clientId: clientId1 }),
-        normaliseClientOptions({ typingTimeoutMs: 1000 }),
+        normaliseClientOptions({}),
         makeTestLogger(),
       );
       const clientId2 = randomClientId();
       const client2 = new DefaultRooms(
         ablyRealtimeClient({ clientId: clientId2 }),
-        normaliseClientOptions({ typingTimeoutMs: 1000 }),
+        normaliseClientOptions({}),
         makeTestLogger(),
       );
 
+      const roomOptions = { typing: { timeoutMs: 1000 } };
+
+      // Attach the rooms
+      await context.chatRoom.attach();
+      await client1.get(context.chatRoom.roomId, roomOptions).attach();
+      await client2.get(context.chatRoom.roomId, roomOptions).attach();
+
       // send typing event for client1 and client2
-      await client1.get(context.roomId).typing.start();
-      await client2.get(context.roomId).typing.start();
+      await client1.get(context.chatRoom.roomId, roomOptions).typing.start();
+      await client2.get(context.chatRoom.roomId, roomOptions).typing.start();
       // Wait for the typing events to be received
       await waitForMessages(events, 2);
       // Get the currently typing client ids
@@ -132,7 +140,7 @@ describe('Typing', () => {
 
       events = [];
       // Try stopping typing for one of the clients
-      await client1.get(context.roomId).typing.stop();
+      await client1.get(context.chatRoom.roomId, roomOptions).typing.stop();
       // Wait for the typing events to be received
       await waitForMessages(events, 1);
       // Get the currently typing client ids
@@ -143,4 +151,55 @@ describe('Typing', () => {
     },
     TEST_TIMEOUT,
   );
+
+  it<TestContext>('handles discontinuities', async (context) => {
+    const { chat } = context;
+
+    const room = chat.get(randomRoomId(), { typing: DefaultTypingOptions });
+
+    // Attach the room
+    await room.attach();
+
+    await waitForRoomStatus(room.status, RoomLifecycle.Attached);
+
+    // Subscribe discontinuity events
+    const discontinuityErrors: (Ably.ErrorInfo | undefined)[] = [];
+    const { off } = room.typing.onDiscontinuity((error: Ably.ErrorInfo | undefined) => {
+      discontinuityErrors.push(error);
+    });
+
+    const channelSuspendable = room.typing.channel as Ably.RealtimeChannel & {
+      notifyState(state: 'suspended' | 'attached'): void;
+    };
+
+    // Simulate a discontinuity by forcing a channel into suspended state
+    channelSuspendable.notifyState('suspended');
+
+    // Wait for the room to go into suspended
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
+
+    // Force the channel back into attached state - to simulate recovery
+    channelSuspendable.notifyState('attached');
+
+    // Wait for the room to go into attached
+    await waitForRoomStatus(room.status, RoomLifecycle.Attached);
+
+    // Wait for a discontinuity event to be received
+    expect(discontinuityErrors.length).toBe(1);
+
+    // Unsubscribe from discontinuity events
+    off();
+
+    // Simulate a discontinuity by forcing a channel into suspended state
+    channelSuspendable.notifyState('suspended');
+
+    // Wait for the room to go into suspended
+    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
+
+    // We shouldn't get any more discontinuity events
+    expect(discontinuityErrors.length).toBe(1);
+
+    // Calling off again should be a no-op
+    off();
+  });
 });

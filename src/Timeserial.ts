@@ -1,3 +1,5 @@
+import * as Ably from 'ably';
+
 /**
  * Represents a parsed timeserial.
  */
@@ -67,17 +69,17 @@ export class DefaultTimeserial implements Timeserial {
   public static calculateTimeserial(timeserial: string): Timeserial {
     const [seriesId, rest] = timeserial.split('@');
     if (!seriesId || !rest) {
-      throw new Error('Invalid timeserial');
+      throw new Ably.ErrorInfo('invalid timeserial', 50000, 500);
     }
 
     const [timestamp, counterAndIndex] = rest.split('-');
     if (!timestamp || !counterAndIndex) {
-      throw new Error('Invalid timeserial');
+      throw new Ably.ErrorInfo('invalid timeserial', 50000, 500);
     }
 
     const [counter, index] = counterAndIndex.split(':');
     if (!counter) {
-      throw new Error('Invalid timeserial');
+      throw new Ably.ErrorInfo('invalid timeserial', 50000, 500);
     }
 
     return new DefaultTimeserial(seriesId, Number(timestamp), Number(counter), index ? Number(index) : undefined);

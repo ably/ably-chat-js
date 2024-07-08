@@ -16,12 +16,12 @@ export const useReactions = () => {
     const reactionReceived = (reaction: Reaction) => {
       setReactions((prevReactions) => [...prevReactions, reaction]);
     };
-    room.reactions.subscribe(reactionReceived);
+    const { unsubscribe } = room.reactions.subscribe(reactionReceived);
 
     setReactions([]);
 
     return () => {
-      room.reactions.unsubscribe(reactionReceived);
+      unsubscribe();
     };
   }, [clientId, room]);
 

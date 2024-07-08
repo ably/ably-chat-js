@@ -1,12 +1,23 @@
 import * as Ably from 'ably';
 import { ErrorInfo, RealtimeChannel } from 'ably';
 
+import { getChannel, messagesChannelName } from './channel.js';
 import { ChatApi } from './ChatApi.js';
+import {
+  DiscontinuityEmitter,
+  DiscontinuityListener,
+  EmitsDiscontinuities,
+  HandlesDiscontinuity,
+  newDiscontinuityEmitter,
+  OnDiscontinuitySubscriptionResponse,
+} from './discontinuity.js';
+import { ErrorCodes } from './errors.js';
 import { MessageEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './Message.js';
 import { PaginatedResult } from './query.js';
-import { SubscriptionManager } from './SubscriptionManager.js';
+import { addListenerToChannelWithoutAttach } from './realtimeextensions.js';
+import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { DefaultTimeserial } from './Timeserial.js';
 import EventEmitter from './utils/EventEmitter.js';
 
@@ -131,34 +142,38 @@ export interface MessageEventPayload {
 export type MessageListener = (event: MessageEventPayload) => void;
 
 /**
+ * A response object that allows you to control a message subscription.
+ */
+export interface MessageSubscriptionResponse {
+  /**
+   * Unsubscribe the listener registered with {@link Messages.subscribe} from message events.
+   */
+  unsubscribe(): void;
+
+  /**
+   * Get the previous messages that were sent to the room before the listener was subscribed.
+   * @param params Options for the history query.
+   * @returns A promise that resolves with the paginated result of messages.
+   */
+  getPreviousMessages(params: Omit<QueryOptions, 'direction'>): Promise<PaginatedResult<Message>>;
+}
+
+/**
  * This class is used to interact with messages in a chat room including subscribing
  * to them, fetching history, or sending messages.
  */
-export interface Messages {
+export interface Messages extends EmitsDiscontinuities {
   /**
-   * Subscribe to new messages in this chat room. This will implicitly attach the underlying Ably channel.
+   * Subscribe to new messages in this chat room.
    * @param listener callback that will be called
-   * @returns A promise that resolves to the underlying Ably state change.
+   * @returns A response object that allows you to control the subscription.
    */
-  subscribe(listener?: MessageListener): Promise<Ably.ChannelStateChange | null>;
+  subscribe(listener: MessageListener): MessageSubscriptionResponse;
 
   /**
-   * Get messages that may have been sent to the room before the listener was subscribed.
-   * @param listener listener to get historical messages for
-   * @param Params - Options for the query.
-   * @returns A promise that resolves to a paginated result of messages, messages are ordered from newest to oldest.
-   **/
-  getBeforeSubscriptionStart(
-    listener: MessageListener,
-    Params?: Omit<QueryOptions, 'direction'>,
-  ): Promise<PaginatedResult<Message>>;
-
-  /**
-   * Unsubscribe the given listener from all events.
-   * @param listener listener to unsubscribe
-   * @returns A promise that resolves when the listener has been unsubscribed.
+   * Unsubscribe all listeners from new messages in from chat room.
    */
-  unsubscribe(listener?: MessageListener): Promise<void>;
+  unsubscribeAll(): void;
 
   /**
    * Queries the chat room for messages, based on the provided query options.
@@ -198,9 +213,12 @@ export interface Messages {
  *
  * Get an instance via room.messages.
  */
-export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages {
+export class DefaultMessages
+  extends EventEmitter<MessageEventsMap>
+  implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
+{
   private readonly _roomId: string;
-  private readonly _managedChannel: SubscriptionManager;
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
   private readonly _listenerSubscriptionPoints: Map<
@@ -210,13 +228,18 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     }>
   >;
   private readonly _logger: Logger;
+  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
-  private _internalListener: Ably.messageCallback<Ably.InboundMessage> | undefined;
-
-  constructor(roomId: string, managedChannel: SubscriptionManager, chatApi: ChatApi, clientId: string, logger: Logger) {
+  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
     this._roomId = roomId;
-    this._managedChannel = managedChannel;
+    this._channel = getChannel(messagesChannelName(roomId), realtime);
+    addListenerToChannelWithoutAttach({
+      listener: this.processEvent.bind(this),
+      events: [MessageEvents.created],
+      channel: this._channel,
+    });
+
     this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
@@ -224,11 +247,11 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
 
     // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
     // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
-    this._managedChannel.channel.on('attached', (message) => {
+    this._channel.on('attached', (message) => {
       this.handleAttach(message.resumed);
     });
     // Handles the case where an update message is received from a channel after a detach and reattach.
-    this._managedChannel.channel.on('update', (message) => {
+    this._channel.on('update', (message) => {
       if (message.current === 'attached' && message.previous === 'attached') {
         this.handleAttach(message.resumed);
       }
@@ -238,7 +261,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   /**
    * @inheritdoc Messages
    */
-  async getBeforeSubscriptionStart(
+  private async getBeforeSubscriptionStart(
     listener: MessageListener,
     params: Omit<QueryOptions, 'direction'>,
   ): Promise<PaginatedResult<Message>> {
@@ -306,7 +329,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     const channelWithProperties = this.getChannelProperties();
 
     // If we are attached, we can resolve with the channelSerial
-    if (this._managedChannel.channel.state === 'attached') {
+    if (this._channel.state === 'attached') {
       if (channelWithProperties.properties.channelSerial) {
         return Promise.resolve({ fromSerial: channelWithProperties.properties.channelSerial });
       }
@@ -321,7 +344,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     properties: { attachSerial: string | undefined; channelSerial: string | undefined };
   } {
     // Get the attachSerial from the channel properties
-    return this._managedChannel.channel as RealtimeChannel & {
+    return this._channel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
         channelSerial: string | undefined;
@@ -332,10 +355,13 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   private async subscribeAtChannelAttach(): Promise<{ fromSerial: string }> {
     return new Promise((resolve, reject) => {
       // Check if the state is now attached
-      if (this._managedChannel.channel.state === 'attached') {
+      if (this._channel.state === 'attached') {
         // Get the attachSerial from the channel properties
         const channelWithProperties = this.getChannelProperties();
         // AttachSerial should always be defined at this point, but we check just in case
+        this._logger.debug('Messages.subscribeAtChannelAttach(); channel is attached already, using attachSerial', {
+          attachSerial: channelWithProperties.properties.attachSerial,
+        });
         if (channelWithProperties.properties.attachSerial) {
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
@@ -344,10 +370,13 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
         }
       }
 
-      this._managedChannel.channel.on('attached', () => {
+      this._channel.once('attached', () => {
         // Get the attachSerial from the channel properties
         const channelWithProperties = this.getChannelProperties();
         // AttachSerial should always be defined at this point, but we check just in case
+        this._logger.debug('Messages.subscribeAtChannelAttach(); channel is now attached, using attachSerial', {
+          attachSerial: channelWithProperties.properties.attachSerial,
+        });
         if (channelWithProperties.properties.attachSerial) {
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
@@ -362,7 +391,7 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
    * @inheritdoc Messages
    */
   get channel(): Ably.RealtimeChannel {
-    return this._managedChannel.channel;
+    return this._channel;
   }
 
   /**
@@ -415,43 +444,32 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
   /**
    * @inheritdoc Messages
    */
-  subscribe(listener: MessageListener): Promise<Ably.ChannelStateChange | null> {
+  subscribe(listener: MessageListener): MessageSubscriptionResponse {
     this._logger.trace('Messages.subscribe();');
-    const hasListeners = this.hasListeners();
     super.on([MessageEvents.created], listener);
 
     // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
     this._listenerSubscriptionPoints.set(listener, this.resolveSubscriptionStart());
 
-    if (!hasListeners) {
-      this._logger.debug('Messages.subscribe(); subscribing internal listener');
-      this._internalListener = this.processEvent.bind(this);
-      return this._managedChannel.subscribe([MessageEvents.created], this._internalListener);
-    }
-
-    return this._managedChannel.channel.attach();
+    return {
+      unsubscribe: () => {
+        // Remove the listener from the subscription points
+        this._listenerSubscriptionPoints.delete(listener);
+        this._logger.trace('Messages.unsubscribe();');
+        super.off(listener);
+      },
+      getPreviousMessages: (params: Omit<QueryOptions, 'direction'>) =>
+        this.getBeforeSubscriptionStart(listener, params),
+    };
   }
 
   /**
    * @inheritdoc Messages
    */
-  unsubscribe(listener: MessageListener): Promise<void> {
-    this._logger.trace('Messages.unsubscribe();');
-    super.off(listener);
-
-    // Remove the listener from the subscription points
-    this._listenerSubscriptionPoints.delete(listener);
-
-    if (this.hasListeners()) {
-      return Promise.resolve();
-    }
-
-    this._logger.debug('Messages.unsubscribe(); unsubscribing internal listener');
-    if (this._internalListener) {
-      return this._managedChannel.unsubscribe(this._internalListener);
-    }
-
-    return Promise.resolve();
+  unsubscribeAll(): void {
+    this._logger.trace('Messages.unsubscribeAll();');
+    super.off();
+    this._listenerSubscriptionPoints.clear();
   }
 
   private processEvent(channelEventMessage: Ably.InboundMessage) {
@@ -525,14 +543,58 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
       return;
     }
 
-    return new DefaultMessage(
-      messageCreatedMessage.extras.timeserial,
-      messageCreatedMessage.clientId,
-      this._roomId,
-      messageCreatedMessage.data.text,
-      new Date(messageCreatedMessage.timestamp),
-      messageCreatedMessage.data.metadata ?? {},
-      messageCreatedMessage.extras.headers ?? {},
-    );
+    try {
+      return new DefaultMessage(
+        messageCreatedMessage.extras.timeserial,
+        messageCreatedMessage.clientId,
+        this._roomId,
+        messageCreatedMessage.data.text,
+        new Date(messageCreatedMessage.timestamp),
+        messageCreatedMessage.data.metadata ?? {},
+        messageCreatedMessage.extras.headers ?? {},
+      );
+    } catch (error: unknown) {
+      this._logger.error(`failed to parse incoming message`, {
+        channelEventMessage,
+        error: error as Ably.ErrorInfo,
+      });
+      return;
+    }
+  }
+
+  /**
+   * @inheritdoc HandlesDiscontinuity
+   */
+  discontinuityDetected(error?: Ably.ErrorInfo): void {
+    this._logger.warn('Messages.discontinuityDetected();', { error });
+    this._discontinuityEmitter.emit('discontinuity', error);
+  }
+
+  /**
+   * @inheritdoc EmitsDiscontinuities
+   */
+  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
+    this._logger.trace('Messages.onDiscontinuity();');
+    this._discontinuityEmitter.on(listener);
+
+    return {
+      off: () => {
+        this._discontinuityEmitter.off(listener);
+      },
+    };
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get attachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.MessagesAttachmentFailed;
+  }
+
+  /**
+   * @inheritdoc ContributesToRoomLifecycle
+   */
+  get detachmentErrorCode(): ErrorCodes {
+    return ErrorCodes.MessagesDetachmentFailed;
   }
 }

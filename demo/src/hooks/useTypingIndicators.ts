@@ -1,5 +1,5 @@
 import { TypingListener } from '@ably-labs/chat';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useRoom } from './useRoom';
 
 export const useTypingIndicators = () => {
@@ -13,19 +13,18 @@ export const useTypingIndicators = () => {
     room.typing.stop().then(() => {});
   }, [room]);
 
+  const [unsubscribe, setUnsubscribe] = useState({ unsubscribe: () => {} });
+
   const subscribeToTypingIndicators = useCallback(
     (callback: TypingListener) => {
-      room.typing.subscribe(callback).then(() => {});
+      setUnsubscribe(room.typing.subscribe(callback));
     },
     [room],
   );
 
-  const unsubscribeToTypingIndicators = useCallback(
-    (callback: TypingListener) => {
-      room.typing.unsubscribe(callback).then(() => {});
-    },
-    [room],
-  );
+  const unsubscribeToTypingIndicators = useCallback(() => {
+    unsubscribe.unsubscribe();
+  }, [unsubscribe]);
 
   return {
     startTyping,
