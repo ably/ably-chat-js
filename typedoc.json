@@ -1,9 +1,9 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src/index.ts"],
+  "entryPoints": ["./src/index.ts", "./src/react/src/index.ts"],
   "out": "typedoc/generated",
   "readme": "typedoc/landing-page.md",
-  "tsconfig": "tsconfig.json",
+  "tsconfig": "tsconfig.typedoc.json",
   "treatWarningsAsErrors": true,
   "includeVersion": true,
   "excludeInternal": true,

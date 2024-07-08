@@ -1,8 +1,33 @@
 import { Message } from '@ably-labs/chat';
 import { useState } from 'react';
 
-// useTest just exports a simple counter
-export const useCounter = () => {
+/**
+ * The return type of the custom hook.
+ */
+export interface TestHookReturnType {
+  /**
+   * The current count.
+   */
+  count: number;
+
+  /**
+   * Increment the count.
+   * @returns void
+   */
+  increment: () => void;
+
+  /**
+   * Decrement the count.
+   * @returns void
+   */
+  decrement: () => void;
+}
+
+/**
+ * A custom hook to manage a counter.
+ * @returns TestHookReturnType The return type of the custom hook.
+ */
+export const useCounter = (): TestHookReturnType => {
   const foo: Message = {
     timeserial: '1',
     text: 'Hello, world',
