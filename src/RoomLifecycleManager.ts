@@ -585,7 +585,6 @@ export class RoomLifecycleManager {
     // We succesfully attached all the channels - set our status to attached, start listening changes in channel status
     this._status.setStatus(attachResult);
     this._operationInProgress = false;
-    // TODO: Work out if we need to do anything special here
     this._pendingDiscontinuityEvents.forEach(
       (error: Ably.ErrorInfo | undefined, contributor: ContributesToRoomLifecycle) => {
         contributor.discontinuityDetected(error);
