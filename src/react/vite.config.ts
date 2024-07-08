@@ -19,5 +19,6 @@ export default defineConfig({
       // not bundle it.
       external: ['ably', '@ably-labs/chat', 'react'],
     },
+    sourcemap: true,
   },
 });
