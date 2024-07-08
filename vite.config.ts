@@ -16,5 +16,6 @@ export default defineConfig({
       // not bundle it.
       external: ['ably'],
     },
+    sourcemap: true,
   },
 });
