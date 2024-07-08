@@ -274,9 +274,9 @@ export class DefaultRoomReactions
     );
   }
 
-  discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
-    this._logger.warn('RoomReactions.discontinuityDetected();', { error });
-    this._discontinuityEmitter.emit('discontinuity', error);
+  discontinuityDetected(reason?: Ably.ErrorInfo | undefined): void {
+    this._logger.warn('RoomReactions.discontinuityDetected();', { reason });
+    this._discontinuityEmitter.emit('discontinuity', reason);
   }
 
   onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {

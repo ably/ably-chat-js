@@ -13,9 +13,9 @@ export interface HandlesDiscontinuity {
 
   /**
    * Called when a discontinuity is detected on the channel.
-   * @param error The error that caused the discontinuity.
+   * @param reason The error that caused the discontinuity.
    */
-  discontinuityDetected(error?: Ably.ErrorInfo): void;
+  discontinuityDetected(reason?: Ably.ErrorInfo): void;
 }
 
 /**
@@ -30,9 +30,9 @@ export interface OnDiscontinuitySubscriptionResponse {
 
 /**
  * A listener that can be registered for discontinuity events.
- * @param error The error that caused the discontinuity.
+ * @param reason The error that caused the discontinuity.
  */
-export type DiscontinuityListener = (error?: Ably.ErrorInfo) => void;
+export type DiscontinuityListener = (reason?: Ably.ErrorInfo) => void;
 
 /**
  * An interface to be implemented by objects that can emit discontinuities to listeners.

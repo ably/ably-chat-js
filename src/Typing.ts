@@ -298,9 +298,9 @@ export class DefaultTyping
     };
   }
 
-  discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
-    this._logger.warn(`DefaultTyping.discontinuityDetected();`, { error });
-    this._discontinuityEmitter.emit('discontinuity', error);
+  discontinuityDetected(reason?: Ably.ErrorInfo | undefined): void {
+    this._logger.warn(`DefaultTyping.discontinuityDetected();`, { reason });
+    this._discontinuityEmitter.emit('discontinuity', reason);
   }
 
   get timeoutMs(): number {

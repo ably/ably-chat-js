@@ -565,9 +565,9 @@ export class DefaultMessages
   /**
    * @inheritdoc HandlesDiscontinuity
    */
-  discontinuityDetected(error?: Ably.ErrorInfo): void {
-    this._logger.warn('Messages.discontinuityDetected();', { error });
-    this._discontinuityEmitter.emit('discontinuity', error);
+  discontinuityDetected(reason?: Ably.ErrorInfo): void {
+    this._logger.warn('Messages.discontinuityDetected();', { reason });
+    this._discontinuityEmitter.emit('discontinuity', reason);
   }
 
   /**

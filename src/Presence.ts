@@ -392,9 +392,9 @@ export class DefaultPresence
       },
     };
   }
-  discontinuityDetected(error?: Ably.ErrorInfo | undefined): void {
-    this._logger.warn('Presence.discontinuityDetected();', { error });
-    this._discontinuityEmitter.emit('discontinuity', error);
+  discontinuityDetected(reason?: Ably.ErrorInfo | undefined): void {
+    this._logger.warn('Presence.discontinuityDetected();', { reason });
+    this._discontinuityEmitter.emit('discontinuity', reason);
   }
 
   /**
