@@ -226,7 +226,7 @@ export class DefaultTyping
   private _receivedEventNumber = 0;
   private _triggeredEventNumber = 0;
   private _currentlyTyping: Set<string> = new Set<string>();
-  private _retryTimeout: NodeJS.Timeout | null = null;
+  private _retryTimeout: ReturnType<typeof setTimeout> | null = null;
   private _numRetries = 0;
 
   /**
