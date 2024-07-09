@@ -86,7 +86,7 @@ describe('realtime extensions', () => {
       addListenerToChannelPresenceWithoutAttach({
         channel,
         listener,
-        events: [PresenceEvents.enter, PresenceEvents.present],
+        events: [PresenceEvents.Enter, PresenceEvents.Present],
       });
 
       // Check the channel is still in initialized state
@@ -107,7 +107,7 @@ describe('realtime extensions', () => {
     new Promise<void>((done) => {
       const { channel } = context;
       const listener = (message: Ably.PresenceMessage) => {
-        expect(message.data).toEqual('foodata');
+        expect(message.data).toEqual('foo-data');
         done();
       };
 
@@ -121,7 +121,7 @@ describe('realtime extensions', () => {
       void otherRealtime.channels
         .get(channel.name)
         .attach()
-        .then(() => void channel.presence.enter('foodata'));
+        .then(() => void channel.presence.enter('foo-data'));
 
       // Attach our channel
       void channel.attach();
@@ -137,7 +137,7 @@ describe('realtime extensions', () => {
           reject(new Error('Listener should not be called'));
         };
 
-        addListenerToChannelPresenceWithoutAttach({ channel, listener, events: [PresenceEvents.leave] });
+        addListenerToChannelPresenceWithoutAttach({ channel, listener, events: [PresenceEvents.Leave] });
 
         // Check the channel is still in initialized state
         expect(channel.state).toEqual('initialized');

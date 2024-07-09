@@ -33,21 +33,21 @@ const expectedErrorInfo = (received: unknown, expected: unknown): Record<string,
   );
 };
 
-export interface errorInfoCompareType {
+export interface ErrorInfoCompareType {
   code?: number;
   statusCode?: number;
   message?: string;
-  cause?: errorInfoCompareType;
+  cause?: ErrorInfoCompareType;
 }
 
-interface checkResponseType {
+interface CheckResponseType {
   pass: boolean;
   message: () => string;
   expected: unknown;
   actual: unknown;
 }
 
-const toBeErrorInfo = (received: unknown, expected: errorInfoCompareType): checkResponseType => {
+const toBeErrorInfo = (received: unknown, expected: ErrorInfoCompareType): CheckResponseType => {
   if (!(received instanceof Ably.ErrorInfo)) {
     return {
       pass: false,

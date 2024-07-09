@@ -80,18 +80,18 @@ export interface OccupancySubscriptionResponse {
 export type OccupancyListener = (event: OccupancyEvent) => void;
 
 enum OccupancyEvents {
-  occupancy = 'occupancy',
+  Occupancy = 'occupancy',
 }
 
 interface OccupancyEventsMap {
-  [OccupancyEvents.occupancy]: OccupancyEvent;
+  [OccupancyEvents.Occupancy]: OccupancyEvent;
 }
 
 export class DefaultOccupancy
   extends EventEmitter<OccupancyEventsMap>
   implements Occupancy, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
-  private readonly roomId: string;
+  private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private _logger: Logger;
@@ -99,10 +99,10 @@ export class DefaultOccupancy
 
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
     super();
-    this.roomId = roomId;
+    this._roomId = roomId;
     this._channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });
     addListenerToChannelWithoutAttach({
-      listener: this.internalOccupancyListener.bind(this),
+      listener: this._internalOccupancyListener.bind(this),
       events: ['[meta]occupancy'],
       channel: this._channel,
     });
@@ -138,7 +138,7 @@ export class DefaultOccupancy
    */
   async get(): Promise<OccupancyEvent> {
     this._logger.trace('Occupancy.get();');
-    return this._chatApi.getOccupancy(this.roomId);
+    return this._chatApi.getOccupancy(this._roomId);
   }
 
   /**
@@ -152,7 +152,7 @@ export class DefaultOccupancy
    * An internal listener that listens for occupancy events from the underlying channel and translates them into
    * occupancy events for the public API.
    */
-  private internalOccupancyListener(message: Ably.InboundMessage): void {
+  private _internalOccupancyListener(message: Ably.InboundMessage): void {
     if (typeof message.data !== 'object') {
       this._logger.error('invalid occupancy event received; data is not an object', message);
       return;
@@ -187,7 +187,7 @@ export class DefaultOccupancy
       return;
     }
 
-    this.emit(OccupancyEvents.occupancy, {
+    this.emit(OccupancyEvents.Occupancy, {
       connections: connections,
       presenceMembers: presenceMembers,
     });
@@ -203,6 +203,7 @@ export class DefaultOccupancy
       },
     };
   }
+
   discontinuityDetected(reason?: Ably.ErrorInfo | undefined): void {
     this._logger.warn('Occupancy.discontinuityDetected();', { reason });
     this._discontinuityEmitter.emit('discontinuity', reason);

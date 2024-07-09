@@ -21,8 +21,8 @@ import EventEmitter from './utils/EventEmitter.js';
  * Represents the typing events mapped to their respective event payloads.
  */
 interface TypingEventsMap {
-  [TypingEvents.typingStarted]: TypingEvent;
-  [TypingEvents.typingStopped]: TypingEvent;
+  [TypingEvents.TypingStarted]: TypingEvent;
+  [TypingEvents.TypingStopped]: TypingEvent;
 }
 
 /**
@@ -177,7 +177,7 @@ export class DefaultTyping
   /**
    * Start the typing timeout timer. This will emit a typingStopped event if the timer expires.
    */
-  private startTypingTimer(): void {
+  private _startTypingTimer(): void {
     this._logger.trace(`DefaultTyping.startTypingTimer();`);
     this._timerId = setTimeout(() => {
       this._logger.debug(`DefaultTyping.startTypingTimer(); timeout expired`);
@@ -194,12 +194,12 @@ export class DefaultTyping
     if (this._timerId) {
       this._logger.debug(`DefaultTyping.start(); already typing, resetting timer`);
       clearTimeout(this._timerId);
-      this.startTypingTimer();
+      this._startTypingTimer();
       return;
     }
 
     // Start typing and emit typingStarted event
-    this.startTypingTimer();
+    this._startTypingTimer();
     return this._channel.presence.enterClient(this._clientId).then();
   }
 
@@ -261,7 +261,7 @@ export class DefaultTyping
         }
 
         this._currentlyTyping.add(member.clientId);
-        this.emit(TypingEvents.typingStarted, {
+        this.emit(TypingEvents.TypingStarted, {
           currentlyTyping: new Set<string>(this._currentlyTyping),
           change: {
             clientId: member.clientId,
@@ -276,7 +276,7 @@ export class DefaultTyping
         }
 
         this._currentlyTyping.delete(member.clientId);
-        this.emit(TypingEvents.typingStopped, {
+        this.emit(TypingEvents.TypingStopped, {
           currentlyTyping: new Set<string>(this._currentlyTyping),
           change: {
             clientId: member.clientId,

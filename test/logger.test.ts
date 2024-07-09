@@ -7,22 +7,22 @@ const defaultLogContext = { contextKey: 'contextValue' };
 
 describe('logger', () => {
   it.each([
-    [LogLevel.trace, LogLevel.trace, defaultLogContext],
-    [LogLevel.debug, LogLevel.trace, defaultLogContext],
-    [LogLevel.info, LogLevel.trace, defaultLogContext],
-    [LogLevel.warn, LogLevel.trace, defaultLogContext],
-    [LogLevel.error, LogLevel.trace, defaultLogContext],
-    [LogLevel.debug, LogLevel.debug, defaultLogContext],
-    [LogLevel.info, LogLevel.debug, defaultLogContext],
-    [LogLevel.warn, LogLevel.debug, defaultLogContext],
-    [LogLevel.error, LogLevel.debug, defaultLogContext],
-    [LogLevel.info, LogLevel.info, defaultLogContext],
-    [LogLevel.warn, LogLevel.info, defaultLogContext],
-    [LogLevel.error, LogLevel.info, defaultLogContext],
-    [LogLevel.warn, LogLevel.warn, defaultLogContext],
-    [LogLevel.error, LogLevel.warn, defaultLogContext],
-    [LogLevel.error, LogLevel.error, defaultLogContext],
-    [LogLevel.error, LogLevel.error, undefined], // no context
+    [LogLevel.Trace, LogLevel.Trace, defaultLogContext],
+    [LogLevel.Debug, LogLevel.Trace, defaultLogContext],
+    [LogLevel.Info, LogLevel.Trace, defaultLogContext],
+    [LogLevel.Warn, LogLevel.Trace, defaultLogContext],
+    [LogLevel.Error, LogLevel.Trace, defaultLogContext],
+    [LogLevel.Debug, LogLevel.Debug, defaultLogContext],
+    [LogLevel.Info, LogLevel.Debug, defaultLogContext],
+    [LogLevel.Warn, LogLevel.Debug, defaultLogContext],
+    [LogLevel.Error, LogLevel.Debug, defaultLogContext],
+    [LogLevel.Info, LogLevel.Info, defaultLogContext],
+    [LogLevel.Warn, LogLevel.Info, defaultLogContext],
+    [LogLevel.Error, LogLevel.Info, defaultLogContext],
+    [LogLevel.Warn, LogLevel.Warn, defaultLogContext],
+    [LogLevel.Error, LogLevel.Warn, defaultLogContext],
+    [LogLevel.Error, LogLevel.Error, defaultLogContext],
+    [LogLevel.Error, LogLevel.Error, undefined], // no context
   ])(
     `logs %s when configured level %s`,
     (logLevel: LogLevel, configuredLevel: LogLevel, logContext?: LogContext) =>
@@ -44,21 +44,21 @@ describe('logger', () => {
   );
 
   it.each([
-    [LogLevel.debug, LogLevel.trace],
-    [LogLevel.info, LogLevel.trace],
-    [LogLevel.warn, LogLevel.trace],
-    [LogLevel.error, LogLevel.trace],
-    [LogLevel.silent, LogLevel.trace],
-    [LogLevel.info, LogLevel.debug],
-    [LogLevel.warn, LogLevel.debug],
-    [LogLevel.error, LogLevel.debug],
-    [LogLevel.silent, LogLevel.debug],
-    [LogLevel.warn, LogLevel.info],
-    [LogLevel.error, LogLevel.info],
-    [LogLevel.silent, LogLevel.info],
-    [LogLevel.error, LogLevel.warn],
-    [LogLevel.silent, LogLevel.warn],
-    [LogLevel.silent, LogLevel.error],
+    [LogLevel.Debug, LogLevel.Trace],
+    [LogLevel.Info, LogLevel.Trace],
+    [LogLevel.Warn, LogLevel.Trace],
+    [LogLevel.Error, LogLevel.Trace],
+    [LogLevel.Silent, LogLevel.Trace],
+    [LogLevel.Info, LogLevel.Debug],
+    [LogLevel.Warn, LogLevel.Debug],
+    [LogLevel.Error, LogLevel.Debug],
+    [LogLevel.Silent, LogLevel.Debug],
+    [LogLevel.Warn, LogLevel.Info],
+    [LogLevel.Error, LogLevel.Info],
+    [LogLevel.Silent, LogLevel.Info],
+    [LogLevel.Error, LogLevel.Warn],
+    [LogLevel.Silent, LogLevel.Warn],
+    [LogLevel.Silent, LogLevel.Error],
   ])(
     'does not log below the log level',
     (configuredLevel: LogLevel, logLevel: LogLevel) =>
@@ -79,19 +79,19 @@ describe('logger', () => {
 
 const callMethodForLevel = (log: Logger, level: Omit<LogLevel, 'silent'>, context?: object | undefined) => {
   switch (level) {
-    case LogLevel.trace:
+    case LogLevel.Trace:
       log.trace('test', context);
       break;
-    case LogLevel.debug:
+    case LogLevel.Debug:
       log.debug('test', context);
       break;
-    case LogLevel.info:
+    case LogLevel.Info:
       log.info('test', context);
       break;
-    case LogLevel.warn:
+    case LogLevel.Warn:
       log.warn('test', context);
       break;
-    case LogLevel.error:
+    case LogLevel.Error:
       log.error('test', context);
       break;
   }

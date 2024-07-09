@@ -21,7 +21,7 @@ export interface ClientOptions {
  * Default configuration options for the chat client.
  */
 const defaultClientOptions = {
-  logLevel: LogLevel.error,
+  logLevel: LogLevel.Error,
 };
 
 /**

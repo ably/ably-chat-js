@@ -100,7 +100,7 @@ export interface Room {
 export class DefaultRoom implements Room {
   private readonly _roomId: string;
   private readonly _options: RoomOptions;
-  private readonly chatApi: ChatApi;
+  private readonly _chatApi: ChatApi;
   private readonly _messages: DefaultMessages;
   private readonly _typing?: DefaultTyping;
   private readonly _presence?: DefaultPresence;
@@ -133,12 +133,12 @@ export class DefaultRoom implements Room {
 
     this._roomId = roomId;
     this._options = options;
-    this.chatApi = chatApi;
+    this._chatApi = chatApi;
     this._logger = logger;
     this._status = new DefaultStatus(logger);
 
     // Setup features
-    this._messages = new DefaultMessages(roomId, realtime, this.chatApi, realtime.auth.clientId, logger);
+    this._messages = new DefaultMessages(roomId, realtime, this._chatApi, realtime.auth.clientId, logger);
     const features: ContributesToRoomLifecycle[] = [this._messages];
     if (options.presence) {
       this._logger.debug('enabling presence on room', { roomId });
@@ -160,7 +160,7 @@ export class DefaultRoom implements Room {
 
     if (options.occupancy) {
       this._logger.debug('enabling occupancy on room', { roomId });
-      this._occupancy = new DefaultOccupancy(roomId, realtime, this.chatApi, logger);
+      this._occupancy = new DefaultOccupancy(roomId, realtime, this._chatApi, logger);
       features.push(this._occupancy);
     }
 

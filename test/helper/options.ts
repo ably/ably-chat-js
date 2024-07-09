@@ -2,7 +2,7 @@ import { ClientOptions, normaliseClientOptions, NormalisedClientOptions } from '
 import { LogLevel } from '../../src/logger.js';
 
 const defaults: NormalisedClientOptions = {
-  logLevel: LogLevel.error,
+  logLevel: LogLevel.Error,
 };
 
 export const testClientOptions = (options?: ClientOptions): NormalisedClientOptions => {

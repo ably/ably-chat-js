@@ -92,6 +92,7 @@ describe('Messages', () => {
       const messagePromise = room.messages.send({
         text: 'hello there',
         headers: { something: 'else', abc: 123, def: true, bla: null },
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         metadata: { hello: { name: 'world', more: ['nested', true] }, 'meta-abc': 'abc', '123': 456, pi: 3.14 },
       });
 
@@ -110,6 +111,7 @@ describe('Messages', () => {
             def: true,
             bla: null,
           },
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           metadata: { hello: { name: 'world', more: ['nested', true] }, 'meta-abc': 'abc', '123': 456, pi: 3.14 },
         }),
       );

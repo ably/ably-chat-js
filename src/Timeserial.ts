@@ -91,7 +91,7 @@ export class DefaultTimeserial implements Timeserial {
    * @returns 0 if the timeserials are equal, <0 if the first timeserial is less than the second, >0 if the first timeserial is greater than the second.
    * @throws {@link ErrorInfo} if comparison timeserial is invalid.
    */
-  private timeserialCompare(timeserialToCompare: string | Timeserial): number {
+  private _timeserialCompare(timeserialToCompare: string | Timeserial): number {
     const secondTimeserial =
       typeof timeserialToCompare === 'string'
         ? DefaultTimeserial.calculateTimeserial(timeserialToCompare)
@@ -129,7 +129,7 @@ export class DefaultTimeserial implements Timeserial {
    * @throws {@link ErrorInfo} if the given timeserial is invalid.
    */
   before(timeserial: Timeserial | string): boolean {
-    return this.timeserialCompare(timeserial) < 0;
+    return this._timeserialCompare(timeserial) < 0;
   }
 
   /**
@@ -140,7 +140,7 @@ export class DefaultTimeserial implements Timeserial {
    * @throws {@link ErrorInfo} if the given timeserial is invalid.
    */
   after(timeserial: Timeserial | string): boolean {
-    return this.timeserialCompare(timeserial) > 0;
+    return this._timeserialCompare(timeserial) > 0;
   }
 
   /**
@@ -150,6 +150,6 @@ export class DefaultTimeserial implements Timeserial {
    * @throws {@link ErrorInfo} if the given timeserial is invalid.
    */
   equal(timeserial: Timeserial | string): boolean {
-    return this.timeserialCompare(timeserial) === 0;
+    return this._timeserialCompare(timeserial) === 0;
   }
 }

@@ -39,16 +39,16 @@ interface SendMessageParams {
  * Chat SDK Backend
  */
 export class ChatApi {
-  private readonly realtime: Ably.Realtime;
+  private readonly _realtime: Ably.Realtime;
   private readonly _logger: Logger;
 
   constructor(realtime: Ably.Realtime, logger: Logger) {
-    this.realtime = realtime;
+    this._realtime = realtime;
     this._logger = logger;
   }
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
-    return this.makeAuthorisedPaginatedRequest<Message, GetMessagesQueryParams>(
+    return this._makeAuthorisedPaginatedRequest<Message, GetMessagesQueryParams>(
       `/chat/v1/rooms/${roomId}/messages`,
       params,
     ).then((data) => {
@@ -82,7 +82,7 @@ export class ChatApi {
       body.headers = params.headers;
     }
 
-    return this.makeAuthorisedRequest<CreateMessageResponse, CreateMessageRequest>(
+    return this._makeAuthorisedRequest<CreateMessageResponse, CreateMessageRequest>(
       `/chat/v1/rooms/${roomId}/messages`,
       'POST',
       body,
@@ -90,17 +90,17 @@ export class ChatApi {
   }
 
   async getOccupancy(roomId: string): Promise<OccupancyEvent> {
-    return this.makeAuthorisedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
+    return this._makeAuthorisedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
   }
 
-  private async makeAuthorisedRequest<RES, REQ = undefined>(
+  private async _makeAuthorisedRequest<RES, REQ = undefined>(
     url: string,
     method: 'POST' | 'GET' | ' PUT' | 'DELETE' | 'PATCH',
     body?: REQ,
   ): Promise<RES> {
-    const response = await this.realtime.request<RES>(method, url, 1.1, {}, body);
+    const response = await this._realtime.request<RES>(method, url, 1.1, {}, body);
     if (!response.success) {
-      this._logger.error('ChatApi.makeAuthorisedRequest(); failed to make request', {
+      this._logger.error('ChatApi._makeAuthorisedRequest(); failed to make request', {
         url,
         statusCode: response.statusCode,
         errorCode: response.errorCode,
@@ -112,14 +112,14 @@ export class ChatApi {
     return response.items[0] as RES;
   }
 
-  private async makeAuthorisedPaginatedRequest<RES, REQ = undefined>(
+  private async _makeAuthorisedPaginatedRequest<RES, REQ = undefined>(
     url: string,
     params?: unknown,
     body?: REQ,
   ): Promise<PaginatedResult<RES>> {
-    const response = await this.realtime.request('GET', url, 1.1, params, body);
+    const response = await this._realtime.request('GET', url, 1.1, params, body);
     if (!response.success) {
-      this._logger.error('ChatApi.makeAuthorisedPaginatedRequest(); failed to make request', {
+      this._logger.error('ChatApi._makeAuthorisedPaginatedRequest(); failed to make request', {
         url,
         statusCode: response.statusCode,
         errorCode: response.errorCode,

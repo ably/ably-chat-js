@@ -18,5 +18,5 @@ export const testLoggingLevel = (): LogLevel => {
     return level as LogLevel;
   }
 
-  return LogLevel.silent;
+  return LogLevel.Silent;
 };

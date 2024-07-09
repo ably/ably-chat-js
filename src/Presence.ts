@@ -21,10 +21,10 @@ import EventEmitter from './utils/EventEmitter.js';
  * Interface for PresenceEventsMap
  */
 interface PresenceEventsMap {
-  [PresenceEvents.enter]: PresenceEvent;
-  [PresenceEvents.leave]: PresenceEvent;
-  [PresenceEvents.update]: PresenceEvent;
-  [PresenceEvents.present]: PresenceEvent;
+  [PresenceEvents.Enter]: PresenceEvent;
+  [PresenceEvents.Leave]: PresenceEvent;
+  [PresenceEvents.Update]: PresenceEvent;
+  [PresenceEvents.Present]: PresenceEvent;
 }
 
 /**
@@ -191,7 +191,7 @@ export class DefaultPresence
   implements Presence, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _channel: Ably.RealtimeChannel;
-  private readonly clientId: string;
+  private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
@@ -222,7 +222,7 @@ export class DefaultPresence
       listener: this.subscribeToEvents.bind(this),
       channel: this._channel,
     });
-    this.clientId = clientId;
+    this._clientId = clientId;
     this._logger = logger;
   }
 
@@ -272,7 +272,7 @@ export class DefaultPresence
       userCustomData: data,
     };
 
-    return this._channel.presence.enterClient(this.clientId, presenceEventToSend);
+    return this._channel.presence.enterClient(this._clientId, presenceEventToSend);
   }
 
   /**
@@ -286,7 +286,7 @@ export class DefaultPresence
       userCustomData: data,
     };
 
-    return this._channel.presence.updateClient(this.clientId, presenceEventToSend);
+    return this._channel.presence.updateClient(this._clientId, presenceEventToSend);
   }
 
   /**
@@ -300,7 +300,7 @@ export class DefaultPresence
       userCustomData: data,
     };
 
-    return this._channel.presence.leaveClient(this.clientId, presenceEventToSend);
+    return this._channel.presence.leaveClient(this._clientId, presenceEventToSend);
   }
 
   /**
@@ -364,8 +364,8 @@ export class DefaultPresence
   subscribeToEvents = (member: Ably.PresenceMessage) => {
     try {
       // Ably-js never emits the 'absent' event, so we can safely ignore it here.
-      this.emit(PresenceEvents[member.action as PresenceEvents], {
-        action: PresenceEvents[member.action as PresenceEvents],
+      this.emit(member.action as PresenceEvents, {
+        action: member.action as PresenceEvents,
         clientId: member.clientId,
         timestamp: member.timestamp,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -392,6 +392,7 @@ export class DefaultPresence
       },
     };
   }
+
   discontinuityDetected(reason?: Ably.ErrorInfo | undefined): void {
     this._logger.warn('Presence.discontinuityDetected();', { reason });
     this._discontinuityEmitter.emit('discontinuity', reason);
