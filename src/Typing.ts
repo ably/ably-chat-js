@@ -1,4 +1,5 @@
 import * as Ably from 'ably';
+import { dequal } from 'dequal';
 
 import { getChannel } from './channel.js';
 import {
@@ -16,7 +17,6 @@ import { addListenerToChannelPresenceWithoutAttach } from './realtimeExtensions.
 import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { TypingOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';
-import { dequal } from 'dequal';
 
 const PRESENCE_GET_RETRY_INTERVAL_MS = 1500; // base retry interval, we double it each time
 const PRESENCE_GET_RETRY_MAX_INTERVAL_MS = 30000; // max retry interval
