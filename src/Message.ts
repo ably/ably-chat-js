@@ -71,7 +71,9 @@ export interface Message {
   readonly headers: MessageHeaders;
 
   /**
-   * Determines if this message was created before the given message.
+   * Determines if this message was created before the given message. This comparison is based on
+   * global order, so does not necessarily represent the order that messages are received in realtime
+   * from the backend.
    * @param message The message to compare against.
    * @returns true if this message was created before the given message, in global order.
    * @throws {@link ErrorInfo} if timeserial of either message is invalid.
@@ -79,7 +81,9 @@ export interface Message {
   before(message: Message): boolean;
 
   /**
-   * Determines if this message was created after the given message.
+   * Determines if this message was created after the given message. This comparison is based on
+   * global order, so does not necessarily represent the order that messages are received in realtime
+   * from the backend.
    * @param message The message to compare against.
    * @returns true if this message was created after the given message, in global order.
    * @throws {@link ErrorInfo} if timeserial of either message is invalid.
