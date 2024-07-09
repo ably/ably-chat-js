@@ -32,7 +32,7 @@ function presenceGetResponse(clientIds: Iterable<string>): Ably.PresenceMessage[
       data: null,
       encoding: '',
       extras: null,
-      id: 'blablabla_' + clientId,
+      id: 'some_id_' + clientId,
     });
   }
   return res;
@@ -291,7 +291,7 @@ describe('Typing', () => {
     expect((context.room.typing as DefaultTyping).detachmentErrorCode).toBe(102054);
   });
 
-  it<TestContext>('shuold not emit the same typing set twice', async (context) => {
+  it<TestContext>('should not emit the same typing set twice', async (context) => {
     const { room } = context;
     const channel = context.room.typing.channel;
 
