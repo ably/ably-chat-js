@@ -39,6 +39,12 @@ module.exports = {
         'no-undef': 'off',
         'no-dupe-class-members': 'off',
         'require-await': 'off',
+        '@typescript-eslint/no-extraneous-class': [
+          'error',
+          {
+            allowStaticOnly: true,
+          },
+        ],
         // see:
         // https://github.com/ably/spaces/issues/76
         // https://github.com/microsoft/TypeScript/issues/16577#issuecomment-703190339

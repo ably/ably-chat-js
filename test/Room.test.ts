@@ -4,13 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatApi } from '../src/ChatApi.ts';
 import { normaliseClientOptions } from '../src/config.ts';
 import { DefaultRoom, Room } from '../src/Room.ts';
-import {
-  DefaultOccupancyOptions,
-  DefaultPresenceOptions,
-  DefaultReactionsOptions,
-  DefaultTypingOptions,
-  RoomOptions,
-} from '../src/RoomOptions.ts';
+import { RoomOptions, RoomOptionsDefaults } from '../src/RoomOptions.ts';
 import { DefaultTyping } from '../src/Typing.ts';
 import { randomRoomId } from './helper/identifier.ts';
 import { makeTestLogger } from './helper/logger.ts';
@@ -51,10 +45,10 @@ describe('Room', () => {
 
   describe.each([
     ['messages', {}, (room: Room) => room.messages],
-    ['presence', { presence: DefaultPresenceOptions }, (room: Room) => room.presence],
-    ['occupancy', { occupancy: DefaultOccupancyOptions }, (room: Room) => room.occupancy],
-    ['typing', { typing: DefaultTypingOptions }, (room: Room) => room.typing],
-    ['reactions', { reactions: DefaultReactionsOptions }, (room: Room) => room.reactions],
+    ['presence', { presence: RoomOptionsDefaults.presence }, (room: Room) => room.presence],
+    ['occupancy', { occupancy: RoomOptionsDefaults.occupancy }, (room: Room) => room.occupancy],
+    ['typing', { typing: RoomOptionsDefaults.typing }, (room: Room) => room.typing],
+    ['reactions', { reactions: RoomOptionsDefaults.reactions }, (room: Room) => room.reactions],
   ])('feature configured', (description: string, options: RoomOptions, featureLoader: (room: Room) => unknown) => {
     it<TestContext>(`should not throw an error when trying to access ${description} whilst enabled`, (context) => {
       const room = context.getRoom(options);
@@ -109,7 +103,7 @@ describe('Room', () => {
     });
 
     it<TestContext>('should only release with enabled features', async (context) => {
-      const room = context.getRoom({ typing: DefaultTypingOptions }) as DefaultRoom;
+      const room = context.getRoom({ typing: RoomOptionsDefaults.typing }) as DefaultRoom;
 
       // Setup spies on the realtime client and the room lifecycle manager
       vi.spyOn(context.realtime.channels, 'release');

@@ -5,13 +5,7 @@ import { ChatClient } from '../../src/Chat.ts';
 import { ChatApi } from '../../src/ChatApi.ts';
 import { normaliseClientOptions } from '../../src/config.ts';
 import { DefaultRoom, Room } from '../../src/Room.ts';
-import {
-  DefaultOccupancyOptions,
-  DefaultPresenceOptions,
-  DefaultReactionsOptions,
-  DefaultTypingOptions,
-  RoomOptions,
-} from '../../src/RoomOptions.ts';
+import { RoomOptions, RoomOptionsDefaults } from '../../src/RoomOptions.ts';
 import { RoomLifecycle, RoomStatus } from '../../src/RoomStatus.ts';
 import { randomRoomId } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
@@ -27,10 +21,7 @@ export const getRandomRoom = (chat: ChatClient): Room => chat.rooms.get(randomRo
 
 // Return a default set of room options
 export const defaultRoomOptions: RoomOptions = {
-  presence: DefaultPresenceOptions,
-  typing: DefaultTypingOptions,
-  reactions: DefaultReactionsOptions,
-  occupancy: DefaultOccupancyOptions,
+  ...RoomOptionsDefaults,
 };
 
 // Makes a room with the given (or default) options, as a standalone room aside from the chat client
