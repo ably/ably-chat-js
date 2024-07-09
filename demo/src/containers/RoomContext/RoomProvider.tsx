@@ -1,5 +1,5 @@
 import { FC, ReactNode, useMemo } from 'react';
-import { ChatClient, RoomOptionsDefaults } from '@ably-labs/chat';
+import { ChatClient, RoomOptionsDefaults } from '@ably/chat';
 import { RoomContext } from './RoomContext';
 
 interface RoomProviderProps {

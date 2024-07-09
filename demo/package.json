@@ -13,7 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ably-labs/chat": "file:..",
+    "@ably/chat": "file:..",
     "ably": "^2.2.1",
     "clsx": "^2.1.1",
     "nanoid": "^5.0.7",

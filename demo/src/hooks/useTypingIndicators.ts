@@ -1,4 +1,4 @@
-import { TypingListener } from '@ably-labs/chat';
+import { TypingListener } from '@ably/chat';
 import { useCallback, useState } from 'react';
 import { useRoom } from './useRoom';
 

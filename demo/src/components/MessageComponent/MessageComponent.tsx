@@ -1,4 +1,4 @@
-import { Message } from '@ably-labs/chat';
+import { Message } from '@ably/chat';
 import React, { useCallback } from 'react';
 import clsx from 'clsx';
 
