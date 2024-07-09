@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { normaliseClientOptions } from '../src/config.js';
 import { Room } from '../src/Room.js';
-import { DefaultTypingOptions } from '../src/RoomOptions.js';
+import { RoomOptionsDefaults } from '../src/RoomOptions.js';
 import { DefaultRooms, Rooms } from '../src/Rooms.js';
 import { RoomLifecycle } from '../src/RoomStatus.js';
 import { TypingEvent } from '../src/Typing.js';
@@ -155,7 +155,7 @@ describe('Typing', () => {
   it<TestContext>('handles discontinuities', async (context) => {
     const { chat } = context;
 
-    const room = chat.get(randomRoomId(), { typing: DefaultTypingOptions });
+    const room = chat.get(randomRoomId(), { typing: RoomOptionsDefaults.typing });
 
     // Attach the room
     await room.attach();

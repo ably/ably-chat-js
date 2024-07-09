@@ -8,7 +8,7 @@ import { ChatClient } from '../src/Chat.js';
 import { PresenceEvents } from '../src/events.js';
 import { PresenceData, PresenceEvent } from '../src/Presence.js';
 import { Room } from '../src/Room.js';
-import { DefaultPresenceOptions } from '../src/RoomOptions.js';
+import { RoomOptionsDefaults } from '../src/RoomOptions.js';
 import { RoomLifecycle } from '../src/RoomStatus.js';
 import { newChatClient } from './helper/chat.js';
 import { randomRoomId } from './helper/identifier.js';
@@ -75,7 +75,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     const roomId = randomRoomId();
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
-    context.chatRoom = context.chat.rooms.get(roomId, { presence: DefaultPresenceOptions });
+    context.chatRoom = context.chat.rooms.get(roomId, { presence: RoomOptionsDefaults.presence });
   });
 
   // Helper function to wait for an event and run an expectation function on the received message

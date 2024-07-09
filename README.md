@@ -85,7 +85,7 @@ chat.connection.status.offAll();
 You can get Room with name `"basketball-stream"` this way:
 
 ```ts
-const room = chat.rooms.get('basketball-stream', {reactions: DefaultRoomReactionsOptions});
+const room = chat.rooms.get('basketball-stream', {reactions: RoomOptionsDefaults.reactions});
 ```
 
 A room does not need to be created explicitly in the backend before it can be used.

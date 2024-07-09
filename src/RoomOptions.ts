@@ -1,6 +1,46 @@
 import * as Ably from 'ably';
 
 /**
+ * Represents the default options for a chat room.
+ */
+export class RoomOptionsDefaults {
+  /**
+   * The default presence options for a chat room.
+   */
+  static presence: PresenceOptions = {
+    /**
+     * The client should be able to enter presence.
+     */
+    enter: true,
+
+    /**
+     * The client should be able to subscribe to presence.
+     */
+    subscribe: true,
+  };
+
+  /**
+   * The default typing options for a chat room.
+   */
+  static typing: TypingOptions = {
+    /**
+     * The default timeout for typing events in milliseconds.
+     */
+    timeoutMs: 10000,
+  };
+
+  /**
+   * The default reactions options for a chat room.
+   */
+  static reactions: RoomReactionsOptions = {};
+
+  /**
+   * The default occupancy options for a chat room.
+   */
+  static occupancy: OccupancyOptions = {};
+}
+
+/**
  * Represents the presence options for a chat room.
  */
 export interface PresenceOptions {
@@ -22,14 +62,6 @@ export interface PresenceOptions {
 }
 
 /**
- * The default presence options.
- */
-export const DefaultPresenceOptions: PresenceOptions = {
-  enter: true,
-  subscribe: true,
-};
-
-/**
  * Represents the typing options for a chat room.
  */
 export interface TypingOptions {
@@ -42,22 +74,10 @@ export interface TypingOptions {
 }
 
 /**
- * The default typing options.
- */
-export const DefaultTypingOptions: TypingOptions = {
-  timeoutMs: 10000,
-};
-
-/**
  * Represents the reactions options for a chat room.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface ReactionsOptions {}
-
-/**
- * The default reactions options.
- */
-export const DefaultReactionsOptions: ReactionsOptions = {};
+export interface RoomReactionsOptions {}
 
 /**
  * Represents the occupancy options for a chat room.
@@ -66,36 +86,31 @@ export const DefaultReactionsOptions: ReactionsOptions = {};
 export interface OccupancyOptions {}
 
 /**
- * The default occupancy options.
- */
-export const DefaultOccupancyOptions: OccupancyOptions = {};
-
-/**
  * Represents the options for a given chat room.
  */
 export interface RoomOptions {
   /**
    * The presence options for the room. To enable presence in the room, set this property. You may
-   * use {@link DefaultPresenceOptions} to enable presence with default options.
+   * use {@link RoomOptionsDefaults.presence} to enable presence with default options.
    * @defaultValue undefined
    */
   presence?: PresenceOptions;
 
   /**
    * The typing options for the room. To enable typing in the room, set this property. You may use
-   * {@link DefaultTypingOptions} to enable typing with default options.
+   * {@link RoomOptionsDefaults.typing} to enable typing with default options.
    */
   typing?: TypingOptions;
 
   /**
    * The reactions options for the room. To enable reactions in the room, set this property. You may use
-   * {@link DefaultReactionsOptions} to enable reactions with default options.
+   * {@link RoomOptionsDefaults.reactions} to enable reactions with default options.
    */
-  reactions?: ReactionsOptions;
+  reactions?: RoomReactionsOptions;
 
   /**
    * The occupancy options for the room. To enable occupancy in the room, set this property. You may use
-   * {@link DefaultOccupancyOptions} to enable occupancy with default options.
+   * {@link RoomOptionsDefaults.occupancy} to enable occupancy with default options.
    */
   occupancy?: OccupancyOptions;
 }
