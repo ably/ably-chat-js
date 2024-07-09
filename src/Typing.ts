@@ -248,10 +248,10 @@ export class DefaultTyping
       this._numRetries = 0;
     }
 
-    this.getAndEmit(this._receivedEventNumber);
+    this._getAndEmit(this._receivedEventNumber);
   };
 
-  private getAndEmit(eventNum: number) {
+  private _getAndEmit(eventNum: number) {
     this.get()
       .then((currentlyTyping) => {
         // successful fetch, remove retry timeout if one exists
@@ -302,7 +302,7 @@ export class DefaultTyping
         this._retryTimeout = setTimeout(() => {
           this._retryTimeout = null;
           this._receivedEventNumber++;
-          this.getAndEmit(this._receivedEventNumber);
+          this._getAndEmit(this._receivedEventNumber);
         }, waitBeforeRetry);
       });
   }
