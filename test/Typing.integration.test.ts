@@ -38,13 +38,14 @@ const waitForMessages = (messages: TypingEvent[], expectedCount: number) => {
     }, 3000);
   });
 };
+
 describe('Typing', () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
     context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
-    context.chatRoom = context.chat.get(randomRoomId(), { typing: { timeoutMs: 300 } });
+    context.chatRoom = context.chat.get(randomRoomId(), { typing: { timeoutMs: 500 } });
   });
 
   // Test to check if typing starts and then stops typing after the default timeout
@@ -63,11 +64,9 @@ describe('Typing', () => {
       // Once the timeout timer expires, the typingStopped event should be emitted
       await waitForMessages(events, 2);
       // Should have received a typingStarted and then typingStopped event
-      expect(events[0]?.change.clientId, 'client ids should match').toEqual(context.clientId);
-      expect(events[0]?.change.isTyping, 'isTyping should be true').toEqual(true);
+      expect(events[0]?.currentlyTyping, 'clientId should be typing').toEqual(new Set([context.clientId]));
       // Wait for the typing timeout to expire and the stop typing event to be received
-      expect(events[1]?.change.clientId, 'client ids should match').toEqual(context.clientId);
-      expect(events[1]?.change.isTyping, 'isTyping should be false').toEqual(false);
+      expect(events[1]?.currentlyTyping, 'clientId should no longer be typing').toEqual(new Set());
     },
     TEST_TIMEOUT,
   );
@@ -79,22 +78,19 @@ describe('Typing', () => {
       context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
-      // Attach the room
+
       await context.chatRoom.attach();
+
       // Send typing events
       await context.chatRoom.typing.start();
+      await waitForMessages(events, 1);
+      expect(events.length).toEqual(1);
+      expect(events[0]?.currentlyTyping).toEqual(new Set([context.clientId]));
+
       await context.chatRoom.typing.stop();
-
-      // Should have received a typingStarted and typingStopped event
-      expect(events.length, 'typingStopped event should have been received').toEqual(2);
-
-      // First event should be typingStarted
-      expect(events[0]?.currentlyTyping.has(context.clientId)).toEqual(true);
-      expect(events[0]?.change.isTyping, 'first event should be typingStarted').toEqual(true);
-
-      // Last event should be typingStopped
-      expect(events[1]?.change.isTyping, 'second event should be typingStopped').toEqual(false);
-      expect(events[1]?.currentlyTyping.has(context.clientId)).toEqual(false);
+      await waitForMessages(events, 2);
+      expect(events.length).toEqual(2);
+      expect(events[1]?.currentlyTyping).toEqual(new Set());
     },
     TEST_TIMEOUT,
   );
@@ -133,7 +129,7 @@ describe('Typing', () => {
       // Wait for the typing events to be received
       await waitForMessages(events, 2);
       // Get the currently typing client ids
-      const currentlyTypingClientIds = context.chatRoom.typing.get();
+      const currentlyTypingClientIds = await context.chatRoom.typing.get();
       // Ensure that the client ids are correct
       expect(currentlyTypingClientIds.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIds.has(clientId1), 'client1 should be typing').toEqual(true);
@@ -144,7 +140,7 @@ describe('Typing', () => {
       // Wait for the typing events to be received
       await waitForMessages(events, 1);
       // Get the currently typing client ids
-      const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.get();
+      const currentlyTypingClientIdsAfterStop = await context.chatRoom.typing.get();
       // Ensure that the client ids are correct and client1 is no longer typing
       expect(currentlyTypingClientIdsAfterStop.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIdsAfterStop.has(clientId1), 'client1 should not be typing').toEqual(false);

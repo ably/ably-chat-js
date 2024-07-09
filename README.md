@@ -435,7 +435,7 @@ To subscribe to typing events, provide a listener to the `subscribe` method.
 
 ```ts
 const {unsubscribe} = room.typing.subscribe((event) => {
-  console.log(event);
+  console.log("currently typing:", event.currentlyTyping);
 });
 ```
 

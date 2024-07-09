@@ -31,10 +31,8 @@ export enum PresenceEvents {
 }
 
 export enum TypingEvents {
-  /** Event trigger when a user starts typing. */
-  TypingStarted = 'typing.typingStarted',
-  /** Event trigger when a user stops typing. */
-  TypingStopped = 'typing.typingStopped',
+  /** The set of currently typing users has changed. */
+  Changed = 'typing.changed',
 }
 
 /**

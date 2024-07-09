@@ -1,4 +1,5 @@
 import * as Ably from 'ably';
+import { dequal } from 'dequal';
 
 import { getChannel } from './channel.js';
 import {
@@ -17,13 +18,9 @@ import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { TypingOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';
 
-/**
- * Represents the typing events mapped to their respective event payloads.
- */
-interface TypingEventsMap {
-  [TypingEvents.TypingStarted]: TypingEvent;
-  [TypingEvents.TypingStopped]: TypingEvent;
-}
+const PRESENCE_GET_RETRY_INTERVAL_MS = 1500; // base retry interval, we double it each time
+const PRESENCE_GET_RETRY_MAX_INTERVAL_MS = 30000; // max retry interval
+const PRESENCE_GET_MAX_RETRIES = 5; // max num of retries
 
 /**
  * Interface for Typing. This class is used to manage typing events in a chat room.
@@ -43,15 +40,10 @@ export interface Typing extends EmitsDiscontinuities {
   unsubscribeAll(): void;
 
   /**
-   * Get the set of clientIds that are currently typing.
-   * @returns A set of clientIds that are currently typing.
+   * Get the current typers, a set of clientIds.
+   * @returns A Promise of a set of clientIds that are currently typing.
    */
-
-  /**
-   * Get the current typers, a unique set of clientIds.
-   * @returns A set of clientIds that are currently typing.
-   */
-  get(): Set<string>;
+  get(): Promise<Set<string>>;
 
   /**
    * Start indicates that the current user is typing. This will emit a typingStarted event to inform listening clients and begin a timer,
@@ -87,21 +79,6 @@ export interface TypingEvent {
    * Get a set of clientIds that are currently typing.
    */
   get currentlyTyping(): Set<string>;
-
-  /**
-   * The change that caused the typing event.
-   */
-  change: {
-    /**
-     * The clientId of the client whose typing state has changed.
-     */
-    clientId: string;
-
-    /**
-     * Whether the client is typing or not.
-     */
-    isTyping: boolean;
-  };
 }
 
 /**
@@ -120,13 +97,19 @@ export interface TypingSubscriptionResponse {
   unsubscribe: () => void;
 }
 
+/**
+ * Represents the typing events mapped to their respective event payloads.
+ */
+interface TypingEventsMap {
+  [TypingEvents.Changed]: TypingEvent;
+}
+
 export class DefaultTyping
   extends EventEmitter<TypingEventsMap>
   implements Typing, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _clientId: string;
   private readonly _roomId: string;
-  private readonly _currentlyTyping: Set<string>;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -147,7 +130,6 @@ export class DefaultTyping
     super();
     this._roomId = roomId;
     this._clientId = clientId;
-    this._currentlyTyping = new Set();
     this._channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
     addListenerToChannelPresenceWithoutAttach({
       listener: this._internalSubscribeToEvents.bind(this),
@@ -163,8 +145,8 @@ export class DefaultTyping
   /**
    * @inheritDoc
    */
-  get(): Set<string> {
-    return new Set<string>(this._currentlyTyping);
+  get(): Promise<Set<string>> {
+    return this._channel.presence.get().then((members) => new Set<string>(members.map((m) => m.clientId)));
   }
 
   /**
@@ -241,6 +223,12 @@ export class DefaultTyping
     this.off();
   }
 
+  private _receivedEventNumber = 0;
+  private _triggeredEventNumber = 0;
+  private _currentlyTyping: Set<string> = new Set<string>();
+  private _retryTimeout: ReturnType<typeof setTimeout> | null = null;
+  private _numRetries = 0;
+
   /**
    * Subscribe to internal events. This will listen to presence events and convert them into associated typing events,
    * while also updating the currentlyTypingClientIds set.
@@ -251,41 +239,73 @@ export class DefaultTyping
       return;
     }
 
-    switch (member.action) {
-      case 'enter':
-      case 'present':
-      case 'update':
-        if (!member.clientId) {
-          this._logger.error(`unable to handle typingStarted event; no clientId`, member);
-          return;
-        }
+    this._receivedEventNumber += 1;
 
-        this._currentlyTyping.add(member.clientId);
-        this.emit(TypingEvents.TypingStarted, {
-          currentlyTyping: new Set<string>(this._currentlyTyping),
-          change: {
-            clientId: member.clientId,
-            isTyping: true,
-          },
-        });
-        break;
-      case 'leave':
-        if (!member.clientId) {
-          this._logger.error(`unable to handle typingStopped event; no clientId`, member);
-          return;
-        }
-
-        this._currentlyTyping.delete(member.clientId);
-        this.emit(TypingEvents.TypingStopped, {
-          currentlyTyping: new Set<string>(this._currentlyTyping),
-          change: {
-            clientId: member.clientId,
-            isTyping: false,
-          },
-        });
-        break;
+    // received a real event, cancelling retry timeout
+    if (this._retryTimeout !== null) {
+      clearTimeout(this._retryTimeout);
+      this._retryTimeout = null;
+      this._numRetries = 0;
     }
+
+    this._getAndEmit(this._receivedEventNumber);
   };
+
+  private _getAndEmit(eventNum: number) {
+    this.get()
+      .then((currentlyTyping) => {
+        // successful fetch, remove retry timeout if one exists
+        if (this._retryTimeout !== null) {
+          clearTimeout(this._retryTimeout);
+          this._retryTimeout = null;
+          this._numRetries = 0;
+        }
+
+        // if we've seen the result of a newer promise, do nothing
+        if (this._triggeredEventNumber >= eventNum) {
+          return;
+        }
+        this._triggeredEventNumber = eventNum;
+
+        // if current typers haven't changed since we last emitted, do nothing
+        if (dequal(this._currentlyTyping, currentlyTyping)) {
+          return;
+        }
+
+        this._currentlyTyping = currentlyTyping;
+        this.emit(TypingEvents.Changed, {
+          currentlyTyping: new Set(currentlyTyping),
+        });
+      })
+      .catch((err: unknown) => {
+        const willReattempt = this._numRetries < PRESENCE_GET_MAX_RETRIES;
+        this._logger.error(`Error fetching currently typing clientIds set.`, {
+          error: err,
+          willReattempt: willReattempt,
+        });
+        if (!willReattempt) {
+          return;
+        }
+
+        // already another timeout, do nothing
+        if (this._retryTimeout !== null) {
+          return;
+        }
+
+        const waitBeforeRetry = Math.min(
+          PRESENCE_GET_RETRY_MAX_INTERVAL_MS,
+          PRESENCE_GET_RETRY_INTERVAL_MS * Math.pow(2, this._numRetries),
+        );
+
+        this._numRetries += 1;
+
+        this._retryTimeout = setTimeout(() => {
+          this._retryTimeout = null;
+          this._receivedEventNumber++;
+          this._getAndEmit(this._receivedEventNumber);
+        }, waitBeforeRetry);
+      });
+  }
 
   onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
     this._logger.trace(`DefaultTyping.onDiscontinuity();`);
