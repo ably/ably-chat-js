@@ -38,13 +38,14 @@ const waitForMessages = (messages: TypingEvent[], expectedCount: number) => {
     }, 3000);
   });
 };
+
 describe('Typing', () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
     context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
-    context.chatRoom = context.chat.get(randomRoomId(), { typing: { timeoutMs: 300 } });
+    context.chatRoom = context.chat.get(randomRoomId(), { typing: { timeoutMs: 500 } });
   });
 
   // Test to check if typing starts and then stops typing after the default timeout
@@ -63,11 +64,9 @@ describe('Typing', () => {
       // Once the timeout timer expires, the typingStopped event should be emitted
       await waitForMessages(events, 2);
       // Should have received a typingStarted and then typingStopped event
-      expect(events[0]?.change.clientId, 'client ids should match').toEqual(context.clientId);
-      expect(events[0]?.change.isTyping, 'isTyping should be true').toEqual(true);
+      expect(events[0]?.currentlyTyping, 'clientId should be typing').toEqual(new Set([context.clientId]));
       // Wait for the typing timeout to expire and the stop typing event to be received
-      expect(events[1]?.change.clientId, 'client ids should match').toEqual(context.clientId);
-      expect(events[1]?.change.isTyping, 'isTyping should be false').toEqual(false);
+      expect(events[1]?.currentlyTyping, 'clientId should no longer be typing').toEqual(new Set());
     },
     TEST_TIMEOUT,
   );
@@ -75,38 +74,23 @@ describe('Typing', () => {
   it<TestContext>(
     'subscribes to all typing events, sent by start and stop',
     async (context) => {
-      await context.chatRoom.attach();
-
-      const twoEvents = new Promise<TypingEvent[]>((accept, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('timed out'));
-        }, 3000);
-        const events: TypingEvent[] = [];
-        context.chatRoom.typing.subscribe((event) => {
-          events.push(event);
-          if (events.length === 2) {
-            clearTimeout(timeout);
-            accept(events);
-          }
-        });
+      const events: TypingEvent[] = [];
+      context.chatRoom.typing.subscribe((event) => {
+        events.push(event);
       });
+
+      await context.chatRoom.attach();
 
       // Send typing events
       await context.chatRoom.typing.start();
+      await waitForMessages(events, 1);
+      expect(events.length).toEqual(1);
+      expect(events[0]?.currentlyTyping).toEqual(new Set([context.clientId]));
+
       await context.chatRoom.typing.stop();
-
-      const events = await twoEvents;
-
-      // Should have received a typingStarted and typingStopped event
-      expect(events.length, 'typingStopped event should have been received').toEqual(2);
-
-      // First event should be typingStarted
-      expect(events[0]?.currentlyTyping.has(context.clientId)).toEqual(true);
-      expect(events[0]?.change.isTyping, 'first event should be typingStarted').toEqual(true);
-
-      // Last event should be typingStopped
-      expect(events[1]?.change.isTyping, 'second event should be typingStopped').toEqual(false);
-      expect(events[1]?.currentlyTyping.has(context.clientId)).toEqual(false);
+      await waitForMessages(events, 2);
+      expect(events.length).toEqual(2);
+      expect(events[1]?.currentlyTyping).toEqual(new Set());
     },
     TEST_TIMEOUT,
   );
