@@ -22,22 +22,7 @@ import { DefaultTimeserial } from './Timeserial.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 interface MessageEventsMap {
-  [MessageEvents.created]: MessageEventPayload;
-}
-
-/**
- * A direction to query messages in a chat room.
- */
-export enum Direction {
-  /**
-   * Query messages from the start of the time window to the end.
-   */
-  forwards = 'forwards',
-
-  /**
-   * Query messages from the end of the time window to the start.
-   */
-  backwards = 'backwards',
+  [MessageEvents.Created]: MessageEventPayload;
 }
 
 /**
@@ -69,10 +54,13 @@ export interface QueryOptions {
 
   /**
    * The direction to query messages in.
+   * If `forwards`, the response will include messages from the start of the time window to the end.
+   * If `backwards`, the response will include messages from the end of the time window to the start.
+   * If not provided, the default is `forwards`.
    *
    * @defaultValue forwards
    */
-  direction?: keyof typeof Direction;
+  direction?: 'forwards' | 'backwards';
 }
 
 /**
@@ -235,8 +223,8 @@ export class DefaultMessages
     this._roomId = roomId;
     this._channel = getChannel(messagesChannelName(roomId), realtime);
     addListenerToChannelWithoutAttach({
-      listener: this.processEvent.bind(this),
-      events: [MessageEvents.created],
+      listener: this._processEvent.bind(this),
+      events: [MessageEvents.Created],
       channel: this._channel,
     });
 
@@ -248,12 +236,12 @@ export class DefaultMessages
     // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
     // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
     this._channel.on('attached', (message) => {
-      this.handleAttach(message.resumed);
+      this._handleAttach(message.resumed);
     });
     // Handles the case where an update message is received from a channel after a detach and reattach.
     this._channel.on('update', (message) => {
       if (message.current === 'attached' && message.previous === 'attached') {
-        this.handleAttach(message.resumed);
+        this._handleAttach(message.resumed);
       }
     });
   }
@@ -261,7 +249,7 @@ export class DefaultMessages
   /**
    * @inheritdoc Messages
    */
-  private async getBeforeSubscriptionStart(
+  private async _getBeforeSubscriptionStart(
     listener: MessageListener,
     params: Omit<QueryOptions, 'direction'>,
   ): Promise<PaginatedResult<Message>> {
@@ -307,14 +295,14 @@ export class DefaultMessages
   /**
    * Handle the case where the channel experiences a detach and reattaches.
    */
-  private handleAttach(fromResume: boolean) {
+  private _handleAttach(fromResume: boolean) {
     this._logger.trace(`DefaultSubscriptionManager.handleAttach();`);
 
     // Do nothing if we have resumed as there is no discontinuity in the message stream
     if (fromResume) return;
 
     // Reset subscription points for all listeners
-    const newSubscriptionStartResolver = this.subscribeAtChannelAttach();
+    const newSubscriptionStartResolver = this._subscribeAtChannelAttach();
     this._listenerSubscriptionPoints.forEach((_, listener) => {
       this._listenerSubscriptionPoints.set(listener, newSubscriptionStartResolver);
     });
@@ -323,10 +311,10 @@ export class DefaultMessages
   /**
    * Create a promise that resolves with the attachSerial of the channel or the timeserial of the latest message.
    */
-  private async resolveSubscriptionStart(): Promise<{
+  private async _resolveSubscriptionStart(): Promise<{
     fromSerial: string;
   }> {
-    const channelWithProperties = this.getChannelProperties();
+    const channelWithProperties = this._getChannelProperties();
 
     // If we are attached, we can resolve with the channelSerial
     if (this._channel.state === 'attached') {
@@ -337,10 +325,10 @@ export class DefaultMessages
       throw new ErrorInfo('channel is attached, but channelSerial is not defined', 40000, 400) as unknown as Error;
     }
 
-    return this.subscribeAtChannelAttach();
+    return this._subscribeAtChannelAttach();
   }
 
-  private getChannelProperties(): RealtimeChannel & {
+  private _getChannelProperties(): RealtimeChannel & {
     properties: { attachSerial: string | undefined; channelSerial: string | undefined };
   } {
     // Get the attachSerial from the channel properties
@@ -352,14 +340,14 @@ export class DefaultMessages
     };
   }
 
-  private async subscribeAtChannelAttach(): Promise<{ fromSerial: string }> {
+  private async _subscribeAtChannelAttach(): Promise<{ fromSerial: string }> {
     return new Promise((resolve, reject) => {
       // Check if the state is now attached
       if (this._channel.state === 'attached') {
         // Get the attachSerial from the channel properties
-        const channelWithProperties = this.getChannelProperties();
+        const channelWithProperties = this._getChannelProperties();
         // AttachSerial should always be defined at this point, but we check just in case
-        this._logger.debug('Messages.subscribeAtChannelAttach(); channel is attached already, using attachSerial', {
+        this._logger.debug('Messages._subscribeAtChannelAttach(); channel is attached already, using attachSerial', {
           attachSerial: channelWithProperties.properties.attachSerial,
         });
         if (channelWithProperties.properties.attachSerial) {
@@ -372,9 +360,9 @@ export class DefaultMessages
 
       this._channel.once('attached', () => {
         // Get the attachSerial from the channel properties
-        const channelWithProperties = this.getChannelProperties();
+        const channelWithProperties = this._getChannelProperties();
         // AttachSerial should always be defined at this point, but we check just in case
-        this._logger.debug('Messages.subscribeAtChannelAttach(); channel is now attached, using attachSerial', {
+        this._logger.debug('Messages._subscribeAtChannelAttach(); channel is now attached, using attachSerial', {
           attachSerial: channelWithProperties.properties.attachSerial,
         });
         if (channelWithProperties.properties.attachSerial) {
@@ -446,10 +434,10 @@ export class DefaultMessages
    */
   subscribe(listener: MessageListener): MessageSubscriptionResponse {
     this._logger.trace('Messages.subscribe();');
-    super.on([MessageEvents.created], listener);
+    super.on([MessageEvents.Created], listener);
 
     // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
-    this._listenerSubscriptionPoints.set(listener, this.resolveSubscriptionStart());
+    this._listenerSubscriptionPoints.set(listener, this._resolveSubscriptionStart());
 
     return {
       unsubscribe: () => {
@@ -459,7 +447,7 @@ export class DefaultMessages
         super.off(listener);
       },
       getPreviousMessages: (params: Omit<QueryOptions, 'direction'>) =>
-        this.getBeforeSubscriptionStart(listener, params),
+        this._getBeforeSubscriptionStart(listener, params),
     };
   }
 
@@ -472,32 +460,32 @@ export class DefaultMessages
     this._listenerSubscriptionPoints.clear();
   }
 
-  private processEvent(channelEventMessage: Ably.InboundMessage) {
-    this._logger.trace('Messages.processEvent();', {
+  private _processEvent(channelEventMessage: Ably.InboundMessage) {
+    this._logger.trace('Messages._processEvent();', {
       channelEventMessage,
     });
     const { name } = channelEventMessage;
 
     // Send the message to the listeners
     switch (name) {
-      case MessageEvents.created: {
-        const message = this.parseNewMessage(channelEventMessage);
+      case MessageEvents.Created: {
+        const message = this._parseNewMessage(channelEventMessage);
         if (!message) {
           return;
         }
 
-        this.emit(MessageEvents.created, { type: name, message: message });
+        this.emit(MessageEvents.Created, { type: name, message: message });
         break;
       }
       default:
-        this._logger.warn('Messages.processEvent(); received unknown event', { name });
+        this._logger.warn('Messages._processEvent(); received unknown event', { name });
     }
   }
 
   /**
    * Validate the realtime message and convert it to a chat message.
    */
-  private parseNewMessage(channelEventMessage: Ably.InboundMessage): Message | undefined {
+  private _parseNewMessage(channelEventMessage: Ably.InboundMessage): Message | undefined {
     interface MessagePayload {
       data?: {
         text?: string;

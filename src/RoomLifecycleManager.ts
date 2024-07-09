@@ -133,7 +133,7 @@ export class RoomLifecycleManager {
       this._operationInProgress = true;
     }
 
-    this.setupContributorListeners(transientDetachTimeout);
+    this._setupContributorListeners(transientDetachTimeout);
   }
 
   /**
@@ -141,7 +141,7 @@ export class RoomLifecycleManager {
    *
    * @param transientDetachTimeout The number of milliseconds to consider a detach to be "transient"
    */
-  private setupContributorListeners(transientDetachTimeout: number): void {
+  private _setupContributorListeners(transientDetachTimeout: number): void {
     this._contributors.forEach((contributor: ContributesToRoomLifecycle) => {
       // Update events are one way to get a discontinuity
       // The occur when the server sends another attach message to the client
@@ -228,7 +228,7 @@ export class RoomLifecycleManager {
             this._logger.debug('RoomLifecycleManager(); detected channel failure', {
               channel: contributor.channel.name,
             });
-            this.clearAllTransientDetachTimeouts();
+            this._clearAllTransientDetachTimeouts();
             this._operationInProgress = true;
             this._status.setStatus({
               status: RoomLifecycle.Failed,
@@ -236,7 +236,7 @@ export class RoomLifecycleManager {
             });
 
             // We'll make a best effort at detaching all the other channels
-            this.doChannelWindDown(contributor).catch((error: unknown) => {
+            this._doChannelWindDown(contributor).catch((error: unknown) => {
               this._logger.error('RoomLifecycleManager(); failed to detach all channels following failure', {
                 contributor: contributor.channel.name,
                 error,
@@ -276,7 +276,7 @@ export class RoomLifecycleManager {
             this._logger.debug('RoomLifecycleManager(); detected channel suspension', {
               channel: contributor.channel.name,
             });
-            this.onChannelSuspension(contributor, change.reason);
+            this._onChannelSuspension(contributor, change.reason);
             return;
           }
 
@@ -305,7 +305,7 @@ export class RoomLifecycleManager {
   }
 
   /**
-   * onChannelSuspension is called when a contributing channel enters the suspended state, which means
+   * _onChannelSuspension is called when a contributing channel enters the suspended state, which means
    * that the room is also suspended and we should wind-down channels until things recover.
    *
    * We transition the room status to the status of this contributor and provide the original
@@ -314,8 +314,8 @@ export class RoomLifecycleManager {
    * @param contributor The contributor that has detached.
    * @param detachError The error that caused the detachment.
    */
-  private onChannelSuspension(contributor: ContributesToRoomLifecycle, detachError?: Ably.ErrorInfo): void {
-    this._logger.debug('RoomLifecycleManager.onChannelSuspension();', {
+  private _onChannelSuspension(contributor: ContributesToRoomLifecycle, detachError?: Ably.ErrorInfo): void {
+    this._logger.debug('RoomLifecycleManager._onChannelSuspension();', {
       channel: contributor.channel.name,
       error: detachError,
     });
@@ -324,13 +324,13 @@ export class RoomLifecycleManager {
     // We also set our room state to the state of the contributor
     // We clear all the transient detach timeouts, because we're closing all the channels
     this._operationInProgress = true;
-    this.clearAllTransientDetachTimeouts();
+    this._clearAllTransientDetachTimeouts();
 
     // We enter the protected block with priority Internal, so take precedence over user-driven actions
     // This process is looping and will continue until a conclusion is reached.
     void this._mtx
       .runExclusive(() => {
-        this._logger.error('RoomLifecycleManager.onChannelSuspension(); setting room status to contributor status', {
+        this._logger.error('RoomLifecycleManager._onChannelSuspension(); setting room status to contributor status', {
           status: contributor.channel.state as RoomLifecycle,
           error: detachError,
         });
@@ -339,10 +339,10 @@ export class RoomLifecycleManager {
           error: detachError,
         });
 
-        return this.doRetry(contributor);
+        return this._doRetry(contributor);
       }, LifecycleOperationPrecedence.Internal)
       .catch((error: unknown) => {
-        this._logger.error('RoomLifecycleManager.onChannelSuspension(); unexpected error thrown', { error });
+        this._logger.error('RoomLifecycleManager._onChannelSuspension(); unexpected error thrown', { error });
       });
   }
 
@@ -361,13 +361,13 @@ export class RoomLifecycleManager {
    * @param contributor The contributor that has entered a suspended state.
    * @returns A promise that resolves when the room is attached, or the room enters a failed state.
    */
-  private async doRetry(contributor: ContributesToRoomLifecycle): Promise<void> {
+  private async _doRetry(contributor: ContributesToRoomLifecycle): Promise<void> {
     // A helper that allows us to retry the attach operation
     const doAttachWithRetry = () => {
       this._logger.debug('RoomLifecycleManager.doAttachWithRetry();');
       this._status.setStatus({ status: RoomLifecycle.Attaching });
 
-      return this.doAttach().then((result: RoomAttachmentResult) => {
+      return this._doAttach().then((result: RoomAttachmentResult) => {
         this._logger.debug('RoomLifecycleManager.doAttachWithRetry(); attach result', {
           status: result.status,
           error: result.error,
@@ -376,7 +376,7 @@ export class RoomLifecycleManager {
         // If we're in failed, then we should wind down all the channels, eventually - but we're done here
         if (result.status === RoomLifecycle.Failed) {
           void this._mtx.runExclusive(
-            () => this.runDownChannelsOnFailedAttach(),
+            () => this._runDownChannelsOnFailedAttach(),
             LifecycleOperationPrecedence.Internal,
           );
           return;
@@ -386,13 +386,13 @@ export class RoomLifecycleManager {
         if (result.status === RoomLifecycle.Suspended) {
           const failedFeature = result.failedFeature;
           if (!failedFeature) {
-            throw new Ably.ErrorInfo('no failed feature in doRetry', ErrorCodes.RoomLifecycleError, 500);
+            throw new Ably.ErrorInfo('no failed feature in _doRetry', ErrorCodes.RoomLifecycleError, 500);
           }
 
           this._logger.debug('RoomLifecycleManager.doAttachWithRetry(); feature suspended, retrying attach', {
             feature: failedFeature.channel.name,
           });
-          return this.doRetry(failedFeature).catch();
+          return this._doRetry(failedFeature).catch();
         }
 
         // We attached, huzzah!
@@ -400,11 +400,11 @@ export class RoomLifecycleManager {
     };
 
     // Handle the channel wind-down.
-    this._logger.debug('RoomLifecycleManager.doRetry(); winding down channels except problem', {
+    this._logger.debug('RoomLifecycleManager._doRetry(); winding down channels except problem', {
       channel: contributor.channel.name,
     });
     try {
-      await this.doChannelWindDown(contributor).catch(() => {
+      await this._doChannelWindDown(contributor).catch(() => {
         // If in doing the wind down, we've entered failed state, then it's game over anyway
         if (this._status.current === RoomLifecycle.Failed) {
           throw new Error('room is in a failed state');
@@ -413,7 +413,7 @@ export class RoomLifecycleManager {
         // If not, we wait a short period and then try again
         return new Promise<unknown>((resolve) => {
           setTimeout(() => {
-            resolve(this.doChannelWindDown(contributor));
+            resolve(this._doChannelWindDown(contributor));
           }, 250);
         });
       });
@@ -424,7 +424,7 @@ export class RoomLifecycleManager {
 
     // If our problem channel has reattached, then we can retry the attach
     if (contributor.channel.state === RoomLifecycle.Attached) {
-      this._logger.debug('RoomLifecycleManager.doRetry(); feature reattached, retrying attach');
+      this._logger.debug('RoomLifecycleManager._doRetry(); feature reattached, retrying attach');
       return doAttachWithRetry();
     }
 
@@ -440,12 +440,12 @@ export class RoomLifecycleManager {
         if (change.current === RoomLifecycle.Failed) {
           contributor.channel.off(listener);
           this._status.setStatus({ status: RoomLifecycle.Failed, error: change.reason });
-          throw change.reason ?? new Ably.ErrorInfo('unknown error in doRetry', ErrorCodes.RoomLifecycleError, 500);
+          throw change.reason ?? new Ably.ErrorInfo('unknown error in _doRetry', ErrorCodes.RoomLifecycleError, 500);
         }
       };
       contributor.channel.on(listener);
     }).then(() => {
-      this._logger.debug('RoomLifecycleManager.doRetry(); feature reattached via listener, retrying attach');
+      this._logger.debug('RoomLifecycleManager._doRetry(); feature reattached via listener, retrying attach');
       return doAttachWithRetry();
     });
   }
@@ -454,7 +454,7 @@ export class RoomLifecycleManager {
    * Clears all transient detach timeouts - used when some event supersedes the transient detach such
    * as a failed channel or suspension.
    */
-  private clearAllTransientDetachTimeouts(): void {
+  private _clearAllTransientDetachTimeouts(): void {
     this._transientDetachTimeouts.forEach((timeout: ReturnType<typeof setTimeout>) => {
       clearTimeout(timeout);
     });
@@ -492,16 +492,16 @@ export class RoomLifecycleManager {
       }
 
       // At this point, we force the room status to be attaching
-      this.clearAllTransientDetachTimeouts();
+      this._clearAllTransientDetachTimeouts();
       this._operationInProgress = true;
       this._status.setStatus({ status: RoomLifecycle.Attaching });
 
-      return this.doAttach().then((result: RoomAttachmentResult) => {
+      return this._doAttach().then((result: RoomAttachmentResult) => {
         // If we're in a failed state, then we should wind down all the channels, eventually
         if (result.status === RoomLifecycle.Failed) {
           this._logger.debug('RoomLifecycleManager.attach(); room entered failed, winding down channels', { result });
           void this._mtx.runExclusive(
-            () => this.runDownChannelsOnFailedAttach(),
+            () => this._runDownChannelsOnFailedAttach(),
             LifecycleOperationPrecedence.Internal,
           );
 
@@ -519,7 +519,10 @@ export class RoomLifecycleManager {
             throw new Ably.ErrorInfo('no failed feature in attach', ErrorCodes.RoomLifecycleError, 500);
           }
 
-          void this._mtx.runExclusive(() => this.doRetry(failedFeature).catch(), LifecycleOperationPrecedence.Internal);
+          void this._mtx.runExclusive(
+            () => this._doRetry(failedFeature).catch(),
+            LifecycleOperationPrecedence.Internal,
+          );
 
           throw (
             result.error ?? new Ably.ErrorInfo('unknown error in attach then block', ErrorCodes.RoomLifecycleError, 500)
@@ -531,22 +534,22 @@ export class RoomLifecycleManager {
     }, LifecycleOperationPrecedence.AttachOrDetach);
   }
 
-  private async doAttach(): Promise<RoomAttachmentResult> {
-    this._logger.trace('RoomLifecycleManager.doAttach();');
+  private async _doAttach(): Promise<RoomAttachmentResult> {
+    this._logger.trace('RoomLifecycleManager._doAttach();');
     const attachResult: RoomAttachmentResult = {
       status: RoomLifecycle.Attached,
     };
 
     for (const feature of this._contributors) {
       try {
-        this._logger.debug('RoomLifecycleManager.doAttach(); attaching', { channel: feature.channel.name });
+        this._logger.debug('RoomLifecycleManager._doAttach(); attaching', { channel: feature.channel.name });
         await feature.channel.attach();
-        this._logger.debug('RoomLifecycleManager.doAttach(); attached', { channel: feature.channel.name });
+        this._logger.debug('RoomLifecycleManager._doAttach(); attached', { channel: feature.channel.name });
 
         // Set ourselves into the first attach list - so we can track discontinuity from now on
         this._firstAttachesCompleted.set(feature, true);
       } catch (error: unknown) {
-        this._logger.error('RoomLifecycleManager.doAttach(); failed to attach', { error: attachResult.error });
+        this._logger.error('RoomLifecycleManager._doAttach(); failed to attach', { error: attachResult.error });
         attachResult.failedFeature = feature;
 
         // We take the status to be whatever caused the error
@@ -603,16 +606,16 @@ export class RoomLifecycleManager {
    *
    * @returns A promise that resolves when all channels are detached. We do not throw.
    */
-  private runDownChannelsOnFailedAttach(): Promise<unknown> {
+  private _runDownChannelsOnFailedAttach(): Promise<unknown> {
     // At this point, we have control over the channel lifecycle, so we can hold onto it until things are resolved
     // Keep trying to detach the channels until they're all detached.
-    return this.doChannelWindDown().catch(() => {
+    return this._doChannelWindDown().catch(() => {
       // Something went wrong during the wind down. After a short delay, to give others a turn, we should run down
       // again until we reach a suitable conclusion.
-      this._logger.debug('RoomLifecycleManager.runDownChannelsOnFailedAttach(); wind down failed, retrying');
+      this._logger.debug('RoomLifecycleManager._runDownChannelsOnFailedAttach(); wind down failed, retrying');
       return new Promise<unknown>((resolve) => {
         setTimeout(() => {
-          resolve(this.runDownChannelsOnFailedAttach());
+          resolve(this._runDownChannelsOnFailedAttach());
         }, 250);
       });
     });
@@ -625,7 +628,7 @@ export class RoomLifecycleManager {
    * @param except The contributor to exclude from the detachment.
    * @returns A promise that resolves when all channels are detached.
    */
-  private doChannelWindDown(except?: ContributesToRoomLifecycle): Promise<unknown> {
+  private _doChannelWindDown(except?: ContributesToRoomLifecycle): Promise<unknown> {
     return Promise.all(
       this._contributors.map(async (contributor: ContributesToRoomLifecycle) => {
         // If its the contributor we want to wait for a conclusion on, then we should not detach it
@@ -641,18 +644,18 @@ export class RoomLifecycleManager {
             this._status.current === RoomLifecycle.Released) &&
           contributor.channel.state === 'failed'
         ) {
-          this._logger.debug('RoomLifecycleManager.doChannelWindDown(); ignoring failed channel', {
+          this._logger.debug('RoomLifecycleManager._doChannelWindDown(); ignoring failed channel', {
             channel: contributor.channel.name,
           });
           return;
         }
 
         try {
-          this._logger.debug('RoomLifecycleManager.doChannelWindDown(); detaching', {
+          this._logger.debug('RoomLifecycleManager._doChannelWindDown(); detaching', {
             channel: contributor.channel.name,
           });
           await contributor.channel.detach();
-          this._logger.debug('RoomLifecycleManager.doChannelWindDown(); detached', {
+          this._logger.debug('RoomLifecycleManager._doChannelWindDown(); detached', {
             channel: contributor.channel.name,
           });
         } catch (error: unknown) {
@@ -718,12 +721,12 @@ export class RoomLifecycleManager {
 
       // We force the room status to be detaching
       this._operationInProgress = true;
-      this.clearAllTransientDetachTimeouts();
+      this._clearAllTransientDetachTimeouts();
       this._status.setStatus({ status: RoomLifecycle.Detaching });
 
       // We now perform an all-channel wind down.
       // We keep trying until we reach a suitable conclusion.
-      return this.doDetach();
+      return this._doDetach();
     }, LifecycleOperationPrecedence.AttachOrDetach);
   }
 
@@ -732,8 +735,8 @@ export class RoomLifecycleManager {
    *
    * If detaching a channel fails, we should retry until every channel is either in the detached state, or in the failed state.
    */
-  private async doDetach(): Promise<void> {
-    this._logger.trace('RoomLifecycleManager.doDetach();');
+  private async _doDetach(): Promise<void> {
+    this._logger.trace('RoomLifecycleManager._doDetach();');
     let detachError: Ably.ErrorInfo | undefined;
     let done = false;
     while (!done) {
@@ -741,25 +744,25 @@ export class RoomLifecycleManager {
       // If it's -1, it means that we need to retry the detach operation
       // If it isn't -1, then we have a failure condition
       try {
-        this._logger.debug('RoomLifecycleManager.doDetach(); detaching all channels');
-        await this.doChannelWindDown();
+        this._logger.debug('RoomLifecycleManager._doDetach(); detaching all channels');
+        await this._doChannelWindDown();
       } catch (error: unknown) {
-        this._logger.error('RoomLifecycleManager.doDetach(); failed to detach all channels', { error });
+        this._logger.error('RoomLifecycleManager._doDetach(); failed to detach all channels', { error });
         if (error instanceof Ably.ErrorInfo && error.code === -1) {
-          this._logger.debug('RoomLifecycleManager.doDetach(); retrying detach', { error });
+          this._logger.debug('RoomLifecycleManager._doDetach(); retrying detach', { error });
           await new Promise<void>((resolve) => setTimeout(resolve, 250));
           continue;
         }
 
         // If we have an error, then this is a failed state error, save it for later
         if (!detachError) {
-          this._logger.debug('RoomLifecycleManager.doDetach(); channel failed on detach', { error });
+          this._logger.debug('RoomLifecycleManager._doDetach(); channel failed on detach', { error });
           detachError = error as Ably.ErrorInfo;
         }
 
         // Wait for a short period and then try again to complete the detach
         await new Promise<void>((resolve) => setTimeout(resolve, 250));
-        this._logger.debug('RoomLifecycleManager.doDetach(); retrying detach after failed channel');
+        this._logger.debug('RoomLifecycleManager._doDetach(); retrying detach after failed channel');
         continue;
       }
 
@@ -774,7 +777,7 @@ export class RoomLifecycleManager {
     }
 
     // If we're in the failed state, then we need to throw the error
-    throw detachError ?? new Ably.ErrorInfo('unknown error in doDetach', ErrorCodes.RoomLifecycleError, 500);
+    throw detachError ?? new Ably.ErrorInfo('unknown error in _doDetach', ErrorCodes.RoomLifecycleError, 500);
   }
 
   /**
@@ -822,14 +825,14 @@ export class RoomLifecycleManager {
       }
 
       // We force the room status to be releasing
-      this.clearAllTransientDetachTimeouts();
+      this._clearAllTransientDetachTimeouts();
       this._operationInProgress = true;
       this._releaseInProgress = true;
       this._status.setStatus({ status: RoomLifecycle.Releasing });
 
       // Do the release until it completes
       this._logger.debug('RoomLifecycleManager.release(); releasing room');
-      return this.releaseChannels();
+      return this._releaseChannels();
     }, LifecycleOperationPrecedence.Release);
   }
 
@@ -837,14 +840,14 @@ export class RoomLifecycleManager {
    *  Releases the room by detaching all channels. If the release operation fails, we wait
    *  a short period and then try again.
    */
-  private releaseChannels(): Promise<void> {
-    return this.doRelease().catch((error: unknown) => {
-      this._logger.error('RoomLifecycleManager.releaseChannels(); failed to release room, retrying', { error });
+  private _releaseChannels(): Promise<void> {
+    return this._doRelease().catch((error: unknown) => {
+      this._logger.error('RoomLifecycleManager._releaseChannels(); failed to release room, retrying', { error });
 
       // Wait a short period and then try again
       return new Promise<void>((resolve) => {
         setTimeout(() => {
-          resolve(this.releaseChannels());
+          resolve(this._releaseChannels());
         }, 250);
       });
     });
@@ -854,7 +857,7 @@ export class RoomLifecycleManager {
    * Performs the release operation. This will detach all channels in the room that aren't
    * already detached or in the failed state.
    */
-  private doRelease(): Promise<void> {
+  private _doRelease(): Promise<void> {
     return Promise.all(
       this._contributors.map(async (contributor: ContributesToRoomLifecycle) => {
         // Failed channels, we can ignore

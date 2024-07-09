@@ -43,7 +43,6 @@ export const useMessages = () => {
     initMessages();
 
     return () => {
-      // mounted = false;
       unsubscribe();
     };
   }, [clientId, room]);

@@ -44,7 +44,7 @@ export class ChatClient {
     this._connection = new DefaultConnection(new DefaultConnectionStatus(realtime, logger));
 
     this._rooms = new DefaultRooms(realtime, this._clientOptions, logger);
-    this.setAgent();
+    this._setAgent();
     logger.trace(`ably chat client version ${VERSION}; initialised`);
   }
 
@@ -96,8 +96,9 @@ export class ChatClient {
    * Sets the agent string for the client.
    * @internal
    */
-  private setAgent(): void {
+  private _setAgent(): void {
     const realtime = this._realtime as RealtimeWithOptions;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const agent = { 'chat-js': VERSION };
     realtime.options.agents = { ...(realtime.options.agents ?? realtime.options.agents), ...agent };
   }

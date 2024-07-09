@@ -33,8 +33,8 @@ describe('Chat', () => {
   });
 
   it('should mix in the client options', () => {
-    const chat = newChatClient(testClientOptions({ logLevel: LogLevel.warn }));
-    expect(chat.clientOptions.logLevel).toBe(LogLevel.warn);
+    const chat = newChatClient(testClientOptions({ logLevel: LogLevel.Warn }));
+    expect(chat.clientOptions.logLevel).toBe(LogLevel.Warn);
   });
 
   it('should work using basic auth', async () => {

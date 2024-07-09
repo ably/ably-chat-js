@@ -4,6 +4,11 @@ import { Logger } from './logger.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
+ * Default timeout for transient states before we attempt handle them as a state change.
+ */
+const TRANSIENT_TIMEOUT = 5000;
+
+/**
  * The different states that the connection can be in through its lifecycle.
  */
 export enum ConnectionLifecycle {
@@ -121,7 +126,6 @@ export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> i
   private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
   private _transientTimeout?: ReturnType<typeof setTimeout>;
-  private readonly TRANSIENT_TIMEOUT = 5000;
 
   /**
    * Constructs a new `DefaultConnection` instance.
@@ -133,13 +137,13 @@ export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> i
     this._logger = logger;
 
     // Set our initial status and error
-    this._state = this.mapAblyStatusToChat(ably.connection.state);
+    this._state = this._mapAblyStatusToChat(ably.connection.state);
     this._error = ably.connection.errorReason;
 
     // Listen for changes to the connection status
     this._connection = ably.connection;
     this._connection.on((change: Ably.ConnectionStateChange) => {
-      const chatState = this.mapAblyStatusToChat(change.current);
+      const chatState = this._mapAblyStatusToChat(change.current);
       if (chatState === this._state) {
         return;
       }
@@ -155,8 +159,8 @@ export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> i
       if (chatState === ConnectionLifecycle.Disconnected && !this._transientTimeout) {
         this._transientTimeout = setTimeout(() => {
           this._transientTimeout = undefined;
-          this.applyStatusChange(stateChange);
-        }, this.TRANSIENT_TIMEOUT);
+          this._applyStatusChange(stateChange);
+        }, TRANSIENT_TIMEOUT);
         return;
       }
 
@@ -166,7 +170,7 @@ export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> i
         this._transientTimeout = undefined;
       }
 
-      this.applyStatusChange(stateChange);
+      this._applyStatusChange(stateChange);
     });
   }
 
@@ -204,14 +208,14 @@ export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> i
     this.off();
   }
 
-  private applyStatusChange(change: ConnectionStatusChange): void {
+  private _applyStatusChange(change: ConnectionStatusChange): void {
     this._state = change.current;
     this._error = change.error;
     this._logger.info(`Connection state changed`, change);
     this.emit(change.current, change);
   }
 
-  private mapAblyStatusToChat(status: Ably.ConnectionState): ConnectionLifecycle {
+  private _mapAblyStatusToChat(status: Ably.ConnectionState): ConnectionLifecycle {
     switch (status) {
       case 'closing':
       case 'closed':

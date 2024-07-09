@@ -18,7 +18,9 @@ vi.mock('ably');
 
 interface MockContributor extends ContributesToRoomLifecycle {
   channel: Ably.RealtimeChannel;
+
   discontinuityDetected(): void;
+
   emulateStateChange: (change: Ably.ChannelStateChange, update?: boolean) => void;
 }
 

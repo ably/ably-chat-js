@@ -48,8 +48,8 @@ export interface Rooms {
  * Manages the chat rooms.
  */
 export class DefaultRooms implements Rooms {
-  private readonly realtime: Ably.Realtime;
-  private readonly chatApi: ChatApi;
+  private readonly _realtime: Ably.Realtime;
+  private readonly _chatApi: ChatApi;
   private readonly _clientOptions: NormalisedClientOptions;
   private readonly _rooms: Map<string, DefaultRoom> = new Map<string, DefaultRoom>();
   private readonly _logger: Logger;
@@ -61,8 +61,8 @@ export class DefaultRooms implements Rooms {
    * @param clientOptions The client options from the chat instance.
    */
   constructor(realtime: Ably.Realtime, clientOptions: NormalisedClientOptions, logger: Logger) {
-    this.realtime = realtime;
-    this.chatApi = new ChatApi(realtime, logger);
+    this._realtime = realtime;
+    this._chatApi = new ChatApi(realtime, logger);
     this._clientOptions = clientOptions;
     this._logger = logger;
   }
@@ -82,7 +82,7 @@ export class DefaultRooms implements Rooms {
       return existing;
     }
 
-    const room = new DefaultRoom(roomId, options, this.realtime, this.chatApi, this._clientOptions, this._logger);
+    const room = new DefaultRoom(roomId, options, this._realtime, this._chatApi, this._clientOptions, this._logger);
     this._rooms.set(roomId, room);
 
     return room;

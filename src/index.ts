@@ -16,7 +16,6 @@ export type { LogContext, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
 export type { Message, MessageHeaders, MessageMetadata } from './Message.js';
 export type {
-  Direction,
   MessageEventPayload,
   MessageListener,
   Messages,

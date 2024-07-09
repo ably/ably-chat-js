@@ -3,7 +3,7 @@
  */
 export enum MessageEvents {
   /** Fires when a new chat message is received. */
-  created = 'message.created',
+  Created = 'message.created',
 }
 
 /**
@@ -13,28 +13,28 @@ export enum PresenceEvents {
   /**
    * Event triggered when a user enters.
    */
-  enter = 'enter',
+  Enter = 'enter',
 
   /**
    * Event triggered when a user leaves.
    */
-  leave = 'leave',
+  Leave = 'leave',
 
   /**
    * Event triggered when a user updates their presence data.
    */
-  update = 'update',
+  Update = 'update',
   /**
    * Event triggered when a user initially subscribes to presence.
    */
-  present = 'present',
+  Present = 'present',
 }
 
 export enum TypingEvents {
   /** Event trigger when a user starts typing. */
-  typingStarted = 'typing.typingStarted',
+  TypingStarted = 'typing.typingStarted',
   /** Event trigger when a user stops typing. */
-  typingStopped = 'typing.typingStopped',
+  TypingStopped = 'typing.typingStopped',
 }
 
 /**
@@ -45,5 +45,5 @@ export enum RoomReactionEvents {
   /**
    * Event triggered when a room reaction was received.
    */
-  reaction = 'roomReaction',
+  Reaction = 'roomReaction',
 }

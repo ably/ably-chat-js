@@ -48,35 +48,35 @@ export enum LogLevel {
    * Something routine and expected has occurred. This level will provide logs for the vast majority of operations
    * and function calls.
    */
-  trace = 'trace',
+  Trace = 'trace',
 
   /**
    * Development information, messages that are useful when trying to debug library behaviour,
    * but superfluous to normal operation.
    */
-  debug = 'debug',
+  Debug = 'debug',
 
   /**
    * Informational messages. Operationally significant to the library but not out of the ordinary.
    */
-  info = 'info',
+  Info = 'info',
 
   /**
    * Anything that is not immediately an error, but could cause unexpected behaviour in the future. For example,
    * passing an invalid value to an option. Indicates that some action should be taken to prevent future errors.
    */
-  warn = 'warn',
+  Warn = 'warn',
 
   /**
    * A given operation has failed and cannot be automatically recovered. The error may threaten the continuity
    * of operation.
    */
-  error = 'error',
+  Error = 'error',
 
   /**
    * No logging will be performed.
    */
-  silent = 'silent',
+  Silent = 'silent',
 }
 
 /**
@@ -102,23 +102,23 @@ export type LogHandler = (message: string, level: LogLevel, context?: LogContext
  */
 const consoleLogger = (message: string, level: LogLevel, context?: LogContext) => {
   const contextString = context ? `, context: ${JSON.stringify(context)}` : '';
-  const formattedMessage = `[${new Date().toISOString()}] ${LogLevel[level].toUpperCase()} ably-chat: ${message}${contextString}`;
+  const formattedMessage = `[${new Date().toISOString()}] ${level.valueOf().toUpperCase()} ably-chat: ${message}${contextString}`;
 
   switch (level) {
-    case LogLevel.trace:
-    case LogLevel.debug:
+    case LogLevel.Trace:
+    case LogLevel.Debug:
       console.log(formattedMessage);
       break;
-    case LogLevel.info:
+    case LogLevel.Info:
       console.info(formattedMessage);
       break;
-    case LogLevel.warn:
+    case LogLevel.Warn:
       console.warn(formattedMessage);
       break;
-    case LogLevel.error:
+    case LogLevel.Error:
       console.error(formattedMessage);
       break;
-    case LogLevel.silent:
+    case LogLevel.Silent:
       break;
   }
 };
@@ -133,24 +133,24 @@ export const makeLogger = (options: NormalisedClientOptions): Logger => {
  * A convenient list of log levels as numbers that can be used for easier comparison.
  */
 enum LogLevelNumbers {
-  trace = 0,
-  debug = 1,
-  info = 2,
-  warn = 3,
-  error = 4,
-  silent = 5,
+  Trace = 0,
+  Debug = 1,
+  Info = 2,
+  Warn = 3,
+  Error = 4,
+  Silent = 5,
 }
 
 /**
  * A mapping of log levels to their numeric equivalents.
  */
 const logLevelNumberMap = new Map<LogLevel, LogLevelNumbers>([
-  [LogLevel.trace, LogLevelNumbers.trace],
-  [LogLevel.debug, LogLevelNumbers.debug],
-  [LogLevel.info, LogLevelNumbers.info],
-  [LogLevel.warn, LogLevelNumbers.warn],
-  [LogLevel.error, LogLevelNumbers.error],
-  [LogLevel.silent, LogLevelNumbers.silent],
+  [LogLevel.Trace, LogLevelNumbers.Trace],
+  [LogLevel.Debug, LogLevelNumbers.Debug],
+  [LogLevel.Info, LogLevelNumbers.Info],
+  [LogLevel.Warn, LogLevelNumbers.Warn],
+  [LogLevel.Error, LogLevelNumbers.Error],
+  [LogLevel.Silent, LogLevelNumbers.Silent],
 ]);
 
 /**
@@ -172,26 +172,26 @@ class DefaultLogger implements Logger {
   }
 
   trace(message: string, context?: LogContext): void {
-    this.write(message, LogLevel.trace, LogLevelNumbers.trace, context);
+    this._write(message, LogLevel.Trace, LogLevelNumbers.Trace, context);
   }
 
   debug(message: string, context?: LogContext): void {
-    this.write(message, LogLevel.debug, LogLevelNumbers.debug, context);
+    this._write(message, LogLevel.Debug, LogLevelNumbers.Debug, context);
   }
 
   info(message: string, context?: LogContext): void {
-    this.write(message, LogLevel.info, LogLevelNumbers.info, context);
+    this._write(message, LogLevel.Info, LogLevelNumbers.Info, context);
   }
 
   warn(message: string, context?: LogContext): void {
-    this.write(message, LogLevel.warn, LogLevelNumbers.warn, context);
+    this._write(message, LogLevel.Warn, LogLevelNumbers.Warn, context);
   }
 
   error(message: string, context?: LogContext): void {
-    this.write(message, LogLevel.error, LogLevelNumbers.error, context);
+    this._write(message, LogLevel.Error, LogLevelNumbers.Error, context);
   }
 
-  private write(message: string, level: LogLevel, levelNumber: LogLevelNumbers, context?: LogContext): void {
+  private _write(message: string, level: LogLevel, levelNumber: LogLevelNumbers, context?: LogContext): void {
     if (levelNumber >= this._levelNumber) {
       this._handler(message, level, context);
     }

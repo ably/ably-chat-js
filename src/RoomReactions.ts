@@ -113,7 +113,7 @@ export interface RoomReactions extends EmitsDiscontinuities {
 }
 
 interface RoomReactionEventsMap {
-  [RoomReactionEvents.reaction]: Reaction;
+  [RoomReactionEvents.Reaction]: Reaction;
 }
 
 interface ReactionPayload {
@@ -135,23 +135,23 @@ export class DefaultRoomReactions
   extends EventEmitter<RoomReactionEventsMap>
   implements RoomReactions, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
-  private readonly roomId: string;
+  private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
-  private readonly clientId: string;
+  private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
-    this.roomId = roomId;
+    this._roomId = roomId;
     this._channel = getChannel(`${roomId}::$chat::$reactions`, realtime);
     addListenerToChannelWithoutAttach({
-      listener: this.forwarder.bind(this),
-      events: [RoomReactionEvents.reaction],
+      listener: this._forwarder.bind(this),
+      events: [RoomReactionEvents.Reaction],
       channel: this._channel,
     });
 
-    this.clientId = clientId;
+    this._clientId = clientId;
     this._logger = logger;
   }
 
@@ -193,7 +193,7 @@ export class DefaultRoomReactions
     };
 
     const realtimeMessage: Ably.Message = {
-      name: RoomReactionEvents.reaction,
+      name: RoomReactionEvents.Reaction,
       data: payload,
       extras: {
         headers: headers ?? {},
@@ -227,13 +227,13 @@ export class DefaultRoomReactions
   }
 
   // parses reactions from realtime channel into Reaction objects and forwards them to the EventEmitter
-  private forwarder = (inbound: Ably.InboundMessage) => {
-    const reaction = this.parseNewReaction(inbound, this.clientId);
+  private _forwarder = (inbound: Ably.InboundMessage) => {
+    const reaction = this.parseNewReaction(inbound, this._clientId);
     if (!reaction) {
       // ignore non-reactions
       return;
     }
-    this.emit(RoomReactionEvents.reaction, reaction);
+    this.emit(RoomReactionEvents.Reaction, reaction);
   };
 
   get channel(): Ably.RealtimeChannel {
