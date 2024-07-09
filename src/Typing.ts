@@ -16,6 +16,7 @@ import { addListenerToChannelPresenceWithoutAttach } from './realtimeExtensions.
 import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { TypingOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';
+import { dequal } from 'dequal';
 
 const PRESENCE_GET_RETRY_INTERVAL_MS = 1500; // base retry interval, we double it each time
 const PRESENCE_GET_RETRY_MAX_INTERVAL_MS = 30000; // max retry interval
@@ -266,8 +267,8 @@ export class DefaultTyping
         }
         this._triggeredEventNumber = eventNum;
 
-        // do nothing else if there's no diff between the known and found sets
-        if (!this.areSetsDifferent(this._currentlyTyping, currentlyTyping)) {
+        // if current typers haven't changed since we last emitted, do nothing
+        if (dequal(this._currentlyTyping, currentlyTyping)) {
           return;
         }
 
@@ -304,18 +305,6 @@ export class DefaultTyping
           this.getAndEmit(this._receivedEventNumber);
         }, waitBeforeRetry);
       });
-  }
-
-  private areSetsDifferent(a: Set<string>, b: Set<string>): boolean {
-    if (a.size !== b.size) {
-      return true;
-    }
-    for (const val of a) {
-      if (!b.has(val)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
