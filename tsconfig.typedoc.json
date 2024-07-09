@@ -1,0 +1,43 @@
+{
+    "include": [
+      "./src/**/*.ts",
+      "./typedoc.d.ts"
+    ],
+    "exclude": [
+      "./src/utils/**/*.ts",
+      "./test/**/*.test.tsx",
+      "./test/**/*.test.ts",
+      "./src/fakes/**/*.ts",
+      "./src/react/test/**/*.ts",
+      "./src/react/test/**/*.tsx",
+    ],
+    "compilerOptions": {
+      "rootDir": "./src",
+      "target": "es6",
+      "sourceMap": true,
+      "strict": true,
+      "alwaysStrict": true,
+      "noImplicitThis": true,
+      "esModuleInterop": true,
+      "declaration": true,
+      "moduleResolution": "node",
+      "skipLibCheck": true,
+      "allowJs": true,
+      "allowSyntheticDefaultImports": true,
+      "resolveJsonModule": true,
+      "strictNullChecks": true,
+      "noUncheckedIndexedAccess": true,
+      "lib": [
+        "DOM",
+        "DOM.Iterable",
+        "ESNext"
+      ],
+      "types": [
+        "node"
+      ],
+      "paths": {
+        "@ably/chat": ["./dist/chat"]
+      }
+    }
+  }
+  

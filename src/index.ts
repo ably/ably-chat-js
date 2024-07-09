@@ -1,3 +1,7 @@
+/**
+ * @module chat-react
+ */
+
 export { ChatClient } from './Chat.js';
 export type { ClientOptions } from './config.js';
 export type { Connection } from './Connection.js';
