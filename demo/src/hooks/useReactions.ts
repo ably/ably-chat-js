@@ -1,4 +1,4 @@
-import { Reaction } from '@ably-labs/chat';
+import { Reaction } from '@ably/chat';
 import { useCallback, useEffect, useState } from 'react';
 import { useRoom } from './useRoom';
 export const useReactions = () => {

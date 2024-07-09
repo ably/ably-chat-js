@@ -4,7 +4,7 @@ The **Chat SDK** offers a seamless and customizable API designed to facilitate d
 in-app conversations scenarios, encompassing live comments, in-app chat functionalities,
 and the management of real-time updates and user interactions.
 
-[Read the API docs here](https://sdk.ably.com/builds/ably-labs/ably-chat-js/main/typedoc/)
+[Read the API docs here](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/)
 
 ## Prerequisites
 

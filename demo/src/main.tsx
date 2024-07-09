@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Ably from 'ably';
-import { ChatClient, LogLevel } from '@ably-labs/chat';
+import { ChatClient, LogLevel } from '@ably/chat';
 import { nanoid } from 'nanoid';
 import App from './App.tsx';
 import './index.css';

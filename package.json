@@ -1,5 +1,5 @@
 {
-  "name": "@ably-labs/chat",
+  "name": "@ably/chat",
   "version": "0.0.1",
   "description": "The Ably Chat SDK offers a seamless and customizable API designed to facilitate diverse in-app conversations scenarios, encompassing live comments, in-app chat functionalities, and the management of real-time updates and user interactions",
   "type": "module",
@@ -33,7 +33,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ably-labs/conversations.git"
+    "url": "git+https://github.com/ably/ably-chat-js.git"
   },
   "keywords": [
     "chat",
@@ -44,9 +44,9 @@
   "author": "Ably Realtime",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/ably-labs/conversations/issues"
+    "url": "https://github.com/ably/ably-chat-js/issues"
   },
-  "homepage": "https://github.com/ably-labs/conversations#readme",
+  "homepage": "https://github.com/ably/ably-chat-js#readme",
   "peerDependencies": {
     "ably": "^2.2.1"
   },

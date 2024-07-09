@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { ChatClient as ChatSdk } from '@ably-labs/chat';
+import { ChatClient as ChatSdk } from '@ably/chat';
 import { RoomProvider } from './containers/RoomContext';
 import { Chat } from './containers/Chat';
 

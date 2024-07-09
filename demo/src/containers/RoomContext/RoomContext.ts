@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import { ChatClient, Room } from '@ably-labs/chat';
+import { ChatClient, Room } from '@ably/chat';
 
 interface ChatContextProps {
   client: ChatClient;

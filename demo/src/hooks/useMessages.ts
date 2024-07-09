@@ -1,4 +1,4 @@
-import { Message, type MessageListener } from '@ably-labs/chat';
+import { Message, type MessageListener } from '@ably/chat';
 import { useCallback, useEffect, useState } from 'react';
 import { useRoom } from './useRoom';
 
