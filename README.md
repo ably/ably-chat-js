@@ -91,7 +91,12 @@ const room = chat.rooms.get('basketball-stream', {reactions: RoomOptionsDefaults
 A room does not need to be created explicitly in the backend before it can be used.
 
 The second argument to `rooms.get` is a `RoomOptions` argument, which tells the Chat SDK what features you would like your
-room to use and they should be configured. For example, you can set the timeout between keystrokes for typing events.
+room to use and how they should be configured. For example, you can set the timeout between keystrokes for typing events.
+
+You must specify which features you wish to enable on a room. Sensible defaults are provided for your convenience.
+
+In order to use the same room but with different options, you must first `release` the room before requesting an instance with
+the changed options (see below for more information on releasing rooms).
 
 ## Attaching a Room
 
@@ -434,7 +439,7 @@ await room.typing.stop();
 To subscribe to typing events, provide a listener to the `subscribe` method.
 
 ```ts
-const {unsubscribe} = room.typing.subscribe((event) => {
+const { unsubscribe } = room.typing.subscribe((event) => {
   console.log("currently typing:", event.currentlyTyping);
 });
 ```
@@ -444,7 +449,7 @@ const {unsubscribe} = room.typing.subscribe((event) => {
 To unsubscribe the listener, you can call the corresponding `unsubscribe` method returned by the `subscribe` call:
 
 ```ts
-const {unsubscribe} = room.typing.subscribe((event) => {
+const { unsubscribe } = room.typing.subscribe((event) => {
   console.log(event);
 });
 
