@@ -1,5 +1,5 @@
 import { FC, ChangeEventHandler, FormEventHandler } from 'react';
-import { useCounter } from '@ably-labs/chat/react';
+import { useCounter } from '@ably/chat/react';
 
 interface MessageInputProps {
   disabled: boolean;

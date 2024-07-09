@@ -21,7 +21,7 @@
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["node"],
     "paths": {
-      "@ably-labs/chat": ["../../dist/chat"]
+      "@ably/chat": ["../../dist/chat"]
     }
   }
 }

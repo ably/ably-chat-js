@@ -36,7 +36,7 @@
         "node"
       ],
       "paths": {
-        "@ably-labs/chat": ["./dist/chat"]
+        "@ably/chat": ["./dist/chat"]
       }
     }
   }
