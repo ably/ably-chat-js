@@ -9,7 +9,7 @@
   "license": "MIT",
   "dependencies": {
     "@netlify/functions": "^2.8.0",
-    "@types/node": "^20.14.8",
+    "@types/node": "^20.14.9",
     "ably": "^2.2.0",
     "dotenv": "^16.4.5",
     "typescript": "^5.5.2"
