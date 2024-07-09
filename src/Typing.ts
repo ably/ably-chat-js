@@ -39,13 +39,8 @@ export interface Typing extends EmitsDiscontinuities {
   unsubscribeAll(): void;
 
   /**
-   * Get the set of clientIds that are currently typing.
-   * @returns A set of clientIds that are currently typing.
-   */
-
-  /**
-   * Get the current typers, a unique set of clientIds.
-   * @returns A set of clientIds that are currently typing.
+   * Get the current typers, a set of clientIds.
+   * @returns A Promise of a set of clientIds that are currently typing.
    */
   get(): Promise<Set<string>>;
 
