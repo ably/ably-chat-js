@@ -240,7 +240,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     await waitForPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId, { customKeyOne: 1 });
   });
 
-  it<TestContext>('doesnt send unrelated presence events', async (context) => {
+  it<TestContext>('does not send unrelated presence events', async (context) => {
     // Subscribe to enter events
     const presenceEvents: PresenceEvent[] = [];
     context.chatRoom.presence.subscribe(PresenceEvents.Leave, (event) => {
@@ -300,7 +300,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     await waitForPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId, { customKeyOne: 1 });
     await waitForPresenceEvent(presenceEvents2, PresenceEvents.Enter, context.chat.clientId, { customKeyOne: 1 });
 
-    // Unsuscribe all listeners
+    // Unsubscribe all listeners
     context.chatRoom.presence.unsubscribeAll();
 
     // Trigger an update event

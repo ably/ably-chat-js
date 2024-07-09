@@ -116,7 +116,7 @@ export interface RoomOptions {
 }
 
 /**
- * Creates an errorinfo for invalid room configuration.
+ * Creates an {@link ErrorInfo} for invalid room configuration.
  *
  * @param reason The reason for the invalid room configuration.
  * @returns An ErrorInfo.

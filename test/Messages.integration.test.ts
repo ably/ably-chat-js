@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../src/Chat.ts';
 import { Message } from '../src/Message.ts';
-import { RealtimeChannelWithOptions } from '../src/realtimeextensions.ts';
+import { RealtimeChannelWithOptions } from '../src/realtimeExtensions.ts';
 import { RoomLifecycle } from '../src/RoomStatus.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 import { newChatClient } from './helper/chat.ts';
@@ -50,7 +50,7 @@ describe('messages integration', () => {
     // Attach the room
     await room.attach();
 
-    // Subscribe to messages and add them to a list when they arive
+    // Subscribe to messages and add them to a list when they arrive
     const messages: Message[] = [];
     room.messages.subscribe((messageEvent) => {
       messages.push(messageEvent.message);
@@ -59,7 +59,7 @@ describe('messages integration', () => {
     const message1 = await room.messages.send({ text: 'Hello there!' });
     const message2 = await room.messages.send({ text: 'I have the high ground!' });
 
-    // Wait up to 5 seconds for the messagesPromise to resolven
+    // Wait up to 5 seconds for the messagesPromise to resolve
     await waitForMessages(messages, 2);
 
     // Check that the messages were received
@@ -217,7 +217,7 @@ describe('messages integration', () => {
 
     const room = getRandomRoom(chat);
 
-    // Subscribe to messages and add them to a list when they arive
+    // Subscribe to messages and add them to a list when they arrive
     const messages: Message[] = [];
     room.messages.subscribe((messageEvent) => {
       messages.push(messageEvent.message);
@@ -236,7 +236,7 @@ describe('messages integration', () => {
       metadata: { hello: { name: 'second' } },
     });
 
-    // Wait up to 5 seconds for the messagesPromise to resolven
+    // Wait up to 5 seconds for the messagesPromise to resolve
     await waitForMessages(messages, 2);
 
     const expectedMessages = [
@@ -280,7 +280,7 @@ describe('messages integration', () => {
     const message1 = await room.messages.send({ text: 'Hello there!' });
     const message2 = await room.messages.send({ text: 'I have the high ground!' });
 
-    // Subscribe to messages and add them to a list when they arive
+    // Subscribe to messages and add them to a list when they arrive
     const messages: Message[] = [];
     const { getPreviousMessages } = room.messages.subscribe((messageEvent) => {
       messages.push(messageEvent.message);

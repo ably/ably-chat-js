@@ -2,7 +2,7 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { normaliseClientOptions } from '../src/config.js';
+import { normalizeClientOptions } from '../src/config.js';
 import { Room } from '../src/Room.js';
 import { RoomOptionsDefaults } from '../src/RoomOptions.js';
 import { DefaultRooms, Rooms } from '../src/Rooms.js';
@@ -42,7 +42,7 @@ describe('Typing', () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
-    context.chat = new DefaultRooms(context.realtime, normaliseClientOptions({}), makeTestLogger());
+    context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = context.chat.get(randomRoomId(), { typing: { timeoutMs: 300 } });
   });
@@ -60,7 +60,7 @@ describe('Typing', () => {
       await context.chatRoom.attach();
       // Start typing and emit typingStarted event
       await context.chatRoom.typing.start();
-      // Once the timout timer expires, the typingStopped event should be emitted
+      // Once the timeout timer expires, the typingStopped event should be emitted
       await waitForMessages(events, 2);
       // Should have received a typingStarted and then typingStopped event
       expect(events[0]?.change.clientId, 'client ids should match').toEqual(context.clientId);
@@ -110,13 +110,13 @@ describe('Typing', () => {
       const clientId1 = randomClientId();
       const client1 = new DefaultRooms(
         ablyRealtimeClient({ clientId: clientId1 }),
-        normaliseClientOptions({}),
+        normalizeClientOptions({}),
         makeTestLogger(),
       );
       const clientId2 = randomClientId();
       const client2 = new DefaultRooms(
         ablyRealtimeClient({ clientId: clientId2 }),
-        normaliseClientOptions({}),
+        normalizeClientOptions({}),
         makeTestLogger(),
       );
 

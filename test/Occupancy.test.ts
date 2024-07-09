@@ -76,7 +76,7 @@ describe('Occupancy', () => {
       });
     }));
 
-  it<TestContext>('allows listener unsubscription', (context) => {
+  it<TestContext>('allows listener to unsubscribe', (context) => {
     const receivedEvents: OccupancyEvent[] = [];
     const { unsubscribe } = context.room.occupancy.subscribe((event: OccupancyEvent) => {
       receivedEvents.push(event);

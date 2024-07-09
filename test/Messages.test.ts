@@ -564,8 +564,8 @@ describe('Messages', () => {
     await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
 
     // Now update the attach serial
-    const secondAttachmentserial = '108hhDJ2dBOihn12345678@1992531200000-1';
-    channel.properties.attachSerial = secondAttachmentserial;
+    const secondAttachmentSerial = '108hhDJ2dBOihn12345678@1992531200000-1';
+    channel.properties.attachSerial = secondAttachmentSerial;
 
     // Initiate a re-attach without resume, should cause all listener points to reset to new attach serial
     context.emulateBackendStateChange({
@@ -576,7 +576,7 @@ describe('Messages', () => {
 
     // Check we are now using the new attachSerial
     expectFunction = (_: string, params: GetMessagesQueryParams) => {
-      expect(params.fromSerial).toEqual(secondAttachmentserial);
+      expect(params.fromSerial).toEqual(secondAttachmentSerial);
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel attachment serial
@@ -596,7 +596,7 @@ describe('Messages', () => {
 
     // Check we are using the previous attachSerial
     expectFunction = (_: string, params: GetMessagesQueryParams) => {
-      expect(params.fromSerial).toEqual(secondAttachmentserial);
+      expect(params.fromSerial).toEqual(secondAttachmentSerial);
     };
 
     // Run a history query for the listener and check the chat api call is made with the previous attach serial

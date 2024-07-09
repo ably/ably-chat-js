@@ -26,21 +26,21 @@ const defaultClientOptions = {
 
 /**
  * This type is used to modify the properties of one type with the properties of another type and thus
- * can be used to turn clientoptions into normalised client options.
+ * can be used to turn client options into normalized client options.
  */
 type Modify<T, R> = Omit<T, keyof R> & R;
 
 /**
- * These are the normalised client options, with default values filled in for any missing properties.
+ * These are the normalized client options, with default values filled in for any missing properties.
  */
-export type NormalisedClientOptions = Modify<
+export type NormalizedClientOptions = Modify<
   ClientOptions,
   {
     logLevel: LogLevel;
   }
 >;
 
-export const normaliseClientOptions = (options?: ClientOptions): NormalisedClientOptions => {
+export const normalizeClientOptions = (options?: ClientOptions): NormalizedClientOptions => {
   options = options ?? {};
 
   return {

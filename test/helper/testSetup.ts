@@ -1,7 +1,7 @@
 import testAppSetup from '../../ably-common/test-resources/test-app-setup.json';
 import { isNonSandboxEnvironment } from './environment.js';
 
-// Setup creates a new app in the sanbox environment and sets the key
+// Setup creates a new app in the sandbox environment and sets the key
 // This is called automatically by vitest before the tests are run.
 const setup = async () => {
   // If we're running using a local realtime cluster, we don't need to do this

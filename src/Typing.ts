@@ -12,7 +12,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
-import { addListenerToChannelPresenceWithoutAttach } from './realtimeextensions.js';
+import { addListenerToChannelPresenceWithoutAttach } from './realtimeExtensions.js';
 import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { TypingOptions } from './RoomOptions.js';
 import EventEmitter from './utils/EventEmitter.js';
@@ -55,7 +55,7 @@ export interface Typing extends EmitsDiscontinuities {
 
   /**
    * Start indicates that the current user is typing. This will emit a typingStarted event to inform listening clients and begin a timer,
-   * once the timer expires, a typingStopped event will be emitted. The timout is configurable through the typingTimeoutMs parameter.
+   * once the timer expires, a typingStopped event will be emitted. The timeout is configurable through the typingTimeoutMs parameter.
    * If the current user is already typing, it will reset the timer and being counting down again without emitting a new event.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.

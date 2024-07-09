@@ -78,7 +78,7 @@ describe('Reactions', () => {
         });
       }));
 
-    it<TestContext>('should be able to get a reaction from realtime channel and recognise it as your own', (context) =>
+    it<TestContext>('should be able to get a reaction from realtime channel and recognize it as your own', (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = new Date().getTime();
         const { room } = context;

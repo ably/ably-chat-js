@@ -602,7 +602,7 @@ describe('room lifecycle manager', () => {
       mockChannelAttachSuccess(context.secondContributor.channel);
       mockChannelAttachFailure(context.thirdContributor.channel, AblyChannelState.Failed, 1003);
 
-      // As the third channel will enter suspened, we expect a call to detach on the first channel and the second
+      // As the third channel will enter suspend, we expect a call to detach on the first channel and the second
       // But lets have the second detach fail
       mockChannelDetachSuccess(context.firstContributor.channel);
       const contributor2DetachSpy = mockChannelDetachFailureSucceedAfter(
@@ -2051,7 +2051,7 @@ describe('room lifecycle manager', () => {
         expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
       });
 
-      it<TestContext>('registers a discontinuty event immediately if fully attached and an update event is received', async (context) => {
+      it<TestContext>('registers a discontinuity event immediately if fully attached and an update event is received', async (context) => {
         // Force our status and contributors into attached
         const status = new DefaultStatus(makeTestLogger());
         context.firstContributor.emulateStateChange({
@@ -2255,7 +2255,7 @@ describe('room lifecycle manager', () => {
     });
 
     describe('via attach event', () => {
-      it<TestContext>('doesnt register a discontinuity event on initial attach', async (context) => {
+      it<TestContext>('does not register a discontinuity event on initial attach', async (context) => {
         const status = new DefaultStatus(makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Initialized,

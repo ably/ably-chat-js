@@ -79,7 +79,7 @@ export enum ErrorCodes {
   /**
    * Cannot perform operation because the previous operation failed.
    */
-  PreviousOperationfailed = 102104,
+  PreviousOperationFailed = 102104,
 
   /**
    * An unknown error has happened in the room lifecycle.

@@ -106,7 +106,7 @@ await room.attach();
 
 ## Detaching a Room
 
-To stop receiving events on a room, it must be detached, which can be acheived by using the `detach` method.
+To stop receiving events on a room, it must be detached, which can be achieved by using the `detach` method.
 
 ```ts
 await room.detach();
@@ -205,7 +205,7 @@ const message = await room.messages.send({text: 'This was a great shot!'});
 
 ### Metadata and headers for chat messages
 
-**Metadata** is a map of extra information that can be attached to chat messages. Metadata is not used by Ably and is sent as part of the realtime message payload. Example use cases are setting custom styling (like background or text colours or fonts), adding links to external images, emojis, etc.
+**Metadata** is a map of extra information that can be attached to chat messages. Metadata is not used by Ably and is sent as part of the realtime message payload. Example use cases are setting custom styling (like background or text color or fonts), adding links to external images, emojis, etc.
 
 **Headers** are a flat key-value map and are sent as part of the realtime message's extras inside the headers property. They can serve similar purposes as metadata but they are read by Ably and can be used for things such as [subscription filters](https://faqs.ably.com/subscription-filters).
 

@@ -16,7 +16,7 @@ import { MessageEvents } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './Message.js';
 import { PaginatedResult } from './query.js';
-import { addListenerToChannelWithoutAttach } from './realtimeextensions.js';
+import { addListenerToChannelWithoutAttach } from './realtimeExtensions.js';
 import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { DefaultTimeserial } from './Timeserial.js';
 import EventEmitter from './utils/EventEmitter.js';
@@ -78,7 +78,7 @@ export interface SendMessageParams {
    * The metadata is a map of extra information that can be attached to chat
    * messages. It is not used by Ably and is sent as part of the realtime
    * message payload. Example use cases are setting custom styling like
-   * background or text colours or fonts, adding links to external images,
+   * background or text colors or fonts, adding links to external images,
    * emojis, etc.
    *
    * Do not use metadata for authoritative information. There is no server-side

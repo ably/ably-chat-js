@@ -1,10 +1,10 @@
 import * as Ably from 'ably';
 
-import { ClientOptions, normaliseClientOptions, NormalisedClientOptions } from './config.js';
+import { ClientOptions, normalizeClientOptions, NormalizedClientOptions } from './config.js';
 import { Connection, DefaultConnection } from './Connection.js';
 import { DefaultConnectionStatus } from './ConnectionStatus.js';
 import { makeLogger } from './logger.js';
-import { RealtimeWithOptions } from './realtimeextensions.js';
+import { RealtimeWithOptions } from './realtimeExtensions.js';
 import { DefaultRooms, Rooms } from './Rooms.js';
 import { VERSION } from './version.js';
 
@@ -25,7 +25,7 @@ export class ChatClient {
   /**
    * @internal
    */
-  private readonly _clientOptions: NormalisedClientOptions;
+  private readonly _clientOptions: NormalizedClientOptions;
 
   /**
    * @internal
@@ -39,13 +39,13 @@ export class ChatClient {
    */
   constructor(realtime: Ably.Realtime, clientOptions?: ClientOptions) {
     this._realtime = realtime;
-    this._clientOptions = normaliseClientOptions(clientOptions);
+    this._clientOptions = normalizeClientOptions(clientOptions);
     const logger = makeLogger(this._clientOptions);
     this._connection = new DefaultConnection(new DefaultConnectionStatus(realtime, logger));
 
     this._rooms = new DefaultRooms(realtime, this._clientOptions, logger);
     this._setAgent();
-    logger.trace(`ably chat client version ${VERSION}; initialised`);
+    logger.trace(`ably chat client version ${VERSION}; initialized`);
   }
 
   /**
@@ -98,7 +98,6 @@ export class ChatClient {
    */
   private _setAgent(): void {
     const realtime = this._realtime as RealtimeWithOptions;
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const agent = { 'chat-js': VERSION };
     realtime.options.agents = { ...(realtime.options.agents ?? realtime.options.agents), ...agent };
   }
