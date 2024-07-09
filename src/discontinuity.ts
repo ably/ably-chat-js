@@ -25,7 +25,7 @@ export interface OnDiscontinuitySubscriptionResponse {
   /**
    * Unsubscribe from discontinuity events.
    */
-  off(): void;
+  off: () => void;
 }
 
 /**

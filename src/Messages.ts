@@ -136,7 +136,7 @@ export interface MessageSubscriptionResponse {
   /**
    * Unsubscribe the listener registered with {@link Messages.subscribe} from message events.
    */
-  unsubscribe(): void;
+  unsubscribe: () => void;
 
   /**
    * Get the previous messages that were sent to the room before the listener was subscribed.
