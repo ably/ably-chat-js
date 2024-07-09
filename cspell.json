@@ -1,9 +1,6 @@
 {
   "language": "en_US",
-  "ignorePaths": [
-    "node_modules/**",
-    "**/dist/**"
-  ],
+  "ignorePaths": ["node_modules/**", "**/dist/**"],
   "useGitignore": true,
   "maxNumberOfProblems": 100,
   "words": [
@@ -16,9 +13,9 @@
     "dequal",
     "Unregisters",
     "Suspendable",
-    "Failable"
+    "Failable",
+    "livestreams",
+    "livestream"
   ],
-  "ignoreRegExpList": [
-    "/.*@\\d{13}-/"
-  ]
+  "ignoreRegExpList": ["/.*@\\d{13}-/"]
 }
