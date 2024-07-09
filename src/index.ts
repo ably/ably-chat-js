@@ -1,5 +1,5 @@
 /**
- * @module chat-react
+ * @module chat-js
  */
 
 export { ChatClient } from './Chat.js';
