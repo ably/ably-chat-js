@@ -21,10 +21,10 @@ To start using this SDK, you will need the following:
 
 ## Installation and authentication
 
-Install the Ably JavaScript SDK and the Chat SDK:
+Install the Chat SDK:
 
 ```sh
-npm install ably @ably/chat
+npm install @ably/chat
 ```
 
 To instantiate the Chat SDK, create an [Ably client](https://ably.com/docs/getting-started/setup) and pass it into the
