@@ -578,7 +578,7 @@ For guidance on how to contribute to this project, see the [CONTRIBUTING.md](CON
 
 ## Support, feedback and troubleshooting
 
-Please visit http://support.ably.com/ for access to our knowledgebase and to ask for any assistance. You can also view the [community reported Github issues](https://github.com/ably/ably-chat-js/issues) or raise one yourself.
+Please visit http://support.ably.com/ for access to our knowledge base and to ask for any assistance. You can also view the [community reported Github issues](https://github.com/ably/ably-chat-js/issues) or raise one yourself.
 
 To see what has changed in recent versions, see the [changelog](CHANGELOG.md).
 
