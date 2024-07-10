@@ -23,7 +23,10 @@ const PRESENCE_GET_RETRY_MAX_INTERVAL_MS = 30000; // max retry interval
 const PRESENCE_GET_MAX_RETRIES = 5; // max num of retries
 
 /**
- * Interface for Typing. This class is used to manage typing events in a chat room.
+ * This interface is used to interact with typing in a chat room including subscribing to typing events and
+ * fetching the current set of typing clients.
+ *
+ * Get an instance via {@link Room.typing}.
  */
 export interface Typing extends EmitsDiscontinuities {
   /**
@@ -104,12 +107,14 @@ interface TypingEventsMap {
   [TypingEvents.Changed]: TypingEvent;
 }
 
+/**
+ * @inheritDoc
+ */
 export class DefaultTyping
   extends EventEmitter<TypingEventsMap>
   implements Typing, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _clientId: string;
-  private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -119,16 +124,15 @@ export class DefaultTyping
   private _timerId: ReturnType<typeof setTimeout> | null;
 
   /**
-   * Create a new DefaultTyping.
-   * @param roomId - The ID of the room.
-   * @param options - The typing options.
-   * @param realtime - The Ably Realtime instance.
-   * @param clientId - The client ID.
-   * @param logger - The logger.
+   * Constructs a new `DefaultTyping` instance.
+   * @param roomId The unique identifier of the room.
+   * @param options The options for typing in the room.
+   * @param realtime An instance of the Ably Realtime client.
+   * @param clientId The client ID of the user.
+   * @param logger An instance of the Logger.
    */
   constructor(roomId: string, options: TypingOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
-    this._roomId = roomId;
     this._clientId = clientId;
     this._channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
     addListenerToChannelPresenceWithoutAttach({

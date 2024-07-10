@@ -59,6 +59,7 @@ export class DefaultRooms implements Rooms {
    *
    * @param realtime An instance of the Ably Realtime client.
    * @param clientOptions The client options from the chat instance.
+   * @param logger An instance of the Logger.
    */
   constructor(realtime: Ably.Realtime, clientOptions: NormalizedClientOptions, logger: Logger) {
     this._realtime = realtime;
@@ -82,7 +83,7 @@ export class DefaultRooms implements Rooms {
       return existing;
     }
 
-    const room = new DefaultRoom(roomId, options, this._realtime, this._chatApi, this._clientOptions, this._logger);
+    const room = new DefaultRoom(roomId, options, this._realtime, this._chatApi, this._logger);
     this._rooms.set(roomId, room);
 
     return room;
