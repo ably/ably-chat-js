@@ -19,4 +19,9 @@ export default defineConfig({
     },
     sourcemap: true,
   },
+  test: {
+    coverage: {
+      include: ['src/**/*.ts'],
+    },
+  },
 });
