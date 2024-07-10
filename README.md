@@ -15,6 +15,16 @@ Get started using the [📚 documentation](https://ably.com/docs/products/chat) 
 
 ![Ably Chat Header](/images/ably-chat-github-header.png)
 
+## Supported Platforms
+
+This SDK supports the following platforms:
+
+**Browsers**: All major desktop and mobile browsers, including (but not limited to) Chrome, Firefox, Edge, Safari on iOS and macOS, Opera, and Android browsers. Internet Explorer is not supported.
+
+**Node.js**: Version 20.x or newer.
+
+**Typescript**: This library is written in TypeScript and has full TypeScript support.
+
 ## Usage
 
 You will need the following prerequisites:
