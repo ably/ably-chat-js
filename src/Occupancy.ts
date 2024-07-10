@@ -17,7 +17,10 @@ import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import EventEmitter from './utils/EventEmitter.js';
 
 /**
- * Represents the occupancy (number of connections, publishers, and subscribers) of a chat room.
+ * This interface is used to interact with occupancy in a chat room: subscribing to occupancy updates and
+ * fetching the current room occupancy metrics.
+ *
+ * Get an instance via {@link Room.occupancy}.
  */
 export interface Occupancy extends EmitsDiscontinuities {
   /**
@@ -87,6 +90,9 @@ interface OccupancyEventsMap {
   [OccupancyEvents.Occupancy]: OccupancyEvent;
 }
 
+/**
+ * @inheritDoc
+ */
 export class DefaultOccupancy
   extends EventEmitter<OccupancyEventsMap>
   implements Occupancy, HandlesDiscontinuity, ContributesToRoomLifecycle
@@ -97,6 +103,13 @@ export class DefaultOccupancy
   private _logger: Logger;
   private _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
+  /**
+   * Constructs a new `DefaultOccupancy` instance.
+   * @param roomId The unique identifier of the room.
+   * @param realtime An instance of the Ably Realtime client.
+   * @param chatApi An instance of the ChatApi.
+   * @param logger An instance of the Logger.
+   */
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
     super();
     this._roomId = roomId;

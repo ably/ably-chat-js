@@ -11,13 +11,13 @@ export interface TestHookReturnType {
   count: number;
 
   /**
-   * Increment the count.
+   * Increments the count.
    * @returns void
    */
   increment: () => void;
 
   /**
-   * Decrement the count.
+   * Decrements the count.
    * @returns void
    */
   decrement: () => void;

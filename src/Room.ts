@@ -1,7 +1,6 @@
 import * as Ably from 'ably';
 
 import { ChatApi } from './ChatApi.js';
-import { NormalizedClientOptions } from './config.js';
 import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './Messages.js';
 import { DefaultOccupancy, Occupancy } from './Occupancy.js';
@@ -118,16 +117,9 @@ export class DefaultRoom implements Room {
    * @param options The options for the room.
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
-   * @param clientOptions The client options from the chat instance.
+   * @param logger An instance of the Logger.
    */
-  constructor(
-    roomId: string,
-    options: RoomOptions,
-    realtime: Ably.Realtime,
-    chatApi: ChatApi,
-    clientOptions: NormalizedClientOptions,
-    logger: Logger,
-  ) {
+  constructor(roomId: string, options: RoomOptions, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
     validateRoomOptions(options);
     logger.debug('Room();', { roomId, options });
 

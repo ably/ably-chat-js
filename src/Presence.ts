@@ -28,7 +28,7 @@ interface PresenceEventsMap {
 }
 
 /**
- * Type for PresenceData
+ * Type for PresenceData. Any JSON serializable data type.
  */
 export type PresenceData = unknown;
 
@@ -114,10 +114,10 @@ export interface PresenceSubscriptionResponse {
 }
 
 /**
- * This interface is used to interact with presence in a chat room including subscribing,
+ * This interface is used to interact with presence in a chat room: subscribing to presence events,
  * fetching presence members, or sending presence events (join,update,leave).
  *
- * Get an instance via room.presence.
+ * Get an instance via {@link Room.presence}.
  */
 export interface Presence extends EmitsDiscontinuities {
   /**
@@ -196,13 +196,13 @@ export class DefaultPresence
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   /**
-   * Constructor for Presence
-   * @param roomId - The room ID.
-   * @param roomOptions - The room options.
-   * @param realtime - The Ably Realtime instance.
-   * @param clientId - The client ID, attached to presences messages as an identifier of the sender.
+   * Constructs a new `DefaultPresence` instance.
+   * @param roomId The unique identifier of the room.
+   * @param roomOptions The room options for presence.
+   * @param realtime An instance of the Ably Realtime client.
+   * @param clientId The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
-   * @param logger - The logger instance.
+   * @param logger An instance of the Logger.
    */
   constructor(roomId: string, roomOptions: RoomOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();

@@ -71,9 +71,9 @@ export interface SendReactionParams {
 export type RoomReactionListener = (reaction: Reaction) => void;
 
 /**
- * Object used to send and subscribe to room-level reactions.
+ * This interface is used to interact with room-level reactions in a chat room: subscribing to reactions and sending them.
  *
- * Get an instance via room.reactions.
+ * Get an instance via {@link Room.reactions}.
  */
 export interface RoomReactions extends EmitsDiscontinuities {
   /**
@@ -131,19 +131,27 @@ export interface RoomReactionsSubscriptionResponse {
   unsubscribe: () => void;
 }
 
+/**
+ * @inheritDoc
+ */
 export class DefaultRoomReactions
   extends EventEmitter<RoomReactionEventsMap>
   implements RoomReactions, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
-  private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
+  /**
+   * Constructs a new `DefaultRoomReactions` instance.
+   * @param roomId The unique identifier of the room.
+   * @param realtime An instance of the Ably Realtime client.
+   * @param clientId The client ID of the user.
+   * @param logger An instance of the Logger.
+   */
   constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
-    this._roomId = roomId;
     this._channel = getChannel(`${roomId}::$chat::$reactions`, realtime);
     addListenerToChannelWithoutAttach({
       listener: this._forwarder.bind(this),

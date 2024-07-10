@@ -21,6 +21,9 @@ import { ContributesToRoomLifecycle } from './RoomLifecycleManager.js';
 import { DefaultTimeserial } from './Timeserial.js';
 import EventEmitter from './utils/EventEmitter.js';
 
+/**
+ * Event names and their respective payloads emitted by the messages feature.
+ */
 interface MessageEventsMap {
   [MessageEvents.Created]: MessageEventPayload;
 }
@@ -147,8 +150,10 @@ export interface MessageSubscriptionResponse {
 }
 
 /**
- * This class is used to interact with messages in a chat room including subscribing
- * to them, fetching history, or sending messages.
+ * This interface is used to interact with messages in a chat room: subscribing
+ * to new messages, fetching history, or sending messages.
+ *
+ * Get an instance via {@link Room.messages}.
  */
 export interface Messages extends EmitsDiscontinuities {
   /**
@@ -164,7 +169,7 @@ export interface Messages extends EmitsDiscontinuities {
   unsubscribeAll(): void;
 
   /**
-   * Queries the chat room for messages, based on the provided query options.
+   * Get messages that have been previously sent to the chat room, based on the provided options.
    *
    * @param options Options for the query.
    * @returns A promise that resolves with the paginated result of messages. This paginated result can
@@ -196,10 +201,7 @@ export interface Messages extends EmitsDiscontinuities {
 }
 
 /**
- * This class is used to interact with messages in a chat room including subscribing
- * to them, fetching history, or sending messages.
- *
- * Get an instance via room.messages.
+ * @inheritDoc
  */
 export class DefaultMessages
   extends EventEmitter<MessageEventsMap>
@@ -218,6 +220,14 @@ export class DefaultMessages
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
+  /**
+   * Constructs a new `DefaultMessages` instance.
+   * @param roomId The unique identifier of the room.
+   * @param realtime An instance of the Ably Realtime client.
+   * @param chatApi An instance of the ChatApi.
+   * @param clientId The client ID of the user.
+   * @param logger An instance of the Logger.
+   */
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
     this._roomId = roomId;
@@ -392,8 +402,8 @@ export class DefaultMessages
 
   /**
    * @inheritdoc Messages
-   * @throws Ably.ErrorInfo if metadata defines reserved keys.
-   * @throws Ably.ErrorInfo if headers defines any headers prefixed with reserved words.
+   * @throws {@link ErrorInfo} if metadata defines reserved keys.
+   * @throws {@link ErrorInfo} if headers defines any headers prefixed with reserved words.
    */
   async send(params: SendMessageParams): Promise<Message> {
     this._logger.trace('Messages.send();');
