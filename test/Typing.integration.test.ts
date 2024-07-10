@@ -116,7 +116,7 @@ describe('Typing', () => {
         makeTestLogger(),
       );
 
-      const roomOptions = { typing: { timeoutMs: 1000 } };
+      const roomOptions = { typing: { timeoutMs: 15000 } };
 
       // Attach the rooms
       await context.chatRoom.attach();
@@ -144,6 +144,9 @@ describe('Typing', () => {
       // Ensure that the client ids are correct and client1 is no longer typing
       expect(currentlyTypingClientIdsAfterStop.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIdsAfterStop.has(clientId1), 'client1 should not be typing').toEqual(false);
+
+      // stop typing 2, clears typing timeout
+      await client2.get(context.chatRoom.roomId, roomOptions).typing.stop();
     },
     TEST_TIMEOUT,
   );
