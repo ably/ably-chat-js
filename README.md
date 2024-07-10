@@ -227,9 +227,9 @@ const message = await room.messages.send({ text: 'This was a great shot!' });
 
 ### Metadata and headers for chat messages
 
-**Metadata** is a map of extra information that can be attached to chat messages. Metadata is not used by Ably and is sent as part of the realtime message payload. Example use cases are setting custom styling (like background or text color or fonts), adding links to external images, emojis, etc.
+**Metadata** is a map of extra information that can be attached to chat messages. `metadata` is not used by Ably and is sent as part of the realtime message payload. Example use cases are setting custom styling (like background or text color or fonts), adding links to external images, emojis, etc.
 
-**Headers** are a flat key-value map and are sent as part of the realtime message's extras inside the headers property. They can serve similar purposes as metadata but they are read by Ably and can be used for things such as [subscription filters](https://faqs.ably.com/subscription-filters).
+**Headers** are a flat key-value map and are sent as part of the realtime message's `extras` inside the `headers` property. They can serve similar purposes as `metadata` but they are read by Ably and can be used for things such as [subscription filters](https://faqs.ably.com/subscription-filters).
 
 To pass headers and/or metadata when sending a chat message:
 
