@@ -24,7 +24,6 @@
     "format": "prettier --write src test __mocks__ demo/src",
     "format:check": "prettier --check src test __mocks__ demo/src",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
     "test:chat": "vitest run --project chat",
     "test:react": "vitest run --project react-hooks",
     "test:watch": "vitest watch",
