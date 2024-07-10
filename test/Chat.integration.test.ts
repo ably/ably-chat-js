@@ -4,6 +4,7 @@ import { ChatClient } from '../src/Chat.js';
 import { ConnectionLifecycle } from '../src/ConnectionStatus.js';
 import { LogLevel } from '../src/logger.js';
 import { RealtimeWithOptions } from '../src/realtimeExtensions.js';
+import { VERSION } from '../src/version.js';
 import { newChatClient } from './helper/chat.js';
 import { testClientOptions } from './helper/options.js';
 import { ablyRealtimeClient } from './helper/realtimeClient.js';
@@ -29,7 +30,7 @@ const waitForConnectionLifecycle = (chat: ChatClient, state: ConnectionLifecycle
 describe('Chat', () => {
   it('should set the agent string', () => {
     const chat = newChatClient(testClientOptions());
-    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({ 'chat-js': '0.0.1' });
+    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({ 'chat-js': VERSION });
   });
 
   it('should mix in the client options', () => {
