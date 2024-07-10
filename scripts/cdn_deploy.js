@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-const AWS = require('aws-sdk');
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
-const argv = require('minimist')(process.argv.slice(2));
+import AWS from 'aws-sdk';
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import minimist from 'minimist';
+const argv = minimist(process.argv.slice(2));
 const S3_DEFAULT_BUCKET = 'prod-cdn.ably.com';
 const S3_DEFAULT_ROOT = 'lib';
 
