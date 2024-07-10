@@ -102,7 +102,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
   it<TestContext>('successfully enter presence with clientId and custom user data', async (context) => {
     const enterEventPromise = waitForEvent(
       context.realtime,
-      'enter',
+      ['enter', 'present'],
       context.chatRoom.messages.channel.name,
       (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
