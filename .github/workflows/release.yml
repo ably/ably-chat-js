@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: 'write'
+      id-token: 'write'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -22,4 +23,4 @@ jobs:
         run: |
           npm ci
           npm run build
-          npm publish --access=public
+          npm publish --provenance --access public
