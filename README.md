@@ -8,7 +8,7 @@
 Ably Chat is a set of purpose-built APIs for a host of chat features enabling you to create 1:1, 1:Many, Many:1 and Many:Many chat rooms for any scale. It is designed to meet a wide range of chat use cases, such as livestreams, in-game communication, customer support, or social interactions in SaaS products. Built on [Ably's](https://ably.com/) core service, it abstracts complex details to enable efficient chat architectures.
 
 > [!IMPORTANT]  
-> This SDK is currently under development. If you are interested in being an early adopter and providing feedback then you can [sign up to the private beta](https://forms.gle/vB2kXhCXrTQpzHLu5) and are welcome to [provide us with feedback](https://forms.gle/mBw9M53NYuCBLFpMA).
+> This SDK is currently under development. If you are interested in being an early adopter and providing feedback then you can [sign up to the private beta](https://forms.gle/vB2kXhCXrTQpzHLu5) and are welcome to [provide us with feedback](https://forms.gle/mBw9M53NYuCBLFpMA). Coming soon: React Hooks for Ably Chat.
 
 Get started using the [📚 documentation](https://ably.com/docs/products/chat) and [🚀check out the live demo](https://ably-livestream-chat-demo.vercel.app/), or [📘 browse the API reference](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/).
 
@@ -26,13 +26,15 @@ You will need the following prerequisites:
   - Make sure your API key has the
     following [capabilities](https://ably.com/docs/auth/capabilities): `publish`, `subscribe`, `presence`, `history` and `channel-metadata`.
 
-## Installation and authentication
+## Installation
 
 Install the Chat SDK:
 
 ```sh
 npm install @ably/chat
 ```
+
+## Instantiation and authentication
 
 To instantiate the Chat SDK, create an [Ably client](https://ably.com/docs/getting-started/setup) and pass it into the
 Chat constructor:
@@ -58,7 +60,7 @@ generate an ID.
 The Chat SDK uses a single connection to Ably, which is exposed via the `ChatClient.connection` property. You can use this
 property to observe the connection state and take action accordingly.
 
-## Current connection status
+### Current connection status
 
 You can view the current connection status at any time:
 
@@ -67,7 +69,7 @@ const connectionStatus = chat.connection.status.current;
 const connectionError = chat.connection.status.error;
 ```
 
-## Subscribing to connection status changes
+### Subscribing to connection status changes
 
 You can subscribe to connection status changes by registering a listener, like so:
 
@@ -301,7 +303,7 @@ if (historicalMessages.hasNext()) {
 
 ## Online status
 
-### Retrieve online members
+### Retrieving online members
 
 You can get the complete list of currently online or present members, their state and data, by calling the `presence.get` method.
 
@@ -444,7 +446,7 @@ const { unsubscribe } = room.typing.subscribe((event) => {
 });
 ```
 
-### Unsubscribe from typing updates
+### Unsubscribing from typing updates
 
 To unsubscribe the listener, you can call the corresponding `unsubscribe` method returned by the `subscribe` call:
 
@@ -490,7 +492,7 @@ You can remove all listeners at once by calling `occupancy.unsubscribeAll()`.
 
 Occupancy updates are delivered in near-real-time, with updates in quick succession batched together for performance.
 
-### Retrieve the occupancy of a chat room
+### Retrieving the occupancy of a chat room
 
 You can request the current occupancy of a chat room using the `occupancy.get` method:
 
@@ -569,6 +571,16 @@ For a given chat room, the channels used for features are as follows:
 | Typing    | `<roomId>::$chat::$typingIndicators` |
 
 ---
+
+## Contributing
+
+For guidance on how to contribute to this project, see the [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Support, feedback and troubleshooting
+
+Please visit http://support.ably.com/ for access to our knowledgebase and to ask for any assistance. You can also view the [community reported Github issues](https://github.com/ably/ably-chat-js/issues) or raise one yourself.
+
+To see what has changed in recent versions, see the [changelog](CHANGELOG.md).
 
 ## Further reading
 
