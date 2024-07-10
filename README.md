@@ -45,6 +45,14 @@ Install the Chat SDK:
 npm install @ably/chat
 ```
 
+For browsers, you can also include the Chat SDK directly into your HTML:
+
+```html
+<script src="https://cdn.ably.com/lib/ably-chat-0.js"></script>
+```
+
+The Ably client library follows [Semantic Versioning](http://semver.org/). To lock into a major or minor version of the client library, you can specify a specific version number such as https://cdn.ably.com/lib/ably-chat-0.js for all v0._ versions, or https://cdn.ably.com/lib/ably-chat-0.1.js for all v0.1._ versions, or you can lock into a single release with https://cdn.ably.com/lib/ably-chat-0.1.0.js. See https://github.com/ably/ably-chat-js/tags for a list of tagged releases.
+
 ## Instantiation and authentication
 
 To instantiate the Chat SDK, create an [Ably client](https://ably.com/docs/getting-started/setup) and pass it into the
