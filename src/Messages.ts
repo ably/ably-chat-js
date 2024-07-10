@@ -1,5 +1,4 @@
 import * as Ably from 'ably';
-import { ErrorInfo, RealtimeChannel } from 'ably';
 
 import { getChannel, messagesChannelName } from './channel.js';
 import { ChatApi } from './ChatApi.js';
@@ -271,7 +270,11 @@ export class DefaultMessages
       this._logger.error(
         `DefaultSubscriptionManager.getBeforeSubscriptionStart(); listener has not been subscribed yet`,
       );
-      throw new ErrorInfo('cannot query history; listener has not been subscribed yet', 40000, 400) as unknown as Error;
+      throw new Ably.ErrorInfo(
+        'cannot query history; listener has not been subscribed yet',
+        40000,
+        400,
+      ) as unknown as Error;
     }
 
     // Get the subscription point of the listener
@@ -287,7 +290,7 @@ export class DefaultMessages
           subscriptionTime: parseSerial.timestamp,
         },
       );
-      throw new ErrorInfo(
+      throw new Ably.ErrorInfo(
         'cannot query history; end time is after the subscription point of the listener',
         40000,
         400,
@@ -332,17 +335,17 @@ export class DefaultMessages
         return Promise.resolve({ fromSerial: channelWithProperties.properties.channelSerial });
       }
       this._logger.error(`DefaultSubscriptionManager.handleAttach(); channelSerial is undefined`);
-      throw new ErrorInfo('channel is attached, but channelSerial is not defined', 40000, 400) as unknown as Error;
+      throw new Ably.ErrorInfo('channel is attached, but channelSerial is not defined', 40000, 400) as unknown as Error;
     }
 
     return this._subscribeAtChannelAttach();
   }
 
-  private _getChannelProperties(): RealtimeChannel & {
+  private _getChannelProperties(): Ably.RealtimeChannel & {
     properties: { attachSerial: string | undefined; channelSerial: string | undefined };
   } {
     // Get the attachSerial from the channel properties
-    return this._channel as RealtimeChannel & {
+    return this._channel as Ably.RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
         channelSerial: string | undefined;
@@ -364,7 +367,9 @@ export class DefaultMessages
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
           this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
-          reject(new ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error);
+          reject(
+            new Ably.ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error,
+          );
         }
       }
 
@@ -379,7 +384,9 @@ export class DefaultMessages
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
           this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
-          reject(new ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error);
+          reject(
+            new Ably.ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error,
+          );
         }
       });
     });
