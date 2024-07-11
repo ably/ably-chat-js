@@ -25,6 +25,19 @@ This SDK supports the following platforms:
 
 **Typescript**: This library is written in TypeScript and has full TypeScript support.
 
+## Supported chat features
+
+This project is under development so we will be incrementally adding new features. At this stage, you'll find APIs for the following chat features:
+
+- Chat rooms for 1:1, 1:many, many:1 and many:many partipation.
+- Sending and receiving chat messages.
+- Online status aka presence of chat participants.
+- Chat room occupancy, i.e total number of connections and presence members.
+- Typing indicators
+- Room-level reactions (ephemeral at this stage)
+
+If there are other features you'd like us to prioritize, please [let us know](https://forms.gle/mBw9M53NYuCBLFpMA).
+
 ## Usage
 
 You will need the following prerequisites:
