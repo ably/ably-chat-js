@@ -29,7 +29,7 @@ This SDK supports the following platforms:
 
 This project is under development so we will be incrementally adding new features. At this stage, you'll find APIs for the following chat features:
 
-- Chat rooms for 1:1, 1:many, many:1 and many:many partipation.
+- Chat rooms for 1:1, 1:many, many:1 and many:many participation.
 - Sending and receiving chat messages.
 - Online status aka presence of chat participants.
 - Chat room occupancy, i.e total number of connections and presence members.
