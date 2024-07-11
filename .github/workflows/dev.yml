@@ -64,6 +64,7 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
+      - run: npx playwright install --with-deps
       - run: npm run test
       - uses: davelosert/vitest-coverage-report-action@v2
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'ably/ably-chat-js' && always()

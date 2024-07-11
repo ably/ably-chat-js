@@ -36,12 +36,15 @@ export const useCounter = (): TestHookReturnType => {
     createdAt: new Date(),
     metadata: {},
     headers: {},
+    /* istanbul ignore next */
     before() {
       return false;
     },
+    /* istanbul ignore next */
     after() {
       return false;
     },
+    /* istanbul ignore next */
     equal() {
       return false;
     },
