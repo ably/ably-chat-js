@@ -200,20 +200,6 @@ To send a message, simply call `send` on the `room.messages` property, with the 
 const message = await room.messages.send({ text: 'This was a great shot!' });
 ```
 
-### Message payload
-
-```json5
-{
-  timeserial: 'string',
-  clientId: 'string',
-  roomId: 'string',
-  text: 'string',
-  createdAt: 'number',
-  metadata: 'Record<string, unknown>',
-  headers: 'Record<string, number | string | boolean | null | undefined>',
-}
-```
-
 ### Metadata and headers for chat messages
 
 **Metadata** is a map of extra information that can be attached to chat messages. Metadata is not used by Ably and is sent as part of the realtime message payload. Example use cases are setting custom styling (like background or text color or fonts), adding links to external images, emojis, etc.
@@ -512,10 +498,10 @@ To send a reaction such as `"like"`:
 await room.reactions.send({ type: 'like' });
 ```
 
-You can also add any metadata to reactions:
+You can also add any metadata and headers to reactions:
 
 ```ts
-await room.reactions.send({ type: 'like', metadata: { effect: 'fireworks' } });
+await room.reactions.send({ type: 'like', metadata: { effect: 'fireworks' }, headers: { streamId: 'basketball-stream' } });
 ```
 
 ### Subscribing to room reactions
@@ -574,7 +560,7 @@ For a given chat room, the channels used for features are as follows:
 
 ## Contributing
 
-For guidance on how to contribute to this project, see the [CONTRIBUTING.md](CONTRIBUTING.md).
+For guidance on how to contribute to this project, see the [contributing guidelines](CONTRIBUTING.md).
 
 ## Support, feedback and troubleshooting
 
