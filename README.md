@@ -3,16 +3,40 @@
 <p style="text-align: left">
     <img src="https://img.shields.io/badge/development_status-Private_Beta-ab7df8" alt="Development status"   />
     <img src="https://badgen.net/github/license/3scale/saas-operator" alt="License" />
+    <img src="https://img.shields.io/npm/v/@ably/chat.svg?style=flat">
 </p>
 
 Ably Chat is a set of purpose-built APIs for a host of chat features enabling you to create 1:1, 1:Many, Many:1 and Many:Many chat rooms for any scale. It is designed to meet a wide range of chat use cases, such as livestreams, in-game communication, customer support, or social interactions in SaaS products. Built on [Ably's](https://ably.com/) core service, it abstracts complex details to enable efficient chat architectures.
 
 > [!IMPORTANT]  
-> This SDK is currently under development. If you are interested in being an early adopter and providing feedback then you can [sign up to the private beta](https://forms.gle/vB2kXhCXrTQpzHLu5) and are welcome to [provide us with feedback](https://forms.gle/mBw9M53NYuCBLFpMA).
+> This SDK is currently under development. If you are interested in being an early adopter and providing feedback then you can [sign up to the private beta](https://forms.gle/vB2kXhCXrTQpzHLu5) and are welcome to [provide us with feedback](https://forms.gle/mBw9M53NYuCBLFpMA). Coming soon: React Hooks for Ably Chat.
 
 Get started using the [📚 documentation](https://ably.com/docs/products/chat) and [🚀check out the live demo](https://ably-livestream-chat-demo.vercel.app/), or [📘 browse the API reference](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/).
 
 ![Ably Chat Header](/images/ably-chat-github-header.png)
+
+## Supported Platforms
+
+This SDK supports the following platforms:
+
+**Browsers**: All major desktop and mobile browsers, including (but not limited to) Chrome, Firefox, Edge, Safari on iOS and macOS, Opera, and Android browsers. Internet Explorer is not supported.
+
+**Node.js**: Version 20.x or newer.
+
+**Typescript**: This library is written in TypeScript and has full TypeScript support.
+
+## Supported chat features
+
+This project is under development so we will be incrementally adding new features. At this stage, you'll find APIs for the following chat features:
+
+- Chat rooms for 1:1, 1:many, many:1 and many:many participation.
+- Sending and receiving chat messages.
+- Online status aka presence of chat participants.
+- Chat room occupancy, i.e total number of connections and presence members.
+- Typing indicators
+- Room-level reactions (ephemeral at this stage)
+
+If there are other features you'd like us to prioritize, please [let us know](https://forms.gle/mBw9M53NYuCBLFpMA).
 
 ## Usage
 
@@ -26,13 +50,23 @@ You will need the following prerequisites:
   - Make sure your API key has the
     following [capabilities](https://ably.com/docs/auth/capabilities): `publish`, `subscribe`, `presence`, `history` and `channel-metadata`.
 
-## Installation and authentication
+## Installation
 
 Install the Chat SDK:
 
 ```sh
 npm install @ably/chat
 ```
+
+For browsers, you can also include the Chat SDK directly into your HTML:
+
+```html
+<script src="https://cdn.ably.com/lib/ably-chat-0.js"></script>
+```
+
+The Ably client library follows [Semantic Versioning](http://semver.org/). To lock into a major or minor version of the client library, you can specify a specific version number such as https://cdn.ably.com/lib/ably-chat-0.js for all v0._ versions, or https://cdn.ably.com/lib/ably-chat-0.1.js for all v0.1._ versions, or you can lock into a single release with https://cdn.ably.com/lib/ably-chat-0.1.0.js. See https://github.com/ably/ably-chat-js/tags for a list of tagged releases.
+
+## Instantiation and authentication
 
 To instantiate the Chat SDK, create an [Ably client](https://ably.com/docs/getting-started/setup) and pass it into the
 Chat constructor:
@@ -58,7 +92,7 @@ generate an ID.
 The Chat SDK uses a single connection to Ably, which is exposed via the `ChatClient.connection` property. You can use this
 property to observe the connection state and take action accordingly.
 
-## Current connection status
+### Current connection status
 
 You can view the current connection status at any time:
 
@@ -67,7 +101,7 @@ const connectionStatus = chat.connection.status.current;
 const connectionError = chat.connection.status.error;
 ```
 
-## Subscribing to connection status changes
+### Subscribing to connection status changes
 
 You can subscribe to connection status changes by registering a listener, like so:
 
@@ -97,7 +131,13 @@ You can create or retrieve a chat room with name `"basketball-stream"` this way:
 const room = chat.rooms.get('basketball-stream', { reactions: RoomOptionsDefaults.reactions });
 ```
 
-The second argument to `rooms.get` is a `RoomOptions` argument, which tells the Chat SDK what features you would like your room to use and how they should be configured. For example, you can set the timeout between keystrokes for typing events as part of the room options. Sensible defaults are provided for your convenience.
+The second argument to `rooms.get` is a `RoomOptions` argument, which tells the Chat SDK what features you would like your room to use and how they should be configured. For example, you can set the timeout between keystrokes for typing events as part of the room options. Sensible defaults for each
+of the features are provided for your convenience:
+
+- A typing timeout (time of inactivity before typing stops) of 10 seconds.
+- Entry into, and subscription to, presence.
+
+The defaults options for each feature may be viewed [here](https://github.com/ably/ably-chat-js/blob/main/src/RoomOptions.ts).
 
 In order to use the same room but with different options, you must first `release` the room before requesting an instance with the changed options (see below for more information on releasing rooms).
 
@@ -198,25 +238,11 @@ To send a message, simply call `send` on the `room.messages` property, with the 
 const message = await room.messages.send({ text: 'This was a great shot!' });
 ```
 
-### Message payload
-
-```json5
-{
-  timeserial: 'string',
-  clientId: 'string',
-  roomId: 'string',
-  text: 'string',
-  createdAt: 'number',
-  metadata: 'Record<string, unknown>',
-  headers: 'Record<string, number | string | boolean | null | undefined>',
-}
-```
-
 ### Metadata and headers for chat messages
 
-**Metadata** is a map of extra information that can be attached to chat messages. Metadata is not used by Ably and is sent as part of the realtime message payload. Example use cases are setting custom styling (like background or text color or fonts), adding links to external images, emojis, etc.
+**Metadata** is a map of extra information that can be attached to chat messages. `metadata` is not used by Ably and is sent as part of the realtime message payload. Example use cases are setting custom styling (like background or text color or fonts), adding links to external images, emojis, etc.
 
-**Headers** are a flat key-value map and are sent as part of the realtime message's extras inside the headers property. They can serve similar purposes as metadata but they are read by Ably and can be used for things such as [subscription filters](https://faqs.ably.com/subscription-filters).
+**Headers** are a flat key-value map and are sent as part of the realtime message's `extras` inside the `headers` property. They can serve similar purposes as `metadata` but they are read by Ably and can be used for things such as [subscription filters](https://faqs.ably.com/subscription-filters).
 
 To pass headers and/or metadata when sending a chat message:
 
@@ -301,7 +327,7 @@ if (historicalMessages.hasNext()) {
 
 ## Online status
 
-### Retrieve online members
+### Retrieving online members
 
 You can get the complete list of currently online or present members, their state and data, by calling the `presence.get` method.
 
@@ -444,7 +470,7 @@ const { unsubscribe } = room.typing.subscribe((event) => {
 });
 ```
 
-### Unsubscribe from typing updates
+### Unsubscribing from typing updates
 
 To unsubscribe the listener, you can call the corresponding `unsubscribe` method returned by the `subscribe` call:
 
@@ -490,7 +516,7 @@ You can remove all listeners at once by calling `occupancy.unsubscribeAll()`.
 
 Occupancy updates are delivered in near-real-time, with updates in quick succession batched together for performance.
 
-### Retrieve the occupancy of a chat room
+### Retrieving the occupancy of a chat room
 
 You can request the current occupancy of a chat room using the `occupancy.get` method:
 
@@ -510,10 +536,10 @@ To send a reaction such as `"like"`:
 await room.reactions.send({ type: 'like' });
 ```
 
-You can also add any metadata to reactions:
+You can also add any metadata and headers to reactions:
 
 ```ts
-await room.reactions.send({ type: 'like', metadata: { effect: 'fireworks' } });
+await room.reactions.send({ type: 'like', metadata: { effect: 'fireworks' }, headers: { streamId: 'basketball-stream' } });
 ```
 
 ### Subscribing to room reactions
@@ -569,6 +595,16 @@ For a given chat room, the channels used for features are as follows:
 | Typing    | `<roomId>::$chat::$typingIndicators` |
 
 ---
+
+## Contributing
+
+For guidance on how to contribute to this project, see the [contributing guidelines](CONTRIBUTING.md).
+
+## Support, feedback and troubleshooting
+
+Please visit http://support.ably.com/ for access to our knowledge base and to ask for any assistance. You can also view the [community reported Github issues](https://github.com/ably/ably-chat-js/issues) or raise one yourself.
+
+To see what has changed in recent versions, see the [changelog](CHANGELOG.md).
 
 ## Further reading
 
