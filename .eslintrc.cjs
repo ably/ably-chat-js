@@ -10,14 +10,15 @@ module.exports = {
     sourceType: 'module',
     project: ['./tsconfig.json', './tsconfig.test.json', './src/react/tsconfig.json', './src/react/tsconfig.test.json'],
   },
-  plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import', 'simple-import-sort'],
+  plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import', 'simple-import-sort', 'compat'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended-type-checked',
     'plugin:@typescript-eslint/strict-type-checked',
     'plugin:@typescript-eslint/stylistic-type-checked',
     'plugin:security/recommended-legacy',
-    'plugin:import/recommended'
+    'plugin:import/recommended',
+    'plugin:compat/recommended'
   ],
   rules: {
     'eol-last': 'error',
@@ -117,7 +118,8 @@ module.exports = {
     'vite.config.ts',
     'vitest.workspace.ts',
     'test/helper/testSetup.ts',
-    '__mocks__'
+    '__mocks__',
+    'coverage/'
   ],
   settings: {
     jsdoc: {
