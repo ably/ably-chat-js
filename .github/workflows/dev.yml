@@ -53,6 +53,9 @@ jobs:
       - run: npm run test:typescript
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v2
         with:
@@ -62,6 +65,8 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run test
+      - uses: davelosert/vitest-coverage-report-action@v2
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'ably/ably-chat-js' && always()
   build:
     runs-on: ubuntu-latest
     steps:
