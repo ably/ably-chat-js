@@ -8,8 +8,6 @@
       "./test/**/*.test.tsx",
       "./test/**/*.test.ts",
       "./src/fakes/**/*.ts",
-      "./src/react/test/**/*.ts",
-      "./src/react/test/**/*.tsx",
     ],
     "compilerOptions": {
       "rootDir": "./src",

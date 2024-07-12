@@ -1,8 +1,7 @@
 {
-  "include": ["./src/**/*.ts"],
-  "exclude": ["./test/**/*.test.tsx", "./test/**/*.test.ts"],
+  "include": ["./hooks/**/*.ts", "index.ts"],
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": ".",
     "target": "es6",
     "sourceMap": true,
     "strict": true,
