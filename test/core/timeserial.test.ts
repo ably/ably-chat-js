@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { DefaultTimeserial } from '../../src/core/Timeserial.js';
+import { DefaultTimeserial } from '../../src/core/timeserial.ts';
 
 describe('calculateTimeserial', () => {
   it('parses a valid timeserial', () => {

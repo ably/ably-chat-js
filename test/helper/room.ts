@@ -1,14 +1,14 @@
 import * as Ably from 'ably';
 import { vi } from 'vitest';
 
-import { ChatClient } from '../../src/core/Chat.ts';
-import { ChatApi } from '../../src/core/ChatApi.ts';
-import { DefaultRoom, Room } from '../../src/core/Room.ts';
-import { RoomOptions, RoomOptionsDefaults } from '../../src/core/RoomOptions.ts';
-import { RoomLifecycle, RoomStatus } from '../../src/core/RoomStatus.ts';
+import { ChatClient } from '../../src/core/chat.ts';
+import { ChatApi } from '../../src/core/chat-api.ts';
+import { DefaultRoom, Room } from '../../src/core/room.ts';
+import { RoomOptions, RoomOptionsDefaults } from '../../src/core/room-options.ts';
+import { RoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
 import { randomRoomId } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
-import { ablyRealtimeClient } from './realtimeClient.ts';
+import { ablyRealtimeClient } from './realtime-client.ts';
 
 // Wait 3 seconds for the room to reach the expected status
 export const waitForRoomStatus = async (status: RoomStatus, expected: RoomLifecycle) => {

@@ -2,4 +2,4 @@
  * @module chat-react
  */
 
-export { type TestHookReturnType, useCounter } from './hooks/useCounter.js';
+export { type TestHookReturnType, useCounter } from './hooks/use-counter.js';

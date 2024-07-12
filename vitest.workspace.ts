@@ -5,7 +5,7 @@ export default defineWorkspace([
   {
     root: '.',
     test: {
-      globalSetup: './test/helper/testSetup.ts',
+      globalSetup: './test/helper/test-setup.ts',
       setupFiles: ['./test/helper/expectations.ts'],
       include: ['test/core/**/*.test.{ts,js}'],
       name: 'chat',
@@ -18,7 +18,7 @@ export default defineWorkspace([
   {
     root: '.',
     test: {
-      globalSetup: './test/helper/testSetup.ts',
+      globalSetup: './test/helper/test-setup.ts',
       setupFiles: ['./test/helper/expectations.ts'],
       include: ['test/react/**/*.test.{tsx,jsx}'],
       name: 'react-hooks',

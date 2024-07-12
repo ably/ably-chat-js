@@ -1,9 +1,9 @@
 import Ably from 'ably';
 
-import { ChatClient } from '../../src/core/Chat.js';
+import { ChatClient } from '../../src/core/chat.ts';
 import { ClientOptions, normalizeClientOptions } from '../../src/core/config.js';
 import { testLoggingLevel } from './logger.js';
-import { ablyRealtimeClientWithToken } from './realtimeClient.js';
+import { ablyRealtimeClientWithToken } from './realtime-client.js';
 
 export const newChatClient = (options?: ClientOptions, realtimeClient?: Ably.Realtime): ChatClient => {
   const normalizedOptions = normalizeClientOptions({

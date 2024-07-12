@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeClientOptions } from '../../src/core/config.js';
-import { LogContext, Logger, LogLevel, makeLogger } from '../../src/core/logger.js';
+import { normalizeClientOptions } from '../../src/core/config.ts';
+import { LogContext, Logger, LogLevel, makeLogger } from '../../src/core/logger.ts';
 
 const defaultLogContext = { contextKey: 'contextValue' };
 
