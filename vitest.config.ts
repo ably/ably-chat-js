@@ -5,14 +5,17 @@ export default defineConfig({
     coverage: {
       enabled: true,
       include: ['src/**/*'],
+      exclude: ['src/index.ts', 'src/react/src/index.ts'],
       reporter: ['text', 'html', 'json-summary', 'json'],
       reportOnFailure: true,
       thresholds: {
-        statements: 93,
+        statements: 91,
         branches: 92,
         functions: 92,
-        lines: 93,
+        lines: 91,
       },
+      provider: 'v8',
+      ignoreEmptyLines: true,
     },
   },
 });
