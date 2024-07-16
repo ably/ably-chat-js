@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
 import { useMessages } from '../../hooks/useMessages';
@@ -8,6 +8,9 @@ import { ReactionInput } from '../../components/ReactionInput';
 
 export const Chat = () => {
   const { loading, clientId, messages, sendMessage } = useMessages();
+
+  // Used to anchor the scroll to the bottom of the chat
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // define for typing indicator
   const { startTyping, stopTyping, subscribeToTypingIndicators } = useTypingIndicators();
@@ -63,6 +66,16 @@ export const Chat = () => {
     window.location.reload();
   }
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (!loading) {
+      scrollToBottom();
+    }
+  }, [messages, loading]);
+
   return (
     <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-screen">
       <div
@@ -93,6 +106,7 @@ export const Chat = () => {
               message={msg}
             ></MessageComponent>
           ))}
+          <div ref={messagesEndRef} />
         </div>
       )}
       <div className="typing-indicator-container">
