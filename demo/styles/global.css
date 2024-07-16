@@ -1,0 +1,33 @@
+:root {
+    --button-width: 180px;
+    --button-height: 50px;
+    --button-padding: 10px 20px;
+    --button-border-radius: 5px;
+}
+
+.btn {
+    width: var(--button-width);
+    height: var(--button-height);
+    padding: var(--button-padding);
+    border-radius: var(--button-border-radius);
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+    color: white;
+    text-align: center;
+    transition: background-color 0.3s ease;
+    background-color: #0000FF;
+}
+
+.btn:hover {
+    background-color: #0000CC;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --button-width: 120px;
+        --button-height: 40px;
+    }
+}
+
