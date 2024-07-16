@@ -3,14 +3,14 @@ module.exports = {
   env: {
     es6: true,
     node: true,
-    browser: true
+    browser: true,
   },
   parser: '@typescript-eslint/parser',
   parserOptions: {
     sourceType: 'module',
     project: ['./tsconfig.json', './tsconfig.test.json', './src/react/tsconfig.json', './src/react/tsconfig.test.json'],
   },
-  plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import', 'simple-import-sort', 'compat'],
+  plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import', 'simple-import-sort', 'compat', 'unicorn'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended-type-checked',
@@ -29,34 +29,35 @@ module.exports = {
     'no-redeclare': 'off',
     'simple-import-sort/imports': 'error',
     'simple-import-sort/exports': 'error',
+    'unicorn/filename-case': 'error',
     '@typescript-eslint/naming-convention': [
       'error',
       {
         selector: 'typeLike',
-        format: ['PascalCase']
+        format: ['PascalCase'],
       },
       {
         selector: 'memberLike',
         format: ['camelCase'],
         modifiers: ['private'],
-        leadingUnderscore: 'require'
+        leadingUnderscore: 'require',
       },
       {
         selector: 'enumMember',
-        format: ['PascalCase']
+        format: ['PascalCase'],
       },
       {
         selector: 'memberLike',
         format: ['camelCase'],
         modifiers: ['public', 'protected'],
-        leadingUnderscore: 'forbid'
+        leadingUnderscore: 'forbid',
       },
       {
         selector: 'objectLiteralProperty',
         filter: { regex: '(ably-|-ably-|chat-|-chat-)', match: true },
-        format: null
+        format: null,
       },
-    ]
+    ],
   },
   overrides: [
     {
@@ -81,10 +82,10 @@ module.exports = {
           'error',
           'always',
           {
-            ignorePackages: true
-          }
-        ]
-      }
+            ignorePackages: true,
+          },
+        ],
+      },
     },
     {
       files: ['test/**/*.{ts,tsx}'],
@@ -117,15 +118,15 @@ module.exports = {
     'vitest.config.ts',
     'vite.config.ts',
     'vitest.workspace.ts',
-    'test/helper/testSetup.ts',
+    'test/helper/test-setup.ts',
     '__mocks__',
     'coverage/'
   ],
   settings: {
     jsdoc: {
       tagNamePreference: {
-        default: 'defaultValue'
-      }
-    }
-  }
+        default: 'defaultValue',
+      },
+    },
+  },
 };

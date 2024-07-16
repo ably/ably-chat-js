@@ -5,9 +5,9 @@ export default defineWorkspace([
   {
     root: '.',
     test: {
-      globalSetup: './test/helper/testSetup.ts',
+      globalSetup: './test/helper/test-setup.ts',
       setupFiles: ['./test/helper/expectations.ts'],
-      include: ['test/**/*.test.{ts,js}'],
+      include: ['test/core/**/*.test.{ts,js}'],
       name: 'chat',
       environment: 'node',
       typecheck: {
@@ -16,11 +16,11 @@ export default defineWorkspace([
     },
   },
   {
-    root: './src/react',
+    root: '.',
     test: {
-      globalSetup: '../../test/helper/testSetup.ts',
-      setupFiles: ['../../test/helper/expectations.ts'],
-      include: ['test/**/*.test.{tsx,jsx}'],
+      globalSetup: './test/helper/test-setup.ts',
+      setupFiles: ['./test/helper/expectations.ts'],
+      include: ['test/react/**/*.test.{tsx,jsx}'],
       name: 'react-hooks',
       environment: 'jsdom',
       typecheck: {

@@ -10,7 +10,7 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, '../../dist/react'),
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: resolve(__dirname, 'index.ts'),
       name: 'ably-chat-react',
       fileName: 'ably-chat-react',
     },

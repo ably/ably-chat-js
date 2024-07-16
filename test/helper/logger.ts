@@ -1,5 +1,5 @@
-import { normalizeClientOptions } from '../../src/config.js';
-import { Logger, LogLevel, makeLogger } from '../../src/logger.js';
+import { normalizeClientOptions } from '../../src/core/config.js';
+import { Logger, LogLevel, makeLogger } from '../../src/core/logger.js';
 
 // makeTestLogger creates a logger that logs at the level specified by the VITE_TEST_LOG_LEVEL environment variable.
 export const makeTestLogger = (): Logger => {

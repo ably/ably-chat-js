@@ -8,7 +8,7 @@ export default defineConfig({
   build: {
     outDir: 'dist/chat',
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: resolve(__dirname, 'src/core/index.ts'),
       name: 'ably-chat-js',
       fileName: 'ably-chat',
     },
