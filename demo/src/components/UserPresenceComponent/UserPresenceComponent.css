@@ -1,0 +1,108 @@
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 20px;
+  color: #555;
+}
+
+.user-presence-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+  height: 100%;
+  width: 300px;
+}
+
+.btn.toggle-panel {
+  width: 300px;
+}
+
+.toggle-panel {
+  position: absolute;
+  top: 0;
+  height: 50px;
+}
+
+.user-presence-container {
+  display: inline-block;
+  margin-top: 50px;
+  border: 1px solid #ddd;
+  flex-direction: column;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  min-width: 300px;
+  max-height: 600px;
+}
+
+.user-list {
+  height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.user-list li:hover {
+  background-color: #add8e6;
+}
+
+.user-list h2 {
+  margin-top: 0;
+}
+
+.user-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.user-list li {
+  color: white;
+  background-color: #333;
+  padding: 8px 12px;
+  margin: 5px 0;
+  border-radius: 4px;
+  list-style-type: none;
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.user-list li.away {
+  background-color: #f4c542;
+}
+
+.user-list li.online {
+  background-color: #4caf50;
+}
+
+.user-list li.busy {
+  background-color: #f44336;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.btn.enter {
+  background-color: #4caf50;
+}
+.btn.enter:hover {
+  background-color: #388e3c;
+}
+
+.btn.update {
+  background-color: #e6e600;
+}
+.btn.update:hover {
+  background-color: #bebe00;
+}
+
+.btn.leave {
+  background-color: #f44336;
+}
