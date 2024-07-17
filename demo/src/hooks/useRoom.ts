@@ -4,7 +4,7 @@ import { RoomContext } from '../containers/RoomContext';
 export const useRoom = () => {
   const context = useContext(RoomContext);
 
-  if (!context) throw Error('Client is not setup!');
+  if (!context) throw Error('useRoom: RoomContext not found.');
 
   useLayoutEffect(() => {
     // Attach to the room. Starts all features of the room.
