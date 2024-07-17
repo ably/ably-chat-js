@@ -12,7 +12,7 @@ interface MessageInputProps {
 }
 
 export const MessageInput: FC<MessageInputProps> = ({ disabled, onSend, onStartTyping, onStopTyping }) => {
-  const { increment } = useCounter();
+  const { increment } = useCounter(); // temporary sanity check for hooks in the chat sdk library
 
   const handleValueChange: ChangeEventHandler<HTMLInputElement> = ({ target }) => {
     // Typing indicators start method should be called with every keystroke since
@@ -45,7 +45,8 @@ export const MessageInput: FC<MessageInputProps> = ({ disabled, onSend, onStartT
 
     // stop typing indicators
     onStopTyping();
-    increment();
+
+    increment(); // temporary sanity check for hooks in the chat sdk library
   };
 
   return (
