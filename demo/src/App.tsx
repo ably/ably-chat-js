@@ -4,6 +4,11 @@ import { RoomProvider } from './containers/RoomContext';
 import { Chat } from './containers/Chat';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
 
+
+// We read the roomID from the URL query string and default to 'abcd' if none
+// provided. We make sure the URL is updated to always include the roomId. This
+// is useful for sharing a link to a specific room or for testing with multiple
+// rooms.
 let roomId: string;
 (function () {
   const params = new URLSearchParams(window.location.search);
