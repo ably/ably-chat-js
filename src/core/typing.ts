@@ -121,7 +121,13 @@ export class DefaultTyping
 
   // Timeout for typing
   private readonly _typingTimeoutMs: number;
-  private _timerId: ReturnType<typeof setTimeout> | null;
+  private _timerId: ReturnType<typeof setTimeout> | undefined;
+
+  private _receivedEventNumber = 0;
+  private _triggeredEventNumber = 0;
+  private _currentlyTyping: Set<string> = new Set<string>();
+  private _retryTimeout: ReturnType<typeof setTimeout> | undefined;
+  private _numRetries = 0;
 
   /**
    * Constructs a new `DefaultTyping` instance.
@@ -142,7 +148,6 @@ export class DefaultTyping
 
     // Timeout for typing
     this._typingTimeoutMs = options.timeoutMs;
-    this._timerId = null;
     this._logger = logger;
   }
 
@@ -197,7 +202,7 @@ export class DefaultTyping
     // Clear the timer and emit typingStopped event
     if (this._timerId) {
       clearTimeout(this._timerId);
-      this._timerId = null;
+      this._timerId = undefined;
     }
 
     // Will throw an error if the user is not typing
@@ -227,12 +232,6 @@ export class DefaultTyping
     this.off();
   }
 
-  private _receivedEventNumber = 0;
-  private _triggeredEventNumber = 0;
-  private _currentlyTyping: Set<string> = new Set<string>();
-  private _retryTimeout: ReturnType<typeof setTimeout> | null = null;
-  private _numRetries = 0;
-
   /**
    * Subscribe to internal events. This will listen to presence events and convert them into associated typing events,
    * while also updating the currentlyTypingClientIds set.
@@ -246,9 +245,9 @@ export class DefaultTyping
     this._receivedEventNumber += 1;
 
     // received a real event, cancelling retry timeout
-    if (this._retryTimeout !== null) {
+    if (this._retryTimeout) {
       clearTimeout(this._retryTimeout);
-      this._retryTimeout = null;
+      this._retryTimeout = undefined;
       this._numRetries = 0;
     }
 
@@ -259,9 +258,9 @@ export class DefaultTyping
     this.get()
       .then((currentlyTyping) => {
         // successful fetch, remove retry timeout if one exists
-        if (this._retryTimeout !== null) {
+        if (this._retryTimeout) {
           clearTimeout(this._retryTimeout);
-          this._retryTimeout = null;
+          this._retryTimeout = undefined;
           this._numRetries = 0;
         }
 
@@ -281,10 +280,10 @@ export class DefaultTyping
           currentlyTyping: new Set(currentlyTyping),
         });
       })
-      .catch((err: unknown) => {
+      .catch((error: unknown) => {
         const willReattempt = this._numRetries < PRESENCE_GET_MAX_RETRIES;
         this._logger.error(`Error fetching currently typing clientIds set.`, {
-          error: err,
+          error,
           willReattempt: willReattempt,
         });
         if (!willReattempt) {
@@ -292,7 +291,7 @@ export class DefaultTyping
         }
 
         // already another timeout, do nothing
-        if (this._retryTimeout !== null) {
+        if (this._retryTimeout) {
           return;
         }
 
@@ -304,7 +303,7 @@ export class DefaultTyping
         this._numRetries += 1;
 
         this._retryTimeout = setTimeout(() => {
-          this._retryTimeout = null;
+          this._retryTimeout = undefined;
           this._receivedEventNumber++;
           this._getAndEmit(this._receivedEventNumber);
         }, waitBeforeRetry);

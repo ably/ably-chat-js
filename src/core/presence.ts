@@ -328,20 +328,20 @@ export class DefaultPresence
     }
 
     // Add listener to all events
-    if (!listener) {
-      this.on(listenerOrEvents as PresenceListener);
-      return {
-        unsubscribe: () => {
-          this._logger.trace('Presence.unsubscribe();');
-          this.off(listenerOrEvents as PresenceListener);
-        },
-      };
-    } else {
+    if (listener) {
       this.on(listenerOrEvents as PresenceEvents, listener);
       return {
         unsubscribe: () => {
           this._logger.trace('Presence.unsubscribe();', { events: listenerOrEvents });
           this.off(listener);
+        },
+      };
+    } else {
+      this.on(listenerOrEvents as PresenceListener);
+      return {
+        unsubscribe: () => {
+          this._logger.trace('Presence.unsubscribe();');
+          this.off(listenerOrEvents as PresenceListener);
         },
       };
     }

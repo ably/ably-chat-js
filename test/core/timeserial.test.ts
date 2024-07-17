@@ -18,11 +18,10 @@ describe('calculateTimeserial', () => {
     ['abcdefghij@1672531200000'], // No counter
     ['abcdefghij@'], // No timestamp
     ['abcdefghij'], // No series id
-  ])('throws an error with an invalid timeserial %s', async (timeserial) => {
-    await expect(async () => {
+  ])('throws an error with an invalid timeserial %s', (timeserial) => {
+    expect(() => {
       DefaultTimeserial.calculateTimeserial(timeserial);
-      return Promise.resolve();
-    }).rejects.toBeErrorInfo({
+    }).toThrowErrorInfo({
       code: 50000,
       message: 'invalid timeserial',
     });

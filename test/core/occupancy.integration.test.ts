@@ -31,9 +31,9 @@ const waitForExpectedInstantaneousOccupancy = (room: Room, expectedOccupancy: Oc
             resolve();
           }
         })
-        .catch((err: unknown) => {
+        .catch((error: unknown) => {
           clearInterval(interval);
-          reject(err as Error);
+          reject(error as Error);
         });
     }, 1000);
 

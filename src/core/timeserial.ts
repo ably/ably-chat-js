@@ -111,7 +111,7 @@ export class DefaultTimeserial implements Timeserial {
 
     // Compare the seriesId lexicographically
     const seriesIdDiff =
-      this.seriesId !== secondTimeserial.seriesId ? (this.seriesId < secondTimeserial.seriesId ? -1 : 1) : 0;
+      this.seriesId === secondTimeserial.seriesId ? 0 : this.seriesId < secondTimeserial.seriesId ? -1 : 1;
 
     if (seriesIdDiff) {
       return seriesIdDiff;

@@ -24,20 +24,26 @@ enum AblyConnectionState {
 
 const mapAblyStatusToChat = (status: Ably.ConnectionState): ConnectionLifecycle => {
   switch (status) {
-    case 'connected':
+    case 'connected': {
       return ConnectionLifecycle.Connected;
-    case 'disconnected':
+    }
+    case 'disconnected': {
       return ConnectionLifecycle.Disconnected;
-    case 'suspended':
+    }
+    case 'suspended': {
       return ConnectionLifecycle.Suspended;
-    case 'connecting':
+    }
+    case 'connecting': {
       return ConnectionLifecycle.Connecting;
+    }
     case 'failed':
     case 'closing':
-    case 'closed':
+    case 'closed': {
       return ConnectionLifecycle.Failed;
-    default:
+    }
+    default: {
       return ConnectionLifecycle.Initialized;
+    }
   }
 };
 
@@ -53,9 +59,9 @@ describe('connection', () => {
       context.channelLevelListeners.add(listener);
 
       context.emulateStateChange = (stateChange: Ably.ConnectionStateChange) => {
-        context.channelLevelListeners.forEach((cb) => {
+        for (const cb of context.channelLevelListeners) {
           cb(stateChange);
-        });
+        }
       };
     });
 

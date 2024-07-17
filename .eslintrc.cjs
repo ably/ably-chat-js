@@ -18,7 +18,8 @@ module.exports = {
     'plugin:@typescript-eslint/stylistic-type-checked',
     'plugin:security/recommended-legacy',
     'plugin:import/recommended',
-    'plugin:compat/recommended'
+    'plugin:compat/recommended',
+    'plugin:unicorn/recommended',
   ],
   rules: {
     'eol-last': 'error',
@@ -69,6 +70,14 @@ module.exports = {
         'no-undef': 'off',
         'no-dupe-class-members': 'off',
         'require-await': 'off',
+        'unicorn/prevent-abbreviations': 'off',
+        'unicorn/numeric-separators-style': 'off',
+        // We have EventEmitter from ably-js, so we can't enforce this rule
+        'unicorn/prefer-event-target': 'off',
+        // We've explicitly decided to do this for room options
+        'unicorn/no-static-only-class': 'off',
+        // Clashes with prettier - so must be turned off
+        'unicorn/no-nested-ternary': 'off',
         '@typescript-eslint/no-extraneous-class': [
           'error',
           {
@@ -92,6 +101,10 @@ module.exports = {
       rules: {
         '@typescript-eslint/unbound-method': 'off',
         '@typescript-eslint/no-empty-function': 'off',
+        // ably-js returns null for channel attach, so we can't enforce this rule in tests
+        'unicorn/no-null': 'off',
+        'unicorn/consistent-function-scoping': 'off',
+        'unicorn/prefer-ternary': 'off',
       },
     },
     // For everything React, use additional rules and plugins
@@ -120,7 +133,7 @@ module.exports = {
     'vitest.workspace.ts',
     'test/helper/test-setup.ts',
     '__mocks__',
-    'coverage/'
+    'coverage/',
   ],
   settings: {
     jsdoc: {

@@ -6,13 +6,12 @@ import { newChatClient } from '../helper/chat.ts';
 import { waitForRoomStatus } from '../helper/room.ts';
 
 describe('Rooms', () => {
-  it('throws an error if you create the same room with different options', async () => {
+  it('throws an error if you create the same room with different options', () => {
     const chat = newChatClient();
     chat.rooms.get('test', { typing: { timeoutMs: 1000 } });
-    await expect(async () => {
+    expect(() => {
       chat.rooms.get('test', { typing: { timeoutMs: 2000 } });
-      return Promise.resolve();
-    }).rejects.toBeErrorInfoWithCode(40000);
+    }).toThrowErrorInfoWithCode(40000);
   });
 
   it('gets the same room if you create it with the same options', () => {

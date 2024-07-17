@@ -49,7 +49,7 @@ describe('Reactions', () => {
   describe('receiving a reaction', () => {
     it<TestContext>("should be able to get a reaction from realtime channel and recognize it as being somebody else's", (context) =>
       new Promise<void>((done, reject) => {
-        const publishTimestamp = new Date().getTime();
+        const publishTimestamp = Date.now();
         const { room } = context;
 
         room.reactions.subscribe((reaction) => {
@@ -62,8 +62,8 @@ describe('Reactions', () => {
                 type: 'like',
               }),
             );
-          } catch (err: unknown) {
-            reject(err as Error);
+          } catch (error: unknown) {
+            reject(error as Error);
           }
           done();
         });
@@ -80,7 +80,7 @@ describe('Reactions', () => {
 
     it<TestContext>('should be able to get a reaction from realtime channel and recognize it as your own', (context) =>
       new Promise<void>((done, reject) => {
-        const publishTimestamp = new Date().getTime();
+        const publishTimestamp = Date.now();
         const { room } = context;
 
         room.reactions.subscribe((reaction) => {
@@ -93,8 +93,8 @@ describe('Reactions', () => {
                 type: 'hate',
               }),
             );
-          } catch (err: unknown) {
-            reject(err as Error);
+          } catch (error: unknown) {
+            reject(error as Error);
           }
           done();
         });
@@ -111,7 +111,7 @@ describe('Reactions', () => {
   });
 
   it<TestContext>('should be able to unsubscribe from reactions', (context) => {
-    const publishTimestamp = new Date().getTime();
+    const publishTimestamp = Date.now();
     const { room } = context;
 
     const receivedReactions: Reaction[] = [];
@@ -155,7 +155,7 @@ describe('Reactions', () => {
   });
 
   it<TestContext>('should be able to unsubscribe all reactions', (context) => {
-    const publishTimestamp = new Date().getTime();
+    const publishTimestamp = Date.now();
     const { room } = context;
 
     const receivedReactions: Reaction[] = [];
@@ -252,8 +252,8 @@ describe('Reactions', () => {
                 type: 'love',
               }),
             );
-          } catch (err: unknown) {
-            reject(err as Error);
+          } catch (error: unknown) {
+            reject(error as Error);
           }
           done();
         });
@@ -286,8 +286,8 @@ describe('Reactions', () => {
                 },
               } as Reaction),
             );
-          } catch (err: unknown) {
-            reject(err as Error);
+          } catch (error: unknown) {
+            reject(error as Error);
           }
           done();
         });
@@ -316,8 +316,8 @@ describe('Reactions', () => {
           .then(() => {
             reject(new Error('send should not succeed'));
           })
-          .catch((err: unknown) => {
-            const errInfo = err as Ably.ErrorInfo;
+          .catch((error: unknown) => {
+            const errInfo = error as Ably.ErrorInfo;
             expect(errInfo).toBeTruthy();
             expect(errInfo.message).toMatch(/reserved prefix/);
             expect(errInfo.code).toEqual(40001);
@@ -342,8 +342,8 @@ describe('Reactions', () => {
           .then(() => {
             reject(new Error('send should not succeed'));
           })
-          .catch((err: unknown) => {
-            const errInfo = err as Ably.ErrorInfo;
+          .catch((error: unknown) => {
+            const errInfo = error as Ably.ErrorInfo;
             expect(errInfo).toBeTruthy();
             expect(errInfo.message).toMatch(/reserved key/);
             expect(errInfo.code).toEqual(40001);

@@ -125,9 +125,7 @@ const invalidRoomConfiguration = (reason: string): Error =>
   new Ably.ErrorInfo(`invalid room configuration: ${reason}`, 40001, 400);
 
 export const validateRoomOptions = (options: RoomOptions): void => {
-  if (options.typing) {
-    if (options.typing.timeoutMs <= 0) {
-      throw invalidRoomConfiguration('typing timeout must be greater than 0');
-    }
+  if (options.typing && options.typing.timeoutMs <= 0) {
+    throw invalidRoomConfiguration('typing timeout must be greater than 0');
   }
 };

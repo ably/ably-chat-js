@@ -107,20 +107,25 @@ const consoleLogger = (message: string, level: LogLevel, context?: LogContext) =
 
   switch (level) {
     case LogLevel.Trace:
-    case LogLevel.Debug:
+    case LogLevel.Debug: {
       console.log(formattedMessage);
       break;
-    case LogLevel.Info:
+    }
+    case LogLevel.Info: {
       console.info(formattedMessage);
       break;
-    case LogLevel.Warn:
+    }
+    case LogLevel.Warn: {
       console.warn(formattedMessage);
       break;
-    case LogLevel.Error:
+    }
+    case LogLevel.Error: {
       console.error(formattedMessage);
       break;
-    case LogLevel.Silent:
+    }
+    case LogLevel.Silent: {
       break;
+    }
   }
 };
 

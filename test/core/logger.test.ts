@@ -79,20 +79,25 @@ describe('logger', () => {
 
 const callMethodForLevel = (log: Logger, level: Omit<LogLevel, 'silent'>, context?: object | undefined) => {
   switch (level) {
-    case LogLevel.Trace:
+    case LogLevel.Trace: {
       log.trace('test', context);
       break;
-    case LogLevel.Debug:
+    }
+    case LogLevel.Debug: {
       log.debug('test', context);
       break;
-    case LogLevel.Info:
+    }
+    case LogLevel.Info: {
       log.info('test', context);
       break;
-    case LogLevel.Warn:
+    }
+    case LogLevel.Warn: {
       log.warn('test', context);
       break;
-    case LogLevel.Error:
+    }
+    case LogLevel.Error: {
       log.error('test', context);
       break;
+    }
   }
 };

@@ -218,10 +218,12 @@ export class DefaultConnectionStatus extends EventEmitter<ConnectionEventsMap> i
   private _mapAblyStatusToChat(status: Ably.ConnectionState): ConnectionLifecycle {
     switch (status) {
       case 'closing':
-      case 'closed':
+      case 'closed': {
         return ConnectionLifecycle.Failed;
-      default:
+      }
+      default: {
         return status as ConnectionLifecycle;
+      }
     }
   }
 }

@@ -170,9 +170,9 @@ export class DefaultRoom implements Room {
 
       await this._lifecycleManager.release();
 
-      features.forEach((feature: ContributesToRoomLifecycle) => {
+      for (const feature of features) {
         realtime.channels.release(feature.channel.name);
-      });
+      }
 
       finalized = true;
     };
