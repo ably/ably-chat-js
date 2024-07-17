@@ -31,8 +31,6 @@ export const useMessages = () => {
     };
     const { unsubscribe, getPreviousMessages } = room.messages.subscribe(handleAdd);
 
-    setMessages([]);
-
     const initMessages = async () => {
       const fetchedMessages = await getPreviousMessages({ limit: 100 });
       setMessages((prevMessages) => combineMessages(prevMessages, fetchedMessages.items).reverse());
