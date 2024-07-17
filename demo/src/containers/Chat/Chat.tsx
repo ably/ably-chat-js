@@ -55,7 +55,8 @@ export const Chat = () => {
    * Ably and Ably Chat also offer a feature called Presence where user profile
    * data can be attached (things like avatar URLs or display names). Editing a
    * profile through Presence is possible without dropping the connection and
-   * it does not change the clientId. See @todo link to docs for Presence.
+   * it does not change the clientId. Read more about Presence in chat:
+   * {@link https://ably.com/docs/chat/rooms/presence}.
    */
   function changeClientId() {
     const newClientId = prompt('Enter your new clientId');
