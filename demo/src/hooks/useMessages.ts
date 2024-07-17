@@ -33,13 +33,10 @@ export const useMessages = () => {
 
     setMessages([]);
 
-    const mounted = true;
     const initMessages = async () => {
       const fetchedMessages = await getPreviousMessages({ limit: 100 });
-      if (mounted) {
-        setMessages((prevMessages) => combineMessages(prevMessages, fetchedMessages.items).reverse());
-        setLoading(false);
-      }
+      setMessages((prevMessages) => combineMessages(prevMessages, fetchedMessages.items).reverse());
+      setLoading(false);
     };
     initMessages();
 
