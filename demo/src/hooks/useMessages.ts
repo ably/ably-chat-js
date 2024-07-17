@@ -2,11 +2,12 @@ import { Message, type MessageListener } from '@ably/chat';
 import { useCallback, useEffect, useState } from 'react';
 import { useRoom } from './useRoom';
 
-// todo: uncomment. used for history query when we add it back
-const combineMessages = (previousMessages: Message[], lastMessages: Message[]) => {
+// Utility function to merge existing messages with messages just fetched. It
+// ensures that we don't have duplicates in the final list of messages.
+const combineMessages = (previousMessages: Message[], fetchedMessages: Message[]) => {
   return [
-    ...previousMessages.filter((msg) => lastMessages.every(({ timeserial }) => timeserial !== msg.timeserial)),
-    ...lastMessages,
+    ...previousMessages.filter((msg) => fetchedMessages.every(({ timeserial }) => timeserial !== msg.timeserial)),
+    ...fetchedMessages,
   ];
 };
 
@@ -34,9 +35,9 @@ export const useMessages = () => {
 
     const mounted = true;
     const initMessages = async () => {
-      const lastMessages = await getPreviousMessages({ limit: 100 });
+      const fetchedMessages = await getPreviousMessages({ limit: 100 });
       if (mounted) {
-        setMessages((prevMessages) => combineMessages(prevMessages, lastMessages.items).reverse());
+        setMessages((prevMessages) => combineMessages(prevMessages, fetchedMessages.items).reverse());
         setLoading(false);
       }
     };
