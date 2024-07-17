@@ -136,7 +136,7 @@ const mockChannelDetachNotCalled = (channel: Ably.RealtimeChannel): void => {
 };
 
 const mockChannelDetachSuccess = (channel: Ably.RealtimeChannel): void => {
-  vi.spyOn(channel, 'detach').mockImplementation(async () => {
+  vi.spyOn(channel, 'detach').mockImplementation(() => {
     vi.spyOn(channel, 'state', 'get').mockReturnValue(AblyChannelState.Detached);
     vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(baseError);
     return Promise.resolve();
@@ -148,11 +148,11 @@ const mockChannelDetachFailure = (
   status: AblyChannelState,
   sequenceNumber: number,
 ): void => {
-  vi.spyOn(channel, 'detach').mockImplementation(async () => {
+  vi.spyOn(channel, 'detach').mockImplementation(() => {
     const error = new Ably.ErrorInfo('error', sequenceNumber, 500);
     vi.spyOn(channel, 'state', 'get').mockReturnValue(status);
     vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(error);
-    return Promise.reject(error);
+    throw error;
   });
 };
 
@@ -169,17 +169,17 @@ const mockChannelDetachFailureSucceedAfter = (
 
   // Mock a number of failures before we succeed
   for (let i = 0; i < succeedAfter; i++) {
-    spy.mockImplementationOnce(async () => {
+    spy.mockImplementationOnce(() => {
       attempts++;
       const error = new Ably.ErrorInfo('error', sequenceNumber, 500);
       vi.spyOn(channel, 'state', 'get').mockReturnValue(status);
       vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(error);
-      return Promise.reject(error);
+      throw error;
     });
   }
 
   // Mock the success
-  spy.mockImplementationOnce(async () => {
+  spy.mockImplementationOnce(() => {
     attempts++;
     vi.spyOn(channel, 'state', 'get').mockReturnValue(AblyChannelState.Detached);
     vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(baseError);

@@ -33,12 +33,9 @@ describe('Room', () => {
     ['typing', (room: Room) => room.typing],
     ['reactions', (room: Room) => room.reactions],
   ])('feature not configured', (description: string, featureLoader: (room: Room) => unknown) => {
-    it<TestContext>(`should throw error if trying to access ${description} without being enabled`, async (context) => {
+    it<TestContext>(`should throw error if trying to access ${description} without being enabled`, (context) => {
       const room = context.getRoom({});
-      await expect(async () => {
-        featureLoader(room);
-        return Promise.resolve();
-      }).rejects.toBeErrorInfoWithCode(40000);
+      expect(() => featureLoader(room)).toThrowErrorInfoWithCode(40000);
     });
   });
 
@@ -59,11 +56,10 @@ describe('Room', () => {
     ['typing timeout <0', 'typing timeout must be greater than 0', { typing: { timeoutMs: -1 } }],
     ['typing timeout =0', 'typing timeout must be greater than 0', { typing: { timeoutMs: 0 } }],
   ])('feature configured', (description: string, reason: string, options: RoomOptions) => {
-    it<TestContext>(`should throw an error when passed invalid options: ${description}`, async (context) => {
-      await expect(async () => {
+    it<TestContext>(`should throw an error when passed invalid options: ${description}`, (context) => {
+      expect(() => {
         context.getRoom(options);
-        return Promise.resolve();
-      }).rejects.toBeErrorInfo({
+      }).toThrowErrorInfo({
         code: 40001,
         message: `invalid room configuration: ${reason}`,
       });

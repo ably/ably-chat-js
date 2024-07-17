@@ -106,8 +106,8 @@ describe('ChatMessage', () => {
     expect(firstMessage.after(secondMessage)).toBe(true);
   });
 
-  it('throws an error with an invalid timeserial', async () => {
-    await expect(async () => {
+  it('throws an error with an invalid timeserial', () => {
+    expect(() => {
       new DefaultMessage(
         'not a valid timeserial',
         'clientId',
@@ -117,8 +117,7 @@ describe('ChatMessage', () => {
         {},
         {},
       );
-      return Promise.resolve();
-    }).rejects.toBeErrorInfo({
+    }).toThrowErrorInfo({
       code: 50000,
       message: 'invalid timeserial',
     });

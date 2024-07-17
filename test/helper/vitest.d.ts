@@ -9,6 +9,8 @@ interface CustomMatchers<R = unknown> {
   toBeErrorInfoWithCode: (code: number) => R;
   toBeErrorInfoWithCauseCode: (code: number) => R;
   toBeErrorInfo: (params: ErrorInfoCompareType) => R;
+  toThrowErrorInfo: (params: ErrorInfoCompareType) => R;
+  toThrowErrorInfoWithCode: (code: number) => R;
 }
 
 declare module 'vitest' {

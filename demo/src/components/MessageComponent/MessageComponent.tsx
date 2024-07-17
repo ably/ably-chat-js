@@ -26,7 +26,7 @@ export const MessageComponent: React.FC<MessageProps> = ({ id, self = false, mes
   }, [id, onMessageClick]);
 
   let displayCreatedAt: string;
-  if (new Date().getTime() - message.createdAt.getTime() < 1000 * 60 * 60 * 24) {
+  if (Date.now() - message.createdAt.getTime() < 1000 * 60 * 60 * 24) {
     // last 24h show the time
     displayCreatedAt = twoDigits(message.createdAt.getHours()) + ':' + twoDigits(message.createdAt.getMinutes());
   } else {

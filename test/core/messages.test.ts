@@ -57,7 +57,7 @@ describe('Messages', () => {
   describe('sending message', () => {
     it<TestContext>('should be able to send message and get it back from response', async (context) => {
       const { chatApi } = context;
-      const timestamp = new Date().getTime();
+      const timestamp = Date.now();
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         timeserial: 'abcdefghij@1672531200000-123',
         createdAt: timestamp,
@@ -82,7 +82,7 @@ describe('Messages', () => {
   describe('headers and metadata', () => {
     it<TestContext>('should be able to send message with headers and metadata and get it back from response', async (context) => {
       const { chatApi, realtime } = context;
-      const timestamp = new Date().getTime();
+      const timestamp = Date.now();
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         timeserial: 'abcdefghij@1672531200000-123',
         createdAt: timestamp,
@@ -120,7 +120,7 @@ describe('Messages', () => {
     it<TestContext>('should be not be able to set reserved header prefix', (context) => {
       return new Promise<void>((accept, reject) => {
         const { chatApi, realtime } = context;
-        const timestamp = new Date().getTime();
+        const timestamp = Date.now();
         vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
           timeserial: 'abcdefghij@1672531200000-123',
           createdAt: timestamp,
@@ -136,9 +136,9 @@ describe('Messages', () => {
           .then(() => {
             reject(new Error('message should have not been sent successfully'));
           })
-          .catch((err: unknown) => {
-            expect(err).toBeTruthy();
-            expect((err as Error).message).toMatch(/reserved prefix/);
+          .catch((error: unknown) => {
+            expect(error).toBeTruthy();
+            expect((error as Error).message).toMatch(/reserved prefix/);
             accept();
           });
       });
@@ -147,7 +147,7 @@ describe('Messages', () => {
     it<TestContext>('should be not be able to set reserved metadata key', (context) => {
       return new Promise<void>((accept, reject) => {
         const { chatApi, realtime } = context;
-        const timestamp = new Date().getTime();
+        const timestamp = Date.now();
         vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
           timeserial: 'abcdefghij@1672531200000-123',
           createdAt: timestamp,
@@ -163,9 +163,9 @@ describe('Messages', () => {
           .then(() => {
             reject(new Error('message should have not been sent successfully'));
           })
-          .catch((err: unknown) => {
-            expect(err).toBeTruthy();
-            expect((err as Error).message).toMatch(/reserved key/);
+          .catch((error: unknown) => {
+            expect(error).toBeTruthy();
+            expect((error as Error).message).toMatch(/reserved key/);
             accept();
           });
       });
@@ -175,7 +175,7 @@ describe('Messages', () => {
   describe('subscribing to updates', () => {
     it<TestContext>('subscribing to messages', (context) =>
       new Promise<void>((done, reject) => {
-        const publishTimestamp = new Date().getTime();
+        const publishTimestamp = Date.now();
         context.room.messages.subscribe((rawMsg) => {
           const message = rawMsg.message;
           try {
@@ -188,8 +188,8 @@ describe('Messages', () => {
                 roomId: context.room.roomId,
               }),
             );
-          } catch (err: unknown) {
-            reject(err as Error);
+          } catch (error: unknown) {
+            reject(error as Error);
           }
           done();
         });
@@ -226,7 +226,7 @@ describe('Messages', () => {
       extras: {
         timeserial: 'abcdefghij@1672531200000-123',
       },
-      timestamp: new Date().getTime(),
+      timestamp: Date.now(),
     });
 
     unsubscribe();
@@ -240,7 +240,7 @@ describe('Messages', () => {
       extras: {
         timeserial: 'abcdefghij@1672531200000-123',
       },
-      timestamp: new Date().getTime(),
+      timestamp: Date.now(),
     });
 
     // We should have only received one message
@@ -275,7 +275,7 @@ describe('Messages', () => {
       extras: {
         timeserial: 'abcdefghij@1672531200000-123',
       },
-      timestamp: new Date().getTime(),
+      timestamp: Date.now(),
     });
 
     room.messages.unsubscribeAll();
@@ -289,7 +289,7 @@ describe('Messages', () => {
       extras: {
         timeserial: 'abcdefghij@1672531200000-123',
       },
-      timestamp: new Date().getTime(),
+      timestamp: Date.now(),
     });
 
     // We should have only received one message
@@ -315,7 +315,7 @@ describe('Messages', () => {
         extras: {
           timeserial: 'abcdefghij@1672531200000-123',
         },
-        timestamp: new Date().getTime(),
+        timestamp: Date.now(),
       },
     ],
     [
@@ -326,7 +326,7 @@ describe('Messages', () => {
         extras: {
           timeserial: 'abcdefghij@1672531200000-123',
         },
-        timestamp: new Date().getTime(),
+        timestamp: Date.now(),
       },
     ],
     [
@@ -338,7 +338,7 @@ describe('Messages', () => {
         extras: {
           timeserial: 'abcdefghij@1672531200000-123',
         },
-        timestamp: new Date().getTime(),
+        timestamp: Date.now(),
       },
     ],
     [
@@ -351,7 +351,7 @@ describe('Messages', () => {
         extras: {
           timeserial: 'abcdefghij@1672531200000-123',
         },
-        timestamp: new Date().getTime(),
+        timestamp: Date.now(),
       },
     ],
     [
@@ -362,7 +362,7 @@ describe('Messages', () => {
         data: {
           text: 'may the fourth be with you',
         },
-        timestamp: new Date().getTime(),
+        timestamp: Date.now(),
       },
     ],
 
@@ -375,7 +375,7 @@ describe('Messages', () => {
           text: 'may the fourth be with you',
         },
         extras: {},
-        timestamp: new Date().getTime(),
+        timestamp: Date.now(),
       },
     ],
     [
@@ -389,7 +389,7 @@ describe('Messages', () => {
         extras: {
           timeserial: 'abc',
         },
-        timestamp: new Date().getTime(),
+        timestamp: Date.now(),
       },
     ],
     [
@@ -458,7 +458,7 @@ describe('Messages', () => {
     // Set the timeserial of the channel attach
     channel.properties.attachSerial = testAttachSerial;
 
-    vi.spyOn(channel, 'whenState').mockImplementation(async () => {
+    vi.spyOn(channel, 'whenState').mockImplementation(() => {
       return Promise.resolve(null);
     });
 
@@ -626,7 +626,7 @@ describe('Messages', () => {
       };
     };
 
-    vi.spyOn(channel, 'whenState').mockImplementation(async () => {
+    vi.spyOn(channel, 'whenState').mockImplementation(() => {
       return Promise.resolve(null);
     });
 
@@ -714,7 +714,7 @@ describe('Messages', () => {
     };
 
     // Mock the whenState to resolve immediately
-    vi.spyOn(channel, 'whenState').mockImplementation(async () => {
+    vi.spyOn(channel, 'whenState').mockImplementation(() => {
       return Promise.resolve(null);
     });
 

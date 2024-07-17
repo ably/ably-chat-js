@@ -316,9 +316,9 @@ export class DefaultMessages
 
     // Reset subscription points for all listeners
     const newSubscriptionStartResolver = this._subscribeAtChannelAttach();
-    this._listenerSubscriptionPoints.forEach((_, listener) => {
+    for (const [listener] of this._listenerSubscriptionPoints.entries()) {
       this._listenerSubscriptionPoints.set(listener, newSubscriptionStartResolver);
-    });
+    }
   }
 
   /**
@@ -332,7 +332,7 @@ export class DefaultMessages
     // If we are attached, we can resolve with the channelSerial
     if (this._channel.state === 'attached') {
       if (channelWithProperties.properties.channelSerial) {
-        return Promise.resolve({ fromSerial: channelWithProperties.properties.channelSerial });
+        return { fromSerial: channelWithProperties.properties.channelSerial };
       }
       this._logger.error(`DefaultSubscriptionManager.handleAttach(); channelSerial is undefined`);
       throw new Ably.ErrorInfo('channel is attached, but channelSerial is not defined', 40000, 400) as unknown as Error;
@@ -422,7 +422,7 @@ export class DefaultMessages
     }
 
     if (headers) {
-      Object.keys(headers).forEach((key) => {
+      for (const key of Object.keys(headers)) {
         if (key.startsWith('ably-chat')) {
           throw new Ably.ErrorInfo(
             "unable to send message; headers cannot have any key starting with reserved prefix 'ably-chat'",
@@ -430,7 +430,7 @@ export class DefaultMessages
             400,
           );
         }
-      });
+      }
     }
 
     const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
@@ -494,8 +494,9 @@ export class DefaultMessages
         this.emit(MessageEvents.Created, { type: name, message: message });
         break;
       }
-      default:
+      default: {
         this._logger.warn('Messages._processEvent(); received unknown event', { name });
+      }
     }
   }
 

@@ -28,7 +28,7 @@ const waitForPresenceEvent = async (
   events: PresenceEvent[],
   action: PresenceEvents,
   clientId: string,
-  data: unknown,
+  data?: unknown,
 ) => {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
@@ -68,6 +68,26 @@ const assertNoPresenceEvent = async (events: PresenceEvent[], action: PresenceEv
   });
 };
 
+// Helper function to wait for an event and run an expectation function on the received message
+const waitForEvent = (
+  realtimeClient: Realtime,
+  event: PresenceAction | PresenceAction[],
+  realtimeChannelName: string,
+  expectationFn: (member: Ably.PresenceMessage) => void,
+) => {
+  return new Promise<void>((resolve, reject) => {
+    const presence = realtimeClient.channels.get(realtimeChannelName).presence;
+    presence
+      .subscribe(event, (member) => {
+        expectationFn(member);
+        resolve();
+      })
+      .catch((error: unknown) => {
+        reject(error as Error);
+      });
+  });
+};
+
 describe('UserPresence', { timeout: 10000 }, () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>((context) => {
@@ -77,26 +97,6 @@ describe('UserPresence', { timeout: 10000 }, () => {
     context.defaultTestClientId = context.realtime.auth.clientId;
     context.chatRoom = context.chat.rooms.get(roomId, { presence: RoomOptionsDefaults.presence });
   });
-
-  // Helper function to wait for an event and run an expectation function on the received message
-  async function waitForEvent(
-    realtimeClient: Realtime,
-    event: PresenceAction | PresenceAction[],
-    realtimeChannelName: string,
-    expectationFn: (member: Ably.PresenceMessage) => void,
-  ) {
-    return new Promise<void>((resolve, reject) => {
-      const presence = realtimeClient.channels.get(realtimeChannelName).presence;
-      presence
-        .subscribe(event, (member) => {
-          expectationFn(member);
-          resolve();
-        })
-        .catch((err: unknown) => {
-          reject(err as Error);
-        });
-    });
-  }
 
   // Test for successful entering with clientId and custom user data
   it<TestContext>('successfully enter presence with clientId and custom user data', async (context) => {
@@ -348,7 +348,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     });
     // Enter presence to trigger the enter event with undefined data
     await context.chatRoom.presence.enter();
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId, undefined);
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId);
     // Update with string
     await context.chatRoom.presence.update('string');
     await waitForPresenceEvent(presenceEvents, PresenceEvents.Update, context.chat.clientId, 'string');

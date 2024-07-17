@@ -35,8 +35,8 @@ describe('Occupancy', () => {
             presenceMembers: 3,
           });
           done();
-        } catch (err: unknown) {
-          reject(err as Error);
+        } catch (error: unknown) {
+          reject(error as Error);
         }
       });
 
@@ -60,8 +60,8 @@ describe('Occupancy', () => {
             presenceMembers: 0,
           });
           done();
-        } catch (err: unknown) {
-          reject(err as Error);
+        } catch (error: unknown) {
+          reject(error as Error);
         }
       });
 

@@ -27,11 +27,11 @@ function presenceGetResponse(clientIds: Iterable<string>): Ably.PresenceMessage[
     res.push({
       clientId: clientId,
       action: 'present',
-      timestamp: new Date().getTime(),
+      timestamp: Date.now(),
       connectionId: 'connection_' + clientId,
-      data: null,
+      data: undefined,
       encoding: '',
-      extras: null,
+      extras: undefined,
       id: 'some_id_' + clientId,
     });
   }
@@ -68,9 +68,7 @@ describe('Typing', () => {
   it<TestContext>('delays stop timeout while still typing', async (context) => {
     const { room } = context;
     // If stop is called, the test should fail as the timer should not have expired
-    vi.spyOn(room.typing, 'stop').mockImplementation(async (): Promise<void> => {
-      return Promise.resolve();
-    });
+    vi.spyOn(room.typing, 'stop').mockImplementation(async (): Promise<void> => {});
     // Start typing - we will wait/type a few times to ensure the timer is resetting
     await room.typing.start();
     // wait for half the timers timeout
@@ -94,9 +92,7 @@ describe('Typing', () => {
     const presence = realtime.channels.get(room.typing.channel.name).presence;
 
     // If stop is called, it should call leaveClient
-    vi.spyOn(presence, 'leaveClient').mockImplementation(async (): Promise<void> => {
-      return Promise.resolve();
-    });
+    vi.spyOn(presence, 'leaveClient').mockImplementation(async (): Promise<void> => {});
 
     // Start typing and then immediately stop typing
     await room.typing.start();

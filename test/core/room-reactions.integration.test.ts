@@ -20,15 +20,15 @@ const waitForReactions = (foundTypes: string[], expectedTypes: string[]) => {
         clearInterval(interval);
         clearTimeout(timeout);
 
-        foundTypes.forEach((foundType, idx) => {
+        for (const [idx, foundType] of foundTypes.entries()) {
           const expectedType = expectedTypes[idx];
           try {
             expect(foundType).toEqual(expectedType);
-          } catch (err: unknown) {
-            reject(err as Error);
-            return;
+          } catch (error: unknown) {
+            reject(error as Error);
+            continue;
           }
-        });
+        }
 
         resolve();
       }
