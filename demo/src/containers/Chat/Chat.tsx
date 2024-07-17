@@ -15,7 +15,6 @@ export const Chat = () => {
   // define for typing indicator
   const { startTyping, stopTyping, subscribeToTypingIndicators } = useTypingIndicators();
   const [typingClients, setTypingClients] = useState<string[]>([]);
-  const [value, setValue] = useState('');
   const { reactions, sendReaction } = useReactions();
 
   useEffect(() => {
@@ -118,9 +117,7 @@ export const Chat = () => {
           ))}
         <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
           <MessageInput
-            value={value}
             disabled={loading}
-            onValueChange={setValue}
             onSend={handleMessageSend}
             onStartTyping={startTyping}
             onStopTyping={stopTyping}
