@@ -7,9 +7,11 @@ export const useRoom = () => {
   if (!context) throw Error('Client is not setup!');
 
   useLayoutEffect(() => {
+    // Attach to the room. Starts all features of the room.
     context.room.attach();
 
     return () => {
+      // cleanup: detach the room. Stops all enabled features of the room.
       context.room.detach();
     };
   }, [context.room]);
