@@ -24,13 +24,16 @@ export const useMessages = () => {
   );
 
   useEffect(() => {
+    // show loading state until we finish fetching recent message history
     setLoading(true);
 
+    // subscribe to the messages in the room
     const handleAdd: MessageListener = ({ message }) => {
       setMessages((prevMessage) => [...prevMessage, message]);
     };
     const { unsubscribe, getPreviousMessages } = room.messages.subscribe(handleAdd);
 
+    // fetch recent message history
     const initMessages = async () => {
       const fetchedMessages = await getPreviousMessages({ limit: 100 });
       setMessages((prevMessages) => combineMessages(prevMessages, fetchedMessages.items).reverse());
@@ -39,6 +42,8 @@ export const useMessages = () => {
     initMessages();
 
     return () => {
+      // cleanup: unsubscribe from messages. Note this only removes the listener and does not
+      // stop updates coming from the server until the room is detached.
       unsubscribe();
     };
   }, [clientId, room]);
