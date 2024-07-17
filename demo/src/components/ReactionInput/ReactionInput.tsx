@@ -14,7 +14,10 @@ export const ReactionInput: FC<ReactionInputProps> = ({ reactions, onSend }) => 
   const buttons = reactions.map((reaction) => (
     <a
       key={reaction}
-      onClick={(e) => { e.preventDefault(); onSend(reaction); }}
+      onClick={(e) => {
+        e.preventDefault();
+        onSend(reaction);
+      }}
       href="#"
     >
       {reaction}
