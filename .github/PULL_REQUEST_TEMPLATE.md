@@ -20,6 +20,8 @@
 * [ ] Follow coding style guidelines found [here](https://github.com/ably/engineering/tree/main/best-practices).
 * [ ] TypeDoc updated (if applicable).
 * [ ] (Optional) Update documentation for new features.
+* [ ] Browser tests created (if applicable).
+* [ ] In repo demo app updated (if applicable).
 
 ### Testing Instructions (Optional)
 
