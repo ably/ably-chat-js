@@ -72,14 +72,40 @@ const toBeErrorInfo = (received: unknown, expected: ErrorInfoCompareType): Check
   };
 };
 
+const toBeErrorInfoWithCode = (received: unknown, expected: number) => {
+  return {
+    pass: received instanceof Ably.ErrorInfo && received.code === expected,
+    message: () => `Expected ErrorInfo with matching code`,
+    expected: expected,
+    actual: (received as Ably.ErrorInfo).code,
+  };
+};
+
 expect.extend({
   toBeErrorInfo,
-  toBeErrorInfoWithCode(received: unknown, expected: number) {
+  toThrowErrorInfo(received: () => unknown, expected: ErrorInfoCompareType) {
+    try {
+      received();
+    } catch (error: unknown) {
+      return toBeErrorInfo(error, expected);
+    }
+
     return {
-      pass: received instanceof Ably.ErrorInfo && received.code === expected,
-      message: () => `Expected ErrorInfo with matching code`,
-      expected: expected,
-      actual: (received as Ably.ErrorInfo).code,
+      pass: false,
+      message: () => `Expected ErrorInfo to be thrown`,
+    };
+  },
+  toBeErrorInfoWithCode,
+  toThrowErrorInfoWithCode(received: () => unknown, expected: number) {
+    try {
+      received();
+    } catch (error: unknown) {
+      return toBeErrorInfoWithCode(error, expected);
+    }
+
+    return {
+      pass: false,
+      message: () => `Expected ErrorInfo to be thrown`,
     };
   },
   toBeErrorInfoWithCauseCode(received: unknown, expected: number) {

@@ -1,4 +1,4 @@
-const randomString = (): string => Math.random().toString(36).substring(7);
+const randomString = (): string => Math.random().toString(36).slice(7);
 
 const randomClientId = (): string => 'ably-chat-js-client-' + randomString();
 
