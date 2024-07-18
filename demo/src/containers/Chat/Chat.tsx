@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
 import { useMessages } from '../../hooks/useMessages';
@@ -8,21 +8,11 @@ import { ReactionInput } from '../../components/ReactionInput';
 
 export const Chat = () => {
   const { loading, clientId, messages, sendMessage } = useMessages();
+  const { startTyping, stopTyping, typers } = useTypingIndicators();
+  const { reactions, sendReaction } = useReactions();
 
   // Used to anchor the scroll to the bottom of the chat
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  // define for typing indicator
-  const { startTyping, stopTyping, subscribeToTypingIndicators } = useTypingIndicators();
-  const [typingClients, setTypingClients] = useState<string[]>([]);
-  const [value, setValue] = useState('');
-  const { reactions, sendReaction } = useReactions();
-
-  useEffect(() => {
-    subscribeToTypingIndicators((typingClients) => {
-      setTypingClients([...typingClients.currentlyTyping.values()]);
-    });
-  }, [subscribeToTypingIndicators]);
 
   const handleMessageSend = useCallback(
     (text: string) => {
@@ -55,7 +45,8 @@ export const Chat = () => {
    * Ably and Ably Chat also offer a feature called Presence where user profile
    * data can be attached (things like avatar URLs or display names). Editing a
    * profile through Presence is possible without dropping the connection and
-   * it does not change the clientId. See @todo link to docs for Presence.
+   * it does not change the clientId. Read more about Presence in chat:
+   * {@link https://ably.com/docs/chat/rooms/presence}.
    */
   function changeClientId() {
     const newClientId = prompt('Enter your new clientId');
@@ -110,33 +101,29 @@ export const Chat = () => {
         </div>
       )}
       <div className="typing-indicator-container">
-        {typingClients
-          .filter((client) => client !== clientId)
-          .map((client) => (
-            <p key={client}>{client} is typing...</p>
-          ))}
-        <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
-          <MessageInput
-            value={value}
-            disabled={loading}
-            onValueChange={setValue}
-            onSend={handleMessageSend}
-            onStartTyping={startTyping}
-            onStopTyping={stopTyping}
-          />
-        </div>
-        <div>
-          <ReactionInput
-            reactions={[]}
-            onSend={sendReaction}
-          ></ReactionInput>
-        </div>
-        <div>
-          Received reactions:{' '}
-          {reactions.map((r, idx) => (
-            <span key={idx}>{r.type}</span>
-          ))}{' '}
-        </div>
+        {new Array(...typers).map((client) => (
+          <p key={client}>{client} is typing...</p>
+        ))}
+      </div>
+      <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
+        <MessageInput
+          disabled={loading}
+          onSend={handleMessageSend}
+          onStartTyping={startTyping}
+          onStopTyping={stopTyping}
+        />
+      </div>
+      <div>
+        <ReactionInput
+          reactions={[]}
+          onSend={sendReaction}
+        ></ReactionInput>
+      </div>
+      <div>
+        Received reactions:{' '}
+        {reactions.map((r, idx) => (
+          <span key={idx}>{r.type}</span>
+        ))}{' '}
       </div>
     </div>
   );

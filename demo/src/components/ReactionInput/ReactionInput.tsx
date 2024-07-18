@@ -11,13 +11,16 @@ export const ReactionInput: FC<ReactionInputProps> = ({ reactions, onSend }) => 
     reactions = ['👍', '❤️', '💥', '🚀', '👎', '💔'];
   }
 
-  const buttons = reactions.map((r) => (
+  const buttons = reactions.map((reaction) => (
     <a
-      key={r}
-      onClick={() => onSend(r)}
+      key={reaction}
+      onClick={(e) => {
+        e.preventDefault();
+        onSend(reaction);
+      }}
       href="#"
     >
-      {r}
+      {reaction}
     </a>
   ));
 

@@ -6,8 +6,11 @@ import { nanoid } from 'nanoid';
 import App from './App.tsx';
 import './index.css';
 
-// generate a random clientId and remember it for the length of the session, so
-// if refreshing the page you still see your messages as yours
+// Generate a random clientId and remember it for the length of the session, so
+// if refreshing the page you still see your own messages as yours.
+//
+// This also allows users to change their clientId by setting the
+// sessionStorage key and we use this in `setClientId()` (see Chat.tsx).
 const clientId = (function () {
   const knownClientId = sessionStorage.getItem('ably-chat-demo-clientId');
   if (knownClientId) {

@@ -3,6 +3,9 @@ import { PresenceMember } from '@ably/chat';
 import { useCallback, useEffect, useState } from 'react';
 import { useRoom } from './useRoom.ts';
 
+/**
+ * Hook that provides presence functionality.
+ */
 export const usePresence = () => {
   const [presenceMembers, setPresenceMembers] = useState<PresenceMember[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

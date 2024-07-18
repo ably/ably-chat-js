@@ -1,11 +1,8 @@
-import { FC, ChangeEventHandler, FormEventHandler } from 'react';
+import { FC, ChangeEventHandler, FormEventHandler, useRef } from 'react';
 import { useCounter } from '@ably/chat/react';
 
 interface MessageInputProps {
   disabled: boolean;
-  value: string;
-
-  onValueChange(text: string): void;
 
   onSend(text: string): void;
 
@@ -14,31 +11,42 @@ interface MessageInputProps {
   onStopTyping(): void;
 }
 
-export const MessageInput: FC<MessageInputProps> = ({
-  value,
-  disabled,
-  onValueChange,
-  onSend,
-  onStartTyping,
-  onStopTyping,
-}) => {
-  const { increment } = useCounter();
+export const MessageInput: FC<MessageInputProps> = ({ disabled, onSend, onStartTyping, onStopTyping }) => {
+  const { increment } = useCounter(); // temporary sanity check for hooks in the chat sdk library
+
   const handleValueChange: ChangeEventHandler<HTMLInputElement> = ({ target }) => {
-    onValueChange(target.value);
+    // Typing indicators start method should be called with every keystroke since
+    // they automatically stop if the user stops typing for a certain amount of time.
+    //
+    // The timeout duration can be configured when initialising the room.
     if (target.value && target.value.length > 0) {
       onStartTyping();
     } else {
+      // For good UX we should stop typing indicators as soon as the input field is empty.
       onStopTyping();
     }
   };
 
+  // Keep a reference to the input element to read it and reset it after sending the message
+  const messageInputRef = useRef<HTMLInputElement | null>(null);
+
   const handleFormSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    onSend(value);
-    onValueChange('');
+
+    // do nothing in case we don't have a ref to the input element
+    if (!messageInputRef.current) {
+      return;
+    }
+
+    // send the message and reset the input field
+    onSend(messageInputRef.current.value);
+    messageInputRef.current.value = '';
+
+    // stop typing indicators
     onStopTyping();
-    increment();
+
+    increment(); // temporary sanity check for hooks in the chat sdk library
   };
 
   return (
@@ -48,11 +56,11 @@ export const MessageInput: FC<MessageInputProps> = ({
     >
       <input
         type="text"
-        value={value}
         onChange={handleValueChange}
         disabled={disabled}
-        placeholder="Type.."
+        placeholder="Say something"
         className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-2 pr-2 bg-gray-200 rounded-l-md py-1"
+        ref={messageInputRef}
         autoFocus
       />
       <div className="items-center inset-y-0 flex">
