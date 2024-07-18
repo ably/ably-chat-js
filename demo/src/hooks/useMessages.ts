@@ -11,6 +11,9 @@ const combineMessages = (previousMessages: Message[], fetchedMessages: Message[]
   ];
 };
 
+/**
+ * Hook that provides access to the messages in the room.
+ */
 export const useMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);

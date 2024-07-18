@@ -1,6 +1,9 @@
 import { useContext, useLayoutEffect } from 'react';
 import { RoomContext } from '../containers/RoomContext';
 
+/**
+ * Hook that provides access to the current room and the client ID.
+ */
 export const useRoom = () => {
   const context = useContext(RoomContext);
 
