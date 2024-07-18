@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
-import EventEmitter from '../utils/EventEmitter.js';
 import { Logger } from './logger.js';
+import EventEmitter from './utils/EventEmitter.js';
 
 /**
  * Default timeout for transient states before we attempt handle them as a state change.

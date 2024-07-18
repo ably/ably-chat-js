@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
-import EventEmitter from '../utils/EventEmitter.js';
 import { Logger } from './logger.js';
+import EventEmitter from './utils/EventEmitter.js';
 
 /**
  * The different states that a room can be in throughout its lifecycle.

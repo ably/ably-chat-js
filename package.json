@@ -28,10 +28,10 @@
     "test:react": "vitest run --project react-hooks",
     "test:watch": "vitest watch",
     "build": "npm run build:chat && npm run build:react",
-    "build:chat": "vite build",
+    "build:chat": "vite build --config ./src/core/vite.config.ts --emptyOutDir",
     "build:react": "vite build --config ./src/react/vite.config.ts --emptyOutDir",
     "prepare": "npm run build",
-    "test:typescript": "tsc --project tsconfig.test.json",
+    "test:typescript": "tsc",
     "demo:reload": "npm run build && cd demo && npm i file:../",
     "docs": "typedoc",
     "modulereport": "tsc --noEmit --esModuleInterop scripts/moduleReport.ts && esr scripts/moduleReport.ts"

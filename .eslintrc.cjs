@@ -8,7 +8,7 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.test.json', './src/react/tsconfig.json', './src/react/tsconfig.test.json'],
+    project: ['./tsconfig.json'],
   },
   plugins: ['@typescript-eslint', 'security', 'jsdoc', 'import', 'simple-import-sort', 'compat', 'unicorn'],
   extends: [
@@ -125,8 +125,8 @@ module.exports = {
     'node_modules',
     'ably-common',
     'typedoc',
-    'src/utils',
-    'test/utils',
+    'src/core/utils',
+    'test/core/utils',
     'scripts/cdn_deploy.js',
     'vitest.config.ts',
     'vite.config.ts',
