@@ -567,6 +567,104 @@ unsubscribe();
 
 You can remove all listeners at once by calling `reactions.unsubscribeAll()`.
 
+## Handling encoded objects in integrations
+
+If you have set up an [Ably integration](https://ably.com/docs/general/integrations) to receive events from your chat
+room, depending on your configuration, you may receive these as encoded objects.
+See [here](https://ably.com/docs/general/webhooks) for more information.
+Should you wish to convert this object to a chat type, you can use the functions below to help you.
+
+For example, if you have the following item reach your integration:
+
+```json
+{
+  "items": [
+    {
+      "webhookId": "Ja-tsg",
+      "source": "channel.message",
+      "serial": "108iZpUxQBe4Vv35120919@1720954404104-0",
+      "timestamp": 1720954404104,
+      "name": "channel.message",
+      "data": {
+        "channelId": "some-room::$chat::$chatMessages",
+        "site": "eu-west-1-A",
+        "messages": [
+          {
+            "id": "chat:6TP2sA:some-room:a4534b0ab37bdd5:0",
+            "clientId": "user1",
+            "timestamp": 1720954404104,
+            "encoding": "json",
+            "extras": {
+              "timeserial": "108iZpUxQBe4Vv35120919@1720954404104-0",
+              "headers": {}
+            },
+            "data": "{\"text\":\"some text data\",\"metadata\":{}}",
+            "name": "message.created"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+You should use `getEntityTypeFromEncoded` to first retrieve the chat entity type of the encoded message,
+then call either `chatMessageFromEncoded` or `reactionFromEncoded` depending on the entity type.
+
+```ts
+import { getEntityTypeFromEncoded, chatMessageFromEncoded, reactionFromEncoded, ChatEntityType } from '@ably/chat';
+
+integrationMessage.items.forEach((item) => {
+  item.data.messages.forEach(async (encodedMessage) => {
+    const entityType = getEntityTypeFromEncoded(encodedMessage);
+    switch (entityType) {
+      case ChatEntityType.ChatMessage:
+        const chatMessage = await chatMessageFromEncoded(encodedMessage);
+        console.log(chatMessage);
+        break;
+      case ChatEntityType.Reaction:
+        const reaction = await reactionFromEncoded(encodedMessage);
+        console.log(reaction);
+        break;
+      default:
+        console.log('Unknown entity type');
+    }
+  });
+});
+```
+
+## Handling Ably messages
+
+If you are working with the underlying channels directly and not using the Chat SDK, you can use these functions to
+convert an inbound Ably message to a chat type.
+You can use `getEntityTypeFromAblyMessage` to retrieve the chat entity type of the message,
+then call either `chatMessageFromAblyMessage` or `reactionFromAblyMessage` depending on the entity type.
+
+```ts
+import * as Ably from 'ably';
+import {
+  getEntityTypeFromAblyMessage,
+  chatMessageFromAblyMessage,
+  reactionFromAblyMessage,
+  ChatEntityType
+} from '@ably/chat';
+
+const entityType = getEntityTypeFromAblyMessage(inboundMessage as Ably.InboundMessage);
+
+switch (entityType) {
+  case ChatEntityType.ChatMessage:
+    const chatMessage = chatMessageFromAblyMessage(inboundMessage as Ably.InboundMessage);
+    console.log(chatMessage);
+    break;
+  case ChatEntityType.Reaction:
+    const reaction = reactionFromAblyMessage(inboundMessage as Ably.InboundMessage);
+    console.log(reaction);
+    break;
+  default:
+    console.log('Unknown entity type');
+}
+```
+
 ## In-depth
 
 ### Channels Behind Chat Features
