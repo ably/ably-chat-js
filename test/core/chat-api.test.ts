@@ -7,7 +7,7 @@ import { makeTestLogger } from '../helper/logger.ts';
 vi.mock('ably');
 
 describe('config', () => {
-  it('throws errors if Realtime returns ErrorInfo on non-paginated request', async () => {
+  it('throws an error if Realtime returns ErrorInfo on non-paginated request', async () => {
     const realtime = new Ably.Realtime({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger());
 
