@@ -1,35 +1,48 @@
-import { TypingListener } from '@ably/chat';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRoom } from './useRoom';
 
+/**
+ * Hook that provides typing indicators functionality.
+ *
+ * @returns an object containing:
+ * - startTyping: function to start typing indicators
+ * - stopTyping: function to stop typing indicators
+ * - typers: set of typers excluding the current user
+ */
 export const useTypingIndicators = () => {
-  const { room } = useRoom();
+  const { clientId, room } = useRoom();
+
+  const [typers, setTypers] = useState<Set<string>>(new Set<string>());
 
   const startTyping = useCallback(() => {
-    room.typing.start().then(() => {});
+    void room.typing.start();
   }, [room]);
 
   const stopTyping = useCallback(() => {
-    room.typing.stop().then(() => {});
+    void room.typing.stop();
   }, [room]);
 
-  const [unsubscribe, setUnsubscribe] = useState({ unsubscribe: () => {} });
+  useEffect(() => {
+    // fetch current typers when the component mounts
+    room.typing.get().then((typers) => {
+      typers.delete(clientId); // remove the current user from the list of typers
+      setTypers(typers);
+    });
 
-  const subscribeToTypingIndicators = useCallback(
-    (callback: TypingListener) => {
-      setUnsubscribe(room.typing.subscribe(callback));
-    },
-    [room],
-  );
+    // subscribe to typing indicators
+    const subscription = room.typing.subscribe((event) => {
+      setTypers(event.currentlyTyping);
+    });
 
-  const unsubscribeToTypingIndicators = useCallback(() => {
-    unsubscribe.unsubscribe();
-  }, [unsubscribe]);
+    return () => {
+      // cleanup: remove subscription
+      subscription.unsubscribe();
+    };
+  }, [clientId, room]);
 
   return {
     startTyping,
     stopTyping,
-    subscribeToTypingIndicators,
-    unsubscribeToTypingIndicators,
+    typers,
   };
 };
