@@ -575,6 +575,65 @@ describe('room lifecycle manager', () => {
       expect(context.secondContributor.channel.detach).toHaveBeenCalled();
     });
 
+    it<TestContext>('rolls back channel attachments on channel entering unexpected state', async (context) => {
+      // Force our status and contributors into attached
+      const status = new DefaultStatus(makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Initialized,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Initialized,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Initialized,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+
+      // Mock channel attachment results
+      mockChannelAttachSuccess(context.firstContributor.channel);
+      mockChannelAttachSuccess(context.secondContributor.channel);
+      mockChannelAttachFailure(context.thirdContributor.channel, AblyChannelState.Detached, 1003);
+
+      // As the third channel will enter failed, we expect a call to detach on the first channel and the second
+      mockChannelDetachSuccess(context.firstContributor.channel);
+      mockChannelDetachSuccess(context.secondContributor.channel);
+
+      const monitor = new RoomLifecycleManager(
+        status,
+        [context.firstContributor, context.secondContributor, context.thirdContributor],
+        makeTestLogger(),
+        5,
+      );
+
+      // Attach result should reject
+      await expect(monitor.attach()).rejects.toBeErrorInfo({
+        code: ErrorCodes.RoomLifecycleError,
+        cause: {
+          code: ErrorCodes.OccupancyAttachmentFailed,
+        },
+      });
+
+      // We should be in the failed state because the second channel failed to attach
+      await waitForRoomStatus(status, RoomLifecycle.Failed);
+
+      // All channels should have been called
+      expect(context.firstContributor.channel.attach).toHaveBeenCalled();
+      expect(context.secondContributor.channel.attach).toHaveBeenCalled();
+      expect(context.thirdContributor.channel.attach).toHaveBeenCalled();
+
+      // We expect both first and second channels to have had detach called
+      expect(context.firstContributor.channel.detach).toHaveBeenCalled();
+      expect(context.secondContributor.channel.detach).toHaveBeenCalled();
+    });
+
     it<TestContext>('rolls back until everything completes', async (context) => {
       // Force our status and contributors into attached
       const status = new DefaultStatus(makeTestLogger());
