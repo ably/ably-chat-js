@@ -4,11 +4,12 @@ import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
 export default defineConfig({
+  root: resolve(__dirname, '.'),
   plugins: [dts({ insertTypesEntry: true })],
   build: {
-    outDir: 'dist/chat',
+    outDir: '../../dist/chat',
     lib: {
-      entry: resolve(__dirname, 'src/core/index.ts'),
+      entry: resolve(__dirname, 'index.ts'),
       name: 'ably-chat-js',
       fileName: 'ably-chat',
     },

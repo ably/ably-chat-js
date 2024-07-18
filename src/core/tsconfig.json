@@ -1,6 +1,6 @@
 {
-  "include": ["../../test/react/**/*.test.tsx", "../../test/react/**/*.test.ts"],
-  "exclude": ["./src/**/*.ts"],
+  "include": ["./**/*.ts"],
+  "exclude": ["./fakes/**/*.ts"],
   "compilerOptions": {
     "rootDir": ".",
     "target": "es6",
@@ -10,18 +10,14 @@
     "noImplicitThis": true,
     "esModuleInterop": true,
     "declaration": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     "skipLibCheck": true,
     "allowJs": true,
-    "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "strictNullChecks": true,
     "noUncheckedIndexedAccess": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["node"],
-    "paths": {
-      "@ably/chat": ["../../dist/chat"]
-    }
+    "types": ["node"]
   }
 }

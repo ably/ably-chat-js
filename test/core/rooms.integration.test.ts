@@ -1,13 +1,14 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
+import { LogLevel } from '../../src/core/logger.ts';
 import { RoomLifecycle } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForRoomStatus } from '../helper/room.ts';
 
 describe('Rooms', () => {
   it('throws an error if you create the same room with different options', () => {
-    const chat = newChatClient();
+    const chat = newChatClient({ logLevel: LogLevel.Silent });
     chat.rooms.get('test', { typing: { timeoutMs: 1000 } });
     expect(() => {
       chat.rooms.get('test', { typing: { timeoutMs: 2000 } });
@@ -49,5 +50,18 @@ describe('Rooms', () => {
 
     // Release the room
     await chat.rooms.release('test');
+  });
+
+  it('does not release a non-existent room', async () => {
+    const chat = newChatClient();
+    await expect(chat.rooms.release('test')).resolves.toBeUndefined();
+  });
+
+  it('returns the client options', () => {
+    expect(newChatClient({ logLevel: LogLevel.Silent }).rooms.clientOptions).toEqual(
+      expect.objectContaining({
+        logLevel: LogLevel.Silent,
+      }),
+    );
   });
 });

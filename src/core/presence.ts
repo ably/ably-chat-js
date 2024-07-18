@@ -1,6 +1,5 @@
 import * as Ably from 'ably';
 
-import EventEmitter from '../utils/EventEmitter.js';
 import { getChannel, messagesChannelName } from './channel.js';
 import {
   DiscontinuityEmitter,
@@ -16,6 +15,7 @@ import { Logger } from './logger.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { RoomOptions } from './room-options.js';
+import EventEmitter from './utils/EventEmitter.js';
 
 /**
  * Interface for PresenceEventsMap

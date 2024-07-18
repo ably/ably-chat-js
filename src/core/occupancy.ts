@@ -1,6 +1,5 @@
 import * as Ably from 'ably';
 
-import EventEmitter from '../utils/EventEmitter.js';
 import { getChannel, messagesChannelName } from './channel.js';
 import { ChatApi } from './chat-api.js';
 import {
@@ -15,6 +14,7 @@ import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
+import EventEmitter from './utils/EventEmitter.js';
 
 /**
  * This interface is used to interact with occupancy in a chat room: subscribing to occupancy updates and

@@ -75,6 +75,14 @@ describe('logger', () => {
         done();
       }),
   );
+
+  it('throws exception on invalid log level', () => {
+    expect(() => makeLogger({ logLevel: 'invalid' as LogLevel })).toThrowErrorInfo({
+      message: 'Invalid log level: invalid',
+      statusCode: 500,
+      code: 50000,
+    });
+  });
 });
 
 const callMethodForLevel = (log: Logger, level: Omit<LogLevel, 'silent'>, context?: object | undefined) => {

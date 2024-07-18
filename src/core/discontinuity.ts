@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import EventEmitter from '../utils/EventEmitter.js';
+import EventEmitter from './utils/EventEmitter.js';
 
 /**
  * Represents an object that has a channel and therefore may care about discontinuities.

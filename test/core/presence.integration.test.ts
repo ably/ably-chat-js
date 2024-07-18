@@ -243,7 +243,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
   it<TestContext>('does not send unrelated presence events', async (context) => {
     // Subscribe to enter events
     const presenceEvents: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe(PresenceEvents.Leave, (event) => {
+    const { unsubscribe } = context.chatRoom.presence.subscribe(PresenceEvents.Leave, (event) => {
       presenceEvents.push(event);
     });
 
@@ -252,6 +252,9 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
     // Wait for the enter event to be received
     await assertNoPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId);
+
+    // Unsubscribe from presence events
+    unsubscribe();
   });
 
   it<TestContext>('should unsubscribe from presence events', async (context) => {

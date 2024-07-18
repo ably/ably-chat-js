@@ -30,4 +30,13 @@ describe('Presence', () => {
   it<TestContext>('has a detachment error code', (context) => {
     expect((context.room.presence as DefaultPresence).detachmentErrorCode).toBe(102051);
   });
+
+  it<TestContext>('throws ErrorInfo if subscribing with no arguments', (context) => {
+    expect(() => {
+      context.room.presence.subscribe();
+    }).toThrowErrorInfo({
+      message: 'could not subscribe listener: invalid arguments',
+      code: 40000,
+    });
+  });
 });

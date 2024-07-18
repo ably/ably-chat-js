@@ -10,9 +10,6 @@ export default defineWorkspace([
       include: ['test/core/**/*.test.{ts,js}'],
       name: 'chat',
       environment: 'node',
-      typecheck: {
-        tsconfig: './tsconfig.test.json',
-      },
     },
   },
   {
@@ -23,9 +20,6 @@ export default defineWorkspace([
       include: ['test/react/**/*.test.{tsx,jsx}'],
       name: 'react-hooks',
       environment: 'jsdom',
-      typecheck: {
-        tsconfig: './tsconfig.test.json',
-      },
     },
   },
 ]);

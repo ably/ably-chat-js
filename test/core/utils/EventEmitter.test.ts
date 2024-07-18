@@ -1,7 +1,7 @@
 // todo EventEmitter has been copied from @ably/spaces, it's better to move it in separate library
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import EventEmitter, { removeListener } from '../../src/utils/EventEmitter.js';
+import EventEmitter, { removeListener } from '../../../src/core/utils/EventEmitter.js';
 
 describe('removeListener', () => {
   const listener = () => true;

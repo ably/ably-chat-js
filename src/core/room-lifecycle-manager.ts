@@ -570,11 +570,13 @@ export class RoomLifecycleManager {
             break;
           }
           default: {
-            this._logger.error(`Unexpected channel state ${feature.channel.state}`);
-            throw new Ably.ErrorInfo(
+            this._logger.error(`Unexpected channel state`, { state: feature.channel.state });
+            attachResult.status = RoomLifecycle.Failed;
+            attachResult.error = new Ably.ErrorInfo(
               `unexpected channel state in doAttach ${feature.channel.state}`,
               ErrorCodes.RoomLifecycleError,
               500,
+              attachResult.error,
             );
           }
         }
