@@ -15,10 +15,10 @@ const actualErrorInfo = (received: unknown, expected: unknown): Record<string, u
     [...commonKeys].map((key) => [key, (received as Ably.ErrorInfo)[key as keyof Ably.ErrorInfo]]),
   );
 
-  if ((received as Ably.ErrorInfo).cause) {
+  if ((received as Ably.ErrorInfo).cause ?? (expected as Ably.ErrorInfo).cause) {
     returnVal.cause = actualErrorInfo(
-      (received as Ably.ErrorInfo).cause,
-      (expected as Ably.ErrorInfo).cause,
+      (received as Ably.ErrorInfo).cause ?? {},
+      (expected as Ably.ErrorInfo).cause ?? {},
     ) as unknown as Ably.ErrorInfo;
   }
 

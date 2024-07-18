@@ -1,3 +1,5 @@
+import * as Ably from 'ably';
+
 import { NormalizedClientOptions } from './config.js';
 
 /**
@@ -171,7 +173,7 @@ class DefaultLogger implements Logger {
 
     const levelNumber = logLevelNumberMap.get(level);
     if (levelNumber === undefined) {
-      throw new Error(`Invalid log level: ${level}`);
+      throw new Ably.ErrorInfo(`Invalid log level: ${level}`, 50000, 500);
     }
 
     this._levelNumber = levelNumber;
