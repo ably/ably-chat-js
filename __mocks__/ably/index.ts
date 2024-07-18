@@ -199,6 +199,8 @@ class MockRealtime {
     };
     this.connection = createMockConnection();
   }
+
+  public request() {}
 }
 
 class MockErrorInfo extends Ably.ErrorInfo {}
