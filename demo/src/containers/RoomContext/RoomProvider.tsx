@@ -15,6 +15,7 @@ export const RoomProvider: FC<RoomProviderProps> = ({ client, roomId: roomId, ch
         presence: RoomOptionsDefaults.presence,
         reactions: RoomOptionsDefaults.reactions,
         typing: RoomOptionsDefaults.typing,
+        occupancy: RoomOptionsDefaults.occupancy,
       }),
     }),
     [client, roomId],

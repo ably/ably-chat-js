@@ -1,0 +1,31 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.occupancy-counts {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin: 0 auto;
+  max-width: 12rem;
+  background-color: #007bff;
+}
+
+.occupancy-counts h2 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #eaeaea;
+}
+
+.occupancy-counts span {
+  font-size: 1rem;
+  color: #eaeaea;
+  white-space: nowrap;
+  font-weight: bold;
+}

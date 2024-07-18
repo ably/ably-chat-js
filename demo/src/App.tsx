@@ -2,6 +2,7 @@ import { FC } from 'react';
 import { ChatClient as ChatSdk } from '@ably/chat';
 import { RoomProvider } from './containers/RoomContext';
 import { Chat } from './containers/Chat';
+import { OccupancyComponent } from './components/OccupancyComponent';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
 
 // We read the roomID from the URL query string and default to 'abcd' if none
@@ -31,7 +32,10 @@ const App: FC<AppProps> = ({ client }) => (
   >
     <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px' }}>
       <Chat />
-      <UserPresenceComponent clientId={client.clientId} />
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <UserPresenceComponent clientId={client.clientId} />
+        <OccupancyComponent />
+      </div>
     </div>
   </RoomProvider>
 );
