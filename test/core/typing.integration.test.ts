@@ -1,5 +1,6 @@
 // Import necessary modules and dependencies
 import * as Ably from 'ably';
+import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
@@ -35,6 +36,22 @@ const waitForMessages = (messages: TypingEvent[], expectedCount: number) => {
     setTimeout(() => {
       clearInterval(interval);
       reject(new Error('Timed out waiting for messages'));
+    }, 3000);
+  });
+};
+
+// Wait for a typing event matching the expected event to be received
+const waitForTypingEvent = (events: TypingEvent[], expected: TypingEvent) => {
+  return new Promise<void>((resolve, reject) => {
+    const interval = setInterval(() => {
+      if (events.some((event) => dequal(event, expected))) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 100);
+    setTimeout(() => {
+      clearInterval(interval);
+      reject(new Error('Timed out waiting for typing event'));
     }, 3000);
   });
 };
@@ -127,7 +144,7 @@ describe('Typing', () => {
       await client1.get(context.chatRoom.roomId, roomOptions).typing.start();
       await client2.get(context.chatRoom.roomId, roomOptions).typing.start();
       // Wait for the typing events to be received
-      await waitForMessages(events, 2);
+      await waitForTypingEvent(events, { currentlyTyping: new Set([clientId1, clientId2]) });
       // Get the currently typing client ids
       const currentlyTypingClientIds = await context.chatRoom.typing.get();
       // Ensure that the client ids are correct
@@ -138,7 +155,7 @@ describe('Typing', () => {
       // Try stopping typing for one of the clients
       await client1.get(context.chatRoom.roomId, roomOptions).typing.stop();
       // Wait for the typing events to be received
-      await waitForMessages(events, 1);
+      await waitForTypingEvent(events, { currentlyTyping: new Set([clientId2]) });
       // Get the currently typing client ids
       const currentlyTypingClientIdsAfterStop = await context.chatRoom.typing.get();
       // Ensure that the client ids are correct and client1 is no longer typing
