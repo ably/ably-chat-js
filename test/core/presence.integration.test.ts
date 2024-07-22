@@ -42,7 +42,8 @@ const waitForPresenceEvent = async (
 
     setTimeout(() => {
       clearInterval(interval);
-      reject(new Error('Timed out waiting for presence event'));
+      const eventType = Array.isArray(action) ? action.join(',') : action;
+      reject(new Error('Timed out waiting for presence event of type ' + eventType));
     }, 5000);
   });
 };
@@ -69,6 +70,7 @@ const assertNoPresenceEvent = async (events: PresenceEvent[], action: PresenceEv
 };
 
 // Helper function to wait for an event and run an expectation function on the received message
+// Wait a maximum of 3 seconds for the event to be received
 const waitForEvent = (
   realtimeClient: Realtime,
   event: PresenceAction | PresenceAction[],
@@ -85,6 +87,11 @@ const waitForEvent = (
       .catch((error: unknown) => {
         reject(error as Error);
       });
+
+    setTimeout(() => {
+      const eventString = Array.isArray(event) ? event.join(',') : event;
+      reject(new Error('Timed out waiting for presence event of type ' + eventString));
+    }, 3000);
   });
 };
 
@@ -113,6 +120,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
         });
       },
     );
+
     // Enter with custom user data
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
     // Wait for the enter event to be received
@@ -134,6 +142,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
         });
       },
     );
+
     // Enter with custom user data
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
     // Send presence update with custom user data
