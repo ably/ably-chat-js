@@ -170,6 +170,9 @@ class MockRealtime {
     requestToken(): void;
   };
   public connection: ReturnType<typeof createMockConnection>;
+  private options: {
+    agents?: Record<string, string | undefined>;
+  };
 
   public time() {}
 
@@ -197,6 +200,11 @@ class MockRealtime {
       clientId: client_id,
       requestToken: () => {},
     };
+
+    this.options = {
+      agents: {},
+    };
+
     this.connection = createMockConnection();
   }
 

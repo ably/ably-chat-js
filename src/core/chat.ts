@@ -42,9 +42,8 @@ export class ChatClient {
     this._clientOptions = normalizeClientOptions(clientOptions);
     const logger = makeLogger(this._clientOptions);
     this._connection = new DefaultConnection(new DefaultConnectionStatus(realtime, logger));
-
     this._rooms = new DefaultRooms(realtime, this._clientOptions, logger);
-    this._setAgent();
+    this._addAgent('chat-js');
     logger.trace(`ably chat client version ${VERSION}; initialized`);
   }
 
@@ -93,12 +92,22 @@ export class ChatClient {
   }
 
   /**
-   * Sets the agent string for the client.
+   * Adds additional agent information to the client.
+   * Used internally to add React-specific agent information.
+   * @param agent - The agent to add.
    * @internal
    */
-  private _setAgent(): void {
+  public addReactAgent(): void {
+    this._addAgent('chat-react');
+  }
+
+  /**
+   * Sets the agent string for the client.
+   * @param agent - The agent to add.
+   * @internal
+   */
+  private _addAgent(agent: string): void {
     const realtime = this._realtime as RealtimeWithOptions;
-    const agent = { 'chat-js': VERSION };
-    realtime.options.agents = { ...(realtime.options.agents ?? realtime.options.agents), ...agent };
+    realtime.options.agents = { ...(realtime.options.agents ?? realtime.options.agents), [agent]: VERSION };
   }
 }

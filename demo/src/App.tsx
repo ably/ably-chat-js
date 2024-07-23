@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import { ChatClient as ChatSdk } from '@ably/chat';
 import { RoomProvider } from './containers/RoomContext';
 import { Chat } from './containers/Chat';
 import { OccupancyComponent } from './components/OccupancyComponent';
@@ -21,19 +20,14 @@ let roomId: string;
   }
 })();
 
-interface AppProps {
-  client: ChatSdk;
-}
+interface AppProps {}
 
-const App: FC<AppProps> = ({ client }) => (
-  <RoomProvider
-    client={client}
-    roomId={roomId}
-  >
-    <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px' }}>
+const App: FC<AppProps> = () => (
+  <RoomProvider roomId={roomId}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px', height: '800px' }}>
       <Chat />
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <UserPresenceComponent clientId={client.clientId} />
+        <UserPresenceComponent />
         <OccupancyComponent />
       </div>
     </div>

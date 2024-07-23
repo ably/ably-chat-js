@@ -28,9 +28,18 @@ const waitForConnectionLifecycle = (chat: ChatClient, state: ConnectionLifecycle
 };
 
 describe('Chat', () => {
-  it('should set the agent string', () => {
+  it('should set the agent string on client instantiation', () => {
     const chat = newChatClient(testClientOptions());
     expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({ 'chat-js': VERSION });
+  });
+
+  it('should add a new agent string', () => {
+    const chat = newChatClient(testClientOptions());
+    chat.addReactAgent();
+    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({
+      'chat-js': VERSION,
+      'chat-react': VERSION,
+    });
   });
 
   it('should mix in the client options', () => {

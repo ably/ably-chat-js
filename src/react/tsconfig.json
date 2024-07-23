@@ -1,5 +1,5 @@
 {
-  "include": ["./hooks/**/*.ts", "index.ts"],
+  "include": ["./hooks/**/*.{ts,tsx}", "index.ts", "./contexts/**/*.{ts,tsx}", "./providers/**/*.{ts,tsx}"],
   "compilerOptions": {
     "rootDir": ".",
     "target": "es6",
