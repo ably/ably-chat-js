@@ -37,7 +37,7 @@ export const ChatClientProvider = ({ children, client }: ChatClientProviderProps
   const value: ChatClientContextValue = React.useMemo(() => {
     // Set the internal useReact option to true to enable React-specific agent.
     client.addReactAgent();
-    return { ...context, [DEFAULT_CHAT_CLIENT_ID]: { client: client } };
+    return { ...context, [DEFAULT_CHAT_CLIENT_ID]: { client: client, rooms: {} } };
   }, [client, context]);
 
   return <ChatClientContext.Provider value={value}>{children}</ChatClientContext.Provider>;

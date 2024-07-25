@@ -1,4 +1,4 @@
-import { ChatClient } from '@ably/chat';
+import { ChatClient, Room } from '@ably/chat';
 import React from 'react';
 
 /**
@@ -38,10 +38,25 @@ export interface ChatClientContextProviderProps {
 }
 
 /**
+ * Represents the context of a single chat client.
+ */
+export interface SingleChatClientContext {
+  /**
+   * Instance of the {@link ChatClient}.
+   */
+  client: ChatClient;
+
+  /**
+   * A record of the rooms currently in use.
+   */
+  rooms: Record<string, Room>
+}
+
+/**
  * Record of provider props for each chat client context provider, indexed by provider id.
  *
  */
-export type ChatClientContextValue = Record<string, ChatClientContextProviderProps>;
+export type ChatClientContextValue = Record<string, SingleChatClientContext>;
 
 /**
  * Returns a chat client context.
