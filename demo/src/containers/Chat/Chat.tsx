@@ -90,7 +90,7 @@ export const Chat = () => {
         </a>
         .
       </div>
-      {loading && <div>loading...</div>}
+      {loading && <div className="text-center m-auto">loading...</div>}
       {!loading && (
         <div
           id="messages"

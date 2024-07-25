@@ -9,7 +9,7 @@ export const OccupancyComponent: FC = () => {
   const { occupancyMetrics } = useOccupancy();
 
   return (
-    <div className="container p-5 sm:p-12 w-full ">
+    <div className="p-5 sm:p-12 w-full ">
       <div className="occupancy-counts w-full flex flex-col items-center ">
         <img
           src="/connected-persons-triangle-svgrepo-com.svg"
