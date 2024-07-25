@@ -1,5 +1,4 @@
 import { FC, ChangeEventHandler, FormEventHandler, useRef } from 'react';
-import { useCounter } from '@ably/chat/react';
 
 interface MessageInputProps {
   disabled: boolean;
@@ -12,8 +11,6 @@ interface MessageInputProps {
 }
 
 export const MessageInput: FC<MessageInputProps> = ({ disabled, onSend, onStartTyping, onStopTyping }) => {
-  const { increment } = useCounter(); // temporary sanity check for hooks in the chat sdk library
-
   const handleValueChange: ChangeEventHandler<HTMLInputElement> = ({ target }) => {
     // Typing indicators start method should be called with every keystroke since
     // they automatically stop if the user stops typing for a certain amount of time.
@@ -45,8 +42,6 @@ export const MessageInput: FC<MessageInputProps> = ({ disabled, onSend, onStartT
 
     // stop typing indicators
     onStopTyping();
-
-    increment(); // temporary sanity check for hooks in the chat sdk library
   };
 
   return (
