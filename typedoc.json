@@ -10,6 +10,13 @@
   "visibilityFilters": {
     "external": true
   },
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@ably/chat": ["./src/core"],
+      "@ably/chat/react": ["./src/react"]
+    }
+  },
   "requiredToBeDocumented": [
     "Accessor",
     "Class",

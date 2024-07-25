@@ -3,14 +3,14 @@ import { usePresence } from '../../hooks/usePresence';
 import '../../../styles/global.css';
 import './UserPresenceComponent.css';
 import { PresenceMember } from '@ably/chat';
+import { useChatClient } from '@ably/chat/react';
 
-interface UserListComponentProps {
-  clientId: string;
-}
+interface UserListComponentProps {}
 
-export const UserPresenceComponent: FC<UserListComponentProps> = ({ clientId }) => {
+export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const { loading, presenceMembers, enterPresence, updatePresence, leavePresence } = usePresence();
+  const clientId = useChatClient().clientId;
 
   const onEnterPresence = useCallback(() => {
     enterPresence({ status: 'online' })

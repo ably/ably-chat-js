@@ -1,13 +1,15 @@
 import { FC, ReactNode, useMemo } from 'react';
-import { ChatClient, RoomOptionsDefaults } from '@ably/chat';
+import { RoomOptionsDefaults } from '@ably/chat';
 import { RoomContext } from './RoomContext';
+import { useChatClient } from '@ably/chat/react';
 
 interface RoomProviderProps {
-  client: ChatClient;
   roomId: string;
   children: ReactNode;
 }
-export const RoomProvider: FC<RoomProviderProps> = ({ client, roomId: roomId, children }) => {
+
+export const RoomProvider: FC<RoomProviderProps> = ({ roomId: roomId, children }) => {
+  const client = useChatClient();
   const value = useMemo(
     () => ({
       client,

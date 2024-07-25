@@ -5,6 +5,8 @@ import { ChatClient, LogLevel } from '@ably/chat';
 import { nanoid } from 'nanoid';
 import App from './App.tsx';
 import './index.css';
+import { ChatClientProvider } from '@ably/chat/react';
+import { AblyProvider } from 'ably/react';
 
 // Generate a random clientId and remember it for the length of the session, so
 // if refreshing the page you still see your own messages as yours.
@@ -31,17 +33,21 @@ const clientId = (function () {
 //   clientId,
 // });
 
-const ablyClient = new Ably.Realtime({
+const realtimeClient = new Ably.Realtime({
   authUrl: `/api/ably-token-request?clientId=${clientId}`,
   restHost: import.meta?.env?.VITE_ABLY_HOST ? import.meta.env.VITE_ABLY_HOST : undefined,
   realtimeHost: import.meta?.env?.VITE_ABLY_HOST ? import.meta.env.VITE_ABLY_HOST : undefined,
   clientId,
 });
 
-const chatClient = new ChatClient(ablyClient, { logLevel: LogLevel.Debug });
+const chatClient = new ChatClient(realtimeClient, { logLevel: LogLevel.Debug });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App client={chatClient} />
+    <AblyProvider client={realtimeClient}>
+      <ChatClientProvider client={chatClient}>
+        <App />
+      </ChatClientProvider>
+    </AblyProvider>
   </React.StrictMode>,
 );
