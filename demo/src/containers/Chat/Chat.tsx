@@ -5,11 +5,13 @@ import { useMessages } from '../../hooks/useMessages';
 import { useTypingIndicators } from '../../hooks/useTypingIndicators.ts';
 import { useReactions } from '../../hooks/useReactions';
 import { ReactionInput } from '../../components/ReactionInput';
+import { useChatConnection } from '@ably/chat/react';
 
 export const Chat = () => {
   const { loading, clientId, messages, sendMessage } = useMessages();
   const { startTyping, stopTyping, typers } = useTypingIndicators();
   const { reactions, sendReaction } = useReactions();
+  const { currentStatus } = useChatConnection();
 
   // Used to anchor the scroll to the bottom of the chat
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -66,6 +68,10 @@ export const Chat = () => {
       scrollToBottom();
     }
   }, [messages, loading]);
+
+  if (currentStatus !== 'connected') {
+    return <div>Connecting...</div>;
+  }
 
   return (
     <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-screen">

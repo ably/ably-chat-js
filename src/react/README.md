@@ -45,3 +45,25 @@ const MyComponent = () => {
   return <div>Client id is: {clientId}</div>;
 };
 ```
+
+## useChatConnection
+
+This hook allows you to access the connection status of the `ChatClient` instance from your React components.
+
+To use it, call the hook in your component, this will retrieve the connection state from the `ChatClient` of the
+nearest `ChatClientProvider`.
+
+It can also be supplied with an optional listener that will receive the underlying connection status changes.
+
+```tsx
+import { useChatConnection } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const { currentStatus } = useChatConnection({
+    onStatusChange: (statusChange) => {
+      console.log('Connection status changed to: ', statusChange.current);
+    },
+  });
+  return <div>Connection status is: {currentStatus}</div>;
+};
+```

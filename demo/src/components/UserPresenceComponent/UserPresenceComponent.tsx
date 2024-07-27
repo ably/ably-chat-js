@@ -3,7 +3,7 @@ import { usePresence } from '../../hooks/usePresence';
 import '../../../styles/global.css';
 import './UserPresenceComponent.css';
 import { PresenceMember } from '@ably/chat';
-import { useChatClient } from '@ably/chat/react';
+import { useChatClient, useChatConnection } from '@ably/chat/react';
 
 interface UserListComponentProps {}
 
@@ -11,6 +11,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const { loading, presenceMembers, enterPresence, updatePresence, leavePresence } = usePresence();
   const clientId = useChatClient().clientId;
+  const { currentStatus } = useChatConnection();
 
   const onEnterPresence = useCallback(() => {
     enterPresence({ status: 'online' })
@@ -41,6 +42,10 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
     }
     return <li key={index}>{`${presentMember.clientId} - ${status.toUpperCase()}`}</li>;
   };
+
+  if (currentStatus !== 'connected') {
+    return <div>Connecting...</div>;
+  }
 
   if (loading) {
     return <div className="loading">loading...</div>;
