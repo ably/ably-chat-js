@@ -2,6 +2,7 @@ import { FC } from 'react';
 import { useOccupancy } from '../../hooks/useOccupancy.ts';
 import './OccupancyComponent.css';
 import { useChatConnection } from '@ably/chat/react';
+import { ConnectionLifecycle } from '@ably/chat';
 
 /**
  * Displays the occupancy metrics of the current room.
@@ -10,7 +11,7 @@ export const OccupancyComponent: FC = () => {
   const { occupancyMetrics } = useOccupancy();
   const { currentStatus } = useChatConnection();
 
-  if (currentStatus !== 'connected') {
+  if (currentStatus !== ConnectionLifecycle.Connected) {
     return <div>Connecting...</div>;
   }
 

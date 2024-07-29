@@ -6,6 +6,7 @@ import { useTypingIndicators } from '../../hooks/useTypingIndicators.ts';
 import { useReactions } from '../../hooks/useReactions';
 import { ReactionInput } from '../../components/ReactionInput';
 import { useChatConnection } from '@ably/chat/react';
+import { ConnectionLifecycle } from '@ably/chat';
 
 export const Chat = () => {
   const { loading, clientId, messages, sendMessage } = useMessages();
@@ -69,7 +70,7 @@ export const Chat = () => {
     }
   }, [messages, loading]);
 
-  if (currentStatus !== 'connected') {
+  if (currentStatus !== ConnectionLifecycle.Connected) {
     return <div>Connecting...</div>;
   }
 

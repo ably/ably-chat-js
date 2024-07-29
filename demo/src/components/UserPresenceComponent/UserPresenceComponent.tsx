@@ -2,7 +2,7 @@ import { FC, useCallback, useState } from 'react';
 import { usePresence } from '../../hooks/usePresence';
 import '../../../styles/global.css';
 import './UserPresenceComponent.css';
-import { PresenceMember } from '@ably/chat';
+import { ConnectionLifecycle, PresenceMember } from '@ably/chat';
 import { useChatClient, useChatConnection } from '@ably/chat/react';
 
 interface UserListComponentProps {}
@@ -43,7 +43,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
     return <li key={index}>{`${presentMember.clientId} - ${status.toUpperCase()}`}</li>;
   };
 
-  if (currentStatus !== 'connected') {
+  if (currentStatus !== ConnectionLifecycle.Connected) {
     return <div>Connecting...</div>;
   }
 
