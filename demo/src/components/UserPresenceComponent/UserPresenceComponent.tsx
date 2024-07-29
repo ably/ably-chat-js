@@ -12,6 +12,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const { loading, presenceMembers, enterPresence, updatePresence, leavePresence } = usePresence();
   const clientId = useChatClient().clientId;
   const { currentStatus } = useChatConnection();
+  const isConnected = currentStatus === ConnectionLifecycle.Connected;
 
   const onEnterPresence = useCallback(() => {
     enterPresence({ status: 'online' })
@@ -43,10 +44,6 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
     return <li key={index}>{`${presentMember.clientId} - ${status.toUpperCase()}`}</li>;
   };
 
-  if (currentStatus !== ConnectionLifecycle.Connected) {
-    return <div>Connecting...</div>;
-  }
-
   if (loading) {
     return <div className="loading">loading...</div>;
   }
@@ -69,19 +66,22 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
           <div className="actions">
             <button
               onClick={() => onEnterPresence()}
-              className="btn enter"
+              disabled={!isConnected}
+              className="btn enter disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               👤 Join
             </button>
             <button
               onClick={() => onUpdatePresence()}
-              className="btn update"
+              disabled={!isConnected}
+              className="btn update disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               🔄 Appear Away
             </button>
             <button
               onClick={() => onLeavePresence()}
-              className="btn leave"
+              disabled={!isConnected}
+              className="btn leave disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               🚪 Leave
             </button>

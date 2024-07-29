@@ -62,7 +62,7 @@ export const MessageInput: FC<MessageInputProps> = ({ disabled, onSend, onStartT
         <button
           disabled={disabled}
           type="submit"
-          className="inline-flex items-center justify-center rounded-r-md px-3 py-1 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
+          className="inline-flex items-center justify-center rounded-r-md px-3 py-1 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           Send
           <svg

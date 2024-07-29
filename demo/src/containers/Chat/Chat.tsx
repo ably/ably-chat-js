@@ -5,6 +5,7 @@ import { useMessages } from '../../hooks/useMessages';
 import { useTypingIndicators } from '../../hooks/useTypingIndicators.ts';
 import { useReactions } from '../../hooks/useReactions';
 import { ReactionInput } from '../../components/ReactionInput';
+import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
 import { useChatConnection } from '@ably/chat/react';
 import { ConnectionLifecycle } from '@ably/chat';
 
@@ -13,6 +14,8 @@ export const Chat = () => {
   const { startTyping, stopTyping, typers } = useTypingIndicators();
   const { reactions, sendReaction } = useReactions();
   const { currentStatus } = useChatConnection();
+
+  const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
 
   // Used to anchor the scroll to the bottom of the chat
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -70,12 +73,9 @@ export const Chat = () => {
     }
   }, [messages, loading]);
 
-  if (currentStatus !== ConnectionLifecycle.Connected) {
-    return <div>Connecting...</div>;
-  }
-
   return (
     <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-screen">
+      <ConnectionStatusComponent />
       <div
         className="text-xs p-3"
         style={{ backgroundColor: '#333' }}
@@ -114,7 +114,7 @@ export const Chat = () => {
       </div>
       <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
         <MessageInput
-          disabled={loading}
+          disabled={loading || !isConnected}
           onSend={handleMessageSend}
           onStartTyping={startTyping}
           onStopTyping={stopTyping}
@@ -124,6 +124,7 @@ export const Chat = () => {
         <ReactionInput
           reactions={[]}
           onSend={sendReaction}
+          disabled={loading || !isConnected}
         ></ReactionInput>
       </div>
       <div>
