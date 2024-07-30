@@ -1,8 +1,8 @@
 import { FC } from 'react';
-import { RoomProvider } from './containers/RoomContext';
 import { Chat } from './containers/Chat';
 import { OccupancyComponent } from './components/OccupancyComponent';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
+import { RoomProvider } from '@ably/chat/react';
 
 // We read the roomID from the URL query string and default to 'abcd' if none
 // provided. We make sure the URL is updated to always include the roomId. This
@@ -23,7 +23,11 @@ let roomId: string;
 interface AppProps {}
 
 const App: FC<AppProps> = () => (
-  <RoomProvider roomId={roomId}>
+  <RoomProvider
+    id={roomId}
+    release={true}
+    attach={true}
+  >
     <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto' }}>
       <Chat />
       <div style={{ display: 'flex', flexDirection: 'column' }}>
