@@ -6,12 +6,12 @@ export { ChatClient } from './chat.js';
 export type { ClientOptions } from './config.js';
 export type { Connection } from './connection.js';
 export type {
-  ConnectionLifecycle,
   ConnectionStatus,
   ConnectionStatusChange,
   ConnectionStatusListener,
   OnConnectionStatusChangeResponse,
 } from './connection-status.js';
+export { ConnectionLifecycle } from './connection-status.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export type { ErrorCodes } from './errors.js';
 export { MessageEvents, PresenceEvents } from './events.js';

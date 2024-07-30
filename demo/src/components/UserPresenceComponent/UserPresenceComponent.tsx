@@ -2,8 +2,8 @@ import { FC, useCallback, useState } from 'react';
 import { usePresence } from '../../hooks/usePresence';
 import '../../../styles/global.css';
 import './UserPresenceComponent.css';
-import { PresenceMember } from '@ably/chat';
-import { useChatClient } from '@ably/chat/react';
+import { ConnectionLifecycle, PresenceMember } from '@ably/chat';
+import { useChatClient, useChatConnection } from '@ably/chat/react';
 
 interface UserListComponentProps {}
 
@@ -11,6 +11,8 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const { loading, presenceMembers, enterPresence, updatePresence, leavePresence } = usePresence();
   const clientId = useChatClient().clientId;
+  const { currentStatus } = useChatConnection();
+  const isConnected = currentStatus === ConnectionLifecycle.Connected;
 
   const onEnterPresence = useCallback(() => {
     enterPresence({ status: 'online' })
@@ -64,19 +66,22 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
           <div className="actions">
             <button
               onClick={() => onEnterPresence()}
-              className="btn enter"
+              disabled={!isConnected}
+              className="btn enter disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               👤 Join
             </button>
             <button
               onClick={() => onUpdatePresence()}
-              className="btn update"
+              disabled={!isConnected}
+              className="btn update disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               🔄 Appear Away
             </button>
             <button
               onClick={() => onLeavePresence()}
-              className="btn leave"
+              disabled={!isConnected}
+              className="btn leave disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               🚪 Leave
             </button>
