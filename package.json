@@ -57,7 +57,7 @@
   },
   "homepage": "https://github.com/ably/ably-chat-js#readme",
   "peerDependencies": {
-    "ably": "^2.2.1"
+    "ably": "^2.3.1"
   },
   "devDependencies": {
     "@testing-library/react": "^16.0.0",
