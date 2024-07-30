@@ -1,13 +1,15 @@
 import { Reaction } from '@ably/chat';
 import { useCallback, useEffect, useState } from 'react';
-import { useRoom } from './useRoom';
+import { useChatClient, useRoom } from '@ably/chat/react';
 
 /**
  * Hook that provides access to the reactions in the room.
  */
 export const useReactions = () => {
   const [reactions, setReactions] = useState<Reaction[]>([]);
-  const { clientId, room } = useRoom();
+  const chatClient = useChatClient();
+  const clientId = chatClient.clientId;
+  const { room } = useRoom();
 
   const sendReaction = useCallback(
     (reaction: string) => {

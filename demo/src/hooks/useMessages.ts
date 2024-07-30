@@ -1,6 +1,6 @@
 import { Message, type MessageListener } from '@ably/chat';
 import { useCallback, useEffect, useState } from 'react';
-import { useRoom } from './useRoom';
+import { useChatClient, useRoom } from '@ably/chat/react';
 
 // Utility function to merge existing messages with messages just fetched. It
 // ensures that we don't have duplicates in the final list of messages.
@@ -17,7 +17,9 @@ const combineMessages = (previousMessages: Message[], fetchedMessages: Message[]
 export const useMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const { clientId, room } = useRoom();
+  const chatClient = useChatClient();
+  const clientId = chatClient.clientId;
+  const { room } = useRoom();
 
   const sendMessage = useCallback(
     (text: string) => {

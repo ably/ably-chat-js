@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useRoom } from './useRoom';
+import { useChatClient, useRoom } from '@ably/chat/react';
 
 /**
  * Hook that provides typing indicators functionality.
@@ -10,7 +10,9 @@ import { useRoom } from './useRoom';
  * - typers: set of typers excluding the current user
  */
 export const useTypingIndicators = () => {
-  const { clientId, room } = useRoom();
+  const chatClient = useChatClient();
+  const clientId = chatClient.clientId;
+  const { room } = useRoom();
 
   const [typers, setTypers] = useState<Set<string>>(new Set<string>());
 
@@ -31,6 +33,7 @@ export const useTypingIndicators = () => {
 
     // subscribe to typing indicators
     const subscription = room.typing.subscribe((event) => {
+      event.currentlyTyping.delete(clientId); // remove the current user from the list of typers
       setTypers(event.currentlyTyping);
     });
 
