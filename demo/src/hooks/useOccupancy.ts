@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { OccupancyListener } from '@ably/chat';
-import { useRoom } from './useRoom.ts';
+import { useRoom } from '@ably/chat/react';
 
 /**
  * Listens to the occupancy events in the current room.

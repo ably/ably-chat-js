@@ -51,13 +51,13 @@ describe('useChatConnection', () => {
     mockChatClient = createMockChatClient(ConnectionLifecycle.Initialized);
   });
 
-  it('it should provide the initial state of the connection on render', () => {
+  it('should provide the initial state of the connection on render', () => {
     const { result } = renderHook(() => useChatConnection());
     expect(result.current.currentStatus).toBe(ConnectionLifecycle.Initialized);
     expect(result.current.error).toEqual(undefined);
   });
 
-  it('it should update the status correctly on status change', () => {
+  it('should update the status correctly on status change', () => {
     const { result } = renderHook(() => useChatConnection());
     // check the initial state
     expect(result.current.currentStatus).toBe(ConnectionLifecycle.Initialized);
@@ -77,7 +77,7 @@ describe('useChatConnection', () => {
     expect(result.current.error).toEqual(undefined);
   });
 
-  it('it should update the error correctly on status change', () => {
+  it('should update the error correctly on status change', () => {
     const { result } = renderHook(() => useChatConnection());
     // check the initial state
     expect(result.current.currentStatus).toBe(ConnectionLifecycle.Initialized);
@@ -99,7 +99,7 @@ describe('useChatConnection', () => {
     expect(result.current.error).toEqual(testError);
   });
 
-  it('it should call the user supplied listener with the status change ', () => {
+  it('should call the user supplied listener with the status change ', () => {
     const listener = (statusChange: ConnectionStatusChange) => {
       expect(statusChange.current).toBe(ConnectionLifecycle.Connected);
       expect(statusChange.previous).toBe(ConnectionLifecycle.Connecting);
@@ -119,7 +119,7 @@ describe('useChatConnection', () => {
     });
   });
 
-  it('it should handle rerender if the chat client instance changes', () => {
+  it('should handle rerender if the chat client instance changes', () => {
     const { result, rerender } = renderHook(() => useChatConnection());
     // check the initial state
     expect(result.current.currentStatus).toBe(ConnectionLifecycle.Initialized);
@@ -136,7 +136,7 @@ describe('useChatConnection', () => {
     expect(result.current.error).toEqual(undefined);
   });
 
-  it('it should call the off functions for registered listeners on unmount', () => {
+  it('should call the off functions for registered listeners on unmount', () => {
     const { unmount } = renderHook(() =>
       useChatConnection({
         onStatusChange: () => {},

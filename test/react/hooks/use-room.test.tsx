@@ -1,0 +1,315 @@
+import { ChatClient, RoomLifecycle, RoomOptionsDefaults, RoomStatusListener } from '@ably/chat';
+import { act, render, renderHook } from '@testing-library/react';
+import * as Ably from 'ably';
+import React from 'react';
+import { describe, expect, it, vi } from 'vitest';
+
+import { ChatRoomProvider, useRoom, UseRoomResponse } from '../../../src/react/index.ts';
+import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
+import { newChatClient as newChatClientLib } from '../../helper/chat.ts';
+import { randomRoomId } from '../../helper/identifier.ts';
+
+const TestComponent: React.FC<{ callback?: (room: UseRoomResponse) => void }> = ({ callback }) => {
+  const response = useRoom();
+  if (callback) callback(response);
+  return <></>;
+};
+
+vi.mock('ably');
+
+function newChatClient() {
+  return newChatClientLib() as unknown as ChatClient;
+}
+
+describe('useRoom', () => {
+  it('should throw an error if used outside of ChatRoomProvider', () => {
+    expect(() => render(<TestComponent />)).toThrowErrorInfo({
+      code: 40000,
+      message: 'useRoom hook must be used within a ChatRoomProvider',
+    });
+  });
+
+  it('should get the room from the context without error', async () => {
+    const chatClient = newChatClient();
+    let setResponse: (response: UseRoomResponse) => void;
+    const responsePromise = new Promise<UseRoomResponse>((resolve) => {
+      setResponse = resolve;
+    });
+    const roomId = randomRoomId();
+    const TestProvider = () => (
+      <ChatClientProvider client={chatClient}>
+        <ChatRoomProvider
+          id={roomId}
+          attach={false}
+          release={false}
+          options={RoomOptionsDefaults}
+        >
+          <TestComponent
+            callback={(response) => {
+              setResponse(response);
+            }}
+          />
+        </ChatRoomProvider>
+      </ChatClientProvider>
+    );
+    render(<TestProvider />);
+    const response = await responsePromise;
+    expect(response.room.roomId).toBe(roomId);
+    expect(response.attach).toBeTruthy();
+    expect(response.detach).toBeTruthy();
+    expect(response.roomStatus).toBe(RoomLifecycle.Initializing);
+  });
+
+  it('should return working shortcuts for attach and detach functions', () => {
+    const chatClient = newChatClient();
+    let called = false;
+    const roomId = randomRoomId();
+    const TestProvider = () => (
+      <ChatClientProvider client={chatClient}>
+        <ChatRoomProvider
+          id={roomId}
+          attach={false}
+          release={false}
+          options={RoomOptionsDefaults}
+        >
+          <TestComponent
+            callback={(response) => {
+              vi.spyOn(response.room, 'attach').mockImplementation(() => Promise.resolve());
+              vi.spyOn(response.room, 'detach').mockImplementation(() => Promise.resolve());
+              // no awaiting since we don't care about result, just that the relevant function was called
+              void response.attach();
+              expect(response.room.attach).toHaveBeenCalled();
+              void response.detach();
+              expect(response.room.detach).toHaveBeenCalled();
+              called = true;
+            }}
+          />
+        </ChatRoomProvider>
+      </ChatClientProvider>
+    );
+    render(<TestProvider />);
+    expect(called).toBe(true);
+  });
+
+  it('should attach, detach and release correctly with the same room twice', () => {
+    const chatClient = newChatClient();
+    let called1 = 0;
+    let called2 = 0;
+    const roomId = randomRoomId();
+    const room = chatClient.rooms.get(roomId, RoomOptionsDefaults);
+
+    vi.spyOn(room, 'attach').mockImplementation(() => Promise.resolve());
+    vi.spyOn(room, 'detach').mockImplementation(() => Promise.resolve());
+    vi.spyOn(chatClient.rooms, 'release');
+
+    const TestProvider = ({ room1 = true, room2 = true }) => {
+      const component1 = (
+        <ChatRoomProvider
+          id={roomId}
+          attach={false}
+          release={false}
+          options={RoomOptionsDefaults}
+        >
+          <TestComponent
+            callback={() => {
+              called1 += 1;
+            }}
+          />
+        </ChatRoomProvider>
+      );
+
+      const component2 = (
+        <ChatRoomProvider
+          id={roomId}
+          attach={true}
+          release={true}
+          options={RoomOptionsDefaults}
+        >
+          <TestComponent
+            callback={() => {
+              called2 += 1;
+            }}
+          />
+        </ChatRoomProvider>
+      );
+
+      return (
+        <ChatClientProvider client={chatClient}>
+          {room1 ? component1 : <></>}
+          {room2 ? component2 : <></>}
+        </ChatClientProvider>
+      );
+    };
+
+    const r = render(
+      <TestProvider
+        room1={true}
+        room2={true}
+      />,
+    );
+    expect(called1).toBe(1);
+    expect(called2).toBe(1);
+    expect(room.attach).toHaveBeenCalledTimes(1);
+    expect(room.detach).toHaveBeenCalledTimes(0);
+    expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
+
+    r.rerender(
+      <TestProvider
+        room1={false}
+        room2={true}
+      />,
+    );
+    expect(called1).toBe(1);
+    expect(called2).toBe(2);
+    expect(room.attach).toHaveBeenCalledTimes(1);
+    expect(room.detach).toHaveBeenCalledTimes(0);
+    expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
+
+    r.rerender(
+      <TestProvider
+        room1={true}
+        room2={true}
+      />,
+    );
+    expect(called1).toBe(2);
+    expect(called2).toBe(3);
+    expect(room.attach).toHaveBeenCalledTimes(1);
+    expect(room.detach).toHaveBeenCalledTimes(0);
+    expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
+
+    r.rerender(
+      <TestProvider
+        room1={false}
+        room2={true}
+      />,
+    );
+    expect(called1).toBe(2);
+    expect(called2).toBe(4);
+    expect(room.attach).toHaveBeenCalledTimes(1);
+    expect(room.detach).toHaveBeenCalledTimes(0);
+    expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
+
+    r.rerender(
+      <TestProvider
+        room1={false}
+        room2={false}
+      />,
+    );
+    expect(called1).toBe(2);
+    expect(called2).toBe(4);
+    expect(room.attach).toHaveBeenCalledTimes(1);
+    // room.detach is not called when releasing, detach happens via lifecycleManager but skipping the public API
+    expect(room.detach).toHaveBeenCalledTimes(0);
+    expect(chatClient.rooms.release).toHaveBeenCalledWith(roomId);
+  });
+
+  it('should correctly set room status callback', () => {
+    const chatClient = newChatClient();
+    const roomId = randomRoomId();
+    const room = chatClient.rooms.get(roomId, RoomOptionsDefaults);
+
+    let listeners: RoomStatusListener[] = [];
+
+    vi.spyOn(room.status, 'onChange').mockImplementation((listener) => {
+      listeners.push(listener);
+      return {
+        off: () => {
+          listeners = listeners.filter((l) => l !== listener);
+        },
+      };
+    });
+
+    const expectedChange = { current: RoomLifecycle.Attached, previous: RoomLifecycle.Attaching };
+    let called = false;
+    const listener: RoomStatusListener = (foundChange) => {
+      expect(foundChange).toBe(expectedChange);
+      called = true;
+    };
+
+    const WithClient = ({ children }: { children: React.ReactNode }) => {
+      return (
+        <ChatClientProvider client={chatClient}>
+          <ChatRoomProvider
+            id={roomId}
+            options={RoomOptionsDefaults}
+          >
+            {children}
+          </ChatRoomProvider>
+        </ChatClientProvider>
+      );
+    };
+
+    renderHook(
+      () =>
+        useRoom({
+          onStatusChange: listener,
+        }),
+      { wrapper: WithClient },
+    );
+
+    expect(room.status.onChange).toHaveBeenCalledWith(listener);
+
+    act(() => {
+      for (const l of listeners) l(expectedChange);
+    });
+
+    expect(called).toBeTruthy();
+  });
+
+  it('should correctly set room status and error state variables', () => {
+    const chatClient = newChatClient();
+    const roomId = randomRoomId();
+    const room = chatClient.rooms.get(roomId, RoomOptionsDefaults);
+
+    let listeners: RoomStatusListener[] = [];
+
+    vi.spyOn(room.status, 'onChange').mockImplementation((listener) => {
+      listeners.push(listener);
+      return {
+        off: () => {
+          listeners = listeners.filter((l) => l !== listener);
+        },
+      };
+    });
+
+    const WithClient = ({ children }: { children: React.ReactNode }) => {
+      return (
+        <ChatClientProvider client={chatClient}>
+          <ChatRoomProvider
+            id={roomId}
+            options={RoomOptionsDefaults}
+          >
+            {children}
+          </ChatRoomProvider>
+        </ChatClientProvider>
+      );
+    };
+
+    const { result } = renderHook(() => useRoom(), { wrapper: WithClient });
+
+    act(() => {
+      const change = { current: RoomLifecycle.Attached, previous: RoomLifecycle.Attaching };
+      for (const l of listeners) l(change);
+    });
+
+    expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
+    expect(result.current.roomError).toBeUndefined();
+
+    act(() => {
+      const change = { current: RoomLifecycle.Detaching, previous: RoomLifecycle.Attached };
+      for (const l of listeners) l(change);
+    });
+
+    expect(result.current.roomStatus).toBe(RoomLifecycle.Detaching);
+    expect(result.current.roomError).toBeUndefined();
+
+    const err = new Ably.ErrorInfo('test', 123, 456);
+    act(() => {
+      const change = { current: RoomLifecycle.Failed, previous: RoomLifecycle.Detaching, error: err };
+      for (const l of listeners) l(change);
+    });
+
+    expect(result.current.roomStatus).toBe(RoomLifecycle.Failed);
+    expect(result.current.roomError).toBe(err);
+  });
+});

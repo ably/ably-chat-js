@@ -18,14 +18,14 @@ const TestComponent: React.FC<{ callback: (client: ChatClient) => void }> = ({ c
 vi.mock('ably');
 
 describe('useChatClient', () => {
-  it('it should throw an error if used outside of ChatClientProvider', () => {
+  it('should throw an error if used outside of ChatClientProvider', () => {
     expect(() => render(<TestComponent callback={() => {}} />)).toThrowErrorInfo({
       code: 40000,
       message: 'useChatClient hook must be used within a chat client provider',
     });
   });
 
-  it('it should get the chat client from the context without error and with the correct agent', () => {
+  it('should get the chat client from the context without error and with the correct agent', () => {
     const chatClient = newChatClient() as unknown as ChatClient;
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
@@ -41,7 +41,7 @@ describe('useChatClient', () => {
     render(<TestProvider />);
   });
 
-  it('it should provide the same chat client to nested components', () => {
+  it('should provide the same chat client to nested components', () => {
     let client1: ChatClient | undefined;
     let client2: ChatClient | undefined;
     const TestComponentInner = () => {
@@ -67,7 +67,7 @@ describe('useChatClient', () => {
 
     expect(client1).toEqual(client2);
   });
-  it('it should handle context updates correctly', () => {
+  it('should handle context updates correctly', () => {
     const client1 = newChatClient() as unknown as ChatClient;
     const client2 = newChatClient() as unknown as ChatClient;
     const { rerender } = render(
@@ -91,7 +91,7 @@ describe('useChatClient', () => {
     );
   });
 
-  it('it should provide same context across disconnected components', () => {
+  it('should provide same context across disconnected components', () => {
     let client1: ChatClient | undefined;
     let client2: ChatClient | undefined;
     const TestComponentInner = () => {
@@ -122,7 +122,7 @@ describe('useChatClient', () => {
     expect(client1).toBe(client2);
   });
 
-  it('it should handle multiple providers correctly', () => {
+  it('should handle multiple providers correctly', () => {
     let innerClient: ChatClient | undefined;
     let outerClient: ChatClient | undefined;
 
