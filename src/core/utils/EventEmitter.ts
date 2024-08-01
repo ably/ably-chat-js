@@ -6,7 +6,9 @@ interface InterfaceEventEmitter<EventsMap> extends Ably.EventEmitter<Callback<Ev
   emit<K extends keyof EventsMap>(event: K, arg: EventsMap[K]): void;
 }
 
-const InternalEventEmitter: new <EventsMap>() => InterfaceEventEmitter<EventsMap> = (Ably.Realtime as any).EventEmitter;
+const InternalEventEmitter: new <EventsMap>() => InterfaceEventEmitter<EventsMap> = (
+  Ably.Realtime as unknown as { EventEmitter: new <EventsMap>() => InterfaceEventEmitter<EventsMap> }
+).EventEmitter;
 
 class EventEmitter<EventsMap> extends InternalEventEmitter<EventsMap> {}
 

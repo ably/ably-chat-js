@@ -27,94 +27,7 @@ type anyType = ((arg: unknown) => void)[];
 type eventType = { [event: string]: ((arg: unknown) => void)[] };
 
 function createMockEmitter() {
-  const emitter = {
-    on: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
-      if (listener) {
-        if (typeof eventsOrListener === 'string') {
-          eventsOrListener = [eventsOrListener];
-        }
-
-        for (const event of eventsOrListener as string[]) {
-          if (!emitter.events[event]) {
-            emitter.events[event] = [];
-          }
-
-          emitter.events[event].push(listener);
-        }
-        return;
-      }
-
-      emitter.any.push(eventsOrListener as (arg: unknown) => void);
-    },
-    once: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
-      if (listener) {
-        if (typeof eventsOrListener === 'string') {
-          eventsOrListener = [eventsOrListener];
-        }
-
-        for (const event of eventsOrListener as string[]) {
-          if (!emitter.eventsOnce[event]) {
-            emitter.eventsOnce[event] = [];
-          }
-
-          emitter.eventsOnce[event].push(listener);
-        }
-        return;
-      }
-
-      emitter.anyOnce.push(eventsOrListener as (arg: unknown) => void);
-    },
-    emit: (event: string, arg: unknown) => {
-      if (emitter.events[event]) {
-        emitter.events[event].forEach((element) => {
-          element(arg);
-        });
-      }
-
-      for (const listener of emitter.any) {
-        listener(arg);
-      }
-
-      if (emitter.eventsOnce[event]) {
-        emitter.eventsOnce[event].forEach((element) => {
-          element(arg);
-        });
-        emitter.eventsOnce[event] = [];
-      }
-
-      for (const listener of emitter.anyOnce) {
-        listener(arg);
-      }
-      emitter.anyOnce = [];
-    },
-    off: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
-      if (listener) {
-        if (typeof eventsOrListener === 'string') {
-          eventsOrListener = [eventsOrListener];
-        }
-
-        for (const event of eventsOrListener as string[]) {
-          if (emitter.events[event]) {
-            emitter.events[event] = emitter.events[event].filter((l) => l !== listener);
-          }
-          if (emitter.eventsOnce[event]) {
-            emitter.eventsOnce[event] = emitter.eventsOnce[event].filter((l) => l !== listener);
-          }
-        }
-        return;
-      }
-
-      // Remove from any
-      emitter.any = emitter.any.filter((l) => l !== eventsOrListener);
-      emitter.anyOnce = emitter.anyOnce.filter((l) => l !== eventsOrListener);
-    },
-    any: [] as anyType,
-    events: {} as eventType,
-    anyOnce: [] as anyType,
-    eventsOnce: {} as eventType,
-  };
-
-  return emitter;
+  return new (Ably.Realtime as any).EventEmitter();
 }
 
 function createMockChannel(name: string) {
@@ -125,17 +38,17 @@ function createMockChannel(name: string) {
     presence: createMockPresence(),
     subscribe: methodReturningVoidPromise,
     unsubscribe: methodReturningVoidPromise,
-    on: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
-      mock.attachmentStateEmitter.on(eventsOrListener, listener);
+    on: (...args: any[]) => {
+      mock.attachmentStateEmitter.on(...args);
     },
-    once: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
-      mock.attachmentStateEmitter.once(eventsOrListener, listener);
+    once: (...args: any[]) => {
+      mock.attachmentStateEmitter.once(...args);
     },
     emit: (event: string, arg: unknown) => {
       mock.attachmentStateEmitter.emit(event, arg);
     },
-    off: (eventsOrListener: string[] | string | ((arg: unknown) => void), listener?: (arg: unknown) => void) => {
-      mock.attachmentStateEmitter.off(eventsOrListener, listener);
+    off: (...args: any[]) => {
+      mock.attachmentStateEmitter.off(...args);
     },
     publish: () => {},
     subscriptions: createMockEmitter(),
@@ -209,6 +122,8 @@ class MockRealtime {
   }
 
   public request() {}
+
+  static EventEmitter = (Ably.Realtime as any).EventEmitter;
 }
 
 class MockErrorInfo extends Ably.ErrorInfo {}
