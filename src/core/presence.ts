@@ -15,7 +15,7 @@ import { Logger } from './logger.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { RoomOptions } from './room-options.js';
-import EventEmitter from './utils/EventEmitter.js';
+import EventEmitter from './utils/event-emitter.js';
 
 /**
  * Interface for PresenceEventsMap

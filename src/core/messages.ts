@@ -19,7 +19,7 @@ import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { DefaultTimeserial } from './timeserial.js';
-import EventEmitter from './utils/EventEmitter.js';
+import EventEmitter from './utils/event-emitter.js';
 
 /**
  * Event names and their respective payloads emitted by the messages feature.

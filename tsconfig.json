@@ -7,8 +7,6 @@
     "./test/**/*.d.ts",
   ],
   "exclude": [
-    "src/core/utils/**/*",
-    "test/core/utils/**/*",
   ],
   "compilerOptions": {
     "rootDir": ".",

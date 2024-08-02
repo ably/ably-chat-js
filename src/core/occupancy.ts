@@ -14,7 +14,7 @@ import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import EventEmitter from './utils/EventEmitter.js';
+import EventEmitter from './utils/event-emitter.js';
 
 /**
  * This interface is used to interact with occupancy in a chat room: subscribing to occupancy updates and
