@@ -16,7 +16,7 @@ import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
 import { parseReaction } from './reaction-parser.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import EventEmitter from './utils/EventEmitter.js';
+import EventEmitter from './utils/event-emitter.js';
 
 /**
  * Params for sending a room-level reactions. Only `type` is mandatory.

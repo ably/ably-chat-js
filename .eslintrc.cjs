@@ -125,8 +125,6 @@ module.exports = {
     'node_modules',
     'ably-common',
     'typedoc',
-    'src/core/utils',
-    'test/core/utils',
     'scripts/cdn_deploy.js',
     'vitest.config.ts',
     'vite.config.ts',

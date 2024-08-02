@@ -16,7 +16,7 @@ import { Logger } from './logger.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { TypingOptions } from './room-options.js';
-import EventEmitter from './utils/EventEmitter.js';
+import EventEmitter from './utils/event-emitter.js';
 
 const PRESENCE_GET_RETRY_INTERVAL_MS = 1500; // base retry interval, we double it each time
 const PRESENCE_GET_RETRY_MAX_INTERVAL_MS = 30000; // max retry interval
