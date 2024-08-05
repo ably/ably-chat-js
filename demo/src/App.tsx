@@ -24,7 +24,7 @@ interface AppProps {}
 
 const App: FC<AppProps> = () => (
   <RoomProvider roomId={roomId}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px', height: '800px' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto' }}>
       <Chat />
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <UserPresenceComponent />
