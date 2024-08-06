@@ -30,9 +30,9 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
-    "netlify-cli": "^17.33.0",
-    "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.4",
+    "netlify-cli": "^17.33.5",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.7",
     "typescript": "^5.4.5",
     "vite": "^5.3.1"
   }
