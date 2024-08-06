@@ -3,6 +3,8 @@
     "./hooks/**/*.ts",
     "./hooks/**/*.tsx",
     "index.ts",
+    "chat-status-response.ts",
+    "status-params.ts",
     "./contexts/**/*.ts",
     "./contexts/**/*.tsx",
     "./providers/**/*.ts",

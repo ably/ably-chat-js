@@ -67,3 +67,36 @@ const MyComponent = () => {
   return <div>Connection status is: {currentStatus}</div>;
 };
 ```
+
+## useRoomReactions
+
+This hook allows you to access the `RoomReactions` instance of a specific room from the nearest `RoomProvider` in the
+component tree.
+
+The hook will provide the `RoomReactions` instance, should you wish to interact with it directly, and also a send method
+that can be used to send a reaction to the room.
+
+You can also provide an optional listener to the hook that will receive room reactions.
+
+```tsx
+import React, { useCallback } from 'react';
+import { useRoomReactions } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const { send } = useRoomReactions({
+    listener: (reaction) => {
+      console.log('Received reaction: ', reaction);
+    },
+  });
+
+  const sendLike = useCallback(() => {
+    send({ type: 'like' });
+  }, [send]);
+
+  return (
+    <div>
+      <button onClick={sendLike}>Send Like</button>
+    </div>
+  );
+};
+```
