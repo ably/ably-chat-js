@@ -109,6 +109,7 @@ export class DefaultRoom implements Room {
   private readonly _status: DefaultStatus;
   private readonly _lifecycleManager: RoomLifecycleManager;
   private readonly _finalizer: () => Promise<void>;
+  private readonly _waitForMe: Promise<void>;
 
   /**
    * Constructs a new Room instance.
@@ -118,8 +119,16 @@ export class DefaultRoom implements Room {
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
+   * @param waitForMe The room will wait for this promise to finish before trying any async operation.
    */
-  constructor(roomId: string, options: RoomOptions, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
+  constructor(
+    roomId: string,
+    options: RoomOptions,
+    realtime: Ably.Realtime,
+    chatApi: ChatApi,
+    logger: Logger,
+    waitForMe?: Promise<void>,
+  ) {
     validateRoomOptions(options);
     logger.debug('Room();', { roomId, options });
 
@@ -128,6 +137,12 @@ export class DefaultRoom implements Room {
     this._chatApi = chatApi;
     this._logger = logger;
     this._status = new DefaultStatus(logger);
+
+    this._waitForMe = waitForMe ? new Promise((resolve) => {
+        waitForMe.finally(() => {
+          resolve();
+        });
+      }) : Promise.resolve();
 
     // Setup features
     this._messages = new DefaultMessages(roomId, realtime, this._chatApi, realtime.auth.clientId, logger);
@@ -257,9 +272,9 @@ export class DefaultRoom implements Room {
   /**
    * @inheritdoc Room
    */
-  async attach(): Promise<void> {
+  async attach() {
     this._logger.trace('Room.attach();');
-    return this._lifecycleManager.attach();
+    return this._waitForMe.then(() => this._lifecycleManager.attach());
   }
 
   /**
@@ -267,7 +282,7 @@ export class DefaultRoom implements Room {
    */
   async detach(): Promise<void> {
     this._logger.trace('Room.detach();');
-    return this._lifecycleManager.detach();
+    return this._waitForMe.then(() => this._lifecycleManager.detach());
   }
 
   /**
@@ -276,7 +291,7 @@ export class DefaultRoom implements Room {
    */
   release(): Promise<void> {
     this._logger.trace('Room.release();');
-    return this._finalizer();
+    return this._waitForMe.then(() => this._finalizer());
   }
 
   /**
