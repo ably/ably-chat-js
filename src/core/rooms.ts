@@ -52,6 +52,7 @@ export class DefaultRooms implements Rooms {
   private readonly _chatApi: ChatApi;
   private readonly _clientOptions: NormalizedClientOptions;
   private readonly _rooms: Map<string, DefaultRoom> = new Map<string, DefaultRoom>();
+  private readonly _releasing = new Map<string, { count: number; promise: Promise<void> }>();
   private readonly _logger: Logger;
 
   /**
@@ -83,7 +84,14 @@ export class DefaultRooms implements Rooms {
       return existing;
     }
 
-    const room = new DefaultRoom(roomId, options, this._realtime, this._chatApi, this._logger);
+    const room = new DefaultRoom(
+      roomId,
+      options,
+      this._realtime,
+      this._chatApi,
+      this._logger,
+      this._releasing.get(roomId)?.promise,
+    );
     this._rooms.set(roomId, room);
 
     return room;
@@ -103,11 +111,41 @@ export class DefaultRooms implements Rooms {
     this._logger.trace('Rooms.release();', { roomId });
 
     const room = this._rooms.get(roomId);
+
+    // if we don't have the room, nothing to do
     if (!room) return Promise.resolve();
 
-    return room.release().then(() => {
+    // make sure we no longer keep this room in the map
+    this._rooms.delete(roomId);
+
+    // if we're already releasing what's the current count
+    const releasing = this._releasing.get(roomId);
+    let count = 0;
+    if (releasing) {
+      count = releasing.count + 1;
+    }
+
+    const releasedPromise = room.release().then(() => {
       this._logger.debug('Rooms.release(); room released', { roomId });
-      this._rooms.delete(roomId);
+      // Remove the room from currently releasing if the count of
+      // this callback is at least as high as the current count.
+      //
+      // This is to handle the case where multiple release calls
+      // are made in quick succession. We only want to remove the
+      // room from the releasing map if the last ongoing release
+      // finished.
+      //
+      // The release callbacks are actually happening in the order
+      // in which release() methods are called due to passing
+      // waitForMe in rooms.get().
+      const releasing = this._releasing.get(roomId);
+      if (releasing && releasing.count < count) {
+        this._releasing.delete(roomId);
+      }
     });
+
+    this._releasing.set(roomId, { count: count, promise: releasedPromise });
+
+    return releasedPromise;
   }
 }
