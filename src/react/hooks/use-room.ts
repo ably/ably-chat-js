@@ -54,7 +54,9 @@ export interface UseRoomResponse extends ChatStatusResponse {
 export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
   const context = useContext(RoomContext);
 
-  if (!context) throw new Error('useRoom: RoomContext not found.');
+  if (!context) {
+    throw new Ably.ErrorInfo('useRoom hook must be used within a chat RoomProvider', 40000, 400);
+  }
 
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
     onStatusChange: params?.onConnectionStatusChange,
