@@ -1,12 +1,12 @@
 import { FC } from 'react';
-import { useOccupancy } from '../../hooks/useOccupancy.ts';
+import { useOccupancy } from '@ably/chat/react';
 import './OccupancyComponent.css';
 
 /**
  * Displays the occupancy metrics of the current room.
  */
 export const OccupancyComponent: FC = () => {
-  const { occupancyMetrics } = useOccupancy();
+  const { connections, presenceMembers } = useOccupancy();
 
   return (
     <div className="p-5 sm:p-12 w-full ">
@@ -21,11 +21,11 @@ export const OccupancyComponent: FC = () => {
           <tbody>
             <tr>
               <td>Connected Users:</td>
-              <td>{occupancyMetrics.connections}</td>
+              <td>{connections}</td>
             </tr>
             <tr>
               <td>Present Users:</td>
-              <td>{occupancyMetrics.presenceMembers}</td>
+              <td>{presenceMembers}</td>
             </tr>
           </tbody>
         </table>
