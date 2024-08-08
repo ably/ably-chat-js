@@ -48,15 +48,12 @@ export interface RoomProviderProps {
 
 export const RoomProvider: React.FC<RoomProviderProps> = ({
   id: roomId,
-  options,
+  options = RoomOptionsDefaults,
   release = true,
   attach = true,
   children,
 }) => {
   const client = useChatClient();
-  if (options === undefined) {
-    options = RoomOptionsDefaults;
-  }
 
   const value = useMemo(() => {
     return { room: client.rooms.get(roomId, options) };
