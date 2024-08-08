@@ -1,7 +1,7 @@
 import * as Chat from '@ably/chat';
 import { PresenceMember } from '@ably/chat';
 import { useCallback, useEffect, useState } from 'react';
-import { useRoom } from './useRoom.ts';
+import { useRoom } from '@ably/chat/react';
 
 /**
  * Hook that provides presence functionality.
