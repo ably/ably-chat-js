@@ -6,37 +6,39 @@ import { useChatClient } from '../hooks/use-chat-client.js';
 
 /**
  * Props for the RoomProvider component.
- *
- * Only `id` (the room ID) is required, all other props are optional.
  */
 export interface RoomProviderProps {
-  /** Required. The id of the room. */
+  /** The id of the room. */
   id: string;
 
   /**
-   * Optional. The options to use when creating the room. If none are provided,
-   * the default is {@link RoomOptionsDefaults}.
+   * The options to use when creating the room.
+   *
+   * @defaultValue {@link RoomOptionsDefaults}
    */
   options?: RoomOptions;
 
   /**
-   * Optional and defaults to true. Set to false to disable auto-releasing the
-   * room when component unmounts, to support multiple RoomProviders for the
-   * same room.
+   * Set to false to disable auto-releasing the room when component unmounts,
+   * to support multiple RoomProviders for the same room.
    *
    * If set to false, you must manually release the room using
    * `chatClient.rooms.release(id)` or have another RoomProvider for the same
    * room and release set to true.
+   *
+   * @defaultValue true
    */
   release?: boolean;
 
   /**
-   * Optional and defaults to true. Set to false to disable auto-attaching the
-   * room when component mounts and auto-detaching when it unmounts.
+   * Set to false to disable auto-attaching the room when component mounts and
+   * auto-detaching when it unmounts.
    *
    * If set to false, you must manually attach and detach the room using
    * room.attach() and room.detach(). This is useful if you have more providers
    * for the same room and want to control the attachment manually.
+   *
+   * @defaultValue true
    */
   attach?: boolean;
 
