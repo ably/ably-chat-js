@@ -187,5 +187,43 @@ const MyComponent = () => {
       <button onClick={sendLike}>Send Like</button>
     </div>
   );
+```
+
+## useTyping
+
+This hook allows you to access the `Typing` instance of a Room from your React components.
+
+To use it, call the hook in your component, this will retrieve the `Typing` instance from the room of the
+nearest `ChatRoomProvider`.
+
+You can also be supply an optional listener that will receive the underlying typing events,
+or use the state object returned by the hook to access the current list of clients currently typing.
+
+```tsx
+import { useTyping } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const { start, stop, currentlyTyping, error } = useTyping({
+    listener: (typingEvent: TypingEvent) => {
+      console.log('Typing event received: ', typingEvent);
+    },
+  });
+
+  const handleStartClick = () => {
+    start();
+  };
+
+  const handleStopClick = () => {
+    stop();
+  };
+
+  return (
+    <div>
+      {error && <p>Typing Error: {error.message}</p>}
+      <button onClick={handleStartClick}>Start Typing</button>
+      <button onClick={handleStopClick}>Stop Typing</button>
+      <p>Currently typing: {currentlyTyping.join(', ')}</p>
+    </div>
+  );
 };
 ```
