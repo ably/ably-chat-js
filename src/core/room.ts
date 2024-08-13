@@ -8,7 +8,7 @@ import { DefaultPresence, Presence } from './presence.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
 import { RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
-import { DefaultStatus, RoomStatus } from './room-status.js';
+import { DefaultStatus, RoomLifecycle, RoomStatus } from './room-status.js';
 import { DefaultTyping, Typing } from './typing.js';
 
 /**
@@ -100,16 +100,16 @@ export class DefaultRoom implements Room {
   private readonly _roomId: string;
   private readonly _options: RoomOptions;
   private readonly _chatApi: ChatApi;
-  private readonly _messages: DefaultMessages;
+  private readonly _messages?: DefaultMessages;
   private readonly _typing?: DefaultTyping;
   private readonly _presence?: DefaultPresence;
   private readonly _reactions?: DefaultRoomReactions;
   private readonly _occupancy?: DefaultOccupancy;
   private readonly _logger: Logger;
   private readonly _status: DefaultStatus;
-  private readonly _lifecycleManager: RoomLifecycleManager;
-  private readonly _finalizer: () => Promise<void>;
-  private readonly _waitForMe: Promise<void>;
+  private _lifecycleManager?: RoomLifecycleManager;
+  private _finalizer: () => Promise<void>;
+  private _asyncOpsAfter: Promise<void>;
 
   /**
    * Constructs a new Room instance.
@@ -119,7 +119,7 @@ export class DefaultRoom implements Room {
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
-   * @param waitForMe The room will wait for this promise to finish before trying any async operation.
+   * @param initAfter The room will wait for this promise to finish before initializing
    */
   constructor(
     roomId: string,
@@ -127,7 +127,7 @@ export class DefaultRoom implements Room {
     realtime: Ably.Realtime,
     chatApi: ChatApi,
     logger: Logger,
-    waitForMe?: Promise<void>,
+    initAfter: Promise<void>,
   ) {
     validateRoomOptions(options);
     logger.debug('Room();', { roomId, options });
@@ -138,59 +138,172 @@ export class DefaultRoom implements Room {
     this._logger = logger;
     this._status = new DefaultStatus(logger);
 
-    this._waitForMe = waitForMe ? new Promise((resolve) => {
-        waitForMe.finally(() => {
+    // This function gets called if release() is called before initialization
+    // starts. It allows for the room to not be initialised at all since it
+    // won't be needed.
+    let stopInitializingFeatures: (() => void) | undefined;
+
+    // This promise is the same as initAfter but it gets rejected if release()
+    // is called before initialization starts. This make sure that room
+    // features will not permanently hang waiting for this promise to resolve.
+    //
+    // This promise is passed down to all features to wait before starting to
+    // create or use any realtime channels.
+    const initFeaturesAfter = new Promise<void>((resolve, reject) => {
+      let rejected = false;
+      stopInitializingFeatures = () => {
+        if (rejected) {
+          return;
+        }
+        rejected = true;
+        stopInitializingFeatures = undefined;
+        this._status.setStatus({ status: RoomLifecycle.Released });
+        const err = new Ably.ErrorInfo('Room released before initialization started.', 40000, 400);
+        reject(err);
+      };
+      initAfter.then(() => {}).catch(() => {}).finally(() => {
+          stopInitializingFeatures = undefined;
+          if (rejected) {
+            return;
+          }
           resolve();
         });
-      }) : Promise.resolve();
+    });
+
+    // At this stage finalizer (release) only needs to cancel the pending
+    // initialization.
+    this._finalizer = async () => {
+      if (stopInitializingFeatures) {
+        stopInitializingFeatures();
+      }
+      // return the original initAfter promise because in this state the
+      // previous room is still being released
+      return initAfter;
+    };
 
     // Setup features
-    this._messages = new DefaultMessages(roomId, realtime, this._chatApi, realtime.auth.clientId, logger);
+    this._messages = new DefaultMessages(
+      roomId,
+      realtime,
+      this._chatApi,
+      realtime.auth.clientId,
+      logger,
+      initFeaturesAfter,
+    );
+
     const features: ContributesToRoomLifecycle[] = [this._messages];
+
     if (options.presence) {
       this._logger.debug('enabling presence on room', { roomId });
-      this._presence = new DefaultPresence(roomId, options, realtime, realtime.auth.clientId, logger);
+      this._presence = new DefaultPresence(
+        roomId,
+        options,
+        realtime,
+        realtime.auth.clientId,
+        logger,
+        initFeaturesAfter,
+      );
       features.push(this._presence);
     }
 
     if (options.typing) {
       this._logger.debug('enabling typing on room', { roomId });
-      this._typing = new DefaultTyping(roomId, options.typing, realtime, realtime.auth.clientId, logger);
+      this._typing = new DefaultTyping(
+        roomId,
+        options.typing,
+        realtime,
+        realtime.auth.clientId,
+        logger,
+        initFeaturesAfter,
+      );
       features.push(this._typing);
     }
 
     if (options.reactions) {
       this._logger.debug('enabling reactions on room', { roomId });
-      this._reactions = new DefaultRoomReactions(roomId, realtime, realtime.auth.clientId, logger);
+      this._reactions = new DefaultRoomReactions(roomId, realtime, realtime.auth.clientId, logger, initFeaturesAfter);
       features.push(this._reactions);
     }
 
     if (options.occupancy) {
       this._logger.debug('enabling occupancy on room', { roomId });
-      this._occupancy = new DefaultOccupancy(roomId, realtime, this._chatApi, logger);
+      this._occupancy = new DefaultOccupancy(roomId, realtime, this._chatApi, logger, initFeaturesAfter);
       features.push(this._occupancy);
     }
 
-    // Setup lifecycle manager - reverse the features so messages always comes in last
-    this._lifecycleManager = new RoomLifecycleManager(this._status, features.toReversed(), logger, 5000);
+    // Wait for features to finish initializing and then finish initializing
+    // the room. Set _asyncOpsAfter to the promise that waits for the room to
+    // finish initializing. This promise is awaited before performing any async
+    // operations at room level (attach and detach).
+    this._asyncOpsAfter = initFeaturesAfter.then(() => {
+      // Features have now started initializing so we can no longer stop the
+      // initialization process. Features haven't yet finished initializing,
+      // so if release() is called we first need to wait for initialization to
+      // finish before releasing. We use a promise to wait for the correct
+      // release function.
 
-    // Setup a finalization function to clean up resources
-    let finalized = false;
-    this._finalizer = async () => {
-      // Cycle the channels in the feature and release them from the realtime client
-      if (finalized) {
-        this._logger.debug('Room.finalizer(); already finalized');
-        return;
+      let setFinalizerFunc: (f: () => Promise<void>) => void;
+      const finalizerFuncPromise = new Promise<() => Promise<void>>((resolve) => {
+        setFinalizerFunc = resolve;
+      });
+      this._finalizer = () => {
+        return finalizerFuncPromise.then((f) => {
+          return f();
+        });
+      };
+
+      // Setup all contributors with resolved channels
+      interface ContributorWithChannel extends ContributesToRoomLifecycle {
+        channel: Ably.RealtimeChannel;
       }
+      const promises = features.map((feature) => {
+        return feature.channelPromise.then((channel): ContributorWithChannel => {
+          return {
+            ...feature,
+            channel: channel,
+          };
+        });
+      });
 
-      await this._lifecycleManager.release();
+      // With all features with resolved channels:
+      // - setup room lifecycle manager
+      // - mark the room as initialized
+      // - setup finalizer function
+      return Promise.all(promises)
+        .then((contributors) => {
+          const manager = new RoomLifecycleManager(this._status, contributors.toReversed(), logger, 5000);
+          this._lifecycleManager = manager;
 
-      for (const feature of features) {
-        realtime.channels.release(feature.channel.name);
-      }
+          let finalized = false;
+          setFinalizerFunc((): Promise<void> => {
+            if (finalized) {
+              return Promise.resolve();
+            }
+            finalized = true;
+            return manager.release().then(() => {
+              for (const contributor of contributors) {
+                realtime.channels.release(contributor.channel.name);
+              }
+            });
+          });
+          this._status.setStatus({ status: RoomLifecycle.Initialized });
+        })
+        .catch((error: unknown) => {
+          // this should never happen because contributor channel promises
+          // should only reject when initFeaturesAfter is rejected. We log
+          // here just in case.
+          setFinalizerFunc(() => Promise.resolve());
+          this._logger.error('Room features initialization failed', { error: error, roomId: roomId });
+          this._status.setStatus({
+            status: RoomLifecycle.Failed,
+            error: new Ably.ErrorInfo('Room features initialization failed.' , 40000, 400, error as Error),
+          });
+          return Promise.reject(error);
+        });
+    });
 
-      finalized = true;
-    };
+    // Catch errors from asyncOpsAfter to prevent unhandled promise rejection error
+    this._asyncOpsAfter.catch(() => {});
   }
 
   /**
@@ -211,7 +324,7 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get messages(): Messages {
-    return this._messages;
+    return this._messages!;
   }
 
   /**
@@ -274,7 +387,7 @@ export class DefaultRoom implements Room {
    */
   async attach() {
     this._logger.trace('Room.attach();');
-    return this._waitForMe.then(() => this._lifecycleManager.attach());
+    return this._asyncOpsAfter.then(() => this._lifecycleManager?.attach());
   }
 
   /**
@@ -282,7 +395,7 @@ export class DefaultRoom implements Room {
    */
   async detach(): Promise<void> {
     this._logger.trace('Room.detach();');
-    return this._waitForMe.then(() => this._lifecycleManager.detach());
+    return this._asyncOpsAfter.then(() => this._lifecycleManager?.detach());
   }
 
   /**
@@ -291,13 +404,6 @@ export class DefaultRoom implements Room {
    */
   release(): Promise<void> {
     this._logger.trace('Room.release();');
-    return this._waitForMe.then(() => this._finalizer());
-  }
-
-  /**
-   * @internal
-   */
-  get lifecycleManager(): RoomLifecycleManager {
-    return this._lifecycleManager;
+    return this._finalizer();
   }
 }

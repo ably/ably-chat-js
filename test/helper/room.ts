@@ -34,5 +34,5 @@ export const makeRandomRoom = (params: {
   const realtime = params.realtime ?? ablyRealtimeClient();
   const chatApi = params.chatApi ?? new ChatApi(realtime, logger);
 
-  return new DefaultRoom(randomRoomId(), params.options ?? defaultRoomOptions, realtime, chatApi, logger);
+  return new DefaultRoom(randomRoomId(), params.options ?? defaultRoomOptions, realtime, chatApi, logger, Promise.resolve());
 };
