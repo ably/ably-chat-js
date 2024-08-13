@@ -48,7 +48,7 @@ export interface Occupancy extends EmitsDiscontinuities {
    *
    * @returns The underlying Ably channel for occupancy events.
    */
-  get channel(): Ably.RealtimeChannel;
+  get channelPromise(): Promise<Ably.RealtimeChannel>;
 }
 
 /**
@@ -98,7 +98,7 @@ export class DefaultOccupancy
   implements Occupancy, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _roomId: string;
-  private readonly _channel: Ably.RealtimeChannel;
+  private readonly _channelPromise: Promise<Ably.RealtimeChannel>;
   private readonly _chatApi: ChatApi;
   private _logger: Logger;
   private _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -110,15 +110,20 @@ export class DefaultOccupancy
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
+  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger, initAfter: Promise<void>) {
     super();
     this._roomId = roomId;
-    this._channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });
-    addListenerToChannelWithoutAttach({
-      listener: this._internalOccupancyListener.bind(this),
-      events: ['[meta]occupancy'],
-      channel: this._channel,
+
+    this._channelPromise = initAfter.then(() => {
+      const channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });
+      addListenerToChannelWithoutAttach({
+        listener: this._internalOccupancyListener.bind(this),
+        events: ['[meta]occupancy'],
+        channel: channel,
+      });
+      return channel;
     });
+
     this._chatApi = chatApi;
     this._logger = logger;
   }
@@ -157,8 +162,8 @@ export class DefaultOccupancy
   /**
    * @inheritdoc Occupancy
    */
-  get channel(): Ably.RealtimeChannel {
-    return this._channel;
+  get channelPromise(): Promise<Ably.RealtimeChannel> {
+    return this._channelPromise;
   }
 
   /**

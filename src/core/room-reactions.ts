@@ -110,7 +110,7 @@ export interface RoomReactions extends EmitsDiscontinuities {
    *
    * @returns The Ably realtime channel instance.
    */
-  get channel(): Ably.RealtimeChannel;
+  get channelPromise(): Promise<Ably.RealtimeChannel>;
 }
 
 interface RoomReactionEventsMap {
@@ -139,7 +139,7 @@ export class DefaultRoomReactions
   extends EventEmitter<RoomReactionEventsMap>
   implements RoomReactions, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
-  private readonly _channel: Ably.RealtimeChannel;
+  private readonly _channelPromise: Promise<Ably.RealtimeChannel>;
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -151,13 +151,16 @@ export class DefaultRoomReactions
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
+  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger, initAfter: Promise<void>) {
     super();
-    this._channel = getChannel(`${roomId}::$chat::$reactions`, realtime);
-    addListenerToChannelWithoutAttach({
-      listener: this._forwarder.bind(this),
-      events: [RoomReactionEvents.Reaction],
-      channel: this._channel,
+    this._channelPromise = initAfter.then(() => {
+      const channel = getChannel(`${roomId}::$chat::$reactions`, realtime);
+      addListenerToChannelWithoutAttach({
+        listener: this._forwarder.bind(this),
+        events: [RoomReactionEvents.Reaction],
+        channel: channel,
+      });
+      return channel;
     });
 
     this._clientId = clientId;
@@ -209,7 +212,9 @@ export class DefaultRoomReactions
       },
     };
 
-    return this._channel.publish(realtimeMessage);
+    return this._channelPromise.then((channel) => {
+      return channel.publish(realtimeMessage);
+    });
   }
 
   /**
@@ -245,8 +250,8 @@ export class DefaultRoomReactions
     this.emit(RoomReactionEvents.Reaction, reaction);
   };
 
-  get channel(): Ably.RealtimeChannel {
-    return this._channel;
+  get channelPromise(): Promise<Ably.RealtimeChannel> {
+    return this._channelPromise;
   }
 
   private _parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {

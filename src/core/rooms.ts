@@ -84,14 +84,10 @@ export class DefaultRooms implements Rooms {
       return existing;
     }
 
-    const room = new DefaultRoom(
-      roomId,
-      options,
-      this._realtime,
-      this._chatApi,
-      this._logger,
-      this._releasing.get(roomId)?.promise,
-    );
+    const releasing = this._releasing.get(roomId);
+    const initializeAfter: Promise<void> = releasing ? releasing.promise : Promise.resolve();
+
+    const room = new DefaultRoom(roomId, options, this._realtime, this._chatApi, this._logger, initializeAfter);
     this._rooms.set(roomId, room);
 
     return room;
@@ -111,15 +107,24 @@ export class DefaultRooms implements Rooms {
     this._logger.trace('Rooms.release();', { roomId });
 
     const room = this._rooms.get(roomId);
+    const releasing = this._releasing.get(roomId);
 
-    // if we don't have the room, nothing to do
-    if (!room) return Promise.resolve();
+    // if we don't have the room
+    if (!room) {
+      // ... and it's currently releasing wait for the same promise
+      if (releasing) {
+        return releasing.promise;
+      }
+
+      // if not releasing, nothing else to do
+      return Promise.resolve();
+    }
 
     // make sure we no longer keep this room in the map
     this._rooms.delete(roomId);
 
-    // if we're already releasing what's the current count
-    const releasing = this._releasing.get(roomId);
+    // we have a room and an ongoing release, we keep the count
+    // of the latest release call.
     let count = 0;
     if (releasing) {
       count = releasing.count + 1;
