@@ -67,3 +67,93 @@ const MyComponent = () => {
   return <div>Connection status is: {currentStatus}</div>;
 };
 ```
+
+## Optional Status Listeners
+
+Most of the hooks detailed below take some optional listeners as input parameters.
+
+Listeners can be provided for events related to the `Room` instance status changes
+via `onRoomStatusChange`, the `ChatClient` connection status changes via `onConnectionStatusChange`,
+and the discontinuity error events via the `onDiscontinuity` event listener.
+
+All events relate to the `Room` instance of the nearest `RoomProvider` and thus the connection of the `ChatClient`
+from the nearest `ChatClientProvider` above it in the component tree.
+
+```tsx
+import { useOccupancy } from '@ably/chat/react';
+
+const MyComponent = () => {
+  useOccupancy({
+    onConnectionStatusChange: (connectionStatusChange) => {
+      console.log('Connection status change:', connectionStatusChange);
+    },
+    onRoomStatusChange: (roomStatusChange) => {
+      console.log('Room status change:', roomStatusChange);
+    },
+    onDiscontinuity: (error) => {
+      console.log('Discontinuity detected:', error);
+    },
+  });
+  return <div>Occupancy Component</div>;
+};
+```
+
+## Optional Status State Return
+
+The hooks that take optional listeners to provide status changes also offer the option of observing
+status updates via a state return by the hook.
+
+This state is managed by the hook and will be updated whenever a change occurs.
+
+You can access the `Room` instance status via `roomStatus` and its associated error via `roomError`, as well as
+the `ChatClient` connection status via `connectionStatus` and its associated error via `connectionError`.
+
+All events relate to the `Room` instance of the nearest `ChatRoomProvider` and thus the connection of the `ChatClient`
+from the nearest `ChatClientProvider` above it in the component tree.
+
+```tsx
+import { useSomeHook } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const { connectionStatus, connectionError, roomStatus, roomError } = useSomeHook();
+  return (
+    <div>
+      <p>Connection status is: {connectionStatus}</p>
+      <p>Connection error is: {connectionError}</p>
+      <p>Room status is: {roomStatus}</p>
+      <p>Room error is: {roomError}</p>
+    </div>
+  );
+};
+```
+
+## useOccupancy
+
+This hook allows you to access the `Occupancy` instance of a `Room` from your React components.
+
+To use it, call the hook in your component, this will retrieve the `Occupancy` instance from the `Room` of the
+nearest `ChatRoomProvider`.
+
+You can also be supply an optional listener that will receive the underlying `Occupancy` events.
+
+The hook also returns the current state (connections and presenceMembers) of the `Occupancy` instance, this is kept
+up to date internally by the hook.
+
+```tsx
+import { useOccupancy } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const { connections, presenceMembers } = useOccupancy({
+    listener: (occupancyEvent) => {
+      console.log('Number of users connected is: ', occupancyEvent.connections);
+      console.log('Number of members present is: ', occupancyEvent.presenceMembers);
+    },
+  });
+  return (
+    <div>
+      <p>Number of users connected is: {connections}</p>
+      <p>Number of members present is: {presenceMembers}</p>
+    </div>
+  );
+};
+```
