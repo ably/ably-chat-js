@@ -13,6 +13,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@ably": ["node_modules/ably/ably.d.ts"],
       "@ably/chat": ["./src/core"],
       "@ably/chat/react": ["./src/react"]
     }

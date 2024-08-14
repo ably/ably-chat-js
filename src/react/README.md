@@ -227,3 +227,40 @@ const MyComponent = () => {
   );
 };
 ```
+
+## usePresence
+
+This hook allows you to control your presence status.
+When mounting, the hook will automatically `enter` the user into presence,
+with the data provided to the hook, and then `leave` presence when the component unmounts.
+
+The `update` function is also exposed by the hook, allowing you to send updates to the presence state.
+
+An optional parameter can be passed to the hook to set the presence data to enter and leave with.
+
+The hook will also provide the `Presence` instance, should you wish to interact with it directly.
+
+_**NOTE: To subscribe to presence events, you can use the `usePresenceListener` hook.**_
+
+```tsx
+import React from 'react';
+import { usePresence } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const { leave, update, isPresent } = usePresence({
+    dataToEnterWith: { status: 'Online' },
+    dataToLeaveWith: { status: 'Offline' },
+  });
+
+  const updatePresence = () => {
+    update({ status: 'Away' });
+  };
+
+  return (
+    <div>
+      <div>Presence status: {isPresent ? 'Online' : 'Offline'}</div>
+      <button onClick={updatePresence}>Set Away</button>
+    </div>
+  );
+};
+```
