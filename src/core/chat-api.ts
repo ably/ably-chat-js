@@ -41,6 +41,7 @@ interface SendMessageParams {
 export class ChatApi {
   private readonly _realtime: Ably.Realtime;
   private readonly _logger: Logger;
+  private readonly _apiProtocolVersion: number = 3;
 
   constructor(realtime: Ably.Realtime, logger: Logger) {
     this._realtime = realtime;
@@ -98,7 +99,7 @@ export class ChatApi {
     method: 'POST' | 'GET' | ' PUT' | 'DELETE' | 'PATCH',
     body?: REQ,
   ): Promise<RES> {
-    const response = await this._realtime.request<RES>(method, url, 1.1, {}, body);
+    const response = await this._realtime.request<RES>(method, url, this._apiProtocolVersion, {}, body);
     if (!response.success) {
       this._logger.error('ChatApi._makeAuthorizedRequest(); failed to make request', {
         url,
@@ -117,7 +118,7 @@ export class ChatApi {
     params?: unknown,
     body?: REQ,
   ): Promise<PaginatedResult<RES>> {
-    const response = await this._realtime.request('GET', url, 1.1, params, body);
+    const response = await this._realtime.request('GET', url, this._apiProtocolVersion, params, body);
     if (!response.success) {
       this._logger.error('ChatApi._makeAuthorizedPaginatedRequest(); failed to make request', {
         url,
