@@ -163,12 +163,90 @@ The `useRoom` hook provides direct access to the `Room` object provided by the n
 import { useRoom } from '@ably/chat/react';
 
 const MyComponent = () => {
-  const { attach } = useRoom()
+  const { attach } = useRoom();
   return (
     <div>
       <button onClick={attach}>Attach Me!</button>
     </div>
   );
+};
+```
+
+## useMessages
+
+This hook allows you to access the `Messages` instance of a `Room` from your React components.
+
+**To use this hook, the component calling it must be a child of a `ChatRoomProvider`.**
+
+### Sending And Getting Messages
+
+The hook will provide the `Messages` instance, should you wish to interact with it directly, a `send` method
+that can be used to send a messages to the room, and a `get` method that can be used to retrieve messages from the room.
+
+```tsx
+import { useMessages } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const { send, get } = useMessages();
+
+  const handleGetMessages = () => {
+    // fetch the last 3 messages, oldest to newest
+    get({ limit: 3, direction: 'forwards' }).then((result) => console.log('Previous messages: ', result.items));
+  };
+
+  const handleMessageSend = () => {
+    send({ text: 'Hello, World!' });
+  };
+
+  return (
+    <div>
+      <button onClick={handleMessageSend}>Send Message</button>
+      <button onClick={handleGetMessages}>Get Messages</button>
+    </div>
+  );
+};
+```
+
+### Subscribing To Messages
+
+You can provide an optional listener that will receive the messages sent to the room; if provided, the hook will
+automatically subscribe to messages in the room.
+
+Additionally, providing the listener will allow you to access the `getPreviousMessages` method, which can be used to
+fetch previous messages up until the listener was subscribed.
+
+The `getPreviousMessages` method can be useful when recovering from a discontinuity event,
+as it allows you to fetch all the messages that were missed while the listener was not subscribed.
+
+```tsx
+import { useEffect, useState } from 'react';
+import { useMessages } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const [loading, setLoading] = useState(true);
+
+  const { getPreviousMessages } = useMessages({
+    listener: (message) => {
+      console.log('Received message: ', message);
+    },
+    onDiscontinuity: (error) => {
+      console.log('Discontinuity detected:', error);
+      setLoading(true);
+    },
+  });
+
+  useEffect(() => {
+    // once the listener is subscribed, `getPreviousMessages` will become available
+    if (getPreviousMessages && loading) {
+      getPreviousMessages({ limit: 10 }).then((result) => {
+        console.log('Previous messages: ', result.items());
+        setLoading(false);
+      });
+    }
+  }, [getPreviousMessages, loading]);
+
+  return <div>...</div>;
+};
 ```
 
 ## useOccupancy
@@ -201,6 +279,7 @@ const MyComponent = () => {
       <p>Number of members present is: {presenceMembers}</p>
     </div>
   );
+};
 ```
 
 ## useRoomReactions
@@ -234,6 +313,7 @@ const MyComponent = () => {
       <button onClick={sendLike}>Send Like</button>
     </div>
   );
+};
 ```
 
 ## useTyping
