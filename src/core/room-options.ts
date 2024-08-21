@@ -3,11 +3,11 @@ import * as Ably from 'ably';
 /**
  * Represents the default options for a chat room.
  */
-export class RoomOptionsDefaults {
+export const RoomOptionsDefaults = {
   /**
    * The default presence options for a chat room.
    */
-  static presence: PresenceOptions = {
+  presence: {
     /**
      * The client should be able to enter presence.
      */
@@ -17,28 +17,28 @@ export class RoomOptionsDefaults {
      * The client should be able to subscribe to presence.
      */
     subscribe: true,
-  };
+  } as PresenceOptions,
 
   /**
    * The default typing options for a chat room.
    */
-  static typing: TypingOptions = {
+  typing: {
     /**
      * The default timeout for typing events in milliseconds.
      */
     timeoutMs: 10000,
-  };
+  } as TypingOptions,
 
   /**
    * The default reactions options for a chat room.
    */
-  static reactions: RoomReactionsOptions = {};
+  reactions: {} as RoomReactionsOptions,
 
   /**
    * The default occupancy options for a chat room.
    */
-  static occupancy: OccupancyOptions = {};
-}
+  occupancy: {} as OccupancyOptions,
+};
 
 /**
  * Represents the presence options for a chat room.
