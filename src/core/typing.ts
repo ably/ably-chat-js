@@ -71,7 +71,7 @@ export interface Typing extends EmitsDiscontinuities {
    * Get the name of the realtime channel underpinning typing events.
    * @returns The name of the realtime channel.
    */
-  channelPromise: Promise<Ably.RealtimeChannel>;
+  channel: Promise<Ably.RealtimeChannel>;
 }
 
 /**
@@ -115,7 +115,7 @@ export class DefaultTyping
   implements Typing, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _clientId: string;
-  private readonly _channelPromise: Promise<Ably.RealtimeChannel>;
+  private readonly _channel: Promise<Ably.RealtimeChannel>;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
@@ -147,7 +147,7 @@ export class DefaultTyping
   ) {
     super();
     this._clientId = clientId;
-    this._channelPromise = initAfter.then(() => {
+    this._channel = initAfter.then(() => {
       const channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
       addListenerToChannelPresenceWithoutAttach({
         listener: this._internalSubscribeToEvents.bind(this),
@@ -157,7 +157,7 @@ export class DefaultTyping
     });
 
     // catch this so it won't send unhandledrejection global event
-    this._channelPromise.catch(() => {});
+    this._channel.catch(() => {});
 
     // Timeout for typing
     this._typingTimeoutMs = options.timeoutMs;
@@ -168,7 +168,7 @@ export class DefaultTyping
    * @inheritDoc
    */
   get(): Promise<Set<string>> {
-    return this._channelPromise.then((channel) =>
+    return this._channel.then((channel) =>
       channel.presence.get().then((members) => new Set<string>(members.map((m) => m.clientId))),
     );
   }
@@ -176,8 +176,8 @@ export class DefaultTyping
   /**
    * @inheritDoc
    */
-  get channelPromise(): Promise<Ably.RealtimeChannel> {
-    return this._channelPromise;
+  get channel(): Promise<Ably.RealtimeChannel> {
+    return this._channel;
   }
 
   /**
@@ -206,7 +206,7 @@ export class DefaultTyping
 
     // Start typing and emit typingStarted event
     this._startTypingTimer();
-    const channel = await this.channelPromise;
+    const channel = await this.channel;
     return channel.presence.enterClient(this._clientId).then();
   }
 
@@ -222,7 +222,7 @@ export class DefaultTyping
     }
 
     // Will throw an error if the user is not typing
-    const channel = await this.channelPromise;
+    const channel = await this.channel;
     return channel.presence.leaveClient(this._clientId);
   }
 

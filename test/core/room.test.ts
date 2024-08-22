@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
+import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
 import { RoomOptions, RoomOptionsDefaults } from '../../src/core/room-options.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { defaultRoomOptions } from '../helper/room.ts';
-import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
 
 vi.mock('ably');
 
@@ -95,11 +95,11 @@ describe('Room', () => {
 
       // Every underlying feature channel should have been released
       expect(context.realtime.channels.release).toHaveBeenCalledTimes(5);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.messages.channelPromise).name);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.presence.channelPromise).name);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.typing.channelPromise).name);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.reactions.channelPromise).name);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.occupancy.channelPromise).name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.messages.channel).name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.presence.channel).name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.typing.channel).name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.reactions.channel).name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.occupancy.channel).name);
     });
 
     it<TestContext>('should only release with enabled features', async (context) => {
@@ -121,8 +121,8 @@ describe('Room', () => {
 
       // Every underlying feature channel should have been released
       expect(context.realtime.channels.release).toHaveBeenCalledTimes(2);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.messages.channelPromise).name);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.typing.channelPromise).name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.messages.channel).name);
+      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.typing.channel).name);
     });
 
     it<TestContext>('releasing multiple times is idempotent', async (context) => {

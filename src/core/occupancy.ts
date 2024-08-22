@@ -48,7 +48,7 @@ export interface Occupancy extends EmitsDiscontinuities {
    *
    * @returns The underlying Ably channel for occupancy events.
    */
-  get channelPromise(): Promise<Ably.RealtimeChannel>;
+  get channel(): Promise<Ably.RealtimeChannel>;
 }
 
 /**
@@ -98,7 +98,7 @@ export class DefaultOccupancy
   implements Occupancy, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _roomId: string;
-  private readonly _channelPromise: Promise<Ably.RealtimeChannel>;
+  private readonly _channel: Promise<Ably.RealtimeChannel>;
   private readonly _chatApi: ChatApi;
   private _logger: Logger;
   private _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -114,7 +114,7 @@ export class DefaultOccupancy
     super();
     this._roomId = roomId;
 
-    this._channelPromise = initAfter.then(() => {
+    this._channel = initAfter.then(() => {
       const channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });
       addListenerToChannelWithoutAttach({
         listener: this._internalOccupancyListener.bind(this),
@@ -125,7 +125,7 @@ export class DefaultOccupancy
     });
 
     // catch this so it won't send unhandledrejection global event
-    this._channelPromise.catch(() => {});
+    this._channel.catch(() => {});
 
     this._chatApi = chatApi;
     this._logger = logger;
@@ -165,8 +165,8 @@ export class DefaultOccupancy
   /**
    * @inheritdoc Occupancy
    */
-  get channelPromise(): Promise<Ably.RealtimeChannel> {
-    return this._channelPromise;
+  get channel(): Promise<Ably.RealtimeChannel> {
+    return this._channel;
   }
 
   /**

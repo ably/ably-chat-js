@@ -14,7 +14,7 @@ export interface ContributesToRoomLifecycle extends HandlesDiscontinuity {
    * Gets the channel on which the feature operates. This promise is never
    * rejected exept in the case where room initialisation is cancelled.
    */
-  get channelPromise(): Promise<Ably.RealtimeChannel>;
+  get channel(): Promise<Ably.RealtimeChannel>;
 
   /**
    * Gets the ErrorInfo code that should be used when the feature fails to attach.

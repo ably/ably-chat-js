@@ -62,7 +62,7 @@ describe('Typing', () => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.room = makeRandomRoom(context);
-    const channel = await context.room.typing.channelPromise;
+    const channel = await context.room.typing.channel;
     context.emulateBackendPublish = channelPresenceEventEmitter(channel);
   });
 
@@ -90,7 +90,7 @@ describe('Typing', () => {
 
   it<TestContext>('when stop is called, immediately stops typing', async (context) => {
     const { realtime, room } = context;
-    const presence = realtime.channels.get((await room.typing.channelPromise).name).presence;
+    const presence = realtime.channels.get((await room.typing.channel).name).presence;
 
     // If stop is called, it should call leaveClient
     vi.spyOn(presence, 'leaveClient').mockImplementation(async (): Promise<void> => {});
@@ -121,7 +121,7 @@ describe('Typing', () => {
       allEvents.push(event);
     });
 
-    const channel = await context.room.typing.channelPromise;
+    const channel = await context.room.typing.channel;
 
     let arrayToReturn = presenceGetResponse(['otherClient']);
 
@@ -186,7 +186,7 @@ describe('Typing', () => {
       receivedEvents2.push(event);
     });
 
-    const channel = await context.room.typing.channelPromise;
+    const channel = await context.room.typing.channel;
     let arrayToReturn = presenceGetResponse(['otherClient']);
     vi.spyOn(channel.presence, 'get').mockImplementation(() => {
       return Promise.resolve<Ably.PresenceMessage[]>(arrayToReturn);
@@ -289,7 +289,7 @@ describe('Typing', () => {
 
   it<TestContext>('should not emit the same typing set twice', async (context) => {
     const { room } = context;
-    const channel = await context.room.typing.channelPromise;
+    const channel = await context.room.typing.channel;
 
     // Add a listener
     const events: TypingEvent[] = [];
@@ -310,20 +310,20 @@ describe('Typing', () => {
       });
       calledTimes++;
     };
-    
+
     returnSet.add('client1');
     simulateEnter('client1');
     await waitForMessages(events, 1); // must be one event here
-    
+
     // these aren't faked in the presence.get() so should not trigger an event but only a call to presence.get
     simulateEnter('client2');
     simulateEnter('client3');
-    
+
     // add client4 and previously triggered client2 and client3
     returnSet.add('client2');
     returnSet.add('client3');
     returnSet.add('client4');
-    
+
     simulateEnter('client4');
     await waitForMessages(events, 2); // expecting only two events
     expect(channel.presence.get).toBeCalledTimes(calledTimes);
@@ -339,7 +339,7 @@ describe('Typing', () => {
 
   it<TestContext>('should retry on failure', async (context) => {
     const { room } = context;
-    const channel = await context.room.typing.channelPromise;
+    const channel = await context.room.typing.channel;
 
     // Add a listener
     const events: TypingEvent[] = [];
@@ -370,7 +370,7 @@ describe('Typing', () => {
 
   it<TestContext>('should not return stale responses even if they resolve out of order', async (context) => {
     const { room } = context;
-    const channel = await context.room.typing.channelPromise;
+    const channel = await context.room.typing.channel;
 
     // Add a listener
     const events: TypingEvent[] = [];

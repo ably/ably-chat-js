@@ -33,7 +33,7 @@ describe('Reactions', () => {
     };
 
     context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
-    const channel = await context.room.reactions.channelPromise;
+    const channel = await context.room.reactions.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
 
     vi.spyOn(channel, 'publish').mockImplementation((message: Ably.Message) => {

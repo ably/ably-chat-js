@@ -50,7 +50,7 @@ describe('Messages', () => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
-    const channel = await context.room.messages.channelPromise;
+    const channel = await context.room.messages.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
     context.emulateBackendStateChange = channelStateEventEmitter(channel);
   });
@@ -449,7 +449,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = await room.messages.channelPromise;
+    const msgChannel = await room.messages.channel;
 
     // Force ts to recognize the channel properties
     const channel = msgChannel as RealtimeChannel & {
@@ -471,9 +471,13 @@ describe('Messages', () => {
     // This test was failing because now we wait for the channel promise inside
     // DefaultMessages._resolveSubscriptionStart. That got resolved a tick after
     // we changed the channel state below. To address this issue we wait an
-    // insignificant amount of time here to ensure the channel promise inside 
+    // insignificant amount of time here to ensure the channel promise inside
     // DefaultMessages resolves BEFORE we change the channel state here.
-    await new Promise<void>(resolve => setTimeout(() => { resolve();}, 10));
+    await new Promise<void>((resolve) =>
+      setTimeout(() => {
+        resolve();
+      }, 10),
+    );
 
     // Mock the channel state to be attached
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
@@ -505,7 +509,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = await room.messages.channelPromise;
+    const msgChannel = await room.messages.channel;
 
     // Force ts to recognize the channel properties
     const channel = msgChannel as RealtimeChannel & {
@@ -542,7 +546,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = await room.messages.channelPromise;
+    const msgChannel = await room.messages.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -556,7 +560,11 @@ describe('Messages', () => {
     const { getPreviousMessages } = room.messages.subscribe(() => {});
 
     // wait
-    await new Promise<void>(resolve => setTimeout(() => { resolve();}, 10));
+    await new Promise<void>((resolve) =>
+      setTimeout(() => {
+        resolve();
+      }, 10),
+    );
 
     // Mock the channel state to be attached
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
@@ -635,7 +643,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = await room.messages.channelPromise;
+    const msgChannel = await room.messages.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -723,7 +731,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = await room.messages.channelPromise;
+    const msgChannel = await room.messages.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -826,7 +834,7 @@ describe('Messages', () => {
     // Create a room instance
     const { room } = context;
 
-    const msgChannel = await room.messages.channelPromise;
+    const msgChannel = await room.messages.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;

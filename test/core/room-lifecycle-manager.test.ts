@@ -200,7 +200,7 @@ const makeMockContributor = (
       discontinuityDetected() {},
       attachmentErrorCode,
       detachmentErrorCode,
-      channelPromise: Promise.resolve(channel),
+      channel: Promise.resolve(channel),
     },
     emulateStateChange(change: Ably.ChannelStateChange, update?: boolean) {
       vi.spyOn(contributor.channel, 'state', 'get').mockReturnValue(change.current);

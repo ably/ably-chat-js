@@ -110,7 +110,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     const enterEventPromise = waitForEvent(
       context.realtime,
       ['enter', 'present'],
-      (await context.chatRoom.messages.channelPromise).name,
+      (await context.chatRoom.messages.channel).name,
       (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
@@ -132,7 +132,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     const enterEventPromise = waitForEvent(
       context.realtime,
       'update',
-      (await context.chatRoom.messages.channelPromise).name,
+      (await context.chatRoom.messages.channel).name,
       (member) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
@@ -156,7 +156,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     const enterEventPromise = waitForEvent(
       context.realtime,
       'leave',
-      (await context.chatRoom.messages.channelPromise).name,
+      (await context.chatRoom.messages.channel).name,
       (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
@@ -176,7 +176,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
   // Test for successful fetching of presence users
   it<TestContext>('should successfully fetch presence users ', async (context) => {
-    const channelName = (await context.chatRoom.messages.channelPromise).name;
+    const channelName = (await context.chatRoom.messages.channel).name;
 
     // Connect 3 clients to the same channel
     const client1 = ablyRealtimeClient({ clientId: 'clientId1' }).channels.get(channelName);
@@ -389,7 +389,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
       discontinuityErrors.push(error);
     });
 
-    const channelSuspendable = (await room.presence.channelPromise) as Ably.RealtimeChannel & {
+    const channelSuspendable = (await room.presence.channel) as Ably.RealtimeChannel & {
       notifyState(state: 'suspended' | 'attached'): void;
     };
 

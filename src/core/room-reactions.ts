@@ -110,7 +110,7 @@ export interface RoomReactions extends EmitsDiscontinuities {
    *
    * @returns The Ably realtime channel instance.
    */
-  get channelPromise(): Promise<Ably.RealtimeChannel>;
+  get channel(): Promise<Ably.RealtimeChannel>;
 }
 
 interface RoomReactionEventsMap {
@@ -139,7 +139,7 @@ export class DefaultRoomReactions
   extends EventEmitter<RoomReactionEventsMap>
   implements RoomReactions, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
-  private readonly _channelPromise: Promise<Ably.RealtimeChannel>;
+  private readonly _channel: Promise<Ably.RealtimeChannel>;
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -153,7 +153,7 @@ export class DefaultRoomReactions
    */
   constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger, initAfter: Promise<void>) {
     super();
-    this._channelPromise = initAfter.then(() => {
+    this._channel = initAfter.then(() => {
       const channel = getChannel(`${roomId}::$chat::$reactions`, realtime);
       addListenerToChannelWithoutAttach({
         listener: this._forwarder.bind(this),
@@ -164,7 +164,7 @@ export class DefaultRoomReactions
     });
 
     // catch this so it won't send unhandledrejection global event
-    this._channelPromise.catch(() => {});
+    this._channel.catch(() => {});
 
     this._clientId = clientId;
     this._logger = logger;
@@ -215,7 +215,7 @@ export class DefaultRoomReactions
       },
     };
 
-    return this._channelPromise.then((channel) => {
+    return this._channel.then((channel) => {
       return channel.publish(realtimeMessage);
     });
   }
@@ -253,8 +253,8 @@ export class DefaultRoomReactions
     this.emit(RoomReactionEvents.Reaction, reaction);
   };
 
-  get channelPromise(): Promise<Ably.RealtimeChannel> {
-    return this._channelPromise;
+  get channel(): Promise<Ably.RealtimeChannel> {
+    return this._channel;
   }
 
   private _parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {

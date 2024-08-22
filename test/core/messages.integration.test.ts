@@ -37,7 +37,7 @@ describe('messages integration', () => {
     const { chat } = context;
 
     const room = getRandomRoom(chat);
-    const channel = (await room.messages.channelPromise) as RealtimeChannelWithOptions;
+    const channel = (await room.messages.channel) as RealtimeChannelWithOptions;
 
     expect(channel.channelOptions.params).toEqual(expect.objectContaining({ agent: CHANNEL_OPTIONS_AGENT_STRING }));
   });
@@ -407,7 +407,7 @@ describe('messages integration', () => {
       discontinuityErrors.push(error);
     });
 
-    const channelSuspendable = (await room.messages.channelPromise) as Ably.RealtimeChannel & {
+    const channelSuspendable = (await room.messages.channel) as Ably.RealtimeChannel & {
       notifyState(state: 'suspended' | 'attached'): void;
     };
 

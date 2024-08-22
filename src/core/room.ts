@@ -261,7 +261,7 @@ export class DefaultRoom implements Room {
         contributor: ContributesToRoomLifecycle;
       }
       const promises = features.map((feature) => {
-        return feature.channelPromise.then((channel): ContributorWithChannel => {
+        return feature.channel.then((channel): ContributorWithChannel => {
           return {
             channel: channel,
             contributor: feature,
@@ -302,7 +302,7 @@ export class DefaultRoom implements Room {
             status: RoomLifecycle.Failed,
             error: new Ably.ErrorInfo('Room features initialization failed.', 40000, 400, error as Error),
           });
-          return Promise.reject(error);
+          throw error;
         });
     });
 

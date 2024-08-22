@@ -197,7 +197,7 @@ export interface Messages extends EmitsDiscontinuities {
    *
    * @returns the realtime channel
    */
-  get channelPromise(): Promise<Ably.RealtimeChannel>;
+  get channel(): Promise<Ably.RealtimeChannel>;
 }
 
 /**
@@ -208,7 +208,7 @@ export class DefaultMessages
   implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _roomId: string;
-  private readonly _channelPromise: Promise<Ably.RealtimeChannel>;
+  private readonly _channel: Promise<Ably.RealtimeChannel>;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
   private readonly _listenerSubscriptionPoints: Map<
@@ -239,7 +239,7 @@ export class DefaultMessages
     super();
     this._roomId = roomId;
 
-    this._channelPromise = initAfter.then(() => {
+    this._channel = initAfter.then(() => {
       const channel = getChannel(messagesChannelName(roomId), realtime);
 
       addListenerToChannelWithoutAttach({
@@ -264,7 +264,7 @@ export class DefaultMessages
     });
 
     // catch this so it won't send unhandledrejection global event
-    this._channelPromise.catch(() => {});
+    this._channel.catch(() => {});
 
     this._chatApi = chatApi;
     this._clientId = clientId;
@@ -364,7 +364,7 @@ export class DefaultMessages
     }
   > {
     // Get the attachSerial from the channel properties
-    const channel = await this._channelPromise;
+    const channel = await this._channel;
     return channel as Ably.RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -414,8 +414,8 @@ export class DefaultMessages
   /**
    * @inheritdoc Messages
    */
-  get channelPromise(): Promise<Ably.RealtimeChannel> {
-    return this._channelPromise;
+  get channel(): Promise<Ably.RealtimeChannel> {
+    return this._channel;
   }
 
   /**
