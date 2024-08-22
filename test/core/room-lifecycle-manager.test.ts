@@ -2,7 +2,11 @@ import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, test, vi } from 'vitest';
 
 import { ErrorCodes } from '../../src/core/errors.ts';
-import { ContributesToRoomLifecycle, RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
+import {
+  ContributesToRoomLifecycle,
+  RoomLifecycleContributor,
+  RoomLifecycleManager,
+} from '../../src/core/room-lifecycle-manager.ts';
 import { DefaultStatus, RoomLifecycle } from '../../src/core/room-status.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { waitForRoomStatus } from '../helper/room.ts';
@@ -16,11 +20,7 @@ interface TestContext {
 
 vi.mock('ably');
 
-interface MockContributor extends ContributesToRoomLifecycle {
-  channel: Ably.RealtimeChannel;
-
-  discontinuityDetected(): void;
-
+interface MockContributor extends RoomLifecycleContributor {
   emulateStateChange: (change: Ably.ChannelStateChange, update?: boolean) => void;
 }
 
@@ -194,9 +194,14 @@ const makeMockContributor = (
   attachmentErrorCode: ErrorCodes,
   detachmentErrorCode: ErrorCodes,
 ): MockContributor => {
-  const contributor = {
+  const contributor: MockContributor = {
     channel: channel,
-    discontinuityDetected() {},
+    contributor: {
+      discontinuityDetected() {},
+      attachmentErrorCode,
+      detachmentErrorCode,
+      channelPromise: Promise.resolve(channel),
+    },
     emulateStateChange(change: Ably.ChannelStateChange, update?: boolean) {
       vi.spyOn(contributor.channel, 'state', 'get').mockReturnValue(change.current);
       vi.spyOn(contributor.channel, 'errorReason', 'get').mockReturnValue(change.reason ?? baseError);
@@ -207,8 +212,6 @@ const makeMockContributor = (
         }
       ).emit(update ? 'update' : (change.current as AblyChannelState), change);
     },
-    attachmentErrorCode,
-    detachmentErrorCode,
   };
   vi.spyOn(
     channel as Ably.RealtimeChannel & {
@@ -218,7 +221,7 @@ const makeMockContributor = (
   );
   vi.spyOn(channel, 'state', 'get').mockReturnValue('initialized');
   vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(new Ably.ErrorInfo('error', 500, 50000));
-  vi.spyOn(contributor, 'discontinuityDetected');
+  vi.spyOn(contributor.contributor, 'discontinuityDetected');
 
   return contributor;
 };
@@ -2097,7 +2100,7 @@ describe('room lifecycle manager', () => {
         expect(status.current).toEqual(RoomLifecycle.Suspended);
 
         // We should not have seen a discontinuity event
-        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now try to attach again
         mockChannelAttachSuccess(context.firstContributor.channel);
@@ -2107,7 +2110,7 @@ describe('room lifecycle manager', () => {
         expect(status.current).toEqual(RoomLifecycle.Attached);
 
         // But we still shouldn't have seen a discontinuity event
-        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
       });
 
       it<TestContext>('registers a discontinuity event immediately if fully attached and an update event is received', async (context) => {
@@ -2161,7 +2164,7 @@ describe('room lifecycle manager', () => {
 
         // Our first contributor should have registered a discontinuity event
         expect(status.current).toEqual(RoomLifecycle.Attached);
-        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
+        expect(context.firstContributor.contributor.discontinuityDetected).toBeCalledWith(baseError);
       });
 
       it<TestContext>('registers a discontinuity after re-attachment if room is detached at the time', async (context) => {
@@ -2222,14 +2225,14 @@ describe('room lifecycle manager', () => {
 
         // We shouldn't have registered a discontinuity event yet
         expect(status.current).toEqual(RoomLifecycle.Detached);
-        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now re-attach the room
         await monitor.attach();
 
         // Our first contributor should have registered a discontinuity event now
         expect(status.current).toEqual(RoomLifecycle.Attached);
-        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
+        expect(context.firstContributor.contributor.discontinuityDetected).toBeCalledWith(baseError);
       });
 
       it<TestContext>('should prefer the first discontinuity event if multiple are received', async (context) => {
@@ -2302,14 +2305,14 @@ describe('room lifecycle manager', () => {
 
         // We shouldn't have registered a discontinuity event yet
         expect(status.current).toEqual(RoomLifecycle.Detached);
-        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now re-attach the room
         await monitor.attach();
 
         // Our first contributor should have registered a discontinuity event now
         expect(status.current).toEqual(RoomLifecycle.Attached);
-        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(error1);
+        expect(context.firstContributor.contributor.discontinuityDetected).toBeCalledWith(error1);
       });
     });
 
@@ -2333,7 +2336,7 @@ describe('room lifecycle manager', () => {
 
         // We shouldn't have registered a discontinuity event
         expect(status.current).toEqual(RoomLifecycle.Attached);
-        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
       });
 
       it<TestContext>('registers a discontinuity immediately post-attach if one of the attach events was a failed resume', async (context) => {
@@ -2382,7 +2385,7 @@ describe('room lifecycle manager', () => {
 
         // There should be no discontinuity event yet
         expect(status.current).toEqual(RoomLifecycle.Detached);
-        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now do a re-attach, but make the first channel fail to resume
         mockChannelAttachSuccessWithResumeFailure(context.firstContributor.channel);
@@ -2392,7 +2395,7 @@ describe('room lifecycle manager', () => {
 
         // Our first contributor should have registered a discontinuity event now
         expect(status.current).toEqual(RoomLifecycle.Attached);
-        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
+        expect(context.firstContributor.contributor.discontinuityDetected).toBeCalledWith(baseError);
       });
 
       it<TestContext>('prefers the first discontinuity event if multiple are received', async (context) => {
@@ -2441,7 +2444,7 @@ describe('room lifecycle manager', () => {
 
         // There should be no discontinuity event yet
         expect(status.current).toEqual(RoomLifecycle.Detached);
-        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now we attach again, but fail the second channel so we get a detach event
         const firstError = new Ably.ErrorInfo('first', 1, 1);
@@ -2461,7 +2464,7 @@ describe('room lifecycle manager', () => {
         expect(status.current).toEqual(RoomLifecycle.Suspended);
 
         // And still no discontinuity event
-        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now we attach in full with a second resume fail
         const secondError = new Ably.ErrorInfo('second', 2, 2);
@@ -2482,7 +2485,7 @@ describe('room lifecycle manager', () => {
 
         // Our first contributor should have registered a discontinuity event now
         expect(status.current).toEqual(RoomLifecycle.Attached);
-        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(firstError);
+        expect(context.firstContributor.contributor.discontinuityDetected).toBeCalledWith(firstError);
       });
     });
   });

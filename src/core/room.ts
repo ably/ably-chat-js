@@ -161,7 +161,10 @@ export class DefaultRoom implements Room {
         const err = new Ably.ErrorInfo('Room released before initialization started.', 40000, 400);
         reject(err);
       };
-      initAfter.then(() => {}).catch(() => {}).finally(() => {
+      initAfter
+        .then(() => {})
+        .catch(() => {})
+        .finally(() => {
           stopInitializingFeatures = undefined;
           if (rejected) {
             return;
@@ -253,14 +256,15 @@ export class DefaultRoom implements Room {
       };
 
       // Setup all contributors with resolved channels
-      interface ContributorWithChannel extends ContributesToRoomLifecycle {
+      interface ContributorWithChannel {
         channel: Ably.RealtimeChannel;
+        contributor: ContributesToRoomLifecycle;
       }
       const promises = features.map((feature) => {
         return feature.channelPromise.then((channel): ContributorWithChannel => {
           return {
-            ...feature,
             channel: channel,
+            contributor: feature,
           };
         });
       });
@@ -296,7 +300,7 @@ export class DefaultRoom implements Room {
           this._logger.error('Room features initialization failed', { error: error, roomId: roomId });
           this._status.setStatus({
             status: RoomLifecycle.Failed,
-            error: new Ably.ErrorInfo('Room features initialization failed.' , 40000, 400, error as Error),
+            error: new Ably.ErrorInfo('Room features initialization failed.', 40000, 400, error as Error),
           });
           return Promise.reject(error);
         });
@@ -405,5 +409,15 @@ export class DefaultRoom implements Room {
   release(): Promise<void> {
     this._logger.trace('Room.release();');
     return this._finalizer();
+  }
+
+  /**
+   * @internal
+   *
+   * Returns a promise that is resolved when the room is initialized or
+   * rejected if the room gets released before initialization.
+   */
+  initializationStatus(): Promise<void> {
+    return this._asyncOpsAfter;
   }
 }

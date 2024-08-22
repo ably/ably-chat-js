@@ -29,8 +29,9 @@ export interface ContributesToRoomLifecycle extends HandlesDiscontinuity {
   get detachmentErrorCode(): ErrorCodes;
 }
 
-export interface RoomLifecycleContributor extends ContributesToRoomLifecycle {
+export interface RoomLifecycleContributor {
   channel: Ably.RealtimeChannel;
+  contributor: ContributesToRoomLifecycle;
 }
 
 /**
@@ -192,7 +193,7 @@ export class RoomLifecycleManager {
           channel: contributor.channel.name,
           change,
         });
-        contributor.discontinuityDetected(change.reason);
+        contributor.contributor.discontinuityDetected(change.reason);
       });
 
       // We handle all events except update events here
@@ -554,7 +555,7 @@ export class RoomLifecycleManager {
         // We take the status to be whatever caused the error
         attachResult.error = new Ably.ErrorInfo(
           'failed to attach feature',
-          feature.attachmentErrorCode,
+          feature.contributor.attachmentErrorCode,
           500,
           error as Ably.ErrorInfo,
         );
@@ -598,7 +599,7 @@ export class RoomLifecycleManager {
 
     // Iterate the pending discontinuity events and trigger them
     for (const [contributor, error] of this._pendingDiscontinuityEvents) {
-      contributor.discontinuityDetected(error);
+      contributor.contributor.discontinuityDetected(error);
     }
     this._pendingDiscontinuityEvents.clear();
 
@@ -672,7 +673,7 @@ export class RoomLifecycleManager {
           ) {
             const contributorError = new Ably.ErrorInfo(
               'failed to detach feature',
-              contributor.detachmentErrorCode,
+              contributor.contributor.detachmentErrorCode,
               500,
               error as Ably.ErrorInfo,
             );

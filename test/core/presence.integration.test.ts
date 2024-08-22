@@ -110,7 +110,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     const enterEventPromise = waitForEvent(
       context.realtime,
       ['enter', 'present'],
-      context.chatRoom.messages.channel.name,
+      (await context.chatRoom.messages.channelPromise).name,
       (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
@@ -132,7 +132,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     const enterEventPromise = waitForEvent(
       context.realtime,
       'update',
-      context.chatRoom.messages.channel.name,
+      (await context.chatRoom.messages.channelPromise).name,
       (member) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
@@ -156,7 +156,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     const enterEventPromise = waitForEvent(
       context.realtime,
       'leave',
-      context.chatRoom.messages.channel.name,
+      (await context.chatRoom.messages.channelPromise).name,
       (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
@@ -176,10 +176,12 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
   // Test for successful fetching of presence users
   it<TestContext>('should successfully fetch presence users ', async (context) => {
+    const channelName = (await context.chatRoom.messages.channelPromise).name;
+
     // Connect 3 clients to the same channel
-    const client1 = ablyRealtimeClient({ clientId: 'clientId1' }).channels.get(context.chatRoom.messages.channel.name);
-    const client2 = ablyRealtimeClient({ clientId: 'clientId2' }).channels.get(context.chatRoom.messages.channel.name);
-    const client3 = ablyRealtimeClient({ clientId: 'clientId3' }).channels.get(context.chatRoom.messages.channel.name);
+    const client1 = ablyRealtimeClient({ clientId: 'clientId1' }).channels.get(channelName);
+    const client2 = ablyRealtimeClient({ clientId: 'clientId2' }).channels.get(channelName);
+    const client3 = ablyRealtimeClient({ clientId: 'clientId3' }).channels.get(channelName);
 
     // Data payload to check if the custom data is fetched correctly
     const testData: PresenceData = {
@@ -387,7 +389,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
       discontinuityErrors.push(error);
     });
 
-    const channelSuspendable = room.presence.channel as Ably.RealtimeChannel & {
+    const channelSuspendable = (await room.presence.channelPromise) as Ably.RealtimeChannel & {
       notifyState(state: 'suspended' | 'attached'): void;
     };
 

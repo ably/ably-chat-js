@@ -40,7 +40,7 @@ describe('Rooms', () => {
     // Make sure our room is attached
     await room.attach();
 
-    const channelFailable = room.messages.channel as Ably.RealtimeChannel & {
+    const channelFailable = (await room.messages.channelPromise) as Ably.RealtimeChannel & {
       notifyState(state: 'failed'): void;
     };
     channelFailable.notifyState('failed');

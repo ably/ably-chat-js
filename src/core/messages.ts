@@ -364,7 +364,6 @@ export class DefaultMessages
     }
   > {
     // Get the attachSerial from the channel properties
-    // const channel = await this._channelPromise;
     const channel = await this._channelPromise;
     return channel as Ably.RealtimeChannel & {
       properties: {
