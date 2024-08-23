@@ -157,7 +157,7 @@ export class DefaultTyping
     });
 
     // catch this so it won't send unhandledrejection global event
-    this._channel.catch(() => {});
+    this._channel.catch(() => void 0);
 
     // Timeout for typing
     this._typingTimeoutMs = options.timeoutMs;

@@ -95,11 +95,21 @@ describe('Room', () => {
 
       // Every underlying feature channel should have been released
       expect(context.realtime.channels.release).toHaveBeenCalledTimes(5);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.messages.channel).name);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.presence.channel).name);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.typing.channel).name);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.reactions.channel).name);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.occupancy.channel).name);
+
+      const messagesChannel = await room.messages.channel;
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(messagesChannel.name);
+
+      const presenceChannel = await room.presence.channel;
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(presenceChannel.name);
+
+      const typingChannel = await room.typing.channel;
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(typingChannel.name);
+
+      const reactionsChannel = await room.reactions.channel;
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(reactionsChannel.name);
+
+      const occupancyChannel = await room.occupancy.channel;
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(occupancyChannel.name);
     });
 
     it<TestContext>('should only release with enabled features', async (context) => {
@@ -121,8 +131,12 @@ describe('Room', () => {
 
       // Every underlying feature channel should have been released
       expect(context.realtime.channels.release).toHaveBeenCalledTimes(2);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.messages.channel).name);
-      expect(context.realtime.channels.release).toHaveBeenCalledWith((await room.typing.channel).name);
+
+      const messagesChannel = await room.messages.channel;
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(messagesChannel.name);
+
+      const typingChannel = await room.typing.channel;
+      expect(context.realtime.channels.release).toHaveBeenCalledWith(typingChannel.name);
     });
 
     it<TestContext>('releasing multiple times is idempotent', async (context) => {

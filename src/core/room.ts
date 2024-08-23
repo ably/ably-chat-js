@@ -100,7 +100,7 @@ export class DefaultRoom implements Room {
   private readonly _roomId: string;
   private readonly _options: RoomOptions;
   private readonly _chatApi: ChatApi;
-  private readonly _messages?: DefaultMessages;
+  private readonly _messages: DefaultMessages;
   private readonly _typing?: DefaultTyping;
   private readonly _presence?: DefaultPresence;
   private readonly _reactions?: DefaultRoomReactions;
@@ -139,7 +139,7 @@ export class DefaultRoom implements Room {
     this._status = new DefaultStatus(logger);
 
     // This function gets called if release() is called before initialization
-    // starts. It allows for the room to not be initialised at all since it
+    // starts. It allows for the room to not be initialized at all since it
     // won't be needed.
     let stopInitializingFeatures: (() => void) | undefined;
 
@@ -162,8 +162,8 @@ export class DefaultRoom implements Room {
         reject(err);
       };
       initAfter
-        .then(() => {})
-        .catch(() => {})
+        .then(() => void 0)
+        .catch(() => void 0)
         .finally(() => {
           stopInitializingFeatures = undefined;
           if (rejected) {
@@ -307,7 +307,7 @@ export class DefaultRoom implements Room {
     });
 
     // Catch errors from asyncOpsAfter to prevent unhandled promise rejection error
-    this._asyncOpsAfter.catch(() => {});
+    this._asyncOpsAfter.catch(() => void 0);
   }
 
   /**
@@ -328,7 +328,7 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get messages(): Messages {
-    return this._messages!;
+    return this._messages;
   }
 
   /**

@@ -234,7 +234,7 @@ export class DefaultPresence
     });
 
     // catch this so it won't send unhandledrejection global event
-    this._channel.catch(() => {});
+    this._channel.catch(() => void 0);
 
     this._clientId = clientId;
     this._logger = logger;

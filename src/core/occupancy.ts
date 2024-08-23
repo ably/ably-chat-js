@@ -125,7 +125,7 @@ export class DefaultOccupancy
     });
 
     // catch this so it won't send unhandledrejection global event
-    this._channel.catch(() => {});
+    this._channel.catch(() => void 0);
 
     this._chatApi = chatApi;
     this._logger = logger;

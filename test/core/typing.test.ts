@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
-import { DefaultRoom, Room } from '../../src/core/room.ts';
+import { Room } from '../../src/core/room.ts';
 import { DefaultTyping, TypingEvent } from '../../src/core/typing.ts';
 import { ChannelEventEmitterReturnType, channelPresenceEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -90,7 +90,8 @@ describe('Typing', () => {
 
   it<TestContext>('when stop is called, immediately stops typing', async (context) => {
     const { realtime, room } = context;
-    const presence = realtime.channels.get((await room.typing.channel).name).presence;
+    const channel = await room.typing.channel;
+    const presence = realtime.channels.get(channel.name).presence;
 
     // If stop is called, it should call leaveClient
     vi.spyOn(presence, 'leaveClient').mockImplementation(async (): Promise<void> => {});

@@ -107,10 +107,12 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
   // Test for successful entering with clientId and custom user data
   it<TestContext>('successfully enter presence with clientId and custom user data', async (context) => {
+    const messageChannel = await context.chatRoom.messages.channel;
+    const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
       context.realtime,
       ['enter', 'present'],
-      (await context.chatRoom.messages.channel).name,
+      messageChannelName,
       (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
@@ -129,19 +131,14 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
   // Test for successful sending of presence update with clientId and custom user data
   it<TestContext>('should successfully send presence update with clientId and custom user data', async (context) => {
-    const enterEventPromise = waitForEvent(
-      context.realtime,
-      'update',
-      (await context.chatRoom.messages.channel).name,
-      (member) => {
-        expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
-          context.defaultTestClientId,
-        );
-        expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
-          userCustomData: { customKeyOne: 1 },
-        });
-      },
-    );
+    const messageChannel = await context.chatRoom.messages.channel;
+    const messageChannelName = messageChannel.name;
+    const enterEventPromise = waitForEvent(context.realtime, 'update', messageChannelName, (member) => {
+      expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(context.defaultTestClientId);
+      expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
+        userCustomData: { customKeyOne: 1 },
+      });
+    });
 
     // Enter with custom user data
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
@@ -153,10 +150,12 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
   // Test for successful leaving of presence
   it<TestContext>('should successfully leave presence', async (context) => {
+    const messageChannel = await context.chatRoom.messages.channel;
+    const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
       context.realtime,
       'leave',
-      (await context.chatRoom.messages.channel).name,
+      messageChannelName,
       (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
@@ -176,7 +175,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
   // Test for successful fetching of presence users
   it<TestContext>('should successfully fetch presence users ', async (context) => {
-    const channelName = (await context.chatRoom.messages.channel).name;
+    const { name: channelName } = await context.chatRoom.messages.channel;
 
     // Connect 3 clients to the same channel
     const client1 = ablyRealtimeClient({ clientId: 'clientId1' }).channels.get(channelName);
