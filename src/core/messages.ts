@@ -144,7 +144,7 @@ export interface MessageSubscriptionResponse {
   /**
    * Get the previous messages that were sent to the room before the listener was subscribed.
    * @param params Options for the history query.
-   * @returns A promise that resolves with the paginated result of messages.
+   * @returns A promise that resolves with the paginated result of messages, in newest-to-oldest order.
    */
   getPreviousMessages(params: Omit<QueryOptions, 'direction'>): Promise<PaginatedResult<Message>>;
 }
