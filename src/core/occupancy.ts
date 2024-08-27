@@ -115,21 +115,26 @@ export class DefaultOccupancy
     super();
     this._roomId = roomId;
 
-    this._channel = initAfter.then(() => {
-      const channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });
-      addListenerToChannelWithoutAttach({
-        listener: this._internalOccupancyListener.bind(this),
-        events: ['[meta]occupancy'],
-        channel: channel,
-      });
-      return channel;
-    });
+    this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
 
     // catch this so it won't send unhandledrejection global event
     this._channel.catch(() => void 0);
 
     this._chatApi = chatApi;
     this._logger = logger;
+  }
+
+  /**
+   * Creates the realtime channel for occupancy. Called after initAfter is resolved.
+   */
+  private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
+    const channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });
+    addListenerToChannelWithoutAttach({
+      listener: this._internalOccupancyListener.bind(this),
+      events: ['[meta]occupancy'],
+      channel: channel,
+    });
+    return channel;
   }
 
   /**

@@ -148,14 +148,7 @@ export class DefaultTyping
   ) {
     super();
     this._clientId = clientId;
-    this._channel = initAfter.then(() => {
-      const channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
-      addListenerToChannelPresenceWithoutAttach({
-        listener: this._internalSubscribeToEvents.bind(this),
-        channel: channel,
-      });
-      return channel;
-    });
+    this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
 
     // catch this so it won't send unhandledrejection global event
     this._channel.catch(() => void 0);
@@ -163,6 +156,18 @@ export class DefaultTyping
     // Timeout for typing
     this._typingTimeoutMs = options.timeoutMs;
     this._logger = logger;
+  }
+
+  /**
+   * Creates the realtime channel for typing indicators. Called after initAfter is resolved.
+   */
+  private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
+    const channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
+    addListenerToChannelPresenceWithoutAttach({
+      listener: this._internalSubscribeToEvents.bind(this),
+      channel: channel,
+    });
+    return channel;
   }
 
   /**

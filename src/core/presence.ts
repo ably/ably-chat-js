@@ -215,6 +215,19 @@ export class DefaultPresence
   ) {
     super();
 
+    this._channel = initAfter.then(() => this._makeChannel(roomId, roomOptions, realtime));
+
+    // catch this so it won't send unhandledrejection global event
+    this._channel.catch(() => void 0);
+
+    this._clientId = clientId;
+    this._logger = logger;
+  }
+
+  /**
+   * Creates the realtime channel for presence. Called after initAfter is resolved.
+   */
+  private _makeChannel(roomId: string, roomOptions: RoomOptions, realtime: Ably.Realtime): Ably.RealtimeChannel {
     // Set our channel modes based on the room options
     const channelModes = ['PUBLISH', 'SUBSCRIBE'] as Ably.ChannelMode[];
     if (roomOptions.presence?.enter === undefined || roomOptions.presence.enter) {
@@ -225,20 +238,14 @@ export class DefaultPresence
       channelModes.push('PRESENCE_SUBSCRIBE');
     }
 
-    this._channel = initAfter.then(() => {
-      const channel = getChannel(messagesChannelName(roomId), realtime, { modes: channelModes });
-      addListenerToChannelPresenceWithoutAttach({
-        listener: this.subscribeToEvents.bind(this),
-        channel: channel,
-      });
-      return channel;
+    const channel = getChannel(messagesChannelName(roomId), realtime, { modes: channelModes });
+
+    addListenerToChannelPresenceWithoutAttach({
+      listener: this.subscribeToEvents.bind(this),
+      channel: channel,
     });
 
-    // catch this so it won't send unhandledrejection global event
-    this._channel.catch(() => void 0);
-
-    this._clientId = clientId;
-    this._logger = logger;
+    return channel;
   }
 
   /**

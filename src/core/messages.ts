@@ -240,29 +240,7 @@ export class DefaultMessages
     super();
     this._roomId = roomId;
 
-    this._channel = initAfter.then(() => {
-      const channel = getChannel(messagesChannelName(roomId), realtime);
-
-      addListenerToChannelWithoutAttach({
-        listener: this._processEvent.bind(this),
-        events: [MessageEvents.Created],
-        channel: channel,
-      });
-
-      // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
-      // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
-      channel.on('attached', (message) => {
-        this._handleAttach(message.resumed);
-      });
-      // Handles the case where an update message is received from a channel after a detach and reattach.
-      channel.on('update', (message) => {
-        if (message.current === 'attached' && message.previous === 'attached') {
-          this._handleAttach(message.resumed);
-        }
-      });
-
-      return channel;
-    });
+    this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
 
     // catch this so it won't send unhandledrejection global event
     this._channel.catch(() => void 0);
@@ -271,6 +249,34 @@ export class DefaultMessages
     this._clientId = clientId;
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
+  }
+
+  /**
+   * Creates the realtime channel for messages. Called after initAfter is resolved.
+   */
+  private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
+    const channel = getChannel(messagesChannelName(roomId), realtime);
+
+    addListenerToChannelWithoutAttach({
+      listener: this._processEvent.bind(this),
+      events: [MessageEvents.Created],
+      channel: channel,
+    });
+
+    // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
+    // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
+    channel.on('attached', (message) => {
+      this._handleAttach(message.resumed);
+    });
+
+    // Handles the case where an update message is received from a channel after a detach and reattach.
+    channel.on('update', (message) => {
+      if (message.current === 'attached' && message.previous === 'attached') {
+        this._handleAttach(message.resumed);
+      }
+    });
+
+    return channel;
   }
 
   /**
