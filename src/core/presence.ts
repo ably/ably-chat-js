@@ -218,7 +218,7 @@ export class DefaultPresence
     this._channel = initAfter.then(() => this._makeChannel(roomId, roomOptions, realtime));
 
     // Catch this so it won't send unhandledrejection global event
-    this._channel.catch((error : unknown) => { logger.debug('Presence: channel initialization cancelled', { roomId, error }); });
+    this._channel.catch((error : unknown) => { logger.debug('Presence: channel initialization canceled', { roomId, error }); });
 
     this._clientId = clientId;
     this._logger = logger;

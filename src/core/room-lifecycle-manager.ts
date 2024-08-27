@@ -12,7 +12,7 @@ import { DefaultStatus, NewRoomStatus, RoomLifecycle, RoomStatusChange } from '.
 export interface ContributesToRoomLifecycle extends HandlesDiscontinuity {
   /**
    * Gets the channel on which the feature operates. This promise is never
-   * rejected except in the case where room initialization is cancelled.
+   * rejected except in the case where room initialization is canceled.
    */
   get channel(): Promise<Ably.RealtimeChannel>;
 

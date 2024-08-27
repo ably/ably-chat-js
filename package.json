@@ -19,7 +19,7 @@
     }
   },
   "scripts": {
-    "lint": "eslint . && cspell '{src,test}/**' './*.md'",
+    "lint": "eslint . && npm run cspell",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write src test __mocks__ demo/src",
     "format:check": "prettier --check src test __mocks__ demo/src",
@@ -34,7 +34,8 @@
     "test:typescript": "tsc",
     "demo:reload": "npm run build && cd demo && npm i file:../",
     "docs": "typedoc",
-    "modulereport": "tsc --noEmit --esModuleInterop scripts/moduleReport.ts && esr scripts/moduleReport.ts"
+    "modulereport": "tsc --noEmit --esModuleInterop scripts/moduleReport.ts && esr scripts/moduleReport.ts",
+    "cspell": "cspell '{src,test}/**' './*.md'"
   },
   "files": [
     "dist/**",
