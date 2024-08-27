@@ -7,6 +7,11 @@ import EventEmitter from './utils/event-emitter.js';
  */
 export interface HandlesDiscontinuity {
   /**
+   * The channel that this object is associated with.
+   */
+  get channel(): Promise<Ably.RealtimeChannel>;
+
+  /**
    * Called when a discontinuity is detected on the channel.
    * @param reason The error that caused the discontinuity.
    */
