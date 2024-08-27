@@ -143,8 +143,8 @@ export class DefaultRoom implements Room {
     // won't be needed.
     let stopInitializingFeatures: (() => void) | undefined;
 
-    // This promise is the same as initAfter but it gets rejected if release()
-    // is called before initialization starts. This make sure that room
+    // This promise is the same as initAfter, but it gets rejected if release()
+    // is called before initialization starts. This makes sure that room
     // features will not permanently hang waiting for this promise to resolve.
     //
     // This promise is passed down to all features to wait before starting to
