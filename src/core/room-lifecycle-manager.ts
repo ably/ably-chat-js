@@ -29,7 +29,14 @@ export interface ContributesToRoomLifecycle extends HandlesDiscontinuity {
   get detachmentErrorCode(): ErrorCodes;
 }
 
-export interface RoomLifecycleContributor {
+/**
+ * This interface represents a feature that contributes to the room lifecycle and
+ * exposes its channel directly. Objects of this type are created by awaiting the
+ * channel promises of all the {@link ContributesToRoomLifecycle} objects.
+ * 
+ * @internal
+ */
+interface ResolvedContributor {
   channel: Ably.RealtimeChannel;
   contributor: ContributesToRoomLifecycle;
 }
@@ -47,13 +54,13 @@ enum LifecycleOperationPrecedence {
 /**
  * A map of contributors to pending discontinuity events.
  */
-type DiscontinuityEventMap = Map<RoomLifecycleContributor, Ably.ErrorInfo | undefined>;
+type DiscontinuityEventMap = Map<ResolvedContributor, Ably.ErrorInfo | undefined>;
 
 /**
  * An internal interface that represents the result of a room attachment operation.
  */
 type RoomAttachmentResult = NewRoomStatus & {
-  failedFeature?: RoomLifecycleContributor;
+  failedFeature?: ResolvedContributor;
 };
 
 /**
@@ -69,7 +76,7 @@ export class RoomLifecycleManager {
   /**
    * The features that contribute to the room status.
    */
-  private readonly _contributors: RoomLifecycleContributor[];
+  private readonly _contributors: ResolvedContributor[];
   private readonly _logger: Logger;
 
   /**
@@ -85,7 +92,7 @@ export class RoomLifecycleManager {
    * If a channel enters the attaching state (as a result of a server initiated detach), we should initially
    * consider it to be transient and not bother changing the room status.
    */
-  private readonly _transientDetachTimeouts: Map<RoomLifecycleContributor, ReturnType<typeof setTimeout>>;
+  private readonly _transientDetachTimeouts: Map<ResolvedContributor, ReturnType<typeof setTimeout>>;
 
   /**
    * This flag indicates whether some sort of controlled operation is in progress (e.g. attaching, detaching, releasing).
@@ -108,7 +115,7 @@ export class RoomLifecycleManager {
    *
    * Used to control whether we should trigger discontinuity events.
    */
-  private _firstAttachesCompleted = new Map<RoomLifecycleContributor, boolean>();
+  private _firstAttachesCompleted = new Map<ResolvedContributor, boolean>();
 
   /**
    * Are we in the process of releasing the room?
@@ -124,7 +131,7 @@ export class RoomLifecycleManager {
    */
   constructor(
     status: DefaultStatus,
-    contributors: RoomLifecycleContributor[],
+    contributors: ResolvedContributor[],
     logger: Logger,
     transientDetachTimeout: number,
   ) {
@@ -318,7 +325,7 @@ export class RoomLifecycleManager {
    * @param contributor The contributor that has detached.
    * @param detachError The error that caused the detachment.
    */
-  private _onChannelSuspension(contributor: RoomLifecycleContributor, detachError?: Ably.ErrorInfo): void {
+  private _onChannelSuspension(contributor: ResolvedContributor, detachError?: Ably.ErrorInfo): void {
     this._logger.debug('RoomLifecycleManager._onChannelSuspension();', {
       channel: contributor.channel.name,
       error: detachError,
@@ -365,7 +372,7 @@ export class RoomLifecycleManager {
    * @param contributor The contributor that has entered a suspended state.
    * @returns A promise that resolves when the room is attached, or the room enters a failed state.
    */
-  private async _doRetry(contributor: RoomLifecycleContributor): Promise<void> {
+  private async _doRetry(contributor: ResolvedContributor): Promise<void> {
     // A helper that allows us to retry the attach operation
     const doAttachWithRetry = () => {
       this._logger.debug('RoomLifecycleManager.doAttachWithRetry();');
@@ -633,7 +640,7 @@ export class RoomLifecycleManager {
    * @param except The contributor to exclude from the detachment.
    * @returns A promise that resolves when all channels are detached.
    */
-  private _doChannelWindDown(except?: RoomLifecycleContributor): Promise<unknown> {
+  private _doChannelWindDown(except?: ResolvedContributor): Promise<unknown> {
     return Promise.all(
       this._contributors.map(async (contributor) => {
         // If its the contributor we want to wait for a conclusion on, then we should not detach it

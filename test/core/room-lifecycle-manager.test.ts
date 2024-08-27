@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, test, vi } from 'vitest';
 
 import { ErrorCodes } from '../../src/core/errors.ts';
-import { RoomLifecycleContributor, RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
+import { ContributesToRoomLifecycle, RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
 import { DefaultStatus, RoomLifecycle } from '../../src/core/room-status.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { waitForRoomStatus } from '../helper/room.ts';
@@ -16,7 +16,9 @@ interface TestContext {
 
 vi.mock('ably');
 
-interface MockContributor extends RoomLifecycleContributor {
+interface MockContributor {
+  contributor: ContributesToRoomLifecycle;
+  channel: Ably.RealtimeChannel;
   emulateStateChange: (change: Ably.ChannelStateChange, update?: boolean) => void;
 }
 
