@@ -175,7 +175,7 @@ export class DefaultRoom implements Room {
 
     // At this stage finalizer (release) only needs to cancel the pending
     // initialization.
-    this._finalizer = async () => {
+    this._finalizer = () => {
       if (stopInitializingFeatures) {
         stopInitializingFeatures();
       }
