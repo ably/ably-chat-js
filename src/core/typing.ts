@@ -150,8 +150,8 @@ export class DefaultTyping
     this._clientId = clientId;
     this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
 
-    // catch this so it won't send unhandledrejection global event
-    this._channel.catch(() => void 0);
+    // Catch this so it won't send unhandledrejection global event
+    this._channel.catch((error : unknown) => { logger.debug('Typing: channel initialization cancelled', { roomId, error }); });
 
     // Timeout for typing
     this._typingTimeoutMs = options.timeoutMs;

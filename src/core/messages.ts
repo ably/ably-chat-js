@@ -242,8 +242,8 @@ export class DefaultMessages
 
     this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
 
-    // catch this so it won't send unhandledrejection global event
-    this._channel.catch(() => void 0);
+    // Catch this so it won't send unhandledrejection global event
+    this._channel.catch((error : unknown) => { logger.debug('Messages: channel initialization cancelled', { roomId, error }); });
 
     this._chatApi = chatApi;
     this._clientId = clientId;
