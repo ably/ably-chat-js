@@ -109,6 +109,7 @@ export class DefaultOccupancy
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
+   * @param initAfter A promise that is awaited before creating any channels.
    */
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger, initAfter: Promise<void>) {
     super();

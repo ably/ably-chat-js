@@ -136,6 +136,7 @@ export class DefaultTyping
    * @param realtime An instance of the Ably Realtime client.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
+   * @param initAfter A promise that is awaited before creating any channels.
    */
   constructor(
     roomId: string,

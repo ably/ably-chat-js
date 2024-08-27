@@ -227,6 +227,7 @@ export class DefaultMessages
    * @param chatApi An instance of the ChatApi.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
+   * @param initAfter A promise that is awaited before creating any channels.
    */
   constructor(
     roomId: string,
