@@ -334,7 +334,7 @@ describe('Room', () => {
     expect(room.status.current).toBe(RoomLifecycle.Initializing);
     const releasePromise = (room as DefaultRoom).release();
 
-    // expect the release promise to be different than initAfter now, because
+    // expect the release promise to be different to initAfter now, because
     // the room has already started initialization of features.
     expect(releasePromise !== initAfter).toBe(true);
 
