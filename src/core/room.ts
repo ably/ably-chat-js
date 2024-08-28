@@ -154,7 +154,7 @@ export class DefaultRoom implements Room {
   private readonly _status: DefaultStatus;
   private _lifecycleManager?: RoomLifecycleManager;
   private _finalizer: () => Promise<void>;
-  private _asyncOpsAfter: Promise<void>;
+  private readonly _asyncOpsAfter: Promise<void>;
 
   /**
    * Constructs a new Room instance.
