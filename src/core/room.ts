@@ -96,6 +96,7 @@ export interface Room {
   options(): RoomOptions;
 }
 
+// Returns a promise that always resolves when p is settled, regardless of whether p is resolved or rejected.
 function makeAlwaysResolves(p: Promise<void>): Promise<void> {
   return new Promise<void>((res) => {
     p.then(() => {
@@ -106,9 +107,7 @@ function makeAlwaysResolves(p: Promise<void>): Promise<void> {
   });
 }
 
-// Returns a promise that gets accepted if p is accepted, and rejected if either p is rejected or the returned reject function is called.
-//
-// Reject callback is called only if reject funciton is called before p is finalised.
+// Returns a promise that gets resolved when p gets resolved, and rejected when either p is rejected or the returned reject function is called.
 function makeRejectablePromise<T>(p: Promise<T>): { promise: Promise<T>; reject: (reason: unknown) => boolean } {
   let insideReject: ((reason: unknown) => void) | undefined;
 
@@ -125,14 +124,16 @@ function makeRejectablePromise<T>(p: Promise<T>): { promise: Promise<T>; reject:
     insideReject = rej;
     p.then((data) => {
       if (!insideReject) {
+        // do nothing if already settled
         return;
-      } // can't finalize promise twice
+      }
       insideReject = undefined;
       res(data);
     }).catch((error: unknown) => {
       if (!insideReject) {
+        // do nothing if already settled
         return;
-      } // can't finalize promise twice
+      }
       insideReject = undefined;
       rej(error as Error);
     });
@@ -183,7 +184,7 @@ export class DefaultRoom implements Room {
     this._logger = logger;
     this._status = new DefaultStatus(logger);
 
-    // Room initalization: handle the state before features start to be initialized
+    // Room initialization: handle the state before features start to be initialized
     const rejectablePromise = makeRejectablePromise(makeAlwaysResolves(initAfter));
     const initFeaturesAfter = rejectablePromise.promise;
     this._finalizer = () => {
