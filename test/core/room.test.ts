@@ -2,6 +2,7 @@ import { RoomLifecycle } from '@ably/chat';
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { messagesChannelName } from '../../src/core/channel.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
@@ -348,7 +349,169 @@ describe('Room', () => {
     expect(statuses).toEqual([RoomLifecycle.Initialized, RoomLifecycle.Releasing, RoomLifecycle.Released]);
   });
 
-  // ASYNC OPS SHOULD WAIT UNTIL AFTER INITIALIZATION FINISHED (attach and detach)
+  it<TestContext>('should wait for initialization to finish before attaching the room', async (context) => {
+    let resolve = () => {};
+    const initAfter = new Promise<void>((res) => {
+      resolve = res;
+    });
 
-  // ASYNC OPS SHOULD FAIL IF RELEASED BEFORE INITIALIZATION FINISHED (attach and detach)
+    const room = context.getRoom({}, initAfter);
+
+    // expect no init to have started
+    vi.spyOn(context.realtime.channels, 'get');
+    expect(context.realtime.channels.get).not.toHaveBeenCalled();
+
+    // spy on the channel
+    const channelName = messagesChannelName(room.roomId);
+    const channel = context.realtime.channels.get(channelName);
+    vi.spyOn(channel, 'attach');
+
+    expect(channel.attach).not.toHaveBeenCalled();
+
+    const attachPromise = room.attach();
+
+    expect(channel.attach).not.toHaveBeenCalled();
+
+    let attached = false;
+    let attachedError = false;
+    attachPromise
+      .then(() => {
+        attached = true;
+      })
+      .catch(() => {
+        attachedError = true;
+      });
+    expect(attached).toBe(false);
+    expect(attachedError).toBe(false);
+
+    // allow a tick to happen
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(channel.attach).not.toHaveBeenCalled();
+    expect(attached).toBe(false);
+    expect(attachedError).toBe(false);
+    expect(channel.attach).not.toHaveBeenCalled();
+
+    resolve();
+    await attachPromise;
+
+    expect(channel.attach).toHaveBeenCalled();
+    expect(attached).toBe(true);
+    expect(attachedError).toBe(false);
+  });
+
+  it<TestContext>('should fail attaching if release called before initialization starts', async (context) => {
+    const initAfter = new Promise<void>(() => {});
+
+    const room = context.getRoom({}, initAfter);
+
+    // expect no init to have started
+    vi.spyOn(context.realtime.channels, 'get');
+    expect(context.realtime.channels.get).not.toHaveBeenCalled();
+
+    // spy on the channel
+    const channelName = messagesChannelName(room.roomId);
+    const channel = context.realtime.channels.get(channelName);
+    vi.spyOn(channel, 'attach');
+
+    expect(channel.attach).not.toHaveBeenCalled();
+
+    const attachPromise = room.attach();
+
+    expect(channel.attach).not.toHaveBeenCalled();
+    let attached = false;
+    let attachedError = false;
+    attachPromise
+      .then(() => {
+        attached = true;
+      })
+      .catch(() => {
+        attachedError = true;
+      });
+    expect(attached).toBe(false);
+    expect(attachedError).toBe(false);
+
+    // allow a tick to happen
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(channel.attach).not.toHaveBeenCalled();
+    expect(attached).toBe(false);
+    expect(attachedError).toBe(false);
+    expect(channel.attach).not.toHaveBeenCalled();
+
+    // Can't await for release here because it returns the original initAfter promise.
+    const releasePromise = (room as DefaultRoom).release();
+    expect(releasePromise === initAfter).toBe(true);
+    void releasePromise;
+
+    // We can await for attachPromise to be rejected instead.
+    await new Promise<void>((accept) => {
+      attachPromise.catch(() => {
+        accept();
+      });
+    });
+
+    expect(channel.attach).not.toHaveBeenCalled();
+    expect(attached).toBe(false);
+    expect(attachedError).toBe(true);
+  });
+
+  it<TestContext>('should fail attaching if release called before initialization finishes (and after initialization starts)', async (context) => {
+    let resolve = () => {};
+    const initAfter = new Promise<void>((res) => {
+      resolve = res;
+    });
+
+    vi.spyOn(context.realtime.channels, 'get');
+
+    const room = context.getRoom({}, initAfter);
+
+    // spy on the channel
+    const channelName = messagesChannelName(room.roomId);
+    const channel = context.realtime.channels.get(channelName);
+    vi.spyOn(channel, 'attach');
+
+    let msgResolve: (channel: Ably.RealtimeChannel) => void = () => void 0;
+    const messagesChannelPromise = new Promise<Ably.RealtimeChannel>((res) => {
+      msgResolve = res;
+    });
+
+    vi.spyOn(room.messages, 'channel', 'get').mockReturnValue(messagesChannelPromise);
+
+    // allow a tick to happen
+    await new Promise((res) => setTimeout(res, 0));
+
+    // attach room
+    const attachPromise = room.attach();
+    let attached = false;
+    let attachedError = false;
+    attachPromise
+      .then(() => {
+        attached = true;
+      })
+      .catch(() => {
+        attachedError = true;
+      });
+    expect(attached).toBe(false);
+    expect(attachedError).toBe(false);
+
+    // allow initialization to start
+    resolve();
+
+    // release the room
+    void (room as DefaultRoom).release();
+
+    // resolve the channel (trigger finish init)
+    msgResolve(channel);
+
+    await new Promise<void>((resolve) => {
+      attachPromise.catch(() => {
+        resolve();
+      });
+    });
+
+    expect(channel.attach).not.toHaveBeenCalled();
+    expect(attached).toBe(false);
+    expect(attachedError).toBe(true);
+  });
 });
