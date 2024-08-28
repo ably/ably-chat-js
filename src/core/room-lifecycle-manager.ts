@@ -33,7 +33,7 @@ export interface ContributesToRoomLifecycle extends HandlesDiscontinuity {
  * This interface represents a feature that contributes to the room lifecycle and
  * exposes its channel directly. Objects of this type are created by awaiting the
  * channel promises of all the {@link ContributesToRoomLifecycle} objects.
- * 
+ *
  * @internal
  */
 interface ResolvedContributor {

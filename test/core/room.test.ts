@@ -1,3 +1,4 @@
+import { RoomLifecycle } from '@ably/chat';
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,13 +11,12 @@ import { randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { defaultRoomOptions } from '../helper/room.ts';
-import { RoomLifecycle } from '@ably/chat';
 
 vi.mock('ably');
 
 interface TestContext {
   realtime: Ably.Realtime;
-  getRoom: (options: RoomOptions, initAfter? : Promise<void>) => Room;
+  getRoom: (options: RoomOptions, initAfter?: Promise<void>) => Room;
 }
 
 describe('Room', () => {
@@ -169,20 +169,18 @@ describe('Room', () => {
     });
   });
 
-  describe("room async initialization", () => {
-    it<TestContext>("should wait for initAfter before initializing", async (context) => {
-      let resolve = ()=>{};
-      let reject = ()=>{};
-      let initAfter = new Promise<void>((res, rej) => {
+  describe('room async initialization', () => {
+    it<TestContext>('should wait for initAfter before initializing', async (context) => {
+      let resolve = () => {};
+      const initAfter = new Promise<void>((res) => {
         resolve = res;
-        reject = rej;
       });
 
       vi.spyOn(context.realtime.channels, 'get');
-      
+
       const room = context.getRoom(defaultRoomOptions, initAfter);
       expect(room.status.current).toBe(RoomLifecycle.Initializing);
-  
+
       // allow a tick to happen
       await new Promise((res) => setTimeout(res, 0));
 
@@ -198,12 +196,9 @@ describe('Room', () => {
       expect(context.realtime.channels.get).toHaveBeenCalledTimes(5); // once for each feature
     });
 
-
-    it<TestContext>("should wait for initAfter before initializing - should work even if initAfter is rejected", async (context) => {
-      let resolve = ()=>{};
-      let reject = ()=>{};
-      let initAfter = new Promise<void>((res, rej) => {
-        resolve = res;
+    it<TestContext>('should wait for initAfter before initializing - should work even if initAfter is rejected', async (context) => {
+      let reject = () => {};
+      const initAfter = new Promise<void>((_res, rej) => {
         reject = rej;
       });
 
@@ -211,7 +206,7 @@ describe('Room', () => {
 
       const room = context.getRoom(defaultRoomOptions, initAfter);
       expect(room.status.current).toBe(RoomLifecycle.Initializing);
-  
+
       // allow a tick to happen
       await new Promise((res) => setTimeout(res, 0));
 
@@ -227,28 +222,24 @@ describe('Room', () => {
       expect(context.realtime.channels.get).toHaveBeenCalledTimes(5); // once for each feature
     });
 
-    it<TestContext>("should wait for features to be initialized before setting the status to initialized", async (context) => {
-      let resolve = ()=>{};
-      let reject = ()=>{};
-      let initAfter = new Promise<void>((res, rej) => {
+    it<TestContext>('should wait for features to be initialized before setting the status to initialized', async (context) => {
+      let resolve = () => {};
+      const initAfter = new Promise<void>((res) => {
         resolve = res;
-        reject = rej;
       });
 
       vi.spyOn(context.realtime.channels, 'get');
-      
+
       const room = context.getRoom({}, initAfter);
       expect(room.status.current).toBe(RoomLifecycle.Initializing);
 
-      let msgResolve = (channel: Ably.RealtimeChannel)=>{};
-      let msgReject = ()=>{};
-      let messagesChannelPromise = new Promise<Ably.RealtimeChannel>((res, rej) => {
+      let msgResolve: (channel: Ably.RealtimeChannel) => void = () => void 0;
+      const messagesChannelPromise = new Promise<Ably.RealtimeChannel>((res) => {
         msgResolve = res;
-        msgReject = rej;
       });
 
       vi.spyOn(room.messages, 'channel', 'get').mockReturnValue(messagesChannelPromise);
-  
+
       // allow a tick to happen
       await new Promise((res) => setTimeout(res, 0));
 
@@ -264,9 +255,9 @@ describe('Room', () => {
       expect(room.status.current).toBe(RoomLifecycle.Initializing);
 
       // this is the actual channel
-      const channel = await (room.messages as unknown as {_channel : Promise<Ably.RealtimeChannel>})._channel;
+      const channel = await (room.messages as unknown as { _channel: Promise<Ably.RealtimeChannel> })._channel;
       msgResolve(channel);
-      
+
       // await for room to become initialized
       await (room as DefaultRoom).initializationStatus();
 
@@ -275,16 +266,11 @@ describe('Room', () => {
     });
   });
 
-  it<TestContext>("should not initialize any features if release called before initAfter resolved", async (context) => {
-    let resolve = ()=>{};
-    let reject = ()=>{};
-    let initAfter = new Promise<void>((res, rej) => {
-      resolve = res;
-      reject = rej;
-    });
+  it<TestContext>('should not initialize any features if release called before initAfter resolved', async (context) => {
+    const initAfter = new Promise<void>(() => {});
 
     vi.spyOn(context.realtime.channels, 'get');
-    
+
     const room = context.getRoom(defaultRoomOptions, initAfter);
     expect(room.status.current).toBe(RoomLifecycle.Initializing);
 
@@ -305,34 +291,30 @@ describe('Room', () => {
     expect(releasePromise === initAfter).toBe(true);
 
     expect(context.realtime.channels.get).not.toHaveBeenCalled();
-    expect(initStatus).rejects.toBeErrorInfoWithCode(40000);
+    await expect(initStatus).rejects.toBeErrorInfoWithCode(40000);
     expect(room.status.current).toBe(RoomLifecycle.Released);
   });
 
-  it<TestContext>("should finish full initialization if released called after features started initializing", async (context) => {
-    let resolve = ()=>{};
-    let reject = ()=>{};
-    let initAfter = new Promise<void>((res, rej) => {
+  it<TestContext>('should finish full initialization if released called after features started initializing', async (context) => {
+    let resolve = () => {};
+    const initAfter = new Promise<void>((res) => {
       resolve = res;
-      reject = rej;
     });
 
     vi.spyOn(context.realtime.channels, 'get');
-    
+
     const room = context.getRoom({}, initAfter);
     expect(room.status.current).toBe(RoomLifecycle.Initializing);
 
     // record all status changes
-    const statuses : string[] =[];
+    const statuses: string[] = [];
     room.status.onChange((status) => {
       statuses.push(status.current);
     });
 
-    let msgResolve = (channel: Ably.RealtimeChannel)=>{};
-    let msgReject = ()=>{};
-    let messagesChannelPromise = new Promise<Ably.RealtimeChannel>((res, rej) => {
+    let msgResolve: (channel: Ably.RealtimeChannel) => void = () => void 0;
+    const messagesChannelPromise = new Promise<Ably.RealtimeChannel>((res) => {
       msgResolve = res;
-      msgReject = rej;
     });
 
     vi.spyOn(room.messages, 'channel', 'get').mockReturnValue(messagesChannelPromise);
@@ -348,32 +330,25 @@ describe('Room', () => {
     // allow a tick to happen
     await new Promise((res) => setTimeout(res, 0));
 
-    const events : string[] = [];
-
     // must sill be initializing since messages channel is not yet initialized
     expect(room.status.current).toBe(RoomLifecycle.Initializing);
     const releasePromise = (room as DefaultRoom).release();
-  
+
     // expect the release promise to be different than initAfter now, because
     // the room has already started initialization of features.
     expect(releasePromise !== initAfter).toBe(true);
 
     // this is the actual channel. this should get resolved because
     // initialization of channels must complete
-    const channel = await (room.messages as unknown as {_channel : Promise<Ably.RealtimeChannel>})._channel;
+    const channel = await (room.messages as unknown as { _channel: Promise<Ably.RealtimeChannel> })._channel;
     msgResolve(channel);
-    
+
     await releasePromise;
 
-    expect(statuses).toEqual([
-      RoomLifecycle.Initialized,
-      RoomLifecycle.Releasing,
-      RoomLifecycle.Released,
-    ]);
+    expect(statuses).toEqual([RoomLifecycle.Initialized, RoomLifecycle.Releasing, RoomLifecycle.Released]);
   });
 
   // ASYNC OPS SHOULD WAIT UNTIL AFTER INITIALIZATION FINISHED (attach and detach)
 
   // ASYNC OPS SHOULD FAIL IF RELEASED BEFORE INITIALIZATION FINISHED (attach and detach)
-
 });
