@@ -139,10 +139,6 @@ export class DefaultRooms implements Rooms {
       // are made in quick succession. We only want to remove the
       // room from the releasing map if the last ongoing release
       // finished.
-      //
-      // The release callbacks are actually happening in the order
-      // in which release() methods are called due to passing
-      // waitForMe in rooms.get().
       const releasing = this._releasing.get(roomId);
       if (releasing && releasing.count < count) {
         this._releasing.delete(roomId);
