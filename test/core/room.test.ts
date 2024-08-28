@@ -251,7 +251,7 @@ describe('Room', () => {
       // allow a tick to happen
       await new Promise((res) => setTimeout(res, 0));
 
-      // must sill be Initializing since messages channel is not yet initialized
+      // must still be initializing since messages channel is not yet initialized
       expect(room.status.current).toBe(RoomLifecycle.Initializing);
 
       // this is the actual channel
@@ -330,7 +330,7 @@ describe('Room', () => {
     // allow a tick to happen
     await new Promise((res) => setTimeout(res, 0));
 
-    // must sill be initializing since messages channel is not yet initialized
+    // must still be initializing since messages channel is not yet initialized
     expect(room.status.current).toBe(RoomLifecycle.Initializing);
     const releasePromise = (room as DefaultRoom).release();
 
