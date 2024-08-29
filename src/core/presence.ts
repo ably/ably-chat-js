@@ -178,7 +178,7 @@ export interface Presence extends EmitsDiscontinuities {
 
   /**
    * Get the underlying Ably realtime channel used for presence in this chat room.
-   * @returns The realtime channel.
+   * @returns A promise of the realtime channel.
    */
   get channel(): Promise<Ably.RealtimeChannel>;
 }

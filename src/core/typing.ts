@@ -68,8 +68,8 @@ export interface Typing extends EmitsDiscontinuities {
   stop(): Promise<void>;
 
   /**
-   * Get the name of the realtime channel underpinning typing events.
-   * @returns The name of the realtime channel.
+   * Get the Ably realtime channel underpinning typing events.
+   * @returns A promise of the Ably realtime channel.
    */
   channel: Promise<Ably.RealtimeChannel>;
 }

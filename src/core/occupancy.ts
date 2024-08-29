@@ -46,7 +46,7 @@ export interface Occupancy extends EmitsDiscontinuities {
   /**
    * Get underlying Ably channel for occupancy events.
    *
-   * @returns The underlying Ably channel for occupancy events.
+   * @returns A promise of the underlying Ably channel for occupancy events.
    */
   get channel(): Promise<Ably.RealtimeChannel>;
 }

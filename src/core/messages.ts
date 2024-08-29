@@ -195,7 +195,7 @@ export interface Messages extends EmitsDiscontinuities {
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
    *
-   * @returns the realtime channel
+   * @returns A promise of the realtime channel.
    */
   get channel(): Promise<Ably.RealtimeChannel>;
 }

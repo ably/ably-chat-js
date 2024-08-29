@@ -108,7 +108,7 @@ export interface RoomReactions extends EmitsDiscontinuities {
    * Returns an instance of the Ably realtime channel used for room-level reactions.
    * Avoid using this directly unless special features that cannot otherwise be implemented are needed.
    *
-   * @returns The Ably realtime channel instance.
+   * @returns A promise of the Ably realtime channel.
    */
   get channel(): Promise<Ably.RealtimeChannel>;
 }

@@ -109,22 +109,22 @@ export class DefaultRooms implements Rooms {
     const room = this._rooms.get(roomId);
     const releasing = this._releasing.get(roomId);
 
-    // if we don't have the room
+    // If the room doesn't currently exist
     if (!room) {
-      // ... and it's currently releasing wait for the same promise
+      // If the room is being released, forward the releasing promise
       if (releasing) {
         return releasing.promise;
       }
 
-      // if not releasing, nothing else to do
+      // If the room is not releasing, there is nothing else to do
       return Promise.resolve();
     }
 
-    // make sure we no longer keep this room in the map
+    // Make sure we no longer keep this room in the map
     this._rooms.delete(roomId);
 
-    // we have a room and an ongoing release, we keep the count
-    // of the latest release call.
+    // We have a room and an ongoing release, we keep the count of the latest
+    // release call.
     let count = 0;
     if (releasing) {
       count = releasing.count + 1;

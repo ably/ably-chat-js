@@ -124,14 +124,14 @@ function makeRejectablePromise<T>(p: Promise<T>): { promise: Promise<T>; reject:
     insideReject = rej;
     p.then((data) => {
       if (!insideReject) {
-        // do nothing if already settled
+        // Do nothing if already settled
         return;
       }
       insideReject = undefined;
       res(data);
     }).catch((error: unknown) => {
       if (!insideReject) {
-        // do nothing if already settled
+        // Do nothing if already settled
         return;
       }
       insideReject = undefined;
@@ -198,8 +198,13 @@ export class DefaultRoom implements Room {
       return initAfter;
     };
 
-    // dummy catch to prevent global errors
-    initFeaturesAfter.catch(() => void 0);
+    // Catch to prevent global errors and print a debug log
+    initFeaturesAfter.catch((error: unknown) => {
+      this._logger.debug('Room initialization was prevented before initializing features', {
+        error: error,
+        roomId: roomId,
+      });
+    });
 
     // Setup features
     this._messages = new DefaultMessages(
@@ -253,8 +258,10 @@ export class DefaultRoom implements Room {
 
     this._asyncOpsAfter = this._setupAsyncRoomInit(features, initFeaturesAfter, realtime);
 
-    // Catch errors from asyncOpsAfter to prevent unhandled promise rejection error
-    this._asyncOpsAfter.catch(() => void 0);
+    // Catch errors from asyncOpsAfter to prevent unhandled promise rejection error and print a debug log
+    this._asyncOpsAfter.catch((error: unknown) => {
+      this._logger.debug('Room initialization was prevented before finishing', { error: error, roomId: roomId });
+    });
   }
 
   /**
@@ -288,7 +295,7 @@ export class DefaultRoom implements Room {
           setFinalizerFunc = resolve;
         });
         this._finalizer = () => {
-          // make sure async ops (attach or detach) don't run after calling release()
+          // Make sure async ops (attach or detach) don't run after calling release()
           rejectableAsyncOpsAfter.reject(
             new Ably.ErrorInfo('Room released before initialization finished', 40000, 400),
           );
