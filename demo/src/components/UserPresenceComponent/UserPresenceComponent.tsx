@@ -1,5 +1,5 @@
 import { FC, useState } from 'react';
-import { useChatClient, useChatConnection, usePresence } from '@ably/chat/react';
+import { useChatClient, useChatConnection, usePresence, usePresenceListener } from '@ably/chat/react';
 import '../../../styles/global.css';
 import './UserPresenceComponent.css';
 import { ConnectionLifecycle, PresenceMember } from '@ably/chat';
@@ -8,18 +8,16 @@ interface UserListComponentProps {}
 
 export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
-  const [presenceMembers, setPresenceMembers] = useState<PresenceMember[]>([]);
+  const { update, isPresent, error } = usePresence({ enterWithData: { status: '💻 Online' } });
+  const { presenceData } = usePresenceListener({
+    listener: (event) => {
+      console.log('Presence data changed', { event });
+    },
+  });
+
   const clientId = useChatClient().clientId;
   const { currentStatus } = useChatConnection();
   const isConnected = currentStatus === ConnectionLifecycle.Connected;
-
-  const { update, presence, isPresent, error } = usePresence({ enterWithData: { status: '💻 Online' } });
-
-  presence.subscribe(() => {
-    presence.get().then((members) => {
-      setPresenceMembers(members);
-    });
-  });
 
   const [isOnline, setIsOnline] = useState(true);
 
@@ -61,7 +59,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
             <>
               <div className="user-list">
                 <h2>Present Users</h2>
-                <ul>{presenceMembers.map(renderPresentMember)}</ul>
+                <ul>{presenceData.map(renderPresentMember)}</ul>
               </div>
               <div className="actions">
                 <button
