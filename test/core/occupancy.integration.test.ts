@@ -84,9 +84,11 @@ describe('occupancy', () => {
       presenceMembers: 0,
     });
 
+    const { name: channelName } = await room.messages.channel;
+
     // In a separate realtime client, attach to the same room
     const realtimeClient = ablyRealtimeClientWithToken();
-    const realtimeChannel = realtimeClient.channels.get(room.messages.channel.name);
+    const realtimeChannel = realtimeClient.channels.get(channelName);
     await realtimeChannel.attach();
 
     // Wait for the occupancy to reach the expected occupancy
@@ -100,7 +102,7 @@ describe('occupancy', () => {
     // Make another realtime client and attach to the same room, but only as a subscriber
     // Also have them enter and subscribe to presence
     const subscriberRealtimeClient = ablyRealtimeClientWithToken();
-    const subscriberRealtimeChannel = subscriberRealtimeClient.channels.get(room.messages.channel.name, {
+    const subscriberRealtimeChannel = subscriberRealtimeClient.channels.get(channelName, {
       modes: ['SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE'],
     });
     await subscriberRealtimeChannel.attach();
@@ -144,7 +146,8 @@ describe('occupancy', () => {
 
     // In a separate realtime client, attach to the same room
     const realtimeClient = ablyRealtimeClientWithToken();
-    const realtimeChannel = realtimeClient.channels.get(room.messages.channel.name);
+    const { name: channelName } = await room.messages.channel;
+    const realtimeChannel = realtimeClient.channels.get(channelName);
     await realtimeChannel.attach();
     await realtimeChannel.presence.enter();
 
@@ -169,7 +172,7 @@ describe('occupancy', () => {
       discontinuityErrors.push(error);
     });
 
-    const channelSuspendable = room.occupancy.channel as Ably.RealtimeChannel & {
+    const channelSuspendable = (await room.messages.channel) as Ably.RealtimeChannel & {
       notifyState(state: 'suspended' | 'attached'): void;
     };
 

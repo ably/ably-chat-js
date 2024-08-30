@@ -108,9 +108,9 @@ export interface RoomReactions extends EmitsDiscontinuities {
    * Returns an instance of the Ably realtime channel used for room-level reactions.
    * Avoid using this directly unless special features that cannot otherwise be implemented are needed.
    *
-   * @returns The Ably realtime channel instance.
+   * @returns A promise of the Ably realtime channel.
    */
-  get channel(): Ably.RealtimeChannel;
+  get channel(): Promise<Ably.RealtimeChannel>;
 }
 
 interface RoomReactionEventsMap {
@@ -139,7 +139,7 @@ export class DefaultRoomReactions
   extends EventEmitter<RoomReactionEventsMap>
   implements RoomReactions, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
-  private readonly _channel: Ably.RealtimeChannel;
+  private readonly _channel: Promise<Ably.RealtimeChannel>;
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -150,18 +150,32 @@ export class DefaultRoomReactions
    * @param realtime An instance of the Ably Realtime client.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
+   * @param initAfter A promise that is awaited before creating any channels.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
+  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger, initAfter: Promise<void>) {
     super();
-    this._channel = getChannel(`${roomId}::$chat::$reactions`, realtime);
-    addListenerToChannelWithoutAttach({
-      listener: this._forwarder.bind(this),
-      events: [RoomReactionEvents.Reaction],
-      channel: this._channel,
+    this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
+
+    // Catch this so it won't send unhandledrejection global event
+    this._channel.catch((error: unknown) => {
+      logger.debug('RoomReactions: channel initialization canceled', { roomId, error });
     });
 
     this._clientId = clientId;
     this._logger = logger;
+  }
+
+  /**
+   * Creates the realtime channel for room reactions. Called after initAfter is resolved.
+   */
+  private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
+    const channel = getChannel(`${roomId}::$chat::$reactions`, realtime);
+    addListenerToChannelWithoutAttach({
+      listener: this._forwarder.bind(this),
+      events: [RoomReactionEvents.Reaction],
+      channel: channel,
+    });
+    return channel;
   }
 
   /**
@@ -209,7 +223,9 @@ export class DefaultRoomReactions
       },
     };
 
-    return this._channel.publish(realtimeMessage);
+    return this._channel.then((channel) => {
+      return channel.publish(realtimeMessage);
+    });
   }
 
   /**
@@ -245,7 +261,7 @@ export class DefaultRoomReactions
     this.emit(RoomReactionEvents.Reaction, reaction);
   };
 
-  get channel(): Ably.RealtimeChannel {
+  get channel(): Promise<Ably.RealtimeChannel> {
     return this._channel;
   }
 

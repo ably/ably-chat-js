@@ -24,11 +24,20 @@ describe('Room', () => {
     expect(room.status.current).toEqual(RoomLifecycle.Attached);
 
     // If we check the underlying channels, they should be attached too
-    expect(room.messages.channel.state).toEqual('attached');
-    expect(room.reactions.channel.state).toEqual('attached');
-    expect(room.typing.channel.state).toEqual('attached');
-    expect(room.presence.channel.state).toEqual('attached');
-    expect(room.occupancy.channel.state).toEqual('attached');
+    const messagesChannel = await room.messages.channel;
+    expect(messagesChannel.state).toEqual('attached');
+
+    const reactionsChannel = await room.reactions.channel;
+    expect(reactionsChannel.state).toEqual('attached');
+
+    const typingChannel = await room.typing.channel;
+    expect(typingChannel.state).toEqual('attached');
+
+    const presenceChannel = await room.presence.channel;
+    expect(presenceChannel.state).toEqual('attached');
+
+    const occupancyChannel = await room.occupancy.channel;
+    expect(occupancyChannel.state).toEqual('attached');
   });
 
   it<TestContext>('should be detachable', async ({ room }) => {
@@ -39,11 +48,20 @@ describe('Room', () => {
     expect(room.status.current).toEqual(RoomLifecycle.Detached);
 
     // If we check the underlying channels, they should be detached too
-    expect(room.messages.channel.state).toEqual('detached');
-    expect(room.reactions.channel.state).toEqual('detached');
-    expect(room.typing.channel.state).toEqual('detached');
-    expect(room.presence.channel.state).toEqual('detached');
-    expect(room.occupancy.channel.state).toEqual('detached');
+    const messagesChannel = await room.messages.channel;
+    expect(messagesChannel.state).toEqual('detached');
+
+    const reactionsChannel = await room.reactions.channel;
+    expect(reactionsChannel.state).toEqual('detached');
+
+    const typingChannel = await room.typing.channel;
+    expect(typingChannel.state).toEqual('detached');
+
+    const presenceChannel = await room.presence.channel;
+    expect(presenceChannel.state).toEqual('detached');
+
+    const occupancyChannel = await room.occupancy.channel;
+    expect(occupancyChannel.state).toEqual('detached');
   });
 
   it<TestContext>('should be releasable', async ({ room }) => {

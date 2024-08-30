@@ -7,9 +7,9 @@ import { makeTestLogger } from '../helper/logger.ts';
 const baseError = new Ably.ErrorInfo('error', 500, 50000);
 
 describe('room status', () => {
-  it('defaults to initialized', () => {
+  it('defaults to initializing', () => {
     const status = new DefaultStatus(makeTestLogger());
-    expect(status.current).toEqual(RoomLifecycle.Initialized);
+    expect(status.current).toEqual(RoomLifecycle.Initializing);
     expect(status.error).toBeUndefined();
   });
 

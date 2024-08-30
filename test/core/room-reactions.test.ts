@@ -21,7 +21,7 @@ interface TestContext {
 vi.mock('ably');
 
 describe('Reactions', () => {
-  beforeEach<TestContext>((context) => {
+  beforeEach<TestContext>(async (context) => {
     const clientId = 'd.vader';
 
     context.realtime = new Ably.Realtime({ clientId: clientId, key: 'key' });
@@ -33,9 +33,10 @@ describe('Reactions', () => {
     };
 
     context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
-    context.emulateBackendPublish = channelEventEmitter(context.room.reactions.channel);
+    const channel = await context.room.reactions.channel;
+    context.emulateBackendPublish = channelEventEmitter(channel);
 
-    vi.spyOn(context.room.reactions.channel, 'publish').mockImplementation((message: Ably.Message) => {
+    vi.spyOn(channel, 'publish').mockImplementation((message: Ably.Message) => {
       context.emulateBackendPublish({
         ...message,
         clientId: clientId,

@@ -8,6 +8,11 @@ import EventEmitter from './utils/event-emitter.js';
  */
 export enum RoomLifecycle {
   /**
+   * The library is currently initializing the room.
+   */
+  Initializing = 'initializing',
+
+  /**
    * A temporary state for when the library is first initialized.
    */
   Initialized = 'initialized',
@@ -162,7 +167,7 @@ type RoomStatusEventsMap = {
  * @internal
  */
 export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements InternalRoomStatus {
-  private _state: RoomLifecycle = RoomLifecycle.Initialized;
+  private _state: RoomLifecycle = RoomLifecycle.Initializing;
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
   private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
@@ -174,7 +179,7 @@ export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements 
   constructor(logger: Logger) {
     super();
     this._logger = logger;
-    this._state = RoomLifecycle.Initialized;
+    this._state = RoomLifecycle.Initializing;
     this._error = undefined;
   }
 

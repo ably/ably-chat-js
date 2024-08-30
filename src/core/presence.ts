@@ -178,9 +178,9 @@ export interface Presence extends EmitsDiscontinuities {
 
   /**
    * Get the underlying Ably realtime channel used for presence in this chat room.
-   * @returns The realtime channel.
+   * @returns A promise of the realtime channel.
    */
-  get channel(): Ably.RealtimeChannel;
+  get channel(): Promise<Ably.RealtimeChannel>;
 }
 
 /**
@@ -190,7 +190,7 @@ export class DefaultPresence
   extends EventEmitter<PresenceEventsMap>
   implements Presence, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
-  private readonly _channel: Ably.RealtimeChannel;
+  private readonly _channel: Promise<Ably.RealtimeChannel>;
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -203,10 +203,33 @@ export class DefaultPresence
    * @param clientId The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    * @param logger An instance of the Logger.
+   * @param initAfter A promise that is awaited before creating any channels.
    */
-  constructor(roomId: string, roomOptions: RoomOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
+  constructor(
+    roomId: string,
+    roomOptions: RoomOptions,
+    realtime: Ably.Realtime,
+    clientId: string,
+    logger: Logger,
+    initAfter: Promise<void>,
+  ) {
     super();
 
+    this._channel = initAfter.then(() => this._makeChannel(roomId, roomOptions, realtime));
+
+    // Catch this so it won't send unhandledrejection global event
+    this._channel.catch((error: unknown) => {
+      logger.debug('Presence: channel initialization canceled', { roomId, error });
+    });
+
+    this._clientId = clientId;
+    this._logger = logger;
+  }
+
+  /**
+   * Creates the realtime channel for presence. Called after initAfter is resolved.
+   */
+  private _makeChannel(roomId: string, roomOptions: RoomOptions, realtime: Ably.Realtime): Ably.RealtimeChannel {
     // Set our channel modes based on the room options
     const channelModes = ['PUBLISH', 'SUBSCRIBE'] as Ably.ChannelMode[];
     if (roomOptions.presence?.enter === undefined || roomOptions.presence.enter) {
@@ -217,20 +240,21 @@ export class DefaultPresence
       channelModes.push('PRESENCE_SUBSCRIBE');
     }
 
-    this._channel = getChannel(messagesChannelName(roomId), realtime, { modes: channelModes });
+    const channel = getChannel(messagesChannelName(roomId), realtime, { modes: channelModes });
+
     addListenerToChannelPresenceWithoutAttach({
       listener: this.subscribeToEvents.bind(this),
-      channel: this._channel,
+      channel: channel,
     });
-    this._clientId = clientId;
-    this._logger = logger;
+
+    return channel;
   }
 
   /**
    * Get the underlying Ably realtime channel used for presence in this chat room.
    * @returns The realtime channel.
    */
-  get channel(): Ably.RealtimeChannel {
+  get channel(): Promise<Ably.RealtimeChannel> {
     return this._channel;
   }
 
@@ -239,7 +263,8 @@ export class DefaultPresence
    */
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     this._logger.trace('Presence.get()', { params });
-    const userOnPresence = await this._channel.presence.get(params);
+    const channel = await this._channel;
+    const userOnPresence = await channel.presence.get(params);
 
     // ably-js never emits the 'absent' event, so we can safely ignore it here.
     return userOnPresence.map((user) => ({
@@ -257,7 +282,8 @@ export class DefaultPresence
    * @inheritDoc
    */
   async isUserPresent(clientId: string): Promise<boolean> {
-    const presenceSet = await this._channel.presence.get({ clientId: clientId });
+    const channel = await this._channel;
+    const presenceSet = await channel.presence.get({ clientId: clientId });
     return presenceSet.length > 0;
   }
 
@@ -271,8 +297,8 @@ export class DefaultPresence
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-
-    return this._channel.presence.enterClient(this._clientId, presenceEventToSend);
+    const channel = await this._channel;
+    return channel.presence.enterClient(this._clientId, presenceEventToSend);
   }
 
   /**
@@ -285,8 +311,8 @@ export class DefaultPresence
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-
-    return this._channel.presence.updateClient(this._clientId, presenceEventToSend);
+    const channel = await this._channel;
+    return channel.presence.updateClient(this._clientId, presenceEventToSend);
   }
 
   /**
@@ -299,8 +325,8 @@ export class DefaultPresence
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
-
-    return this._channel.presence.leaveClient(this._clientId, presenceEventToSend);
+    const channel = await this._channel;
+    return channel.presence.leaveClient(this._clientId, presenceEventToSend);
   }
 
   /**

@@ -184,7 +184,7 @@ describe('Typing', () => {
       discontinuityErrors.push(error);
     });
 
-    const channelSuspendable = room.typing.channel as Ably.RealtimeChannel & {
+    const channelSuspendable = (await room.typing.channel) as Ably.RealtimeChannel & {
       notifyState(state: 'suspended' | 'attached'): void;
     };
 

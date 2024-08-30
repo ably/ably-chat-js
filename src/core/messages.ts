@@ -195,9 +195,9 @@ export interface Messages extends EmitsDiscontinuities {
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
    *
-   * @returns the realtime channel
+   * @returns A promise of the realtime channel.
    */
-  get channel(): Ably.RealtimeChannel;
+  get channel(): Promise<Ably.RealtimeChannel>;
 }
 
 /**
@@ -208,7 +208,7 @@ export class DefaultMessages
   implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _roomId: string;
-  private readonly _channel: Ably.RealtimeChannel;
+  private readonly _channel: Promise<Ably.RealtimeChannel>;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
   private readonly _listenerSubscriptionPoints: Map<
@@ -227,33 +227,58 @@ export class DefaultMessages
    * @param chatApi An instance of the ChatApi.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
+   * @param initAfter A promise that is awaited before creating any channels.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientId: string, logger: Logger) {
+  constructor(
+    roomId: string,
+    realtime: Ably.Realtime,
+    chatApi: ChatApi,
+    clientId: string,
+    logger: Logger,
+    initAfter: Promise<void>,
+  ) {
     super();
     this._roomId = roomId;
-    this._channel = getChannel(messagesChannelName(roomId), realtime);
-    addListenerToChannelWithoutAttach({
-      listener: this._processEvent.bind(this),
-      events: [MessageEvents.Created],
-      channel: this._channel,
+
+    this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
+
+    // Catch this so it won't send unhandledrejection global event
+    this._channel.catch((error: unknown) => {
+      logger.debug('Messages: channel initialization canceled', { roomId, error });
     });
 
     this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
+  }
+
+  /**
+   * Creates the realtime channel for messages. Called after initAfter is resolved.
+   */
+  private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
+    const channel = getChannel(messagesChannelName(roomId), realtime);
+
+    addListenerToChannelWithoutAttach({
+      listener: this._processEvent.bind(this),
+      events: [MessageEvents.Created],
+      channel: channel,
+    });
 
     // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
     // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
-    this._channel.on('attached', (message) => {
+    channel.on('attached', (message) => {
       this._handleAttach(message.resumed);
     });
+
     // Handles the case where an update message is received from a channel after a detach and reattach.
-    this._channel.on('update', (message) => {
+    channel.on('update', (message) => {
       if (message.current === 'attached' && message.previous === 'attached') {
         this._handleAttach(message.resumed);
       }
     });
+
+    return channel;
   }
 
   /**
@@ -328,10 +353,10 @@ export class DefaultMessages
   private async _resolveSubscriptionStart(): Promise<{
     fromSerial: string;
   }> {
-    const channelWithProperties = this._getChannelProperties();
+    const channelWithProperties = await this._getChannelProperties();
 
     // If we are attached, we can resolve with the channelSerial
-    if (this._channel.state === 'attached') {
+    if (channelWithProperties.state === 'attached') {
       if (channelWithProperties.properties.channelSerial) {
         return { fromSerial: channelWithProperties.properties.channelSerial };
       }
@@ -342,11 +367,14 @@ export class DefaultMessages
     return this._subscribeAtChannelAttach();
   }
 
-  private _getChannelProperties(): Ably.RealtimeChannel & {
-    properties: { attachSerial: string | undefined; channelSerial: string | undefined };
-  } {
+  private async _getChannelProperties(): Promise<
+    Ably.RealtimeChannel & {
+      properties: { attachSerial: string | undefined; channelSerial: string | undefined };
+    }
+  > {
     // Get the attachSerial from the channel properties
-    return this._channel as Ably.RealtimeChannel & {
+    const channel = await this._channel;
+    return channel as Ably.RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
         channelSerial: string | undefined;
@@ -355,11 +383,11 @@ export class DefaultMessages
   }
 
   private async _subscribeAtChannelAttach(): Promise<{ fromSerial: string }> {
+    const channelWithProperties = await this._getChannelProperties();
     return new Promise((resolve, reject) => {
       // Check if the state is now attached
-      if (this._channel.state === 'attached') {
+      if (channelWithProperties.state === 'attached') {
         // Get the attachSerial from the channel properties
-        const channelWithProperties = this._getChannelProperties();
         // AttachSerial should always be defined at this point, but we check just in case
         this._logger.debug('Messages._subscribeAtChannelAttach(); channel is attached already, using attachSerial', {
           attachSerial: channelWithProperties.properties.attachSerial,
@@ -374,9 +402,8 @@ export class DefaultMessages
         }
       }
 
-      this._channel.once('attached', () => {
+      channelWithProperties.once('attached', () => {
         // Get the attachSerial from the channel properties
-        const channelWithProperties = this._getChannelProperties();
         // AttachSerial should always be defined at this point, but we check just in case
         this._logger.debug('Messages._subscribeAtChannelAttach(); channel is now attached, using attachSerial', {
           attachSerial: channelWithProperties.properties.attachSerial,
@@ -396,7 +423,7 @@ export class DefaultMessages
   /**
    * @inheritdoc Messages
    */
-  get channel(): Ably.RealtimeChannel {
+  get channel(): Promise<Ably.RealtimeChannel> {
     return this._channel;
   }
 

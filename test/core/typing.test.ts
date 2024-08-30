@@ -58,11 +58,12 @@ const waitForMessages = (messages: TypingEvent[], expectedCount: number, timeout
 };
 
 describe('Typing', () => {
-  beforeEach<TestContext>((context) => {
+  beforeEach<TestContext>(async (context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.room = makeRandomRoom(context);
-    context.emulateBackendPublish = channelPresenceEventEmitter(context.room.typing.channel);
+    const channel = await context.room.typing.channel;
+    context.emulateBackendPublish = channelPresenceEventEmitter(channel);
   });
 
   it<TestContext>('delays stop timeout while still typing', async (context) => {
@@ -89,7 +90,8 @@ describe('Typing', () => {
 
   it<TestContext>('when stop is called, immediately stops typing', async (context) => {
     const { realtime, room } = context;
-    const presence = realtime.channels.get(room.typing.channel.name).presence;
+    const channel = await room.typing.channel;
+    const presence = realtime.channels.get(channel.name).presence;
 
     // If stop is called, it should call leaveClient
     vi.spyOn(presence, 'leaveClient').mockImplementation(async (): Promise<void> => {});
@@ -120,7 +122,7 @@ describe('Typing', () => {
       allEvents.push(event);
     });
 
-    const channel = context.room.typing.channel;
+    const channel = await context.room.typing.channel;
 
     let arrayToReturn = presenceGetResponse(['otherClient']);
 
@@ -134,9 +136,8 @@ describe('Typing', () => {
       action: 'enter',
     });
 
-    expect(channel.presence.get).toBeCalledTimes(1);
-
     await waitForMessages(receivedEvents, 1);
+    expect(channel.presence.get).toBeCalledTimes(1);
 
     // Ensure that the listener received the event
     expect(receivedEvents).toHaveLength(1);
@@ -157,8 +158,8 @@ describe('Typing', () => {
     });
 
     // wait for check events to be length 2 to make sure second event was triggered
-    expect(channel.presence.get).toBeCalledTimes(2);
     await waitForMessages(allEvents, 2);
+    expect(channel.presence.get).toBeCalledTimes(2);
     expect(allEvents.length).toEqual(2);
     expect(allEvents[1]?.currentlyTyping).toEqual(new Set(['otherClient', 'anotherClient']));
 
@@ -186,7 +187,7 @@ describe('Typing', () => {
       receivedEvents2.push(event);
     });
 
-    const channel = context.room.typing.channel;
+    const channel = await context.room.typing.channel;
     let arrayToReturn = presenceGetResponse(['otherClient']);
     vi.spyOn(channel.presence, 'get').mockImplementation(() => {
       return Promise.resolve<Ably.PresenceMessage[]>(arrayToReturn);
@@ -198,8 +199,8 @@ describe('Typing', () => {
       action: 'enter',
     });
 
-    expect(channel.presence.get).toBeCalledTimes(1);
     await waitForMessages(receivedEvents, 1);
+    expect(channel.presence.get).toBeCalledTimes(1);
 
     // Ensure that the listener received the event
     expect(receivedEvents).toHaveLength(1);
@@ -229,8 +230,8 @@ describe('Typing', () => {
       clientId: 'anotherClient2',
       action: 'enter',
     });
-    expect(channel.presence.get).toBeCalledTimes(2);
     await waitForMessages(checkEvents, 1);
+    expect(channel.presence.get).toBeCalledTimes(2);
     expect(checkEvents[0]?.currentlyTyping).toEqual(new Set(['otherClient', 'anotherClient2']));
 
     // Ensure that the listeners did not receive the event
@@ -289,7 +290,7 @@ describe('Typing', () => {
 
   it<TestContext>('should not emit the same typing set twice', async (context) => {
     const { room } = context;
-    const channel = context.room.typing.channel;
+    const channel = await context.room.typing.channel;
 
     // Add a listener
     const events: TypingEvent[] = [];
@@ -309,7 +310,6 @@ describe('Typing', () => {
         action: 'enter',
       });
       calledTimes++;
-      expect(channel.presence.get).toBeCalledTimes(calledTimes);
     };
 
     returnSet.add('client1');
@@ -327,6 +327,7 @@ describe('Typing', () => {
 
     simulateEnter('client4');
     await waitForMessages(events, 2); // expecting only two events
+    expect(channel.presence.get).toBeCalledTimes(calledTimes);
     expect(events).toHaveLength(2);
     expect(events[0]?.currentlyTyping).toEqual(new Set(['client1'])); // first event unchanged
     expect(events[1]?.currentlyTyping).toEqual(new Set(['client1', 'client2', 'client3', 'client4'])); // second event has all clients
@@ -339,7 +340,7 @@ describe('Typing', () => {
 
   it<TestContext>('should retry on failure', async (context) => {
     const { room } = context;
-    const channel = context.room.typing.channel;
+    const channel = await context.room.typing.channel;
 
     // Add a listener
     const events: TypingEvent[] = [];
@@ -362,7 +363,6 @@ describe('Typing', () => {
       action: 'enter',
     });
 
-    expect(channel.presence.get).toBeCalledTimes(1); // first call for the failure
     await waitForMessages(events, 1, 4000); // must be one event here but extra wait time for the retry
     expect(channel.presence.get).toBeCalledTimes(2); // second call for the retry
     expect(events).toHaveLength(1);
@@ -371,7 +371,7 @@ describe('Typing', () => {
 
   it<TestContext>('should not return stale responses even if they resolve out of order', async (context) => {
     const { room } = context;
-    const channel = context.room.typing.channel;
+    const channel = await context.room.typing.channel;
 
     // Add a listener
     const events: TypingEvent[] = [];
@@ -407,16 +407,14 @@ describe('Typing', () => {
       clientId: 'client1',
       action: 'enter',
     });
-    expect(channel.presence.get).toBeCalledTimes(1);
 
     context.emulateBackendPublish({
       clientId: 'client2',
       action: 'enter',
     });
-    expect(channel.presence.get).toBeCalledTimes(2);
 
     await waitForThis; // at this point we should have exactly one message
-
+    expect(channel.presence.get).toBeCalledTimes(2);
     expect(events).toHaveLength(1);
     expect(events[0]?.currentlyTyping).toEqual(new Set(['client1', 'client2']));
   });

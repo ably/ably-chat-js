@@ -46,9 +46,9 @@ export interface Occupancy extends EmitsDiscontinuities {
   /**
    * Get underlying Ably channel for occupancy events.
    *
-   * @returns The underlying Ably channel for occupancy events.
+   * @returns A promise of the underlying Ably channel for occupancy events.
    */
-  get channel(): Ably.RealtimeChannel;
+  get channel(): Promise<Ably.RealtimeChannel>;
 }
 
 /**
@@ -98,7 +98,7 @@ export class DefaultOccupancy
   implements Occupancy, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _roomId: string;
-  private readonly _channel: Ably.RealtimeChannel;
+  private readonly _channel: Promise<Ably.RealtimeChannel>;
   private readonly _chatApi: ChatApi;
   private _logger: Logger;
   private _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -109,18 +109,34 @@ export class DefaultOccupancy
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
+   * @param initAfter A promise that is awaited before creating any channels.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
+  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger, initAfter: Promise<void>) {
     super();
     this._roomId = roomId;
-    this._channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });
+
+    this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
+
+    // Catch this so it won't send unhandledrejection global event
+    this._channel.catch((error: unknown) => {
+      logger.debug('Occupancy: channel initialization canceled', { roomId, error });
+    });
+
+    this._chatApi = chatApi;
+    this._logger = logger;
+  }
+
+  /**
+   * Creates the realtime channel for occupancy. Called after initAfter is resolved.
+   */
+  private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
+    const channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });
     addListenerToChannelWithoutAttach({
       listener: this._internalOccupancyListener.bind(this),
       events: ['[meta]occupancy'],
-      channel: this._channel,
+      channel: channel,
     });
-    this._chatApi = chatApi;
-    this._logger = logger;
+    return channel;
   }
 
   /**
@@ -157,7 +173,7 @@ export class DefaultOccupancy
   /**
    * @inheritdoc Occupancy
    */
-  get channel(): Ably.RealtimeChannel {
+  get channel(): Promise<Ably.RealtimeChannel> {
     return this._channel;
   }
 

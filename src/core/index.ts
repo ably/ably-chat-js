@@ -63,13 +63,8 @@ export type {
   RoomReactionsSubscriptionResponse,
   SendReactionParams,
 } from './room-reactions.js';
-export type {
-  OnRoomStatusChangeResponse,
-  RoomLifecycle,
-  RoomStatus,
-  RoomStatusChange,
-  RoomStatusListener,
-} from './room-status.js';
+export type { OnRoomStatusChangeResponse, RoomStatus, RoomStatusChange, RoomStatusListener } from './room-status.js';
+export { RoomLifecycle } from './room-status.js';
 export type { Rooms } from './rooms.js';
 export type { Typing, TypingEvent, TypingListener, TypingSubscriptionResponse } from './typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';

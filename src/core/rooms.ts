@@ -52,6 +52,7 @@ export class DefaultRooms implements Rooms {
   private readonly _chatApi: ChatApi;
   private readonly _clientOptions: NormalizedClientOptions;
   private readonly _rooms: Map<string, DefaultRoom> = new Map<string, DefaultRoom>();
+  private readonly _releasing = new Map<string, { count: number; promise: Promise<void> }>();
   private readonly _logger: Logger;
 
   /**
@@ -83,7 +84,10 @@ export class DefaultRooms implements Rooms {
       return existing;
     }
 
-    const room = new DefaultRoom(roomId, options, this._realtime, this._chatApi, this._logger);
+    const releasing = this._releasing.get(roomId);
+    const initializeAfter: Promise<void> = releasing ? releasing.promise : Promise.resolve();
+
+    const room = new DefaultRoom(roomId, options, this._realtime, this._chatApi, this._logger, initializeAfter);
     this._rooms.set(roomId, room);
 
     return room;
@@ -103,11 +107,46 @@ export class DefaultRooms implements Rooms {
     this._logger.trace('Rooms.release();', { roomId });
 
     const room = this._rooms.get(roomId);
-    if (!room) return Promise.resolve();
+    const releasing = this._releasing.get(roomId);
 
-    return room.release().then(() => {
+    // If the room doesn't currently exist
+    if (!room) {
+      // If the room is being released, forward the releasing promise
+      if (releasing) {
+        return releasing.promise;
+      }
+
+      // If the room is not releasing, there is nothing else to do
+      return Promise.resolve();
+    }
+
+    // Make sure we no longer keep this room in the map
+    this._rooms.delete(roomId);
+
+    // We have a room and an ongoing release, we keep the count of the latest
+    // release call.
+    let count = 0;
+    if (releasing) {
+      count = releasing.count + 1;
+    }
+
+    const releasedPromise = room.release().then(() => {
       this._logger.debug('Rooms.release(); room released', { roomId });
-      this._rooms.delete(roomId);
+      // Remove the room from currently releasing if the count of
+      // this callback is at least as high as the current count.
+      //
+      // This is to handle the case where multiple release calls
+      // are made in quick succession. We only want to remove the
+      // room from the releasing map if the last ongoing release
+      // finished.
+      const releasing = this._releasing.get(roomId);
+      if (releasing && releasing.count < count) {
+        this._releasing.delete(roomId);
+      }
     });
+
+    this._releasing.set(roomId, { count: count, promise: releasedPromise });
+
+    return releasedPromise;
   }
 }

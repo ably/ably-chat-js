@@ -15,7 +15,7 @@ export const MessageInput: FC<MessageInputProps> = ({ disabled, onSend, onStartT
     // Typing indicators start method should be called with every keystroke since
     // they automatically stop if the user stops typing for a certain amount of time.
     //
-    // The timeout duration can be configured when initialising the room.
+    // The timeout duration can be configured when initializing the room.
     if (target.value && target.value.length > 0) {
       onStartTyping();
     } else {

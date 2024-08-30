@@ -17,5 +17,8 @@
     "livestreams",
     "livestream"
   ],
-  "ignoreRegExpList": ["/.*@\\d{13}-/"]
+  "ignoreRegExpList": ["/.*@\\d{13}-/"],
+  "flagWords": [
+    "cancelled"
+  ]
 }
