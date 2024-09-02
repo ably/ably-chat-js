@@ -9,7 +9,7 @@ import { newChatClient } from '../../helper/chat.ts';
 vi.mock('ably');
 
 describe('useChatClient', () => {
-  it('it should create a provider without error', () => {
+  it('should create a provider without error', () => {
     const chatClient = newChatClient() as unknown as ChatClient;
     const TestComponent = () => {
       return <div />;
