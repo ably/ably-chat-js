@@ -61,7 +61,13 @@ npm install @ably/chat
 For browsers, you can also include the Chat SDK directly into your HTML:
 
 ```html
-<script src="https://cdn.ably.com/lib/ably-chat-0.js"></script>
+<!-- Ably Chat also requires the core Ably SDK to be available -->
+<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+<script src="https://cdn.ably.com/lib/ably-chat.umd.cjs-0.js"></script>
+<script>
+  const realtime = new Ably.Realtime({key: 'your-ably-key'})
+  const chatClient = new AblyChat.ChatClient(realtime);
+</script>
 ```
 
 The Ably client library follows [Semantic Versioning](http://semver.org/). To lock into a major or minor version of the client library, you can specify a specific version number such as https://cdn.ably.com/lib/ably-chat-0.js for all v0._ versions, or https://cdn.ably.com/lib/ably-chat-0.1.js for all v0.1._ versions, or you can lock into a single release with https://cdn.ably.com/lib/ably-chat-0.1.0.js. See https://github.com/ably/ably-chat-js/tags for a list of tagged releases.

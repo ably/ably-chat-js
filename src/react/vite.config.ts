@@ -11,7 +11,7 @@ export default defineConfig({
     outDir: resolve(__dirname, '../../dist/react'),
     lib: {
       entry: resolve(__dirname, 'index.ts'),
-      name: 'ably-chat-react',
+      name: 'AblyChatReact',
       fileName: 'ably-chat-react',
     },
     rollupOptions: {
