@@ -10,7 +10,7 @@ export default defineConfig({
     outDir: '../../dist/chat',
     lib: {
       entry: resolve(__dirname, 'index.ts'),
-      name: 'ably-chat-js',
+      name: 'AblyChat',
       fileName: 'ably-chat',
     },
     rollupOptions: {
