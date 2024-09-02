@@ -17,7 +17,10 @@ export default defineConfig({
     rollupOptions: {
       // We currently suggest that ably be installed as a separate dependency, so lets
       // not bundle it.
-      external: ['ably', '@ably/chat', 'react'],
+      // We don't bundle react, react-dom, and react/jsx-runtime as they are expected to be
+      // provided by the consuming application and not specifying them could lead to
+      // multiple conflicting versions of react.
+      external: ['ably', '@ably/chat', 'react', 'react-dom', 'react/jsx-runtime'],
     },
     sourcemap: true,
   },
