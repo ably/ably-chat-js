@@ -2,15 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
 import { useMessages } from '../../hooks/useMessages';
-import { useTypingIndicators } from '../../hooks/useTypingIndicators.ts';
-import { useChatConnection, useRoomReactions } from '@ably/chat/react';
+import { useChatConnection, useRoomReactions, useTyping } from '@ably/chat/react';
 import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
 import { ConnectionLifecycle, Reaction } from '@ably/chat';
 
 export const Chat = () => {
   const { loading, clientId, messages, sendMessage } = useMessages();
-  const { startTyping, stopTyping, typers } = useTypingIndicators();
+  const { start, stop, currentlyTyping, error: typingError } = useTyping();
   const [roomReactions, setRoomReactions] = useState<Reaction[]>([]);
 
   const { send } = useRoomReactions({
@@ -32,6 +31,18 @@ export const Chat = () => {
     },
     [sendMessage],
   );
+
+  const handleStartTyping = () => {
+    start().catch((error) => {
+      console.error('Failed to start typing indicator', error);
+    });
+  };
+
+  const handleStopTyping = () => {
+    stop().catch((error) => {
+      console.error('Failed to stop typing indicator', error);
+    });
+  };
 
   /**
    * In a real app, changing the logged in user typically means navigating to
@@ -113,17 +124,22 @@ export const Chat = () => {
           <div ref={messagesEndRef} />
         </div>
       )}
-      <div className="typing-indicator-container">
-        {new Array(...typers).map((client) => (
-          <p key={client}>{client} is typing...</p>
-        ))}
-      </div>
+      {typingError && (
+        <div className="text-red-600 dark:text-red-500 p-3">Typing indicator error: {typingError.message}</div>
+      )}
+      {!typingError && (
+        <div className="typing-indicator-container">
+          {new Array(...currentlyTyping).map((client) => (
+            <p key={client}>{client} is typing...</p>
+          ))}
+        </div>
+      )}
       <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
         <MessageInput
           disabled={loading || !isConnected}
           onSend={handleMessageSend}
-          onStartTyping={startTyping}
-          onStopTyping={stopTyping}
+          onStartTyping={handleStartTyping}
+          onStopTyping={handleStopTyping}
         />
       </div>
       <div>
