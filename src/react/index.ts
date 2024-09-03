@@ -12,6 +12,11 @@ export {
 } from './hooks/use-chat-connection.js';
 export { useOccupancy, type UseOccupancyParams, type UseOccupancyResponse } from './hooks/use-occupancy.js';
 export { useRoom, type UseRoomParams, type UseRoomResponse } from './hooks/use-room.js';
+export {
+  useRoomReactions,
+  type UseRoomReactionsParams,
+  type UseRoomReactionsResponse,
+} from './hooks/use-room-reactions.js';
 export { ChatClientProvider, type ChatClientProviderProps } from './providers/chat-client-provider.js';
 export { ChatRoomProvider, type ChatRoomProviderProps } from './providers/chat-room-provider.js';
 export { type ChatStatusResponse } from './types/chat-status-response.js';

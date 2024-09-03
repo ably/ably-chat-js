@@ -4,6 +4,7 @@
     "./hooks/**/*.tsx",
     "index.ts",
     "./types/**/*.ts",
+    "./types/**/*.tsx",
     "./contexts/**/*.ts",
     "./contexts/**/*.tsx",
     "./providers/**/*.ts",

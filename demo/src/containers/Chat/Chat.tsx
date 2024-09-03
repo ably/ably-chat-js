@@ -1,18 +1,24 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
 import { useMessages } from '../../hooks/useMessages';
 import { useTypingIndicators } from '../../hooks/useTypingIndicators.ts';
-import { useReactions } from '../../hooks/useReactions';
+import { useChatConnection, useRoomReactions } from '@ably/chat/react';
 import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
-import { useChatConnection } from '@ably/chat/react';
-import { ConnectionLifecycle } from '@ably/chat';
+import { ConnectionLifecycle, Reaction } from '@ably/chat';
 
 export const Chat = () => {
   const { loading, clientId, messages, sendMessage } = useMessages();
   const { startTyping, stopTyping, typers } = useTypingIndicators();
-  const { reactions, sendReaction } = useReactions();
+  const [roomReactions, setRoomReactions] = useState<Reaction[]>([]);
+
+  const { send } = useRoomReactions({
+    listener: (reaction) => {
+      setRoomReactions([...roomReactions, reaction]);
+    },
+  });
+
   const { currentStatus } = useChatConnection();
 
   const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
@@ -123,13 +129,13 @@ export const Chat = () => {
       <div>
         <ReactionInput
           reactions={[]}
-          onSend={sendReaction}
+          onSend={send}
           disabled={loading || !isConnected}
         ></ReactionInput>
       </div>
       <div>
         Received reactions:{' '}
-        {reactions.map((r, idx) => (
+        {roomReactions.map((r, idx) => (
           <span key={idx}>{r.type}</span>
         ))}{' '}
       </div>
