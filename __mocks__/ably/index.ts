@@ -15,6 +15,7 @@ function createMockPresence() {
     update: () => mockPromisify<void>(undefined),
     enterClient: methodReturningVoidPromise,
     leaveClient: methodReturningVoidPromise,
+    updateClient: methodReturningVoidPromise,
     enter: methodReturningVoidPromise,
     leave: methodReturningVoidPromise,
     subscriptions: createMockEmitter(),

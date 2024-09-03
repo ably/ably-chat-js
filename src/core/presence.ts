@@ -123,35 +123,35 @@ export interface Presence extends EmitsDiscontinuities {
   /**
    * Method to get list of the current online users and returns the latest presence messages associated to it.
    * @param {Ably.RealtimePresenceParams} params - Parameters that control how the presence set is retrieved.
-   * @returns {Promise<PresenceMessage[]>} or upon failure, the promise will be rejected with an [[Ably.ErrorInfo]] object which explains the error.
+   * @returns {Promise<PresenceMessage[]>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]>;
 
   /**
    * Method to check if user with supplied clientId is online
    * @param {string} clientId - The client ID to check if it is present in the room.
-   * @returns {Promise<{boolean}>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   * @returns {Promise<{boolean}>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   isUserPresent(clientId: string): Promise<boolean>;
 
   /**
    * Method to join room presence, will emit an enter event to all subscribers. Repeat calls will trigger more enter events.
    * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
-   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   enter(data?: PresenceData): Promise<void>;
 
   /**
    * Method to update room presence, will emit an update event to all subscribers. If the user is not present, it will be treated as a join event.
    * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
-   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   update(data?: PresenceData): Promise<void>;
 
   /**
    * Method to leave room presence, will emit a leave event to all subscribers. If the user is not present, it will be treated as a no-op.
    * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
-   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   leave(data?: PresenceData): Promise<void>;
 

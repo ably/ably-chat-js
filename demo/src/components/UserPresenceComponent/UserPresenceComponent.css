@@ -91,15 +91,17 @@
 .btn.enter {
   background-color: #4caf50;
 }
+
 .btn.enter:hover {
   background-color: #388e3c;
 }
 
 .btn.update {
-  background-color: #e6e600;
+  background-color: #006edc;
 }
+
 .btn.update:hover {
-  background-color: #bebe00;
+  background-color: #0862b9;
 }
 
 .btn.leave {
