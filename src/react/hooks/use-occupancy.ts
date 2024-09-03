@@ -68,7 +68,6 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
 
   // subscribe to occupancy events, throttling the updates if an interval is provided
   useEffect(() => {
-    console.log('useEffect has been run');
     const { unsubscribe } = room.occupancy.subscribe((occupancyEvent) => {
       setOccupancyMetrics({
         connections: occupancyEvent.connections,
