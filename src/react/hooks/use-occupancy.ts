@@ -66,7 +66,7 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
     };
   }, [room, params?.onDiscontinuity]);
 
-  // subscribe to occupancy events, throttling the updates if an interval is provided
+  // subscribe to occupancy events internally, to update the state metrics
   useEffect(() => {
     const { unsubscribe } = room.occupancy.subscribe((occupancyEvent) => {
       setOccupancyMetrics({
@@ -77,7 +77,7 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
     return () => {
       unsubscribe();
     };
-  }, [params?.listener, room]);
+  }, [room]);
 
   // if provided, subscribes the user provided listener to occupancy events
   useEffect(() => {
