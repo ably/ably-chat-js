@@ -6,6 +6,7 @@ import { OccupancyEvent } from '../../src/core/occupancy.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomLifecycle } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';
+import { waitForExpectedInbandOccupancy } from '../helper/common.ts';
 import { ablyRealtimeClientWithToken } from '../helper/realtime-client.ts';
 import { getRandomRoom, waitForRoomStatus } from '../helper/room.ts';
 
@@ -40,30 +41,6 @@ const waitForExpectedInstantaneousOccupancy = (room: Room, expectedOccupancy: Oc
     setTimeout(() => {
       clearInterval(interval);
       reject(new Error('Timed out waiting for occupancy'));
-    }, TEST_TIMEOUT);
-  });
-};
-
-// Wait to receive an occupancy event that matches the expected occupancy.
-// Do this with a 10s timeout.
-const waitForExpectedInbandOccupancy = (occupancyEvents: OccupancyEvent[], expectedOccupancy: OccupancyEvent) => {
-  return new Promise<void>((resolve) => {
-    const interval = setInterval(() => {
-      const occupancy = occupancyEvents.find(
-        (occupancy) =>
-          occupancy.connections === expectedOccupancy.connections &&
-          occupancy.presenceMembers === expectedOccupancy.presenceMembers,
-      );
-
-      if (occupancy) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 1000);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      resolve();
     }, TEST_TIMEOUT);
   });
 };
@@ -139,10 +116,14 @@ describe('occupancy', () => {
     await room.attach();
 
     // Wait to get our first occupancy update - us entering the room
-    await waitForExpectedInbandOccupancy(occupancyUpdates, {
-      connections: 1,
-      presenceMembers: 0,
-    });
+    await waitForExpectedInbandOccupancy(
+      occupancyUpdates,
+      {
+        connections: 1,
+        presenceMembers: 0,
+      },
+      TEST_TIMEOUT,
+    );
 
     // In a separate realtime client, attach to the same room
     const realtimeClient = ablyRealtimeClientWithToken();
@@ -152,10 +133,14 @@ describe('occupancy', () => {
     await realtimeChannel.presence.enter();
 
     // Wait for the occupancy to reach the expected occupancy
-    await waitForExpectedInbandOccupancy(occupancyUpdates, {
-      connections: 2,
-      presenceMembers: 1,
-    });
+    await waitForExpectedInbandOccupancy(
+      occupancyUpdates,
+      {
+        connections: 2,
+        presenceMembers: 1,
+      },
+      TEST_TIMEOUT,
+    );
   });
 
   it<TestContext>('handles discontinuities', async (context) => {

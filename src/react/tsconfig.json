@@ -3,6 +3,7 @@
     "./hooks/**/*.ts",
     "./hooks/**/*.tsx",
     "index.ts",
+    "./types/**/*.ts",
     "./contexts/**/*.ts",
     "./contexts/**/*.tsx",
     "./providers/**/*.ts",

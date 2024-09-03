@@ -2,8 +2,8 @@ import { ConnectionStatusChange, Room, RoomLifecycle, RoomStatusChange } from '@
 import * as Ably from 'ably';
 import { useCallback, useContext, useEffect, useState } from 'react';
 
-import { ChatStatusResponse } from '../chat-status-response.js';
 import { ChatRoomContext } from '../contexts/chat-room-context.js';
+import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { useChatConnection } from './use-chat-connection.js';
 
 /**
