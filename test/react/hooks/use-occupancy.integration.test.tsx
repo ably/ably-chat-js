@@ -8,6 +8,7 @@ import { ChatClientProvider } from '../../../src/react/providers/chat-client-pro
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 import { waitForExpectedInbandOccupancy } from '../../helper/common.ts';
+import { randomRoomId } from '../../helper/identifier.ts';
 
 describe('useOccupancy', () => {
   it('should receive occupancy updates', async () => {
@@ -17,8 +18,9 @@ describe('useOccupancy', () => {
     const chatClientThree = newChatClient() as unknown as ChatClient;
 
     // create two more rooms and attach to contribute towards occupancy metrics
-    const roomTwo = chatClientTwo.rooms.get('room-id', RoomOptionsDefaults);
-    const roomThree = chatClientThree.rooms.get('room-id', RoomOptionsDefaults);
+    const roomId = randomRoomId();
+    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomThree = chatClientThree.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
     await roomThree.attach();
 
@@ -43,7 +45,7 @@ describe('useOccupancy', () => {
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
         <ChatRoomProvider
-          id="room-id"
+          id={roomId}
           options={RoomOptionsDefaults}
         >
           <TestComponent listener={(occupancyEvent) => occupancyEvents.push(occupancyEvent)} />
