@@ -7,6 +7,7 @@ import { usePresence } from '../../../src/react/hooks/use-presence.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
+import { randomRoomId } from '../../helper/identifier.ts';
 
 function waitForPresenceEvents(presenceEvents: PresenceEvent[], expectedCount: number) {
   return new Promise<void>((resolve, reject) => {
@@ -30,7 +31,8 @@ describe('usePresence', () => {
     const chatClientTwo = newChatClient() as unknown as ChatClient;
 
     // create a second room and attach it, so we can listen for presence events
-    const roomTwo = chatClientTwo.rooms.get('room-id', RoomOptionsDefaults);
+    const roomId = randomRoomId();
+    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // start listening for presence events on room two
@@ -64,7 +66,7 @@ describe('usePresence', () => {
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
-          id="room-id"
+          id={roomId}
           options={RoomOptionsDefaults}
         >
           <TestComponent

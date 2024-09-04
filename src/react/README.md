@@ -264,3 +264,42 @@ const MyComponent = () => {
   );
 };
 ```
+
+## usePresenceListener
+
+This hook accepts a listener callback for receiving presence events and provides a state variable kept up to date
+with the current presence state.
+
+It is intended solely for monitoring the state of `Presence` in a room, should you wish to enter presence and thus
+update the presence state, you should use the `usePresence` hook.
+
+This hook also allows you to access the `Presence` instance of a specific room from the nearest `ChatRoomProvider` in
+the component tree.
+
+```tsx
+import React from 'react';
+import { usePresenceListener } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const { presenceData, error } = usePresenceListener({
+    listener: (event) => {
+      console.log('Presence event: ', event);
+    },
+  });
+
+  return (
+    <div>
+      <p>Presence data:</p>
+      {error === undefined ? (
+        <ul>
+          {presenceData.map((presence) => (
+            <li key={presence.clientId}>{presence.clientId}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>Error loading presence data</p>
+      )}
+    </div>
+  );
+};
+```
