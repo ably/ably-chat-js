@@ -46,38 +46,13 @@ const MyComponent = () => {
 };
 ```
 
-## useChatConnection
-
-This hook allows you to access the connection status of the `ChatClient` instance from your React components.
-
-To use it, call the hook in your component, this will retrieve the connection state from the `ChatClient` of the
-nearest `ChatClientProvider`.
-
-It can also be supplied with an optional listener that will receive the underlying connection status changes.
-
-```tsx
-import { useChatConnection } from '@ably/chat/react';
-
-const MyComponent = () => {
-  const { currentStatus } = useChatConnection({
-    onStatusChange: (statusChange) => {
-      console.log('Connection status changed to: ', statusChange.current);
-    },
-  });
-  return <div>Connection status is: {currentStatus}</div>;
-};
-```
-
 ## Optional Status Listeners
 
 Most of the hooks detailed below take some optional listeners as input parameters.
 
-Listeners can be provided for events related to the `Room` instance status changes
-via `onRoomStatusChange`, the `ChatClient` connection status changes via `onConnectionStatusChange`,
-and the discontinuity error events via the `onDiscontinuity` event listener.
+At a client-level, changes to the connection status can be subscribed to by providing an `onConnectionStatusChange` listener. The events pertain to the `ChatClient` registered with the nearest parent `ChatClientProvider` in the component tree.
 
-All events relate to the `Room` instance of the nearest `RoomProvider` and thus the connection of the `ChatClient`
-from the nearest `ChatClientProvider` above it in the component tree.
+Listeners can be provided for events related to a particular `Room` instances status changes via `onRoomStatusChange`. Furthermore, discontinuities in the event stream for room features can be monitored via the `onDiscontinuity` event listener. Room-level events pertain to the nearest parent `RoomProvider` in the React component tree.
 
 ```tsx
 import { useOccupancy } from '@ably/chat/react';
@@ -127,9 +102,80 @@ const MyComponent = () => {
 };
 ```
 
+## useChatConnection
+
+This hook allows you to access the connection status of the `ChatClient` instance from your React components.
+
+To use it, call the hook in your component, this will retrieve the connection state from the `ChatClient` of the
+nearest `ChatClientProvider`.
+
+It can also be supplied with an optional listener that will receive the underlying connection status changes.
+
+```tsx
+import { useChatConnection } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const { currentStatus } = useChatConnection({
+    onStatusChange: (statusChange) => {
+      console.log('Connection status changed to: ', statusChange.current);
+    },
+  });
+  return <div>Connection status is: {currentStatus}</div>;
+};
+```
+
+## ChatRoomProvider
+
+The `ChatRoomProvider` provides access to a specific chat room to all child components in the component tree. To use it,
+pass in the id of the room you wish to use, as well as the desired room options (i.e. configuration for each feature):
+
+```tsx
+import { ChatClientProvider, ChatRoomProvider } from '@ably/chat/react';
+import * as Ably from 'ably';
+import { LogLevel, RoomOptionsDefaults } from '@ably/chat';
+
+const realtimeClient = new Ably.Realtime({ key: 'api-key', clientId: 'clientId' });
+const chatClient = new ChatClient(realtimeClient);
+
+const App = () => {
+  return (
+    <ChatClientProvider client={chatClient}>
+      <ChatRoomProvider
+        id="my-room-id"
+        options={RoomOptionsDefaults}
+      >
+        <RestOfYourApp />
+      </ChatRoomProvider>
+    </ChatClientProvider>
+  );
+};
+```
+
+By default, the `ChatRoomProvider` will automatically call `attach()` on the room when it first mounts, and will subsequently call `release()` when it unmounts. If you do not wish for this behavior, you may set the `attach` parameter to `false`, which will allow you to manually control the attachment via the `useRoom` hook (see below). You may also inhibit the `release` behavior, to simply only `detach` the room when the component unmounts.
+
+To use the room-level hooks below, you **must** wrap any components utilizing the hooks inside a `ChatRoomProvider`.
+
+## useRoom
+
+The `useRoom` hook provides direct access to the `Room` object provided by the nearest parent `ChatRoomProvider`. Unless you are intending to explicitly control the room lifecycle (see `ChatRoomProvider`), you probably won't need to use this hook and can instead use feature-specific hooks such as `useMessages`.
+
+```tsx
+import { useRoom } from '@ably/chat/react';
+
+const MyComponent = () => {
+  const { attach } = useRoom()
+  return (
+    <div>
+      <button onClick={attach}>Attach Me!</button>
+    </div>
+  );
+```
+
 ## useOccupancy
 
 This hook allows you to access the `Occupancy` instance of a `Room` from your React components.
+
+**To use this hook, the component calling it must be a child of a `ChatRoomProvider`.**
 
 To use it, call the hook in your component, this will retrieve the `Occupancy` instance from the `Room` of the
 nearest `ChatRoomProvider`.
@@ -159,8 +205,9 @@ const MyComponent = () => {
 
 ## useRoomReactions
 
-This hook allows you to access the `RoomReactions` instance of a specific room from the nearest `ChatRoomProvider` in the
-component tree.
+This hook allows you to access the `RoomReactions` instance of a `Room` from your React components.
+
+**To use this hook, the component calling it must be a child of a `ChatRoomProvider`.**
 
 The hook will provide the `RoomReactions` instance, should you wish to interact with it directly, and also a send method
 that can be used to send a reaction to the room.
@@ -191,7 +238,9 @@ const MyComponent = () => {
 
 ## useTyping
 
-This hook allows you to access the `Typing` instance of a Room from your React components.
+This hook allows you to access the `Typing` instance of a `Room` from your React components.
+
+**To use this hook, the component calling it must be a child of a `ChatRoomProvider`.**
 
 To use it, call the hook in your component, this will retrieve the `Typing` instance from the room of the
 nearest `ChatRoomProvider`.
@@ -230,9 +279,11 @@ const MyComponent = () => {
 
 ## usePresence
 
-This hook allows you to control your presence status.
-When mounting, the hook will automatically `enter` the user into presence,
-with the data provided to the hook, and then `leave` presence when the component unmounts.
+This hook allows you to control your presence status in a `Room`.
+
+**To use this hook, the component calling it must be a child of a `ChatRoomProvider`.**
+
+When mounting, the hook will automatically `enter` the user into presence, with the data provided to the hook, and then `leave` presence when the component unmounts.
 
 The `update` function is also exposed by the hook, allowing you to send updates to the presence state.
 
@@ -273,8 +324,10 @@ with the current presence state.
 It is intended solely for monitoring the state of `Presence` in a room, should you wish to enter presence and thus
 update the presence state, you should use the `usePresence` hook.
 
-This hook also allows you to access the `Presence` instance of a specific room from the nearest `ChatRoomProvider` in
+This hook also allows you to access the `Presence` instance of a specific `room` from the nearest `ChatRoomProvider` in
 the component tree.
+
+**To use this hook, the component calling it must be a child of a `ChatRoomProvider`.**
 
 ```tsx
 import React from 'react';
