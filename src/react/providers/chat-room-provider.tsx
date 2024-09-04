@@ -5,6 +5,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 
 import { ChatRoomContext } from '../contexts/chat-room-context.js';
 import { useChatClient } from '../hooks/use-chat-client.js';
+import { useLogger } from '../hooks/use-logger.js';
 
 /**
  * Props for the {@link ChatRoomProvider} component.
@@ -73,6 +74,8 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
   children,
 }) => {
   const client = useChatClient();
+  const logger = useLogger();
+  logger.trace(`ChatRoomProvider();`, { roomId, options, release, attach });
 
   const [value, setValue] = useState({ room: client.rooms.get(roomId, options) });
 
@@ -90,18 +93,21 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
     if (attach) {
       // attachment error and/or room status is available via useRoom
       // or room.status, no need to do anything with the promise here
+      logger.debug(`ChatRoomProvider(); attaching room`, { roomId });
       void room.attach();
     }
     return () => {
       // Releasing the room will implicitly detach if needed.
 
       if (release) {
+        logger.debug(`ChatRoomProvider(); releasing room`, { roomId });
         void client.rooms.release(roomId);
       } else if (attach) {
+        logger.debug(`ChatRoomProvider(); detaching room`, { roomId });
         void room.detach();
       }
     };
-  }, [client, roomId, options, release, attach]);
+  }, [client, roomId, options, release, attach, logger]);
 
   return <ChatRoomContext.Provider value={value}>{children}</ChatRoomContext.Provider>;
 };

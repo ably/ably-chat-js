@@ -1,12 +1,14 @@
-import { ConnectionLifecycle, Room, RoomLifecycle, TypingListener } from '@ably/chat';
+import { ConnectionLifecycle, Logger, Room, RoomLifecycle, TypingListener } from '@ably/chat';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { ErrorInfo } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useTyping } from '../../../src/react/hooks/use-typing.ts';
+import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
 
 let mockRoom: Room;
+let mockLogger: Logger;
 
 // apply mocks for the useChatConnection and useRoom hooks
 vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
@@ -17,6 +19,10 @@ vi.mock('../../../src/react/hooks/use-room.js', () => ({
   useRoom: () => ({ room: mockRoom, roomStatus: RoomLifecycle.Attached }),
 }));
 
+vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+  useLogger: () => mockLogger,
+}));
+
 vi.mock('ably');
 
 describe('useTyping', () => {
@@ -24,6 +30,7 @@ describe('useTyping', () => {
     // create a new mock room before each test, enabling typing
     vi.resetAllMocks();
     mockRoom = makeRandomRoom({ options: { typing: { timeoutMs: 500 } } });
+    mockLogger = makeTestLogger();
   });
 
   it('should provide the typing instance and chat status response metrics', () => {

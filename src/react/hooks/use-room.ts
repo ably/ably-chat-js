@@ -5,6 +5,7 @@ import { useCallback, useContext, useEffect, useState } from 'react';
 import { ChatRoomContext } from '../contexts/chat-room-context.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { useChatConnection } from './use-chat-connection.js';
+import { useLogger } from './use-logger.js';
 
 /**
  * Parameters for the {@link useRoom} hook.
@@ -64,8 +65,11 @@ function makeStatusObject(source: { current: RoomLifecycle; error?: Ably.ErrorIn
  */
 export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
   const context = useContext(ChatRoomContext);
+  const logger = useLogger();
+  logger.trace('useRoom();', { roomId: context?.room.roomId });
 
   if (!context) {
+    logger.error('useRoom(); must be used within a ChatRoomProvider');
     throw new Ably.ErrorInfo('useRoom hook must be used within a ChatRoomProvider', 40000, 400);
   }
 
@@ -83,6 +87,7 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
 
   // Effect that keeps the roomStatus state up to date
   useEffect(() => {
+    logger.debug('useRoom(); setting up room status listener', { roomId: room.roomId });
     const { off } = room.status.onChange((change) => {
       setRoomStatus(makeStatusObject(change));
     });
@@ -95,17 +100,24 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
       return prev;
     });
 
-    return off;
-  }, [room]);
+    return () => {
+      logger.debug('useRoom(); removing room status listener', { roomId: room.roomId });
+      off();
+    };
+  }, [room, logger]);
 
   // Effect that registers and removes the user-provided callback
   const onRoomStatusChange = params?.onStatusChange;
   useEffect(() => {
     if (onRoomStatusChange) {
+      logger.debug('useRoom(); applying user-provided listener', { roomId: room.roomId });
       const { off } = room.status.onChange(onRoomStatusChange);
-      return off;
+      return () => {
+        logger.debug('useRoom(); removing user-provided listener', { roomId: room.roomId });
+        off();
+      };
     }
-  }, [room, onRoomStatusChange]);
+  }, [room, onRoomStatusChange, logger]);
 
   const attach = useCallback(() => room.attach(), [room]);
   const detach = useCallback(() => room.detach(), [room]);

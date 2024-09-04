@@ -5,6 +5,7 @@ import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
+import { useLogger } from './use-logger.js';
 import { useRoom } from './use-room.js';
 
 /**
@@ -46,24 +47,30 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
   const { room, roomError, roomStatus } = useRoom({
     onStatusChange: params?.onRoomStatusChange,
   });
+  const logger = useLogger();
+  logger.trace('useRoomReactions();', { params, roomId: room.roomId });
 
   // if provided, subscribes the user provided discontinuity listener
   useEffect(() => {
     if (!params?.onDiscontinuity) return;
+    logger.debug('useRoomReactions(); applying onDiscontinuity listener', { roomId: room.roomId });
     const { off } = room.reactions.onDiscontinuity(params.onDiscontinuity);
     return () => {
+      logger.debug('useRoomReactions(); removing onDiscontinuity listener', { roomId: room.roomId });
       off();
     };
-  }, [room, params]);
+  }, [room, params, logger]);
 
   // if provided, subscribe the user provided listener to room reactions
   useEffect(() => {
     if (!params?.listener) return;
+    logger.debug('useRoomReactions(); applying listener', { roomId: room.roomId });
     const { unsubscribe } = room.reactions.subscribe(params.listener);
     return () => {
+      logger.debug('useRoomReactions(); removing listener', { roomId: room.roomId });
       unsubscribe();
     };
-  }, [room, params]);
+  }, [room, params, logger]);
 
   const send = useCallback((params: SendReactionParams) => room.reactions.send(params), [room.reactions]);
 

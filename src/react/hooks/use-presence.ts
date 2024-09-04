@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
+import { useLogger } from './use-logger.js';
 import { useRoom } from './use-room.js';
 
 /**
@@ -65,6 +66,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   const { room, roomError, roomStatus } = useRoom({
     onStatusChange: params?.onRoomStatusChange,
   });
+  const logger = useLogger();
+  logger.trace('usePresence();', { params, roomId: room.roomId });
 
   const [isPresent, setIsPresent] = useState(false);
   const [error, setError] = useState<ErrorInfo | undefined>();
@@ -95,10 +98,12 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     room.presence
       .enter(dataRef.current?.enterWithData)
       .then(() => {
+        logger.debug('usePresence(); entered room', { roomId: room.roomId });
         setIsPresent(true);
         setError(undefined);
       })
       .catch((error: unknown) => {
+        logger.error('usePresence(); error entering room', { error, roomId: room.roomId });
         setError(error as ErrorInfo);
       });
 
@@ -109,24 +114,28 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
         room.presence
           .leave(dataRef.current?.leaveWithData)
           .then(() => {
+            logger.debug('usePresence(); left room', { roomId: room.roomId });
             setIsPresent(false);
             setError(undefined);
           })
           .catch((error: unknown) => {
+            logger.error('usePresence(); error leaving room', { error, roomId: room.roomId });
             setError(error as ErrorInfo);
           });
       }
     };
-  }, [room, connectionStatus, roomStatus]);
+  }, [room, connectionStatus, roomStatus, logger]);
 
   // if provided, subscribes the user provided onDiscontinuity listener
   useEffect(() => {
     if (!params?.onDiscontinuity) return;
+    logger.debug('usePresence(); applying onDiscontinuity listener', { roomId: room.roomId });
     const { off } = room.presence.onDiscontinuity(params.onDiscontinuity);
     return () => {
+      logger.debug('usePresence(); removing onDiscontinuity listener', { roomId: room.roomId });
       off();
     };
-  }, [room, params]);
+  }, [room, params, logger]);
 
   // memoize the methods to avoid re-renders and ensure the same instance is used
   const update = useCallback(

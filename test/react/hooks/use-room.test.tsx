@@ -23,7 +23,14 @@ function newChatClient() {
 
 describe('useRoom', () => {
   it('should throw an error if used outside of ChatRoomProvider', () => {
-    expect(() => render(<TestComponent />)).toThrowErrorInfo({
+    const chatClient = newChatClient();
+    const TestProvider = () => (
+      <ChatClientProvider client={chatClient}>
+        <TestComponent />
+      </ChatClientProvider>
+    );
+
+    expect(() => render(<TestProvider />)).toThrowErrorInfo({
       code: 40000,
       message: 'useRoom hook must be used within a ChatRoomProvider',
     });

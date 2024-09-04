@@ -1,5 +1,6 @@
 import {
   ConnectionLifecycle,
+  Logger,
   PresenceEvent,
   PresenceEvents,
   PresenceListener,
@@ -13,9 +14,11 @@ import { ErrorInfo } from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { usePresenceListener } from '../../../src/react/hooks/use-presence-listener.ts';
+import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
 
 let mockRoom: Room;
+let mockLogger: Logger;
 
 let mockCurrentConnectionStatus: ConnectionLifecycle;
 let mockCurrentRoomStatus: RoomLifecycle;
@@ -40,12 +43,17 @@ vi.mock('../../../src/react/hooks/use-room.js', () => ({
   },
 }));
 
+vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+  useLogger: () => mockLogger,
+}));
+
 vi.mock('ably');
 
 describe('usePresenceListener', () => {
   beforeEach(() => {
     // create a new mock room before each test
     mockRoom = makeRandomRoom({ options: { presence: { subscribe: true } } });
+    mockLogger = makeTestLogger();
   });
   afterEach(() => {
     vi.restoreAllMocks();
