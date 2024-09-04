@@ -7,6 +7,7 @@ import { useRoomReactions } from '../../../src/react/hooks/use-room-reactions.ts
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
+import { randomRoomId } from '../../helper/identifier.ts';
 
 function waitForReactions(reactions: Reaction[], expectedCount: number) {
   return new Promise<void>((resolve, reject) => {
@@ -30,7 +31,8 @@ describe('useRoomReactions', () => {
     const chatClientTwo = newChatClient() as unknown as ChatClient;
 
     // create a second room and attach it, so we can receive reactions
-    const roomTwo = chatClientTwo.rooms.get('room-id', RoomOptionsDefaults);
+    const roomId = randomRoomId();
+    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // store the received reactions
@@ -58,7 +60,7 @@ describe('useRoomReactions', () => {
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
-          id="room-id"
+          id={roomId}
           options={RoomOptionsDefaults}
         >
           <TestComponent />
@@ -73,13 +75,15 @@ describe('useRoomReactions', () => {
     // check the reaction was received
     expect(reactions.find((reaction) => reaction.type === 'like')).toBeTruthy();
   });
+
   it('should receive room reactions', async () => {
     // create new clients
     const chatClientOne = newChatClient() as unknown as ChatClient;
     const chatClientTwo = newChatClient() as unknown as ChatClient;
 
     // create a second room and attach it, so we can send a reaction
-    const roomTwo = chatClientTwo.rooms.get('room-id', RoomOptionsDefaults);
+    const roomId = randomRoomId();
+    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // store the received reactions
@@ -100,7 +104,7 @@ describe('useRoomReactions', () => {
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
-          id="room-id"
+          id={roomId}
           options={RoomOptionsDefaults}
         >
           <TestComponent listener={(reaction) => reactions.push(reaction)} />

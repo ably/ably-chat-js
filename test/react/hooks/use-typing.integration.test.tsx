@@ -7,6 +7,7 @@ import { useTyping } from '../../../src/react/hooks/use-typing.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
+import { randomRoomId } from '../../helper/identifier.ts';
 
 function waitForTypingEvents(typingEvents: TypingEvent[], expectedCount: number) {
   return new Promise<void>((resolve, reject) => {
@@ -30,7 +31,8 @@ describe('useTyping', () => {
     const chatClientTwo = newChatClient() as unknown as ChatClient;
 
     // create a second room and attach it, so we can listen for typing events
-    const roomTwo = chatClientTwo.rooms.get('room-id', RoomOptionsDefaults);
+    const roomId = randomRoomId();
+    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // start listening for typing events on room two
@@ -55,7 +57,7 @@ describe('useTyping', () => {
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
-          id="room-id"
+          id={roomId}
           options={RoomOptionsDefaults}
         >
           <TestComponent />
@@ -76,7 +78,8 @@ describe('useTyping', () => {
     const chatClientTwo = newChatClient() as unknown as ChatClient;
 
     // create a second room and attach it, so we can send typing events
-    const roomTwo = chatClientTwo.rooms.get('room-id', RoomOptionsDefaults);
+    const roomId = randomRoomId();
+    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // store the received typing events for room one
@@ -97,7 +100,7 @@ describe('useTyping', () => {
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
-          id="room-id"
+          id={roomId}
           options={RoomOptionsDefaults}
         >
           <TestComponent listener={(typingEvent) => typingEventsRoomOne.push(typingEvent)} />

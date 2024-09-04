@@ -14,6 +14,7 @@ import { usePresenceListener } from '../../../src/react/hooks/use-presence-liste
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
+import { randomRoomId } from '../../helper/identifier.ts';
 
 function waitForPresenceEvents(presenceEvents: PresenceEvent[], expectedCount: number) {
   return new Promise<void>((resolve, reject) => {
@@ -26,7 +27,7 @@ function waitForPresenceEvents(presenceEvents: PresenceEvent[], expectedCount: n
     setTimeout(() => {
       clearInterval(interval);
       reject(new Error('Timed out waiting for presence events'));
-    }, 20000);
+    }, 10000);
   });
 }
 
@@ -37,7 +38,8 @@ describe('usePresenceListener', () => {
     const chatClientTwo = newChatClient() as unknown as ChatClient;
 
     // create a second room and attach it, so we can send presence events with it
-    const roomTwo = chatClientTwo.rooms.get('room-id', RoomOptionsDefaults);
+    const roomId = randomRoomId();
+    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // store the current presence member state
@@ -62,7 +64,7 @@ describe('usePresenceListener', () => {
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
-          id="room-id"
+          id={roomId}
           options={RoomOptionsDefaults}
         >
           <TestComponent
