@@ -3,7 +3,7 @@ import * as Ably from 'ably';
 import { ClientOptions, normalizeClientOptions, NormalizedClientOptions } from './config.js';
 import { Connection, DefaultConnection } from './connection.js';
 import { DefaultConnectionStatus } from './connection-status.js';
-import { makeLogger } from './logger.js';
+import { Logger, makeLogger } from './logger.js';
 import { RealtimeWithOptions } from './realtime-extensions.js';
 import { DefaultRooms, Rooms } from './rooms.js';
 import { VERSION } from './version.js';
@@ -33,6 +33,11 @@ export class ChatClient {
   private readonly _connection: Connection;
 
   /**
+   * @internal
+   */
+  private readonly _logger: Logger;
+
+  /**
    * Constructor for Chat
    * @param realtime - The Ably Realtime client.
    * @param clientOptions - The client options.
@@ -40,11 +45,11 @@ export class ChatClient {
   constructor(realtime: Ably.Realtime, clientOptions?: ClientOptions) {
     this._realtime = realtime;
     this._clientOptions = normalizeClientOptions(clientOptions);
-    const logger = makeLogger(this._clientOptions);
-    this._connection = new DefaultConnection(new DefaultConnectionStatus(realtime, logger));
-    this._rooms = new DefaultRooms(realtime, this._clientOptions, logger);
+    this._logger = makeLogger(this._clientOptions);
+    this._connection = new DefaultConnection(new DefaultConnectionStatus(realtime, this._logger));
+    this._rooms = new DefaultRooms(realtime, this._clientOptions, this._logger);
     this._addAgent('chat-js');
-    logger.trace(`ably chat client version ${VERSION}; initialized`);
+    this._logger.trace(`ably chat client version ${VERSION}; initialized`);
   }
 
   /**
@@ -89,6 +94,15 @@ export class ChatClient {
    */
   get clientOptions(): ClientOptions {
     return this._clientOptions;
+  }
+
+  /**
+   * Returns the logger instance for the client.
+   * @internal
+   * @returns The logger instance.
+   */
+  get logger(): Logger {
+    return this._logger;
   }
 
   /**
