@@ -12,6 +12,7 @@ let mockCurrentConnectionStatus: ConnectionLifecycle;
 let mockCurrentRoomStatus: RoomLifecycle;
 let mockConnectionError: Ably.ErrorInfo;
 let mockRoomError: Ably.ErrorInfo;
+let mockLogger: ReturnType<typeof makeTestLogger>;
 
 // apply mocks for the useChatConnection and useRoom hooks
 vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
@@ -30,7 +31,7 @@ vi.mock('../../../src/react/hooks/use-room.js', () => ({
 }));
 
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
-  useLogger: () => makeTestLogger(),
+  useLogger: () => mockLogger,
 }));
 
 vi.mock('ably');
@@ -39,6 +40,7 @@ describe('usePresence', () => {
   beforeEach(() => {
     // create a new mock room before each test, enabling presence
     vi.resetAllMocks();
+    mockLogger = makeTestLogger();
     mockCurrentConnectionStatus = ConnectionLifecycle.Connected;
     mockCurrentRoomStatus = RoomLifecycle.Attached;
     mockRoom = makeRandomRoom({
