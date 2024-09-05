@@ -2,6 +2,7 @@ import { Typing, TypingEvent, TypingListener, TypingSubscriptionResponse } from 
 import * as Ably from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
@@ -83,6 +84,11 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     errorRef.current = undefined;
     setError(undefined);
   }, [logger, room.roomId]);
+
+  // Create a stable reference for the listeners
+  const listenerRef = useEventListenerRef(params?.listener);
+  const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
+
   useEffect(() => {
     const fetchAndSubscribe = async () => {
       let response: TypingSubscriptionResponse;
@@ -122,25 +128,25 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
 
   // if provided, subscribes the user-provided onDiscontinuity listener
   useEffect(() => {
-    if (!params?.onDiscontinuity) return;
+    if (!onDiscontinuityRef) return;
     logger.debug('useTyping(); applying onDiscontinuity listener', { roomId: room.roomId });
-    const { off } = room.typing.onDiscontinuity(params.onDiscontinuity);
+    const { off } = room.typing.onDiscontinuity(onDiscontinuityRef);
     return () => {
       logger.debug('useTyping(); removing onDiscontinuity listener', { roomId: room.roomId });
       off();
     };
-  }, [room, params?.onDiscontinuity, logger]);
+  }, [room, onDiscontinuityRef, logger]);
 
   // if provided, subscribe the user-provided listener to TypingEvents
   useEffect(() => {
-    if (!params?.listener) return;
+    if (!listenerRef) return;
     logger.debug('useTyping(); applying listener', { roomId: room.roomId });
-    const { unsubscribe } = room.typing.subscribe(params.listener);
+    const { unsubscribe } = room.typing.subscribe(listenerRef);
     return () => {
       logger.debug('useTyping(); removing listener', { roomId: room.roomId });
       unsubscribe();
     };
-  }, [room, params?.listener, logger]);
+  }, [room, listenerRef, logger]);
 
   // memoize the methods to avoid re-renders, and ensure the same instance is used
   const start = useCallback(() => room.typing.start(), [room.typing]);

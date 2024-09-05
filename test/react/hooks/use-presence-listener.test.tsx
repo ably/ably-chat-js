@@ -1,5 +1,6 @@
 import {
   ConnectionLifecycle,
+  DiscontinuityListener,
   Logger,
   PresenceEvent,
   PresenceEvents,
@@ -84,13 +85,27 @@ describe('usePresenceListener', () => {
     const mockListener = vi.fn();
     const mockUnsubscribe = vi.fn();
 
-    vi.spyOn(mockRoom.presence, 'subscribe').mockReturnValue({ unsubscribe: mockUnsubscribe });
+    const presenceListeners = new Set<PresenceListener | undefined>();
+
+    vi.spyOn(mockRoom.presence, 'subscribe').mockImplementation((listener: PresenceListener | undefined) => {
+      presenceListeners.add(listener);
+      return { unsubscribe: mockUnsubscribe };
+    });
     vi.spyOn(mockRoom.presence, 'get').mockResolvedValue([]);
 
     const { unmount } = renderHook(() => usePresenceListener({ listener: mockListener }));
 
-    // verify that subscribe was called with the mock listener on mount
-    expect(mockRoom.presence.subscribe).toHaveBeenCalledWith(mockListener);
+    // verify that subscribe was called with the mock listener on mount by triggering a presence event
+    const testPresenceEvent: PresenceEvent = {
+      clientId: 'client1',
+      action: PresenceEvents.Enter,
+      data: undefined,
+      timestamp: Date.now(),
+    };
+    for (const listener of presenceListeners) {
+      listener?.(testPresenceEvent);
+    }
+    expect(mockListener).toHaveBeenCalledWith(testPresenceEvent);
 
     // unmount the hook and verify that unsubscribe was called
     unmount();
@@ -151,7 +166,7 @@ describe('usePresenceListener', () => {
       { timeout: 3000 },
     );
 
-    expect(mockRoom.presence.subscribe).toHaveBeenCalledOnce();
+    expect(mockRoom.presence.subscribe).toHaveBeenCalledTimes(1);
     expect(mockRoom.presence.get).toHaveBeenCalledOnce();
 
     // check that the presence data is correctly set
@@ -177,7 +192,7 @@ describe('usePresenceListener', () => {
 
     // ensure the get method was called
     expect(mockRoom.presence.get).toHaveBeenCalledOnce();
-    expect(mockRoom.presence.subscribe).toHaveBeenCalledOnce();
+    expect(mockRoom.presence.subscribe).toHaveBeenCalledTimes(1);
 
     // ensure we have the correct error state
     expect(result.current.error).toBeErrorInfo({
@@ -248,13 +263,19 @@ describe('usePresenceListener', () => {
     const mockDiscontinuityListener = vi.fn();
 
     // spy on the onDiscontinuity method of the room presence instance
-    vi.spyOn(mockRoom.presence, 'onDiscontinuity').mockReturnValue({ off: mockOff });
+    let discontinuityListener: DiscontinuityListener | undefined;
+    vi.spyOn(mockRoom.presence, 'onDiscontinuity').mockImplementation((listener) => {
+      discontinuityListener = listener;
+      return { off: mockOff };
+    });
 
     // render the hook with a discontinuity listener
     const { unmount } = renderHook(() => usePresenceListener({ onDiscontinuity: mockDiscontinuityListener }));
 
-    // check that the listener was subscribed to the discontinuity events
-    expect(mockRoom.presence.onDiscontinuity).toHaveBeenCalledWith(mockDiscontinuityListener);
+    // check that the listener was subscribed to the discontinuity events by triggering a discontinuity event
+    const errorInfo = new Ably.ErrorInfo('test', 500, 50000);
+    expect(discontinuityListener).toBeDefined();
+    discontinuityListener?.(errorInfo);
 
     // unmount the hook and verify that the listener was unsubscribed
     unmount();

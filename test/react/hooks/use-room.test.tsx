@@ -254,8 +254,6 @@ describe('useRoom', () => {
       { wrapper: WithClient },
     );
 
-    expect(room.status.onChange).toHaveBeenCalledWith(listener);
-
     act(() => {
       for (const l of listeners) l(expectedChange);
     });

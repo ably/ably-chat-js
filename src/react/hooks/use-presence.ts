@@ -2,6 +2,7 @@ import { ConnectionLifecycle, Presence, PresenceData, RoomLifecycle } from '@abl
 import { type ErrorInfo } from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
@@ -75,6 +76,9 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   // store the roomStatus in a ref to ensure the correct value is used in the effect cleanup
   const roomStatusAndConnectionStatusRef = useRef({ roomStatus, connectionStatus });
 
+  // create a stable reference for the onDiscontinuity listener
+  const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
+
   // we can't use the data param directly in a dependency array as it will cause an infinite loop
   const dataRef = useRef(params);
   useEffect(() => {
@@ -128,14 +132,14 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
   // if provided, subscribes the user provided onDiscontinuity listener
   useEffect(() => {
-    if (!params?.onDiscontinuity) return;
+    if (!onDiscontinuityRef) return;
     logger.debug('usePresence(); applying onDiscontinuity listener', { roomId: room.roomId });
-    const { off } = room.presence.onDiscontinuity(params.onDiscontinuity);
+    const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
     return () => {
       logger.debug('usePresence(); removing onDiscontinuity listener', { roomId: room.roomId });
       off();
     };
-  }, [room, params, logger]);
+  }, [room, onDiscontinuityRef, logger]);
 
   // memoize the methods to avoid re-renders and ensure the same instance is used
   const update = useCallback(
