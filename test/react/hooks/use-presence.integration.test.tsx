@@ -1,7 +1,7 @@
 import { ChatClient, PresenceData, PresenceEvent, RoomOptionsDefaults } from '@ably/chat';
-import { render } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { usePresence } from '../../../src/react/hooks/use-presence.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -25,6 +25,10 @@ function waitForPresenceEvents(presenceEvents: PresenceEvent[], expectedCount: n
 }
 
 describe('usePresence', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should send presence events', async () => {
     // create new clients
     const chatClientOne = newChatClient() as unknown as ChatClient;
@@ -79,13 +83,19 @@ describe('usePresence', () => {
 
     const { unmount } = render(<TestProvider />);
 
+    await waitFor(
+      () => {
+        expect(isPresentState).toBe(true);
+      },
+      { timeout: 3000 },
+    );
+
     // expect a presence enter and update event from the test component to be received by the second room
     await waitForPresenceEvents(presenceEventsRoomTwo, 2);
     expect(presenceEventsRoomTwo[0]?.clientId).toBe(chatClientOne.clientId);
     expect(presenceEventsRoomTwo[0]?.data).toBe('test enter');
     expect(presenceEventsRoomTwo[1]?.clientId).toBe(chatClientOne.clientId);
     expect(presenceEventsRoomTwo[1]?.data).toBe('test update');
-    expect(isPresentState).toBe(true);
 
     unmount();
     // expect a presence leave event from the test component to be received by the second room

@@ -1,6 +1,6 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ConnectionLifecycle,
@@ -51,6 +51,10 @@ describe('useChatConnection', () => {
   beforeEach(() => {
     mockCallbacks = [];
     mockChatClient = createMockChatClient(ConnectionLifecycle.Initialized);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should provide the initial state of the connection on render', () => {

@@ -1,7 +1,7 @@
 import { ChatClient, RoomOptionsDefaults } from '@ably/chat';
-import { render } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
@@ -11,6 +11,10 @@ import { randomRoomId } from '../../helper/identifier.ts';
 vi.mock('ably');
 
 describe('ChatRoomProvider', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should create a provider without error', () => {
     const chatClient = newChatClient() as unknown as ChatClient;
     const TestComponent = () => {

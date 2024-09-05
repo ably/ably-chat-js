@@ -1,8 +1,8 @@
 import { ChatClient, RoomLifecycle, RoomOptionsDefaults, RoomStatusListener } from '@ably/chat';
-import { act, render, renderHook } from '@testing-library/react';
+import { act, cleanup, render, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatRoomProvider, useRoom, UseRoomResponse } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -22,18 +22,28 @@ function newChatClient() {
 }
 
 describe('useRoom', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should throw an error if used outside of ChatRoomProvider', () => {
     const chatClient = newChatClient();
+
+    const TestThrowError: React.FC = () => {
+      expect(() => useRoom()).toThrowErrorInfo({
+        code: 40000,
+        message: 'useRoom hook must be used within a ChatRoomProvider',
+      });
+      return null;
+    };
+
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
-        <TestComponent />
+        <TestThrowError />
       </ChatClientProvider>
     );
 
-    expect(() => render(<TestProvider />)).toThrowErrorInfo({
-      code: 40000,
-      message: 'useRoom hook must be used within a ChatRoomProvider',
-    });
+    render(<TestProvider />);
   });
 
   it('should get the room from the context without error', async () => {
@@ -210,7 +220,7 @@ describe('useRoom', () => {
     expect(chatClient.rooms.release).toHaveBeenCalledWith(roomId);
   });
 
-  it('should correctly set room status callback', () => {
+  it('should correctly set room status callback', async () => {
     const chatClient = newChatClient();
     const roomId = randomRoomId();
     const room = chatClient.rooms.get(roomId, RoomOptionsDefaults);
@@ -259,9 +269,10 @@ describe('useRoom', () => {
     });
 
     expect(called).toBeTruthy();
+    await room.detach();
   });
 
-  it('should correctly set room status and error state variables', () => {
+  it('should correctly set room status and error state variables', async () => {
     const chatClient = newChatClient();
     const roomId = randomRoomId();
     const room = chatClient.rooms.get(roomId, RoomOptionsDefaults);
@@ -316,5 +327,6 @@ describe('useRoom', () => {
 
     expect(result.current.roomStatus).toBe(RoomLifecycle.Failed);
     expect(result.current.roomError).toBe(err);
+    await room.detach();
   });
 });

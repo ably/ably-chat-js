@@ -6,9 +6,9 @@ import {
   Room,
   RoomLifecycle,
 } from '@ably/chat';
-import { act, renderHook } from '@testing-library/react';
+import { act, cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
@@ -38,6 +38,10 @@ describe('useOccupancy', () => {
     vi.resetAllMocks();
     mockLogger = makeTestLogger();
     mockRoom = makeRandomRoom({ options: { occupancy: true } });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should provide the occupancy instance, associated metrics, and chat status response metrics', () => {

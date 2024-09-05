@@ -1,7 +1,7 @@
 import { ChatClient, Reaction, RoomLifecycle, RoomOptionsDefaults, RoomReactionListener } from '@ably/chat';
-import { render, waitFor } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { useRoomReactions } from '../../../src/react/hooks/use-room-reactions.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -25,6 +25,10 @@ function waitForReactions(reactions: Reaction[], expectedCount: number) {
 }
 
 describe('useRoomReactions', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should send a room reaction', async () => {
     // create new clients
     const chatClientOne = newChatClient() as unknown as ChatClient;

@@ -1,7 +1,7 @@
 import { ConnectionLifecycle, DiscontinuityListener, Room, RoomLifecycle } from '@ably/chat';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { usePresence } from '../../../src/react/hooks/use-presence.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
@@ -53,12 +53,16 @@ describe('usePresence', () => {
     });
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should provide the presence instance and chat status response metrics', () => {
     // set the connection and room errors to check that they are correctly provided
     mockConnectionError = new Ably.ErrorInfo('test error', 40000, 400);
     mockRoomError = new Ably.ErrorInfo('test error', 40000, 400);
 
-    const { result, unmount } = renderHook(() => usePresence());
+    const { result } = renderHook(() => usePresence());
 
     // check that the presence instance and metrics are correctly provided
     expect(result.current.presence).toBe(mockRoom.presence);
@@ -70,13 +74,12 @@ describe('usePresence', () => {
     expect(result.current.roomError).toBeErrorInfo({ message: 'test error' });
     expect(result.current.connectionStatus).toEqual(ConnectionLifecycle.Connected);
     expect(result.current.connectionError).toBeErrorInfo({ message: 'test error' });
-    unmount();
   });
 
   it('should handle rerender if the room instance changes', async () => {
     vi.spyOn(mockRoom.presence, 'enter');
 
-    const { result, rerender, unmount } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
+    const { result, rerender } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
 
     // ensure we have entered presence
     expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
@@ -109,7 +112,6 @@ describe('usePresence', () => {
 
     // check that the presence instance is updated
     expect(result.current.presence).toBe(mockRoom.presence);
-    unmount();
   });
 
   it('should correctly enter presence on render and leave on unmount', async () => {
@@ -140,7 +142,7 @@ describe('usePresence', () => {
     // spy on the update method of the presence instance
     const updateSpy = vi.spyOn(mockRoom.presence, 'update');
 
-    const { result, unmount } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
+    const { result } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
 
     // call the update method
     await act(async () => {
@@ -151,7 +153,6 @@ describe('usePresence', () => {
     expect(updateSpy).toHaveBeenCalled();
 
     expect(result.current.isPresent).toBe(true);
-    unmount();
   });
 
   it('should correctly return any error that occurs', async () => {
@@ -160,15 +161,18 @@ describe('usePresence', () => {
       .spyOn(mockRoom.presence, 'enter')
       .mockRejectedValue(new Ably.ErrorInfo('enter error', 40000, 400));
 
-    const { result, unmount } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
+    const { result } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
 
     // expect the enter method to be called
     expect(enterSpy).toHaveBeenCalled();
 
     // wait for the error to be set from the useEffect
-    await waitFor(() => result.current.error, { timeout: 3000 });
-    expect(result.current.error).toBeErrorInfo({ message: 'enter error' });
-    unmount();
+    await waitFor(
+      () => {
+        expect(result.current.error).toBeErrorInfo({ message: 'enter error' });
+      },
+      { timeout: 3000 },
+    );
   });
 
   describe.each([[ConnectionLifecycle.Failed], [ConnectionLifecycle.Suspended]])(
@@ -180,12 +184,10 @@ describe('usePresence', () => {
 
         // spy on the enter method of the presence instance to check if it is called
         vi.spyOn(mockRoom.presence, 'enter');
-
-        const { unmount } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
+        renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
 
         // ensure we have not entered presence
         expect(mockRoom.presence.enter).not.toHaveBeenCalled();
-        unmount();
       });
     },
   );
@@ -204,10 +206,9 @@ describe('usePresence', () => {
       // change the room status, so we render the hook with the new status
       mockCurrentRoomStatus = status;
 
-      const { unmount } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
+      renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
       // ensure we have not entered presence
       expect(mockRoom.presence.enter).not.toHaveBeenCalled();
-      unmount();
     }
   });
 

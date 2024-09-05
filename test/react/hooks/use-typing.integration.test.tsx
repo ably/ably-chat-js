@@ -1,7 +1,7 @@
 import { ChatClient, RoomLifecycle, RoomOptionsDefaults, TypingEvent, TypingListener } from '@ably/chat';
-import { render } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import React, { useEffect } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { useTyping } from '../../../src/react/hooks/use-typing.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -25,6 +25,10 @@ function waitForTypingEvents(typingEvents: TypingEvent[], expectedCount: number)
 }
 
 describe('useTyping', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should send typing events', async () => {
     // create new clients
     const chatClientOne = newChatClient() as unknown as ChatClient;
