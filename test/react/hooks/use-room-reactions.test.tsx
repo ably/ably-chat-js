@@ -7,6 +7,7 @@ import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
 
 let mockRoom: Room;
+let mockLogger: ReturnType<typeof makeTestLogger>;
 
 // apply mocks for the useChatConnection and useRoom hooks
 vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
@@ -18,7 +19,7 @@ vi.mock('../../../src/react/hooks/use-room.js', () => ({
 }));
 
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
-  useLogger: () => makeTestLogger(),
+  useLogger: () => mockLogger,
 }));
 
 vi.mock('ably');
@@ -27,6 +28,7 @@ describe('useRoomReactions', () => {
   beforeEach(() => {
     // create a new mock room before each test
     vi.resetAllMocks();
+    mockLogger = makeTestLogger();
     mockRoom = makeRandomRoom({ options: { reactions: true } });
   });
 
