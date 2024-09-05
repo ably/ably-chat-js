@@ -54,6 +54,8 @@ At a client-level, changes to the connection status can be subscribed to by prov
 
 Listeners can be provided for events related to a particular `Room` instances status changes via `onRoomStatusChange`. Furthermore, discontinuities in the event stream for room features can be monitored via the `onDiscontinuity` event listener. Room-level events pertain to the nearest parent `RoomProvider` in the React component tree.
 
+Changing the value provided for each of the available listeners will cause the previously registered listener instance to stop receiving events. However, all message events will be received by exactly one listener.
+
 ```tsx
 import { useOccupancy } from '@ably/chat/react';
 

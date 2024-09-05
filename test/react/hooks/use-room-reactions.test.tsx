@@ -1,5 +1,6 @@
-import { ConnectionLifecycle, Room, RoomLifecycle } from '@ably/chat';
+import { ConnectionLifecycle, DiscontinuityListener, Room, RoomLifecycle, RoomReactionListener } from '@ably/chat';
 import { act, renderHook } from '@testing-library/react';
+import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useRoomReactions } from '../../../src/react/hooks/use-room-reactions.ts';
@@ -67,7 +68,17 @@ describe('useRoomReactions', () => {
 
     const mockReactions = {
       ...mockRoom.reactions,
-      subscribe: vi.fn().mockReturnValue({ unsubscribe: mockUnsubscribe }),
+      listeners: new Set<RoomReactionListener>(),
+      subscribe: vi.fn().mockImplementation((listener: RoomReactionListener) => {
+        mockReactions.listeners.add(listener);
+        return {
+          unsubscribe: () => {
+            mockReactions.listeners.delete(listener);
+            mockUnsubscribe();
+          },
+        };
+      }),
+      onDiscontinuity: vi.fn().mockReturnValue({ off: vi.fn() }),
     };
 
     // update the mock room with the new reactions object
@@ -75,8 +86,20 @@ describe('useRoomReactions', () => {
 
     const { unmount } = renderHook(() => useRoomReactions({ listener: mockListener }));
 
-    // verify that subscribe was called with the mock listener on mount
-    expect(mockReactions.subscribe).toHaveBeenCalledWith(mockListener);
+    // verify that subscribe was called with the mock listener on mount by triggering a reaction event
+    const reaction = {
+      type: 'like',
+      user: { id: 'user1' },
+      metadata: { test: 'data' },
+      headers: {},
+      createdAt: new Date(),
+      clientId: 'client1',
+      isSelf: false,
+    };
+    for (const listener of mockReactions.listeners) {
+      listener(reaction);
+    }
+    expect(mockListener).toHaveBeenCalledWith(reaction);
 
     // unmount the hook and verify that unsubscribe was called
     unmount();
@@ -104,13 +127,20 @@ describe('useRoomReactions', () => {
     const mockDiscontinuityListener = vi.fn();
 
     // spy on the onDiscontinuity method of the room reactions instance
-    vi.spyOn(mockRoom.reactions, 'onDiscontinuity').mockReturnValue({ off: mockOff });
+    let discontinuityListener: DiscontinuityListener | undefined;
+    vi.spyOn(mockRoom.reactions, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+      discontinuityListener = listener;
+      return { off: mockOff };
+    });
 
     // render the hook with a discontinuity listener
     const { unmount } = renderHook(() => useRoomReactions({ onDiscontinuity: mockDiscontinuityListener }));
 
-    // check that the listener was subscribed to the discontinuity events
-    expect(mockRoom.reactions.onDiscontinuity).toHaveBeenCalledWith(mockDiscontinuityListener);
+    // check that the listener was subscribed to the discontinuity events by triggering one
+    const errorInfo = new Ably.ErrorInfo('test', 50000, 500);
+    expect(discontinuityListener).toBeDefined();
+    discontinuityListener?.(errorInfo);
+    expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
 
     // unmount the hook and verify that the listener was unsubscribed
     unmount();

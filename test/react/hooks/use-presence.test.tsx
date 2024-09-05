@@ -1,4 +1,4 @@
-import { ConnectionLifecycle, Room, RoomLifecycle } from '@ably/chat';
+import { ConnectionLifecycle, DiscontinuityListener, Room, RoomLifecycle } from '@ably/chat';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -216,13 +216,20 @@ describe('usePresence', () => {
     const mockDiscontinuityListener = vi.fn();
 
     // spy on the onDiscontinuity method of the presence instance
-    vi.spyOn(mockRoom.presence, 'onDiscontinuity').mockReturnValue({ off: mockOff });
+    let discontinuityListener: DiscontinuityListener | undefined;
+    vi.spyOn(mockRoom.presence, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+      discontinuityListener = listener;
+      return { off: mockOff };
+    });
 
     // render the hook with a discontinuity listener
     const { unmount } = renderHook(() => usePresence({ onDiscontinuity: mockDiscontinuityListener }));
 
-    // check that the listener was subscribed to the discontinuity events
-    expect(mockRoom.presence.onDiscontinuity).toHaveBeenCalledWith(mockDiscontinuityListener);
+    // check that the listener was subscribed to the discontinuity events by triggering the listener
+    const errorInfo = new Ably.ErrorInfo('test', 50000, 500);
+    expect(discontinuityListener).toBeDefined();
+    discontinuityListener?.(errorInfo);
+    expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
 
     // unmount the hook and verify that the listener was unsubscribed
     unmount();

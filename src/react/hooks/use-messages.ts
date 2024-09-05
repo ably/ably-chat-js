@@ -1,6 +1,7 @@
 import { MessageListener, Messages, MessageSubscriptionResponse, QueryOptions, SendMessageParams } from '@ably/chat';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
@@ -73,11 +74,8 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
 
   // we are storing the params in a ref so that we don't end up with an infinite loop should the user pass
   // in an unstable reference
-  const paramsRef = useRef(params);
-
-  useLayoutEffect(() => {
-    paramsRef.current = params;
-  });
+  const listenerRef = useEventListenerRef(params?.listener);
+  const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
   const send = useCallback((params: SendMessageParams) => room.messages.send(params), [room]);
   const get = useCallback((options: QueryOptions) => room.messages.get(options), [room]);
@@ -85,36 +83,32 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   const [getPreviousMessages, setGetPreviousMessages] = useState<MessageSubscriptionResponse['getPreviousMessages']>();
 
   useEffect(() => {
-    if (paramsRef.current?.listener) {
-      logger.debug('useMessages(); applying listener', { roomId: room.roomId });
-      const sub = room.messages.subscribe(paramsRef.current.listener);
+    logger.debug('useMessages(); applying listener', { roomId: room.roomId });
+    const sub = room.messages.subscribe(listenerRef);
 
-      // set the getPreviousMessages method if a listener is provided
-      setGetPreviousMessages(() => {
-        logger.debug('useMessages(); setting getPreviousMessages state', { roomId: room.roomId });
-        return (params: Omit<QueryOptions, 'direction'>) => {
-          return sub.getPreviousMessages(params);
-        };
-      });
-
-      return () => {
-        logger.debug('useMessages(); removing listener and getPreviousMessages state', { roomId: room.roomId });
-        sub.unsubscribe();
-        setGetPreviousMessages(undefined);
+    // set the getPreviousMessages method if a listener is provided
+    setGetPreviousMessages(() => {
+      logger.debug('useMessages(); setting getPreviousMessages state', { roomId: room.roomId });
+      return (params: Omit<QueryOptions, 'direction'>) => {
+        return sub.getPreviousMessages(params);
       };
-    }
-  }, [room, logger]);
+    });
+
+    return () => {
+      logger.debug('useMessages(); removing listener and getPreviousMessages state', { roomId: room.roomId });
+      sub.unsubscribe();
+      setGetPreviousMessages(undefined);
+    };
+  }, [room, logger, listenerRef]);
 
   useEffect(() => {
-    if (paramsRef.current?.onDiscontinuity) {
-      logger.debug('useMessages(); applying onDiscontinuity listener', { roomId: room.roomId });
-      const { off } = room.messages.onDiscontinuity(paramsRef.current.onDiscontinuity);
-      return () => {
-        logger.debug('useMessages(); removing onDiscontinuity listener', { roomId: room.roomId });
-        off();
-      };
-    }
-  }, [room, logger]);
+    logger.debug('useMessages(); applying onDiscontinuity listener', { roomId: room.roomId });
+    const { off } = room.messages.onDiscontinuity(onDiscontinuityRef);
+    return () => {
+      logger.debug('useMessages(); removing onDiscontinuity listener', { roomId: room.roomId });
+      off();
+    };
+  }, [room, logger, onDiscontinuityRef]);
 
   return {
     send,

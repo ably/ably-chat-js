@@ -2,6 +2,7 @@ import { Presence, PresenceListener, PresenceMember } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
@@ -84,6 +85,10 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
   const errorRef = useRef<Ably.ErrorInfo | undefined>();
 
   const [error, setError] = useState<Ably.ErrorInfo | undefined>();
+
+  // create stable references for the listeners
+  const listenerRef = useEventListenerRef(params?.listener);
+  const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
   const setErrorState = useCallback(
     (error: Ably.ErrorInfo) => {
@@ -218,27 +223,25 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
 
   // subscribe the user provided listener to presence changes
   useEffect(() => {
-    if (!params?.listener) return;
-    const { unsubscribe } = room.presence.subscribe(params.listener);
+    const { unsubscribe } = room.presence.subscribe(listenerRef);
     logger.debug('usePresenceListener(); applying external listener', { roomId: room.roomId });
 
     return () => {
       logger.debug('usePresenceListener(); cleaning up external listener', { roomId: room.roomId });
       unsubscribe();
     };
-  }, [room, params?.listener, logger]);
+  }, [room, listenerRef, logger]);
 
   // subscribe the user provided onDiscontinuity listener
   useEffect(() => {
-    if (!params?.onDiscontinuity) return;
     logger.debug('usePresenceListener(); applying onDiscontinuity listener', { roomId: room.roomId });
-    const { off } = room.presence.onDiscontinuity(params.onDiscontinuity);
+    const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
 
     return () => {
       logger.debug('usePresenceListener(); removing onDiscontinuity listener', { roomId: room.roomId });
       off();
     };
-  }, [room, params?.onDiscontinuity, logger]);
+  }, [room, onDiscontinuityRef, logger]);
 
   return {
     connectionStatus,
