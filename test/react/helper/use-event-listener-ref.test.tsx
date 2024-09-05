@@ -21,23 +21,42 @@ describe('useEventListenerRef', () => {
     expect(originalCallback).lastCalledWith('arg1', 'arg2');
   });
 
-  it('should return handle undefined callbacks', () => {
-    const { result } = renderHook(() => useEventListenerRef());
+  it('should handle undefined callbacks gracefully and keep references constant', () => {
+    type myfunc = (arg0: string, arg1: string) => void;
 
-    (result.current as (arg0: string, arg1: string) => void)('arg3', 'arg4');
-  });
-
-  it('should return handle undefined callbacks becoming defined', () => {
+    // undefined at first
     const { result, rerender } = renderHook(
-      ({ callback }: { callback?: (arg0: string, arg1: string) => void }) => useEventListenerRef(callback),
+      ({ callback }: { callback?: myfunc}) => useEventListenerRef(callback),
       { initialProps: {} },
     );
 
-    (result.current as (arg0: string, arg1: string) => void)('arg1', 'arg2');
+    // current must be undefined
+    expect(result.current === undefined).toBeTruthy();
 
-    const newCallback: (arg0: string, arg1: string) => void = vi.fn();
-    rerender({ callback: newCallback });
+    // set a real callback
+    const callback1: myfunc = vi.fn();
+    rerender({ callback: callback1 });
+    const result1 = result.current;
 
-    (result.current as (arg0: string, arg1: string) => void)('arg3', 'arg4');
+    // expect callback to work and correctly propagate calls
+    (result1 as myfunc)("arg1", "arg2");
+    expect(callback1).toHaveBeenCalledWith("arg1", "arg2");
+
+    // set to undefined
+    rerender({ callback: undefined });
+    expect(result.current === undefined).toBeTruthy();
+
+    // set to a new callback
+    const callback2: myfunc = vi.fn();
+    rerender({ callback: callback2 });
+    const result2 = result.current;
+
+    // expect referential equality
+    expect(result1 === result2).toBeTruthy();
+
+    // expect callback to work and correctly propagate calls
+    (result2 as myfunc)("arg3", "arg4");
+    expect(callback2).toHaveBeenCalledWith("arg3", "arg4");
+    expect(callback1).toHaveBeenCalledTimes(1); // callback1 should not have been called again
   });
 });

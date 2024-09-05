@@ -42,13 +42,16 @@ type Callback<CallbackArguments extends unknown[]> = (...args: CallbackArguments
  */
 export const useEventListenerRef = <Arguments extends unknown[]>(
   callback?: Callback<Arguments>,
-): Callback<Arguments> => {
+): Callback<Arguments> | undefined => {
   const ref = useRef<Callback<Arguments> | undefined>(callback);
   useEffect(() => {
     ref.current = callback;
   });
 
-  return useCallback((...args: Arguments) => {
+  const result = useCallback((...args: Arguments) => {
     ref.current && ref.current(...args);
   }, []);
+
+  if (callback === undefined) { return undefined; }
+  return result;
 };
