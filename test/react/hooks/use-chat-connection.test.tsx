@@ -8,6 +8,7 @@ import {
   ConnectionStatusListener,
 } from '../../../src/core/connection-status.ts';
 import { useChatConnection } from '../../../src/react/hooks/use-chat-connection.ts';
+import { makeTestLogger } from '../../helper/logger.ts';
 
 let mockCallbacks: ConnectionStatusListener[] = [];
 
@@ -27,6 +28,7 @@ const createMockChatClient = (currentStatus: ConnectionLifecycle, error?: Ably.E
         },
       },
     },
+    logger: makeTestLogger(),
   };
 };
 

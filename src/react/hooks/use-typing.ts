@@ -6,6 +6,7 @@ import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
+import { useLogger } from './use-logger.js';
 import { useRoom } from './use-room.js';
 
 /**
@@ -61,21 +62,27 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   const { room, roomError, roomStatus } = useRoom({
     onStatusChange: params?.onRoomStatusChange,
   });
+  const logger = useLogger();
+  logger.trace('useTyping();', { roomId: room.roomId });
 
   const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
   const [error, setError] = useState<Ably.ErrorInfo | undefined>();
   const errorRef = useRef<Ably.ErrorInfo | undefined>();
 
-  const setErrorState = useCallback((error: Ably.ErrorInfo) => {
-    errorRef.current = error;
-    setError(error);
-  }, []);
+  const setErrorState = useCallback(
+    (error: Ably.ErrorInfo) => {
+      logger.error('useTyping(); setting error state', { error, roomId: room.roomId });
+      errorRef.current = error;
+      setError(error);
+    },
+    [logger, room.roomId],
+  );
 
   const clearErrorState = useCallback(() => {
+    logger.debug('useTyping(); clearing error state', { roomId: room.roomId });
     errorRef.current = undefined;
     setError(undefined);
-  }, []);
-
+  }, [logger, room.roomId]);
   useEffect(() => {
     const fetchAndSubscribe = async () => {
       let response: TypingSubscriptionResponse;
@@ -92,6 +99,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
         setErrorState(errorInfo);
       } finally {
         // subscribe to typing events
+        logger.debug('useTyping(); subscribing to typing events', { roomId: room.roomId });
         response = room.typing.subscribe((event) => {
           // clear error state if there was one
           if (errorRef.current) {
@@ -104,30 +112,35 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
 
       // cleanup function
       return () => {
+        logger.debug('useTyping(); unsubscribing from typing events', { roomId: room.roomId });
         response.unsubscribe();
       };
     };
 
     void fetchAndSubscribe();
-  }, [room, setErrorState, clearErrorState]);
+  }, [room, setErrorState, clearErrorState, logger]);
 
   // if provided, subscribes the user-provided onDiscontinuity listener
   useEffect(() => {
     if (!params?.onDiscontinuity) return;
+    logger.debug('useTyping(); applying onDiscontinuity listener', { roomId: room.roomId });
     const { off } = room.typing.onDiscontinuity(params.onDiscontinuity);
     return () => {
+      logger.debug('useTyping(); removing onDiscontinuity listener', { roomId: room.roomId });
       off();
     };
-  }, [room, params?.onDiscontinuity]);
+  }, [room, params?.onDiscontinuity, logger]);
 
   // if provided, subscribe the user-provided listener to TypingEvents
   useEffect(() => {
     if (!params?.listener) return;
+    logger.debug('useTyping(); applying listener', { roomId: room.roomId });
     const { unsubscribe } = room.typing.subscribe(params.listener);
     return () => {
+      logger.debug('useTyping(); removing listener', { roomId: room.roomId });
       unsubscribe();
     };
-  }, [room, params?.listener]);
+  }, [room, params?.listener, logger]);
 
   // memoize the methods to avoid re-renders, and ensure the same instance is used
   const start = useCallback(() => room.typing.start(), [room.typing]);

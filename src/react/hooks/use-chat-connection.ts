@@ -42,6 +42,7 @@ export interface UseChatConnectionResponse {
  */
 export const useChatConnection = (options?: UseChatConnectionOptions): UseChatConnectionResponse => {
   const chatClient = useChatClient();
+  chatClient.logger.trace('useChatConnection();', options);
 
   // Initialize states with the current values from chatClient
   const [currentStatus, setCurrentStatus] = useState<ConnectionLifecycle>(chatClient.connection.status.current);
@@ -57,6 +58,7 @@ export const useChatConnection = (options?: UseChatConnectionOptions): UseChatCo
 
   // Apply the listener to the chatClient's connection status changes to keep the state update across re-renders
   useEffect(() => {
+    chatClient.logger.debug('useChatConnection(); applying internal listener');
     const { off } = chatClient.connection.status.onChange((change: ConnectionStatusChange) => {
       // Update states with new values
       setCurrentStatus(change.current);
@@ -64,20 +66,23 @@ export const useChatConnection = (options?: UseChatConnectionOptions): UseChatCo
     });
     // Cleanup listener on un-mount
     return () => {
+      chatClient.logger.debug('useChatConnection(); cleaning up listener');
       off();
     };
-  }, [chatClient.connection.status]);
+  }, [chatClient.connection.status, chatClient.logger]);
 
   // Register the listener for the user-provided onStatusChange callback
   useEffect(() => {
     if (!options?.onStatusChange) return;
+    chatClient.logger.debug('useChatConnection(); applying client listener');
     const { onStatusChange } = options;
     const { off } = chatClient.connection.status.onChange(onStatusChange);
 
     return () => {
+      chatClient.logger.debug('useChatConnection(); cleaning up client listener');
       off();
     };
-  }, [chatClient.connection.status, options]);
+  }, [chatClient.connection.status, options, chatClient.logger]);
 
   return {
     currentStatus,

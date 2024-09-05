@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
+import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
 
 let mockRoom: Room;
@@ -14,6 +15,10 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
 
 vi.mock('../../../src/react/hooks/use-room.js', () => ({
   useRoom: () => ({ room: mockRoom, roomStatus: RoomLifecycle.Attached }),
+}));
+
+vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+  useLogger: () => makeTestLogger(),
 }));
 
 vi.mock('ably');

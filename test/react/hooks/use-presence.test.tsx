@@ -4,6 +4,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { usePresence } from '../../../src/react/hooks/use-presence.ts';
+import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
 
 let mockRoom: Room;
@@ -26,6 +27,10 @@ vi.mock('../../../src/react/hooks/use-room.js', () => ({
     roomStatus: mockCurrentRoomStatus,
     roomError: mockRoomError,
   }),
+}));
+
+vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+  useLogger: () => makeTestLogger(),
 }));
 
 vi.mock('ably');
