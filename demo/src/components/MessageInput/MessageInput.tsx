@@ -1,9 +1,10 @@
-import { FC, ChangeEventHandler, FormEventHandler, useRef } from 'react';
+import { ChangeEventHandler, FC, FormEventHandler, useRef } from 'react';
+import { Message, SendMessageParams } from '@ably/chat';
 
 interface MessageInputProps {
   disabled: boolean;
 
-  onSend(text: string): void;
+  onSend(params: SendMessageParams): Promise<Message>;
 
   onStartTyping(): void;
 
@@ -37,8 +38,15 @@ export const MessageInput: FC<MessageInputProps> = ({ disabled, onSend, onStartT
     }
 
     // send the message and reset the input field
-    onSend(messageInputRef.current.value);
-    messageInputRef.current.value = '';
+    onSend({ text: messageInputRef.current.value })
+      .then(() => {
+        if (messageInputRef.current) {
+          messageInputRef.current.value = '';
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to send message', error);
+      });
 
     // stop typing indicators
     onStopTyping();

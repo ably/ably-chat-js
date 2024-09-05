@@ -2,8 +2,8 @@ import { ChatClient } from '@ably/chat';
 import React from 'react';
 
 /**
- * Context key to handle global context for Ably Chat Client.
- * Only a single instance of Ably Chat context should exist to avoid issues resulted from multiple identical contexts,
+ * The Context key to handle global context for Ably Chat Client.
+ * Only a single instance of Ably Chat context should exist to avoid issues resulting from multiple identical contexts,
  * e.g., a Chat Client instance added in one context, and then attempted to retrieve it from a different context.
  *
  */

@@ -1,36 +1,61 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
-import { useMessages } from '../../hooks/useMessages';
-import { useChatConnection, useRoomReactions, useTyping } from '@ably/chat/react';
+import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
 import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
-import { ConnectionLifecycle, Reaction } from '@ably/chat';
+import { ConnectionLifecycle, Message, Reaction } from '@ably/chat';
 
 export const Chat = () => {
-  const { loading, clientId, messages, sendMessage } = useMessages();
+  const chatClient = useChatClient();
+  const clientId = chatClient.clientId;
+  const [messages, setMessages] = useState<Message[]>([]);
+  const { currentStatus } = useChatConnection();
+  const [loading, setLoading] = useState(true);
+
+  const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
+
+  const { send: sendMessage, getPreviousMessages } = useMessages({
+    listener: (message) => {
+      setMessages((prevMessage) => [...prevMessage, message.message]);
+    },
+    onDiscontinuity: (discontinuity) => {
+      console.log('Discontinuity', discontinuity);
+      // reset the messages when a discontinuity is detected,
+      // this will trigger a re-fetch of the messages
+      setMessages([]);
+
+      // triggers the useEffect to fetch the initial messages again.
+      setLoading(true);
+    },
+  });
+
   const { start, stop, currentlyTyping, error: typingError } = useTyping();
   const [roomReactions, setRoomReactions] = useState<Reaction[]>([]);
 
-  const { send } = useRoomReactions({
+  const { send: sendReaction } = useRoomReactions({
     listener: (reaction) => {
       setRoomReactions([...roomReactions, reaction]);
     },
   });
 
-  const { currentStatus } = useChatConnection();
-
-  const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
-
   // Used to anchor the scroll to the bottom of the chat
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const handleMessageSend = useCallback(
-    (text: string) => {
-      sendMessage(text);
-    },
-    [sendMessage],
-  );
+  useEffect(() => {
+    // try and fetch the messages up to attachment of the messages listener
+    if (getPreviousMessages && loading) {
+      getPreviousMessages({ limit: 50 })
+        .then((result) => {
+          setMessages(result.items.reverse());
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error('Error fetching initial messages', error);
+          setLoading(false);
+        });
+    }
+  }, [getPreviousMessages, loading]);
 
   const handleStartTyping = () => {
     start().catch((error) => {
@@ -136,8 +161,8 @@ export const Chat = () => {
       )}
       <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
         <MessageInput
-          disabled={loading || !isConnected}
-          onSend={handleMessageSend}
+          disabled={!isConnected}
+          onSend={sendMessage}
           onStartTyping={handleStartTyping}
           onStopTyping={handleStopTyping}
         />
@@ -145,8 +170,8 @@ export const Chat = () => {
       <div>
         <ReactionInput
           reactions={[]}
-          onSend={send}
-          disabled={loading || !isConnected}
+          onSend={sendReaction}
+          disabled={!isConnected}
         ></ReactionInput>
       </div>
       <div>

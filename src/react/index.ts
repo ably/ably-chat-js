@@ -10,6 +10,7 @@ export {
   type UseChatConnectionOptions,
   type UseChatConnectionResponse,
 } from './hooks/use-chat-connection.js';
+export { useMessages, type UseMessagesParams, type UseMessagesResponse } from './hooks/use-messages.js';
 export { useOccupancy, type UseOccupancyParams, type UseOccupancyResponse } from './hooks/use-occupancy.js';
 export { usePresence, type UsePresenceParams, type UsePresenceResponse } from './hooks/use-presence.js';
 export {
