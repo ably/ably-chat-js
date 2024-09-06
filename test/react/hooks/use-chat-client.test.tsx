@@ -1,11 +1,12 @@
 import { ChatClient } from '@ably/chat';
-import { render } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { RealtimeWithOptions } from '../../../src/core/realtime-extensions.ts';
 import { VERSION } from '../../../src/core/version.ts';
 import { useChatClient } from '../../../src/react/hooks/use-chat-client.ts';
+import { useRoom } from '../../../src/react/hooks/use-room.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 
@@ -18,11 +19,20 @@ const TestComponent: React.FC<{ callback: (client: ChatClient) => void }> = ({ c
 vi.mock('ably');
 
 describe('useChatClient', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should throw an error if used outside of ChatClientProvider', () => {
-    expect(() => render(<TestComponent callback={() => {}} />)).toThrowErrorInfo({
-      code: 40000,
-      message: 'useChatClient hook must be used within a chat client provider',
-    });
+    const TestThrowError: React.FC = () => {
+      expect(() => useRoom()).toThrowErrorInfo({
+        code: 40000,
+        message: 'useChatClient hook must be used within a chat client provider',
+      });
+      return null;
+    };
+
+    render(<TestThrowError />);
   });
 
   it('should get the chat client from the context without error and with the correct agent', () => {

@@ -7,9 +7,9 @@ import {
   Room,
   RoomLifecycle,
 } from '@ably/chat';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PaginatedResult } from '../../../src/core/query.ts';
 import { useMessages } from '../../../src/react/hooks/use-messages.ts';
@@ -55,12 +55,16 @@ describe('useMessages', () => {
     mockRoom = makeRandomRoom({});
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should provide the messages instance and chat status response metrics', () => {
     // set the connection and room errors to check that they are correctly provided
     mockConnectionError = new Ably.ErrorInfo('test error', 40000, 400);
     mockRoomError = new Ably.ErrorInfo('test error', 40000, 400);
 
-    const { result, unmount } = renderHook(() => useMessages());
+    const { result } = renderHook(() => useMessages());
 
     // check that the messages instance and metrics are correctly provided
     expect(result.current.messages).toBe(mockRoom.messages);
@@ -70,7 +74,6 @@ describe('useMessages', () => {
     expect(result.current.roomError).toBeErrorInfo({ message: 'test error' });
     expect(result.current.connectionStatus).toEqual(ConnectionLifecycle.Connected);
     expect(result.current.connectionError).toBeErrorInfo({ message: 'test error' });
-    unmount();
   });
 
   it('should correctly subscribe and unsubscribe to message events', async () => {
@@ -85,13 +88,13 @@ describe('useMessages', () => {
       return { unsubscribe: mockUnsubscribe, getPreviousMessages: mockGetPreviousMessages };
     });
 
-    let result = renderHook(() =>
+    const { result, unmount } = renderHook(() =>
       useMessages({
         listener: mockListener,
       }),
     );
 
-    const getPreviousMessages = result.result.current.getPreviousMessages;
+    const getPreviousMessages = result.current.getPreviousMessages;
 
     // verify that subscribe was called with the mock listener on mount by invoking it
     const messageEvent = {
@@ -129,19 +132,18 @@ describe('useMessages', () => {
     expect(mockGetPreviousMessages).toHaveBeenCalledWith({ limit: 10 });
 
     // unmount the hook and verify that unsubscribe was called
-    result.unmount();
+    unmount();
     expect(mockUnsubscribe).toHaveBeenCalled();
 
     // now check that if we render the hook without previousMessagesParams
-    result = renderHook(() => useMessages({ listener: mockListener }));
+    renderHook(() => useMessages({ listener: mockListener }));
 
     // the mock should not have been called again
     expect(mockGetPreviousMessages).toHaveBeenCalledTimes(1);
-    result.unmount();
   });
 
   it('should correctly call the send and get message methods', async () => {
-    const { result, unmount } = renderHook(() => useMessages());
+    const { result } = renderHook(() => useMessages());
 
     // spy on the send method of the messages instance
     const sendSpy = vi.spyOn(mockRoom.messages, 'send').mockResolvedValue({} as unknown as Message);
@@ -157,11 +159,10 @@ describe('useMessages', () => {
 
     expect(sendSpy).toHaveBeenCalledWith({ text: 'test message' });
     expect(getSpy).toHaveBeenCalledWith({ limit: 10 });
-    unmount();
   });
 
   it('should handle rerender if the room instance changes', () => {
-    const { result, rerender, unmount } = renderHook(() => useMessages());
+    const { result, rerender } = renderHook(() => useMessages());
 
     // check the initial state of the messages instance
     expect(result.current.messages).toBe(mockRoom.messages);
@@ -174,7 +175,6 @@ describe('useMessages', () => {
 
     // check that the messages instance is updated
     expect(result.current.messages).toBe(mockRoom.messages);
-    unmount();
   });
 
   it('should subscribe and unsubscribe to discontinuity events', () => {

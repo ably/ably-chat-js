@@ -1,7 +1,7 @@
 import { ChatClient, Message, MessageListener, RoomLifecycle, RoomOptionsDefaults } from '@ably/chat';
-import { render, waitFor } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { useMessages } from '../../../src/react/hooks/use-messages.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -25,6 +25,10 @@ function waitForMessages(messages: Message[], expectedCount: number) {
 }
 
 describe('useMessages', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should send messages correctly', async () => {
     // create new clients
     const chatClientOne = newChatClient() as unknown as ChatClient;
@@ -238,7 +242,7 @@ describe('useMessages', () => {
       </ChatClientProvider>
     );
 
-    const { rerender, unmount } = render(<TestProvider defineListener={true} />);
+    const { rerender } = render(<TestProvider defineListener={true} />);
 
     // Wait until the getPreviousMessages is defined
     await waitFor(
@@ -321,9 +325,6 @@ describe('useMessages', () => {
     expect(messageTexts3[0]).toBe('Time is an illusion. Lunchtime doubly so.');
     expect(messageTexts3[1]).toBe('Tis but a scratch');
     expect(messageTexts3[2]).toBe('You underestimate my power');
-
-    // Unmount the component
-    unmount();
   }, 20000);
 
   it('should persist the getPreviousMessages subscription point across renders, if listener remains defined', async () => {
@@ -375,7 +376,7 @@ describe('useMessages', () => {
       </ChatClientProvider>
     );
 
-    const { rerender, unmount } = render(<TestProvider listener={vi.fn()} />);
+    const { rerender } = render(<TestProvider listener={vi.fn()} />);
 
     // Wait until the getPreviousMessages is defined
     await waitFor(
@@ -419,8 +420,5 @@ describe('useMessages', () => {
     expect(messageTexts2[0]).toBe('You underestimate my power');
     expect(messageTexts2[1]).toBe('I have the high ground');
     expect(messageTexts2[2]).toBe('The force is strong with this one');
-
-    // Unmount the component
-    unmount();
   }, 20000);
 });

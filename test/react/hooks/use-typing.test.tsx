@@ -1,7 +1,7 @@
 import { ConnectionLifecycle, DiscontinuityListener, Logger, Room, RoomLifecycle, TypingListener } from '@ably/chat';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useTyping } from '../../../src/react/hooks/use-typing.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
@@ -31,6 +31,10 @@ describe('useTyping', () => {
     vi.resetAllMocks();
     mockRoom = makeRandomRoom({ options: { typing: { timeoutMs: 500 } } });
     mockLogger = makeTestLogger();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('should provide the typing instance and chat status response metrics', () => {

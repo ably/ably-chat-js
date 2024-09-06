@@ -9,7 +9,7 @@ import {
   Room,
   RoomLifecycle,
 } from '@ably/chat';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { ErrorInfo } from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -58,6 +58,7 @@ describe('usePresenceListener', () => {
   });
   afterEach(() => {
     vi.restoreAllMocks();
+    cleanup();
   });
 
   it('should provide the room presence instance, presence data and correct chat status response metrics', () => {
@@ -66,7 +67,7 @@ describe('usePresenceListener', () => {
     mockCurrentRoomStatus = RoomLifecycle.Attached;
     mockCurrentConnectionStatus = ConnectionLifecycle.Connected;
 
-    const { result, unmount } = renderHook(() => usePresenceListener());
+    const { result } = renderHook(() => usePresenceListener());
 
     // check that the room presence instance is correctly provided
     expect(result.current.presence).toBe(mockRoom.presence);
@@ -77,7 +78,6 @@ describe('usePresenceListener', () => {
     expect(result.current.roomError).toBe(mockRoomError);
     expect(result.current.connectionStatus).toEqual(ConnectionLifecycle.Connected);
     expect(result.current.connectionError).toBe(mockConnectionError);
-    unmount();
   });
 
   it('should correctly subscribe and unsubscribe to presence', () => {
@@ -113,7 +113,7 @@ describe('usePresenceListener', () => {
   });
 
   it('should handle rerender if the room instance changes', () => {
-    const { result, rerender, unmount } = renderHook(() => usePresenceListener());
+    const { result, rerender } = renderHook(() => usePresenceListener());
 
     // check the initial state of the presence object
     expect(result.current.presence).toBe(mockRoom.presence);
@@ -126,7 +126,6 @@ describe('usePresenceListener', () => {
 
     // check that the room presence instance is updated
     expect(result.current.presence).toBe(mockRoom.presence);
-    unmount();
   });
 
   it('should set the initial present clients on mount', async () => {
@@ -156,7 +155,7 @@ describe('usePresenceListener', () => {
     vi.spyOn(mockRoom.presence, 'get').mockResolvedValue(testPresenceMembers);
 
     // render the hook and check the initial state
-    const { result, unmount } = renderHook(() => usePresenceListener());
+    const { result } = renderHook(() => usePresenceListener());
 
     await waitFor(
       () => {
@@ -171,7 +170,6 @@ describe('usePresenceListener', () => {
 
     // check that the presence data is correctly set
     expect(result.current.presenceData).toEqual(testPresenceMembers);
-    unmount();
   });
 
   it('should set and return the error state when the call to get the initial presence data fails', async () => {
@@ -180,7 +178,7 @@ describe('usePresenceListener', () => {
     vi.spyOn(mockRoom.presence, 'subscribe');
 
     // render the hook
-    const { result, unmount } = renderHook(() => usePresenceListener());
+    const { result } = renderHook(() => usePresenceListener());
 
     // wait for the hook to finish mounting and set the error state
     await waitFor(
@@ -200,7 +198,6 @@ describe('usePresenceListener', () => {
       statusCode: 50000,
       code: 500,
     });
-    unmount();
   });
 
   it('should reset the current error state if a new presence event is received', async () => {
@@ -219,7 +216,7 @@ describe('usePresenceListener', () => {
     });
 
     // render the hook
-    const { result, unmount } = renderHook(() => usePresenceListener());
+    const { result } = renderHook(() => usePresenceListener());
 
     // wait for the hook to finish mounting and set the error state
     await waitFor(
@@ -255,7 +252,6 @@ describe('usePresenceListener', () => {
       },
       { timeout: 3000 },
     );
-    unmount();
   });
 
   it('should subscribe and unsubscribe to discontinuity events', () => {
@@ -297,7 +293,7 @@ describe('usePresenceListener', () => {
     vi.spyOn(mockRoom.presence, 'get').mockResolvedValue([]);
 
     // render the hook, this should trigger a useEffect call to subscribe to the presence events
-    const { result, unmount } = renderHook(() => usePresenceListener());
+    const { result } = renderHook(() => usePresenceListener());
 
     // wait for the hook to subscribe the listener
     await waitFor(() => {
@@ -353,7 +349,6 @@ describe('usePresenceListener', () => {
     // our returned data should be the presence member we received
     expect(result.current.presenceData[0]?.clientId).toEqual('client1');
     expect(result.current.presenceData[0]?.action).toEqual('enter');
-    unmount();
   }, 10000);
 
   it('should not return stale presence data even if they resolve out of order', async () => {
@@ -366,7 +361,7 @@ describe('usePresenceListener', () => {
     });
 
     // render the hook, this should trigger a useEffect call to subscribe to the presence events
-    const { result, rerender, unmount } = renderHook(() => usePresenceListener());
+    const { result, rerender } = renderHook(() => usePresenceListener());
 
     // wait for the hook to subscribe the listener
     await waitFor(() => {
@@ -462,6 +457,5 @@ describe('usePresenceListener', () => {
     // our returned data should be the second event we received
     expect(result.current.presenceData).toHaveLength(1);
     expect(result.current.presenceData[0]).toStrictEqual(testPresenceData2[0]);
-    unmount();
   }, 10000);
 });

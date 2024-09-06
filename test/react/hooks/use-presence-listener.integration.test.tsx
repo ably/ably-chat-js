@@ -6,9 +6,9 @@ import {
   RoomLifecycle,
   RoomOptionsDefaults,
 } from '@ably/chat';
-import { render, waitFor } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { usePresenceListener } from '../../../src/react/hooks/use-presence-listener.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -32,6 +32,10 @@ function waitForPresenceEvents(presenceEvents: PresenceEvent[], expectedCount: n
 }
 
 describe('usePresenceListener', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('should correctly listen to presence events', async () => {
     // create new clients
     const chatClientOne = newChatClient() as unknown as ChatClient;
@@ -76,7 +80,7 @@ describe('usePresenceListener', () => {
       </ChatClientProvider>
     );
 
-    const { unmount } = render(<TestProvider />);
+    render(<TestProvider />);
 
     // ensure we are attached first
     await waitFor(
@@ -101,6 +105,5 @@ describe('usePresenceListener', () => {
     expect(currentPresenceData.length).toBe(1);
     expect(currentPresenceData[0]?.clientId).toBe(chatClientTwo.clientId);
     expect(currentPresenceData[0]?.data).toBe('test update');
-    unmount();
   }, 20000);
 });

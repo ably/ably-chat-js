@@ -1,8 +1,8 @@
 import { ChatClient, OccupancyEvent, OccupancyListener, RoomOptionsDefaults } from '@ably/chat';
-import { render } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import { dequal } from 'dequal';
 import React from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -12,6 +12,10 @@ import { waitForExpectedInbandOccupancy } from '../../helper/common.ts';
 import { randomRoomId } from '../../helper/identifier.ts';
 
 describe('useOccupancy', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it(
     'should receive occupancy updates',
     async () => {
