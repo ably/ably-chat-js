@@ -15,6 +15,7 @@ import { useRoom } from './use-room.js';
 export interface UseOccupancyParams extends StatusParams, Listenable<OccupancyListener> {
   /**
    * A listener that will be called whenever an occupancy event is received.
+   * The listener is removed when the component unmounts.
    */
   listener?: OccupancyListener;
 }
@@ -29,12 +30,12 @@ export interface UseOccupancyResponse extends ChatStatusResponse {
   readonly occupancy: Occupancy;
 
   /**
-   * Number of users connected to the room.
+   * The current number of users connected to the room, kept up to date by the hook.
    */
   readonly connections: number;
 
   /**
-   * Number of users present in the room.
+   * The current number of users present in the room, kept up to date by the hook.
    */
   readonly presenceMembers: number;
 }
@@ -43,7 +44,7 @@ export interface UseOccupancyResponse extends ChatStatusResponse {
  * A hook that provides access to the {@link Occupancy} instance of the room.
  * It will use the instance belonging to the nearest {@link ChatRoomProvider} in the component tree.
  *
- * @param params - Allows the registering of optional callbacks and setting the optional update interval.
+ * @param params - Allows the registering of optional callbacks.
  * @returns UseOccupancyResponse
  */
 export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse => {

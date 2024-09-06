@@ -10,7 +10,7 @@ import { useLogger } from './use-logger.js';
 import { useRoom } from './use-room.js';
 
 /**
- * The response from the useMessages hook.
+ * The response from the {@link useMessages} hook.
  */
 export interface UseMessagesResponse extends ChatStatusResponse {
   /**
@@ -38,6 +38,8 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * It is advised to call this method after any discontinuity event; to retrieve messages that may have been missed
    * before the listener was re-attached.
    *
+   * This is removed when the component unmounts or when the previously provided listener is removed.
+   *
    * @param options - The query options to use when fetching the previous messages.
    *
    * @defaultValue - This will be undefined if no listener is provided in the {@link UseMessagesParams}.
@@ -48,6 +50,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
 export interface UseMessagesParams extends StatusParams, Listenable<MessageListener> {
   /**
    * An optional listener that can be provided to receive new messages in the room.
+   * The listener is removed when the component unmounts.
    */
   listener?: MessageListener;
 }

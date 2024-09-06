@@ -9,7 +9,7 @@ import { useChatConnection } from './use-chat-connection.js';
 import { useLogger } from './use-logger.js';
 
 /**
- * Parameters for the {@link useRoom} hook.
+ * The parameters for the {@link useRoom} hook.
  */
 export interface UseRoomParams {
   /**
@@ -59,7 +59,7 @@ function makeStatusObject(source: { current: RoomLifecycle; error?: Ably.ErrorIn
 }
 
 /**
- * Hook that provides access to the current room.
+ * A hook that provides access to the current room.
  *
  * @param params Register optional callbacks, see {@link UseRoomParams}.
  * @returns {@link UseRoomResponse}

@@ -10,7 +10,7 @@ import { useLogger } from './use-logger.js';
 import { useRoom } from './use-room.js';
 
 /**
- * The options for the {@link useRoomReactions} hook.
+ * The parameters for the {@link useRoomReactions} hook.
  */
 export interface UseRoomReactionsParams extends StatusParams, Listenable<RoomReactionListener> {
   /**
@@ -29,7 +29,7 @@ export interface UseRoomReactionsResponse extends ChatStatusResponse {
   readonly send: RoomReactions['send'];
 
   /**
-   * Provides access to the underlying {@link RoomReactions} instance of the chat room.
+   * Provides access to the underlying {@link RoomReactions} instance of the room.
    */
   readonly reactions: RoomReactions;
 }

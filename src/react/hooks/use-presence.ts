@@ -46,6 +46,9 @@ export interface UsePresenceResponse extends ChatStatusResponse {
   readonly presence: Presence;
 }
 
+/**
+ * A set of connection states that are considered inactive and where presence operations should not be attempted.
+ */
 const INACTIVE_CONNECTION_STATES = new Set<ConnectionLifecycle>([
   ConnectionLifecycle.Suspended,
   ConnectionLifecycle.Failed,
@@ -54,7 +57,7 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionLifecycle>([
 /**
  * A hook that provides access to the {@link Presence} instance in the room.
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
- * On calling, the hook will enter the room with the provided data and leave the room when the component unmounts.
+ * On calling, the hook will `enter` the room with the provided data and `leave` the room when the component unmounts.
  * The {@link isPresent} flag will indicate when the user has become present in the room.
  *
  * @param params - Allows the registering of optional callbacks.

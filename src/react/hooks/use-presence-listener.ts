@@ -31,13 +31,14 @@ const PRESENCE_GET_MAX_RETRIES = 5;
 export interface UsePresenceListenerParams extends StatusParams, Listenable<PresenceListener> {
   /**
    * The listener to be called when the presence state changes.
+   * The listener is removed when the component unmounts.
    */
   listener?: PresenceListener;
 }
 
 export interface UsePresenceListenerResponse extends ChatStatusResponse {
   /**
-   * The current state of the presence set, observed as a whole change, and only emitted while presence is not syncing.
+   * The current state of all the presence members, observed as a whole change, and only emitted while presence is not syncing.
    */
   readonly presenceData: PresenceMember[];
 

@@ -1,6 +1,5 @@
-import { RoomOptions } from '@ably/chat';
 // imported for docs linking
-import { type RoomOptionsDefaults } from '@ably/chat'; // eslint-disable-line @typescript-eslint/no-unused-vars
+import { Room, RoomOptions, type RoomOptionsDefaults } from '@ably/chat'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import React, { ReactNode, useEffect, useState } from 'react';
 
 import { ChatRoomContext } from '../contexts/chat-room-context.js';
@@ -38,7 +37,7 @@ export interface ChatRoomProviderProps {
    * `chatClient.rooms.release(id)` or have another {@link ChatRoomProvider} for
    * the same room and {@link release} set to `true`.
    *
-   * @defaultValue true
+   * @defaultValue `true`
    */
   release?: boolean;
 
@@ -48,11 +47,11 @@ export interface ChatRoomProviderProps {
    *
    * If set to `false`, you must manually attach and detach the room using
    * `room.attach()` and `room.detach()` or the provided shortcut functions
-   * that {@link useRoom} provides. Setting this flag to `false` is useful in
-   * the case you have more providers fot the same room and you need to control
-   * the attachment manually or by choosing which provider handles it.
+   * that {@link useRoom} provides.
+   * Setting this flag to `false` is useful in the case where you have more providers for the same room,
+   * and you need to control the attachment manually or by choosing which provider handles it.
    *
-   * @defaultValue true
+   * @defaultValue `true`
    */
   attach?: boolean;
 
@@ -61,7 +60,7 @@ export interface ChatRoomProviderProps {
 }
 
 /**
- * Provider for a chat room. Must be wrapped in a {@link ChatClientProvider}.
+ * Provider for a {@link Room}. Must be wrapped in a {@link ChatClientProvider}.
  *
  * See {@link ChatRoomProviderProps} for the available props and configuring the
  * provider to automatically attach, detach and/or release the room.

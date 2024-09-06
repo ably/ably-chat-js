@@ -6,31 +6,32 @@ import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useChatClient } from './use-chat-client.js';
 
 /**
- * The options for the useChatConnection hook.
+ * The options for the {@link useChatConnection} hook.
  */
 export interface UseChatConnectionOptions {
   /**
    * A callback that will be called whenever the connection status changes.
+   * The listener is removed when the component unmounts.
    */
   onStatusChange?: ConnectionStatusListener;
 }
 
 /**
- * The response from the useChatConnection hook.
+ * The response from the {@link useChatConnection} hook.
  */
 export interface UseChatConnectionResponse {
   /**
-   * The current status of the connection.
+   * The current status of the {@link connection}.
    */
   currentStatus: ConnectionLifecycle;
 
   /**
-   * An error that provides a reason why the connection has entered the new status, if applicable.
+   * An error that provides a reason why the {@link connection} has entered the new status, if applicable.
    */
   error?: ErrorInfo;
 
   /**
-   * The current Ably connection instance.
+   * The current Ably {@link Connection} instance.
    */
   connection: Connection;
 }
@@ -39,7 +40,7 @@ export interface UseChatConnectionResponse {
  * A hook that provides the current connection status and error, and allows the user to listen to connection status changes.
  *
  * @param options - The options for the hook
- * @returns The current connection status and error, as well as the connection instance.
+ * @returns The current connection status and error, as well as the {@link Connection} instance.
  */
 export const useChatConnection = (options?: UseChatConnectionOptions): UseChatConnectionResponse => {
   const chatClient = useChatClient();
