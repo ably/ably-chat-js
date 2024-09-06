@@ -1,4 +1,4 @@
-# Ably Chat SDK
+# Ably Chat SDK for TypeScript and React
 
 <p style="text-align: left">
     <img src="https://img.shields.io/badge/development_status-Private_Beta-ab7df8" alt="Development status"   />
@@ -9,7 +9,7 @@
 Ably Chat is a set of purpose-built APIs for a host of chat features enabling you to create 1:1, 1:Many, Many:1 and Many:Many chat rooms for any scale. It is designed to meet a wide range of chat use cases, such as livestreams, in-game communication, customer support, or social interactions in SaaS products. Built on [Ably's](https://ably.com/) core service, it abstracts complex details to enable efficient chat architectures.
 
 > [!IMPORTANT]  
-> This SDK is currently under development. If you are interested in being an early adopter and providing feedback then you can [sign up to the private beta](https://forms.gle/vB2kXhCXrTQpzHLu5) and are welcome to [provide us with feedback](https://forms.gle/mBw9M53NYuCBLFpMA). Coming soon: React Hooks for Ably Chat.
+> This SDK is currently under development. If you are interested in being an early adopter and providing feedback then you can [sign up to the private beta](https://forms.gle/vB2kXhCXrTQpzHLu5) and are welcome to [provide us with feedback](https://forms.gle/mBw9M53NYuCBLFpMA). Coming soon: chat moderation, editing and deleting messages.
 
 Get started using the [📚 documentation](https://ably.com/docs/products/chat) and [🚀check out the live demo](https://ably-livestream-chat-demo.vercel.app/), or [📘 browse the API reference](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/).
 
@@ -24,6 +24,8 @@ This SDK supports the following platforms:
 **Node.js**: Version 20.x or newer.
 
 **Typescript**: This library is written in TypeScript and has full TypeScript support.
+
+**React**: The library ships with a number of providers and hooks for React, which provide a closer integration with that ecosystem. For more information on using Ably Chat in React, see the [React readme](./src/react/README.md).
 
 ## Supported chat features
 
