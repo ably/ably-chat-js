@@ -48,38 +48,40 @@ export interface UseTypingResponse extends ChatStatusResponse {
   readonly error?: Ably.ErrorInfo;
 }
 
-/** Utility function that makes a promise unsubscribable. Wraps the provided
- * promise in a new promise that may not settle.
+/**
+ * Utility function to make working with promises inside effects easier.
  *
- * If the returned `unsubscribe` function is called before the initial promise
- * is settled, the returned promise will never settle. Otherwise the returned
- * promise behaves the same as the initial promise.
+ * It returns an object with a `unsubscribe` function and a callback wrapper
+ * function `cb`. `cb` should be used to wrap all callbacks passed to promises,
+ * either in `.then()`, `.catch()`, or `.finally()` if you do not want your
+ * code inside the callback to be run after `unsubscribe()` was called.
  *
- * @param promise - The promise to make unsubscribable.
- * @returns An object containing the unsubscribable `promise` and an
- * `unsubscribe` function.
+ * Example usage inside an effect:
+ * ```
+ * useEffect(() => {
+ *   const { unsubscribe, cb } = unsubscribable();
+ *   somePromise.then(cb((value) => {
+ *     console.log("never prints if unsubscribe is called");
+ *   }));
+ *   return () => { unsubscribe(); }
+ * });
+ * ```
+ *
+ * @returns An object with an `unsubscribe` function and a callback wrapper `cb`.
  */
-function unsubscribablePromise<T>(promise: Promise<T>) {
+function unsubscribable() {
   let subscribed = true;
   const unsubscribe = () => {
     subscribed = false;
   };
-  const unsubscribable = new Promise<T>((resolve, reject) => {
-    promise
-      .then((value) => {
-        if (subscribed) {
-          resolve(value);
-        }
-      })
-      .catch((error: unknown) => {
-        if (subscribed) {
-          reject(error as Error);
-        }
-      });
-  });
+  function callbackWrapper<Arguments extends unknown[], Return>(callback: (...args: Arguments) => Return) {
+    if (subscribed) {
+      return callback;
+    }
+  }
   return {
-    promise: unsubscribable,
-    unsubscribe: unsubscribe,
+    unsubscribe,
+    cb: callbackWrapper,
   };
 }
 
@@ -121,15 +123,20 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       setError(error);
     };
 
-    const { promise: fetchPromise, unsubscribe } = unsubscribablePromise(room.typing.get());
+    const { unsubscribe, cb } = unsubscribable();
 
-    fetchPromise
-      .then((currentlyTyping) => {
-        setCurrentlyTyping(currentlyTyping);
-      })
-      .catch((error: unknown) => {
-        setErrorState(error as Ably.ErrorInfo);
-      });
+    room.typing
+      .get()
+      .then(
+        cb((currentlyTyping) => {
+          setCurrentlyTyping(currentlyTyping);
+        }),
+      )
+      .catch(
+        cb((error: unknown) => {
+          setErrorState(error as Ably.ErrorInfo);
+        }),
+      );
 
     const subscription = room.typing.subscribe((event) => {
       setErrorState(undefined);

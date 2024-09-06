@@ -54,6 +54,7 @@ describe('useTyping', () => {
     const mockTyping = {
       ...mockRoom.typing,
       subscribe: vi.fn().mockReturnValue({ unsubscribe: mockUnsubscribe }),
+      get: mockRoom.typing.get,
     };
 
     // update the mock room with the new typing object
