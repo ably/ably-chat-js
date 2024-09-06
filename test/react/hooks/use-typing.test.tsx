@@ -63,6 +63,7 @@ describe('useTyping', () => {
         return { unsubscribe: mockUnsubscribe };
       }),
       onDiscontinuity: vi.fn().mockReturnValue({ off: vi.fn() }),
+      get: mockRoom.typing.get,
     };
 
     // update the mock room with the new typing object
