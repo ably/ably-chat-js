@@ -5,12 +5,12 @@ import { ReactNode } from 'react';
 import { ChatClientContext, ChatClientContextValue } from '../contexts/chat-client-context.js';
 
 /**
- * The default identifier for the chat client context.
+ * The default identifier for the {@link ChatClientContext}.
  */
 export const DEFAULT_CHAT_CLIENT_ID = 'default';
 
 /**
- * Props for the ChatClientProvider component.
+ * Props for the {@link ChatClientProvider} component.
  */
 export interface ChatClientProviderProps {
   /**
@@ -19,16 +19,16 @@ export interface ChatClientProviderProps {
   children?: ReactNode | ReactNode[] | null;
 
   /**
-   * An instance of the chat client to be used in the provider.
+   * An instance of the {@link ChatClient} to be used in the provider.
    */
   client: ChatClient;
 }
 
 /**
- * Returns a React component that provides a `ChatClient` in a React context to the component subtree.
- * Updates the context value when the `ChatClient` prop changes.
+ * Returns a React component that provides a {@link ChatClient} in a React context to the component subtree.
+ * Updates the context value when the client prop changes.
  *
- * @param {ChatClientProviderProps} props - The props for the ChatClientProvider component.
+ * @param {ChatClientProviderProps} props - The props for the {@link ChatClientProvider} component.
  *
  * @returns {ChatClientProvider} component.
  */

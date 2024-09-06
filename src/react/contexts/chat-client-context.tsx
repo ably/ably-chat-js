@@ -2,16 +2,16 @@ import { ChatClient } from '@ably/chat';
 import React from 'react';
 
 /**
- * The Context key to handle global context for Ably Chat Client.
- * Only a single instance of Ably Chat context should exist to avoid issues resulting from multiple identical contexts,
- * e.g., a Chat Client instance added in one context, and then attempted to retrieve it from a different context.
+ * The Context key to handle global context for the {@link ChatClient}.
+ * Only a single instance the {@link ChatClientContext} should exist to avoid issues resulting from multiple identical contexts,
+ * e.g., a {@link ChatClient} instance added in one context, and then attempting to retrieve it from a different context.
  *
  */
 const contextKey = Symbol.for('__ABLY_CHAT_CLIENT_CONTEXT__');
 
 /**
  * Extends GlobalThis interface with chat context.
- * The chat context is created once and stored in the global state to ensure a single context instance.
+ * The {@link ChatClientContext} is created once and stored in the global state to ensure a single context instance.
  *
  * @property {React.Context<ChatClientContextValue> | undefined} contextKey Ably Chat client context.
  */
@@ -20,15 +20,16 @@ interface GlobalThis {
 }
 
 /**
- * Object to encapsulate global context. Uses `globalThis` if defined.
- * Protects against creating multiple instances of the context due to misconfigurations
- * in module bundler or package manager configurations.
+ * Object to encapsulate global context.
+ * Uses {@link GlobalThis} if defined.
+ * Protects against creating multiple instances of the {@link ChatClientContext} due to misconfigurations
+ * in the module bundler or package manager configurations.
  *
  */
 const globalObjectForContext: GlobalThis = typeof globalThis === 'undefined' ? {} : (globalThis as GlobalThis);
 
 /**
- * Props for a chat client context provider.
+ * Props for the chat client context provider.
  */
 export interface ChatClientContextProviderProps {
   /**
@@ -44,11 +45,11 @@ export interface ChatClientContextProviderProps {
 export type ChatClientContextValue = Record<string, ChatClientContextProviderProps>;
 
 /**
- * Returns a chat client context.
+ * Returns a {@link ChatClientContext}.
  * Retrieve the context from the global object if initialized,
  * else, initialize and store the context in the global object.
  *
- * @return {React.Context<ChatClientContextValue>} Global context for ChatClient.
+ * @return {React.Context<ChatClientContextValue>} Global context for {@link ChatClient}.
  *
  */
 function getChatContext(): React.Context<ChatClientContextValue> {
@@ -61,8 +62,8 @@ function getChatContext(): React.Context<ChatClientContextValue> {
 }
 
 /**
- * Global context for ChatClientProvider.
- * Access point for ChatClient context in the application.
+ * Global context for {@link ChatClientProvider}.
+ * Access point for {@link ChatClient} context in the application.
  *
  * @type {React.Context<ChatClientContextValue>}
  */

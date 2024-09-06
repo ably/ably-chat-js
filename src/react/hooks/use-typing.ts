@@ -11,11 +11,13 @@ import { useLogger } from './use-logger.js';
 import { useRoom } from './use-room.js';
 
 /**
- * The options for the {@link useTyping} hook.
+ * The parameters for the {@link useTyping} hook.
  */
 export interface TypingParams extends StatusParams, Listenable<TypingListener> {
   /**
    * A listener that will be called whenever a typing event is sent to the room.
+   * The listener is removed when the component unmounts.
+   *
    */
   listener?: TypingListener;
 }
@@ -32,7 +34,8 @@ export interface UseTypingResponse extends ChatStatusResponse {
   readonly stop: Typing['stop'];
 
   /**
-   * The set of client IDs that are currently typing in the room.
+   * A state value representing the set of client IDs that are currently typing in the room.
+   * It automatically updates based on typing events received from the room.
    */
   readonly currentlyTyping: TypingEvent['currentlyTyping'];
 
@@ -42,7 +45,7 @@ export interface UseTypingResponse extends ChatStatusResponse {
   readonly typingIndicators: Typing;
 
   /**
-   * The current error state of the hook, this will be an instance of {@link Ably.ErrorInfo} or `undefined`.
+   * A state value representing the current error state of the hook, this will be an instance of {@link Ably.ErrorInfo} or `undefined`.
    * An error can occur during mount when initially fetching the current typing state; this does not mean that further
    * updates will not be received, and so the hook might recover from this state on its own.
    */

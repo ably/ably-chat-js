@@ -6,12 +6,12 @@ import { ChatClientContext } from '../contexts/chat-client-context.js';
 import { DEFAULT_CHAT_CLIENT_ID } from '../providers/chat-client-provider.js';
 
 /**
- * Hook to access the chat client provided by `ChatClientContext`.
- * This hook must be used within a `ChatClientProvider`.
+ * Hook to access the chat client provided by {@link ChatClientContext}.
+ * This hook must be used within a {@link ChatClientProvider}.
  *
- * @throws {ErrorInfo} When the hook is not used within a `ChatClientProvider`.
+ * @throws {ErrorInfo} When the hook is not used within a {@link ChatClientProvider}.
  *
- * @returns {ChatClient} The chat client instance provided by the context.
+ * @returns {ChatClient} The {@link ChatClient} instance provided by the context.
  *
  */
 export const useChatClient = (): ChatClient => {

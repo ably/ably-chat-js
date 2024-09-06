@@ -10,7 +10,7 @@ export interface ChatRoomContextType {
 }
 
 /**
- * RoomContext is used to keep a chat room in a React context. Use
+ * {@link ChatRoomContext} is used to keep a chat room in a React context. Use
  * {@link ChatRoomProvider} to set a room in this context and {@link useRoom} to
  * use the room from the context.
  */
