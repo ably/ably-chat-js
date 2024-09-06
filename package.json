@@ -6,17 +6,21 @@
   "main": "dist/chat/ably-chat.umd.cjs",
   "browser": "dist/chat/ably-chat.js",
   "types": "dist/chat/index.d.ts",
+  "react-native": "dist/react/ably-chat-react.umd.cjs",
   "exports": {
     ".": {
       "types": "./dist/chat/index.d.ts",
       "import": "./dist/chat/ably-chat.js",
-      "require": "./dist/chat/ably-chat.umd.cjs"
+      "require": "./dist/chat/ably-chat.umd.cjs",
+      "react-native": "./dist/chat/ably-chat.umd.cjs"
     },
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/ably-chat-react.js",
-      "require": "./dist/react/ably-chat-react.umd.cjs"
-    }
+      "require": "./dist/react/ably-chat-react.umd.cjs",
+      "react-native": "./dist/react/ably-chat-react.umd.cjs"
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "lint": "eslint . && npm run cspell",

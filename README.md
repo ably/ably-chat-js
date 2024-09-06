@@ -27,6 +27,10 @@ This SDK supports the following platforms:
 
 **React**: The library ships with a number of providers and hooks for React, which provide a closer integration with that ecosystem. For more information on using Ably Chat in React, see the [React readme](./src/react/README.md).
 
+**React Native** We aim to support all platforms supported by React Native. If you find any issues please raise an issue or contact us.
+
+There is a known caveat in the current version of the library in environments where `structuredClone` is not defined. To address this, you can use a polyfill such as [@ungap/structured-clone](https://www.npmjs.com/package/@ungap/structured-clone).
+
 ## Supported chat features
 
 This project is under development so we will be incrementally adding new features. At this stage, you'll find APIs for the following chat features:
