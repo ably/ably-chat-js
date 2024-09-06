@@ -1,6 +1,6 @@
-import { Typing, TypingEvent, TypingListener, TypingSubscriptionResponse } from '@ably/chat';
+import { Typing, TypingEvent, TypingListener } from '@ably/chat';
 import * as Ably from 'ably';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -71,63 +71,54 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
 
   const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
   const [error, setError] = useState<Ably.ErrorInfo | undefined>();
-  const errorRef = useRef<Ably.ErrorInfo | undefined>();
-
-  const setErrorState = useCallback(
-    (error: Ably.ErrorInfo) => {
-      logger.error('useTyping(); setting error state', { error, roomId: room.roomId });
-      errorRef.current = error;
-      setError(error);
-    },
-    [logger, room.roomId],
-  );
-
-  const clearErrorState = useCallback(() => {
-    logger.debug('useTyping(); clearing error state', { roomId: room.roomId });
-    errorRef.current = undefined;
-    setError(undefined);
-  }, [logger, room.roomId]);
 
   // Create a stable reference for the listeners
   const listenerRef = useEventListenerRef(params?.listener);
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
   useEffect(() => {
-    const fetchAndSubscribe = async () => {
-      let response: TypingSubscriptionResponse;
-      try {
-        // fetch current typers
-        const currentTypers = await room.typing.get();
-        setCurrentlyTyping(currentTypers);
+    // Start with a clean slate - no errors and empty set
+    setError(undefined);
+    setCurrentlyTyping((prev) => {
+      // keep reference constant if it's already empty
+      if (prev.size === 0) return prev;
+      return new Set<string>();
+    });
 
-        // clear previous errors
-        clearErrorState();
-      } catch (error: unknown) {
-        // handle and set the error
-        const errorInfo = error as Ably.ErrorInfo;
-        setErrorState(errorInfo);
-      } finally {
-        // subscribe to typing events
-        logger.debug('useTyping(); subscribing to typing events', { roomId: room.roomId });
-        response = room.typing.subscribe((event) => {
-          // clear error state if there was one
-          if (errorRef.current) {
-            clearErrorState();
-          }
-          // update typing state
-          setCurrentlyTyping(event.currentlyTyping);
-        });
+    let mounted = true;
+
+    const setErrorState = (error?: Ably.ErrorInfo) => {
+      if (error === undefined) {
+        logger.debug('useTyping(); clearing error state', { roomId: room.roomId });
+      } else {
+        logger.error('useTyping(); setting error state', { error, roomId: room.roomId });
       }
-
-      // cleanup function
-      return () => {
-        logger.debug('useTyping(); unsubscribing from typing events', { roomId: room.roomId });
-        response.unsubscribe();
-      };
+      setError(error);
     };
 
-    void fetchAndSubscribe();
-  }, [room, setErrorState, clearErrorState, logger]);
+    room.typing
+      .get()
+      .then((currentlyTyping) => {
+        if (!mounted) return;
+        setCurrentlyTyping(currentlyTyping);
+      })
+      .catch((error: unknown) => {
+        if (!mounted) return;
+        setErrorState(error as Ably.ErrorInfo);
+      });
+
+    const subscription = room.typing.subscribe((event) => {
+      setErrorState(undefined);
+      setCurrentlyTyping(event.currentlyTyping);
+    });
+
+    // cleanup function
+    return () => {
+      logger.debug('useTyping(); unsubscribing from typing events', { roomId: room.roomId });
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [room, logger]);
 
   // if provided, subscribes the user-provided onDiscontinuity listener
   useEffect(() => {
