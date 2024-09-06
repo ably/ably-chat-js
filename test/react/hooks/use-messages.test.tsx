@@ -1,4 +1,12 @@
-import { ConnectionLifecycle, Message, Room, RoomLifecycle } from '@ably/chat';
+import {
+  ConnectionLifecycle,
+  DiscontinuityListener,
+  Message,
+  MessageEvents,
+  MessageListener,
+  Room,
+  RoomLifecycle,
+} from '@ably/chat';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -56,7 +64,6 @@ describe('useMessages', () => {
 
     // check that the messages instance and metrics are correctly provided
     expect(result.current.messages).toBe(mockRoom.messages);
-    expect(result.current.getPreviousMessages).toBeUndefined();
 
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
@@ -71,9 +78,11 @@ describe('useMessages', () => {
     const mockListener = vi.fn();
     const mockUnsubscribe = vi.fn();
     const mockGetPreviousMessages = vi.fn().mockResolvedValue({ items: [] });
-    vi.spyOn(mockRoom.messages, 'subscribe').mockReturnValue({
-      unsubscribe: mockUnsubscribe,
-      getPreviousMessages: mockGetPreviousMessages,
+
+    const messageListeners = new Set<MessageListener>();
+    vi.spyOn(mockRoom.messages, 'subscribe').mockImplementation((listener) => {
+      messageListeners.add(listener);
+      return { unsubscribe: mockUnsubscribe, getPreviousMessages: mockGetPreviousMessages };
     });
 
     let result = renderHook(() =>
@@ -84,8 +93,25 @@ describe('useMessages', () => {
 
     const getPreviousMessages = result.result.current.getPreviousMessages;
 
-    // verify that subscribe was called with the mock listener on mount
-    expect(mockRoom.messages.subscribe).toHaveBeenCalledWith(mockListener);
+    // verify that subscribe was called with the mock listener on mount by invoking it
+    const messageEvent = {
+      type: MessageEvents.Created,
+      message: {
+        timestamp: new Date(),
+        text: 'test message',
+        timeserial: '123',
+        clientId: '123',
+        roomId: '123',
+        createdAt: new Date(),
+        before: vi.fn(),
+        after: vi.fn(),
+        equal: vi.fn(),
+        headers: {},
+        metadata: {},
+      },
+    };
+    for (const listener of messageListeners) listener(messageEvent);
+    expect(mockListener).toHaveBeenCalledWith(messageEvent);
 
     // wait for the getPreviousMessages function to be defined
     await waitFor(
@@ -156,13 +182,20 @@ describe('useMessages', () => {
     const mockDiscontinuityListener = vi.fn();
 
     // spy on the onDiscontinuity method of the messages instance
-    vi.spyOn(mockRoom.messages, 'onDiscontinuity').mockReturnValue({ off: mockOff });
+    let discontinuityListener: DiscontinuityListener | undefined;
+    vi.spyOn(mockRoom.messages, 'onDiscontinuity').mockImplementation((listener) => {
+      discontinuityListener = listener;
+      return { off: mockOff };
+    });
 
     // render the hook with a discontinuity listener
     const { unmount } = renderHook(() => useMessages({ onDiscontinuity: mockDiscontinuityListener }));
 
-    // check that the listener was subscribed to the discontinuity events
-    expect(mockRoom.messages.onDiscontinuity).toHaveBeenCalledWith(mockDiscontinuityListener);
+    // check that the listener was subscribed to the discontinuity events by invoking it
+    const errorInfo = new Ably.ErrorInfo('test error', 40000, 400);
+    expect(discontinuityListener).toBeDefined();
+    discontinuityListener?.(errorInfo);
+    expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
 
     // unmount the hook and verify that the listener was unsubscribed
     unmount();

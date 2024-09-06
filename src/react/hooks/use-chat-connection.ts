@@ -2,6 +2,7 @@ import { Connection, ConnectionLifecycle, ConnectionStatusChange, ConnectionStat
 import { ErrorInfo } from 'ably';
 import { useEffect, useState } from 'react';
 
+import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useChatClient } from './use-chat-client.js';
 
 /**
@@ -56,6 +57,9 @@ export const useChatConnection = (options?: UseChatConnectionOptions): UseChatCo
     setCurrentStatus(chatClient.connection.status.current);
   }, [chatClient]);
 
+  // Create stable references for the listeners
+  const onStatusChangeRef = useEventListenerRef(options?.onStatusChange);
+
   // Apply the listener to the chatClient's connection status changes to keep the state update across re-renders
   useEffect(() => {
     chatClient.logger.debug('useChatConnection(); applying internal listener');
@@ -73,16 +77,15 @@ export const useChatConnection = (options?: UseChatConnectionOptions): UseChatCo
 
   // Register the listener for the user-provided onStatusChange callback
   useEffect(() => {
-    if (!options?.onStatusChange) return;
+    if (!onStatusChangeRef) return;
     chatClient.logger.debug('useChatConnection(); applying client listener');
-    const { onStatusChange } = options;
-    const { off } = chatClient.connection.status.onChange(onStatusChange);
+    const { off } = chatClient.connection.status.onChange(onStatusChangeRef);
 
     return () => {
       chatClient.logger.debug('useChatConnection(); cleaning up client listener');
       off();
     };
-  }, [chatClient.connection.status, options, chatClient.logger]);
+  }, [chatClient.connection.status, chatClient.logger, onStatusChangeRef]);
 
   return {
     currentStatus,

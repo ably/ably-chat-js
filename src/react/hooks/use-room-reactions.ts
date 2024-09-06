@@ -1,6 +1,7 @@
 import { RoomReactionListener, RoomReactions, SendReactionParams } from '@ably/chat';
 import { useCallback, useEffect } from 'react';
 
+import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
@@ -50,27 +51,31 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
   const logger = useLogger();
   logger.trace('useRoomReactions();', { params, roomId: room.roomId });
 
+  // create stable references for the listeners
+  const listenerRef = useEventListenerRef(params?.listener);
+  const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
+
   // if provided, subscribes the user provided discontinuity listener
   useEffect(() => {
-    if (!params?.onDiscontinuity) return;
+    if (!onDiscontinuityRef) return;
     logger.debug('useRoomReactions(); applying onDiscontinuity listener', { roomId: room.roomId });
-    const { off } = room.reactions.onDiscontinuity(params.onDiscontinuity);
+    const { off } = room.reactions.onDiscontinuity(onDiscontinuityRef);
     return () => {
       logger.debug('useRoomReactions(); removing onDiscontinuity listener', { roomId: room.roomId });
       off();
     };
-  }, [room, params, logger]);
+  }, [room, onDiscontinuityRef, logger]);
 
   // if provided, subscribe the user provided listener to room reactions
   useEffect(() => {
-    if (!params?.listener) return;
+    if (!listenerRef) return;
     logger.debug('useRoomReactions(); applying listener', { roomId: room.roomId });
-    const { unsubscribe } = room.reactions.subscribe(params.listener);
+    const { unsubscribe } = room.reactions.subscribe(listenerRef);
     return () => {
       logger.debug('useRoomReactions(); removing listener', { roomId: room.roomId });
       unsubscribe();
     };
-  }, [room, params, logger]);
+  }, [room, listenerRef, logger]);
 
   const send = useCallback((params: SendReactionParams) => room.reactions.send(params), [room.reactions]);
 

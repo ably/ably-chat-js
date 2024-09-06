@@ -54,6 +54,8 @@ At a client-level, changes to the connection status can be subscribed to by prov
 
 Listeners can be provided for events related to a particular `Room` instances status changes via `onRoomStatusChange`. Furthermore, discontinuities in the event stream for room features can be monitored via the `onDiscontinuity` event listener. Room-level events pertain to the nearest parent `RoomProvider` in the React component tree.
 
+Changing the value provided for each of the available listeners will cause the previously registered listener instance to stop receiving events. However, all message events will be received by exactly one listener. If your listener becomes `undefined`, then the subscription will be removed.
+
 ```tsx
 import { useOccupancy } from '@ably/chat/react';
 
@@ -210,13 +212,19 @@ const MyComponent = () => {
 ### Subscribing To Messages
 
 You can provide an optional listener that will receive the messages sent to the room; if provided, the hook will
-automatically subscribe to messages in the room.
+automatically subscribe to messages in the room. As long as a defined value is provided, the subscription will persist
+across renders: making your listener value `undefined` will cause the subscription to be removed until it becomes defined
+again.
 
 Additionally, providing the listener will allow you to access the `getPreviousMessages` method, which can be used to
 fetch previous messages up until the listener was subscribed.
 
-The `getPreviousMessages` method can be useful when recovering from a discontinuity event,
-as it allows you to fetch all the messages that were missed while the listener was not subscribed.
+The `getPreviousMessages` method can be useful when recovering from a discontinuity event, as it allows you to fetch all
+the messages that were missed while the listener was not subscribed. As long as you provide a defined value for the
+listener (and there are no message discontinuities), `getPreviousMessages` will consistently return messages from the
+same point across renders. However, if your listener becomes `undefined`, then the subscription to messages will be
+removed meaning that, if you then re-define your listener, `getPreviousMessages` will now return messages from the
+new subscription point.
 
 ```tsx
 import { useEffect, useState } from 'react';

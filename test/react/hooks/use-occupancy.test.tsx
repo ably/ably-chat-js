@@ -1,5 +1,13 @@
-import { ConnectionLifecycle, OccupancyListener, Room, RoomLifecycle } from '@ably/chat';
+import {
+  ConnectionLifecycle,
+  DiscontinuityListener,
+  OccupancyEvent,
+  OccupancyListener,
+  Room,
+  RoomLifecycle,
+} from '@ably/chat';
 import { act, renderHook } from '@testing-library/react';
+import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
@@ -54,7 +62,22 @@ describe('useOccupancy', () => {
 
     const mockOccupancy = {
       ...mockRoom.occupancy,
-      subscribe: vi.fn().mockReturnValue({ unsubscribe: mockUnsubscribe }),
+      callAllListeners: (arg: OccupancyEvent) => {
+        for (const listener of mockOccupancy.listeners) {
+          listener(arg);
+        }
+      },
+      listeners: new Set<OccupancyListener>(),
+      subscribe: vi.fn().mockImplementation((listener: OccupancyListener) => {
+        mockOccupancy.listeners.add(listener);
+        return {
+          unsubscribe: () => {
+            mockOccupancy.listeners.delete(listener);
+            mockUnsubscribe();
+          },
+        };
+      }),
+      onDiscontinuity: vi.fn().mockReturnValue({ off: vi.fn() }),
     };
 
     // update the mock room with the new occupancy object
@@ -62,8 +85,9 @@ describe('useOccupancy', () => {
 
     const { unmount } = renderHook(() => useOccupancy({ listener: mockListener }));
 
-    // verify that subscribe was called with the mock listener on mount
-    expect(mockOccupancy.subscribe).toHaveBeenCalledWith(mockListener);
+    // verify that subscribe was called with the mock listener on mount by triggering an occupancy event
+    mockOccupancy.callAllListeners({ connections: 5, presenceMembers: 3 });
+    expect(mockListener).toHaveBeenCalledWith({ connections: 5, presenceMembers: 3 });
 
     // unmount the hook and verify that unsubscribe was called
     unmount();
@@ -74,8 +98,14 @@ describe('useOccupancy', () => {
     let subscribedListener: OccupancyListener;
 
     // spy on the subscribe method of the occupancy instance
+    let callTimes = 0;
     vi.spyOn(mockRoom.occupancy, 'subscribe').mockImplementation((listener) => {
-      subscribedListener = listener;
+      // We only care about the first call to subscribe, as that's the internal listener going on
+      if (callTimes === 0) {
+        callTimes++;
+        subscribedListener = listener;
+      }
+
       return { unsubscribe: vi.fn() };
     });
 
@@ -115,14 +145,36 @@ describe('useOccupancy', () => {
     const mockOff = vi.fn();
     const mockDiscontinuityListener = vi.fn();
 
-    // spy on the onDiscontinuity method of the occupancy instance
-    vi.spyOn(mockRoom.occupancy, 'onDiscontinuity').mockReturnValue({ off: mockOff });
+    const mockOccupancy = {
+      ...mockRoom.occupancy,
+      callAllListeners: (arg: Ably.ErrorInfo) => {
+        for (const listener of mockOccupancy.listeners) {
+          listener(arg);
+        }
+      },
+      listeners: new Set<DiscontinuityListener>(),
+      onDiscontinuity: vi.fn().mockImplementation((listener: DiscontinuityListener) => {
+        mockOccupancy.listeners.add(listener);
+        return {
+          off: () => {
+            mockOccupancy.listeners.delete(listener);
+            mockOff();
+          },
+        };
+      }),
+      subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
+    };
+
+    // update the mock room with the new occupancy object
+    mockRoom = { ...mockRoom, occupancy: mockOccupancy };
 
     // render the hook with a discontinuity listener
     const { unmount } = renderHook(() => useOccupancy({ onDiscontinuity: mockDiscontinuityListener }));
 
-    // check that the listener was subscribed to the discontinuity events
-    expect(mockRoom.occupancy.onDiscontinuity).toHaveBeenCalledWith(mockDiscontinuityListener);
+    // check that the listener was subscribed to the discontinuity events by triggering one
+    const errorInfo = new Ably.ErrorInfo('test', 50000, 500);
+    mockOccupancy.callAllListeners(errorInfo);
+    expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
 
     // unmount the hook and verify that the listener was unsubscribed
     unmount();

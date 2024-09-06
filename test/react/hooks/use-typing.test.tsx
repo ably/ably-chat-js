@@ -1,6 +1,6 @@
-import { ConnectionLifecycle, Logger, Room, RoomLifecycle, TypingListener } from '@ably/chat';
+import { ConnectionLifecycle, DiscontinuityListener, Logger, Room, RoomLifecycle, TypingListener } from '@ably/chat';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { ErrorInfo } from 'ably';
+import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useTyping } from '../../../src/react/hooks/use-typing.ts';
@@ -53,7 +53,12 @@ describe('useTyping', () => {
 
     const mockTyping = {
       ...mockRoom.typing,
-      subscribe: vi.fn().mockReturnValue({ unsubscribe: mockUnsubscribe }),
+      listeners: new Set<TypingListener>(),
+      subscribe: vi.fn().mockImplementation((listener: TypingListener) => {
+        mockTyping.listeners.add(listener);
+        return { unsubscribe: mockUnsubscribe };
+      }),
+      onDiscontinuity: vi.fn().mockReturnValue({ off: vi.fn() }),
     };
 
     // update the mock room with the new typing object
@@ -61,8 +66,12 @@ describe('useTyping', () => {
 
     const { unmount } = renderHook(() => useTyping({ listener: mockListener }));
 
-    // verify that subscribe was called with the mock listener on mount
-    expect(mockTyping.subscribe).toHaveBeenCalledWith(mockListener);
+    // verify that subscribe was called with the mock listener on mount by triggering an event
+    const typingEvent = { currentlyTyping: new Set<string>() };
+    for (const listener of mockTyping.listeners) {
+      listener(typingEvent);
+    }
+    expect(mockListener).toHaveBeenCalledWith(typingEvent);
 
     // unmount the hook and verify that unsubscribe was called
     unmount();
@@ -160,7 +169,7 @@ describe('useTyping', () => {
       { timeout: 3000 },
     );
 
-    expect(mockRoom.typing.subscribe).toHaveBeenCalledOnce();
+    expect(mockRoom.typing.subscribe).toHaveBeenCalledTimes(1);
     expect(mockRoom.typing.get).toHaveBeenCalledOnce();
 
     // check the states of the occupancy metrics are correctly updated
@@ -169,7 +178,7 @@ describe('useTyping', () => {
 
   it('should set and return the error state when the call to get the initial typers set fails', async () => {
     // spy on the get method of the typing instance and throw an error
-    vi.spyOn(mockRoom.typing, 'get').mockRejectedValue(new ErrorInfo('test', 500, 50000));
+    vi.spyOn(mockRoom.typing, 'get').mockRejectedValue(new Ably.ErrorInfo('test', 500, 50000));
     vi.spyOn(mockRoom.typing, 'subscribe');
 
     // render the hook
@@ -185,7 +194,7 @@ describe('useTyping', () => {
 
     // ensure the get method was called
     expect(mockRoom.typing.get).toHaveBeenCalledOnce();
-    expect(mockRoom.typing.subscribe).toHaveBeenCalledOnce();
+    expect(mockRoom.typing.subscribe).toHaveBeenCalledTimes(1);
 
     // ensure we have the correct error state
     expect(result.current.error).toBeErrorInfo({
@@ -200,7 +209,7 @@ describe('useTyping', () => {
     // if we then receive a typing event, we should clear the error state since we now have the latest set of typers
 
     // spy on the get method of the typing instance and throw an error
-    vi.spyOn(mockRoom.typing, 'get').mockRejectedValue(new ErrorInfo('test', 500, 50000));
+    vi.spyOn(mockRoom.typing, 'get').mockRejectedValue(new Ably.ErrorInfo('test', 500, 50000));
 
     let subscribedListener: TypingListener | undefined;
 
@@ -266,13 +275,20 @@ describe('useTyping', () => {
     const mockDiscontinuityListener = vi.fn();
 
     // spy on the onDiscontinuity method of the typing instance
-    vi.spyOn(mockRoom.typing, 'onDiscontinuity').mockReturnValue({ off: mockOff });
+    let discontinuityListener: DiscontinuityListener | undefined;
+    vi.spyOn(mockRoom.typing, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+      discontinuityListener = listener;
+      return { off: mockOff };
+    });
 
     // render the hook with a discontinuity listener
     const { unmount } = renderHook(() => useTyping({ onDiscontinuity: mockDiscontinuityListener }));
 
-    // check that the listener was subscribed to the discontinuity events
-    expect(mockRoom.typing.onDiscontinuity).toHaveBeenCalledWith(mockDiscontinuityListener);
+    // check that the listener was subscribed to the discontinuity events by triggering one
+    const discontinuityEvent = new Ably.ErrorInfo('test', 50000, 500);
+    expect(discontinuityListener).toBeDefined();
+    discontinuityListener?.(discontinuityEvent);
+    expect(mockDiscontinuityListener).toHaveBeenCalledWith(discontinuityEvent);
 
     // unmount the hook and verify that the listener was unsubscribed
     unmount();

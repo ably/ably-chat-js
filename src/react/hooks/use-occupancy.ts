@@ -1,6 +1,7 @@
 import { Occupancy, OccupancyListener } from '@ably/chat';
 import { useEffect, useState } from 'react';
 
+import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
@@ -60,16 +61,20 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
     presenceMembers: 0,
   });
 
+  // create stable references for the listeners
+  const listenerRef = useEventListenerRef(params?.listener);
+  const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
+
   // if provided, subscribes the user provided discontinuity listener
   useEffect(() => {
-    if (!params?.onDiscontinuity) return;
+    if (!onDiscontinuityRef) return;
     logger.debug('useOccupancy(); applying onDiscontinuity listener', { roomId: room.roomId });
-    const { off } = room.occupancy.onDiscontinuity(params.onDiscontinuity);
+    const { off } = room.occupancy.onDiscontinuity(onDiscontinuityRef);
     return () => {
       logger.debug('useOccupancy(); removing onDiscontinuity listener', { roomId: room.roomId });
       off();
     };
-  }, [room, params?.onDiscontinuity, logger]);
+  }, [room, onDiscontinuityRef, logger]);
 
   // subscribe to occupancy events internally, to update the state metrics
   useEffect(() => {
@@ -88,14 +93,14 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
 
   // if provided, subscribes the user provided listener to occupancy events
   useEffect(() => {
-    if (!params?.listener) return;
+    if (!listenerRef) return;
     logger.debug('useOccupancy(); applying listener', { roomId: room.roomId });
-    const { unsubscribe } = room.occupancy.subscribe(params.listener);
+    const { unsubscribe } = room.occupancy.subscribe(listenerRef);
     return () => {
       logger.debug('useOccupancy(); cleaning up listener', { roomId: room.roomId });
       unsubscribe();
     };
-  }, [params?.listener, room, logger]);
+  }, [listenerRef, room, logger]);
 
   return {
     connectionStatus,

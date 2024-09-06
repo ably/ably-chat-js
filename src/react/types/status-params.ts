@@ -10,6 +10,9 @@ import * as Ably from 'ably';
  *
  * It's an alternative to {@link ChatStatusResponse} which provide this
  * information via a callback.
+ *
+ * Changing the value provided for each of the available listeners will cause the previously registered listener instance
+ * to stop receiving events. However, all message events will be received by exactly one listener.
  */
 export interface StatusParams {
   /**
