@@ -15,7 +15,8 @@
     "Suspendable",
     "Failable",
     "livestreams",
-    "livestream"
+    "livestream",
+    "unsubscribable"
   ],
   "ignoreRegExpList": ["/.*@\\d{13}-/"],
   "flagWords": [
