@@ -1,4 +1,12 @@
-import { MessageListener, Messages, MessageSubscriptionResponse, QueryOptions, SendMessageParams } from '@ably/chat';
+import {
+  Message,
+  MessageListener,
+  Messages,
+  MessageSubscriptionResponse,
+  PaginatedResult,
+  QueryOptions,
+  SendMessageParams,
+} from '@ably/chat';
 import { useCallback, useEffect, useState } from 'react';
 
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
@@ -88,18 +96,34 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   useEffect(() => {
     if (!listenerRef) return;
     logger.debug('useMessages(); applying listener', { roomId: room.roomId });
+    let unmounted = false;
     const sub = room.messages.subscribe(listenerRef);
 
     // set the getPreviousMessages method if a listener is provided
     setGetPreviousMessages(() => {
       logger.debug('useMessages(); setting getPreviousMessages state', { roomId: room.roomId });
       return (params: Omit<QueryOptions, 'direction'>) => {
+        // If we've unmounted, then the subscription is gone and we can't call getPreviousMessages
+        // So return a dummy object that should be thrown away anyway
+        if (unmounted) {
+          logger.debug('useMessages(); getPreviousMessages called after unmount', { roomId: room.roomId });
+          return Promise.resolve({
+            items: [],
+            hasNext: () => false,
+            isLast: () => true,
+            next: () => undefined as unknown as Promise<PaginatedResult<Message>> | null,
+            previous: () => undefined as unknown as Promise<PaginatedResult<Message>>,
+            current: () => undefined as unknown as Promise<PaginatedResult<Message>>,
+            first: () => undefined as unknown as Promise<PaginatedResult<Message>>,
+          }) as Promise<PaginatedResult<Message>>;
+        }
         return sub.getPreviousMessages(params);
       };
     });
 
     return () => {
       logger.debug('useMessages(); removing listener and getPreviousMessages state', { roomId: room.roomId });
+      unmounted = true;
       sub.unsubscribe();
       setGetPreviousMessages(undefined);
     };
