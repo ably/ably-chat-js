@@ -154,9 +154,11 @@ export const Chat = () => {
       )}
       {!typingError && (
         <div className="typing-indicator-container">
-          {new Array(...currentlyTyping).map((client) => (
-            <p key={client}>{client} is typing...</p>
-          ))}
+          {new Array(...currentlyTyping)
+            .filter((client) => client !== clientId)
+            .map((client) => (
+              <p key={client}>{client} is typing...</p>
+            ))}
         </div>
       )}
       <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
