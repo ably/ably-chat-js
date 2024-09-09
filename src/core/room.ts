@@ -1,4 +1,5 @@
 import * as Ably from 'ably';
+import cloneDeep from 'lodash.clonedeep';
 
 import { ChatApi } from './chat-api.js';
 import { Logger } from './logger.js';
@@ -370,7 +371,7 @@ export class DefaultRoom implements Room {
    * @inheritDoc Room
    */
   options(): RoomOptions {
-    return structuredClone(this._options);
+    return cloneDeep(this._options);
   }
 
   /**

@@ -67,6 +67,7 @@
   "devDependencies": {
     "@testing-library/react": "^16.0.0",
     "@types/jsonwebtoken": "^9.0.6",
+    "@types/lodash.clonedeep": "^4.5.9",
     "@types/react": "^18.3.3",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.14.1",
@@ -80,6 +81,7 @@
     "eslint-plugin-jsdoc": "^48.5.0",
     "eslint-plugin-react": "^7.34.3",
     "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-native": "^4.1.0",
     "eslint-plugin-react-refresh": "^0.4.7",
     "eslint-plugin-security": "^3.0.1",
     "eslint-plugin-simple-import-sort": "^12.1.0",
@@ -99,7 +101,8 @@
   },
   "dependencies": {
     "async-mutex": "^0.5.0",
-    "dequal": "^2.0.3"
+    "dequal": "^2.0.3",
+    "lodash.clonedeep": "^4.5.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.18",
