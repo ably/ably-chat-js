@@ -16,7 +16,7 @@
     "Failable",
     "livestreams",
     "livestream",
-    "ungap"
+    "clonedeep"
   ],
   "ignoreRegExpList": ["/.*@\\d{13}-/"],
   "flagWords": ["cancelled"]
