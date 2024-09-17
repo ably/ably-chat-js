@@ -26,6 +26,9 @@ export interface ChatRoomProviderProps {
    *   reactions: RoomOptionsDefaults.reactions,
    * }} />
    * ```
+   *
+   * NOTE: This value is not memoized by the provider. It must be memoized in your component to prevent
+   * re-renders of a parent component from causing the room to be recreated.
    */
   options: RoomOptions;
 

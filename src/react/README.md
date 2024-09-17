@@ -144,6 +144,7 @@ const App = () => {
     <ChatClientProvider client={chatClient}>
       <ChatRoomProvider
         id="my-room-id"
+        // The value passed to options should be memoized, or use the defaults.
         options={RoomOptionsDefaults}
       >
         <RestOfYourApp />
@@ -154,6 +155,9 @@ const App = () => {
 ```
 
 By default, the `ChatRoomProvider` will automatically call `attach()` on the room when it first mounts, and will subsequently call `release()` when it unmounts. If you do not wish for this behavior, you may set the `attach` parameter to `false`, which will allow you to manually control the attachment via the `useRoom` hook (see below). You may also inhibit the `release` behavior, to simply only `detach` the room when the component unmounts.
+
+> [!IMPORTANT]
+> The `ChatClientProvider` does **not** memoize the value passed in to the `options` parameter. If the value changes between re-renders, then the chat room will be discarded and recreated with the new options. To prevent a parent component re-render causing the `ChatRoomProvider` to re-render, be sure to memoize / provide a stable reference to, your desired room options.
 
 To use the room-level hooks below, you **must** wrap any components utilizing the hooks inside a `ChatRoomProvider`.
 
