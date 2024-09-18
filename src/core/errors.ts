@@ -1,3 +1,5 @@
+import * as Ably from 'ably';
+
 /**
  * Error codes for the Chat SDK.
  */
@@ -86,3 +88,13 @@ export enum ErrorCodes {
    */
   RoomLifecycleError = 102105,
 }
+
+/**
+ * Returns true if the {@link Ably.ErrorInfo} code matches the provided ErrorCodes value.
+ *
+ * @param errorInfo The error info to check.
+ * @param error The error code to compare against.
+ * @returns true if the error code matches, false otherwise.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+export const errorInfoIs = (errorInfo: Ably.ErrorInfo, error: ErrorCodes): boolean => errorInfo.code === error;
