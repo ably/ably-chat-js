@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { messagesChannelName } from '../../src/core/channel.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ErrorCodes } from '../../src/core/errors.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
 import { RoomOptions, RoomOptionsDefaults } from '../../src/core/room-options.ts';
@@ -292,7 +293,7 @@ describe('Room', () => {
     expect(releasePromise === initAfter).toBe(true);
 
     expect(context.realtime.channels.get).not.toHaveBeenCalled();
-    await expect(initStatus).rejects.toBeErrorInfoWithCode(40000);
+    await expect(initStatus).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomIsReleased);
     expect(room.status.current).toBe(RoomLifecycle.Released);
   });
 
