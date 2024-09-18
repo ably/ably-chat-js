@@ -2,6 +2,10 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.2.1](https://github.com/ably/ably-chat-js/tree/0.2.1) (2024-09-18)
+
+- Fixed a bug that can lead to unhandled promise rejections and error logs when a room is released prior to initialization, particularly in React [#352](https://github.com/ably/ably-chat-js/pull/352)
+
 ## [0.2.0](https://github.com/ably/ably-chat-js/tree/0.2.0) (2024-09-09)
 
 - Added hooks and providers for React, to allow a closer integration with these ecosystems. For more information on how to get started with Chat in React, see [the React README](./src/react/README.md).
