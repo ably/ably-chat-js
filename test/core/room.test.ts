@@ -514,4 +514,13 @@ describe('Room', () => {
     expect(attached).toBe(false);
     expect(attachedError).toBe(true);
   });
+
+  it<TestContext>('can be released immediately without unhandled rejections', async (context) => {
+    const room = context.getRoom(defaultRoomOptions);
+
+    // Release the room
+    // Note that an unhandled rejection will not cause the test to fail, but it will cause the process to exit
+    // with a non-zero exit code.
+    await (room as DefaultRoom).release();
+  });
 });
