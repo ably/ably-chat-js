@@ -4,9 +4,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ChatClient } from '../../src/core/chat.ts';
 import { Message } from '../../src/core/message.ts';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
+import { RoomOptionsDefaults } from '../../src/core/room-options.ts';
 import { RoomLifecycle } from '../../src/core/room-status.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.ts';
 import { newChatClient } from '../helper/chat.ts';
+import { randomRoomId } from '../helper/identifier.ts';
 import { getRandomRoom, waitForRoomStatus } from '../helper/room.ts';
 
 interface TestContext {
@@ -440,5 +442,20 @@ describe('messages integration', () => {
 
     // Calling off again should be a no-op
     off();
+  });
+
+  it<TestContext>('handles the room being released before getPreviousMessages is called', async (context) => {
+    const chat = context.chat;
+    const roomId = randomRoomId();
+    const room = chat.rooms.get(roomId, RoomOptionsDefaults);
+
+    // Create a subscription to messages
+    room.messages.subscribe(() => {});
+
+    // Now release the room
+    // We should not have any unhanded promise rejections
+    // Note that an unhandled rejection will not cause the test to fail, but it will cause the process to exit
+    // with a non-zero exit code.
+    await chat.rooms.release(roomId);
   });
 });

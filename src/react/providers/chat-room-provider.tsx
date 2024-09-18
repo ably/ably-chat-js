@@ -96,17 +96,20 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
       // attachment error and/or room status is available via useRoom
       // or room.status, no need to do anything with the promise here
       logger.debug(`ChatRoomProvider(); attaching room`, { roomId });
-      void room.attach();
+      void room.attach().catch(() => {
+        // Ignore, the error will be available via various room status properties
+      });
     }
     return () => {
       // Releasing the room will implicitly detach if needed.
-
       if (release) {
         logger.debug(`ChatRoomProvider(); releasing room`, { roomId });
         void client.rooms.release(roomId);
       } else if (attach) {
         logger.debug(`ChatRoomProvider(); detaching room`, { roomId });
-        void room.detach();
+        void room.detach().catch(() => {
+          // Ignore, the error will be available via various room status properties
+        });
       }
     };
   }, [client, roomId, options, release, attach, logger]);

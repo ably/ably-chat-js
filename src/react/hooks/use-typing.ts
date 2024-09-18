@@ -1,4 +1,4 @@
-import { Typing, TypingEvent, TypingListener } from '@ably/chat';
+import { ErrorCodes, errorInfoIs, Typing, TypingEvent, TypingListener } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -103,8 +103,10 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
         setCurrentlyTyping(currentlyTyping);
       })
       .catch((error: unknown) => {
-        if (!mounted) return;
-        setErrorState(error as Ably.ErrorInfo);
+        const errorInfo = error as Ably.ErrorInfo;
+        if (!mounted || errorInfoIs(errorInfo, ErrorCodes.RoomIsReleased)) return;
+
+        setErrorState(errorInfo);
       });
 
     const subscription = room.typing.subscribe((event) => {

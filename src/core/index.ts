@@ -13,7 +13,7 @@ export type {
 } from './connection-status.js';
 export { ConnectionLifecycle } from './connection-status.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
-export type { ErrorCodes } from './errors.js';
+export { ErrorCodes, errorInfoIs } from './errors.js';
 export { MessageEvents, PresenceEvents } from './events.js';
 export type { Headers } from './headers.js';
 export {

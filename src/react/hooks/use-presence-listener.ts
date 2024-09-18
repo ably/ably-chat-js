@@ -1,4 +1,4 @@
-import { Presence, PresenceListener, PresenceMember } from '@ably/chat';
+import { ErrorCodes, errorInfoIs, Presence, PresenceListener, PresenceMember } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -201,8 +201,14 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
         clearErrorState();
       })
       .catch((error: unknown) => {
-        logger.error('usePresenceListener(); error fetching initial presence data', { error, roomId: room.roomId });
-        setErrorState(error as Ably.ErrorInfo);
+        const errorInfo = error as Ably.ErrorInfo;
+        if (errorInfoIs(errorInfo, ErrorCodes.RoomIsReleased)) return;
+
+        logger.error('usePresenceListener(); error fetching initial presence data', {
+          error,
+          roomId: room.roomId,
+        });
+        setErrorState(errorInfo);
       })
       .finally(() => {
         // subscribe to presence events

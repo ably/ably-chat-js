@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import cloneDeep from 'lodash.clonedeep';
 
 import { ChatApi } from './chat-api.js';
+import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
@@ -186,11 +187,13 @@ export class DefaultRoom implements Room {
     this._status = new DefaultStatus(logger);
 
     // Room initialization: handle the state before features start to be initialized
+    // We don't need to catch it here as we immediately go into _asyncOpsAfter where we catch it
     const rejectablePromise = makeRejectablePromise(makeAlwaysResolves(initAfter));
     const initFeaturesAfter = rejectablePromise.promise;
+
     this._finalizer = () => {
       const rejectedNow = rejectablePromise.reject(
-        new Ably.ErrorInfo('Room released before initialization started.', 40000, 400),
+        new Ably.ErrorInfo('Room released before initialization started', ErrorCodes.RoomIsReleased, 400),
       );
       if (rejectedNow) {
         // when this promise is rejected by calling reject(), the room is released
@@ -198,14 +201,6 @@ export class DefaultRoom implements Room {
       }
       return initAfter;
     };
-
-    // Catch to prevent global errors and print a debug log
-    initFeaturesAfter.catch((error: unknown) => {
-      this._logger.debug('Room initialization was prevented before initializing features', {
-        error: error,
-        roomId: roomId,
-      });
-    });
 
     // Setup features
     this._messages = new DefaultMessages(
@@ -260,6 +255,8 @@ export class DefaultRoom implements Room {
     this._asyncOpsAfter = this._setupAsyncRoomInit(features, initFeaturesAfter, realtime);
 
     // Catch errors from asyncOpsAfter to prevent unhandled promise rejection error and print a debug log
+    // This only prevents the base promise from erroring - calls to attach, detach etc that depend on _asyncOpsAfter
+    // will need to specify their own error handling.
     this._asyncOpsAfter.catch((error: unknown) => {
       this._logger.debug('Room initialization was prevented before finishing', { error: error, roomId: roomId });
     });
@@ -298,7 +295,7 @@ export class DefaultRoom implements Room {
         this._finalizer = () => {
           // Make sure async ops (attach or detach) don't run after calling release()
           rejectableAsyncOpsAfter.reject(
-            new Ably.ErrorInfo('Room released before initialization finished', 40000, 400),
+            new Ably.ErrorInfo('Room released before initialization finished', ErrorCodes.RoomIsReleased, 400),
           );
           return finalizerFuncPromise.then((f) => {
             return f();
