@@ -1,6 +1,6 @@
 # Chat SDK Demo
 
-An app showcasing the usage of Chat SDK to build chat.
+An app showcasing the usage of Chat SDK with Chat React hooks to build chat.
 
 Quickstart install-to-browser, from this folder run:
 
@@ -10,9 +10,12 @@ npm install
 npm run start
 ```
 
-## Installation
+##   Installation
 
-1. First of all, you need to build the main Chat SDK from the root directory (`(cd .. && npm run build)`).
+> [!NOTE] This demo app uses both the `ably-chat-js` core SDK and associated React hooks.
+> The latter is accessible via `@ably/chat/react` once the `@ably/chat` package has been installed.
+
+1. First of all, you need to build the main Chat SDK and associated React hooks from the root directory (`(cd .. && npm run build)`).
 2. Run `npm install` here.
 
 ## Credential Setup
