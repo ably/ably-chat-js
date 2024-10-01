@@ -8,10 +8,10 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@netlify/functions": "^2.8.1",
-    "@types/node": "^22.5.2",
-    "ably": "^2.3.1",
+    "@netlify/functions": "^2.8.2",
+    "@types/node": "^22.7.4",
+    "ably": "^2.4.0",
     "dotenv": "^16.4.5",
-    "typescript": "^5.5.3"
+    "typescript": "^5.6.2"
   }
 }
