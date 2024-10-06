@@ -340,6 +340,9 @@ nearest `ChatRoomProvider`.
 You can also be supply an optional listener that will receive the underlying typing events,
 or use the state object returned by the hook to access the current list of clients currently typing.
 
+**The default timeout on the typing indicator can be configured in the `options` parameter you provided
+to the `ChatRoomProvider`.**
+
 ```tsx
 import { useTyping } from '@ably/chat/react';
 
@@ -351,6 +354,7 @@ const MyComponent = () => {
   });
 
   const handleStartClick = () => {
+    // calling starts a timer that will automatically call stop() after a pre defined time
     start();
   };
 
