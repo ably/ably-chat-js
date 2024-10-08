@@ -13,6 +13,11 @@ export type MessageHeaders = Headers;
 export type MessageMetadata = Metadata;
 
 /**
+ * {@link Metadata} type for chat message edit/delete detail.
+ */
+export type MessageDetailsMetadata = Metadata;
+
+/**
  * Represents a single message in a chat room.
  */
 export interface Message {
@@ -71,6 +76,57 @@ export interface Message {
   readonly headers: MessageHeaders;
 
   /**
+   * The timestamp at which the message was deleted. If the message has not been deleted, this
+   * value is undefined.
+   */
+  readonly deletedAt?: Date;
+
+  /**
+   * The clientId of the user who deleted the message.
+   * If the message has not been deleted, or has been deleted by a connection without a clientId (such as requests made
+   * using an API key only), this value is undefined.
+   */
+  readonly deletedBy?: string;
+
+  /**
+   * The detail of the deletion. If the message has not been deleted, this value is undefined.
+   * Contains the optional reason for deletion and any additional optional metadata associated with the
+   * deletion.
+   */
+  readonly deletionDetail?: { reason?: string; metadata?: MessageDetailsMetadata };
+
+  /**
+   * The timestamp at which the message was edited. If the message has not been edited, this
+   * value is undefined.
+   */
+  readonly editedAt?: Date;
+
+  /**
+   * The clientId of the user who edited the message.
+   * If the message has not been edited, or has been edited by a connection without a clientId (such as requests made
+   * using an API key only), this value is undefined.
+   */
+  readonly editedBy?: string;
+
+  /**
+   * The detail of the edit. If the message has not been edited, this value is undefined.
+   * Contains the optional reason for edit and any additional optional metadata associated with the edit.
+   */
+  readonly editDetail?: { reason?: string; metadata?: MessageDetailsMetadata };
+
+  /**
+   * Determines if this message has been deleted.
+   * @returns true if the message has been deleted.
+   */
+  isDeleted(): boolean;
+
+  /**
+   * Determines if this message has been edited.
+   * @returns true if the message has been edited.
+   */
+  isEdited(): boolean;
+
+  /**
    * Determines if this message was created before the given message. This comparison is based on
    * global order, so does not necessarily represent the order that messages are received in realtime
    * from the backend.
@@ -115,11 +171,25 @@ export class DefaultMessage implements Message {
     public readonly createdAt: Date,
     public readonly metadata: MessageMetadata,
     public readonly headers: MessageHeaders,
+    public readonly deletedAt?: Date,
+    public readonly deletedBy?: string,
+    public readonly deletionDetail?: { reason?: string; metadata?: MessageDetailsMetadata },
+    public readonly editedAt?: Date,
+    public readonly editedBy?: string,
+    public readonly editDetail?: { reason?: string; metadata?: MessageDetailsMetadata },
   ) {
     this._calculatedTimeserial = DefaultTimeserial.calculateTimeserial(timeserial);
 
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
+  }
+
+  isDeleted(): boolean {
+    return this.deletedAt !== undefined;
+  }
+
+  isEdited(): boolean {
+    return this.editedAt !== undefined;
   }
 
   before(message: Message): boolean {
