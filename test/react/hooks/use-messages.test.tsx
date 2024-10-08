@@ -11,6 +11,7 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ChatMessageActions } from '../../../src/core/events.ts';
 import { PaginatedResult } from '../../../src/core/query.ts';
 import { useMessages } from '../../../src/react/hooks/use-messages.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
@@ -103,9 +104,17 @@ describe('useMessages', () => {
         timestamp: new Date(),
         text: 'test message',
         timeserial: '123',
+        action: ChatMessageActions.MessageCreate,
         clientId: '123',
         roomId: '123',
         createdAt: new Date(),
+        latestAction: ChatMessageActions.MessageCreate,
+        latestActionSerial: '122',
+        isUpdated: false,
+        isDeleted: false,
+        actionBefore: vi.fn(),
+        actionAfter: vi.fn(),
+        actionEqual: vi.fn(),
         before: vi.fn(),
         after: vi.fn(),
         equal: vi.fn(),
