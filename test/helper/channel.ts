@@ -1,5 +1,8 @@
 import * as Ably from 'ably';
 
+import { RealtimeMessageNames } from '../../src/core/events.ts';
+import { messageActionToMessageEvent } from '../../src/core/messages.ts';
+
 interface Emitter {
   emit(event: string, arg: unknown): void;
 }
@@ -18,7 +21,13 @@ export const channelEventEmitter = (
     if (!arg.name) {
       throw new Error('Event name is required');
     }
-
+    if (Object.values(RealtimeMessageNames).includes(arg.name as RealtimeMessageNames)) {
+      if (!arg.action) {
+        throw new Error('Action is required');
+      }
+      channelWithEmitter.subscriptions.emit(messageActionToMessageEvent(arg.action), arg);
+      return;
+    }
     channelWithEmitter.subscriptions.emit(arg.name, arg);
   };
 };
