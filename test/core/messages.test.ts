@@ -145,9 +145,9 @@ describe('Messages', () => {
           data: {
             text: 'may the fourth be with you',
           },
-          extras: {
-            timeserial: 'abcdefghij@1672531200000-123',
-          },
+          serial: 'abcdefghij@1672531200000-123',
+          action: 'MESSAGE_CREATE',
+          extras: {},
           timestamp: publishTimestamp,
         });
       }));
@@ -168,9 +168,9 @@ describe('Messages', () => {
       data: {
         text: 'may the fourth be with you',
       },
-      extras: {
-        timeserial: 'abcdefghij@1672531200000-123',
-      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: 'MESSAGE_CREATE',
+      extras: {},
       timestamp: Date.now(),
     });
 
@@ -182,9 +182,9 @@ describe('Messages', () => {
       data: {
         text: 'may the fourth be with you',
       },
-      extras: {
-        timeserial: 'abcdefghij@1672531200000-123',
-      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: 'MESSAGE_CREATE',
+      extras: {},
       timestamp: Date.now(),
     });
 
@@ -217,9 +217,9 @@ describe('Messages', () => {
       data: {
         text: 'may the fourth be with you',
       },
-      extras: {
-        timeserial: 'abcdefghij@1672531200000-123',
-      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: 'MESSAGE_CREATE',
+      extras: {},
       timestamp: Date.now(),
     });
 
@@ -231,9 +231,9 @@ describe('Messages', () => {
       data: {
         text: 'may the fourth be with you',
       },
-      extras: {
-        timeserial: 'abcdefghij@1672531200000-123',
-      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: 'MESSAGE_CREATE',
+      extras: {},
       timestamp: Date.now(),
     });
 
@@ -257,9 +257,9 @@ describe('Messages', () => {
         data: {
           text: 'may the fourth be with you',
         },
-        extras: {
-          timeserial: 'abcdefghij@1672531200000-123',
-        },
+        serial: 'abcdefghij@1672531200000-123',
+        action: 'MESSAGE_CREATE',
+        extras: {},
         timestamp: Date.now(),
       },
     ],
@@ -267,10 +267,10 @@ describe('Messages', () => {
       'no data',
       {
         clientId: 'yoda2',
-        name: 'message.created',
-        extras: {
-          timeserial: 'abcdefghij@1672531200000-123',
-        },
+        name: 'chat.message',
+        serial: 'abcdefghij@1672531200000-123',
+        action: 'MESSAGE_CREATE',
+        extras: {},
         timestamp: Date.now(),
       },
     ],
@@ -278,62 +278,65 @@ describe('Messages', () => {
       'no text',
       {
         clientId: 'yoda2',
-        name: 'message.created',
+        name: 'chat.message',
         data: {},
-        extras: {
-          timeserial: 'abcdefghij@1672531200000-123',
-        },
+        serial: 'abcdefghij@1672531200000-123',
+        action: 'MESSAGE_CREATE',
+        extras: {},
         timestamp: Date.now(),
       },
     ],
     [
       'no client id',
       {
-        name: 'message.created',
+        name: 'chat.message',
         data: {
           text: 'may the fourth be with you',
         },
-        extras: {
-          timeserial: 'abcdefghij@1672531200000-123',
-        },
+        serial: 'abcdefghij@1672531200000-123',
+        action: 'MESSAGE_CREATE',
+        extras: {},
         timestamp: Date.now(),
       },
     ],
     [
       'no extras',
       {
+        name: 'chat.message',
         clientId: 'yoda2',
-        name: 'message.created',
         data: {
           text: 'may the fourth be with you',
         },
+        serial: 'abcdefghij@1672531200000-123',
+        action: 'MESSAGE_CREATE',
         timestamp: Date.now(),
       },
     ],
 
     [
-      'no extras.timeserial',
+      'no timeserial',
       {
         clientId: 'yoda2',
-        name: 'message.created',
+        name: 'chat.message',
         data: {
           text: 'may the fourth be with you',
         },
         extras: {},
+        action: 'MESSAGE_CREATE',
         timestamp: Date.now(),
       },
     ],
     [
-      'extras.timeserial invalid',
+      'timeserial invalid',
       {
+        name: 'chat.message',
         clientId: 'yoda2',
-        name: 'message.created',
         data: {
           text: 'may the fourth be with you',
         },
-        extras: {
-          timeserial: 'abc',
-        },
+        extras: {},
+        serial: 'abc',
+        action: 'MESSAGE_CREATE',
         timestamp: Date.now(),
       },
     ],
@@ -341,16 +344,16 @@ describe('Messages', () => {
       'no timestamp',
       {
         clientId: 'yoda2',
-        name: 'message.created',
+        name: 'chat.message',
         data: {
           text: 'may the fourth be with you',
         },
-        extras: {
-          timeserial: 'abcdefghij@1672531200000-123',
-        },
+        extras: {},
+        serial: 'abcdefghij@1672531200000-123',
+        action: 'MESSAGE_CREATE',
       },
     ],
-  ])('invalid incoming messages', (name: string, inboundMessage: Partial<Ably.InboundMessage>) => {
+  ])('invalid incoming messages', (name: string, inboundMessage: unknown) => {
     it<TestContext>('should handle invalid inbound messages: ' + name, (context) => {
       const room = context.room;
       let listenerCalled = false;
@@ -358,7 +361,7 @@ describe('Messages', () => {
         listenerCalled = true;
       });
 
-      context.emulateBackendPublish(inboundMessage);
+      context.emulateBackendPublish(inboundMessage as Ably.InboundMessage);
       expect(listenerCalled).toBe(false);
     });
   });
