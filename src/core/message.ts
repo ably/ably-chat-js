@@ -1,5 +1,5 @@
 import { Headers } from './headers.js';
-import { Metadata } from './metadata.js';
+import { DetailsMetadata, Metadata } from './metadata.js';
 import { DefaultTimeserial, Timeserial } from './timeserial.js';
 
 /**
@@ -13,9 +13,23 @@ export type MessageHeaders = Headers;
 export type MessageMetadata = Metadata;
 
 /**
- * {@link Metadata} type for chat message edit/delete detail.
+ * {@link DetailsMetadata} type for a chat messages {@link MessageDetails}.
  */
-export type MessageDetailsMetadata = Metadata;
+export type MessageDetailsMetadata = DetailsMetadata;
+
+/**
+ * Represents the detail of a message deletion or update.
+ */
+export interface MessageDetails {
+  /**
+   * The optional description for the update or deletion.
+   */
+  description?: string;
+  /**
+   * The optional {@link MessageDetailsMetadata} associated with the update or deletion.
+   */
+  metadata?: MessageDetailsMetadata;
+}
 
 /**
  * Represents a single message in a chat room.
@@ -89,30 +103,30 @@ export interface Message {
   readonly deletedBy?: string;
 
   /**
-   * The detail of the deletion. If the message has not been deleted, this value is undefined.
-   * Contains the optional reason for deletion and any additional optional metadata associated with the
+   * The {@link MessageDetails} of the deletion. If the message has not been deleted, this value is undefined.
+   * Contains the optional description for deletion and any additional optional metadata associated with the
    * deletion.
    */
-  readonly deletionDetail?: { reason?: string; metadata?: MessageDetailsMetadata };
+  readonly deletionDetail?: MessageDetails;
 
   /**
-   * The timestamp at which the message was edited. If the message has not been edited, this
-   * value is undefined.
+   * The timestamp at which the message was updated.
+   * If the message has not been updated, this value is undefined.
    */
-  readonly editedAt?: Date;
+  readonly updatedAt?: Date;
 
   /**
-   * The clientId of the user who edited the message.
-   * If the message has not been edited, or has been edited by a connection without a clientId (such as requests made
+   * The clientId of the user who updated the message.
+   * If the message has not been updated, or has been updated by a connection without a clientId (such as requests made
    * using an API key only), this value is undefined.
    */
-  readonly editedBy?: string;
+  readonly updatedBy?: string;
 
   /**
-   * The detail of the edit. If the message has not been edited, this value is undefined.
-   * Contains the optional reason for edit and any additional optional metadata associated with the edit.
+   * The {@link MessageDetails} of the latest update. If the message has not been updated, this value is undefined.
+   * Contains the optional reason for update and any additional optional metadata associated with the update.
    */
-  readonly editDetail?: { reason?: string; metadata?: MessageDetailsMetadata };
+  readonly updateDetail?: MessageDetails;
 
   /**
    * Determines if this message has been deleted.
@@ -121,10 +135,10 @@ export interface Message {
   isDeleted(): boolean;
 
   /**
-   * Determines if this message has been edited.
-   * @returns true if the message has been edited.
+   * Determines if this message has been updated.
+   * @returns true if the message has been updated.
    */
-  isEdited(): boolean;
+  isUpdated(): boolean;
 
   /**
    * Determines if this message was created before the given message. This comparison is based on
@@ -174,9 +188,9 @@ export class DefaultMessage implements Message {
     public readonly deletedAt?: Date,
     public readonly deletedBy?: string,
     public readonly deletionDetail?: { reason?: string; metadata?: MessageDetailsMetadata },
-    public readonly editedAt?: Date,
-    public readonly editedBy?: string,
-    public readonly editDetail?: { reason?: string; metadata?: MessageDetailsMetadata },
+    public readonly updatedAt?: Date,
+    public readonly updatedBy?: string,
+    public readonly updateDetail?: { reason?: string; metadata?: MessageDetailsMetadata },
   ) {
     this._calculatedTimeserial = DefaultTimeserial.calculateTimeserial(timeserial);
 
@@ -188,8 +202,8 @@ export class DefaultMessage implements Message {
     return this.deletedAt !== undefined;
   }
 
-  isEdited(): boolean {
-    return this.editedAt !== undefined;
+  isUpdated(): boolean {
+    return this.updatedAt !== undefined;
   }
 
   before(message: Message): boolean {
