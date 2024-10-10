@@ -124,6 +124,45 @@ describe('parseMessage', () => {
       },
       expectedError: 'received incoming deletion message without deletedAt',
     },
+    {
+      description: 'message.action is unhandled',
+      roomId: 'room1',
+      message: {
+        data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1234567890,
+        extras: {},
+        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        action: 'UNHANDLED_ACTION',
+      },
+      expectedError: 'received incoming message with unhandled action; UNHANDLED_ACTION',
+    },
+    {
+      description: 'message.editedAt is undefined for update',
+      roomId: 'room1',
+      message: {
+        data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1234567890,
+        extras: {},
+        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        action: 'MESSAGE_UPDATE',
+      },
+      expectedError: 'received incoming update message without updatedAt',
+    },
+    {
+      description: 'message.deletedAt is undefined for deletion',
+      roomId: 'room1',
+      message: {
+        data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1234567890,
+        extras: {},
+        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        action: 'MESSAGE_DELETE',
+      },
+      expectedError: 'received incoming deletion message without deletedAt',
+    },
   ])('should throw an error ', ({ description, roomId, message, expectedError }) => {
     it(`should throw an error if ${description}`, () => {
       expect(() => {
