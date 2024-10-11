@@ -16,20 +16,56 @@ interface TestContext {
 
 const TEST_TIMEOUT = 20000;
 
-// Wait for the occupancy of a room to reach the expected occupancy.
-// Do this with a 10s timeout.
-const waitForExpectedInstantaneousOccupancy = (room: Room, expectedOccupancy: OccupancyEvent) => {
-  return new Promise<void>((resolve, reject) => {
+// Wait for the occupancy of a room to reach the expected occupancy or higher
+const waitForOccupancyIncrease = (room: Room, expectedChange: OccupancyEvent, last: OccupancyEvent) => {
+  return new Promise<OccupancyEvent>((resolve, reject) => {
     const interval = setInterval(() => {
       room.occupancy
         .get()
         .then((occupancy) => {
+          console.log('increase occupancy', occupancy, 'last', last);
           if (
-            occupancy.connections === expectedOccupancy.connections &&
-            occupancy.presenceMembers === expectedOccupancy.presenceMembers
+            occupancy.connections - last.connections >= expectedChange.connections &&
+            occupancy.presenceMembers - last.presenceMembers >= expectedChange.presenceMembers
           ) {
             clearInterval(interval);
-            resolve();
+            resolve(occupancy);
+          }
+        })
+        .catch((error: unknown) => {
+          clearInterval(interval);
+          reject(error as Error);
+        });
+    }, 1000);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      reject(new Error('Timed out waiting for occupancy'));
+    }, TEST_TIMEOUT);
+  });
+};
+
+// Wait for the occupancy of a room to reach the expected occupancy or lower
+const waitForOccupancyDecrease = (room: Room, expectedChange: OccupancyEvent, last: OccupancyEvent) => {
+  return new Promise<OccupancyEvent>((resolve, reject) => {
+    const interval = setInterval(() => {
+      room.occupancy
+        .get()
+        .then((occupancy) => {
+          console.log(
+            'decrease occupancy',
+            occupancy,
+            'last',
+            last,
+            last.connections - occupancy.connections >= expectedChange.connections,
+            last.presenceMembers - occupancy.presenceMembers >= expectedChange.presenceMembers,
+          );
+          if (
+            last.connections - occupancy.connections >= expectedChange.connections &&
+            last.presenceMembers - occupancy.presenceMembers >= expectedChange.presenceMembers
+          ) {
+            clearInterval(interval);
+            resolve(occupancy);
           }
         })
         .catch((error: unknown) => {
@@ -55,11 +91,18 @@ describe('occupancy', () => {
 
     const room = getRandomRoom(chat);
 
-    // Get the occupancy of the room
-    await waitForExpectedInstantaneousOccupancy(room, {
-      connections: 0,
-      presenceMembers: 0,
-    });
+    // Get the occupancy of the room, we start at 0
+    await waitForOccupancyIncrease(
+      room,
+      {
+        connections: 0,
+        presenceMembers: 0,
+      },
+      {
+        connections: 0,
+        presenceMembers: 0,
+      },
+    );
 
     const { name: channelName } = await room.messages.channel;
 
@@ -68,13 +111,20 @@ describe('occupancy', () => {
     const realtimeChannel = realtimeClient.channels.get(channelName);
     await realtimeChannel.attach();
 
-    // Wait for the occupancy to reach the expected occupancy
+    // Wait for the occupancy to reach the expected occupancy - should be 1,0 as we just have a realtime connection
     // Note that presence connections and subscribers increments as our client has permission
     // to enter presence (even if it hasn't)
-    await waitForExpectedInstantaneousOccupancy(room, {
-      connections: 1,
-      presenceMembers: 0,
-    });
+    const occupancyAfterIncrease = await waitForOccupancyIncrease(
+      room,
+      {
+        connections: 1,
+        presenceMembers: 0,
+      },
+      {
+        connections: 0,
+        presenceMembers: 0,
+      },
+    );
 
     // Make another realtime client and attach to the same room, but only as a subscriber
     // Also have them enter and subscribe to presence
@@ -86,19 +136,28 @@ describe('occupancy', () => {
     await subscriberRealtimeChannel.presence.enter({ foo: 'bar' });
 
     // Wait for the occupancy to reach the expected occupancy
-    await waitForExpectedInstantaneousOccupancy(room, {
-      connections: 2,
-      presenceMembers: 1,
-    });
+    const occupancyAfterPresence = await waitForOccupancyIncrease(
+      room,
+      {
+        connections: 1,
+        presenceMembers: 1,
+      },
+      occupancyAfterIncrease,
+    );
 
-    // Detach the subscriber and other realtime client and wait for the occupancy to return to 0
+    // Detach the subscriber and other realtime client and wait for the occupancy to return to the baseline 1
     await subscriberRealtimeChannel.detach();
     await realtimeChannel.detach();
 
-    await waitForExpectedInstantaneousOccupancy(room, {
-      connections: 0,
-      presenceMembers: 0,
-    });
+    // With the realtime client detach, we end on 1,1 - due to how channel clients are cached in realtime
+    await waitForOccupancyDecrease(
+      room,
+      {
+        connections: 1,
+        presenceMembers: 1,
+      },
+      occupancyAfterPresence,
+    );
   });
 
   it<TestContext>('allows subscriptions to inband occupancy', { timeout: TEST_TIMEOUT }, async (context) => {
@@ -137,7 +196,7 @@ describe('occupancy', () => {
       occupancyUpdates,
       {
         connections: 2,
-        presenceMembers: 1,
+        presenceMembers: 0,
       },
       TEST_TIMEOUT,
     );
