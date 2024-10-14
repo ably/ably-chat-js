@@ -27,8 +27,9 @@ export {
 } from './helpers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
-export type { Message, MessageHeaders, MessageMetadata } from './message.js';
+export type { Message, MessageDetails,MessageDetailsMetadata, MessageHeaders, MessageMetadata } from './message.js';
 export type {
+  DeleteMessageParams,
   MessageEventPayload,
   MessageListener,
   Messages,
@@ -36,7 +37,7 @@ export type {
   QueryOptions,
   SendMessageParams,
 } from './messages.js';
-export type { Metadata } from './metadata.js';
+export type { DetailsMetadata,Metadata } from './metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener, OccupancySubscriptionResponse } from './occupancy.js';
 export type {
   Presence,

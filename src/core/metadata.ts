@@ -14,7 +14,7 @@
 export type Metadata = Record<string, unknown>;
 
 /**
- * The type for metadata contained in the {@link updateDetail} and {@link deletionDetail} fields of a chat message.
+ * The type for metadata contained in the details fields of a chat message.
  * This is a key-value pair where the key is a string, and the value is a string, it represents the metadata supplied
  * to a message update or deletion request.
  *

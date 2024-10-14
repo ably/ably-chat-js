@@ -13,7 +13,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { MessageEvents, RealtimeMessageTypes } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
+import { DefaultMessage, Message, MessageDetailsMetadata, MessageHeaders, MessageMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
@@ -84,6 +84,29 @@ export interface QueryOptions {
    * @defaultValue forwards
    */
   direction?: 'forwards' | 'backwards';
+}
+
+/**
+ * The parameters supplied to delete a message.
+ */
+export interface DeleteMessageParams {
+  /**
+   * The optional method to use for deleting messages. Defaults to 'soft' if not provided.
+   * `soft` will mark the message as deleted but keep it in the history, while `hard` will
+   * permanently delete the message from persistent storage.
+   */
+  hard?: boolean;
+
+  /**
+   * The optional description for deleting messages.
+   */
+  description?: string;
+
+  /**
+   * The {@link MessageDetailsMetadata} that will be added to the deletion request. Defaults to empty.
+   *
+   */
+  metadata?: MessageDetailsMetadata;
 }
 
 /**
@@ -211,6 +234,21 @@ export interface Messages extends EmitsDiscontinuities {
    * @returns A promise that resolves when the message was published.
    */
   send(params: SendMessageParams): Promise<Message>;
+
+  /**
+   * Delete a message in the chat room.
+   *
+   * This method uses the Ably Chat API REST endpoint for deleting messages.
+   *
+   * Note that the Promise may resolve before OR after the message is deleted
+   * from the realtime channel. This means you may see the message that was just
+   * deleted in a callback to `subscribe` before the returned promise resolves.
+   *
+   * @returns A promise that resolves when the message was deleted.
+   * @param message - The message to delete.
+   * @param deleteMessageParams - The optional parameters for deleting the message.
+   */
+  delete(message: Message, deleteMessageParams?: DeleteMessageParams): Promise<Message>;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -482,7 +520,6 @@ export class DefaultMessages
     }
 
     const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
-
     return new DefaultMessage(
       response.timeserial,
       this._clientId,
@@ -492,6 +529,34 @@ export class DefaultMessages
       metadata ?? {},
       headers ?? {},
     );
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  async delete(message: Message, deleteMessageParams?: DeleteMessageParams): Promise<Message> {
+    this._logger.trace('Messages.delete();');
+    const response = await this._chatApi.deleteMessage(this._roomId, message.timeserial, deleteMessageParams);
+    const deletedMessage: Message = new DefaultMessage(
+      message.timeserial,
+      message.clientId,
+      message.roomId,
+      message.text,
+      message.createdAt,
+      message.metadata,
+      message.headers,
+      new Date(response.deletedAt),
+      this._clientId,
+      {
+        description: deleteMessageParams?.description,
+        metadata: deleteMessageParams?.metadata,
+      },
+      message.updatedAt,
+      message.updatedBy,
+      message.updateDetail,
+    );
+    this._logger.debug('Messages.delete(); message deleted successfully', { message });
+    return deletedMessage;
   }
 
   /**
