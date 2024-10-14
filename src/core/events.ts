@@ -6,19 +6,21 @@ export enum MessageEvents {
   Created = 'message.created',
 
   /** Fires when a chat message is updated. */
-  Edited = 'message.edited',
+  Updated = 'message.updated',
 
   /** Fires when a chat message is deleted. */
   Deleted = 'message.deleted',
 }
 
-export enum RealtimeMessageNames {
+/**
+ * Realtime chat message types.
+ */
+export enum RealtimeMessageTypes {
   /** Represents a regular chat message. */
   ChatMessage = 'chat.message',
 
   /** The old legacy message type, used from v1 of the Publish endpoint.
-   * @deprecated This will be removed in upcoming versions of the SDK,
-   * once the realtime endpoint has been version bumped.
+   * @deprecated Please use {@link RealtimeMessageTypes.ChatMessage} instead.
    */
   LegacyChatMessage = 'message.created',
 }

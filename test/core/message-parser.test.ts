@@ -83,7 +83,7 @@ describe('parseMessage', () => {
         extras: {},
         action: 'MESSAGE_CREATE',
       },
-      expectedError: 'received incoming message without timeserial',
+      expectedError: 'received incoming message without serial',
     },
     {
       description: 'message.action is unhandled',
@@ -99,7 +99,7 @@ describe('parseMessage', () => {
       expectedError: 'received incoming message with unhandled action; UNHANDLED_ACTION',
     },
     {
-      description: 'message.editedAt is undefined for update',
+      description: 'message.updateAt is undefined for update',
       roomId: 'room1',
       message: {
         data: { text: 'hello' },
@@ -163,7 +163,7 @@ describe('parseMessage', () => {
     expect(result.deletedBy).toBeUndefined();
     expect(result.deletionDetail).toBeUndefined();
 
-    // editing related fields should be undefined
+    // update related fields should be undefined
     expect(result.updatedAt).toBeUndefined();
     expect(result.updatedBy).toBeUndefined();
     expect(result.updateDetail).toBeUndefined();
@@ -240,7 +240,7 @@ describe('parseMessage', () => {
       metadata: { 'custom-warning': 'this is a warning' },
     });
 
-    // editing related fields should be undefined
+    // update related fields should be undefined
     expect(result.updatedAt).toBeUndefined();
     expect(result.updatedBy).toBeUndefined();
     expect(result.updateDetail).toBeUndefined();
