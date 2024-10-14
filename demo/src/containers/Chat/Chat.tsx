@@ -4,7 +4,8 @@ import { MessageInput } from '../../components/MessageInput';
 import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
 import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
-import { ConnectionLifecycle, Message, Reaction } from '@ably/chat';
+import { ConnectionLifecycle, Message, MessageEvents, Reaction } from '@ably/chat';
+import { randomString } from '../../../../test/helper/identifier.ts';
 
 export const Chat = () => {
   const chatClient = useChatClient();
@@ -15,9 +16,26 @@ export const Chat = () => {
 
   const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
 
-  const { send: sendMessage, getPreviousMessages } = useMessages({
+  const {
+    send: sendMessage,
+    getPreviousMessages,
+    deleteMessage,
+  } = useMessages({
     listener: (message) => {
-      setMessages((prevMessage) => [...prevMessage, message.message]);
+      switch (message.type) {
+        case MessageEvents.Created:
+          setMessages((prevMessage) => [...prevMessage, message.message]);
+          break;
+        case MessageEvents.Deleted:
+          setMessages((prevMessage) => {
+            return prevMessage.filter((m) => {
+              return m.timeserial !== message.message.timeserial;
+            });
+          });
+          break;
+        default:
+          console.error('Unknown message', message);
+      }
     },
     onDiscontinuity: (discontinuity) => {
       console.log('Discontinuity', discontinuity);
@@ -141,9 +159,24 @@ export const Chat = () => {
           {messages.map((msg) => (
             <MessageComponent
               id={msg.timeserial}
-              key={msg.timeserial}
+              key={randomString()}
               self={msg.clientId === clientId}
               message={msg}
+              onMessageClick={(id) => {
+                console.log(
+                  'Message clicked',
+                  messages.find((m) => m.timeserial === id),
+                );
+              }}
+              onMessageDelete={(msg) => {
+                deleteMessage(msg, { description: 'deleted by user' }).then((deletedMessage) => {
+                  setMessages((prevMessages) => {
+                    return prevMessages.filter((m) => {
+                      return m.timeserial !== deletedMessage.timeserial;
+                    });
+                  });
+                });
+              }}
             ></MessageComponent>
           ))}
           <div ref={messagesEndRef} />
