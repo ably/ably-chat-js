@@ -11,7 +11,7 @@ import {
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
-import { MessageEvents, RealtimeMessageNames } from './events.js';
+import { MessageEvents, RealtimeMessageTypes } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
@@ -26,26 +26,17 @@ import EventEmitter from './utils/event-emitter.js';
  */
 interface MessageEventsMap {
   [MessageEvents.Created]: MessageEventPayload;
-  [MessageEvents.Edited]: MessageEventPayload;
+  [MessageEvents.Updated]: MessageEventPayload;
   [MessageEvents.Deleted]: MessageEventPayload;
 }
 
-// This function is used to convert the message action from Ably to the ChatMessageEvents enum
-export function messageActionToMessageEvent(action: Ably.MessageAction): MessageEvents {
-  switch (action) {
-    case 'MESSAGE_CREATE': {
-      return MessageEvents.Created;
-    }
-    case 'MESSAGE_UPDATE': {
-      return MessageEvents.Edited;
-    }
-    case 'MESSAGE_DELETE': {
-      return MessageEvents.Deleted;
-    }
-    default: {
-      throw new Ably.ErrorInfo(`received unhandled message action ${action}`, 50000, 500);
-    }
-  }
+/**
+ * Enum that maps message actions to message events.
+ */
+enum MessageActionsToEvents {
+  'MESSAGE_CREATE' = MessageEvents.Created,
+  'MESSAGE_UPDATE' = MessageEvents.Updated,
+  'MESSAGE_DELETE' = MessageEvents.Deleted,
 }
 
 /**
@@ -277,7 +268,7 @@ export class DefaultMessages
 
     addListenerToChannelWithoutAttach({
       listener: this._processEvent.bind(this),
-      events: [RealtimeMessageNames.ChatMessage, RealtimeMessageNames.LegacyChatMessage],
+      events: [RealtimeMessageTypes.ChatMessage, RealtimeMessageTypes.LegacyChatMessage],
       channel: channel,
     });
 
@@ -479,7 +470,7 @@ export class DefaultMessages
    */
   subscribe(listener: MessageListener): MessageSubscriptionResponse {
     this._logger.trace('Messages.subscribe();');
-    super.on([MessageEvents.Created, MessageEvents.Edited, MessageEvents.Deleted], listener);
+    super.on([MessageEvents.Created, MessageEvents.Updated, MessageEvents.Deleted], listener);
 
     // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
     const resolvedSubscriptionStart = this._resolveSubscriptionStart();
@@ -518,24 +509,20 @@ export class DefaultMessages
     this._logger.trace('Messages._processEvent();', {
       channelEventMessage,
     });
-    const { name } = channelEventMessage;
-
-    // Send the message to the listeners
-    switch (name) {
-      case RealtimeMessageNames.ChatMessage:
-      case RealtimeMessageNames.LegacyChatMessage: {
-        const message = this._parseNewMessage(channelEventMessage);
-        if (!message) {
-          return;
-        }
-        const event = messageActionToMessageEvent(channelEventMessage.action);
-        this.emit(event, { type: event, message: message });
-        break;
-      }
-      default: {
-        this._logger.warn('Messages._processEvent(); received unknown message type', { name });
-      }
+    const { action } = channelEventMessage;
+    if (!(action in MessageActionsToEvents)) {
+      this._logger.warn('Messages._processEvent(); received unknown message action', { action });
+      return;
     }
+    // Send the message to the listeners
+    const message = this._parseNewMessage(channelEventMessage);
+    if (!message) {
+      return;
+    }
+
+    const event = MessageActionsToEvents[action as keyof typeof MessageActionsToEvents].valueOf();
+
+    this.emit(event as MessageEvents, { type: event as MessageEvents, message: message });
   }
 
   /**
