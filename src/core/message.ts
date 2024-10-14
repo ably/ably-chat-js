@@ -187,10 +187,10 @@ export class DefaultMessage implements Message {
     public readonly headers: MessageHeaders,
     public readonly deletedAt?: Date,
     public readonly deletedBy?: string,
-    public readonly deletionDetail?: { reason?: string; metadata?: MessageDetailsMetadata },
+    public readonly deletionDetail?: MessageDetails,
     public readonly updatedAt?: Date,
     public readonly updatedBy?: string,
-    public readonly updateDetail?: { reason?: string; metadata?: MessageDetailsMetadata },
+    public readonly updateDetail?: MessageDetails,
   ) {
     this._calculatedTimeserial = DefaultTimeserial.calculateTimeserial(timeserial);
 

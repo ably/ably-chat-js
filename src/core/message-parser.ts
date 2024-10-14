@@ -82,6 +82,8 @@ export function parseMessage(roomId: string | undefined, message: Ably.InboundMe
     createdAt: new Date(messageCreatedMessage.timestamp),
     metadata: messageCreatedMessage.data.metadata ?? {},
     headers: messageCreatedMessage.extras.headers ?? {},
+    updatedAt: messageCreatedMessage.updatedAt ? new Date(messageCreatedMessage.updatedAt) : undefined,
+    deletedAt: messageCreatedMessage.deletedAt ? new Date(messageCreatedMessage.deletedAt) : undefined,
   };
 
   switch (messageCreatedMessage.action) {
@@ -92,7 +94,6 @@ export function parseMessage(roomId: string | undefined, message: Ably.InboundMe
       if (!messageCreatedMessage.updatedAt) {
         throw new Ably.ErrorInfo(`received incoming update message without updatedAt`, 50000, 500);
       }
-      newMessage.updatedAt = messageCreatedMessage.updatedAt ? new Date(messageCreatedMessage.updatedAt) : undefined;
       newMessage.updatedBy = messageCreatedMessage.operation?.clientId;
       newMessage.updateDetail = operationDetails;
       break;
@@ -101,7 +102,6 @@ export function parseMessage(roomId: string | undefined, message: Ably.InboundMe
       if (!messageCreatedMessage.deletedAt) {
         throw new Ably.ErrorInfo(`received incoming deletion message without deletedAt`, 50000, 500);
       }
-      newMessage.deletedAt = messageCreatedMessage.deletedAt ? new Date(messageCreatedMessage.deletedAt) : undefined;
       newMessage.deletedBy = messageCreatedMessage.operation?.clientId;
       newMessage.deletionDetail = operationDetails;
       break;

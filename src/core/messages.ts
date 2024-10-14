@@ -11,7 +11,7 @@ import {
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
-import { MessageEvents, RealtimeMessageNames } from './events.js';
+import { MessageEvents, RealtimeMessageTypes } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
@@ -281,7 +281,7 @@ export class DefaultMessages
 
     addListenerToChannelWithoutAttach({
       listener: this._processEvent.bind(this),
-      events: [RealtimeMessageNames.ChatMessage, RealtimeMessageNames.LegacyChatMessage],
+      events: [RealtimeMessageTypes.ChatMessage, RealtimeMessageTypes.LegacyChatMessage],
       channel: channel,
     });
 
@@ -542,8 +542,8 @@ export class DefaultMessages
 
     // Send the message to the listeners
     switch (name) {
-      case RealtimeMessageNames.ChatMessage:
-      case RealtimeMessageNames.LegacyChatMessage: {
+      case RealtimeMessageTypes.ChatMessage:
+      case RealtimeMessageTypes.LegacyChatMessage: {
         const message = this._parseNewMessage(channelEventMessage);
         if (!message) {
           return;
