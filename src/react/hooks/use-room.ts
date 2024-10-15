@@ -1,9 +1,11 @@
 import { ConnectionStatusChange, Room, RoomLifecycle, RoomStatusChange } from '@ably/chat';
 import * as Ably from 'ably';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { ChatRoomContext } from '../contexts/chat-room-context.js';
+import { useEventualRoom } from '../helper/eventual-room.js';
+import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useRoomContext } from '../helper/use-room-context.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { useChatConnection } from './use-chat-connection.js';
 import { useLogger } from './use-logger.js';
@@ -31,8 +33,13 @@ export interface UseRoomParams {
  * The return type for the {@link useRoom} hook.
  */
 export interface UseRoomResponse extends ChatStatusResponse {
+  /**
+   * The id of the room.
+   */
+  readonly roomId: string;
+
   /** The room object. */
-  room: Room;
+  room?: Room;
 
   /**
    * Shortcut to {@link Room.attach}. Not needed if the {@link ChatRoomProvider}
@@ -65,67 +72,80 @@ function makeStatusObject(source: { current: RoomLifecycle; error?: Ably.ErrorIn
  * @returns {@link UseRoomResponse}
  */
 export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
-  const context = useContext(ChatRoomContext);
+  const context = useRoomContext('useRoom');
+  const roomId = context.roomId;
   const logger = useLogger();
-  logger.trace('useRoom();', { roomId: context?.room.roomId });
-
-  if (!context) {
-    logger.error('useRoom(); must be used within a ChatRoomProvider');
-    throw new Ably.ErrorInfo('useRoom hook must be used within a ChatRoomProvider', 40000, 400);
-  }
+  logger.debug('useRoom();', { roomId: roomId });
 
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
     onStatusChange: params?.onConnectionStatusChange,
   });
 
-  const room = context.room;
-
   // room error and status callbacks
   const [roomStatus, setRoomStatus] = useState<{
     status: RoomLifecycle;
     error?: Ably.ErrorInfo;
-  }>(makeStatusObject(room.status));
+  }>(
+    makeStatusObject({
+      current: RoomLifecycle.Initializing,
+    }),
+  );
 
   // create stable references for the listeners
   const onRoomStatusChangeRef = useEventListenerRef(params?.onStatusChange);
 
   // Effect that keeps the roomStatus state up to date
   useEffect(() => {
-    logger.debug('useRoom(); setting up room status listener', { roomId: room.roomId });
-    const { off } = room.status.onChange((change) => {
-      setRoomStatus(makeStatusObject(change));
-    });
+    const roomPromise = wrapRoomPromise(
+      context.room,
+      (room: Room) => {
+        logger.debug('useRoom(); setting up room status listener', { roomId: roomId });
+        const { off } = room.status.onChange((change) => {
+          setRoomStatus(makeStatusObject(change));
+        });
 
-    // update react state if real state has changed since setting up the listener
-    setRoomStatus((prev) => {
-      if (room.status.current !== prev.status || room.status.error !== prev.error) {
-        return makeStatusObject(room.status);
-      }
-      return prev;
-    });
+        return () => {
+          logger.debug('useRoom(); removing room status listener', { roomId: roomId });
+          off();
+        };
+      },
+      logger,
+      roomId,
+    );
 
-    return () => {
-      logger.debug('useRoom(); removing room status listener', { roomId: room.roomId });
-      off();
-    };
-  }, [room, logger]);
+    return roomPromise.unmount();
+  }, [context, roomId, logger]);
 
   // Effect that registers and removes the user-provided callback
   useEffect(() => {
     if (!onRoomStatusChangeRef) return;
-    logger.debug('useRoom(); applying user-provided listener', { roomId: room.roomId });
-    const { off } = room.status.onChange(onRoomStatusChangeRef);
-    return () => {
-      logger.debug('useRoom(); removing user-provided listener', { roomId: room.roomId });
-      off();
-    };
-  }, [room, onRoomStatusChangeRef, logger]);
 
-  const attach = useCallback(() => room.attach(), [room]);
-  const detach = useCallback(() => room.detach(), [room]);
+    const roomPromise = wrapRoomPromise(
+      context.room,
+      (room: Room) => {
+        logger.debug('useRoom(); setting up user-provided listener', { roomId: roomId });
+        const { off } = room.status.onChange(onRoomStatusChangeRef);
+
+        return () => {
+          logger.debug('useRoom(); removing user-provided listener', { roomId: roomId });
+          off();
+        };
+      },
+      logger,
+      roomId,
+    );
+
+    return roomPromise.unmount();
+  }, [context, roomId, onRoomStatusChangeRef, logger]);
+
+  // TODO: Can we even do this if the room isn't defined?
+  // Would we have to do a queue/backlog of calls somehow?
+  const attach = useCallback(() => context.room.then((room: Room) => room.attach()), [context]);
+  const detach = useCallback(() => context.room.then((room: Room) => room.detach()), [context]);
 
   return {
-    room: room,
+    roomId: roomId,
+    room: useEventualRoom(roomId, context.room),
     attach: attach,
     detach: detach,
     roomStatus: roomStatus.status,

@@ -1,14 +1,16 @@
-import { ErrorCodes, errorInfoIs, Presence, PresenceListener, PresenceMember } from '@ably/chat';
+import { ErrorCodes, errorInfoIs, PresenceListener, PresenceMember, Room, RoomLifecycle } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useRoomContext } from '../helper/use-room-context.js';
+import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
 import { useLogger } from './use-logger.js';
-import { useRoom } from './use-room.js';
 
 /**
  * The interval between retries when fetching presence data.
@@ -43,11 +45,6 @@ export interface UsePresenceListenerResponse extends ChatStatusResponse {
   readonly presenceData: PresenceMember[];
 
   /**
-   * Provides access to the underlying {@link Presence} instance of the room.
-   */
-  readonly presence: Presence;
-
-  /**
    * The error state of the presence listener.
    * The hook keeps {@link presenceData} up to date asynchronously, so this error state is provided to allow
    * the user to handle errors that may occur when fetching presence data.
@@ -70,12 +67,12 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
     onStatusChange: params?.onConnectionStatusChange,
   });
-  const { room, roomError, roomStatus } = useRoom({
-    onStatusChange: params?.onRoomStatusChange,
-  });
+
+  const context = useRoomContext('usePresenceListener');
+  const { status: roomStatus, error: roomError } = useRoomStatus(params);
 
   const logger = useLogger();
-  logger.trace('usePresenceListener();', { roomId: room.roomId });
+  logger.trace('usePresenceListener();', { roomId: context.roomId });
 
   const receivedEventNumber = useRef(0);
   const triggeredEventNumber = useRef(0);
@@ -93,18 +90,18 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
 
   const setErrorState = useCallback(
     (error: Ably.ErrorInfo) => {
-      logger.debug('usePresenceListener(); setting error state', { error, roomId: room.roomId });
+      logger.debug('usePresenceListener(); setting error state', { error, roomId: context.roomId });
       errorRef.current = error;
       setError(error);
     },
-    [logger, room.roomId],
+    [logger, context],
   );
 
   const clearErrorState = useCallback(() => {
-    logger.debug('usePresenceListener(); clearing error state', { roomId: room.roomId });
+    logger.debug('usePresenceListener(); clearing error state', { roomId: context.roomId });
     errorRef.current = undefined;
     setError(undefined);
-  }, [logger, room.roomId]);
+  }, [logger, context]);
 
   useEffect(() => {
     // ensure we only process and return the latest presence data.
@@ -123,134 +120,184 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
     };
 
     const getAndSetState = (eventNumber: number) => {
-      room.presence
-        .get({ waitForSync: true })
-        .then((presenceMembers) => {
-          logger.debug('usePresenceListener(); fetched presence data', { presenceMembers, roomId: room.roomId });
+      wrapRoomPromise(
+        context.room,
+        (room: Room) => {
+          room.presence
+            .get({ waitForSync: true })
+            .then((presenceMembers) => {
+              logger.debug('usePresenceListener(); fetched presence data', { presenceMembers, roomId: context.roomId });
 
-          // clear the retry now we have resolved
-          if (retryTimeout.current) {
-            clearTimeout(retryTimeout.current);
-            retryTimeout.current = undefined;
-            numRetries.current = 0;
-          }
+              // clear the retry now we have resolved
+              if (retryTimeout.current) {
+                clearTimeout(retryTimeout.current);
+                retryTimeout.current = undefined;
+                numRetries.current = 0;
+              }
 
-          // ensure the current event is still the latest
-          if (triggeredEventNumber.current >= eventNumber) {
-            return;
-          }
+              // ensure the current event is still the latest
+              if (triggeredEventNumber.current >= eventNumber) {
+                return;
+              }
 
-          triggeredEventNumber.current = eventNumber;
+              triggeredEventNumber.current = eventNumber;
 
-          // update the presence data
-          latestPresentData.current = presenceMembers;
-          setPresenceData(presenceMembers);
+              // update the presence data
+              latestPresentData.current = presenceMembers;
+              setPresenceData(presenceMembers);
 
-          // clear any previous errors as we have now resolved to the latest state
-          if (errorRef.current) {
-            clearErrorState();
-          }
-        })
-        .catch(() => {
-          const willReattempt = numRetries.current < PRESENCE_GET_MAX_RETRIES;
+              // clear any previous errors as we have now resolved to the latest state
+              if (errorRef.current) {
+                clearErrorState();
+              }
+            })
+            .catch(() => {
+              const willReattempt = numRetries.current < PRESENCE_GET_MAX_RETRIES;
 
-          if (!willReattempt) {
-            // since we have reached the maximum number of retries, set the error state
-            logger.error('usePresenceListener(); failed to fetch presence data after max retries', {
-              roomId: room.roomId,
+              if (!willReattempt) {
+                // since we have reached the maximum number of retries, set the error state
+                logger.error('usePresenceListener(); failed to fetch presence data after max retries', {
+                  roomId: context.roomId,
+                });
+                setErrorState(new Ably.ErrorInfo(`failed to fetch presence data after max retries`, 50000, 500));
+                return;
+              }
+
+              // if we are currently waiting for a retry, do nothing as a new event has been received
+              if (retryTimeout.current) {
+                logger.debug('usePresenceListener(); waiting for retry but new event received', {
+                  roomId: context.roomId,
+                });
+                return;
+              }
+
+              const waitBeforeRetry = Math.min(
+                PRESENCE_GET_RETRY_MAX_INTERVAL_MS,
+                PRESENCE_GET_RETRY_INTERVAL_MS * Math.pow(2, numRetries.current),
+              );
+
+              numRetries.current += 1;
+              logger.debug('usePresenceListener(); retrying to fetch presence data', {
+                numRetries: numRetries.current,
+                roomId: context.roomId,
+              });
+
+              retryTimeout.current = setTimeout(() => {
+                retryTimeout.current = undefined;
+                receivedEventNumber.current += 1;
+                getAndSetState(receivedEventNumber.current);
+              }, waitBeforeRetry);
             });
-            setErrorState(new Ably.ErrorInfo(`failed to fetch presence data after max retries`, 50000, 500));
-            return;
-          }
 
-          // if we are currently waiting for a retry, do nothing as a new event has been received
-          if (retryTimeout.current) {
-            logger.debug('usePresenceListener(); waiting for retry but new event received', { roomId: room.roomId });
-            return;
-          }
+          return () => {
+            // No-op
+          };
+        },
+        logger,
+        context.roomId,
+      );
+    };
 
-          const waitBeforeRetry = Math.min(
-            PRESENCE_GET_RETRY_MAX_INTERVAL_MS,
-            PRESENCE_GET_RETRY_INTERVAL_MS * Math.pow(2, numRetries.current),
-          );
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        let unsubscribe: (() => void) | undefined;
+        // If the room isn't attached yet, we can't do the initial fetch
+        if (room.status.current === RoomLifecycle.Attached) {
+          room.presence
+            .get({ waitForSync: true })
+            .then((presenceMembers) => {
+              logger.debug('usePresenceListener(); fetched initial presence data', {
+                presenceMembers,
+                roomId: context.roomId,
+              });
+              // on mount, fetch the initial presence data
+              latestPresentData.current = presenceMembers;
+              setPresenceData(presenceMembers);
 
-          numRetries.current += 1;
-          logger.debug('usePresenceListener(); retrying to fetch presence data', {
-            numRetries: numRetries.current,
-            roomId: room.roomId,
+              // clear any previous errors
+              clearErrorState();
+            })
+            .catch((error: unknown) => {
+              const errorInfo = error as Ably.ErrorInfo;
+              if (errorInfoIs(errorInfo, ErrorCodes.RoomIsReleased)) return;
+
+              logger.error('usePresenceListener(); error fetching initial presence data', {
+                error,
+                roomId: context.roomId,
+              });
+              setErrorState(errorInfo);
+            })
+            .finally(() => {
+              // subscribe to presence events
+              logger.debug('usePresenceListener(); subscribing internal listener to presence events', {
+                roomId: context.roomId,
+              });
+              const result = room.presence.subscribe(() => {
+                updatePresenceData();
+              });
+              unsubscribe = result.unsubscribe;
+            });
+        } else {
+          // subscribe to presence events
+          logger.debug('usePresenceListener(); not yet attached, subscribing internal listener to presence events', {
+            roomId: context.roomId,
           });
+          const result = room.presence.subscribe(() => {
+            updatePresenceData();
+          });
+          unsubscribe = result.unsubscribe;
+        }
 
-          retryTimeout.current = setTimeout(() => {
-            retryTimeout.current = undefined;
-            receivedEventNumber.current += 1;
-            getAndSetState(receivedEventNumber.current);
-          }, waitBeforeRetry);
-        });
-    };
-
-    let unsubscribe: (() => void) | undefined;
-    room.presence
-      .get({ waitForSync: true })
-      .then((presenceMembers) => {
-        logger.debug('usePresenceListener(); fetched initial presence data', { presenceMembers, roomId: room.roomId });
-        // on mount, fetch the initial presence data
-        latestPresentData.current = presenceMembers;
-        setPresenceData(presenceMembers);
-
-        // clear any previous errors
-        clearErrorState();
-      })
-      .catch((error: unknown) => {
-        const errorInfo = error as Ably.ErrorInfo;
-        if (errorInfoIs(errorInfo, ErrorCodes.RoomIsReleased)) return;
-
-        logger.error('usePresenceListener(); error fetching initial presence data', {
-          error,
-          roomId: room.roomId,
-        });
-        setErrorState(errorInfo);
-      })
-      .finally(() => {
-        // subscribe to presence events
-        logger.debug('usePresenceListener(); subscribing internal listener to presence events', {
-          roomId: room.roomId,
-        });
-        const result = room.presence.subscribe(() => {
-          updatePresenceData();
-        });
-        unsubscribe = result.unsubscribe;
-      });
-    return () => {
-      if (unsubscribe) {
-        logger.debug('usePresenceListener(); cleaning up internal listener', { roomId: room.roomId });
-        unsubscribe();
-      }
-    };
-  }, [room, setErrorState, clearErrorState, logger]);
+        return () => {
+          if (unsubscribe) {
+            logger.debug('usePresenceListener(); cleaning up internal listener', { roomId: context.roomId });
+            unsubscribe();
+          }
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, setErrorState, clearErrorState, logger]);
 
   // subscribe the user provided listener to presence changes
   useEffect(() => {
     if (!listenerRef) return;
-    const { unsubscribe } = room.presence.subscribe(listenerRef);
-    logger.debug('usePresenceListener(); applying external listener', { roomId: room.roomId });
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('usePresenceListener(); applying external listener', { roomId: context.roomId });
+        const { unsubscribe } = room.presence.subscribe(listenerRef);
 
-    return () => {
-      logger.debug('usePresenceListener(); cleaning up external listener', { roomId: room.roomId });
-      unsubscribe();
-    };
-  }, [room, listenerRef, logger]);
+        return () => {
+          logger.debug('usePresenceListener(); cleaning up external listener', { roomId: context.roomId });
+          unsubscribe();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, listenerRef, logger]);
 
   // subscribe the user provided onDiscontinuity listener
   useEffect(() => {
     if (!onDiscontinuityRef) return;
-    logger.debug('usePresenceListener(); applying onDiscontinuity listener', { roomId: room.roomId });
-    const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('usePresenceListener(); applying onDiscontinuity listener', { roomId: context.roomId });
+        const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
 
-    return () => {
-      logger.debug('usePresenceListener(); removing onDiscontinuity listener', { roomId: room.roomId });
-      off();
-    };
-  }, [room, onDiscontinuityRef, logger]);
+        return () => {
+          logger.debug('usePresenceListener(); removing onDiscontinuity listener', { roomId: context.roomId });
+          off();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, onDiscontinuityRef, logger]);
 
   return {
     connectionStatus,
@@ -259,6 +306,5 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
     roomError,
     error,
     presenceData: presenceData,
-    presence: room.presence,
   };
 };
