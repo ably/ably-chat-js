@@ -6,7 +6,7 @@ import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
 import { ConnectionLifecycle, Message, MessageEventPayload, PaginatedResult, Reaction } from '@ably/chat';
 
-export const Chat = () => {
+export const Chat = (props: {roomId: string, setRoomId: (roomId: string) => void }) => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
   const [messages, setMessages] = useState<Message[]>([]);
@@ -15,7 +15,7 @@ export const Chat = () => {
 
   const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
 
-  const { send: sendMessage, getPreviousMessages } = useMessages({
+  const { send: sendMessage, getPreviousMessages, roomStatus } = useMessages({
     listener: (message: MessageEventPayload) => {
       setMessages((prevMessage) => [...prevMessage, message.message]);
     },
@@ -43,16 +43,22 @@ export const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    chatClient.logger.debug('sendMessage changed')
+  }, [sendMessage])
+
+  useEffect(() => {
+    chatClient.logger.debug('updating getPreviousMessages useEffect', {getPreviousMessages});
     // try and fetch the messages up to attachment of the messages listener
     if (getPreviousMessages && loading) {
+      chatClient.logger.debug('fetching initial messages', {roomStatus});
       getPreviousMessages({ limit: 50 })
         .then((result: PaginatedResult<Message>) => {
+          chatClient.logger.debug('getPreviousMessages result', result);
           setMessages(result.items.reverse());
           setLoading(false);
         })
         .catch((error: unknown) => {
-          console.error('Error fetching initial messages', error);
-          setLoading(false);
+          chatClient.logger.error('Error fetching initial messages', {err: error.toString()});
         });
     }
   }, [getPreviousMessages, loading]);
@@ -105,6 +111,19 @@ export const Chat = () => {
     window.location.reload();
   }
 
+  function changeRoomId() {
+    const newRoomId = prompt('Enter your new roomId');
+    if (!newRoomId) {
+      return;
+    }
+    
+    // Clear the room messages
+    setMessages([]);
+    setLoading(true);
+    setRoomReactions([]);
+    props.setRoomId(newRoomId);
+  }
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -129,6 +148,20 @@ export const Chat = () => {
           onClick={changeClientId}
         >
           Change clientId
+        </a>
+        .
+      </div>
+      <div
+        className="text-xs p-3"
+        style={{ backgroundColor: '#333' }}
+      >
+        You are in room <strong>{props.roomId}</strong>.{' '}
+        <a
+          href="#"
+          className="text-blue-600 dark:text-blue-500 hover:underline"
+          onClick={changeRoomId}
+        >
+          Change roomId
         </a>
         .
       </div>

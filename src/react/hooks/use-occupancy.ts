@@ -1,13 +1,15 @@
-import { Occupancy, OccupancyListener } from '@ably/chat';
+import { OccupancyListener } from '@ably/chat';
 import { useEffect, useState } from 'react';
 
+import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useRoomContext } from '../helper/use-room-context.js';
+import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
 import { useLogger } from './use-logger.js';
-import { useRoom } from './use-room.js';
 
 /**
  * The options for the {@link useOccupancy} hook.
@@ -24,11 +26,6 @@ export interface UseOccupancyParams extends StatusParams, Listenable<OccupancyLi
  * The response type from the {@link useOccupancy} hook.
  */
 export interface UseOccupancyResponse extends ChatStatusResponse {
-  /**
-   * Provides access to the underlying {@link Occupancy} instance of the room.
-   */
-  readonly occupancy: Occupancy;
-
   /**
    * The current number of users connected to the room, kept up to date by the hook.
    */
@@ -51,11 +48,11 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
     onStatusChange: params?.onConnectionStatusChange,
   });
-  const { room, roomError, roomStatus } = useRoom({
-    onStatusChange: params?.onRoomStatusChange,
-  });
+  const context = useRoomContext('useOccupancy');
+  const { status: roomStatus, error: roomError } = useRoomStatus(params);
+
   const logger = useLogger();
-  logger.trace('useOccupancy();', { params, roomId: room.roomId });
+  logger.trace('useOccupancy();', { params, roomId: context.roomId });
 
   const [occupancyMetrics, setOccupancyMetrics] = useState<{ connections: number; presenceMembers: number }>({
     connections: 0,
@@ -69,46 +66,66 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
   // if provided, subscribes the user provided discontinuity listener
   useEffect(() => {
     if (!onDiscontinuityRef) return;
-    logger.debug('useOccupancy(); applying onDiscontinuity listener', { roomId: room.roomId });
-    const { off } = room.occupancy.onDiscontinuity(onDiscontinuityRef);
-    return () => {
-      logger.debug('useOccupancy(); removing onDiscontinuity listener', { roomId: room.roomId });
-      off();
-    };
-  }, [room, onDiscontinuityRef, logger]);
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('useOccupancy(); applying onDiscontinuity listener', { roomId: context.roomId });
+        const { off } = room.occupancy.onDiscontinuity(onDiscontinuityRef);
+        return () => {
+          logger.debug('useOccupancy(); removing onDiscontinuity listener', { roomId: context.roomId });
+          off();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, onDiscontinuityRef, logger]);
 
   // subscribe to occupancy events internally, to update the state metrics
   useEffect(() => {
-    logger.debug('useOccupancy(); applying internal listener', { roomId: room.roomId });
-    const { unsubscribe } = room.occupancy.subscribe((occupancyEvent) => {
-      setOccupancyMetrics({
-        connections: occupancyEvent.connections,
-        presenceMembers: occupancyEvent.presenceMembers,
-      });
-    });
-    return () => {
-      logger.debug('useOccupancy(); cleaning up internal listener', { roomId: room.roomId });
-      unsubscribe();
-    };
-  }, [room, logger]);
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('useOccupancy(); applying internal listener', { roomId: context.roomId });
+        const { unsubscribe } = room.occupancy.subscribe((occupancyEvent) => {
+          setOccupancyMetrics({
+            connections: occupancyEvent.connections,
+            presenceMembers: occupancyEvent.presenceMembers,
+          });
+        });
+        return () => {
+          logger.debug('useOccupancy(); cleaning up internal listener', { roomId: context.roomId });
+          unsubscribe();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, logger]);
 
   // if provided, subscribes the user provided listener to occupancy events
   useEffect(() => {
     if (!listenerRef) return;
-    logger.debug('useOccupancy(); applying listener', { roomId: room.roomId });
-    const { unsubscribe } = room.occupancy.subscribe(listenerRef);
-    return () => {
-      logger.debug('useOccupancy(); cleaning up listener', { roomId: room.roomId });
-      unsubscribe();
-    };
-  }, [listenerRef, room, logger]);
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('useOccupancy(); applying listener', { roomId: context.roomId });
+        const { unsubscribe } = room.occupancy.subscribe(listenerRef);
+        return () => {
+          logger.debug('useOccupancy(); cleaning up listener', { roomId: context.roomId });
+          unsubscribe();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [listenerRef, context, logger]);
 
   return {
     connectionStatus,
     connectionError,
     roomStatus,
     roomError,
-    occupancy: room.occupancy,
     connections: occupancyMetrics.connections,
     presenceMembers: occupancyMetrics.presenceMembers,
   };
