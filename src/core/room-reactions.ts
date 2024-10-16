@@ -40,8 +40,6 @@ export interface SendReactionParams {
    * Do not use metadata for authoritative information. There is no server-side
    * validation. When reading the metadata treat it like user input.
    *
-   * The key `ably-chat` is reserved and cannot be used. Ably may populate this
-   * with different values in the future.
    */
   metadata?: ReactionMetadata;
 
@@ -58,8 +56,6 @@ export interface SendReactionParams {
    * server-side validation. When reading the headers treat them like user
    * input.
    *
-   * The key prefix `ably-chat` is reserved and cannot be used. Ably may add
-   * headers prefixed with `ably-chat` in the future.
    */
   headers?: ReactionHeaders;
 }
@@ -188,26 +184,6 @@ export class DefaultRoomReactions
 
     if (!type) {
       return Promise.reject(new Ably.ErrorInfo('unable to send reaction; type not set and it is required', 40001, 400));
-    }
-
-    if (metadata && metadata['ably-chat'] !== undefined) {
-      return Promise.reject(
-        new Ably.ErrorInfo("unable to send reaction; metadata cannot use reserved key 'ably-chat'", 40001, 400),
-      );
-    }
-
-    if (headers) {
-      for (const key of Object.keys(headers)) {
-        if (key.startsWith('ably-chat')) {
-          return Promise.reject(
-            new Ably.ErrorInfo(
-              "unable to send reaction; headers cannot have any key starting with reserved prefix 'ably-chat'",
-              40001,
-              400,
-            ),
-          );
-        }
-      }
     }
 
     const payload: ReactionPayload = {
