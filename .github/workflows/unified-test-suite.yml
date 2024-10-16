@@ -1,0 +1,33 @@
+name: Unified Test Suite
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  unified-test-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - name: Prepare adapter
+        working-directory: unified-test-suite/adapter
+        run: npm ci
+
+      - name: Install uts-chat globally
+        run: npm install -g @ably-labs/uts-chat
+
+      - name: Run uts-chat with ADAPTER_EXECUTABLE
+        env:
+          ADAPTER_EXECUTABLE: npm run uts:adapter
+        run: uts-chat

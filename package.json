@@ -39,7 +39,8 @@
     "demo:reload": "npm run build && cd demo && npm i file:../",
     "docs": "typedoc",
     "modulereport": "tsc --noEmit --esModuleInterop scripts/moduleReport.ts && esr scripts/moduleReport.ts",
-    "cspell": "cspell '{src,test}/**' './*.md'"
+    "cspell": "cspell '{src,test}/**' './*.md'",
+    "uts:adapter": "cd unified-test-suite/adapter && npm run start"
   },
   "files": [
     "dist/**",

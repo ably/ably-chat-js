@@ -137,6 +137,7 @@ module.exports = {
     'test/helper/test-setup.ts',
     '__mocks__',
     'coverage/',
+    'unified-test-suite',
   ],
   settings: {
     jsdoc: {
