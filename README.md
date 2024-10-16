@@ -538,6 +538,8 @@ const occupancy = await room.occupancy.get();
 
 You can subscribe to and send ephemeral room-level reactions by using the `room.reactions` objects.
 
+To send room-level reactions, you must be [attached](#attaching-to-a-room) to the room.
+
 ### Sending a reaction
 
 To send a reaction such as `"like"`:
