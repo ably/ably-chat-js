@@ -58,7 +58,6 @@ const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtim
     iat: currentTime,
     exp: currentTime + 3600,
     'x-ably-capability': '{"*":["*"], "[chat]*":["*"]}',
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     'x-ably-clientId': options.clientId,
   };
 

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-empty-interface */
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
 import type { Assertion, AsymmetricMatchersContaining } from 'vitest';
 
 import type { ErrorInfoCompareType } from './expectations.ts';

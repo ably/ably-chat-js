@@ -22,7 +22,7 @@ const waitForConnectionLifecycle = (chat: ChatClient, state: ConnectionLifecycle
     // Set a timeout to reject the promise if the status is not reached
     setInterval(() => {
       off();
-      reject(new Error(`Connection status ${status} not reached`));
+      reject(new Error(`Connection status ${state} not reached`));
     }, 5000);
   });
 };

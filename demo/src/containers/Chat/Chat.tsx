@@ -4,7 +4,7 @@ import { MessageInput } from '../../components/MessageInput';
 import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
 import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
-import { ConnectionLifecycle, Message, Reaction } from '@ably/chat';
+import { ConnectionLifecycle, Message, MessageEventPayload, PaginatedResult, Reaction } from '@ably/chat';
 
 export const Chat = () => {
   const chatClient = useChatClient();
@@ -16,7 +16,7 @@ export const Chat = () => {
   const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
 
   const { send: sendMessage, getPreviousMessages } = useMessages({
-    listener: (message) => {
+    listener: (message: MessageEventPayload) => {
       setMessages((prevMessage) => [...prevMessage, message.message]);
     },
     onDiscontinuity: (discontinuity) => {
@@ -34,7 +34,7 @@ export const Chat = () => {
   const [roomReactions, setRoomReactions] = useState<Reaction[]>([]);
 
   const { send: sendReaction } = useRoomReactions({
-    listener: (reaction) => {
+    listener: (reaction: Reaction) => {
       setRoomReactions([...roomReactions, reaction]);
     },
   });
@@ -46,11 +46,11 @@ export const Chat = () => {
     // try and fetch the messages up to attachment of the messages listener
     if (getPreviousMessages && loading) {
       getPreviousMessages({ limit: 50 })
-        .then((result) => {
+        .then((result: PaginatedResult<Message>) => {
           setMessages(result.items.reverse());
           setLoading(false);
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
           console.error('Error fetching initial messages', error);
           setLoading(false);
         });
@@ -58,13 +58,13 @@ export const Chat = () => {
   }, [getPreviousMessages, loading]);
 
   const handleStartTyping = () => {
-    start().catch((error) => {
+    start().catch((error: unknown) => {
       console.error('Failed to start typing indicator', error);
     });
   };
 
   const handleStopTyping = () => {
-    stop().catch((error) => {
+    stop().catch((error: unknown) => {
       console.error('Failed to stop typing indicator', error);
     });
   };

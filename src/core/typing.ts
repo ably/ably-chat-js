@@ -346,7 +346,7 @@ export class DefaultTyping
     };
   }
 
-  discontinuityDetected(reason?: Ably.ErrorInfo | undefined): void {
+  discontinuityDetected(reason?: Ably.ErrorInfo): void {
     this._logger.warn(`DefaultTyping.discontinuityDetected();`, { reason });
     this._discontinuityEmitter.emit('discontinuity', reason);
   }

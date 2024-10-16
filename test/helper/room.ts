@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ErrorCodes } from '../../src/core/errors.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { RoomOptions, RoomOptionsDefaults } from '../../src/core/room-options.ts';
 import { RoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
@@ -13,6 +14,11 @@ import { ablyRealtimeClient } from './realtime-client.ts';
 // Wait 3 seconds for the room to reach the expected status
 export const waitForRoomStatus = async (status: RoomStatus, expected: RoomLifecycle) => {
   return vi.waitUntil(() => status.current === expected, 3000);
+};
+
+// Wait 3 seconds for the room error to reach an expected code
+export const waitForRoomError = async (status: RoomStatus, expected: ErrorCodes) => {
+  return vi.waitUntil(() => status.error?.code === expected, 3000);
 };
 
 // Gets a random room with default options from the chat client

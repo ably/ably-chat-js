@@ -50,7 +50,9 @@ export const useEventListenerRef = <Arguments extends unknown[]>(
   });
 
   const returnVal = useCallback((...args: Arguments) => {
-    ref.current && ref.current(...args);
+    if (ref.current) {
+      ref.current(...args);
+    }
   }, []);
 
   return callback ? returnVal : undefined;
