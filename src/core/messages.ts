@@ -87,8 +87,6 @@ export interface SendMessageParams {
    * Do not use metadata for authoritative information. There is no server-side
    * validation. When reading the metadata treat it like user input.
    *
-   * The key `ably-chat` is reserved and cannot be used. Ably may populate
-   * this with different values in the future.
    */
   metadata?: MessageMetadata;
 
@@ -105,8 +103,6 @@ export interface SendMessageParams {
    * server-side validation. When reading the headers treat them like user
    * input.
    *
-   * The key prefix `ably-chat` is reserved and cannot be used. Ably may add
-   * headers prefixed with `ably-chat` in the future.
    */
   headers?: MessageHeaders;
 }
@@ -444,22 +440,6 @@ export class DefaultMessages
     this._logger.trace('Messages.send();');
 
     const { text, metadata, headers } = params;
-
-    if (metadata && metadata['ably-chat'] !== undefined) {
-      throw new Ably.ErrorInfo("unable to send message; metadata cannot use reserved key 'ably-chat'", 40001, 400);
-    }
-
-    if (headers) {
-      for (const key of Object.keys(headers)) {
-        if (key.startsWith('ably-chat')) {
-          throw new Ably.ErrorInfo(
-            "unable to send message; headers cannot have any key starting with reserved prefix 'ably-chat'",
-            40001,
-            400,
-          );
-        }
-      }
-    }
 
     const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
 
