@@ -10,7 +10,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const { update, isPresent, error } = usePresence({ enterWithData: { status: '💻 Online' } });
   const { presenceData } = usePresenceListener({
-    listener: (event) => {
+    listener: (event: unknown) => {
       console.log('Presence data changed', { event });
     },
   });
@@ -23,7 +23,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
 
   const handleUpdateButtonClick = () => {
     setIsOnline(!isOnline);
-    update({ status: isOnline ? '🔄 Away' : '💻 Online' }).catch((error) => {
+    update({ status: isOnline ? '🔄 Away' : '💻 Online' }).catch((error: unknown) => {
       console.error('Error updating presence:', error);
     });
   };

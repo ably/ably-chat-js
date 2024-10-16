@@ -5,7 +5,7 @@ import { ErrorCodes } from '../../src/core/errors.ts';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
 import { DefaultStatus, RoomLifecycle } from '../../src/core/room-status.ts';
 import { makeTestLogger } from '../helper/logger.ts';
-import { waitForRoomStatus } from '../helper/room.ts';
+import { waitForRoomError, waitForRoomStatus } from '../helper/room.ts';
 
 interface TestContext {
   realtime: Ably.Realtime;
@@ -503,6 +503,9 @@ describe('room lifecycle manager', () => {
       });
 
       // We should be back in suspended
+      // Wait til the room error is ErrorCodes.OccupancyAttachmentFailed to ensure everything has
+      // had time to cycle
+      await waitForRoomError(status, ErrorCodes.OccupancyAttachmentFailed);
       await waitForRoomStatus(status, RoomLifecycle.Suspended);
 
       // Now let the third channel succeed
@@ -2134,7 +2137,6 @@ describe('room lifecycle manager', () => {
         });
         status.setStatus({ status: RoomLifecycle.Initialized });
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const monitor = new RoomLifecycleManager(
           status,
           [context.firstContributor, context.secondContributor, context.thirdContributor],
@@ -2188,7 +2190,6 @@ describe('room lifecycle manager', () => {
         });
         status.setStatus({ status: RoomLifecycle.Initialized });
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const monitor = new RoomLifecycleManager(
           status,
           [context.firstContributor, context.secondContributor, context.thirdContributor],
@@ -2256,7 +2257,6 @@ describe('room lifecycle manager', () => {
         });
         status.setStatus({ status: RoomLifecycle.Initialized });
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const monitor = new RoomLifecycleManager(
           status,
           [context.firstContributor, context.secondContributor, context.thirdContributor],

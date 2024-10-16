@@ -30,7 +30,7 @@ describe('useRoomReactions', () => {
     // create a new mock room before each test
     vi.resetAllMocks();
     mockLogger = makeTestLogger();
-    mockRoom = makeRandomRoom({ options: { reactions: true } });
+    mockRoom = makeRandomRoom({ options: { reactions: {} } });
   });
 
   afterEach(() => {
@@ -117,7 +117,7 @@ describe('useRoomReactions', () => {
     expect(result.current.reactions).toBe(mockRoom.reactions);
 
     // change the mock room instance
-    mockRoom = makeRandomRoom({ options: { reactions: true } });
+    mockRoom = makeRandomRoom({ options: { reactions: {} } });
 
     // re-render to trigger the useEffect
     rerender();

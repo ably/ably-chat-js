@@ -85,7 +85,7 @@ describe('logger', () => {
   });
 });
 
-const callMethodForLevel = (log: Logger, level: Omit<LogLevel, 'silent'>, context?: object | undefined) => {
+const callMethodForLevel = (log: Logger, level: Omit<LogLevel, 'silent'>, context?: object) => {
   switch (level) {
     case LogLevel.Trace: {
       log.trace('test', context);

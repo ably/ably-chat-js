@@ -76,14 +76,12 @@ export interface TypingOptions {
 /**
  * Represents the reactions options for a chat room.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface RoomReactionsOptions {}
+export type RoomReactionsOptions = object;
 
 /**
  * Represents the occupancy options for a chat room.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface OccupancyOptions {}
+export type OccupancyOptions = object;
 
 /**
  * Represents the options for a given chat room.

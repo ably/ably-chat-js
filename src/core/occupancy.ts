@@ -233,7 +233,7 @@ export class DefaultOccupancy
     };
   }
 
-  discontinuityDetected(reason?: Ably.ErrorInfo | undefined): void {
+  discontinuityDetected(reason?: Ably.ErrorInfo): void {
     this._logger.warn('Occupancy.discontinuityDetected();', { reason });
     this._discontinuityEmitter.emit('discontinuity', reason);
   }

@@ -37,7 +37,7 @@ describe('useOccupancy', () => {
     // create a new mock room before each test, enabling occupancy
     vi.resetAllMocks();
     mockLogger = makeTestLogger();
-    mockRoom = makeRandomRoom({ options: { occupancy: true } });
+    mockRoom = makeRandomRoom({ options: { occupancy: {} } });
   });
 
   afterEach(() => {
@@ -136,7 +136,7 @@ describe('useOccupancy', () => {
     expect(result.current.occupancy).toBe(mockRoom.occupancy);
 
     // change the mock room instance
-    mockRoom = makeRandomRoom({ options: { occupancy: true } });
+    mockRoom = makeRandomRoom({ options: { occupancy: {} } });
 
     // re-render to trigger the useEffect
     rerender();

@@ -419,7 +419,7 @@ export class DefaultPresence
     };
   }
 
-  discontinuityDetected(reason?: Ably.ErrorInfo | undefined): void {
+  discontinuityDetected(reason?: Ably.ErrorInfo): void {
     this._logger.warn('Presence.discontinuityDetected();', { reason });
     this._discontinuityEmitter.emit('discontinuity', reason);
   }

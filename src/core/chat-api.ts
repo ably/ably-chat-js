@@ -25,10 +25,6 @@ export interface CreateMessageResponse {
   createdAt: number;
 }
 
-interface CreateMessageRequest {
-  text: string;
-}
-
 interface SendMessageParams {
   text: string;
   metadata?: MessageMetadata;
@@ -49,10 +45,7 @@ export class ChatApi {
   }
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
-    return this._makeAuthorizedPaginatedRequest<Message, GetMessagesQueryParams>(
-      `/chat/v1/rooms/${roomId}/messages`,
-      params,
-    ).then((data) => {
+    return this._makeAuthorizedPaginatedRequest<Message>(`/chat/v1/rooms/${roomId}/messages`, params).then((data) => {
       data.items = data.items.map((message) => {
         const metadata = message.metadata as MessageMetadata | undefined;
         const headers = message.headers as MessageHeaders | undefined;
@@ -83,21 +76,17 @@ export class ChatApi {
       body.headers = params.headers;
     }
 
-    return this._makeAuthorizedRequest<CreateMessageResponse, CreateMessageRequest>(
-      `/chat/v1/rooms/${roomId}/messages`,
-      'POST',
-      body,
-    );
+    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v1/rooms/${roomId}/messages`, 'POST', body);
   }
 
   async getOccupancy(roomId: string): Promise<OccupancyEvent> {
     return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
   }
 
-  private async _makeAuthorizedRequest<RES, REQ = undefined>(
+  private async _makeAuthorizedRequest<RES = undefined>(
     url: string,
     method: 'POST' | 'GET' | ' PUT' | 'DELETE' | 'PATCH',
-    body?: REQ,
+    body?: unknown,
   ): Promise<RES> {
     const response = await this._realtime.request<RES>(method, url, this._apiProtocolVersion, {}, body);
     if (!response.success) {
@@ -113,10 +102,10 @@ export class ChatApi {
     return response.items[0] as RES;
   }
 
-  private async _makeAuthorizedPaginatedRequest<RES, REQ = undefined>(
+  private async _makeAuthorizedPaginatedRequest<RES>(
     url: string,
     params?: unknown,
-    body?: REQ,
+    body?: unknown,
   ): Promise<PaginatedResult<RES>> {
     const response = await this._realtime.request('GET', url, this._apiProtocolVersion, params, body);
     if (!response.success) {
