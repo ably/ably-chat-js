@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
+import { MessageEvents } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
 import { RoomOptionsDefaults } from '../../src/core/room-options.ts';
@@ -79,6 +80,66 @@ describe('messages integration', () => {
     ]);
   });
 
+  it<TestContext>('should be able to delete and receive deletion messages', async (context) => {
+    const { chat } = context;
+
+    const room = getRandomRoom(chat);
+
+    // Attach the room
+    await room.attach();
+
+    // Subscribe to messages and filter them when they arrive
+    const messages: Message[] = [];
+    const deletions: Message[] = [];
+    room.messages.subscribe((messageEvent) => {
+      switch (messageEvent.type) {
+        case MessageEvents.Created: {
+          messages.push(messageEvent.message);
+          break;
+        }
+        case MessageEvents.Deleted: {
+          deletions.push(messageEvent.message);
+          break;
+        }
+        default: {
+          throw new Error('Unexpected message event type');
+        }
+      }
+    });
+
+    // send a message, and then delete it
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const deletedMessage1 = await room.messages.delete(message1, {
+      description: 'Deleted message',
+      metadata: { key: 'value' },
+      hard: false,
+    });
+
+    // Wait up to 5 seconds for the promises to resolve
+    await waitForMessages(messages, 1);
+    await waitForMessages(deletions, 1);
+
+    // Check that the message was received
+    expect(messages).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        timeserial: message1.timeserial,
+      }),
+    ]);
+    // Check that the deletion was received
+    expect(deletions).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        timeserial: deletedMessage1.timeserial,
+        deletedAt: deletedMessage1.deletedAt,
+        deletedBy: chat.clientId,
+        deletionDetail: deletedMessage1.deletionDetail,
+      }),
+    ]);
+  });
+
   it<TestContext>('should be able to retrieve chat history', async (context) => {
     const { chat } = context;
 
@@ -107,6 +168,35 @@ describe('messages integration', () => {
         text: 'You underestimate my power!',
         clientId: chat.clientId,
         timeserial: message3.timeserial,
+      }),
+    ]);
+
+    // We shouldn't have a "next" link in the response
+    expect(history.hasNext()).toBe(false);
+  });
+
+  it<TestContext>('should be able to retrieve chat deletion history', async (context) => {
+    const { chat } = context;
+
+    const room = getRandomRoom(chat);
+
+    // Publish 1 messages
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+
+    // Delete the message
+    const deletedMessage1 = await room.messages.delete(message1, { description: 'Deleted message' });
+
+    // Do a history request to get all 3 messages
+    const history = await room.messages.get({ limit: 1, direction: 'forwards' });
+
+    expect(history.items).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        timeserial: deletedMessage1.timeserial,
+        deletedAt: deletedMessage1.deletedAt,
+        deletedBy: chat.clientId,
+        deletionDetail: deletedMessage1.deletionDetail,
       }),
     ]);
 
