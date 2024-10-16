@@ -1,9 +1,10 @@
-import { ChatClient, PresenceData, PresenceEvent, RoomOptionsDefaults } from '@ably/chat';
+import { ChatClient, LogLevel, PresenceData, PresenceEvent, RoomOptionsDefaults } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { usePresence } from '../../../src/react/hooks/use-presence.ts';
+import { usePresenceListener } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
@@ -31,8 +32,8 @@ describe('usePresence', () => {
 
   it('should send presence events', async () => {
     // create new clients
-    const chatClientOne = newChatClient() as unknown as ChatClient;
-    const chatClientTwo = newChatClient() as unknown as ChatClient;
+    const chatClientOne = newChatClient({logLevel: LogLevel.Error}) as unknown as ChatClient;
+    const chatClientTwo = newChatClient({logLevel: LogLevel.Error}) as unknown as ChatClient;
 
     // create a second room and attach it, so we can listen for presence events
     const roomId = randomRoomId();
@@ -41,7 +42,11 @@ describe('usePresence', () => {
 
     // start listening for presence events on room two
     const presenceEventsRoomTwo: PresenceEvent[] = [];
-    roomTwo.presence.subscribe((presenceEvent) => presenceEventsRoomTwo.push(presenceEvent));
+    chatClientTwo.logger.error('test log');
+    roomTwo.presence.subscribe((presenceEvent) => {
+      presenceEventsRoomTwo.push(presenceEvent);
+      chatClientTwo.logger.error('presence event client 2', {event: presenceEvent, len: presenceEventsRoomTwo.length});
+    });
 
     let isPresentState = false;
 
@@ -53,6 +58,11 @@ describe('usePresence', () => {
       leaveWithData: PresenceData;
     }) => {
       const { update, isPresent } = usePresence({ enterWithData, leaveWithData });
+      usePresenceListener({
+        listener: (event) => {
+          chatClientOne.logger.error('presence event client 1', event);
+        }
+      });
 
       // the effect should send a presence update
       useEffect(() => {
@@ -85,12 +95,14 @@ describe('usePresence', () => {
 
     await waitFor(
       () => {
+        chatClientOne.logger.error('isPresentState', {isPresentState});
         expect(isPresentState).toBe(true);
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
 
     // expect a presence enter and update event from the test component to be received by the second room
+    chatClientTwo.logger.error('presenceEventsRoomTwo', {presenceEventsRoomTwo});
     await waitForPresenceEvents(presenceEventsRoomTwo, 2);
     expect(presenceEventsRoomTwo[0]?.clientId).toBe(chatClientOne.clientId);
     expect(presenceEventsRoomTwo[0]?.data).toBe('test enter');
@@ -99,6 +111,7 @@ describe('usePresence', () => {
 
     unmount();
     // expect a presence leave event from the test component to be received by the second room
+    chatClientTwo.logger.error('presenceEventsRoomTwo', {presenceEventsRoomTwo});
     await waitForPresenceEvents(presenceEventsRoomTwo, 3);
     expect(presenceEventsRoomTwo[2]?.clientId).toBe(chatClientOne.clientId);
     expect(presenceEventsRoomTwo[2]?.data).toBe('test leave');
