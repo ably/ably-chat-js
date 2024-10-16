@@ -30,7 +30,7 @@ describe('usePresence', () => {
     cleanup();
   });
 
-  it('should send presence events', async () => {
+  it('should send presence events', { timeout: 30000, repeats: 10 }, async () => {
     // create new clients
     const chatClientOne = newChatClient({logLevel: LogLevel.Error}) as unknown as ChatClient;
     const chatClientTwo = newChatClient({logLevel: LogLevel.Error}) as unknown as ChatClient;
@@ -115,5 +115,5 @@ describe('usePresence', () => {
     await waitForPresenceEvents(presenceEventsRoomTwo, 3);
     expect(presenceEventsRoomTwo[2]?.clientId).toBe(chatClientOne.clientId);
     expect(presenceEventsRoomTwo[2]?.data).toBe('test leave');
-  }, 20000);
+  });
 });
