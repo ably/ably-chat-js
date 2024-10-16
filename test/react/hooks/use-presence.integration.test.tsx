@@ -32,8 +32,10 @@ describe('usePresence', () => {
 
   it('should send presence events', { timeout: 30000, repeats: 10 }, async () => {
     // create new clients
-    const chatClientOne = newChatClient({logLevel: LogLevel.Error}) as unknown as ChatClient;
+    const chatClientOne = newChatClient() as unknown as ChatClient;
     const chatClientTwo = newChatClient({logLevel: LogLevel.Error}) as unknown as ChatClient;
+
+    chatClientTwo.logger.error('starting a new test')
 
     // create a second room and attach it, so we can listen for presence events
     const roomId = randomRoomId();
@@ -42,7 +44,6 @@ describe('usePresence', () => {
 
     // start listening for presence events on room two
     const presenceEventsRoomTwo: PresenceEvent[] = [];
-    chatClientTwo.logger.error('test log');
     roomTwo.presence.subscribe((presenceEvent) => {
       presenceEventsRoomTwo.push(presenceEvent);
       chatClientTwo.logger.error('presence event client 2', {event: presenceEvent, len: presenceEventsRoomTwo.length});
@@ -108,6 +109,7 @@ describe('usePresence', () => {
     expect(presenceEventsRoomTwo[0]?.data).toBe('test enter');
     expect(presenceEventsRoomTwo[1]?.clientId).toBe(chatClientOne.clientId);
     expect(presenceEventsRoomTwo[1]?.data).toBe('test update');
+    chatClientTwo.logger.error('checked initial presence events')
 
     unmount();
     // expect a presence leave event from the test component to be received by the second room
@@ -115,5 +117,6 @@ describe('usePresence', () => {
     await waitForPresenceEvents(presenceEventsRoomTwo, 3);
     expect(presenceEventsRoomTwo[2]?.clientId).toBe(chatClientOne.clientId);
     expect(presenceEventsRoomTwo[2]?.data).toBe('test leave');
+    chatClientTwo.logger.error('checked final presence events')
   });
 });
