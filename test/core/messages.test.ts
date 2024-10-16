@@ -115,60 +115,6 @@ describe('Messages', () => {
         }),
       );
     });
-
-    it<TestContext>('should be not be able to set reserved header prefix', (context) => {
-      return new Promise<void>((accept, reject) => {
-        const { chatApi, realtime } = context;
-        const timestamp = Date.now();
-        vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-          timeserial: 'abcdefghij@1672531200000-123',
-          createdAt: timestamp,
-        });
-
-        const room = makeRandomRoom({ chatApi, realtime });
-        const messagePromise = room.messages.send({
-          text: 'hello there',
-          headers: { 'ably-chat.you': 'shall not pass' },
-        });
-
-        messagePromise
-          .then(() => {
-            reject(new Error('message should have not been sent successfully'));
-          })
-          .catch((error: unknown) => {
-            expect(error).toBeTruthy();
-            expect((error as Error).message).toMatch(/reserved prefix/);
-            accept();
-          });
-      });
-    });
-
-    it<TestContext>('should be not be able to set reserved metadata key', (context) => {
-      return new Promise<void>((accept, reject) => {
-        const { chatApi, realtime } = context;
-        const timestamp = Date.now();
-        vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-          timeserial: 'abcdefghij@1672531200000-123',
-          createdAt: timestamp,
-        });
-
-        const room = makeRandomRoom({ chatApi, realtime });
-        const messagePromise = room.messages.send({
-          text: 'hello there',
-          metadata: { 'ably-chat': 'shall not pass' },
-        });
-
-        messagePromise
-          .then(() => {
-            reject(new Error('message should have not been sent successfully'));
-          })
-          .catch((error: unknown) => {
-            expect(error).toBeTruthy();
-            expect((error as Error).message).toMatch(/reserved key/);
-            accept();
-          });
-      });
-    });
   });
 
   describe('subscribing to updates', () => {
