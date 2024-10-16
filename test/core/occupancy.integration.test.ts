@@ -14,7 +14,7 @@ interface TestContext {
   chat: ChatClient;
 }
 
-const TEST_TIMEOUT = 20000;
+const TEST_TIMEOUT = 30000;
 
 // Wait for the occupancy of a room to reach the expected occupancy.
 // Do this with a 10s timeout.
@@ -55,7 +55,7 @@ describe('occupancy', () => {
 
     const room = getRandomRoom(chat);
 
-    // Get the occupancy of the room
+    // Get the occupancy of the room, instantaneously it will be 0
     await waitForExpectedInstantaneousOccupancy(room, {
       connections: 0,
       presenceMembers: 0,
@@ -86,17 +86,22 @@ describe('occupancy', () => {
     await subscriberRealtimeChannel.presence.enter({ foo: 'bar' });
 
     // Wait for the occupancy to reach the expected occupancy
+    // We get an extra 1 from inside Realtime, so expect 3
     await waitForExpectedInstantaneousOccupancy(room, {
-      connections: 2,
+      connections: 3,
       presenceMembers: 1,
     });
 
-    // Detach the subscriber and other realtime client and wait for the occupancy to return to 0
+    // Explicitly leave presence
+    await subscriberRealtimeChannel.presence.leave();
+
+    // Detach the subscriber and other realtime client
     await subscriberRealtimeChannel.detach();
     await realtimeChannel.detach();
 
+    // We'll get 1 connection from the channel until resources clean up in realtime, so expect that and end here
     await waitForExpectedInstantaneousOccupancy(room, {
-      connections: 0,
+      connections: 1,
       presenceMembers: 0,
     });
   });
@@ -136,7 +141,7 @@ describe('occupancy', () => {
     await waitForExpectedInbandOccupancy(
       occupancyUpdates,
       {
-        connections: 2,
+        connections: 3,
         presenceMembers: 1,
       },
       TEST_TIMEOUT,

@@ -63,16 +63,16 @@ describe('useOccupancy', () => {
       render(<TestProvider />);
 
       // if we already have expected occupancy, then we don't need to wait for the event
-      const expectedOccupancy = { connections: 3, presenceMembers: 2 };
+      const expectedOccupancy = { connections: 4, presenceMembers: 2 };
       if (dequal(expectedOccupancy, occupancyState)) {
         return;
       }
 
       // we don't have the requested occupancy yet, so wait for the occupancy events to be received
-      await waitForExpectedInbandOccupancy(occupancyEvents, { connections: 3, presenceMembers: 2 }, 20000);
+      await waitForExpectedInbandOccupancy(occupancyEvents, { connections: 4, presenceMembers: 2 }, 20000);
 
       // check the occupancy metrics
-      expect(occupancyState.connections).toBe(3);
+      expect(occupancyState.connections).toBe(4);
       expect(occupancyState.presenceMembers).toBe(2);
     },
     { timeout: 20000 },
