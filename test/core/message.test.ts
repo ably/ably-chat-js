@@ -106,6 +106,43 @@ describe('ChatMessage', () => {
     expect(firstMessage.after(secondMessage)).toBe(true);
   });
 
+  it('is deleted', () => {
+    const firstTimeserial = 'abcdefghij@1672531200000-124';
+
+    const firstMessage = new DefaultMessage(
+      firstTimeserial,
+      'clientId',
+      'roomId',
+      'hello there',
+      new Date(1672531200000),
+      {},
+      {},
+      new Date(1672531200000),
+    );
+
+    expect(firstMessage.isDeleted()).toBe(true);
+  });
+
+  it('is updated', () => {
+    const firstTimeserial = 'abcdefghij@1672531200000-124';
+
+    const firstMessage = new DefaultMessage(
+      firstTimeserial,
+      'clientId',
+      'roomId',
+      'hello there',
+      new Date(1672531200000),
+      {},
+      {},
+      undefined,
+      undefined,
+      undefined,
+      new Date(1672531200000),
+    );
+
+    expect(firstMessage.isUpdated()).toBe(true);
+  });
+
   it('throws an error with an invalid timeserial', () => {
     expect(() => {
       new DefaultMessage(
