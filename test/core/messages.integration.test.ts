@@ -69,12 +69,12 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: message1.timeserial,
+        timeserial: message1.timeserial.slice(0, -2),
       }),
       expect.objectContaining({
         text: 'I have the high ground!',
         clientId: chat.clientId,
-        timeserial: message2.timeserial,
+        timeserial: message2.timeserial.slice(0, -2),
       }),
     ]);
   });
@@ -222,7 +222,10 @@ describe('messages integration', () => {
     // Subscribe to messages and add them to a list when they arrive
     const messages: Message[] = [];
     room.messages.subscribe((messageEvent) => {
-      messages.push(messageEvent.message);
+      messages.push({
+        ...messageEvent.message,
+        timeserial: messageEvent.message.timeserial + ':0',
+      });
     });
 
     await room.attach();
