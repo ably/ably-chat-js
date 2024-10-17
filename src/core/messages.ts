@@ -11,7 +11,7 @@ import {
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
-import { MessageEvents, RealtimeMessageTypes } from './events.js';
+import { ChatMessageActions, MessageEvents, RealtimeMessageTypes } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
@@ -28,15 +28,6 @@ interface MessageEventsMap {
   [MessageEvents.Created]: MessageEventPayload;
   [MessageEvents.Updated]: MessageEventPayload;
   [MessageEvents.Deleted]: MessageEventPayload;
-}
-
-/**
- * Enum that maps message actions to message events.
- */
-enum MessageActionsToEvents {
-  'MESSAGE_CREATE' = MessageEvents.Created,
-  'MESSAGE_UPDATE' = MessageEvents.Updated,
-  'MESSAGE_DELETE' = MessageEvents.Deleted,
 }
 
 /**
@@ -525,12 +516,31 @@ export class DefaultMessages
     this._listenerSubscriptionPoints.clear();
   }
 
+  // This function is used to convert the message action from Ably to the chat MessageEvents.
+  private _messageActionToMessageEvent(action: ChatMessageActions): MessageEvents | undefined {
+    switch (action) {
+      case ChatMessageActions.MessageCreate: {
+        return MessageEvents.Created;
+      }
+      case ChatMessageActions.MessageUpdate: {
+        return MessageEvents.Updated;
+      }
+      case ChatMessageActions.MessageDelete: {
+        return MessageEvents.Deleted;
+      }
+      default: {
+        return undefined;
+      }
+    }
+  }
+
   private _processEvent(channelEventMessage: Ably.InboundMessage) {
     this._logger.trace('Messages._processEvent();', {
       channelEventMessage,
     });
     const { action } = channelEventMessage;
-    if (!(action in MessageActionsToEvents)) {
+    const event = this._messageActionToMessageEvent(action as ChatMessageActions);
+    if (!event) {
       this._logger.warn('Messages._processEvent(); received unknown message action', { action });
       return;
     }
@@ -540,9 +550,7 @@ export class DefaultMessages
       return;
     }
 
-    const event = MessageActionsToEvents[action as keyof typeof MessageActionsToEvents].valueOf();
-
-    this.emit(event as MessageEvents, { type: event as MessageEvents, message: message });
+    this.emit(event, { type: event, message: message });
   }
 
   /**

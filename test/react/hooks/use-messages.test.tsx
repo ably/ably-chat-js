@@ -103,7 +103,7 @@ describe('useMessages', () => {
         timestamp: new Date(),
         text: 'test message',
         timeserial: '123',
-        action: 'MESSAGE_CREATE',
+        action: 'message_create',
         clientId: '123',
         roomId: '123',
         createdAt: new Date(),

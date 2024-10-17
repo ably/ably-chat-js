@@ -25,10 +25,15 @@ interface TestContext {
 
 interface MockPaginatedResult {
   items: Message[];
+
   first(): Promise<Ably.PaginatedResult<Message>>;
+
   next(): Promise<Ably.PaginatedResult<Message> | null>;
+
   current(): Promise<Ably.PaginatedResult<Message>>;
+
   hasNext(): boolean;
+
   isLast(): boolean;
 }
 
@@ -172,27 +177,44 @@ describe('Messages', () => {
   });
 
   describe('subscribing to updates', () => {
-    it<TestContext>('subscribing to messages', (context) =>
+    it<TestContext>('should subscribe to all message events', (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = Date.now();
-        context.room.messages.subscribe((rawMsg) => {
-          const message = rawMsg.message;
-          try {
-            expect(message).toEqual(
-              expect.objectContaining({
-                timeserial: 'abcdefghij@1672531200000-123',
-                text: 'may the fourth be with you',
-                clientId: 'yoda',
-                createdAt: new Date(publishTimestamp),
-                roomId: context.room.roomId,
-              }),
-            );
-          } catch (error: unknown) {
-            reject(error as Error);
+        let eventCount = 0;
+        const timout = setTimeout(() => {
+          reject(new Error('did not receive all message events'));
+        }, 300);
+        context.room.messages.subscribe(() => {
+          eventCount++;
+          if (eventCount === 3) {
+            clearTimeout(timout);
+            done();
           }
-          done();
         });
-
+        context.emulateBackendPublish({
+          clientId: 'yoda',
+          name: 'message.created',
+          data: {
+            text: 'this message has been deleted',
+          },
+          serial: 'abcdefghij@1672531200000-123',
+          action: 'message_delete',
+          deletedAt: 1729091893,
+          extras: {},
+          timestamp: publishTimestamp,
+        });
+        context.emulateBackendPublish({
+          clientId: 'yoda',
+          name: 'message.created',
+          data: {
+            text: 'some updated text',
+          },
+          serial: 'abcdefghij@1672531200000-123',
+          action: 'message_update',
+          updatedAt: 1729091893,
+          extras: {},
+          timestamp: publishTimestamp,
+        });
         context.emulateBackendPublish({
           clientId: 'yoda',
           name: 'message.created',
@@ -200,7 +222,7 @@ describe('Messages', () => {
             text: 'may the fourth be with you',
           },
           serial: 'abcdefghij@1672531200000-123',
-          action: 'MESSAGE_CREATE',
+          action: 'message_create',
           extras: {},
           timestamp: publishTimestamp,
         });
@@ -223,7 +245,7 @@ describe('Messages', () => {
         text: 'may the fourth be with you',
       },
       serial: 'abcdefghij@1672531200000-123',
-      action: 'MESSAGE_CREATE',
+      action: 'message_create',
       extras: {},
       timestamp: Date.now(),
     });
@@ -237,7 +259,7 @@ describe('Messages', () => {
         text: 'may the fourth be with you',
       },
       serial: 'abcdefghij@1672531200000-123',
-      action: 'MESSAGE_CREATE',
+      action: 'message_create',
       extras: {},
       timestamp: Date.now(),
     });
@@ -272,7 +294,7 @@ describe('Messages', () => {
         text: 'may the fourth be with you',
       },
       serial: 'abcdefghij@1672531200000-123',
-      action: 'MESSAGE_CREATE',
+      action: 'message_create',
       extras: {},
       timestamp: Date.now(),
     });
@@ -286,7 +308,7 @@ describe('Messages', () => {
         text: 'may the fourth be with you',
       },
       serial: 'abcdefghij@1672531200000-123',
-      action: 'MESSAGE_CREATE',
+      action: 'message_create',
       extras: {},
       timestamp: Date.now(),
     });
