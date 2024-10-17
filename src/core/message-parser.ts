@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
+import { DefaultMessage, Message, MessageDetails, MessageHeaders, MessageMetadata } from './message.js';
 
 interface MessagePayload {
   data?: {
@@ -10,48 +10,119 @@ interface MessagePayload {
   clientId?: string;
   timestamp: number;
   extras?: {
-    timeserial?: string;
     headers?: MessageHeaders;
   };
+
+  serial: string;
+  updatedAt?: number;
+  deletedAt?: number;
+  action: Ably.MessageAction;
+  operation?: Ably.Operation;
 }
 
-export function parseMessage(roomId: string | undefined, message: Ably.InboundMessage): Message {
-  const messageCreatedMessage = message as MessagePayload;
+interface ChatMessageFields {
+  timeserial: string;
+  clientId: string;
+  roomId: string;
+  text: string;
+  createdAt: Date;
+  metadata: MessageMetadata;
+  headers: MessageHeaders;
+  deletedAt?: Date;
+  deletedBy?: string;
+  deletionDetail?: MessageDetails;
+  updatedAt?: Date;
+  updatedBy?: string;
+  updateDetail?: MessageDetails;
+}
+
+export function parseMessage(roomId: string | undefined, inboundMessage: Ably.InboundMessage): Message {
+  const message = inboundMessage as MessagePayload;
   if (!roomId) {
     throw new Ably.ErrorInfo(`received incoming message without roomId`, 50000, 500);
   }
 
-  if (!messageCreatedMessage.data) {
+  if (!message.data) {
     throw new Ably.ErrorInfo(`received incoming message without data`, 50000, 500);
   }
 
-  if (!messageCreatedMessage.clientId) {
+  if (!message.clientId) {
     throw new Ably.ErrorInfo(`received incoming message without clientId`, 50000, 500);
   }
 
-  if (!messageCreatedMessage.timestamp) {
+  if (!message.timestamp) {
     throw new Ably.ErrorInfo(`received incoming message without timestamp`, 50000, 500);
   }
 
-  if (messageCreatedMessage.data.text === undefined) {
+  if (message.data.text === undefined) {
     throw new Ably.ErrorInfo(`received incoming message without text`, 50000, 500);
   }
 
-  if (!messageCreatedMessage.extras) {
+  if (!message.extras) {
     throw new Ably.ErrorInfo(`received incoming message without extras`, 50000, 500);
   }
 
-  if (!messageCreatedMessage.extras.timeserial) {
-    throw new Ably.ErrorInfo(`received incoming message without timeserial`, 50000, 500);
+  if (!message.serial) {
+    throw new Ably.ErrorInfo(`received incoming message without serial`, 50000, 500);
   }
 
-  return new DefaultMessage(
-    messageCreatedMessage.extras.timeserial,
-    messageCreatedMessage.clientId,
+  let operationDetails: MessageDetails | undefined;
+  if (message.operation) {
+    operationDetails = {
+      description: message.operation.description,
+      metadata: message.operation.metadata,
+    };
+  }
+
+  const newMessage: ChatMessageFields = {
+    timeserial: message.serial,
+    clientId: message.clientId,
     roomId,
-    messageCreatedMessage.data.text,
-    new Date(messageCreatedMessage.timestamp),
-    messageCreatedMessage.data.metadata ?? {},
-    messageCreatedMessage.extras.headers ?? {},
+    text: message.data.text,
+    createdAt: new Date(message.timestamp),
+    metadata: message.data.metadata ?? {},
+    headers: message.extras.headers ?? {},
+    updatedAt: message.updatedAt ? new Date(message.updatedAt) : undefined,
+    deletedAt: message.deletedAt ? new Date(message.deletedAt) : undefined,
+  };
+
+  switch (message.action) {
+    case 'message_create': {
+      break;
+    }
+    case 'message_update': {
+      if (!message.updatedAt) {
+        throw new Ably.ErrorInfo(`received incoming update message without updatedAt`, 50000, 500);
+      }
+      newMessage.updatedBy = message.operation?.clientId;
+      newMessage.updateDetail = operationDetails;
+      break;
+    }
+    case 'message_delete': {
+      if (!message.deletedAt) {
+        throw new Ably.ErrorInfo(`received incoming deletion message without deletedAt`, 50000, 500);
+      }
+      newMessage.deletedBy = message.operation?.clientId;
+      newMessage.deletionDetail = operationDetails;
+      break;
+    }
+    default: {
+      throw new Ably.ErrorInfo(`received incoming message with unhandled action; ${message.action}`, 50000, 500);
+    }
+  }
+  return new DefaultMessage(
+    newMessage.timeserial,
+    newMessage.clientId,
+    newMessage.roomId,
+    newMessage.text,
+    newMessage.createdAt,
+    newMessage.metadata,
+    newMessage.headers,
+    newMessage.deletedAt,
+    newMessage.deletedBy,
+    newMessage.deletionDetail,
+    newMessage.updatedAt,
+    newMessage.updatedBy,
+    newMessage.updateDetail,
   );
 }

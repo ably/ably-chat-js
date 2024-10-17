@@ -12,8 +12,9 @@ const TEST_ENVELOPED_MESSAGE = {
   clientId: 'user1',
   timestamp: 1719948956834,
   encoding: 'json',
+  action: 'MESSAGE_CREATE',
+  serial: '108TeGZDQBderu97202638@1719948956834-0',
   extras: {
-    timeserial: '108TeGZDQBderu97202638@1719948956834-0',
     headers: {},
   },
   data: '{"text":"I have the high ground now","metadata":{}}',
@@ -28,6 +29,8 @@ const TEST_ENVELOPED_ROOM_REACTION = {
   encoding: 'json',
   data: '{"type":"like"}',
   name: 'roomReaction',
+  serial: '108TeGZDQBderu97202638@1719948956834-0',
+  action: 'MESSAGE_CREATE',
 };
 
 describe('helpers', () => {
@@ -54,8 +57,9 @@ describe('helpers', () => {
           clientId: 'user1',
           timestamp: 1719948956834,
           encoding: 'json',
+          action: 'MESSAGE_CREATED',
+          serial: '108TeGZDQBderu97202638@1719948956834-0',
           extras: {
-            timeserial: '108TeGZDQBderu97202638@1719948956834-0',
             headers: {},
           },
           name: 'message.created',
