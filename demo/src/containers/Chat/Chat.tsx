@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
 import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
@@ -26,21 +26,44 @@ export const Chat = () => {
     send: sendMessage,
     getPreviousMessages,
     deleteMessage,
+    update,
   } = useMessages({
     listener: (message: MessageEventPayload) => {
       switch (message.type) {
-        case MessageEvents.Created:
+        case MessageEvents.Created: {
           setMessages((prevMessage) => [...prevMessage, message.message]);
           break;
-        case MessageEvents.Deleted:
+        }
+        case MessageEvents.Deleted: {
           setMessages((prevMessage) => {
-            return prevMessage.filter((m) => {
+            const updatedArray = prevMessage.filter((m) => {
               return m.timeserial !== message.message.timeserial;
             });
+
+            // don't change state if deleted message is not in the current list
+            if (prevMessage.length === updatedArray.length) {
+              return prevMessage;
+            }
+
+            return updatedArray;
           });
           break;
-        default:
+        }
+        case MessageEvents.Updated: {
+          setMessages((prevMessage) => {
+            const index = prevMessage.findIndex((m) => m.timeserial === message.message.timeserial);
+            if (index === -1) {
+              return prevMessage;
+            }
+            const updatedArray = [...prevMessage];
+            updatedArray[index] = message.message;
+            return updatedArray;
+          });
+          break;
+        }
+        default: {
           console.error('Unknown message', message);
+        }
       }
     },
     onDiscontinuity: (discontinuity) => {
@@ -141,6 +164,22 @@ export const Chat = () => {
     }
   }, [messages, loading]);
 
+  const updateMessage = useCallback(
+    (message: Message) => {
+      const newText = prompt('Enter new text');
+      if (!newText) {
+        return;
+      }
+      const updateOp = update(message, {
+        text: newText,
+        metadata: message.metadata,
+        headers: message.headers,
+      });
+      console.log('message ', message.timeserial, ' updated. op=', updateOp);
+    },
+    [update],
+  );
+
   return (
     <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-screen">
       <ConnectionStatusComponent />
@@ -170,12 +209,6 @@ export const Chat = () => {
               key={msg.timeserial}
               self={msg.clientId === clientId}
               message={msg}
-              onMessageClick={(id) => {
-                console.log(
-                  'Message clicked',
-                  messages.find((m) => m.timeserial === id),
-                );
-              }}
               onMessageDelete={(msg) => {
                 deleteMessage(msg, { description: 'deleted by user' }).then((deletedMessage: Message) => {
                   setMessages((prevMessages) => {
@@ -185,6 +218,7 @@ export const Chat = () => {
                   });
                 });
               }}
+              onMessageClick={updateMessage}
             ></MessageComponent>
           ))}
           <div ref={messagesEndRef} />

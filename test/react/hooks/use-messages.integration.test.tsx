@@ -127,6 +127,71 @@ describe('useMessages', () => {
     expect(deletionsRoomTwo[0]?.deletedBy).toBe(chatClientOne.clientId);
   }, 10000);
 
+  it('should update messages correctly', async () => {
+    // create new clients
+    const chatClientOne = newChatClient() as unknown as ChatClient;
+    const chatClientTwo = newChatClient() as unknown as ChatClient;
+
+    // create a second room and attach it, so we can listen for deletions
+    const roomId = randomRoomId();
+    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    await roomTwo.attach();
+
+    // start listening for deletions
+    const updatesRoomTwo: Message[] = [];
+    roomTwo.messages.subscribe((message) => {
+      if (message.type === MessageEvents.Updated) {
+        updatesRoomTwo.push(message.message);
+      }
+    });
+
+    const TestComponent = () => {
+      const { send, update, roomStatus } = useMessages();
+
+      useEffect(() => {
+        if (roomStatus === RoomLifecycle.Attached) {
+          void send({ text: 'hello world' }).then((message) => {
+            void update(message, {
+              text: 'hello universe',
+              metadata: { icon: 'universe' },
+              headers: { awesome: 'yes' },
+            }, {
+              description: "make it better",
+              metadata: { something: 'else' },
+            });
+          });
+        }
+      }, [roomStatus]);
+
+      return null;
+    };
+
+    const TestProvider = () => (
+      <ChatClientProvider client={chatClientOne}>
+        <ChatRoomProvider
+          id={roomId}
+          options={RoomOptionsDefaults}
+        >
+          <TestComponent />
+        </ChatRoomProvider>
+      </ChatClientProvider>
+    );
+
+    render(<TestProvider />);
+
+    // expect a message to be received by the second room
+    await waitForMessages(updatesRoomTwo, 1);
+    expect(updatesRoomTwo.length).toBe(1);
+    const update = updatesRoomTwo[0]!;
+    expect(update.isUpdated).toBe(true);
+    expect(update.updatedBy).toBe(chatClientOne.clientId);
+    expect(update.text).toBe('hello universe');
+    expect(update.metadata).toEqual({ icon: 'universe' });
+    expect(update.updateDetail?.description).toBe('make it better');
+    expect(update.updateDetail?.metadata).toEqual({ something: 'else' });
+  }, 10000);
+
+
   it('should receive messages on a subscribed listener', async () => {
     // create new clients
     const chatClientOne = newChatClient() as unknown as ChatClient;
