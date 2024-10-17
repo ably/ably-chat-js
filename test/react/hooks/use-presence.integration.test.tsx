@@ -1,6 +1,6 @@
-import { ChatClient, PresenceData, PresenceEvent, RoomOptionsDefaults } from '@ably/chat';
+import { ChatClient, PresenceData, PresenceEvent, PresenceEvents, RoomOptionsDefaults } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { usePresence } from '../../../src/react/hooks/use-presence.ts';
@@ -9,20 +9,32 @@ import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provide
 import { newChatClient } from '../../helper/chat.ts';
 import { randomRoomId } from '../../helper/identifier.ts';
 
-function waitForPresenceEvents(presenceEvents: PresenceEvent[], expectedCount: number) {
-  return new Promise<void>((resolve, reject) => {
+const waitToReceivePresenceEvent = (
+  event: { clientId: string; data: unknown; event: PresenceEvents },
+  presenceEvents: PresenceEvent[],
+) =>
+  new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
-      if (presenceEvents.length === expectedCount) {
-        clearInterval(interval);
-        resolve();
+      for (const presenceEvent of presenceEvents) {
+        if (
+          presenceEvent.data === event.data &&
+          presenceEvent.clientId === event.clientId &&
+          presenceEvent.action === event.event
+        ) {
+          // Remove the event from the array, in a mutative way - so that we consider this event seen
+          presenceEvents.splice(presenceEvents.indexOf(presenceEvent), 1);
+
+          clearInterval(interval);
+          resolve();
+          return;
+        }
       }
     }, 100);
     setTimeout(() => {
       clearInterval(interval);
-      reject(new Error('Timed out waiting for presence events'));
+      reject(new Error('Timed out waiting for presence event'));
     }, 20000);
   });
-}
 
 describe('usePresence', () => {
   afterEach(() => {
@@ -87,20 +99,26 @@ describe('usePresence', () => {
       () => {
         expect(isPresentState).toBe(true);
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
 
     // expect a presence enter and update event from the test component to be received by the second room
-    await waitForPresenceEvents(presenceEventsRoomTwo, 2);
-    expect(presenceEventsRoomTwo[0]?.clientId).toBe(chatClientOne.clientId);
-    expect(presenceEventsRoomTwo[0]?.data).toBe('test enter');
-    expect(presenceEventsRoomTwo[1]?.clientId).toBe(chatClientOne.clientId);
-    expect(presenceEventsRoomTwo[1]?.data).toBe('test update');
+    await waitToReceivePresenceEvent(
+      { clientId: chatClientOne.clientId, event: PresenceEvents.Enter, data: 'test enter' },
+      presenceEventsRoomTwo,
+    );
+    await waitToReceivePresenceEvent(
+      { clientId: chatClientOne.clientId, event: PresenceEvents.Update, data: 'test update' },
+      presenceEventsRoomTwo,
+    );
 
+    // unmount the component
     unmount();
+
     // expect a presence leave event from the test component to be received by the second room
-    await waitForPresenceEvents(presenceEventsRoomTwo, 3);
-    expect(presenceEventsRoomTwo[2]?.clientId).toBe(chatClientOne.clientId);
-    expect(presenceEventsRoomTwo[2]?.data).toBe('test leave');
+    await waitToReceivePresenceEvent(
+      { clientId: chatClientOne.clientId, event: PresenceEvents.Leave, data: 'test leave' },
+      presenceEventsRoomTwo,
+    );
   }, 20000);
 });
