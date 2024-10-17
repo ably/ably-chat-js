@@ -26,6 +26,26 @@ export enum RealtimeMessageTypes {
 }
 
 /**
+ * Chat Message Actions.
+ */
+export enum ChatMessageActions {
+  /** Action applied to a new message. */
+  MessageCreate = 'message_create',
+
+  /** Action applied to an updated message. */
+  MessageUpdate = 'message_update',
+
+  /** Action applied to a deleted message. */
+  MessageDelete = 'message_delete',
+
+  /** Action applied to a new annotation. */
+  AnnotationCreate = 'annotation_create',
+
+  /** Action applied to an updated annotation. */
+  AnnotationUpdate = 'annotation_update',
+}
+
+/**
  * Enum representing presence events.
  */
 export enum PresenceEvents {

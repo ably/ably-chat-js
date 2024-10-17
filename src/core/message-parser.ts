@@ -87,10 +87,10 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
   };
 
   switch (message.action) {
-    case 'MESSAGE_CREATE': {
+    case 'message_create': {
       break;
     }
-    case 'MESSAGE_UPDATE': {
+    case 'message_update': {
       if (!message.updatedAt) {
         throw new Ably.ErrorInfo(`received incoming update message without updatedAt`, 50000, 500);
       }
@@ -98,7 +98,7 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
       newMessage.updateDetail = operationDetails;
       break;
     }
-    case 'MESSAGE_DELETE': {
+    case 'message_delete': {
       if (!message.deletedAt) {
         throw new Ably.ErrorInfo(`received incoming deletion message without deletedAt`, 50000, 500);
       }
