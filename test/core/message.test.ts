@@ -5,6 +5,23 @@ import { ChatMessageActions } from '../../src/core/events.ts';
 import { DefaultMessage } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
+  it('should correctly parse createdAt from serial', () => {
+    const serial = 'abcdefghij@1672531200000-123';
+
+    const message = new DefaultMessage(
+      serial,
+      'clientId',
+      'roomId',
+      'hello there',
+      {},
+      {},
+      ChatMessageActions.MessageCreate,
+      serial,
+    );
+
+    expect(message.createdAt).toEqual(new Date(1672531200000));
+  });
+
   it('is the same as another message', () => {
     const firstSerial = 'abcdefghij@1672531200000-123';
     const secondSerial = 'abcdefghij@1672531200000-123';
@@ -14,7 +31,6 @@ describe('ChatMessage', () => {
       'clientId',
       'roomId',
       'hello there',
-      new Date(1672531200000),
       {},
       {},
       ChatMessageActions.MessageCreate,
@@ -25,7 +41,6 @@ describe('ChatMessage', () => {
       'clientId',
       'roomId',
       'hello there',
-      new Date(1672531200000),
       {},
       {},
       ChatMessageActions.MessageCreate,
@@ -44,7 +59,6 @@ describe('ChatMessage', () => {
       'clientId',
       'roomId',
       'hello there',
-      new Date(1672531200000),
       {},
       {},
       ChatMessageActions.MessageCreate,
@@ -55,7 +69,6 @@ describe('ChatMessage', () => {
       'clientId',
       'roomId',
       'hello there',
-      new Date(1672531200000),
       {},
       {},
       ChatMessageActions.MessageCreate,
@@ -74,7 +87,6 @@ describe('ChatMessage', () => {
       'clientId',
       'roomId',
       'hello there',
-      new Date(1672531200000),
       {},
       {},
       ChatMessageActions.MessageCreate,
@@ -85,7 +97,6 @@ describe('ChatMessage', () => {
       'clientId',
       'roomId',
       'hello there',
-      new Date(1672531200000),
       {},
       {},
       ChatMessageActions.MessageCreate,
@@ -103,7 +114,6 @@ describe('ChatMessage', () => {
       'clientId',
       'roomId',
       'hello there',
-      new Date(1672531200000),
       {},
       {},
       ChatMessageActions.MessageCreate,
@@ -114,7 +124,6 @@ describe('ChatMessage', () => {
       'clientId',
       'roomId',
       'hello there',
-      new Date(1672531200000),
       {},
       {},
       ChatMessageActions.MessageCreate,
@@ -131,7 +140,6 @@ describe('ChatMessage', () => {
         'clientId',
         'roomId',
         'hello there',
-        new Date(1672531200000),
         {},
         {},
         ChatMessageActions.MessageCreate,
@@ -151,7 +159,6 @@ describe('ChatMessage', () => {
         'clientId',
         'roomId',
         'hello there',
-        new Date(1672531200000),
         {},
         {},
         ChatMessageActions.MessageDelete,
@@ -173,7 +180,6 @@ describe('ChatMessage', () => {
         'clientId',
         'roomId',
         'hello there',
-        new Date(1672531200000),
         {},
         {},
         ChatMessageActions.MessageUpdate,
@@ -198,7 +204,6 @@ describe('ChatMessage', () => {
         'clientId',
         'roomId',
         'hello there',
-        new Date(1672531200000),
         {},
         {},
         ChatMessageActions.MessageUpdate,
@@ -209,7 +214,6 @@ describe('ChatMessage', () => {
         'clientId',
         'roomId',
         'hello there',
-        new Date(1672531200000),
         {},
         {},
         ChatMessageActions.MessageUpdate,
@@ -275,7 +279,6 @@ describe('ChatMessage', () => {
           'clientId',
           'roomId',
           'hello there',
-          new Date(1672531200000),
           {},
           {},
           ChatMessageActions.MessageUpdate,
@@ -286,7 +289,6 @@ describe('ChatMessage', () => {
           'clientId',
           'roomId',
           'hello there',
-          new Date(1672531200000),
           {},
           {},
           ChatMessageActions.MessageUpdate,

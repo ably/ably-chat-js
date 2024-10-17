@@ -1,4 +1,5 @@
 import {
+  ActionDetails,
   DeleteMessageParams,
   Message,
   MessageListener,
@@ -6,6 +7,7 @@ import {
   MessageSubscriptionResponse,
   QueryOptions,
   SendMessageParams,
+  UpdateMessageParams,
 } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
@@ -29,6 +31,11 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * A shortcut to the {@link Messages.send} method.
    */
   readonly send: Messages['send'];
+
+  /**
+   * A shortcut to the {@link Messages.update} method.
+   */
+  readonly update: Messages['update'];
 
   /**
    * A shortcut to the {@link Messages.get} method.
@@ -109,6 +116,11 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     (options: QueryOptions) => context.room.then((room) => room.messages.get(options)),
     [context],
   );
+  const update = useCallback(
+    (message: Message, update: UpdateMessageParams, details?: ActionDetails) =>
+      context.room.then((room) => room.messages.update(message, update, details)),
+    [context],
+  );
 
   const [getPreviousMessages, setGetPreviousMessages] = useState<MessageSubscriptionResponse['getPreviousMessages']>();
 
@@ -176,6 +188,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   return {
     messages: useEventualRoomProperty((room) => room.messages),
     send,
+    update,
     get,
     deleteMessage,
     getPreviousMessages,

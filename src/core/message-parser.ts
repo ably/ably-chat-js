@@ -26,7 +26,6 @@ interface ChatMessageFields {
   clientId: string;
   roomId: string;
   text: string;
-  createdAt: Date;
   metadata: MessageMetadata;
   headers: MessageHeaders;
   latestAction: ChatMessageActions;
@@ -50,10 +49,6 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     throw new Ably.ErrorInfo(`received incoming message without clientId`, 50000, 500);
   }
 
-  if (!message.timestamp) {
-    throw new Ably.ErrorInfo(`received incoming message without timestamp`, 50000, 500);
-  }
-
   if (message.data.text === undefined) {
     throw new Ably.ErrorInfo(`received incoming message without text`, 50000, 500);
   }
@@ -71,7 +66,6 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     clientId: message.clientId,
     roomId,
     text: message.data.text,
-    createdAt: new Date(message.timestamp),
     metadata: message.data.metadata ?? {},
     headers: message.extras.headers ?? {},
     latestAction: message.action as ChatMessageActions,
@@ -104,7 +98,6 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     newMessage.clientId,
     newMessage.roomId,
     newMessage.text,
-    newMessage.createdAt,
     newMessage.metadata,
     newMessage.headers,
     newMessage.latestAction,

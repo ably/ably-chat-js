@@ -65,8 +65,9 @@ describe('Messages', () => {
     it<TestContext>('should be able to send message and get it back from response', async (context) => {
       const { chatApi } = context;
       const timestamp = Date.now();
+      const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        serial: 'abcdefghij@1672531200000-123',
+        serial: serial,
         createdAt: timestamp,
       });
 
@@ -76,7 +77,7 @@ describe('Messages', () => {
 
       expect(message).toEqual(
         expect.objectContaining({
-          serial: 'abcdefghij@1672531200000-123',
+          serial: serial,
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
@@ -88,8 +89,9 @@ describe('Messages', () => {
     it<TestContext>('should be able to delete a message and get it back from response', async (context) => {
       const { chatApi } = context;
       const sendTimestamp = Date.now();
+      const sendSerial = 'abcdefghij@' + String(sendTimestamp) + '-123';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        serial: 'abcdefghij@1672531200000-123',
+        serial: sendSerial,
         createdAt: sendTimestamp,
       });
 
@@ -104,11 +106,12 @@ describe('Messages', () => {
 
       expect(deleteMessage1).toEqual(
         expect.objectContaining({
-          serial: 'abcdefghij@1672531200000-123',
+          serial: sendSerial,
           text: 'hello there',
           clientId: 'clientId',
           deletedAt: new Date(deleteTimestamp),
           deletedBy: 'clientId',
+          createdAt: new Date(sendTimestamp),
           roomId: context.room.roomId,
         }),
       );
@@ -119,8 +122,9 @@ describe('Messages', () => {
     it<TestContext>('should be able to send message with headers and metadata and get it back from response', async (context) => {
       const { chatApi, realtime } = context;
       const timestamp = Date.now();
+      const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        serial: 'abcdefghij@1672531200000-123',
+        serial: serial,
         createdAt: timestamp,
       });
 
@@ -135,7 +139,7 @@ describe('Messages', () => {
 
       expect(message).toEqual(
         expect.objectContaining({
-          serial: 'abcdefghij@1672531200000-123',
+          serial: serial,
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
@@ -607,19 +611,6 @@ describe('Messages', () => {
         serial: 'abc',
         action: ChatMessageActions.MessageCreate,
         timestamp: Date.now(),
-      },
-    ],
-    [
-      'no timestamp',
-      {
-        clientId: 'yoda2',
-        name: 'chat.message',
-        data: {
-          text: 'may the fourth be with you',
-        },
-        extras: {},
-        serial: 'abcdefghij@1672531200000-123',
-        action: ChatMessageActions.MessageCreate,
       },
     ],
   ])('invalid incoming messages', (name: string, inboundMessage: unknown) => {

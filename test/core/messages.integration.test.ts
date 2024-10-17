@@ -141,6 +141,71 @@ describe('messages integration', () => {
     ]);
   });
 
+  it<TestContext>('should be able to update and receive update messages', async (context) => {
+    const { chat } = context;
+
+    const room = await getRandomRoom(chat);
+
+    // Attach the room
+    await room.attach();
+
+    // Subscribe to messages and filter them when they arrive
+    const messages: Message[] = [];
+    const updates: Message[] = [];
+    room.messages.subscribe((messageEvent) => {
+      switch (messageEvent.type) {
+        case MessageEvents.Created: {
+          messages.push(messageEvent.message);
+          break;
+        }
+        case MessageEvents.Updated: {
+          updates.push(messageEvent.message);
+          break;
+        }
+        default: {
+          throw new Error('Unexpected message event type');
+        }
+      }
+    });
+
+    // send a message, and then update it
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const updated1 = await room.messages.update(message1, { text: 'bananas' });
+
+    expect(updated1.text).toBe('bananas');
+    expect(updated1.serial).toBe(message1.serial);
+    expect(updated1.createdAt.getTime()).toBe(message1.createdAt.getTime());
+    expect(updated1.updatedAt).toBeDefined();
+    expect(updated1.updatedBy).toBe(chat.clientId);
+
+    // Wait up to 5 seconds for the promises to resolve
+    await waitForMessages(messages, 1);
+    await waitForMessages(updates, 1);
+
+    // Check that the message was received
+    expect(messages).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        serial: message1.serial,
+      }),
+    ]);
+
+    // Check that the update was received
+    expect(updates).toEqual([
+      expect.objectContaining({
+        text: 'bananas',
+        clientId: chat.clientId,
+        serial: message1.serial,
+        updatedAt: updated1.updatedAt,
+        updatedBy: chat.clientId,
+        latestAction: ChatMessageActions.MessageUpdate,
+        latestActionSerial: updated1.latestActionSerial,
+        createdAt: message1.createdAt,
+      }),
+    ]);
+  });
+
   it<TestContext>('should be able to retrieve chat history', async (context) => {
     const { chat } = context;
 
@@ -198,6 +263,41 @@ describe('messages integration', () => {
         serial: deletedMessage1.serial,
         deletedAt: deletedMessage1.deletedAt,
         deletedBy: chat.clientId,
+      }),
+    ]);
+
+    // We shouldn't have a "next" link in the response
+    expect(history.hasNext()).toBe(false);
+  });
+
+  // At the moment, the history API does not materialize updated messages in the history.
+  it.skip<TestContext>('should be able to retrieve chat updated message in history', async (context) => {
+    const { chat } = context;
+
+    const room = await getRandomRoom(chat);
+
+    // Publish 1 messages
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+
+    // Update the message
+    const updatedMessage1 = await room.messages.update(
+      message1,
+      { text: 'Hello test!' },
+      { description: 'updated message' },
+    );
+
+    // Do a history request to get the update message
+    const history = await room.messages.get({ limit: 3, direction: 'forwards' });
+
+    expect(history.items).toEqual([
+      expect.objectContaining({
+        text: 'Hello test!',
+        clientId: chat.clientId,
+        serial: updatedMessage1.serial,
+        updatedAt: updatedMessage1.updatedAt,
+        updatedBy: chat.clientId,
+        createdAt: message1.createdAt,
+        createdBy: message1.clientId,
       }),
     ]);
 

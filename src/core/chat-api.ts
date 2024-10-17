@@ -31,11 +31,6 @@ interface SendMessageParams {
   headers?: MessageHeaders;
 }
 
-interface DeleteMessageParams {
-  description?: string;
-  metadata?: MessageActionMetadata;
-}
-
 export interface DeleteMessageResponse {
   /**
    * The serial of the deletion action.
@@ -46,6 +41,43 @@ export interface DeleteMessageResponse {
    * The timestamp of the deletion action.
    */
   deletedAt: number;
+}
+
+interface UpdateMessageParams {
+  /**
+   * Message data to update. All fields are updated and if omitted they are
+   * set to empty.
+   */
+  message: {
+    text: string;
+    metadata?: MessageMetadata;
+    headers?: MessageHeaders;
+  };
+
+  /** Description of the update action */
+  description?: string;
+
+  /** Metadata of the update action */
+  metadata?: MessageActionMetadata;
+}
+interface DeleteMessageParams {
+  /** Description of the delete action */
+  description?: string;
+
+  /** Metadata of the delete action */
+  metadata?: MessageActionMetadata;
+}
+
+interface UpdateMessageResponse {
+  /**
+   * The serial of the update action.
+   */
+  serial: string;
+
+  /**
+   * The timestamp of when the update occurred.
+   */
+  updatedAt: number;
 }
 
 /**
@@ -62,6 +94,7 @@ export class ChatApi {
   }
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
+    roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, params).then((data) => {
       data.items = data.items.map((message) => {
         const metadata = message.metadata as MessageMetadata | undefined;
@@ -71,7 +104,6 @@ export class ChatApi {
           message.clientId,
           message.roomId,
           message.text,
-          new Date(message.createdAt),
           metadata ?? {},
           headers ?? {},
           message.latestAction,
@@ -90,6 +122,8 @@ export class ChatApi {
       description: params?.description,
       metadata: params?.metadata,
     };
+    serial = encodeURIComponent(serial);
+    roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
       `/chat/v2/rooms/${roomId}/messages/${serial}/delete`,
       'POST',
@@ -110,10 +144,22 @@ export class ChatApi {
     if (params.headers) {
       body.headers = params.headers;
     }
+    roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v2/rooms/${roomId}/messages`, 'POST', body);
   }
 
+  async updateMessage(roomId: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
+    const encodedSerial = encodeURIComponent(serial);
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest<UpdateMessageResponse>(
+      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}`,
+      'PUT',
+      params,
+    );
+  }
+
   async getOccupancy(roomId: string): Promise<OccupancyEvent> {
+    roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
   }
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
 import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
@@ -30,25 +30,78 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
     }
   };
 
+  const handleUpdatedMessage = (message: Message) => {
+    setMessages((prevMessages) => {
+      const index = prevMessages.findIndex((m) => m.serial === message.serial);
+      if (index === -1) {
+        return prevMessages;
+      }
+
+      // skip update if the received action is not newer
+      if (!prevMessages[index].actionBefore(message)) {
+        return prevMessages;
+      }
+
+      const updatedArray = [...prevMessages];
+      updatedArray[index] = message;
+      return updatedArray;
+    });
+  };
+
   const {
     send: sendMessage,
     getPreviousMessages,
     deleteMessage,
+    update,
   } = useMessages({
     listener: (message: MessageEventPayload) => {
       switch (message.type) {
-        case MessageEvents.Created:
-          setMessages((prevMessage) => [...prevMessage, message.message]);
-          break;
-        case MessageEvents.Deleted:
-          setMessages((prevMessage) => {
-            return prevMessage.filter((m) => {
-              return m.serial !== message.message.serial;
-            });
+        case MessageEvents.Created: {
+          setMessages((prevMessages) => {
+            // if already exists do nothing
+            const index = prevMessages.findIndex((m) => m.serial === message.message.serial);
+            if (index !== -1) {
+              return prevMessages;
+            }
+
+            // if the message is not in the list, add it
+            const newArray = [...prevMessages, message.message];
+
+            // and put it at the right place
+            for (let i = newArray.length - 1; i > 1; i--) {
+              if (newArray[i].before(newArray[i - 1])) {
+                const temp = newArray[i];
+                newArray[i] = newArray[i - 1];
+                newArray[i - 1] = temp;
+              }
+            }
+
+            return newArray;
           });
           break;
-        default:
+        }
+        case MessageEvents.Deleted: {
+          setMessages((prevMessage) => {
+            const updatedArray = prevMessage.filter((m) => {
+              return m.serial !== message.message.serial;
+            });
+
+            // don't change state if deleted message is not in the current list
+            if (prevMessage.length === updatedArray.length) {
+              return prevMessage;
+            }
+
+            return updatedArray;
+          });
+          break;
+        }
+        case MessageEvents.Updated: {
+          handleUpdatedMessage(message.message);
+          break;
+        }
+        default: {
           console.error('Unknown message', message);
+        }
       }
     },
     onDiscontinuity: (discontinuity) => {
@@ -153,6 +206,38 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
     }
   }, [messages, loading]);
 
+  const onUpdateMessage = useCallback(
+    (message: Message) => {
+      const newText = prompt('Enter new text');
+      if (!newText) {
+        return;
+      }
+      update(message, {
+        text: newText,
+        metadata: message.metadata,
+        headers: message.headers,
+      })
+        .then((updatedMessage: Message) => {
+          handleUpdatedMessage(updatedMessage);
+        })
+        .catch((error: unknown) => {
+          console.warn('failed to update message', error);
+        });
+    },
+    [update],
+  );
+
+  const onDeleteMessage = useCallback(
+    (message: Message) => {
+      deleteMessage(message, { description: 'deleted by user' }).then((deletedMessage: Message) => {
+        setMessages((prevMessages) => {
+          return prevMessages.filter((m) => m.serial !== deletedMessage.serial);
+        });
+      });
+    },
+    [deleteMessage],
+  );
+
   return (
     <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-screen">
       <ConnectionStatusComponent />
@@ -192,19 +277,11 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
         >
           {messages.map((msg) => (
             <MessageComponent
-              id={msg.serial}
               key={msg.serial}
               self={msg.clientId === clientId}
               message={msg}
-              onMessageDelete={(msg) => {
-                deleteMessage(msg, { description: 'deleted by user' }).then((deletedMessage: Message) => {
-                  setMessages((prevMessages) => {
-                    return prevMessages.filter((m) => {
-                      return m.serial !== deletedMessage.serial;
-                    });
-                  });
-                });
-              }}
+              onMessageDelete={onDeleteMessage}
+              onMessageUpdate={onUpdateMessage}
             ></MessageComponent>
           ))}
           <div ref={messagesEndRef} />

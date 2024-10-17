@@ -281,6 +281,60 @@ const message = await room.messages.send({
 });
 ```
 
+### Updating messages
+
+To update an existing message, call `update` on the `room.messages` property, with the original message you want to update,
+the updated fields, and optional operation details to provide extra context for the update.
+
+The optional operation details are:
+* `description`: a string that can be used to inform others as to why the message was updated.
+* `metadata`: a map of extra information that can be attached to the update operation.
+
+Example
+```typescript
+const updatedMessage = await room.messages.update(message,
+  {
+    text: "hello, this is edited",
+  },
+  {
+    description: "edit example",
+  },
+);
+```
+
+`updatedMessage` is a Message object with all updates applied. As with sending and deleting, the promise may resolve after the updated message is received via the messages subscription.
+
+A `Message` that was updated will have `updatedAt` and `updatedBy` fields set, and `isUpdated()` will return `true`.
+
+Note that if you delete an updated message, it is no longer considered _updated_. Only the last operation takes effect.
+
+#### Handling updates in realtime
+
+Updated messages received from realtime have the `latestAction` parameter set to `ChatMessageActions.MessageUpdate`, and the event received has the `type` set to `MessageEvents.Updated`. Updated messages are full copies of the message, meaning that all that is needed to keep a state or UI up to date is to replace the old message with the received one.
+
+In rare occasions updates might arrive over realtime out of order. To keep a correct state, the `Message` interface provides methods to compare two instances of the same base message to determine which one is newer: `actionBefore()`, `actionAfter()`, and `actionEqual()`.
+
+The same out-of-order situation can happen between updates received over realtime and HTTP responses. In the situation where two concurrent edits happen, both might be received via realtime before the HTTP response of the first one arrives. Always use `actionAfter()`, `actionBefore()`, or `actionEqual()` to determine which instance of a `Message` is newer.
+
+Example for handling updates:
+```typescript
+const messages : Message[] = []; // assuming this is where state is kept
+
+room.messages.subscribe(event => {
+  switch (event.type) {
+    case MessageEvents.Updated: {
+      const serial = event.message.serial;
+      const index = messages.findIndex((m) => m.serial === serial);
+      if (index !== -1 && messages[index].actionBefore(event.message)) {
+        messages[index] = event.message;
+      }
+      break;
+    }
+    // other event types (ie. created and updated) omitted
+  }
+});
+```
+
 ### Deleting messages
 
 To delete a message, call `delete` on the `room.messages` property, with the original message you want to delete.
@@ -297,6 +351,8 @@ This is a _soft delete_ and the message will still be available in the history, 
 ```ts
 const deletedMessage = await room.messages.delete(message, { description: 'This message was deleted for ...' });
 ```
+
+Note that you can update deleted messages, which will effectively undo the delete. Only the last operation on a message takes effect.
 
 ### Subscribing to incoming messages
 

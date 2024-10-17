@@ -38,18 +38,6 @@ describe('parseMessage', () => {
       expectedError: 'received incoming message without clientId',
     },
     {
-      description: 'message.timestamp is undefined',
-      roomId: 'room1',
-      message: {
-        data: { text: 'hello' },
-        clientId: 'client1',
-        extras: {},
-        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
-        action: ChatMessageActions.MessageCreate,
-      },
-      expectedError: 'received incoming message without timestamp',
-    },
-    {
       description: 'message.data.text is undefined',
       roomId: 'room1',
       message: {
@@ -100,7 +88,7 @@ describe('parseMessage', () => {
       expectedError: 'received incoming message with unhandled action; unhandled.action',
     },
     {
-      description: 'message.updateAt is undefined for update',
+      description: 'message.updatedAt is undefined for update',
       roomId: 'room1',
       message: {
         data: { text: 'hello' },
@@ -174,11 +162,11 @@ describe('parseMessage', () => {
     const message = {
       data: { text: 'hello', metadata: { key: 'value' } },
       clientId: 'client1',
-      timestamp: 1234567890,
+      timestamp: 1728402074206,
       extras: {
         headers: { headerKey: 'headerValue' },
       },
-      updatedAt: 1234567890,
+      updatedAt: 1728402074206,
       updateSerial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
       action: ChatMessageActions.MessageCreate,
       serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
@@ -191,7 +179,7 @@ describe('parseMessage', () => {
     expect(result.clientId).toBe('client1');
     expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
-    expect(result.createdAt).toEqual(new Date(1234567890));
+    expect(result.createdAt).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
 
@@ -218,7 +206,7 @@ describe('parseMessage', () => {
       },
       action: ChatMessageActions.MessageUpdate,
       serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
-      updatedAt: 1234567890,
+      updatedAt: 1728402074206,
       updateSerial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
       operation: { clientId: 'client2', description: 'update message', metadata: { 'custom-update': 'some flag' } },
     } as Ably.InboundMessage;
@@ -230,10 +218,10 @@ describe('parseMessage', () => {
     expect(result.clientId).toBe('client1');
     expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
-    expect(result.createdAt).toEqual(new Date(1234567890));
+    expect(result.createdAt).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
-    expect(result.updatedAt).toEqual(new Date(1234567890));
+    expect(result.updatedAt).toEqual(new Date(1728402074206));
     expect(result.updatedBy).toBe('client2');
     expect(result.latestAction).toEqual(ChatMessageActions.MessageUpdate);
     expect(result.latestActionSerial).toEqual('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
@@ -259,7 +247,7 @@ describe('parseMessage', () => {
       },
       action: ChatMessageActions.MessageDelete,
       serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
-      updatedAt: 1234567890,
+      updatedAt: 1728402074206,
       updateSerial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
       operation: {
         clientId: 'client2',
@@ -275,10 +263,10 @@ describe('parseMessage', () => {
     expect(result.clientId).toBe('client1');
     expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
-    expect(result.createdAt).toEqual(new Date(1234567890));
+    expect(result.createdAt).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
-    expect(result.deletedAt).toEqual(new Date(1234567890));
+    expect(result.deletedAt).toEqual(new Date(1728402074206));
     expect(result.deletedBy).toBe('client2');
     expect(result.latestActionSerial).toEqual('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
     expect(result.latestActionDetails).toEqual({

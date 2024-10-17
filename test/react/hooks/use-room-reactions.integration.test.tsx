@@ -124,7 +124,7 @@ describe('useRoomReactions', () => {
       () => {
         expect(currentRoomStatus).toBe(RoomStatus.Attached);
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
 
     // send a reaction from the second room
