@@ -91,6 +91,12 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     case ChatMessageActions.MessageCreate: {
       break;
     }
+    case '' as Ably.MessageAction:
+      break;
+    case undefined as unknown as Ably.MessageAction:
+      break;
+    case null as unknown as Ably.MessageAction:
+      break;  
     case ChatMessageActions.MessageUpdate: {
       if (!message.updatedAt) {
         throw new Ably.ErrorInfo(`received incoming update message without updatedAt`, 50000, 500);

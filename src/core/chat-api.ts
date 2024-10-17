@@ -51,6 +51,31 @@ export interface DeleteMessageResponse {
   deletedAt: number;
 }
 
+interface UpdateMessageParams {
+  /**
+   * Messages data to update. All fields are updated and if omitted they are
+   * set to empty.
+   */
+  message: {
+    text: string;
+    metadata?: MessageMetadata;
+    headers?: MessageHeaders;  
+  }
+
+  /** Description of the update operation */
+  description?: string;
+
+  /** Metadata of the update operation */
+  metadata?: Record<string, string>;
+}
+
+interface UpdateMessageResponse {
+  /**
+   * The timestamp of when the update occurred.
+   */
+  updatedAt: number;
+}
+
 /**
  * Chat SDK Backend
  */
@@ -96,8 +121,9 @@ export class ChatApi {
   ): Promise<DeleteMessageResponse> {
     const body: MessageDetails = { description: params?.description, metadata: params?.metadata };
     const restParams = params?.hard ? { hard: true } : { hard: false };
+    const encodedSerial = encodeURIComponent(timeserial);
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
-      `/chat/v1/rooms/${roomId}/messages/${timeserial}/delete`,
+      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}/delete`,
       'POST',
       body,
       restParams,
@@ -118,6 +144,11 @@ export class ChatApi {
     }
 
     return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v2/rooms/${roomId}/messages`, 'POST', body);
+  }
+
+  async updateMessage(roomId: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
+    const encodedSerial = encodeURIComponent(serial);
+    return this._makeAuthorizedRequest<UpdateMessageResponse>(`/chat/v2/rooms/${roomId}/messages/${encodedSerial}`, 'PUT', params);
   }
 
   async getOccupancy(roomId: string): Promise<OccupancyEvent> {

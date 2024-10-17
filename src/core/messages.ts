@@ -137,6 +137,31 @@ export interface SendMessageParams {
 }
 
 /**
+ * Params for updating a message. It accepts all parameters that sending a
+ * message accepts.
+ * 
+ * Note that updating a message replaces the whole previous message, so all
+ * metadata and headers that should be kept must be set in the update request,
+ * or they will be lost.
+ */
+export interface UpdateMessageParams extends SendMessageParams {}
+
+/*
+ * Allows setting optional details about the update operation itself.
+ */
+export interface UpdateMessageDetails {
+  /**
+   * An optional description for the update operation.
+   */
+  description?: string;
+
+  /**
+   * Optional metadata for the update operation.
+   */
+  metadata?: Record<string, string>;
+}
+
+/**
  * Payload for a message event.
  */
 export interface MessageEventPayload {
@@ -231,6 +256,22 @@ export interface Messages extends EmitsDiscontinuities {
    * @param deleteMessageParams - The optional parameters for deleting the message.
    */
   delete(message: Message, deleteMessageParams?: DeleteMessageParams): Promise<Message>;
+
+  /**
+   * Update a message in the chat room.
+   * 
+   * Note that the Promise may resolve before OR after the updated message is
+   * received from the realtime channel. This means you may see the message
+   * that was just sent in a callback to `subscribe` before the returned
+   * promise resolves.
+   * 
+   * @param message The message to update.
+   * @param update The new message content including headers and metadata. This
+   * fully replaces the old content. Everything that's not set will be removed.
+   * @param details Details to record about the update operation.
+   * @returns A promise of the updated message.
+   */
+  update(message : Message, update: UpdateMessageParams, details?: UpdateMessageDetails): Promise<Message>
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -510,6 +551,29 @@ export class DefaultMessages
       new Date(response.createdAt),
       metadata ?? {},
       headers ?? {},
+    );
+  }
+
+  async update(message : Message, update: UpdateMessageParams, details?: UpdateMessageDetails): Promise<Message> {
+    const response = await this._chatApi.updateMessage(this._roomId, message.timeserial, {
+      ...details,
+      message: update,
+    });
+
+    return new DefaultMessage(
+      message.timeserial,
+      this._clientId,
+      this._roomId,
+      update.text,
+      new Date(message.createdAt),
+      update.metadata ?? {},
+      update.headers ?? {},
+      message.deletedAt,
+      message.deletedBy,
+      message.deletionDetail ? { ...message.deletionDetail } : undefined,
+      new Date(response.updatedAt),
+      this._clientId,
+      details ? {...details} : undefined,
     );
   }
 

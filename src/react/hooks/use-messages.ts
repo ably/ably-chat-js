@@ -28,6 +28,11 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly send: Messages['send'];
 
   /**
+   * A shortcut to the {@link Messages.update} method.
+   */
+  readonly update: Messages['update'];
+
+  /**
    * A shortcut to the {@link Messages.get} method.
    */
   readonly get: Messages['get'];
@@ -101,6 +106,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [room],
   );
   const get = useCallback((options: QueryOptions) => room.messages.get(options), [room]);
+  const update = useCallback(room.messages.update.bind(room.messages), [room])
 
   const [getPreviousMessages, setGetPreviousMessages] = useState<MessageSubscriptionResponse['getPreviousMessages']>();
 
@@ -152,6 +158,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
 
   return {
     send,
+    update,
     get,
     deleteMessage,
     messages: room.messages,

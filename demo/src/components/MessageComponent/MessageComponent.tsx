@@ -18,7 +18,7 @@ interface MessageProps {
   self?: boolean;
   message: Message;
 
-  onMessageClick?(id: string): void;
+  onMessageClick?(message: Message): void;
 
   onMessageDelete?(msg: Message): void;
 }
@@ -31,7 +31,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
   onMessageDelete,
 }) => {
   const handleMessageClick = useCallback(() => {
-    onMessageClick?.(id);
+    onMessageClick?.(message);
   }, [id, onMessageClick]);
 
   const [hovered, setHovered] = useState(false);
