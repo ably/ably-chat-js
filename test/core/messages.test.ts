@@ -181,19 +181,19 @@ describe('Messages', () => {
       new Promise<void>((done, reject) => {
         const publishTimestamp = Date.now();
         let eventCount = 0;
-        const timout = setTimeout(() => {
+        const timeout = setTimeout(() => {
           reject(new Error('did not receive all message events'));
         }, 300);
         context.room.messages.subscribe(() => {
           eventCount++;
           if (eventCount === 3) {
-            clearTimeout(timout);
+            clearTimeout(timeout);
             done();
           }
         });
         context.emulateBackendPublish({
           clientId: 'yoda',
-          name: 'message.created',
+          name: 'chat.message',
           data: {
             text: 'this message has been deleted',
           },
@@ -205,7 +205,7 @@ describe('Messages', () => {
         });
         context.emulateBackendPublish({
           clientId: 'yoda',
-          name: 'message.created',
+          name: 'chat.message',
           data: {
             text: 'some updated text',
           },
@@ -217,7 +217,7 @@ describe('Messages', () => {
         });
         context.emulateBackendPublish({
           clientId: 'yoda',
-          name: 'message.created',
+          name: 'chat.message',
           data: {
             text: 'may the fourth be with you',
           },
@@ -240,7 +240,7 @@ describe('Messages', () => {
     const { unsubscribe } = room.messages.subscribe(listener);
     context.emulateBackendPublish({
       clientId: 'yoda',
-      name: 'message.created',
+      name: 'chat.message',
       data: {
         text: 'may the fourth be with you',
       },
@@ -254,7 +254,7 @@ describe('Messages', () => {
 
     context.emulateBackendPublish({
       clientId: 'yoda2',
-      name: 'message.created',
+      name: 'chat.message',
       data: {
         text: 'may the fourth be with you',
       },
@@ -289,7 +289,7 @@ describe('Messages', () => {
     const { unsubscribe: unsubscribe2 } = room.messages.subscribe(listener2);
     context.emulateBackendPublish({
       clientId: 'yoda',
-      name: 'message.created',
+      name: 'chat.message',
       data: {
         text: 'may the fourth be with you',
       },
@@ -303,7 +303,7 @@ describe('Messages', () => {
 
     context.emulateBackendPublish({
       clientId: 'yoda2',
-      name: 'message.created',
+      name: 'chat.message',
       data: {
         text: 'may the fourth be with you',
       },
