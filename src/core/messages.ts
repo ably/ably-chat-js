@@ -259,7 +259,7 @@ export class DefaultMessages
 
     addListenerToChannelWithoutAttach({
       listener: this._processEvent.bind(this),
-      events: [RealtimeMessageTypes.ChatMessage, RealtimeMessageTypes.LegacyChatMessage],
+      events: [RealtimeMessageTypes.ChatMessage],
       channel: channel,
     });
 
@@ -521,7 +521,7 @@ export class DefaultMessages
     const { action } = channelEventMessage;
     const event = this._messageActionToMessageEvent(action as ChatMessageActions);
     if (!event) {
-      this._logger.warn('Messages._processEvent(); received unknown message action', { action });
+      this._logger.debug('Messages._processEvent(); received unknown message action', { action });
       return;
     }
     // Send the message to the listeners

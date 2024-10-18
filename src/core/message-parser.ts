@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { ChatMessageActions } from './events.js';
 import { DefaultMessage, Message, MessageDetails, MessageHeaders, MessageMetadata } from './message.js';
 
 interface MessagePayload {
@@ -87,10 +88,10 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
   };
 
   switch (message.action) {
-    case 'message_create': {
+    case ChatMessageActions.MessageCreate: {
       break;
     }
-    case 'message_update': {
+    case ChatMessageActions.MessageUpdate: {
       if (!message.updatedAt) {
         throw new Ably.ErrorInfo(`received incoming update message without updatedAt`, 50000, 500);
       }
@@ -98,7 +99,7 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
       newMessage.updateDetail = operationDetails;
       break;
     }
-    case 'message_delete': {
+    case ChatMessageActions.MessageDelete: {
       if (!message.deletedAt) {
         throw new Ably.ErrorInfo(`received incoming deletion message without deletedAt`, 50000, 500);
       }
