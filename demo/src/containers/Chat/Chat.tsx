@@ -4,7 +4,15 @@ import { MessageInput } from '../../components/MessageInput';
 import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
 import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
-import { ConnectionLifecycle, Message, MessageEventPayload, PaginatedResult, Reaction } from '@ably/chat';
+import {
+  ConnectionLifecycle,
+  Message,
+  MessageEvents,
+  MessageEventPayload,
+  PaginatedResult,
+  Reaction,
+} from '@ably/chat';
+
 
 export const Chat = () => {
   const chatClient = useChatClient();
@@ -15,9 +23,26 @@ export const Chat = () => {
 
   const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
 
-  const { send: sendMessage, getPreviousMessages } = useMessages({
+  const {
+    send: sendMessage,
+    getPreviousMessages,
+    deleteMessage,
+  } = useMessages({
     listener: (message: MessageEventPayload) => {
-      setMessages((prevMessage) => [...prevMessage, message.message]);
+      switch (message.type) {
+        case MessageEvents.Created:
+          setMessages((prevMessage) => [...prevMessage, message.message]);
+          break;
+        case MessageEvents.Deleted:
+          setMessages((prevMessage) => {
+            return prevMessage.filter((m) => {
+              return m.timeserial !== message.message.timeserial;
+            });
+          });
+          break;
+        default:
+          console.error('Unknown message', message);
+      }
     },
     onDiscontinuity: (discontinuity) => {
       console.log('Discontinuity', discontinuity);
@@ -47,7 +72,9 @@ export const Chat = () => {
     if (getPreviousMessages && loading) {
       getPreviousMessages({ limit: 50 })
         .then((result: PaginatedResult<Message>) => {
-          setMessages(result.items.reverse());
+          // reverse the messages so they are displayed in the correct order
+          // and don't include deleted messages
+          setMessages(result.items.filter((m) => !m.isDeleted()).reverse());
           setLoading(false);
         })
         .catch((error: unknown) => {
@@ -144,6 +171,21 @@ export const Chat = () => {
               key={msg.timeserial}
               self={msg.clientId === clientId}
               message={msg}
+              onMessageClick={(id) => {
+                console.log(
+                  'Message clicked',
+                  messages.find((m) => m.timeserial === id),
+                );
+              }}
+              onMessageDelete={(msg) => {
+                deleteMessage(msg, { description: 'deleted by user' }).then((deletedMessage: Message) => {
+                  setMessages((prevMessages) => {
+                    return prevMessages.filter((m) => {
+                      return m.timeserial !== deletedMessage.timeserial;
+                    });
+                  });
+                });
+              }}
             ></MessageComponent>
           ))}
           <div ref={messagesEndRef} />
