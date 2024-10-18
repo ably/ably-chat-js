@@ -18,11 +18,6 @@ export enum MessageEvents {
 export enum RealtimeMessageTypes {
   /** Represents a regular chat message. */
   ChatMessage = 'chat.message',
-
-  /** The old legacy message type, used from v1 of the Publish endpoint.
-   * @deprecated Please use {@link RealtimeMessageTypes.ChatMessage} instead.
-   */
-  LegacyChatMessage = 'message.created',
 }
 
 /**
@@ -39,10 +34,13 @@ export enum ChatMessageActions {
   MessageDelete = 'message_delete',
 
   /** Action applied to a new annotation. */
-  AnnotationCreate = 'annotation_create',
+  MessageAnnotationCreate = 'message_annotation_create',
 
   /** Action applied to an updated annotation. */
-  AnnotationUpdate = 'annotation_update',
+  MessageAnnotationUpdate = 'message_annotation_update',
+
+  /** Action applied to a meta occupancy message. */
+  MessageMetaOccupancy = 'message_meta_occupancy',
 }
 
 /**

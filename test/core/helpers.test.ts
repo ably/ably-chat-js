@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
-import { MessageEvents } from '../../src/core/events.js';
+import { RealtimeMessageTypes } from '../../src/core/events.js';
 import { RoomReactionEvents } from '../../src/core/events.ts';
 import { chatMessageFromEncoded, getEntityTypeFromEncoded, reactionFromEncoded } from '../../src/core/helpers.js';
 import { DefaultMessage } from '../../src/core/message.js';
@@ -12,13 +12,13 @@ const TEST_ENVELOPED_MESSAGE = {
   clientId: 'user1',
   timestamp: 1719948956834,
   encoding: 'json',
-  action: 'MESSAGE_CREATE',
+  action: 1,
   serial: '108TeGZDQBderu97202638@1719948956834-0',
   extras: {
     headers: {},
   },
   data: '{"text":"I have the high ground now","metadata":{}}',
-  name: 'message.created',
+  name: 'chat.message',
 };
 
 const TEST_ENVELOPED_ROOM_REACTION = {
@@ -30,7 +30,7 @@ const TEST_ENVELOPED_ROOM_REACTION = {
   data: '{"type":"like"}',
   name: 'roomReaction',
   serial: '108TeGZDQBderu97202638@1719948956834-0',
-  action: 'MESSAGE_CREATE',
+  action: 1,
 };
 
 describe('helpers', () => {
@@ -57,12 +57,12 @@ describe('helpers', () => {
           clientId: 'user1',
           timestamp: 1719948956834,
           encoding: 'json',
-          action: 'MESSAGE_CREATED',
+          action: 1,
           serial: '108TeGZDQBderu97202638@1719948956834-0',
           extras: {
             headers: {},
           },
-          name: 'message.created',
+          name: 'chat.message',
         });
       }).rejects.toBeErrorInfo({
         code: 50000,
@@ -85,7 +85,8 @@ describe('helpers', () => {
           connectionId: 'NtORcEMDdH',
           timestamp: 1719948877991,
           encoding: 'json',
-          name: 'message.created',
+          action: 1,
+          name: 'chat.message',
         });
       }).rejects.toBeErrorInfo({
         code: 50000,
@@ -133,13 +134,13 @@ describe('helpers', () => {
     });
 
     it('should return "chatMessage" for MessageEvents.created', () => {
-      const message = { name: MessageEvents.Created as string } as Ably.InboundMessage;
+      const message = { name: RealtimeMessageTypes.ChatMessage } as Ably.InboundMessage;
       const result = getEntityTypeFromEncoded(message);
       expect(result).toBe('chatMessage');
     });
 
     it('should return "roomReaction" for RoomReactionEvents.reaction', () => {
-      const message = { name: RoomReactionEvents.Reaction as string } as Ably.InboundMessage;
+      const message = { name: RoomReactionEvents.Reaction } as Ably.InboundMessage;
       const result = getEntityTypeFromEncoded(message);
       expect(result).toBe('reaction');
     });

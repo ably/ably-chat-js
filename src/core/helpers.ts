@@ -89,8 +89,7 @@ export async function reactionFromEncoded(encoded: unknown): Promise<Reaction> {
  */
 export function getEntityTypeFromAblyMessage(message: Ably.InboundMessage): ChatEntityType {
   switch (message.name) {
-    case RealtimeMessageTypes.ChatMessage:
-    case RealtimeMessageTypes.LegacyChatMessage: {
+    case RealtimeMessageTypes.ChatMessage: {
       return ChatEntityType.ChatMessage;
     }
     case RoomReactionEvents.Reaction: {
