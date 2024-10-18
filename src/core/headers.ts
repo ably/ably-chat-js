@@ -11,7 +11,5 @@
  * server-side validation. When reading the headers treat them like user
  * input.
  *
- * The key prefix `ably-chat` is reserved and cannot be used. Ably may add
- * headers prefixed with `ably-chat` in the future.
  */
 export type Headers = Record<string, number | string | boolean | null | undefined>;

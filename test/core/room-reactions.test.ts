@@ -299,58 +299,6 @@ describe('Reactions', () => {
           headers: { action: 'strike back', number: 1980 },
         });
       }));
-
-    it<TestContext>('should not be able to use reserved prefix in reaction headers', (context) =>
-      new Promise<void>((done, reject) => {
-        const { room } = context;
-
-        room.reactions.subscribe(() => {
-          reject(new Error("should not receive reaction, sending must've failed"));
-        });
-
-        const sendPromise = room.reactions.send({
-          type: 'love',
-          headers: { 'ably-chat-hello': true }, // "ably-chat" prefix is the reserved
-        });
-
-        sendPromise
-          .then(() => {
-            reject(new Error('send should not succeed'));
-          })
-          .catch((error: unknown) => {
-            const errInfo = error as Ably.ErrorInfo;
-            expect(errInfo).toBeTruthy();
-            expect(errInfo.message).toMatch(/reserved prefix/);
-            expect(errInfo.code).toEqual(40001);
-            done();
-          });
-      }));
-
-    it<TestContext>('should not be able to use reserved key in reaction metadata', (context) =>
-      new Promise<void>((done, reject) => {
-        const { room } = context;
-
-        room.reactions.subscribe(() => {
-          reject(new Error("should not receive reaction, sending must've failed"));
-        });
-
-        const sendPromise = room.reactions.send({
-          type: 'love',
-          metadata: { 'ably-chat': { value: 1 } }, // "ably-chat" is reserved
-        });
-
-        sendPromise
-          .then(() => {
-            reject(new Error('send should not succeed'));
-          })
-          .catch((error: unknown) => {
-            const errInfo = error as Ably.ErrorInfo;
-            expect(errInfo).toBeTruthy();
-            expect(errInfo.message).toMatch(/reserved key/);
-            expect(errInfo.code).toEqual(40001);
-            done();
-          });
-      }));
   });
 
   it<TestContext>('has an attachment error code', (context) => {
