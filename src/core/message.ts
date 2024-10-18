@@ -1,5 +1,5 @@
 import { Headers } from './headers.js';
-import { Metadata } from './metadata.js';
+import { DetailsMetadata, Metadata } from './metadata.js';
 import { DefaultTimeserial, Timeserial } from './timeserial.js';
 
 /**
@@ -11,6 +11,25 @@ export type MessageHeaders = Headers;
  * {@link Metadata} type for chat messages.
  */
 export type MessageMetadata = Metadata;
+
+/**
+ * {@link DetailsMetadata} type for a chat messages {@link MessageDetails}.
+ */
+export type MessageDetailsMetadata = DetailsMetadata;
+
+/**
+ * Represents the detail of a message deletion or update.
+ */
+export interface MessageDetails {
+  /**
+   * The optional description for the update or deletion.
+   */
+  description?: string;
+  /**
+   * The optional {@link MessageDetailsMetadata} associated with the update or deletion.
+   */
+  metadata?: MessageDetailsMetadata;
+}
 
 /**
  * Represents a single message in a chat room.
@@ -71,6 +90,57 @@ export interface Message {
   readonly headers: MessageHeaders;
 
   /**
+   * The timestamp at which the message was deleted. If the message has not been deleted, this
+   * value is undefined.
+   */
+  readonly deletedAt?: Date;
+
+  /**
+   * The clientId of the user who deleted the message.
+   * If the message has not been deleted, or has been deleted by a connection without a clientId (such as requests made
+   * using an API key only), this value is undefined.
+   */
+  readonly deletedBy?: string;
+
+  /**
+   * The {@link MessageDetails} of the deletion. If the message has not been deleted, this value is undefined.
+   * Contains the optional description for deletion and any additional optional metadata associated with the
+   * deletion.
+   */
+  readonly deletionDetail?: MessageDetails;
+
+  /**
+   * The timestamp at which the message was updated.
+   * If the message has not been updated, this value is undefined.
+   */
+  readonly updatedAt?: Date;
+
+  /**
+   * The clientId of the user who updated the message.
+   * If the message has not been updated, or has been updated by a connection without a clientId (such as requests made
+   * using an API key only), this value is undefined.
+   */
+  readonly updatedBy?: string;
+
+  /**
+   * The {@link MessageDetails} of the latest update. If the message has not been updated, this value is undefined.
+   * Contains the optional reason for update and any additional optional metadata associated with the update.
+   */
+  readonly updateDetail?: MessageDetails;
+
+  /**
+   * Determines if this message has been deleted.
+   * @returns true if the message has been deleted.
+   */
+  isDeleted(): boolean;
+
+  /**
+   * Determines if this message has been updated.
+   * @returns true if the message has been updated.
+   */
+  isUpdated(): boolean;
+
+  /**
    * Determines if this message was created before the given message. This comparison is based on
    * global order, so does not necessarily represent the order that messages are received in realtime
    * from the backend.
@@ -115,11 +185,25 @@ export class DefaultMessage implements Message {
     public readonly createdAt: Date,
     public readonly metadata: MessageMetadata,
     public readonly headers: MessageHeaders,
+    public readonly deletedAt?: Date,
+    public readonly deletedBy?: string,
+    public readonly deletionDetail?: MessageDetails,
+    public readonly updatedAt?: Date,
+    public readonly updatedBy?: string,
+    public readonly updateDetail?: MessageDetails,
   ) {
     this._calculatedTimeserial = DefaultTimeserial.calculateTimeserial(timeserial);
 
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
+  }
+
+  isDeleted(): boolean {
+    return this.deletedAt !== undefined;
+  }
+
+  isUpdated(): boolean {
+    return this.updatedAt !== undefined;
   }
 
   before(message: Message): boolean {

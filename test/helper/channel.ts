@@ -18,7 +18,6 @@ export const channelEventEmitter = (
     if (!arg.name) {
       throw new Error('Event name is required');
     }
-
     channelWithEmitter.subscriptions.emit(arg.name, arg);
   };
 };

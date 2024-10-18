@@ -62,7 +62,7 @@
   },
   "homepage": "https://github.com/ably/ably-chat-js#readme",
   "peerDependencies": {
-    "ably": "^2.3.1"
+    "ably": "file:./ably-2.4.1.tgz"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.0",
