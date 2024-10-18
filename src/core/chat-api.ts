@@ -1,7 +1,14 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
+import {
+  DefaultMessage,
+  Message,
+  MessageDetails,
+  MessageDetailsMetadata,
+  MessageHeaders,
+  MessageMetadata,
+} from './message.js';
 import { OccupancyEvent } from './occupancy.js';
 import { PaginatedResult } from './query.js';
 
@@ -31,6 +38,19 @@ interface SendMessageParams {
   headers?: MessageHeaders;
 }
 
+interface DeleteMessageParams {
+  hard?: boolean;
+  description?: string;
+  metadata?: MessageDetailsMetadata;
+}
+
+export interface DeleteMessageResponse {
+  /**
+   * The timestamp of when the deletion occurred.
+   */
+  deletedAt: number;
+}
+
 /**
  * Chat SDK Backend
  */
@@ -57,10 +77,31 @@ export class ChatApi {
           new Date(message.createdAt),
           metadata ?? {},
           headers ?? {},
+          message.deletedAt ? new Date(message.deletedAt) : undefined,
+          message.deletedBy,
+          message.deletionDetail,
+          message.updatedAt ? new Date(message.updatedAt) : undefined,
+          message.updatedBy,
+          message.updateDetail,
         );
       });
       return data;
     });
+  }
+
+  async deleteMessage(
+    roomId: string,
+    timeserial: string,
+    params?: DeleteMessageParams,
+  ): Promise<DeleteMessageResponse> {
+    const body: MessageDetails = { description: params?.description, metadata: params?.metadata };
+    const restParams = params?.hard ? { hard: true } : { hard: false };
+    return this._makeAuthorizedRequest<DeleteMessageResponse>(
+      `/chat/v1/rooms/${roomId}/messages/${timeserial}/delete`,
+      'POST',
+      body,
+      restParams,
+    );
   }
 
   async sendMessage(roomId: string, params: SendMessageParams): Promise<CreateMessageResponse> {
@@ -85,10 +126,11 @@ export class ChatApi {
 
   private async _makeAuthorizedRequest<RES = undefined>(
     url: string,
-    method: 'POST' | 'GET' | ' PUT' | 'DELETE' | 'PATCH',
+    method: 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH',
     body?: unknown,
+    params?: unknown,
   ): Promise<RES> {
-    const response = await this._realtime.request<RES>(method, url, this._apiProtocolVersion, {}, body);
+    const response = await this._realtime.request<RES>(method, url, this._apiProtocolVersion, params, body);
     if (!response.success) {
       this._logger.error('ChatApi._makeAuthorizedRequest(); failed to make request', {
         url,
