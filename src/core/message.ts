@@ -4,7 +4,7 @@ import { ActionMetadata } from './action-metadata.js';
 import { ChatMessageActions } from './events.js';
 import { Headers } from './headers.js';
 import { Metadata } from './metadata.js';
-import { DefaultTimeserial, Timeserial } from './timeserial.js';
+import { DefaultSerial, Serial } from './serial.js';
 
 /**
  * {@link Headers} type for chat messages.
@@ -46,7 +46,7 @@ export interface Message {
   /**
    * The unique identifier of the message.
    */
-  readonly timeserial: string;
+  readonly serial: string;
 
   /**
    * The clientId of the user who created the message.
@@ -146,7 +146,7 @@ export interface Message {
    * Determines if the action of this message is before the action of the given message.
    * @param message The message to compare against.
    * @returns true if the action of this message is before the given message.
-   * @throws {@link ErrorInfo} if both message timeserials do not match, or if {@link latestActionSerial} of either is invalid.
+   * @throws {@link ErrorInfo} if both message serials do not match, or if {@link latestActionSerial} of either is invalid.
    */
   actionBefore(message: Message): boolean;
 
@@ -154,7 +154,7 @@ export interface Message {
    * Determines if the action of this message is after the action of the given message.
    * @param message The message to compare against.
    * @returns true if the action of this message is after the given message.
-   * @throws {@link ErrorInfo} if both message timeserials do not match, or if {@link latestActionSerial} of either is invalid.
+   * @throws {@link ErrorInfo} if both message serials do not match, or if {@link latestActionSerial} of either is invalid.
    */
   actionAfter(message: Message): boolean;
 
@@ -162,7 +162,7 @@ export interface Message {
    * Determines if the action of this message is equal to the action of the given message.
    * @param message The message to compare against.
    * @returns true if the action of this message is equal to the given message.
-   * @throws {@link ErrorInfo} if both message timeserials do not match, or if {@link latestActionSerial} of either is invalid.
+   * @throws {@link ErrorInfo} if both message serials do not match, or if {@link latestActionSerial} of either is invalid.
    */
   actionEqual(message: Message): boolean;
 
@@ -172,7 +172,7 @@ export interface Message {
    * from the backend.
    * @param message The message to compare against.
    * @returns true if this message was created before the given message, in global order.
-   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
+   * @throws {@link ErrorInfo} if serials of either message is invalid.
    */
   before(message: Message): boolean;
 
@@ -182,7 +182,7 @@ export interface Message {
    * from the backend.
    * @param message The message to compare against.
    * @returns true if this message was created after the given message, in global order.
-   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
+   * @throws {@link ErrorInfo} if serials of either message is invalid.
    */
   after(message: Message): boolean;
 
@@ -190,7 +190,7 @@ export interface Message {
    * Determines if this message is equal to the given message.
    * @param message The message to compare against.
    * @returns true if this message is equal to the given message.
-   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
+   * @throws {@link ErrorInfo} if serials of either message is invalid.
    */
   equal(message: Message): boolean;
 }
@@ -198,33 +198,32 @@ export interface Message {
 /**
  * An implementation of the Message interface for chat messages.
  *
- * Allows for comparison of messages based on their timeserials.
+ * Allows for comparison of messages based on their serials.
  */
 export class DefaultMessage implements Message {
-  private readonly _calculatedOriginTimeserial: Timeserial;
-  private readonly _calculatedActionSerial: Timeserial;
+  private readonly _calculatedOriginSerial: Serial;
+  private readonly _calculatedActionSerial: Serial;
 
   constructor(
-    public readonly timeserial: string,
+    public readonly serial: string,
     public readonly clientId: string,
     public readonly roomId: string,
     public readonly text: string,
     public readonly createdAt: Date,
     public readonly metadata: MessageMetadata,
     public readonly headers: MessageHeaders,
-
     public readonly latestAction: ChatMessageActions,
-    // the latestActionSerial will be set to the original timeserial for new messages,
-    // else it will be set to the serial corresponding to whatever action
+
+    // the `latestActionSerial` will be set to the current message `serial` for new messages,
+    // else it will be set to the `updateSerial` corresponding to whatever action
     // (update/delete) that was just performed.
     public readonly latestActionSerial: string,
-
     public readonly deletedAt?: Date,
     public readonly updatedAt?: Date,
     public readonly latestActionDetails?: MessageActionDetails,
   ) {
-    this._calculatedOriginTimeserial = DefaultTimeserial.calculateTimeserial(timeserial);
-    this._calculatedActionSerial = DefaultTimeserial.calculateTimeserial(latestActionSerial);
+    this._calculatedOriginSerial = DefaultSerial.calculateSerial(serial);
+    this._calculatedActionSerial = DefaultSerial.calculateSerial(latestActionSerial);
 
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
@@ -249,7 +248,7 @@ export class DefaultMessage implements Message {
   actionBefore(message: Message): boolean {
     // Check to ensure the messages are the same before comparing operation order
     if (!this.equal(message)) {
-      throw new ErrorInfo('actionBefore(): Cannot compare actions, message timeserials must be equal', 50000, 500);
+      throw new ErrorInfo('actionBefore(): Cannot compare actions, message serials must be equal', 50000, 500);
     }
     return this._calculatedActionSerial.before(message.latestActionSerial);
   }
@@ -257,7 +256,7 @@ export class DefaultMessage implements Message {
   actionAfter(message: Message): boolean {
     // Check to ensure the messages are the same before comparing operation order
     if (!this.equal(message)) {
-      throw new ErrorInfo('actionAfter(): Cannot compare actions, message timeserials must be equal', 50000, 500);
+      throw new ErrorInfo('actionAfter(): Cannot compare actions, message serials must be equal', 50000, 500);
     }
     return this._calculatedActionSerial.after(message.latestActionSerial);
   }
@@ -265,20 +264,20 @@ export class DefaultMessage implements Message {
   actionEqual(message: Message): boolean {
     // Check to ensure the messages are the same before comparing operation order
     if (!this.equal(message)) {
-      throw new ErrorInfo('actionEqual(): Cannot compare actions, message timeserials must be equal', 50000, 500);
+      throw new ErrorInfo('actionEqual(): Cannot compare actions, message serials must be equal', 50000, 500);
     }
     return this._calculatedActionSerial.equal(message.latestActionSerial);
   }
 
   before(message: Message): boolean {
-    return this._calculatedOriginTimeserial.before(message.timeserial);
+    return this._calculatedOriginSerial.before(message.serial);
   }
 
   after(message: Message): boolean {
-    return this._calculatedOriginTimeserial.after(message.timeserial);
+    return this._calculatedOriginSerial.after(message.serial);
   }
 
   equal(message: Message): boolean {
-    return this._calculatedOriginTimeserial.equal(message.timeserial);
+    return this._calculatedOriginSerial.equal(message.serial);
   }
 }

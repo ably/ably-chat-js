@@ -18,7 +18,7 @@ import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import { DefaultTimeserial } from './timeserial.js';
+import { DefaultSerial } from './serial.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -339,7 +339,7 @@ export class DefaultMessages
     const subscriptionPointParams = await subscriptionPoint;
 
     // Check the end time does not occur after the fromSerial time
-    const parseSerial = DefaultTimeserial.calculateTimeserial(subscriptionPointParams.fromSerial);
+    const parseSerial = DefaultSerial.calculateSerial(subscriptionPointParams.fromSerial);
     if (params.end && params.end > parseSerial.timestamp) {
       this._logger.error(
         `DefaultSubscriptionManager.getBeforeSubscriptionStart(); end time is after the subscription point of the listener`,
@@ -380,7 +380,7 @@ export class DefaultMessages
   }
 
   /**
-   * Create a promise that resolves with the attachSerial of the channel or the timeserial of the latest message.
+   * Create a promise that resolves with the attachSerial of the channel or the serial of the latest message.
    */
   private async _resolveSubscriptionStart(): Promise<{
     fromSerial: string;
@@ -466,8 +466,6 @@ export class DefaultMessages
 
   /**
    * @inheritdoc Messages
-   * @throws {@link ErrorInfo} if metadata defines reserved keys.
-   * @throws {@link ErrorInfo} if headers defines any headers prefixed with reserved words.
    */
   async send(params: SendMessageParams): Promise<Message> {
     this._logger.trace('Messages.send();', { params });
@@ -476,7 +474,7 @@ export class DefaultMessages
 
     const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
     return new DefaultMessage(
-      response.timeserial,
+      response.serial,
       this._clientId,
       this._roomId,
       text,
@@ -484,7 +482,7 @@ export class DefaultMessages
       metadata ?? {},
       headers ?? {},
       ChatMessageActions.MessageCreate,
-      response.timeserial,
+      response.serial,
     );
   }
 
@@ -493,9 +491,9 @@ export class DefaultMessages
    */
   async delete(message: Message, params?: DeleteMessageParams): Promise<Message> {
     this._logger.trace('Messages.delete();', { params });
-    const response = await this._chatApi.deleteMessage(this._roomId, message.timeserial, params);
+    const response = await this._chatApi.deleteMessage(this._roomId, message.serial, params);
     const deletedMessage: Message = new DefaultMessage(
-      message.timeserial,
+      message.serial,
       message.clientId,
       message.roomId,
       message.text,
@@ -505,7 +503,7 @@ export class DefaultMessages
       ChatMessageActions.MessageDelete,
       response.serial,
       response.deletedAt ? new Date(response.deletedAt) : undefined,
-      undefined,
+      message.updatedAt,
       {
         clientId: this._clientId,
         description: params?.description,

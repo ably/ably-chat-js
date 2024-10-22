@@ -43,7 +43,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
         case MessageEvents.Deleted:
           setMessages((prevMessage) => {
             return prevMessage.filter((m) => {
-              return m.timeserial !== message.message.timeserial;
+              return m.serial !== message.message.serial;
             });
           });
           break;
@@ -192,15 +192,15 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
         >
           {messages.map((msg) => (
             <MessageComponent
-              id={msg.timeserial}
-              key={msg.timeserial}
+              id={msg.serial}
+              key={msg.serial}
               self={msg.clientId === clientId}
               message={msg}
               onMessageDelete={(msg) => {
                 deleteMessage(msg, { description: 'deleted by user' }).then((deletedMessage: Message) => {
                   setMessages((prevMessages) => {
                     return prevMessages.filter((m) => {
-                      return m.timeserial !== deletedMessage.timeserial;
+                      return m.serial !== deletedMessage.serial;
                     });
                   });
                 });

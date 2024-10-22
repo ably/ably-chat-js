@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { DefaultTimeserial } from '../../src/core/timeserial.ts';
+import { DefaultSerial } from '../../src/core/serial.ts';
 
-describe('calculateTimeserial', () => {
-  it('parses a valid timeserial', () => {
-    const timeserial = 'abcdefghij@1672531200000-123:1';
-    const result = DefaultTimeserial.calculateTimeserial(timeserial);
+describe('calculateSerial', () => {
+  it('parses a valid serial', () => {
+    const serial = 'abcdefghij@1672531200000-123:1';
+    const result = DefaultSerial.calculateSerial(serial);
     expect(result).toEqual({
       seriesId: 'abcdefghij',
       timestamp: 1672531200000,
@@ -18,19 +18,19 @@ describe('calculateTimeserial', () => {
     ['abcdefghij@1672531200000'], // No counter
     ['abcdefghij@'], // No timestamp
     ['abcdefghij'], // No series id
-  ])('throws an error with an invalid timeserial %s', (timeserial) => {
+  ])('throws an error with an invalid serial %s', (serial) => {
     expect(() => {
-      DefaultTimeserial.calculateTimeserial(timeserial);
+      DefaultSerial.calculateSerial(serial);
     }).toThrowErrorInfo({
       code: 50000,
-      message: 'invalid timeserial',
+      message: 'invalid serial',
     });
   });
 
-  it('should be equal to the same timeserial', () => {
-    const timeserial = 'abcdefghij@1672531200000-123:1';
-    const result = DefaultTimeserial.calculateTimeserial(timeserial);
-    expect(result.equal(timeserial)).toBe(true);
+  it('should be equal to the same serial', () => {
+    const serial = 'abcdefghij@1672531200000-123:1';
+    const result = DefaultSerial.calculateSerial(serial);
+    expect(result.equal(serial)).toBe(true);
   });
 
   it.each([
@@ -46,11 +46,11 @@ describe('calculateTimeserial', () => {
     ['abcdefghi@1672531200000-123', 'abcdefghij@1672531200001-123', true], // Earlier timestamp
     ['abcdefghij@1672531200001-123', 'abcdefghij@1672531200000-123', false], // Later timestamp
     ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-123', false], // Same timestamp]
-  ])(`is before another timeserial %s, %s -> %o`, (firstTimeserialString, secondTimeserialString, expected) => {
-    const firstTimeserial = DefaultTimeserial.calculateTimeserial(firstTimeserialString);
-    const secondTimeserial = DefaultTimeserial.calculateTimeserial(secondTimeserialString);
+  ])(`is before another serial %s, %s -> %o`, (firstSerialString, secondSerialString, expected) => {
+    const firstSerial = DefaultSerial.calculateSerial(firstSerialString);
+    const secondSerial = DefaultSerial.calculateSerial(secondSerialString);
 
-    expect(firstTimeserial.before(secondTimeserial)).toBe(expected);
+    expect(firstSerial.before(secondSerial)).toBe(expected);
   });
 
   it.each([
@@ -66,15 +66,15 @@ describe('calculateTimeserial', () => {
     ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200001-123', false], // Earlier timestamp
     ['abcdefghij@1672531200001-123', 'abcdefghij@1672531200000-123', true], // Later timestamp
     ['abcdefghij@1672531200000-123', 'abcdefghij@1672531200000-123', false], // Same timestamp
-  ])('is after another timeserial %s, %s -> %o', (firstTimeserialString, secondTimeserialString, expected) => {
-    const firstTimeserial = DefaultTimeserial.calculateTimeserial(firstTimeserialString);
-    const secondTimeserial = DefaultTimeserial.calculateTimeserial(secondTimeserialString);
-    expect(firstTimeserial.after(secondTimeserial)).toBe(expected);
+  ])('is after another serial %s, %s -> %o', (firstSerialString, secondSerialString, expected) => {
+    const firstSerial = DefaultSerial.calculateSerial(firstSerialString);
+    const secondSerial = DefaultSerial.calculateSerial(secondSerialString);
+    expect(firstSerial.after(secondSerial)).toBe(expected);
   });
 
-  it('should return the original timeserial as a string', () => {
-    const timeserial = 'abcdefghij@1672531200000-123:1';
-    const result = DefaultTimeserial.calculateTimeserial(timeserial);
-    expect(result.toString()).toBe(timeserial);
+  it('should return the original serial as a string', () => {
+    const serial = 'abcdefghij@1672531200000-123:1';
+    const result = DefaultSerial.calculateSerial(serial);
+    expect(result.toString()).toBe(serial);
   });
 });

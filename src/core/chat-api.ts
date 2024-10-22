@@ -11,9 +11,9 @@ export interface GetMessagesQueryParams {
   direction?: 'forwards' | 'backwards';
   limit?: number;
   /**
-   * Timeserial indicating the starting point for message retrieval.
-   * This timeserial is specific to the region of the channel the client is connected to. Messages published within
-   * the same region of the channel are guaranteed to be received in increasing timeserial order.
+   * Serial indicating the starting point for message retrieval.
+   * This serial is specific to the region of the channel the client is connected to. Messages published within
+   * the same region of the channel are guaranteed to be received in increasing serial order.
    *
    * @defaultValue undefined (not used if not specified)
    */
@@ -21,7 +21,7 @@ export interface GetMessagesQueryParams {
 }
 
 export interface CreateMessageResponse {
-  timeserial: string;
+  serial: string;
   createdAt: number;
 }
 
@@ -67,7 +67,7 @@ export class ChatApi {
         const metadata = message.metadata as MessageMetadata | undefined;
         const headers = message.headers as MessageHeaders | undefined;
         return new DefaultMessage(
-          message.timeserial,
+          message.serial,
           message.clientId,
           message.roomId,
           message.text,
@@ -85,17 +85,13 @@ export class ChatApi {
     });
   }
 
-  async deleteMessage(
-    roomId: string,
-    timeserial: string,
-    params?: DeleteMessageParams,
-  ): Promise<DeleteMessageResponse> {
+  async deleteMessage(roomId: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
     const body: { description?: string; metadata?: MessageActionMetadata } = {
       description: params?.description,
       metadata: params?.metadata,
     };
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
-      `/chat/v2/rooms/${roomId}/messages/${timeserial}/delete`,
+      `/chat/v2/rooms/${roomId}/messages/${serial}/delete`,
       'POST',
       body,
       {},
@@ -114,7 +110,6 @@ export class ChatApi {
     if (params.headers) {
       body.headers = params.headers;
     }
-
     return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v2/rooms/${roomId}/messages`, 'POST', body);
   }
 

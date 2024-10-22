@@ -6,11 +6,11 @@ import { DefaultMessage } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
   it('is the same as another message', () => {
-    const firstTimeserial = 'abcdefghij@1672531200000-123';
-    const secondTimeserial = 'abcdefghij@1672531200000-123';
+    const firstSerial = 'abcdefghij@1672531200000-123';
+    const secondSerial = 'abcdefghij@1672531200000-123';
 
     const firstMessage = new DefaultMessage(
-      firstTimeserial,
+      firstSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -18,10 +18,10 @@ describe('ChatMessage', () => {
       {},
       {},
       ChatMessageActions.MessageCreate,
-      firstTimeserial,
+      firstSerial,
     );
     const secondMessage = new DefaultMessage(
-      secondTimeserial,
+      secondSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -29,18 +29,18 @@ describe('ChatMessage', () => {
       {},
       {},
       ChatMessageActions.MessageCreate,
-      secondTimeserial,
+      secondSerial,
     );
 
     expect(firstMessage.equal(secondMessage)).toBe(true);
   });
 
   it('is not the same as another message', () => {
-    const firstTimeserial = 'abcdefghij@1672531200000-123';
-    const secondTimeserial = 'abcdefghij@1672531200000-124';
+    const firstSerial = 'abcdefghij@1672531200000-123';
+    const secondSerial = 'abcdefghij@1672531200000-124';
 
     const firstMessage = new DefaultMessage(
-      firstTimeserial,
+      firstSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -48,10 +48,10 @@ describe('ChatMessage', () => {
       {},
       {},
       ChatMessageActions.MessageCreate,
-      firstTimeserial,
+      firstSerial,
     );
     const secondMessage = new DefaultMessage(
-      secondTimeserial,
+      secondSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -59,18 +59,18 @@ describe('ChatMessage', () => {
       {},
       {},
       ChatMessageActions.MessageCreate,
-      secondTimeserial,
+      secondSerial,
     );
 
     expect(firstMessage.equal(secondMessage)).toBe(false);
   });
 
   it('is before another message', () => {
-    const firstTimeserial = 'abcdefghij@1672531200000-123';
-    const secondTimeserial = 'abcdefghij@1672531200000-124';
+    const firstSerial = 'abcdefghij@1672531200000-123';
+    const secondSerial = 'abcdefghij@1672531200000-124';
 
     const firstMessage = new DefaultMessage(
-      firstTimeserial,
+      firstSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -78,10 +78,10 @@ describe('ChatMessage', () => {
       {},
       {},
       ChatMessageActions.MessageCreate,
-      firstTimeserial,
+      firstSerial,
     );
     const secondMessage = new DefaultMessage(
-      secondTimeserial,
+      secondSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -89,17 +89,17 @@ describe('ChatMessage', () => {
       {},
       {},
       ChatMessageActions.MessageCreate,
-      secondTimeserial,
+      secondSerial,
     );
 
     expect(firstMessage.before(secondMessage)).toBe(true);
   });
   it('is after another message', () => {
-    const firstTimeserial = 'abcdefghij@1672531200000-124';
-    const secondTimeserial = 'abcdefghij@1672531200000-123';
+    const firstSerial = 'abcdefghij@1672531200000-124';
+    const secondSerial = 'abcdefghij@1672531200000-123';
 
     const firstMessage = new DefaultMessage(
-      firstTimeserial,
+      firstSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -107,10 +107,10 @@ describe('ChatMessage', () => {
       {},
       {},
       ChatMessageActions.MessageCreate,
-      firstTimeserial,
+      firstSerial,
     );
     const secondMessage = new DefaultMessage(
-      secondTimeserial,
+      secondSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -118,16 +118,16 @@ describe('ChatMessage', () => {
       {},
       {},
       ChatMessageActions.MessageCreate,
-      secondTimeserial,
+      secondSerial,
     );
 
     expect(firstMessage.after(secondMessage)).toBe(true);
   });
 
-  it('throws an error with an invalid timeserial', () => {
+  it('throws an error with an invalid serial', () => {
     expect(() => {
       new DefaultMessage(
-        'not a valid timeserial',
+        'not a valid serial',
         'clientId',
         'roomId',
         'hello there',
@@ -135,19 +135,19 @@ describe('ChatMessage', () => {
         {},
         {},
         ChatMessageActions.MessageCreate,
-        'not a valid timeserial',
+        'not a valid serial',
       );
     }).toThrowErrorInfo({
       code: 50000,
-      message: 'invalid timeserial',
+      message: 'invalid serial',
     });
   });
 
   describe('message actions', () => {
     it('is deleted', () => {
-      const firstTimeserial = 'abcdefghij@1672531200000-124:0';
+      const firstSerial = 'abcdefghij@1672531200000-124:0';
       const firstMessage = new DefaultMessage(
-        firstTimeserial,
+        firstSerial,
         'clientId',
         'roomId',
         'hello there',
@@ -167,9 +167,9 @@ describe('ChatMessage', () => {
     });
 
     it('is updated', () => {
-      const firstTimeserial = 'abcdefghij@1672531200000-124';
+      const firstSerial = 'abcdefghij@1672531200000-124';
       const firstMessage = new DefaultMessage(
-        firstTimeserial,
+        firstSerial,
         'clientId',
         'roomId',
         'hello there',
@@ -187,14 +187,14 @@ describe('ChatMessage', () => {
     });
 
     it(`throws an error when trying to compare actions belonging to different origin messages`, () => {
-      const firstTimeserial = 'abcdefghij@1672531200000-124';
-      const secondTimeserial = 'abcdefghij@1672531200000-123';
+      const firstSerial = 'abcdefghij@1672531200000-124';
+      const secondSerial = 'abcdefghij@1672531200000-123';
 
       const firstActionSerial = 'abcdefghij@1672531200000-123:0';
       const secondActionSerial = 'abcdefghij@1672531200000-123:0';
 
       const firstMessage = new DefaultMessage(
-        firstTimeserial,
+        firstSerial,
         'clientId',
         'roomId',
         'hello there',
@@ -205,7 +205,7 @@ describe('ChatMessage', () => {
         firstActionSerial,
       );
       const secondMessage = new DefaultMessage(
-        secondTimeserial,
+        secondSerial,
         'clientId',
         'roomId',
         'hello there',
@@ -218,7 +218,7 @@ describe('ChatMessage', () => {
 
       expect(() => firstMessage.actionEqual(secondMessage)).toThrowErrorInfo({
         code: 50000,
-        message: 'actionEqual(): Cannot compare actions, message timeserials must be equal',
+        message: 'actionEqual(): Cannot compare actions, message serials must be equal',
       });
     });
 
@@ -269,9 +269,9 @@ describe('ChatMessage', () => {
       ],
     ])('compare message action serials', (name, { firstActionSerial, secondActionSerial, expected }) => {
       it(name, () => {
-        const messageTimeserial = 'abcdefghij@1672531200000-123';
+        const messageSerial = 'abcdefghij@1672531200000-123';
         const firstMessage = new DefaultMessage(
-          messageTimeserial,
+          messageSerial,
           'clientId',
           'roomId',
           'hello there',
@@ -282,7 +282,7 @@ describe('ChatMessage', () => {
           firstActionSerial,
         );
         const secondMessage = new DefaultMessage(
-          messageTimeserial,
+          messageSerial,
           'clientId',
           'roomId',
           'hello there',
