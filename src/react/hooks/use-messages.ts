@@ -106,7 +106,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [room],
   );
   const get = useCallback((options: QueryOptions) => room.messages.get(options), [room]);
-  const update = useCallback(room.messages.update.bind(room.messages), [room])
+  const update = useCallback(room.messages.update.bind(room.messages), [room]);
 
   const [getPreviousMessages, setGetPreviousMessages] = useState<MessageSubscriptionResponse['getPreviousMessages']>();
 

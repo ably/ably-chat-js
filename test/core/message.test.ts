@@ -4,11 +4,11 @@ import { DefaultMessage } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
   it('is the same as another message', () => {
-    const firstTimeserial = 'abcdefghij@1672531200000-123';
-    const secondTimeserial = 'abcdefghij@1672531200000-123';
+    const firstSerial = 'abcdefghij@1672531200000-123';
+    const secondSerial = 'abcdefghij@1672531200000-123';
 
     const firstMessage = new DefaultMessage(
-      firstTimeserial,
+      firstSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -17,7 +17,7 @@ describe('ChatMessage', () => {
       {},
     );
     const secondMessage = new DefaultMessage(
-      secondTimeserial,
+      secondSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -30,11 +30,11 @@ describe('ChatMessage', () => {
   });
 
   it('is not the same as another message', () => {
-    const firstTimeserial = 'abcdefghij@1672531200000-123';
-    const secondTimeserial = 'abcdefghij@1672531200000-124';
+    const firstSerial = 'abcdefghij@1672531200000-123';
+    const secondSerial = 'abcdefghij@1672531200000-124';
 
     const firstMessage = new DefaultMessage(
-      firstTimeserial,
+      firstSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -43,7 +43,7 @@ describe('ChatMessage', () => {
       {},
     );
     const secondMessage = new DefaultMessage(
-      secondTimeserial,
+      secondSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -56,11 +56,11 @@ describe('ChatMessage', () => {
   });
 
   it('is before another message', () => {
-    const firstTimeserial = 'abcdefghij@1672531200000-123';
-    const secondTimeserial = 'abcdefghij@1672531200000-124';
+    const firstSerial = 'abcdefghij@1672531200000-123';
+    const secondSerial = 'abcdefghij@1672531200000-124';
 
     const firstMessage = new DefaultMessage(
-      firstTimeserial,
+      firstSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -69,7 +69,7 @@ describe('ChatMessage', () => {
       {},
     );
     const secondMessage = new DefaultMessage(
-      secondTimeserial,
+      secondSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -81,11 +81,11 @@ describe('ChatMessage', () => {
     expect(firstMessage.before(secondMessage)).toBe(true);
   });
   it('is after another message', () => {
-    const firstTimeserial = 'abcdefghij@1672531200000-124';
-    const secondTimeserial = 'abcdefghij@1672531200000-123';
+    const firstSerial = 'abcdefghij@1672531200000-124';
+    const secondSerial = 'abcdefghij@1672531200000-123';
 
     const firstMessage = new DefaultMessage(
-      firstTimeserial,
+      firstSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -94,7 +94,7 @@ describe('ChatMessage', () => {
       {},
     );
     const secondMessage = new DefaultMessage(
-      secondTimeserial,
+      secondSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -107,10 +107,10 @@ describe('ChatMessage', () => {
   });
 
   it('is deleted', () => {
-    const firstTimeserial = 'abcdefghij@1672531200000-124';
+    const firstSerial = 'abcdefghij@1672531200000-124';
 
     const firstMessage = new DefaultMessage(
-      firstTimeserial,
+      firstSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -124,10 +124,10 @@ describe('ChatMessage', () => {
   });
 
   it('is updated', () => {
-    const firstTimeserial = 'abcdefghij@1672531200000-124';
+    const firstSerial = 'abcdefghij@1672531200000-124';
 
     const firstMessage = new DefaultMessage(
-      firstTimeserial,
+      firstSerial,
       'clientId',
       'roomId',
       'hello there',
@@ -143,20 +143,12 @@ describe('ChatMessage', () => {
     expect(firstMessage.isUpdated()).toBe(true);
   });
 
-  it('throws an error with an invalid timeserial', () => {
+  it('throws an error with an invalid serial', () => {
     expect(() => {
-      new DefaultMessage(
-        'not a valid timeserial',
-        'clientId',
-        'roomId',
-        'hello there',
-        new Date(1672531200000),
-        {},
-        {},
-      );
+      new DefaultMessage('not a valid serial', 'clientId', 'roomId', 'hello there', new Date(1672531200000), {}, {});
     }).toThrowErrorInfo({
       code: 50000,
-      message: 'invalid timeserial',
+      message: 'invalid serial',
     });
   });
 });

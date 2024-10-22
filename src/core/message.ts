@@ -1,6 +1,6 @@
 import { Headers } from './headers.js';
 import { DetailsMetadata, Metadata } from './metadata.js';
-import { DefaultTimeserial, Timeserial } from './timeserial.js';
+import { DefaultSerial, Serial } from './serial.js';
 
 /**
  * {@link Headers} type for chat messages.
@@ -37,8 +37,14 @@ export interface MessageDetails {
 export interface Message {
   /**
    * The unique identifier of the message.
+   * @deprecated Use `serial` instead.
    */
   readonly timeserial: string;
+
+  /**
+   * The unique identifier of the message.
+   */
+  readonly serial: string;
 
   /**
    * The clientId of the user who created the message.
@@ -146,7 +152,7 @@ export interface Message {
    * from the backend.
    * @param message The message to compare against.
    * @returns true if this message was created before the given message, in global order.
-   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
+   * @throws {@link ErrorInfo} if serials of either message is invalid.
    */
   before(message: Message): boolean;
 
@@ -156,7 +162,7 @@ export interface Message {
    * from the backend.
    * @param message The message to compare against.
    * @returns true if this message was created after the given message, in global order.
-   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
+   * @throws {@link ErrorInfo} if serials of either message is invalid.
    */
   after(message: Message): boolean;
 
@@ -164,7 +170,7 @@ export interface Message {
    * Determines if this message is equal to the given message.
    * @param message The message to compare against.
    * @returns true if this message is equal to the given message.
-   * @throws {@link ErrorInfo} if timeserial of either message is invalid.
+   * @throws {@link ErrorInfo} if serials of either message is invalid.
    */
   equal(message: Message): boolean;
 }
@@ -172,13 +178,14 @@ export interface Message {
 /**
  * An implementation of the Message interface for chat messages.
  *
- * Allows for comparison of messages based on their timeserials.
+ * Allows for comparison of messages based on their serials.
  */
 export class DefaultMessage implements Message {
-  private readonly _calculatedTimeserial: Timeserial;
+  private readonly _calculatedSerial: Serial;
+  public readonly timeserial: string;
 
   constructor(
-    public readonly timeserial: string,
+    public readonly serial: string,
     public readonly clientId: string,
     public readonly roomId: string,
     public readonly text: string,
@@ -192,7 +199,9 @@ export class DefaultMessage implements Message {
     public readonly updatedBy?: string,
     public readonly updateDetail?: MessageDetails,
   ) {
-    this._calculatedTimeserial = DefaultTimeserial.calculateTimeserial(timeserial);
+    this._calculatedSerial = DefaultSerial.calculateSerial(serial);
+
+    this.timeserial = serial; // Deprecated, use serial instead
 
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
@@ -207,14 +216,14 @@ export class DefaultMessage implements Message {
   }
 
   before(message: Message): boolean {
-    return this._calculatedTimeserial.before(message.timeserial);
+    return this._calculatedSerial.before(message.serial);
   }
 
   after(message: Message): boolean {
-    return this._calculatedTimeserial.after(message.timeserial);
+    return this._calculatedSerial.after(message.serial);
   }
 
   equal(message: Message): boolean {
-    return this._calculatedTimeserial.equal(message.timeserial);
+    return this._calculatedSerial.equal(message.serial);
   }
 }

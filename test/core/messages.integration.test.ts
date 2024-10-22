@@ -70,12 +70,12 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: message1.timeserial,
+        serial: message1.serial,
       }),
       expect.objectContaining({
         text: 'I have the high ground!',
         clientId: chat.clientId,
-        timeserial: message2.timeserial,
+        serial: message2.serial,
       }),
     ]);
   });
@@ -124,7 +124,7 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: message1.timeserial,
+        serial: message1.serial,
       }),
     ]);
     // Check that the deletion was received
@@ -132,7 +132,7 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: deletedMessage1.timeserial,
+        serial: deletedMessage1.serial,
         deletedAt: deletedMessage1.deletedAt,
         deletedBy: chat.clientId,
         deletionDetail: deletedMessage1.deletionDetail,
@@ -157,17 +157,17 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: message1.timeserial,
+        serial: message1.serial,
       }),
       expect.objectContaining({
         text: 'I have the high ground!',
         clientId: chat.clientId,
-        timeserial: message2.timeserial,
+        serial: message2.serial,
       }),
       expect.objectContaining({
         text: 'You underestimate my power!',
         clientId: chat.clientId,
-        timeserial: message3.timeserial,
+        serial: message3.serial,
       }),
     ]);
 
@@ -193,7 +193,7 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: deletedMessage1.timeserial,
+        serial: deletedMessage1.serial,
         deletedAt: deletedMessage1.deletedAt,
         deletedBy: chat.clientId,
         deletionDetail: deletedMessage1.deletionDetail,
@@ -222,17 +222,17 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: message1.timeserial,
+        serial: message1.serial,
       }),
       expect.objectContaining({
         text: 'I have the high ground!',
         clientId: chat.clientId,
-        timeserial: message2.timeserial,
+        serial: message2.serial,
       }),
       expect.objectContaining({
         text: 'You underestimate my power!',
         clientId: chat.clientId,
-        timeserial: message3.timeserial,
+        serial: message3.serial,
       }),
     ]);
 
@@ -246,7 +246,7 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: "Don't try it!",
         clientId: chat.clientId,
-        timeserial: message4.timeserial,
+        serial: message4.serial,
       }),
     ]);
 
@@ -272,17 +272,17 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: "Don't try it!",
         clientId: chat.clientId,
-        timeserial: message4.timeserial,
+        serial: message4.serial,
       }),
       expect.objectContaining({
         text: 'You underestimate my power!',
         clientId: chat.clientId,
-        timeserial: message3.timeserial,
+        serial: message3.serial,
       }),
       expect.objectContaining({
         text: 'I have the high ground!',
         clientId: chat.clientId,
-        timeserial: message2.timeserial,
+        serial: message2.serial,
       }),
     ]);
 
@@ -296,7 +296,7 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: message1.timeserial,
+        serial: message1.serial,
       }),
     ]);
 
@@ -335,14 +335,14 @@ describe('messages integration', () => {
       {
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: message1.timeserial,
+        serial: message1.serial,
         headers: { key1: 'val1', key2: 22 },
         metadata: { hello: { name: 'world' } },
       },
       {
         text: 'I have the high ground!',
         clientId: chat.clientId,
-        timeserial: message2.timeserial,
+        serial: message2.serial,
         headers: { key1: 'second key 1 value', key2: 99, greeting: 'yo' },
         metadata: { hello: { name: 'second' } },
       },
@@ -363,7 +363,7 @@ describe('messages integration', () => {
     ]);
   });
 
-  it<TestContext>('should be able to get history for listener from attached timeserial', async (context) => {
+  it<TestContext>('should be able to get history for listener from attached serial', async (context) => {
     const { chat } = context;
 
     const room = getRandomRoom(chat);
@@ -388,12 +388,12 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: 'I have the high ground!',
         clientId: chat.clientId,
-        timeserial: message2.timeserial,
+        serial: message2.serial,
       }),
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: message1.timeserial,
+        serial: message1.serial,
       }),
     ]);
 
@@ -404,21 +404,21 @@ describe('messages integration', () => {
     // Try and get history again
     const historyPreSubscription2 = await getPreviousMessages({ limit: 50 });
 
-    // It should not contain the new messages since we should be getting messages based on initial attach timeserial
+    // It should not contain the new messages since we should be getting messages based on initial attach serial
     expect(historyPreSubscription2.items).toEqual([
       expect.objectContaining({
         text: 'I have the high ground!',
         clientId: chat.clientId,
-        timeserial: message2.timeserial,
+        serial: message2.serial,
       }),
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: message1.timeserial,
+        serial: message1.serial,
       }),
     ]);
   });
-  it<TestContext>('should be able to get history for listener with latest message timeserial', async (context) => {
+  it<TestContext>('should be able to get history for listener with latest message serial', async (context) => {
     const { chat } = context;
 
     const room = getRandomRoom(chat);
@@ -433,10 +433,10 @@ describe('messages integration', () => {
     const message1 = await room.messages.send({ text: 'Hello there!' });
     const message2 = await room.messages.send({ text: 'I have the high ground!' });
 
-    // Do a history request which should use attach timeserial
+    // Do a history request which should use attach serial
     const historyPreSubscription1 = await getPreviousMessages({ limit: 50 });
 
-    // Should have no items since we are using attach timeserial
+    // Should have no items since we are using attach serial
     expect(historyPreSubscription1.items).toEqual([]);
 
     const { getPreviousMessages: getPreviousMessagesListener2 } = room.messages.subscribe(() => {});
@@ -449,12 +449,12 @@ describe('messages integration', () => {
       expect.objectContaining({
         text: 'I have the high ground!',
         clientId: chat.clientId,
-        timeserial: message2.timeserial,
+        serial: message2.serial,
       }),
       expect.objectContaining({
         text: 'Hello there!',
         clientId: chat.clientId,
-        timeserial: message1.timeserial,
+        serial: message1.serial,
       }),
     ]);
   });
