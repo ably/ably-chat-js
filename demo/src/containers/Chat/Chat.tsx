@@ -13,7 +13,6 @@ import {
   Reaction,
 } from '@ably/chat';
 
-
 export const Chat = () => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
@@ -37,7 +36,7 @@ export const Chat = () => {
         case MessageEvents.Deleted:
           setMessages((prevMessage) => {
             const updatedArray = prevMessage.filter((m) => {
-              return m.timeserial !== message.message.timeserial;
+              return m.serial !== message.message.serial;
             });
 
             // don't change state if deleted message is not in the current list
@@ -52,7 +51,7 @@ export const Chat = () => {
           setMessages((prevMessage) => {
             let found = false;
             const updatedArray = prevMessage.map((m) => {
-              if (m.timeserial === message.message.timeserial) {
+              if (m.serial === message.message.serial) {
                 found = true;
                 return message.message;
               }
@@ -66,7 +65,7 @@ export const Chat = () => {
 
             return updatedArray;
           });
-          break
+          break;
         default:
           console.error('Unknown message', message);
       }
@@ -169,16 +168,21 @@ export const Chat = () => {
     }
   }, [messages, loading]);
 
-  const updateMessage = useCallback((message: Message) => {
-    const newText = prompt('Enter new text');
-    if (!newText) { return; }
-    const updateOp = update(message, {
-      text: newText,
-      metadata: message.metadata,
-      headers: message.headers,
-    });
-    console.log("message ", message.timeserial, " updated. op=", updateOp);
-  }, [update]);
+  const updateMessage = useCallback(
+    (message: Message) => {
+      const newText = prompt('Enter new text');
+      if (!newText) {
+        return;
+      }
+      const updateOp = update(message, {
+        text: newText,
+        metadata: message.metadata,
+        headers: message.headers,
+      });
+      console.log('message ', message.serial, ' updated. op=', updateOp);
+    },
+    [update],
+  );
 
   return (
     <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-screen">
@@ -205,15 +209,15 @@ export const Chat = () => {
         >
           {messages.map((msg) => (
             <MessageComponent
-              id={msg.timeserial}
-              key={msg.timeserial}
+              id={msg.serial}
+              key={msg.serial}
               self={msg.clientId === clientId}
               message={msg}
               onMessageDelete={(msg) => {
                 deleteMessage(msg, { description: 'deleted by user' }).then((deletedMessage: Message) => {
                   setMessages((prevMessages) => {
                     return prevMessages.filter((m) => {
-                      return m.timeserial !== deletedMessage.timeserial;
+                      return m.serial !== deletedMessage.serial;
                     });
                   });
                 });

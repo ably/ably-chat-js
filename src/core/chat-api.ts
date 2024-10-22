@@ -18,9 +18,9 @@ export interface GetMessagesQueryParams {
   direction?: 'forwards' | 'backwards';
   limit?: number;
   /**
-   * Timeserial indicating the starting point for message retrieval.
-   * This timeserial is specific to the region of the channel the client is connected to. Messages published within
-   * the same region of the channel are guaranteed to be received in increasing timeserial order.
+   * Serial indicating the starting point for message retrieval.
+   * This serial is specific to the region of the channel the client is connected to. Messages published within
+   * the same region of the channel are guaranteed to be received in increasing serial order.
    *
    * @defaultValue undefined (not used if not specified)
    */
@@ -28,7 +28,7 @@ export interface GetMessagesQueryParams {
 }
 
 export interface CreateMessageResponse {
-  timeserial: string;
+  serial: string;
   createdAt: number;
 }
 
@@ -59,8 +59,8 @@ interface UpdateMessageParams {
   message: {
     text: string;
     metadata?: MessageMetadata;
-    headers?: MessageHeaders;  
-  }
+    headers?: MessageHeaders;
+  };
 
   /** Description of the update operation */
   description?: string;
@@ -114,14 +114,10 @@ export class ChatApi {
     });
   }
 
-  async deleteMessage(
-    roomId: string,
-    timeserial: string,
-    params?: DeleteMessageParams,
-  ): Promise<DeleteMessageResponse> {
+  async deleteMessage(roomId: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
     const body: MessageDetails = { description: params?.description, metadata: params?.metadata };
     const restParams = params?.hard ? { hard: true } : { hard: false };
-    const encodedSerial = encodeURIComponent(timeserial);
+    const encodedSerial = encodeURIComponent(serial);
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
       `/chat/v2/rooms/${roomId}/messages/${encodedSerial}/delete`,
       'POST',
@@ -143,12 +139,28 @@ export class ChatApi {
       body.headers = params.headers;
     }
 
-    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v2/rooms/${roomId}/messages`, 'POST', body);
+    // This can all be reverted once the change to serial from timeserial is complete.
+    const response = this._makeAuthorizedRequest<{ timeserial: string; serial?: string; createdAt: number }>(
+      `/chat/v2/rooms/${roomId}/messages`,
+      'POST',
+      body,
+    );
+    return response.then((data) => {
+      const serial = data.serial ?? data.timeserial;
+      return {
+        serial,
+        createdAt: data.createdAt,
+      };
+    });
   }
 
   async updateMessage(roomId: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
     const encodedSerial = encodeURIComponent(serial);
-    return this._makeAuthorizedRequest<UpdateMessageResponse>(`/chat/v2/rooms/${roomId}/messages/${encodedSerial}`, 'PUT', params);
+    return this._makeAuthorizedRequest<UpdateMessageResponse>(
+      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}`,
+      'PUT',
+      params,
+    );
   }
 
   async getOccupancy(roomId: string): Promise<OccupancyEvent> {

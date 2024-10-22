@@ -66,7 +66,7 @@ describe('Messages', () => {
       const { chatApi } = context;
       const timestamp = Date.now();
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        timeserial: 'abcdefghij@1672531200000-123',
+        serial: 'abcdefghij@1672531200000-123',
         createdAt: timestamp,
       });
 
@@ -76,7 +76,7 @@ describe('Messages', () => {
 
       expect(message).toEqual(
         expect.objectContaining({
-          timeserial: 'abcdefghij@1672531200000-123',
+          serial: 'abcdefghij@1672531200000-123',
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
@@ -89,7 +89,7 @@ describe('Messages', () => {
       const { chatApi } = context;
       const sendTimestamp = Date.now();
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        timeserial: 'abcdefghij@1672531200000-123',
+        serial: 'abcdefghij@1672531200000-123',
         createdAt: sendTimestamp,
       });
 
@@ -103,7 +103,7 @@ describe('Messages', () => {
 
       expect(deleteMessage1).toEqual(
         expect.objectContaining({
-          timeserial: 'abcdefghij@1672531200000-123',
+          serial: 'abcdefghij@1672531200000-123',
           text: 'hello there',
           clientId: 'clientId',
           deletedAt: new Date(deleteTimestamp),
@@ -119,7 +119,7 @@ describe('Messages', () => {
       const { chatApi, realtime } = context;
       const timestamp = Date.now();
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        timeserial: 'abcdefghij@1672531200000-123',
+        serial: 'abcdefghij@1672531200000-123',
         createdAt: timestamp,
       });
 
@@ -134,7 +134,7 @@ describe('Messages', () => {
 
       expect(message).toEqual(
         expect.objectContaining({
-          timeserial: 'abcdefghij@1672531200000-123',
+          serial: 'abcdefghij@1672531200000-123',
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
@@ -155,7 +155,7 @@ describe('Messages', () => {
         const { chatApi, realtime } = context;
         const timestamp = Date.now();
         vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-          timeserial: 'abcdefghij@1672531200000-123',
+          serial: 'abcdefghij@1672531200000-123',
           createdAt: timestamp,
         });
 
@@ -182,7 +182,7 @@ describe('Messages', () => {
         const { chatApi, realtime } = context;
         const timestamp = Date.now();
         vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-          timeserial: 'abcdefghij@1672531200000-123',
+          serial: 'abcdefghij@1672531200000-123',
           createdAt: timestamp,
         });
 
@@ -719,7 +719,7 @@ describe('Messages', () => {
       };
     };
 
-    // Set the timeserial of the channel attach
+    // Set the serial of the channel attach
     channel.properties.attachSerial = testAttachSerial;
 
     vi.spyOn(channel, 'whenState').mockImplementation(function () {
@@ -783,13 +783,13 @@ describe('Messages', () => {
     // Mock the channel state to be attached so we should query with the channel serial
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
 
-    // Set the timeserial of the channel (attachment serial)
+    // Set the serial of the channel (attachment serial)
     channel.properties.channelSerial = latestChannelSerial;
 
     // Subscribe to the messages
     const { getPreviousMessages } = room.messages.subscribe(() => {});
 
-    // Run a history query for the listener and check the chat api call is made with the channel timeserial
+    // Run a history query for the listener and check the chat api call is made with the channel serial
     await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
   });
 
@@ -815,7 +815,7 @@ describe('Messages', () => {
       };
     };
 
-    // Set the timeserials for before attachment testing
+    // Set the serials for before attachment testing
     channel.properties.attachSerial = firstAttachmentSerial;
 
     const { getPreviousMessages } = room.messages.subscribe(() => {});
@@ -916,7 +916,7 @@ describe('Messages', () => {
       return Promise.resolve(null);
     });
 
-    // Set the timeserials for the channel
+    // Set the serials for the channel
     channel.properties.channelSerial = firstChannelSerial;
     channel.properties.attachSerial = firstAttachSerial;
 
@@ -1005,7 +1005,7 @@ describe('Messages', () => {
       return Promise.resolve(null);
     });
 
-    // Set the timeserials for the channel
+    // Set the serials for the channel
     channel.properties.channelSerial = firstChannelSerial;
     channel.properties.attachSerial = firstAttachSerial;
 
@@ -1091,7 +1091,7 @@ describe('Messages', () => {
     await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
   });
 
-  it<TestContext>('should throw an error if listener query end time is later than query timeserial', async (context) => {
+  it<TestContext>('should throw an error if listener query end time is later than query serial', async (context) => {
     // Create a room instance
     const { room } = context;
 
@@ -1103,7 +1103,7 @@ describe('Messages', () => {
       };
     };
 
-    // Set the timeserials for the channel
+    // Set the serials for the channel
     channel.properties.channelSerial = '108uyDJAgBOihn12345678@1772531200000-1';
     channel.properties.attachSerial = '108uyDJAgBOihn12345678@1772531200000-1';
 

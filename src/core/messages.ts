@@ -18,7 +18,7 @@ import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import { DefaultTimeserial } from './timeserial.js';
+import { DefaultSerial } from './serial.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -139,7 +139,7 @@ export interface SendMessageParams {
 /**
  * Params for updating a message. It accepts all parameters that sending a
  * message accepts.
- * 
+ *
  * Note that updating a message replaces the whole previous message, so all
  * metadata and headers that should be kept must be set in the update request,
  * or they will be lost.
@@ -259,19 +259,19 @@ export interface Messages extends EmitsDiscontinuities {
 
   /**
    * Update a message in the chat room.
-   * 
+   *
    * Note that the Promise may resolve before OR after the updated message is
    * received from the realtime channel. This means you may see the message
    * that was just sent in a callback to `subscribe` before the returned
    * promise resolves.
-   * 
+   *
    * @param message The message to update.
    * @param update The new message content including headers and metadata. This
    * fully replaces the old content. Everything that's not set will be removed.
    * @param details Details to record about the update operation.
    * @returns A promise of the updated message.
    */
-  update(message : Message, update: UpdateMessageParams, details?: UpdateMessageDetails): Promise<Message>
+  update(message: Message, update: UpdateMessageParams, details?: UpdateMessageDetails): Promise<Message>;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -388,7 +388,7 @@ export class DefaultMessages
     const subscriptionPointParams = await subscriptionPoint;
 
     // Check the end time does not occur after the fromSerial time
-    const parseSerial = DefaultTimeserial.calculateTimeserial(subscriptionPointParams.fromSerial);
+    const parseSerial = DefaultSerial.calculateSerial(subscriptionPointParams.fromSerial);
     if (params.end && params.end > parseSerial.timestamp) {
       this._logger.error(
         `DefaultSubscriptionManager.getBeforeSubscriptionStart(); end time is after the subscription point of the listener`,
@@ -429,7 +429,7 @@ export class DefaultMessages
   }
 
   /**
-   * Create a promise that resolves with the attachSerial of the channel or the timeserial of the latest message.
+   * Create a promise that resolves with the attachSerial of the channel or the serial of the latest message.
    */
   private async _resolveSubscriptionStart(): Promise<{
     fromSerial: string;
@@ -544,7 +544,7 @@ export class DefaultMessages
 
     const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
     return new DefaultMessage(
-      response.timeserial,
+      response.serial,
       this._clientId,
       this._roomId,
       text,
@@ -554,14 +554,14 @@ export class DefaultMessages
     );
   }
 
-  async update(message : Message, update: UpdateMessageParams, details?: UpdateMessageDetails): Promise<Message> {
-    const response = await this._chatApi.updateMessage(this._roomId, message.timeserial, {
+  async update(message: Message, update: UpdateMessageParams, details?: UpdateMessageDetails): Promise<Message> {
+    const response = await this._chatApi.updateMessage(this._roomId, message.serial, {
       ...details,
       message: update,
     });
 
     return new DefaultMessage(
-      message.timeserial,
+      message.serial,
       this._clientId,
       this._roomId,
       update.text,
@@ -573,7 +573,7 @@ export class DefaultMessages
       message.deletionDetail ? { ...message.deletionDetail } : undefined,
       new Date(response.updatedAt),
       this._clientId,
-      details ? {...details} : undefined,
+      details ? { ...details } : undefined,
     );
   }
 
@@ -582,9 +582,9 @@ export class DefaultMessages
    */
   async delete(message: Message, deleteMessageParams?: DeleteMessageParams): Promise<Message> {
     this._logger.trace('Messages.delete();');
-    const response = await this._chatApi.deleteMessage(this._roomId, message.timeserial, deleteMessageParams);
+    const response = await this._chatApi.deleteMessage(this._roomId, message.serial, deleteMessageParams);
     const deletedMessage: Message = new DefaultMessage(
-      message.timeserial,
+      message.serial,
       message.clientId,
       message.roomId,
       message.text,
