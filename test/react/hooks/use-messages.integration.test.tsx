@@ -100,7 +100,6 @@ describe('useMessages', () => {
             void deleteMessage(message, {
               description: 'deleted',
               metadata: { reason: 'test' },
-              hard: false,
             });
           });
         }
@@ -124,7 +123,7 @@ describe('useMessages', () => {
 
     // expect a message to be received by the second room
     await waitForMessages(deletionsRoomTwo, 1);
-    expect(deletionsRoomTwo[0]?.isDeleted()).toBe(true);
+    expect(deletionsRoomTwo[0]?.isDeleted).toBe(true);
     expect(deletionsRoomTwo[0]?.deletedBy).toBe(chatClientOne.clientId);
   }, 10000);
 

@@ -187,7 +187,7 @@ This hook allows you to access the `Messages` instance of a `Room` from your Rea
 ### Sending, Deleting And Getting Messages
 
 The hook will provide the `Messages` instance, should you wish to interact with it directly, a `send` method
-that can be used to send a messages to the room,
+that can be used to send a message to the room,
 a `deleteMessage` method that can be used to delete a message from the room,
 and a `get` method that can be used to retrieve messages from the room.
 

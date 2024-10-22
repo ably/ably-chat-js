@@ -281,11 +281,9 @@ You can supply optional parameters to the `delete` method to provide additional 
 These additional parameters are:
 * `description`: a string that can be used to inform others as to why the message was deleted.
 * `metadata`: a map of extra information that can be attached to the deletion message.
-* `hard`: a boolean that determines whether the message should be hard deleted or not. If `hard` is set to `true`, the message will be permanently deleted and will not be recoverable.
 
 The return of this call will be the deleted message, as it would appear to other subscribers of the room.
-
-By default, the `hard` parameter is set to `false`.
+This is a _soft delete_ and the message will still be available in the history, but with the `deletedAt` property set.
 
 ```ts
 const deletedMessage = await room.messages.delete(message);

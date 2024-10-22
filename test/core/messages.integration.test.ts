@@ -175,7 +175,8 @@ describe('messages integration', () => {
     expect(history.hasNext()).toBe(false);
   });
 
-  it<TestContext>('should be able to retrieve chat deletion in history', async (context) => {
+  // At the moment, the history API does not materialize deleted messages in the history.
+  it.skip<TestContext>('should be able to retrieve chat deletion in history', async (context) => {
     const { chat } = context;
 
     const room = getRandomRoom(chat);
@@ -187,7 +188,7 @@ describe('messages integration', () => {
     const deletedMessage1 = await room.messages.delete(message1, { description: 'Deleted message' });
 
     // Do a history request to get the deleted message
-    const history = await room.messages.get({ limit: 1, direction: 'forwards' });
+    const history = await room.messages.get({ limit: 3, direction: 'forwards' });
 
     expect(history.items).toEqual([
       expect.objectContaining({

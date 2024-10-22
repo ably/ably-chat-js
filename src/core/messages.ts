@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 
 import { getChannel, messagesChannelName } from './channel.js';
 import { ChatApi } from './chat-api.js';
+import { DetailsMetadata } from './details-metadata.js';
 import {
   DiscontinuityEmitter,
   DiscontinuityListener,
@@ -13,7 +14,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { ChatMessageActions, MessageEvents, RealtimeMessageTypes } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageDetailsMetadata, MessageHeaders, MessageMetadata } from './message.js';
+import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
@@ -29,6 +30,15 @@ interface MessageEventsMap {
   [MessageEvents.Updated]: MessageEventPayload;
   [MessageEvents.Deleted]: MessageEventPayload;
 }
+
+/**
+ * Mapping of chat message actions to message events.
+ */
+const MessageActionsToEventsMap: Map<ChatMessageActions, MessageEvents> = new Map<ChatMessageActions, MessageEvents>([
+  [ChatMessageActions.MessageCreate, MessageEvents.Created],
+  [ChatMessageActions.MessageUpdate, MessageEvents.Updated],
+  [ChatMessageActions.MessageDelete, MessageEvents.Deleted],
+]);
 
 /**
  * Options for querying messages in a chat room.
@@ -85,10 +95,10 @@ export interface DeleteMessageParams {
   description?: string;
 
   /**
-   * The {@link MessageDetailsMetadata} that will be added to the deletion request. Defaults to empty.
+   * The {@link DetailsMetadata} that will be added to the deletion request. Defaults to empty.
    *
    */
-  metadata?: MessageDetailsMetadata;
+  metadata?: DetailsMetadata;
 }
 
 /**
@@ -477,7 +487,7 @@ export class DefaultMessages
    * @throws {@link ErrorInfo} if headers defines any headers prefixed with reserved words.
    */
   async send(params: SendMessageParams): Promise<Message> {
-    this._logger.trace('Messages.send();');
+    this._logger.trace('Messages.send();', { params });
 
     const { text, metadata, headers } = params;
 
@@ -496,9 +506,9 @@ export class DefaultMessages
   /**
    * @inheritdoc Messages
    */
-  async delete(message: Message, deleteMessageParams?: DeleteMessageParams): Promise<Message> {
-    this._logger.trace('Messages.delete();');
-    const response = await this._chatApi.deleteMessage(this._roomId, message.timeserial, deleteMessageParams);
+  async delete(message: Message, params?: DeleteMessageParams): Promise<Message> {
+    this._logger.trace('Messages.delete();', { params });
+    const response = await this._chatApi.deleteMessage(this._roomId, message.timeserial, params);
     const deletedMessage: Message = new DefaultMessage(
       message.timeserial,
       message.clientId,
@@ -510,14 +520,14 @@ export class DefaultMessages
       new Date(response.deletedAt),
       this._clientId,
       {
-        description: deleteMessageParams?.description,
-        metadata: deleteMessageParams?.metadata,
+        description: params?.description,
+        metadata: params?.metadata,
       },
       message.updatedAt,
       message.updatedBy,
       message.updateDetail,
     );
-    this._logger.debug('Messages.delete(); message deleted successfully', { message });
+    this._logger.debug('Messages.delete(); message deleted successfully', { deletedMessage });
     return deletedMessage;
   }
 
@@ -561,30 +571,12 @@ export class DefaultMessages
     this._listenerSubscriptionPoints.clear();
   }
 
-  // This function is used to convert the message action from Ably to the chat MessageEvents.
-  private _messageActionToMessageEvent(action: ChatMessageActions): MessageEvents | undefined {
-    switch (action) {
-      case ChatMessageActions.MessageCreate: {
-        return MessageEvents.Created;
-      }
-      case ChatMessageActions.MessageUpdate: {
-        return MessageEvents.Updated;
-      }
-      case ChatMessageActions.MessageDelete: {
-        return MessageEvents.Deleted;
-      }
-      default: {
-        return undefined;
-      }
-    }
-  }
-
   private _processEvent(channelEventMessage: Ably.InboundMessage) {
     this._logger.trace('Messages._processEvent();', {
       channelEventMessage,
     });
     const { action } = channelEventMessage;
-    const event = this._messageActionToMessageEvent(action as ChatMessageActions);
+    const event = MessageActionsToEventsMap.get(action as ChatMessageActions);
     if (!event) {
       this._logger.debug('Messages._processEvent(); received unknown message action', { action });
       return;

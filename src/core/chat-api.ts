@@ -97,7 +97,7 @@ export class ChatApi {
     const body: MessageDetails = { description: params?.description, metadata: params?.metadata };
     const restParams = params?.hard ? { hard: true } : { hard: false };
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
-      `/chat/v1/rooms/${roomId}/messages/${timeserial}/delete`,
+      `/chat/v2/rooms/${roomId}/messages/${timeserial}/delete`,
       'POST',
       body,
       restParams,

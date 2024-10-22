@@ -13,7 +13,6 @@ import {
   Reaction,
 } from '@ably/chat';
 
-
 export const Chat = () => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
@@ -74,7 +73,7 @@ export const Chat = () => {
         .then((result: PaginatedResult<Message>) => {
           // reverse the messages so they are displayed in the correct order
           // and don't include deleted messages
-          setMessages(result.items.filter((m) => !m.isDeleted()).reverse());
+          setMessages(result.items.filter((m) => !m.isDeleted).reverse());
           setLoading(false);
         })
         .catch((error: unknown) => {
