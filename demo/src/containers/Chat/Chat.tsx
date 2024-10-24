@@ -22,6 +22,18 @@ export const Chat = () => {
 
   const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
 
+  const handleUpdatedMessage = (message: Message) => {
+    setMessages((prevMessage) => {
+      const index = prevMessage.findIndex((m) => m.timeserial === message.timeserial);
+      if (index === -1) {
+        return prevMessage;
+      }
+      const updatedArray = [...prevMessage];
+      updatedArray[index] = message;
+      return updatedArray;
+    });
+  };
+
   const {
     send: sendMessage,
     getPreviousMessages,
@@ -50,15 +62,7 @@ export const Chat = () => {
           break;
         }
         case MessageEvents.Updated: {
-          setMessages((prevMessage) => {
-            const index = prevMessage.findIndex((m) => m.timeserial === message.message.timeserial);
-            if (index === -1) {
-              return prevMessage;
-            }
-            const updatedArray = [...prevMessage];
-            updatedArray[index] = message.message;
-            return updatedArray;
-          });
+          handleUpdatedMessage(message.message);
           break;
         }
         default: {
@@ -164,21 +168,21 @@ export const Chat = () => {
     }
   }, [messages, loading]);
 
-  const updateMessage = useCallback(
-    (message: Message) => {
-      const newText = prompt('Enter new text');
-      if (!newText) {
-        return;
-      }
-      const updateOp = update(message, {
-        text: newText,
-        metadata: message.metadata,
-        headers: message.headers,
-      });
-      console.log('message ', message.timeserial, ' updated. op=', updateOp);
-    },
-    [update],
-  );
+  const onUpdateMessage = (message: Message) => {
+    const newText = prompt('Enter new text');
+    if (!newText) {
+      return;
+    }
+    update(message, {
+      text: newText,
+      metadata: message.metadata,
+      headers: message.headers,
+    }).then((updatedMessage: Message) => {
+      handleUpdatedMessage(updatedMessage);
+    }).catch((error: unknown) => {
+      console.warn("failed to update message", error);
+    });
+  };
 
   return (
     <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-screen">
@@ -205,7 +209,6 @@ export const Chat = () => {
         >
           {messages.map((msg) => (
             <MessageComponent
-              id={msg.timeserial}
               key={msg.timeserial}
               self={msg.clientId === clientId}
               message={msg}
@@ -218,7 +221,7 @@ export const Chat = () => {
                   });
                 });
               }}
-              onMessageClick={updateMessage}
+              onMessageUpdate={onUpdateMessage}
             ></MessageComponent>
           ))}
           <div ref={messagesEndRef} />

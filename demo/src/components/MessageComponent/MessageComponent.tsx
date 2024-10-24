@@ -1,7 +1,7 @@
 import { Message } from '@ably/chat';
 import React, { useCallback, useState } from 'react';
 import clsx from 'clsx';
-import { FaTrash } from 'react-icons/fa6';
+import { FaPencil, FaTrash } from 'react-icons/fa6';
 
 function twoDigits(input: number): string {
   if (input === 0) {
@@ -14,58 +14,48 @@ function twoDigits(input: number): string {
 }
 
 interface MessageProps {
-  id: string;
   self?: boolean;
   message: Message;
 
-  onMessageClick?(message: Message): void;
+  onMessageUpdate?(message: Message): void;
 
   onMessageDelete?(msg: Message): void;
 }
 
-export const MessageComponent: React.FC<MessageProps> = ({
-  id,
-  self = false,
-  message,
-  onMessageClick,
-  onMessageDelete,
-}) => {
-  const handleMessageClick = useCallback(() => {
-    onMessageClick?.(message);
-  }, [id, onMessageClick]);
-
-  const [hovered, setHovered] = useState(false);
-
-  let displayCreatedAt: string;
-  if (Date.now() - message.createdAt.getTime() < 1000 * 60 * 60 * 24) {
+function shortDate(date: Date): string {
+  if (Date.now() - date.getTime() < 1000 * 60 * 60 * 24) {
     // last 24h show the time
-    displayCreatedAt = twoDigits(message.createdAt.getHours()) + ':' + twoDigits(message.createdAt.getMinutes());
+    return twoDigits(date.getHours()) + ':' + twoDigits(date.getMinutes());
   } else {
     // older, show full date
-    displayCreatedAt =
-      message.createdAt.getDate() +
+    return date.getDate() +
       '/' +
-      message.createdAt.getMonth() +
+      date.getMonth() +
       '/' +
-      message.createdAt.getFullYear() +
+      date.getFullYear() +
       ' ' +
-      twoDigits(message.createdAt.getHours()) +
+      twoDigits(date.getHours()) +
       ':' +
-      twoDigits(message.createdAt.getMinutes());
+      twoDigits(date.getMinutes());
   }
+}
 
-  const handleDelete = useCallback(() => {
-    // Add your delete handling logic here
-    onMessageDelete?.(message);
-  }, [message, onMessageDelete]);
+export const MessageComponent: React.FC<MessageProps> = ({
+  self = false,
+  message,
+  onMessageUpdate,
+  onMessageDelete,
+}) => {
+  const handleMessageUpdate = useCallback((e : React.UIEvent) => {
+    e.stopPropagation(); onMessageUpdate?.(message);
+  }, [ message ]);
+
+  const handleMessageDelete = useCallback((e : React.UIEvent) => {
+    e.stopPropagation(); onMessageDelete?.(message);
+  }, [ message ]);
 
   return (
-    <div
-      className="chat-message"
-      onClick={handleMessageClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div className="chat-message">
       <div className={clsx('flex items-end', { ['justify-end']: self, ['justify-start']: !self })}>
         <div
           className={clsx('flex flex-col text max-w-xs mx-2 relative', {
@@ -76,9 +66,14 @@ export const MessageComponent: React.FC<MessageProps> = ({
           <div className="text-xs">
             <span>{message.clientId}</span> &middot;{' '}
             <span className="sent-at-time">
-              <span className="short">{displayCreatedAt}</span>
+              <span className="short">{shortDate(message.createdAt)}</span>
               <span className="long">{message.createdAt.toLocaleString()}</span>
             </span>
+            {message.isUpdated && (<> &middot; Edited <span className="sent-at-time">
+                <span className="short">{shortDate(message.updatedAt!)}</span>
+                <span className="long">{message.createdAt.toLocaleString()}</span>
+              </span>
+            </>)}
           </div>
           <div
             className={clsx('px-4 py-2 rounded-lg inline-block', {
@@ -87,16 +82,15 @@ export const MessageComponent: React.FC<MessageProps> = ({
             })}
           >
             {message.text}
-            {hovered && (
-              <FaTrash
-                className="ml-2 cursor-pointer text-red-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete();
-                }}
-              />
-            )}
           </div>
+          <div className="buttons"
+            ><FaPencil
+              className="cursor-pointer text-gray-100 m-1 hover:text-gray-500 inline-block"
+              onClick={handleMessageUpdate}
+            ></FaPencil><FaTrash
+              className="cursor-pointer text-red-500 m-1 hover:text-red-700 inline-block"
+              onClick={handleMessageDelete}
+            /></div>
         </div>
       </div>
     </div>
