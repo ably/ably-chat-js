@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
 import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
@@ -22,25 +22,52 @@ export const Chat = () => {
 
   const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
 
+  const handleUpdatedMessage = (message: Message) => {
+    setMessages((prevMessage) => {
+      const index = prevMessage.findIndex((m) => m.timeserial === message.timeserial);
+      if (index === -1) {
+        return prevMessage;
+      }
+      const updatedArray = [...prevMessage];
+      updatedArray[index] = message;
+      return updatedArray;
+    });
+  };
+
   const {
     send: sendMessage,
     getPreviousMessages,
     deleteMessage,
+    update,
   } = useMessages({
     listener: (message: MessageEventPayload) => {
       switch (message.type) {
-        case MessageEvents.Created:
+        case MessageEvents.Created: {
           setMessages((prevMessage) => [...prevMessage, message.message]);
           break;
-        case MessageEvents.Deleted:
+        }
+        case MessageEvents.Deleted: {
           setMessages((prevMessage) => {
-            return prevMessage.filter((m) => {
+            const updatedArray = prevMessage.filter((m) => {
               return m.timeserial !== message.message.timeserial;
             });
+
+            // don't change state if deleted message is not in the current list
+            if (prevMessage.length === updatedArray.length) {
+              return prevMessage;
+            }
+
+            return updatedArray;
           });
           break;
-        default:
+        }
+        case MessageEvents.Updated: {
+          handleUpdatedMessage(message.message);
+          break;
+        }
+        default: {
           console.error('Unknown message', message);
+        }
       }
     },
     onDiscontinuity: (discontinuity) => {
@@ -141,6 +168,22 @@ export const Chat = () => {
     }
   }, [messages, loading]);
 
+  const onUpdateMessage = (message: Message) => {
+    const newText = prompt('Enter new text');
+    if (!newText) {
+      return;
+    }
+    update(message, {
+      text: newText,
+      metadata: message.metadata,
+      headers: message.headers,
+    }).then((updatedMessage: Message) => {
+      handleUpdatedMessage(updatedMessage);
+    }).catch((error: unknown) => {
+      console.warn("failed to update message", error);
+    });
+  };
+
   return (
     <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-screen">
       <ConnectionStatusComponent />
@@ -166,16 +209,9 @@ export const Chat = () => {
         >
           {messages.map((msg) => (
             <MessageComponent
-              id={msg.timeserial}
               key={msg.timeserial}
               self={msg.clientId === clientId}
               message={msg}
-              onMessageClick={(id) => {
-                console.log(
-                  'Message clicked',
-                  messages.find((m) => m.timeserial === id),
-                );
-              }}
               onMessageDelete={(msg) => {
                 deleteMessage(msg, { description: 'deleted by user' }).then((deletedMessage: Message) => {
                   setMessages((prevMessages) => {
@@ -185,6 +221,7 @@ export const Chat = () => {
                   });
                 });
               }}
+              onMessageUpdate={onUpdateMessage}
             ></MessageComponent>
           ))}
           <div ref={messagesEndRef} />
