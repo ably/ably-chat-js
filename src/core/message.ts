@@ -1,5 +1,6 @@
+import { DetailsMetadata } from './details-metadata.js';
 import { Headers } from './headers.js';
-import { DetailsMetadata, Metadata } from './metadata.js';
+import { Metadata } from './metadata.js';
 import { DefaultTimeserial, Timeserial } from './timeserial.js';
 
 /**
@@ -132,13 +133,13 @@ export interface Message {
    * Determines if this message has been deleted.
    * @returns true if the message has been deleted.
    */
-  isDeleted(): boolean;
+  get isDeleted(): boolean;
 
   /**
    * Determines if this message has been updated.
    * @returns true if the message has been updated.
    */
-  isUpdated(): boolean;
+  get isUpdated(): boolean;
 
   /**
    * Determines if this message was created before the given message. This comparison is based on
@@ -198,11 +199,11 @@ export class DefaultMessage implements Message {
     Object.freeze(this);
   }
 
-  isDeleted(): boolean {
+  get isDeleted(): boolean {
     return this.deletedAt !== undefined;
   }
 
-  isUpdated(): boolean {
+  get isUpdated(): boolean {
     return this.updatedAt !== undefined;
   }
 

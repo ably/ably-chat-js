@@ -12,6 +12,7 @@ export type {
   OnConnectionStatusChangeResponse,
 } from './connection-status.js';
 export { ConnectionLifecycle } from './connection-status.js';
+export type { DetailsMetadata } from './details-metadata.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
 export { MessageEvents, PresenceEvents } from './events.js';
@@ -29,6 +30,7 @@ export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
 export type { Message, MessageDetails, MessageDetailsMetadata, MessageHeaders, MessageMetadata } from './message.js';
 export type {
+  DeleteMessageParams,
   MessageEventPayload,
   MessageListener,
   Messages,
@@ -36,7 +38,7 @@ export type {
   QueryOptions,
   SendMessageParams,
 } from './messages.js';
-export type { DetailsMetadata, Metadata } from './metadata.js';
+export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener, OccupancySubscriptionResponse } from './occupancy.js';
 export type {
   Presence,

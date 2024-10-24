@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 
 import { getChannel, messagesChannelName } from './channel.js';
 import { ChatApi } from './chat-api.js';
+import { DetailsMetadata } from './details-metadata.js';
 import {
   DiscontinuityEmitter,
   DiscontinuityListener,
@@ -29,6 +30,15 @@ interface MessageEventsMap {
   [MessageEvents.Updated]: MessageEventPayload;
   [MessageEvents.Deleted]: MessageEventPayload;
 }
+
+/**
+ * Mapping of chat message actions to message events.
+ */
+const MessageActionsToEventsMap: Map<ChatMessageActions, MessageEvents> = new Map<ChatMessageActions, MessageEvents>([
+  [ChatMessageActions.MessageCreate, MessageEvents.Created],
+  [ChatMessageActions.MessageUpdate, MessageEvents.Updated],
+  [ChatMessageActions.MessageDelete, MessageEvents.Deleted],
+]);
 
 /**
  * Options for querying messages in a chat room.
@@ -66,6 +76,29 @@ export interface QueryOptions {
    * @defaultValue forwards
    */
   direction?: 'forwards' | 'backwards';
+}
+
+/**
+ * The parameters supplied to delete a message.
+ */
+export interface DeleteMessageParams {
+  /**
+   * The optional method to use for deleting messages. Defaults to 'soft' if not provided.
+   * `soft` will mark the message as deleted but keep it in the history, while `hard` will
+   * permanently delete the message from persistent storage.
+   */
+  hard?: boolean;
+
+  /**
+   * The optional description for deleting messages.
+   */
+  description?: string;
+
+  /**
+   * The {@link DetailsMetadata} that will be added to the deletion request. Defaults to empty.
+   *
+   */
+  metadata?: DetailsMetadata;
 }
 
 /**
@@ -189,6 +222,21 @@ export interface Messages extends EmitsDiscontinuities {
    * @returns A promise that resolves when the message was published.
    */
   send(params: SendMessageParams): Promise<Message>;
+
+  /**
+   * Delete a message in the chat room.
+   *
+   * This method uses the Ably Chat API REST endpoint for deleting messages.
+   *
+   * Note that the Promise may resolve before OR after the message is deleted
+   * from the realtime channel. This means you may see the message that was just
+   * deleted in a callback to `subscribe` before the returned promise resolves.
+   *
+   * @returns A promise that resolves when the message was deleted.
+   * @param message - The message to delete.
+   * @param deleteMessageParams - The optional parameters for deleting the message.
+   */
+  delete(message: Message, deleteMessageParams?: DeleteMessageParams): Promise<Message>;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -439,12 +487,11 @@ export class DefaultMessages
    * @throws {@link ErrorInfo} if headers defines any headers prefixed with reserved words.
    */
   async send(params: SendMessageParams): Promise<Message> {
-    this._logger.trace('Messages.send();');
+    this._logger.trace('Messages.send();', { params });
 
     const { text, metadata, headers } = params;
 
     const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
-
     return new DefaultMessage(
       response.timeserial,
       this._clientId,
@@ -454,6 +501,34 @@ export class DefaultMessages
       metadata ?? {},
       headers ?? {},
     );
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  async delete(message: Message, params?: DeleteMessageParams): Promise<Message> {
+    this._logger.trace('Messages.delete();', { params });
+    const response = await this._chatApi.deleteMessage(this._roomId, message.timeserial, params);
+    const deletedMessage: Message = new DefaultMessage(
+      message.timeserial,
+      message.clientId,
+      message.roomId,
+      message.text,
+      message.createdAt,
+      message.metadata,
+      message.headers,
+      new Date(response.deletedAt),
+      this._clientId,
+      {
+        description: params?.description,
+        metadata: params?.metadata,
+      },
+      message.updatedAt,
+      message.updatedBy,
+      message.updateDetail,
+    );
+    this._logger.debug('Messages.delete(); message deleted successfully', { deletedMessage });
+    return deletedMessage;
   }
 
   /**
@@ -496,30 +571,12 @@ export class DefaultMessages
     this._listenerSubscriptionPoints.clear();
   }
 
-  // This function is used to convert the message action from Ably to the chat MessageEvents.
-  private _messageActionToMessageEvent(action: ChatMessageActions): MessageEvents | undefined {
-    switch (action) {
-      case ChatMessageActions.MessageCreate: {
-        return MessageEvents.Created;
-      }
-      case ChatMessageActions.MessageUpdate: {
-        return MessageEvents.Updated;
-      }
-      case ChatMessageActions.MessageDelete: {
-        return MessageEvents.Deleted;
-      }
-      default: {
-        return undefined;
-      }
-    }
-  }
-
   private _processEvent(channelEventMessage: Ably.InboundMessage) {
     this._logger.trace('Messages._processEvent();', {
       channelEventMessage,
     });
     const { action } = channelEventMessage;
-    const event = this._messageActionToMessageEvent(action as ChatMessageActions);
+    const event = MessageActionsToEventsMap.get(action as ChatMessageActions);
     if (!event) {
       this._logger.debug('Messages._processEvent(); received unknown message action', { action });
       return;

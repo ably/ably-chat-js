@@ -120,7 +120,7 @@ describe('ChatMessage', () => {
       new Date(1672531200000),
     );
 
-    expect(firstMessage.isDeleted()).toBe(true);
+    expect(firstMessage.isDeleted).toBe(true);
   });
 
   it('is updated', () => {
@@ -140,7 +140,7 @@ describe('ChatMessage', () => {
       new Date(1672531200000),
     );
 
-    expect(firstMessage.isUpdated()).toBe(true);
+    expect(firstMessage.isUpdated).toBe(true);
   });
 
   it('throws an error with an invalid timeserial', () => {
