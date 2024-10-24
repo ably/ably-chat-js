@@ -66,7 +66,7 @@ interface UpdateMessageParams {
   description?: string;
 
   /** Metadata of the update operation */
-  metadata?: Record<string, string>;
+  metadata?: MessageDetailsMetadata;
 }
 
 interface UpdateMessageResponse {
