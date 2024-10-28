@@ -62,7 +62,7 @@ export type {
   RoomReactionsSubscriptionResponse,
   SendReactionParams,
 } from './room-reactions.js';
-export type { OnRoomStatusChangeResponse, RoomLifecycle, RoomStatusChange, RoomStatusListener } from './room-status.js';
+export type { OnRoomStatusChangeResponse, RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
 export type { Typing, TypingEvent, TypingListener, TypingSubscriptionResponse } from './typing.js';

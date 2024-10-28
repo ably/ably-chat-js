@@ -21,7 +21,7 @@ describe('Room', () => {
     await room.attach();
 
     // We should be attached
-    expect(room.status.status).toEqual(RoomStatus.Attached);
+    expect(room.status).toEqual(RoomStatus.Attached);
 
     // If we check the underlying channels, they should be attached too
     const messagesChannel = await room.messages.channel;
@@ -45,7 +45,7 @@ describe('Room', () => {
     await room.detach();
 
     // We should be detached
-    expect(room.status.status).toEqual(RoomStatus.Detached);
+    expect(room.status).toEqual(RoomStatus.Detached);
 
     // If we check the underlying channels, they should be detached too
     const messagesChannel = await room.messages.channel;
@@ -68,20 +68,20 @@ describe('Room', () => {
     await room.attach();
 
     // We should be attached
-    expect(room.status.status).toEqual(RoomStatus.Attached);
+    expect(room.status).toEqual(RoomStatus.Attached);
 
     // Release the room
     await (room as DefaultRoom).release();
 
     // We should be released
-    expect(room.status.status).toEqual(RoomStatus.Released);
+    expect(room.status).toEqual(RoomStatus.Released);
   });
 
   it<TestContext>('releasing a room multiple times is idempotent', async ({ room }) => {
     await room.attach();
 
     // We should be attached
-    expect(room.status.status).toEqual(RoomStatus.Attached);
+    expect(room.status).toEqual(RoomStatus.Attached);
 
     // Release the room multiple times
     await (room as DefaultRoom).release();
@@ -89,6 +89,6 @@ describe('Room', () => {
     await (room as DefaultRoom).release();
 
     // We should be released
-    expect(room.status.status).toEqual(RoomStatus.Released);
+    expect(room.status).toEqual(RoomStatus.Released);
   });
 });

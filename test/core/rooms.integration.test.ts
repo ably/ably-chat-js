@@ -46,7 +46,7 @@ describe('Rooms', () => {
     channelFailable.notifyState('failed');
 
     // Wait for room to enter failed state
-    await waitForRoomStatus(room.status, RoomStatus.Failed);
+    await waitForRoomStatus(room, RoomStatus.Failed);
 
     // Release the room
     await chat.rooms.release('test');

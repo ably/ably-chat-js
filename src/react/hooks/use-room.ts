@@ -51,9 +51,9 @@ export interface UseRoomResponse extends ChatStatusResponse {
  * Helper function to create a status object from a change event or the room
  * status. It makes sure error isn't set at all if it's undefined in the source.
  */
-const makeStatusObject = (lifecycle: { status: RoomStatus; error?: Ably.ErrorInfo }) => ({
-  status: lifecycle.status,
-  error: lifecycle.error,
+const makeStatusObject = (room: Room) => ({
+  status: room.status,
+  error: room.error,
 });
 
 /**
@@ -91,7 +91,7 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
   const [roomStatus, setRoomStatus] = useState<{
     status: RoomStatus;
     error?: Ably.ErrorInfo;
-  }>(makeStatusObject(room.status));
+  }>(makeStatusObject(room));
 
   // create stable references for the listeners
   const onRoomStatusChangeRef = useEventListenerRef(params?.onStatusChange);
@@ -99,14 +99,14 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
   // Effect that keeps the roomStatus state up to date
   useEffect(() => {
     logger.debug('useRoom(); setting up room status listener', { roomId: room.roomId });
-    const { off } = room.status.onChange((change) => {
+    const { off } = room.onStatusChange((change) => {
       setRoomStatus(makeStatusObjectFromChangeEvent(change));
     });
 
     // update react state if real state has changed since setting up the listener
     setRoomStatus((prev) => {
-      if (room.status.status !== prev.status || room.status.error !== prev.error) {
-        return makeStatusObject(room.status);
+      if (room.status !== prev.status || room.error !== prev.error) {
+        return makeStatusObject(room);
       }
       return prev;
     });
@@ -121,7 +121,7 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
   useEffect(() => {
     if (!onRoomStatusChangeRef) return;
     logger.debug('useRoom(); applying user-provided listener', { roomId: room.roomId });
-    const { off } = room.status.onChange(onRoomStatusChangeRef);
+    const { off } = room.onStatusChange(onRoomStatusChangeRef);
     return () => {
       logger.debug('useRoom(); removing user-provided listener', { roomId: room.roomId });
       off();

@@ -227,7 +227,7 @@ describe('useRoom', () => {
 
     let listeners: RoomStatusListener[] = [];
 
-    vi.spyOn(room.status, 'onChange').mockImplementation((listener) => {
+    vi.spyOn(room, 'onStatusChange').mockImplementation((listener) => {
       listeners.push(listener);
       return {
         off: () => {
@@ -279,7 +279,7 @@ describe('useRoom', () => {
 
     let listeners: RoomStatusListener[] = [];
 
-    vi.spyOn(room.status, 'onChange').mockImplementation((listener) => {
+    vi.spyOn(room, 'onStatusChange').mockImplementation((listener) => {
       listeners.push(listener);
       return {
         off: () => {

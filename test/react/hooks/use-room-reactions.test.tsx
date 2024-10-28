@@ -1,4 +1,4 @@
-import { ConnectionStatus, DiscontinuityListener, Room, RoomReactionListener,RoomStatus } from '@ably/chat';
+import { ConnectionStatus, DiscontinuityListener, Room, RoomReactionListener, RoomStatus } from '@ably/chat';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

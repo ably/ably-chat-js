@@ -1,4 +1,4 @@
-import { ChatClient, Reaction, RoomOptionsDefaults, RoomReactionListener,RoomStatus } from '@ably/chat';
+import { ChatClient, Reaction, RoomOptionsDefaults, RoomReactionListener, RoomStatus } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';

@@ -10,7 +10,13 @@ import { DefaultPresence, Presence } from './presence.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
 import { RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
-import { DefaultRoomLifecycle, RoomLifecycle, RoomStatus } from './room-status.js';
+import {
+  DefaultRoomLifecycle,
+  InternalRoomLifecycle,
+  OnRoomStatusChangeResponse,
+  RoomStatus,
+  RoomStatusListener,
+} from './room-status.js';
 import { DefaultTyping, Typing } from './typing.js';
 
 /**
@@ -67,7 +73,24 @@ export interface Room {
    *
    * @returns The current status.
    */
-  get status(): RoomLifecycle;
+  get status(): RoomStatus;
+
+  /**
+   * The current error, if any, that caused the room to enter the current status.
+   */
+  get error(): Ably.ErrorInfo | undefined;
+
+  /**
+   * Registers a listener that will be called whenever the room status changes.
+   * @param listener The function to call when the status changes.
+   * @returns An object that can be used to unregister the listener.
+   */
+  onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse;
+
+  /**
+   * Removes all listeners that were added by the `onStatusChange` method.
+   */
+  offAllStatusChange(): void;
 
   /**
    * Attaches to the room to receive events in realtime.
@@ -429,8 +452,29 @@ export class DefaultRoom implements Room {
   /**
    * @inheritdoc Room
    */
-  get status(): RoomLifecycle {
-    return this._lifecycle;
+  get status(): RoomStatus {
+    return this._lifecycle.status;
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  get error(): Ably.ErrorInfo | undefined {
+    return this._lifecycle.error;
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse {
+    return this._lifecycle.onChange(listener);
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  offAllStatusChange(): void {
+    this._lifecycle.offAll();
   }
 
   /**
@@ -466,5 +510,14 @@ export class DefaultRoom implements Room {
    */
   initializationStatus(): Promise<void> {
     return this._asyncOpsAfter;
+  }
+
+  /**
+   * @internal
+   *
+   * Returns the rooms lifecycle.
+   */
+  get lifecycle(): InternalRoomLifecycle {
+    return this._lifecycle;
   }
 }

@@ -396,13 +396,13 @@ describe('UserPresence', { timeout: 10000 }, () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomStatus.Suspended);
+    await waitForRoomStatus(room, RoomStatus.Suspended);
 
     // Force the channel back into attached state - to simulate recovery
     channelSuspendable.notifyState('attached');
 
     // Wait for the room to go into attached
-    await waitForRoomStatus(room.status, RoomStatus.Attached);
+    await waitForRoomStatus(room, RoomStatus.Attached);
 
     // Wait for a discontinuity event to be received
     expect(discontinuityErrors.length).toBe(1);
@@ -414,7 +414,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomStatus.Suspended);
+    await waitForRoomStatus(room, RoomStatus.Suspended);
 
     // We shouldn't get any more discontinuity events
     expect(discontinuityErrors.length).toBe(1);
