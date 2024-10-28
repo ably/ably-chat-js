@@ -1,4 +1,4 @@
-import { ConnectionLifecycle, DiscontinuityListener, Room, RoomLifecycle } from '@ably/chat';
+import { ConnectionStatus, DiscontinuityListener, Room, RoomLifecycle } from '@ably/chat';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -8,7 +8,7 @@ import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
 
 let mockRoom: Room;
-let mockCurrentConnectionStatus: ConnectionLifecycle;
+let mockCurrentConnectionStatus: ConnectionStatus;
 let mockCurrentRoomStatus: RoomLifecycle;
 let mockConnectionError: Ably.ErrorInfo;
 let mockRoomError: Ably.ErrorInfo;
@@ -41,7 +41,7 @@ describe('usePresence', () => {
     // create a new mock room before each test, enabling presence
     vi.resetAllMocks();
     mockLogger = makeTestLogger();
-    mockCurrentConnectionStatus = ConnectionLifecycle.Connected;
+    mockCurrentConnectionStatus = ConnectionStatus.Connected;
     mockCurrentRoomStatus = RoomLifecycle.Attached;
     mockRoom = makeRandomRoom({
       options: {
@@ -72,7 +72,7 @@ describe('usePresence', () => {
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
     expect(result.current.roomError).toBeErrorInfo({ message: 'test error' });
-    expect(result.current.connectionStatus).toEqual(ConnectionLifecycle.Connected);
+    expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
     expect(result.current.connectionError).toBeErrorInfo({ message: 'test error' });
   });
 
@@ -175,9 +175,9 @@ describe('usePresence', () => {
     );
   });
 
-  describe.each([[ConnectionLifecycle.Failed], [ConnectionLifecycle.Suspended]])(
+  describe.each([[ConnectionStatus.Failed], [ConnectionStatus.Suspended]])(
     'invalid connection state for joining presence',
-    (connectionState: ConnectionLifecycle) => {
+    (connectionState: ConnectionStatus) => {
       it('should not join presence if connection state is: ' + connectionState, () => {
         // change the connection status, so we render the hook with the new status
         mockCurrentConnectionStatus = connectionState;

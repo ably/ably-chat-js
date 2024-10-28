@@ -1,4 +1,4 @@
-import { ConnectionLifecycle, Presence, PresenceData, RoomLifecycle } from '@ably/chat';
+import { ConnectionStatus, Presence, PresenceData, RoomLifecycle } from '@ably/chat';
 import { type ErrorInfo } from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -49,10 +49,7 @@ export interface UsePresenceResponse extends ChatStatusResponse {
 /**
  * A set of connection states that are considered inactive and where presence operations should not be attempted.
  */
-const INACTIVE_CONNECTION_STATES = new Set<ConnectionLifecycle>([
-  ConnectionLifecycle.Suspended,
-  ConnectionLifecycle.Failed,
-]);
+const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.Suspended, ConnectionStatus.Failed]);
 
 /**
  * A hook that provides access to the {@link Presence} instance in the room.

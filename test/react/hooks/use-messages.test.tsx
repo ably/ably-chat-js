@@ -1,5 +1,5 @@
 import {
-  ConnectionLifecycle,
+  ConnectionStatus,
   DiscontinuityListener,
   Message,
   MessageEvents,
@@ -17,7 +17,7 @@ import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
 
 let mockRoom: Room;
-let mockCurrentConnectionStatus: ConnectionLifecycle;
+let mockCurrentConnectionStatus: ConnectionStatus;
 let mockCurrentRoomStatus: RoomLifecycle;
 let mockConnectionError: Ably.ErrorInfo;
 let mockRoomError: Ably.ErrorInfo;
@@ -50,7 +50,7 @@ describe('useMessages', () => {
     // create a new mock room before each test, enabling messages
     vi.resetAllMocks();
     testLogger = makeTestLogger();
-    mockCurrentConnectionStatus = ConnectionLifecycle.Connected;
+    mockCurrentConnectionStatus = ConnectionStatus.Connected;
     mockCurrentRoomStatus = RoomLifecycle.Attached;
     mockRoom = makeRandomRoom({});
   });
@@ -72,7 +72,7 @@ describe('useMessages', () => {
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
     expect(result.current.roomError).toBeErrorInfo({ message: 'test error' });
-    expect(result.current.connectionStatus).toEqual(ConnectionLifecycle.Connected);
+    expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
     expect(result.current.connectionError).toBeErrorInfo({ message: 'test error' });
   });
 

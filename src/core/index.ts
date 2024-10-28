@@ -4,14 +4,13 @@
 
 export { ChatClient } from './chat.js';
 export type { ClientOptions } from './config.js';
-export type { Connection } from './connection.js';
 export type {
-  ConnectionStatus,
+  Connection,
   ConnectionStatusChange,
   ConnectionStatusListener,
   OnConnectionStatusChangeResponse,
-} from './connection-status.js';
-export { ConnectionLifecycle } from './connection-status.js';
+} from './connection.js';
+export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
 export { MessageEvents, PresenceEvents } from './events.js';

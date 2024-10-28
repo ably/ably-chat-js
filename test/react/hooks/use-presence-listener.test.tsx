@@ -1,5 +1,5 @@
 import {
-  ConnectionLifecycle,
+  ConnectionStatus,
   DiscontinuityListener,
   Logger,
   PresenceEvent,
@@ -21,7 +21,7 @@ import { makeRandomRoom } from '../../helper/room.ts';
 let mockRoom: Room;
 let mockLogger: Logger;
 
-let mockCurrentConnectionStatus: ConnectionLifecycle;
+let mockCurrentConnectionStatus: ConnectionStatus;
 let mockCurrentRoomStatus: RoomLifecycle;
 let mockConnectionError: Ably.ErrorInfo;
 let mockRoomError: Ably.ErrorInfo;
@@ -65,7 +65,7 @@ describe('usePresenceListener', () => {
     mockConnectionError = new Ably.ErrorInfo('test', 500, 50000);
     mockRoomError = new Ably.ErrorInfo('test', 500, 50000);
     mockCurrentRoomStatus = RoomLifecycle.Attached;
-    mockCurrentConnectionStatus = ConnectionLifecycle.Connected;
+    mockCurrentConnectionStatus = ConnectionStatus.Connected;
 
     const { result } = renderHook(() => usePresenceListener());
 
@@ -76,7 +76,7 @@ describe('usePresenceListener', () => {
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
     expect(result.current.roomError).toBe(mockRoomError);
-    expect(result.current.connectionStatus).toEqual(ConnectionLifecycle.Connected);
+    expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
     expect(result.current.connectionError).toBe(mockConnectionError);
   });
 

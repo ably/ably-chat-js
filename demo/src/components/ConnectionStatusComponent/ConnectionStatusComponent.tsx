@@ -1,12 +1,12 @@
 import React from 'react';
 import { useChatConnection } from '@ably/chat/react';
-import { ConnectionLifecycle } from '@ably/chat';
+import { ConnectionStatus } from '@ably/chat';
 
 export const ConnectionStatusComponent: React.FC = () => {
   const { currentStatus } = useChatConnection();
 
   switch (currentStatus) {
-    case ConnectionLifecycle.Connecting: {
+    case ConnectionStatus.Connecting: {
       return (
         <div
           className="text-blue-800 bg-blue-50"
@@ -16,7 +16,7 @@ export const ConnectionStatusComponent: React.FC = () => {
         </div>
       );
     }
-    case ConnectionLifecycle.Disconnected: {
+    case ConnectionStatus.Disconnected: {
       return (
         <div
           className="text-yellow-800 bg-yellow-50"
@@ -26,7 +26,7 @@ export const ConnectionStatusComponent: React.FC = () => {
         </div>
       );
     }
-    case ConnectionLifecycle.Suspended: {
+    case ConnectionStatus.Suspended: {
       return (
         <div
           className="text-yellow-800 bg-yellow-50"
@@ -36,7 +36,7 @@ export const ConnectionStatusComponent: React.FC = () => {
         </div>
       );
     }
-    case ConnectionLifecycle.Failed: {
+    case ConnectionStatus.Failed: {
       return (
         <div
           className="text-red-800 bg-red-50"
