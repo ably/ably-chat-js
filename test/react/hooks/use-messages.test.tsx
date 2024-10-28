@@ -5,7 +5,7 @@ import {
   MessageEvents,
   MessageListener,
   Room,
-  RoomLifecycle,
+  RoomStatus,
 } from '@ably/chat';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
@@ -18,7 +18,7 @@ import { makeRandomRoom } from '../../helper/room.ts';
 
 let mockRoom: Room;
 let mockCurrentConnectionStatus: ConnectionStatus;
-let mockCurrentRoomStatus: RoomLifecycle;
+let mockCurrentRoomStatus: RoomStatus;
 let mockConnectionError: Ably.ErrorInfo;
 let mockRoomError: Ably.ErrorInfo;
 let testLogger: ReturnType<typeof makeTestLogger>;
@@ -51,7 +51,7 @@ describe('useMessages', () => {
     vi.resetAllMocks();
     testLogger = makeTestLogger();
     mockCurrentConnectionStatus = ConnectionStatus.Connected;
-    mockCurrentRoomStatus = RoomLifecycle.Attached;
+    mockCurrentRoomStatus = RoomStatus.Attached;
     mockRoom = makeRandomRoom({});
   });
 
@@ -70,7 +70,7 @@ describe('useMessages', () => {
     expect(result.current.messages).toBe(mockRoom.messages);
 
     // check connection and room metrics are correctly provided
-    expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
+    expect(result.current.roomStatus).toBe(RoomStatus.Attached);
     expect(result.current.roomError).toBeErrorInfo({ message: 'test error' });
     expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
     expect(result.current.connectionError).toBeErrorInfo({ message: 'test error' });

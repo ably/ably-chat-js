@@ -1,4 +1,4 @@
-import { ChatClient, RoomLifecycle, RoomOptionsDefaults, RoomStatusListener } from '@ably/chat';
+import { ChatClient, RoomOptionsDefaults, RoomStatus, RoomStatusListener } from '@ably/chat';
 import { act, cleanup, render, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import React from 'react';
@@ -74,7 +74,7 @@ describe('useRoom', () => {
     expect(response.room.roomId).toBe(roomId);
     expect(response.attach).toBeTruthy();
     expect(response.detach).toBeTruthy();
-    expect(response.roomStatus).toBe(RoomLifecycle.Initializing);
+    expect(response.roomStatus).toBe(RoomStatus.Initializing);
   });
 
   it('should return working shortcuts for attach and detach functions', () => {
@@ -236,7 +236,7 @@ describe('useRoom', () => {
       };
     });
 
-    const expectedChange = { current: RoomLifecycle.Attached, previous: RoomLifecycle.Attaching };
+    const expectedChange = { current: RoomStatus.Attached, previous: RoomStatus.Attaching };
     let called = false;
     const listener: RoomStatusListener = (foundChange) => {
       expect(foundChange).toBe(expectedChange);
@@ -304,28 +304,28 @@ describe('useRoom', () => {
     const { result } = renderHook(() => useRoom(), { wrapper: WithClient });
 
     act(() => {
-      const change = { current: RoomLifecycle.Attached, previous: RoomLifecycle.Attaching };
+      const change = { current: RoomStatus.Attached, previous: RoomStatus.Attaching };
       for (const l of listeners) l(change);
     });
 
-    expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
+    expect(result.current.roomStatus).toBe(RoomStatus.Attached);
     expect(result.current.roomError).toBeUndefined();
 
     act(() => {
-      const change = { current: RoomLifecycle.Detaching, previous: RoomLifecycle.Attached };
+      const change = { current: RoomStatus.Detaching, previous: RoomStatus.Attached };
       for (const l of listeners) l(change);
     });
 
-    expect(result.current.roomStatus).toBe(RoomLifecycle.Detaching);
+    expect(result.current.roomStatus).toBe(RoomStatus.Detaching);
     expect(result.current.roomError).toBeUndefined();
 
     const err = new Ably.ErrorInfo('test', 123, 456);
     act(() => {
-      const change = { current: RoomLifecycle.Failed, previous: RoomLifecycle.Detaching, error: err };
+      const change = { current: RoomStatus.Failed, previous: RoomStatus.Detaching, error: err };
       for (const l of listeners) l(change);
     });
 
-    expect(result.current.roomStatus).toBe(RoomLifecycle.Failed);
+    expect(result.current.roomStatus).toBe(RoomStatus.Failed);
     expect(result.current.roomError).toBe(err);
     await room.detach();
   });

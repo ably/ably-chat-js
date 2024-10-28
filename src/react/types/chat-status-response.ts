@@ -1,4 +1,4 @@
-import { ConnectionStatus, ErrorInfo, RoomLifecycle } from '@ably/chat';
+import { ConnectionStatus, ErrorInfo, RoomStatus } from '@ably/chat';
 
 /**
  * Common status variables for chat features. Most hooks in this library
@@ -12,7 +12,7 @@ export interface ChatStatusResponse {
   readonly connectionError?: ErrorInfo;
 
   /** Provides the status of the room. */
-  readonly roomStatus: RoomLifecycle;
+  readonly roomStatus: RoomStatus;
 
   /** If there's an error with the room it will be available here. */
   readonly roomError?: ErrorInfo;

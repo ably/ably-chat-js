@@ -1,4 +1,4 @@
-import { ChatClient, Message, MessageListener, RoomLifecycle, RoomOptionsDefaults } from '@ably/chat';
+import { ChatClient, Message, MessageListener, RoomOptionsDefaults, RoomStatus } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -47,7 +47,7 @@ describe('useMessages', () => {
       const { send, roomStatus } = useMessages();
 
       useEffect(() => {
-        if (roomStatus === RoomLifecycle.Attached) {
+        if (roomStatus === RoomStatus.Attached) {
           void send({ text: 'hello world' });
         }
       }, [roomStatus]);
@@ -85,7 +85,7 @@ describe('useMessages', () => {
     // start listening for messages
     const messagesRoomOne: Message[] = [];
 
-    let currentRoomStatus: RoomLifecycle;
+    let currentRoomStatus: RoomStatus;
 
     const TestComponent = () => {
       const { roomStatus } = useMessages({
@@ -115,7 +115,7 @@ describe('useMessages', () => {
     // wait for the first room to be attached
     await waitFor(
       () => {
-        expect(currentRoomStatus).toBe(RoomLifecycle.Attached);
+        expect(currentRoomStatus).toBe(RoomStatus.Attached);
       },
       { timeout: 3000 },
     );
@@ -144,7 +144,7 @@ describe('useMessages', () => {
     await roomTwo.messages.send({ text: 'You underestimate my power' });
 
     let getPreviousMessagesRoomOne: ReturnType<typeof useMessages>['getPreviousMessages'];
-    let roomStatusRoomOne: RoomLifecycle;
+    let roomStatusRoomOne: RoomStatus;
 
     const TestComponent = () => {
       const { getPreviousMessages, roomStatus } = useMessages({
@@ -173,7 +173,7 @@ describe('useMessages', () => {
     // wait for the first room to be attached
     await waitFor(
       () => {
-        expect(roomStatusRoomOne).toBe(RoomLifecycle.Attached);
+        expect(roomStatusRoomOne).toBe(RoomStatus.Attached);
       },
       { timeout: 3000 },
     );

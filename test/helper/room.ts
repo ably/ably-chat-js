@@ -12,12 +12,12 @@ import { makeTestLogger } from './logger.ts';
 import { ablyRealtimeClient } from './realtime-client.ts';
 
 // Wait 3 seconds for the room to reach the expected status
-export const waitForRoomStatus = async (status: RoomStatus, expected: RoomLifecycle) => {
-  return vi.waitUntil(() => status.current === expected, 3000);
+export const waitForRoomStatus = async (status: RoomLifecycle, expected: RoomStatus) => {
+  return vi.waitUntil(() => status.status === expected, 3000);
 };
 
 // Wait 3 seconds for the room error to reach an expected code
-export const waitForRoomError = async (status: RoomStatus, expected: ErrorCodes) => {
+export const waitForRoomError = async (status: RoomLifecycle, expected: ErrorCodes) => {
   return vi.waitUntil(() => status.error?.code === expected, 3000);
 };
 

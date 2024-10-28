@@ -1,4 +1,4 @@
-import { ConnectionStatusChange, Room, RoomLifecycle, RoomStatusChange } from '@ably/chat';
+import { ConnectionStatusChange, Room, RoomStatus, RoomStatusChange } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useContext, useEffect, useState } from 'react';
 
@@ -51,12 +51,19 @@ export interface UseRoomResponse extends ChatStatusResponse {
  * Helper function to create a status object from a change event or the room
  * status. It makes sure error isn't set at all if it's undefined in the source.
  */
-function makeStatusObject(source: { current: RoomLifecycle; error?: Ably.ErrorInfo }) {
-  return {
-    status: source.current,
-    error: source.error,
-  };
-}
+const makeStatusObject = (lifecycle: { status: RoomStatus; error?: Ably.ErrorInfo }) => ({
+  status: lifecycle.status,
+  error: lifecycle.error,
+});
+
+/**
+ * Helper function to create a status object from a change event or the room
+ * status. It makes sure error isn't set at all if it's undefined in the source.
+ */
+const makeStatusObjectFromChangeEvent = (event: RoomStatusChange) => ({
+  status: event.current,
+  error: event.error,
+});
 
 /**
  * A hook that provides access to the current room.
@@ -82,7 +89,7 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
 
   // room error and status callbacks
   const [roomStatus, setRoomStatus] = useState<{
-    status: RoomLifecycle;
+    status: RoomStatus;
     error?: Ably.ErrorInfo;
   }>(makeStatusObject(room.status));
 
@@ -93,12 +100,12 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
   useEffect(() => {
     logger.debug('useRoom(); setting up room status listener', { roomId: room.roomId });
     const { off } = room.status.onChange((change) => {
-      setRoomStatus(makeStatusObject(change));
+      setRoomStatus(makeStatusObjectFromChangeEvent(change));
     });
 
     // update react state if real state has changed since setting up the listener
     setRoomStatus((prev) => {
-      if (room.status.current !== prev.status || room.status.error !== prev.error) {
+      if (room.status.status !== prev.status || room.status.error !== prev.error) {
         return makeStatusObject(room.status);
       }
       return prev;

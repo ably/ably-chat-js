@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { normalizeClientOptions } from '../../src/core/config.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptionsDefaults } from '../../src/core/room-options.ts';
-import { RoomLifecycle } from '../../src/core/room-status.ts';
+import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { TypingEvent } from '../../src/core/typing.ts';
 import { randomClientId, randomRoomId } from '../helper/identifier.ts';
@@ -176,7 +176,7 @@ describe('Typing', () => {
     // Attach the room
     await room.attach();
 
-    await waitForRoomStatus(room.status, RoomLifecycle.Attached);
+    await waitForRoomStatus(room.status, RoomStatus.Attached);
 
     // Subscribe discontinuity events
     const discontinuityErrors: (Ably.ErrorInfo | undefined)[] = [];
@@ -192,13 +192,13 @@ describe('Typing', () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
+    await waitForRoomStatus(room.status, RoomStatus.Suspended);
 
     // Force the channel back into attached state - to simulate recovery
     channelSuspendable.notifyState('attached');
 
     // Wait for the room to go into attached
-    await waitForRoomStatus(room.status, RoomLifecycle.Attached);
+    await waitForRoomStatus(room.status, RoomStatus.Attached);
 
     // Wait for a discontinuity event to be received
     expect(discontinuityErrors.length).toBe(1);
@@ -210,7 +210,7 @@ describe('Typing', () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
+    await waitForRoomStatus(room.status, RoomStatus.Suspended);
 
     // We shouldn't get any more discontinuity events
     expect(discontinuityErrors.length).toBe(1);

@@ -1,4 +1,4 @@
-import { ConnectionStatus, DiscontinuityListener, Room, RoomLifecycle } from '@ably/chat';
+import { ConnectionStatus, DiscontinuityListener, Room, RoomStatus } from '@ably/chat';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,7 +9,7 @@ import { makeRandomRoom } from '../../helper/room.ts';
 
 let mockRoom: Room;
 let mockCurrentConnectionStatus: ConnectionStatus;
-let mockCurrentRoomStatus: RoomLifecycle;
+let mockCurrentRoomStatus: RoomStatus;
 let mockConnectionError: Ably.ErrorInfo;
 let mockRoomError: Ably.ErrorInfo;
 let mockLogger: ReturnType<typeof makeTestLogger>;
@@ -42,7 +42,7 @@ describe('usePresence', () => {
     vi.resetAllMocks();
     mockLogger = makeTestLogger();
     mockCurrentConnectionStatus = ConnectionStatus.Connected;
-    mockCurrentRoomStatus = RoomLifecycle.Attached;
+    mockCurrentRoomStatus = RoomStatus.Attached;
     mockRoom = makeRandomRoom({
       options: {
         presence: {
@@ -70,7 +70,7 @@ describe('usePresence', () => {
     expect(result.current.error).toBeUndefined();
 
     // check connection and room metrics are correctly provided
-    expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
+    expect(result.current.roomStatus).toBe(RoomStatus.Attached);
     expect(result.current.roomError).toBeErrorInfo({ message: 'test error' });
     expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
     expect(result.current.connectionError).toBeErrorInfo({ message: 'test error' });
@@ -196,12 +196,12 @@ describe('usePresence', () => {
     vi.spyOn(mockRoom.presence, 'enter');
     // check we do not enter presence if the room is not attached
     for (const status of [
-      RoomLifecycle.Detaching,
-      RoomLifecycle.Detached,
-      RoomLifecycle.Suspended,
-      RoomLifecycle.Failed,
-      RoomLifecycle.Releasing,
-      RoomLifecycle.Released,
+      RoomStatus.Detaching,
+      RoomStatus.Detached,
+      RoomStatus.Suspended,
+      RoomStatus.Failed,
+      RoomStatus.Releasing,
+      RoomStatus.Released,
     ]) {
       // change the room status, so we render the hook with the new status
       mockCurrentRoomStatus = status;

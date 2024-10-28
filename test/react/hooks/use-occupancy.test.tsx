@@ -4,7 +4,7 @@ import {
   OccupancyEvent,
   OccupancyListener,
   Room,
-  RoomLifecycle,
+  RoomStatus,
 } from '@ably/chat';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
@@ -23,7 +23,7 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
 }));
 
 vi.mock('../../../src/react/hooks/use-room.js', () => ({
-  useRoom: () => ({ room: mockRoom, roomStatus: RoomLifecycle.Attached }),
+  useRoom: () => ({ room: mockRoom, roomStatus: RoomStatus.Attached }),
 }));
 
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
@@ -53,7 +53,7 @@ describe('useOccupancy', () => {
     expect(result.current.presenceMembers).toBe(0);
 
     // check connection and room metrics are correctly provided
-    expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
+    expect(result.current.roomStatus).toBe(RoomStatus.Attached);
     expect(result.current.roomError).toBeUndefined();
     expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
     expect(result.current.connectionError).toBeUndefined();

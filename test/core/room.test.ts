@@ -1,4 +1,3 @@
-import { RoomLifecycle } from '@ably/chat';
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,6 +7,7 @@ import { ErrorCodes } from '../../src/core/errors.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
 import { RoomOptions, RoomOptionsDefaults } from '../../src/core/room-options.ts';
+import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -181,7 +181,7 @@ describe('Room', () => {
       vi.spyOn(context.realtime.channels, 'get');
 
       const room = context.getRoom(defaultRoomOptions, initAfter);
-      expect(room.status.current).toBe(RoomLifecycle.Initializing);
+      expect(room.status.status).toBe(RoomStatus.Initializing);
 
       // allow a tick to happen
       await new Promise((res) => setTimeout(res, 0));
@@ -194,7 +194,7 @@ describe('Room', () => {
       // await for room to become initialized
       await (room as DefaultRoom).initializationStatus();
 
-      expect(room.status.current).toBe(RoomLifecycle.Initialized);
+      expect(room.status.status).toBe(RoomStatus.Initialized);
       expect(context.realtime.channels.get).toHaveBeenCalledTimes(5); // once for each feature
     });
 
@@ -207,7 +207,7 @@ describe('Room', () => {
       vi.spyOn(context.realtime.channels, 'get');
 
       const room = context.getRoom(defaultRoomOptions, initAfter);
-      expect(room.status.current).toBe(RoomLifecycle.Initializing);
+      expect(room.status.status).toBe(RoomStatus.Initializing);
 
       // allow a tick to happen
       await new Promise((res) => setTimeout(res, 0));
@@ -220,7 +220,7 @@ describe('Room', () => {
       // await for room to become initialized
       await (room as DefaultRoom).initializationStatus();
 
-      expect(room.status.current).toBe(RoomLifecycle.Initialized);
+      expect(room.status.status).toBe(RoomStatus.Initialized);
       expect(context.realtime.channels.get).toHaveBeenCalledTimes(5); // once for each feature
     });
 
@@ -233,7 +233,7 @@ describe('Room', () => {
       vi.spyOn(context.realtime.channels, 'get');
 
       const room = context.getRoom({}, initAfter);
-      expect(room.status.current).toBe(RoomLifecycle.Initializing);
+      expect(room.status.status).toBe(RoomStatus.Initializing);
 
       let msgResolve: (channel: Ably.RealtimeChannel) => void = () => void 0;
       const messagesChannelPromise = new Promise<Ably.RealtimeChannel>((res) => {
@@ -254,7 +254,7 @@ describe('Room', () => {
       await new Promise((res) => setTimeout(res, 0));
 
       // must still be initializing since messages channel is not yet initialized
-      expect(room.status.current).toBe(RoomLifecycle.Initializing);
+      expect(room.status.status).toBe(RoomStatus.Initializing);
 
       // this is the actual channel
       const channel = await (room.messages as unknown as { _channel: Promise<Ably.RealtimeChannel> })._channel;
@@ -263,7 +263,7 @@ describe('Room', () => {
       // await for room to become initialized
       await (room as DefaultRoom).initializationStatus();
 
-      expect(room.status.current).toBe(RoomLifecycle.Initialized);
+      expect(room.status.status).toBe(RoomStatus.Initialized);
       expect(context.realtime.channels.get).toHaveBeenCalledTimes(1); // once, only for messages (others are disabled)
     });
   });
@@ -274,7 +274,7 @@ describe('Room', () => {
     vi.spyOn(context.realtime.channels, 'get');
 
     const room = context.getRoom(defaultRoomOptions, initAfter);
-    expect(room.status.current).toBe(RoomLifecycle.Initializing);
+    expect(room.status.status).toBe(RoomStatus.Initializing);
 
     // allow a tick to happen
     await new Promise((res) => setTimeout(res, 0));
@@ -294,7 +294,7 @@ describe('Room', () => {
 
     expect(context.realtime.channels.get).not.toHaveBeenCalled();
     await expect(initStatus).rejects.toBeErrorInfoWithCode(ErrorCodes.RoomIsReleased);
-    expect(room.status.current).toBe(RoomLifecycle.Released);
+    expect(room.status.status).toBe(RoomStatus.Released);
   });
 
   it<TestContext>('should finish full initialization if released called after features started initializing', async (context) => {
@@ -306,7 +306,7 @@ describe('Room', () => {
     vi.spyOn(context.realtime.channels, 'get');
 
     const room = context.getRoom({}, initAfter);
-    expect(room.status.current).toBe(RoomLifecycle.Initializing);
+    expect(room.status.status).toBe(RoomStatus.Initializing);
 
     // record all status changes
     const statuses: string[] = [];
@@ -333,7 +333,7 @@ describe('Room', () => {
     await new Promise((res) => setTimeout(res, 0));
 
     // must still be initializing since messages channel is not yet initialized
-    expect(room.status.current).toBe(RoomLifecycle.Initializing);
+    expect(room.status.status).toBe(RoomStatus.Initializing);
     const releasePromise = (room as DefaultRoom).release();
 
     // expect the release promise to be different to initAfter now, because
@@ -347,7 +347,7 @@ describe('Room', () => {
 
     await releasePromise;
 
-    expect(statuses).toEqual([RoomLifecycle.Initialized, RoomLifecycle.Releasing, RoomLifecycle.Released]);
+    expect(statuses).toEqual([RoomStatus.Initialized, RoomStatus.Releasing, RoomStatus.Released]);
   });
 
   it<TestContext>('should wait for initialization to finish before attaching the room', async (context) => {

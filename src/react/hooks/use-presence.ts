@@ -1,4 +1,4 @@
-import { ConnectionStatus, Presence, PresenceData, RoomLifecycle } from '@ably/chat';
+import { ConnectionStatus, Presence, PresenceData, RoomStatus } from '@ably/chat';
 import { type ErrorInfo } from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -92,9 +92,9 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
   // enter the room when the hook is mounted
   useEffect(() => {
-    const canJoinPresence = roomStatus === RoomLifecycle.Attached && !INACTIVE_CONNECTION_STATES.has(connectionStatus);
+    const canJoinPresence = roomStatus === RoomStatus.Attached && !INACTIVE_CONNECTION_STATES.has(connectionStatus);
     const canLeavePresence =
-      roomStatusAndConnectionStatusRef.current.roomStatus === RoomLifecycle.Attached &&
+      roomStatusAndConnectionStatusRef.current.roomStatus === RoomStatus.Attached &&
       !INACTIVE_CONNECTION_STATES.has(roomStatusAndConnectionStatusRef.current.connectionStatus);
 
     // wait until the room is attached before attempting to enter, and ensure the connection is active

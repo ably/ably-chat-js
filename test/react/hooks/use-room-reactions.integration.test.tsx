@@ -1,4 +1,4 @@
-import { ChatClient, Reaction, RoomLifecycle, RoomOptionsDefaults, RoomReactionListener } from '@ably/chat';
+import { ChatClient, Reaction, RoomOptionsDefaults, RoomReactionListener,RoomStatus } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -53,7 +53,7 @@ describe('useRoomReactions', () => {
 
       // should send a reaction when mounted and the room is attached
       useEffect(() => {
-        if (roomStatus !== RoomLifecycle.Attached) return;
+        if (roomStatus !== RoomStatus.Attached) return;
         void send({ type: 'like' });
       }, [send, roomStatus]);
 
@@ -93,7 +93,7 @@ describe('useRoomReactions', () => {
     // store the received reactions
     const reactions: Reaction[] = [];
 
-    let currentRoomStatus: RoomLifecycle;
+    let currentRoomStatus: RoomStatus;
 
     // the test component should receive a reaction
     const TestComponent = ({ listener }: { listener: RoomReactionListener }) => {
@@ -121,7 +121,7 @@ describe('useRoomReactions', () => {
     // wait for the room to be attached
     await waitFor(
       () => {
-        expect(currentRoomStatus).toBe(RoomLifecycle.Attached);
+        expect(currentRoomStatus).toBe(RoomStatus.Attached);
       },
       { timeout: 3000 },
     );

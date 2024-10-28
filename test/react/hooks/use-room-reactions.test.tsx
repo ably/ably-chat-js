@@ -1,4 +1,4 @@
-import { ConnectionStatus, DiscontinuityListener, Room, RoomLifecycle, RoomReactionListener } from '@ably/chat';
+import { ConnectionStatus, DiscontinuityListener, Room, RoomReactionListener,RoomStatus } from '@ably/chat';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,7 +16,7 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
 }));
 
 vi.mock('../../../src/react/hooks/use-room.js', () => ({
-  useRoom: () => ({ room: mockRoom, roomStatus: RoomLifecycle.Attached }),
+  useRoom: () => ({ room: mockRoom, roomStatus: RoomStatus.Attached }),
 }));
 
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
@@ -44,7 +44,7 @@ describe('useRoomReactions', () => {
     expect(result.current.reactions).toBe(mockRoom.reactions);
 
     // check connection and room metrics are correctly provided
-    expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
+    expect(result.current.roomStatus).toBe(RoomStatus.Attached);
     expect(result.current.roomError).toBeUndefined();
     expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
     expect(result.current.connectionError).toBeUndefined();
