@@ -86,9 +86,8 @@ describe('occupancy', () => {
     await subscriberRealtimeChannel.presence.enter({ foo: 'bar' });
 
     // Wait for the occupancy to reach the expected occupancy
-    // We get an extra 1 from inside Realtime, so expect 3
     await waitForExpectedInstantaneousOccupancy(room, {
-      connections: 3,
+      connections: 2,
       presenceMembers: 1,
     });
 
@@ -99,9 +98,9 @@ describe('occupancy', () => {
     await subscriberRealtimeChannel.detach();
     await realtimeChannel.detach();
 
-    // We'll get 1 connection from the channel until resources clean up in realtime, so expect that and end here
+    // Everything should be back to 0
     await waitForExpectedInstantaneousOccupancy(room, {
-      connections: 1,
+      connections: 0,
       presenceMembers: 0,
     });
   });
@@ -141,7 +140,7 @@ describe('occupancy', () => {
     await waitForExpectedInbandOccupancy(
       occupancyUpdates,
       {
-        connections: 3,
+        connections: 2,
         presenceMembers: 1,
       },
       TEST_TIMEOUT,
