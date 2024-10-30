@@ -53,7 +53,7 @@ describe('occupancy', () => {
   it<TestContext>('should be able to get the occupancy of a chat room', { timeout: TEST_TIMEOUT }, async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Get the occupancy of the room, instantaneously it will be 0
     await waitForExpectedInstantaneousOccupancy(room, {
@@ -61,7 +61,7 @@ describe('occupancy', () => {
       presenceMembers: 0,
     });
 
-    const { name: channelName } = await room.messages.channel;
+    const { name: channelName } = room.messages.channel;
 
     // In a separate realtime client, attach to the same room
     const realtimeClient = ablyRealtimeClientWithToken();
@@ -108,7 +108,7 @@ describe('occupancy', () => {
   it<TestContext>('allows subscriptions to inband occupancy', { timeout: TEST_TIMEOUT }, async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Subscribe to occupancy
     const occupancyUpdates: OccupancyEvent[] = [];
@@ -131,7 +131,7 @@ describe('occupancy', () => {
 
     // In a separate realtime client, attach to the same room
     const realtimeClient = ablyRealtimeClientWithToken();
-    const { name: channelName } = await room.messages.channel;
+    const { name: channelName } = room.messages.channel;
     const realtimeChannel = realtimeClient.channels.get(channelName);
     await realtimeChannel.attach();
     await realtimeChannel.presence.enter();
@@ -150,7 +150,7 @@ describe('occupancy', () => {
   it<TestContext>('handles discontinuities', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Attach the room
     await room.attach();
@@ -161,7 +161,7 @@ describe('occupancy', () => {
       discontinuityErrors.push(error);
     });
 
-    const channelSuspendable = (await room.messages.channel) as Ably.RealtimeChannel & {
+    const channelSuspendable = room.messages.channel as Ably.RealtimeChannel & {
       notifyState(state: 'suspended' | 'attached'): void;
     };
 

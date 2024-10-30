@@ -25,12 +25,12 @@ describe('Room', () => {
   });
 
   describe('room get-release lifecycle', () => {
-    it<TestContext>('should return a the same room if rooms.get called twice', (context) => {
+    it<TestContext>('should return a the same room if rooms.get called twice', async (context) => {
       const roomId = randomRoomId();
       const roomOptions: RoomOptions = defaultRoomOptions;
-      const room1 = context.rooms.get(roomId, roomOptions);
-      const room2 = context.rooms.get(roomId, roomOptions);
-      expect(room1 === room2).toBeTruthy();
+      const room1 = await context.rooms.get(roomId, roomOptions);
+      const room2 = await context.rooms.get(roomId, roomOptions);
+      expect(room1).toBe(room2);
     });
 
     it<TestContext>('should return a fresh room in room.get if previous one is currently releasing', (context) => {
@@ -39,13 +39,13 @@ describe('Room', () => {
       const room1 = context.rooms.get(roomId, roomOptions);
       void context.rooms.release(roomId);
       const room2 = context.rooms.get(roomId, roomOptions);
-      expect(room1 === room2).not.toBeTruthy();
+      expect(room1).not.toBe(room2);
     });
 
     it<TestContext>('should correctly forward releasing promises to new room instances', async (context) => {
       const roomId = randomRoomId();
       const roomOptions: RoomOptions = defaultRoomOptions;
-      const room1 = context.rooms.get(roomId, roomOptions);
+      const room1 = await context.rooms.get(roomId, roomOptions);
 
       let resolveReleasePromise: () => void = () => void 0;
       const releasePromise = new Promise<void>((resolve) => {
@@ -56,7 +56,7 @@ describe('Room', () => {
         return releasePromise;
       });
 
-      const room2 = context.rooms.get(roomId, roomOptions);
+      const room2 = await context.rooms.get(roomId, roomOptions);
 
       // this should forward the previous room's release() promise
       const secondReleasePromise = (room2 as DefaultRoom).release();

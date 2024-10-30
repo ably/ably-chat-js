@@ -22,7 +22,8 @@ export const waitForRoomError = async (status: RoomStatus, expected: ErrorCodes)
 };
 
 // Gets a random room with default options from the chat client
-export const getRandomRoom = (chat: ChatClient): Room => chat.rooms.get(randomRoomId(), defaultRoomOptions);
+export const getRandomRoom = async (chat: ChatClient): Promise<Room> =>
+  chat.rooms.get(randomRoomId(), defaultRoomOptions);
 
 // Return a default set of room options
 export const defaultRoomOptions: RoomOptions = {
@@ -40,12 +41,5 @@ export const makeRandomRoom = (params: {
   const realtime = params.realtime ?? ablyRealtimeClient();
   const chatApi = params.chatApi ?? new ChatApi(realtime, logger);
 
-  return new DefaultRoom(
-    randomRoomId(),
-    params.options ?? defaultRoomOptions,
-    realtime,
-    chatApi,
-    logger,
-    Promise.resolve(),
-  );
+  return new DefaultRoom(randomRoomId(), params.options ?? defaultRoomOptions, realtime, chatApi, logger);
 };

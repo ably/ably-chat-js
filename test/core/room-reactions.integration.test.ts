@@ -48,8 +48,8 @@ describe('room-level reactions integration test', () => {
   it<TestContext>('sets the agent version on the channel', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
-    const channel = (await room.messages.channel) as RealtimeChannelWithOptions;
+    const room = await getRandomRoom(chat);
+    const channel = room.messages.channel as RealtimeChannelWithOptions;
 
     expect(channel.channelOptions.params).toEqual(expect.objectContaining({ agent: CHANNEL_OPTIONS_AGENT_STRING }));
   });
@@ -57,7 +57,7 @@ describe('room-level reactions integration test', () => {
   it<TestContext>('sends and receives a reaction', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     const expectedReactions = ['like', 'like', 'love', 'hate'];
     const reactions: string[] = [];
@@ -81,7 +81,7 @@ describe('room-level reactions integration test', () => {
   it<TestContext>('handles discontinuities', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Attach the room
     await room.attach();
@@ -92,7 +92,7 @@ describe('room-level reactions integration test', () => {
       discontinuityErrors.push(error);
     });
 
-    const channelSuspendable = (await room.reactions.channel) as Ably.RealtimeChannel & {
+    const channelSuspendable = room.reactions.channel as Ably.RealtimeChannel & {
       notifyState(state: 'suspended' | 'attached'): void;
     };
 
