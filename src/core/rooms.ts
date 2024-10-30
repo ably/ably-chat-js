@@ -166,8 +166,8 @@ export class DefaultRooms implements Rooms {
     if (releasing) {
       // The releasing operation is not for the existing room, it is for the room that was released
       // before. We have to short-circuit and never initialise the existing room.
-      existing.kill();
       this._rooms.delete(roomId);
+      existing.kill();
       return Promise.resolve();
     }
 
