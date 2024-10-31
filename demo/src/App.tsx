@@ -34,13 +34,16 @@ const App: FC<AppProps> = () => {
       options={RoomOptionsDefaults}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto' }}>
-        <Chat setRoomId={setRoomId} roomId={roomIdState}/>
+        <Chat
+          setRoomId={setRoomId}
+          roomId={roomIdState}
+        />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <UserPresenceComponent />
           <OccupancyComponent />
         </div>
       </div>
     </ChatRoomProvider>
-  )
+  );
 };
 export default App;

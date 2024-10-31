@@ -1,9 +1,6 @@
-import { ConnectionStatusChange, Room, RoomLifecycle, RoomStatusChange } from '@ably/chat';
-import * as Ably from 'ably';
-import { useCallback, useEffect, useState } from 'react';
+import { ConnectionStatusChange, Room, RoomStatusChange } from '@ably/chat';
+import { useCallback } from 'react';
 
-import { wrapRoomPromise } from '../helper/room-promise.js';
-import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoom } from '../helper/use-eventual-room.js';
 import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';

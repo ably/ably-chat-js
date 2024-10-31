@@ -6,7 +6,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RealtimeWithOptions } from '../../../src/core/realtime-extensions.ts';
 import { VERSION } from '../../../src/core/version.ts';
 import { useChatClient } from '../../../src/react/hooks/use-chat-client.ts';
-import { useRoom } from '../../../src/react/hooks/use-room.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 

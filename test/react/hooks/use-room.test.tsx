@@ -67,7 +67,9 @@ describe('useRoom', () => {
       </ChatClientProvider>
     );
     render(<TestProvider />);
-    await vi.waitFor(() => { expect(latestResponse.room?.roomId).toBe(roomId); });
+    await vi.waitFor(() => {
+      expect(latestResponse?.room?.roomId).toBe(roomId);
+    });
     expect(latestResponse?.attach).toBeTruthy();
     expect(latestResponse?.detach).toBeTruthy();
     expect(latestResponse?.roomStatus).toBe(RoomLifecycle.Initializing);
@@ -166,7 +168,9 @@ describe('useRoom', () => {
 
     expect(called1).toBe(1);
     expect(called2).toBe(1);
-    await vi.waitFor(() => { expect(room.attach).toHaveBeenCalledTimes(1); });
+    await vi.waitFor(() => {
+      expect(room.attach).toHaveBeenCalledTimes(1);
+    });
     expect(room.detach).toHaveBeenCalledTimes(0);
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
@@ -178,7 +182,9 @@ describe('useRoom', () => {
     );
     expect(called1).toBe(2);
     expect(called2).toBe(3);
-    await vi.waitFor(() => { expect(room.attach).toHaveBeenCalledTimes(1); });
+    await vi.waitFor(() => {
+      expect(room.attach).toHaveBeenCalledTimes(1);
+    });
     expect(room.detach).toHaveBeenCalledTimes(0);
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
@@ -190,7 +196,9 @@ describe('useRoom', () => {
     );
     expect(called1).toBe(3);
     expect(called2).toBe(4);
-    await vi.waitFor(() => { expect(room.attach).toHaveBeenCalledTimes(1); });
+    await vi.waitFor(() => {
+      expect(room.attach).toHaveBeenCalledTimes(1);
+    });
     expect(room.detach).toHaveBeenCalledTimes(0);
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
@@ -202,7 +210,9 @@ describe('useRoom', () => {
     );
     expect(called1).toBe(3);
     expect(called2).toBe(5);
-    await vi.waitFor(() => { expect(room.attach).toHaveBeenCalledTimes(1); });
+    await vi.waitFor(() => {
+      expect(room.attach).toHaveBeenCalledTimes(1);
+    });
     expect(room.detach).toHaveBeenCalledTimes(0);
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
@@ -214,10 +224,14 @@ describe('useRoom', () => {
     );
     expect(called1).toBe(3);
     expect(called2).toBe(5);
-    await vi.waitFor(() => { expect(room.attach).toHaveBeenCalledTimes(1); });
+    await vi.waitFor(() => {
+      expect(room.attach).toHaveBeenCalledTimes(1);
+    });
     // room.detach is not called when releasing, detach happens via lifecycleManager but skipping the public API
     expect(room.detach).toHaveBeenCalledTimes(0);
-    await vi.waitFor(() => { expect(chatClient.rooms.release).toHaveBeenCalledWith(roomId); });
+    await vi.waitFor(() => {
+      expect(chatClient.rooms.release).toHaveBeenCalledWith(roomId);
+    });
   });
 
   it('should correctly set room status callback', async () => {
@@ -265,7 +279,9 @@ describe('useRoom', () => {
     );
 
     // useEffect is async, so we need to wait for it to run
-    await vi.waitFor(() => { expect(listeners.length).toBe(2); });
+    await vi.waitFor(() => {
+      expect(listeners.length).toBe(2);
+    });
 
     act(() => {
       for (const l of listeners) l(expectedChange);
@@ -307,14 +323,18 @@ describe('useRoom', () => {
     const { result } = renderHook(() => useRoom(), { wrapper: WithClient });
 
     // Because useEffect adds listeners async, wait until we have a listener
-    await vi.waitFor(() => { expect(listeners.length).toBe(1); });
+    await vi.waitFor(() => {
+      expect(listeners.length).toBe(1);
+    });
 
     act(() => {
       const change = { current: RoomLifecycle.Attached, previous: RoomLifecycle.Attaching };
       for (const l of listeners) l(change);
     });
 
-    await vi.waitFor( () => { expect(result.current.roomStatus).toBe(RoomLifecycle.Attached); });
+    await vi.waitFor(() => {
+      expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
+    });
     expect(result.current.roomError).toBeUndefined();
 
     act(() => {
@@ -322,8 +342,9 @@ describe('useRoom', () => {
       for (const l of listeners) l(change);
     });
 
-
-    await vi.waitFor( () => { expect(result.current.roomStatus).toBe(RoomLifecycle.Detaching); });
+    await vi.waitFor(() => {
+      expect(result.current.roomStatus).toBe(RoomLifecycle.Detaching);
+    });
     expect(result.current.roomError).toBeUndefined();
 
     const err = new Ably.ErrorInfo('test', 123, 456);
@@ -332,8 +353,12 @@ describe('useRoom', () => {
       for (const l of listeners) l(change);
     });
 
-    await vi.waitFor( () => { expect(result.current.roomStatus).toBe(RoomLifecycle.Failed); });
-    await vi.waitFor( () => { expect(result.current.roomError).toBe(err); });
+    await vi.waitFor(() => {
+      expect(result.current.roomStatus).toBe(RoomLifecycle.Failed);
+    });
+    await vi.waitFor(() => {
+      expect(result.current.roomError).toBe(err);
+    });
     await room.detach();
   });
 });

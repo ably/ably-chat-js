@@ -28,7 +28,6 @@ vi.mock('../../../src/react/helper/use-room-status.js', () => ({
   useRoomStatus: () => ({ status: RoomLifecycle.Attached }),
 }));
 
-
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
   useLogger: () => mockLogger,
 }));
@@ -38,7 +37,7 @@ vi.mock('ably');
 const updateMockRoom = (room: Room) => {
   mockRoom = room;
   mockRoomContext = { room: Promise.resolve(mockRoom) };
-}
+};
 
 describe('useRoomReactions', () => {
   beforeEach(() => {
@@ -56,7 +55,9 @@ describe('useRoomReactions', () => {
     const { result } = renderHook(() => useRoomReactions());
 
     // check that the room reactions instance is correctly provided - eventually
-    await vi.waitFor(() => { expect(result.current.reactions).toBe(mockRoom.reactions); });
+    await vi.waitFor(() => {
+      expect(result.current.reactions).toBe(mockRoom.reactions);
+    });
 
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);

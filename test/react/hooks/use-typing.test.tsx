@@ -10,7 +10,7 @@ import { makeRandomRoom } from '../../helper/room.ts';
 import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
-let mockRoomContext:{ room: Promise<Room> };
+let mockRoomContext: { room: Promise<Room> };
 let mockLogger: Logger;
 
 // apply mocks for the useChatConnection and useRoom hooks
@@ -18,13 +18,12 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
   useChatConnection: () => ({ currentStatus: ConnectionLifecycle.Connected }),
 }));
 
-
 vi.mock('../../../src/react/helper/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
 
 vi.mock('../../../src/react/helper/use-room-status.js', () => ({
-  useRoomStatus: () => ({ status: RoomLifecycle.Attached}),
+  useRoomStatus: () => ({ status: RoomLifecycle.Attached }),
 }));
 
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
@@ -35,9 +34,9 @@ vi.mock('ably');
 
 const updateMockRoom = (newRoom: Room) => {
   mockRoom = newRoom;
-  (mockRoom.status as InternalRoomStatus).setStatus({status: RoomLifecycle.Attached});
+  (mockRoom.status as InternalRoomStatus).setStatus({ status: RoomLifecycle.Attached });
   mockRoomContext = { room: Promise.resolve(newRoom) };
-}
+};
 
 describe('useTyping', () => {
   beforeEach(() => {
@@ -275,13 +274,15 @@ describe('useTyping', () => {
     await waitForEventualHookValue(result, mockRoom.typing, (value) => value.typingIndicators);
 
     // change the mock room instance
-    updateMockRoom(makeRandomRoom({
-      options: {
-        typing: {
-          timeoutMs: 500,
+    updateMockRoom(
+      makeRandomRoom({
+        options: {
+          typing: {
+            timeoutMs: 500,
+          },
         },
-      },
-    }));
+      }),
+    );
 
     // re-render to trigger the useEffect
     rerender();

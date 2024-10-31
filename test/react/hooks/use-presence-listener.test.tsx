@@ -21,7 +21,7 @@ import { makeRandomRoom } from '../../helper/room.ts';
 import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
-let mockRoomContext: {room: Promise<Room>};
+let mockRoomContext: { room: Promise<Room> };
 let mockLogger: Logger;
 
 let mockCurrentConnectionStatus: ConnectionLifecycle;
@@ -55,7 +55,7 @@ const updateMockRoom = (newRoom: Room) => {
   mockRoom = newRoom;
   (mockRoom.status as InternalRoomStatus).setStatus({ status: RoomLifecycle.Attached });
   mockRoomContext = { room: Promise.resolve(newRoom) };
-}
+};
 
 describe('usePresenceListener', () => {
   beforeEach(() => {
@@ -315,7 +315,7 @@ describe('usePresenceListener', () => {
       return subscribedListener !== undefined;
     });
 
-    // wait until the 
+    // wait until the
 
     if (!subscribedListener) {
       expect.fail('subscribedListener is undefined');

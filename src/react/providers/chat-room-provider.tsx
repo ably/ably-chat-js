@@ -62,17 +62,11 @@ export interface ChatRoomProviderProps {
   children?: ReactNode | ReactNode[] | null;
 }
 
-interface RoomStateType {room: Promise<Room>, roomId: string}
-
-let opNumber = 1;
-const useEffectCount = 1
-
 interface RoomReleaseOp {
   id: string;
   options: RoomOptions;
-  abort : AbortController;
+  abort: AbortController;
 }
-
 
 class RoomReleaseQueue {
   private readonly _queue: RoomReleaseOp[];
@@ -88,23 +82,26 @@ class RoomReleaseQueue {
     this._queue.push(op);
     this._logger.debug(`RoomReleaseQueue(); enqueued release`, { id, options });
 
-    void Promise.resolve().then(() => {
-      if (abort.signal.aborted) {
-        this._logger.debug(`RoomReleaseQueue(); aborting release`, { id, options });
-        return;
-      }
+    void Promise.resolve()
+      .then(() => {
+        if (abort.signal.aborted) {
+          this._logger.debug(`RoomReleaseQueue(); aborting release`, { id, options });
+          return;
+        }
 
-      this._logger.debug(`RoomReleaseQueue(); releasing room`, { id, options });
-      void client.rooms.release(id).catch();
-    }).catch().finally(() => {
-      this._logger.debug(`RoomReleaseQueue(); dequeued release`, { id, options });
-      this._queue.splice(this._queue.indexOf(op), 1);
-    });
+        this._logger.debug(`RoomReleaseQueue(); releasing room`, { id, options });
+        void client.rooms.release(id).catch();
+      })
+      .catch()
+      .finally(() => {
+        this._logger.debug(`RoomReleaseQueue(); dequeued release`, { id, options });
+        this._queue.splice(this._queue.indexOf(op), 1);
+      });
   }
 
   abort(id: string, options: RoomOptions) {
     this._logger.debug(`RoomReleaseQueue(); checking for abort`, { id, options, length: this._queue.length });
-    const op = this._queue.find(op => op.id === id && op.options === options);
+    const op = this._queue.find((op) => op.id === id && op.options === options);
     if (op) {
       this._logger.debug(`RoomReleaseQueue(); triggering abort`, { id, options });
       op.abort.abort();
@@ -131,19 +128,15 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
 }) => {
   const client = useChatClient();
   const logger = useLogger();
-  logger.debug(`ChatRoomProvider();`, { roomId, options, release, attach, opNumber: opNumber++ });
+  logger.debug(`ChatRoomProvider();`, { roomId, options, release, attach });
 
   // Set the initial room promise, we do this in a function to avoid rooms.get being called
   // every time the component re-renders
   // In StrictMode this will be called twice one after the other, but that's ok
   const [value, setValue] = useState<ChatRoomContextType>(() => {
     logger.debug(`ChatRoomProvider(); initializing value`, { roomId, options });
-    return {room: client.rooms.get(roomId, options), roomId: roomId, options: options};}
-  );
-
-  // We set the rooms state value in a stable value, so that it can
-  // be dependend on by other hooks and components
-  //const [value, setValue] = useState<RoomStateType>({room: client.rooms.get(roomId, options), roomId: roomId});
+    return { room: client.rooms.get(roomId, options), roomId: roomId, options: options };
+  });
 
   // Create an effect that changes the room when the id or options change
   const prevId = useRef(roomId);
@@ -162,7 +155,6 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
     roomReleaseQueue.current = new RoomReleaseQueue(logger);
   }, [logger]);
 
-
   useEffect(() => {
     if (prevId.current === roomId && prevOptions.current === options) {
       return;
@@ -176,58 +168,58 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
     setValue((prev: ChatRoomContextType) => {
       void client.rooms.release(prev.roomId).catch();
       logger.debug(`ChatRoomProvider(); updating value`, { roomId, options });
-      return {room: client.rooms.get(roomId, options), roomId, options};
-    })
+      return { room: client.rooms.get(roomId, options), roomId, options };
+    });
   }, [client, roomId, options, logger]);
-
-
 
   // Create an effect that attaches and detaches the room, or releases it when the component unmounts
   useEffect(() => {
     let unmounted = false;
     let resolvedRoom: Room | undefined;
     const currentReleaseQueue = roomReleaseQueue.current;
-    logger.debug(`ChatRoomProvider(); running useEffect`, { roomId: value.roomId,});
+    logger.debug(`ChatRoomProvider(); running useEffect`, { roomId: value.roomId });
 
     // If there was a previous release queued for this room, abort it
     currentReleaseQueue.abort(value.roomId, value.options);
 
     // Get the latest value of the room promise to ensure we're not using stale values
-    void value.room.then((room: Room) => {
-      if (unmounted) {
-        logger.debug(`ChatRoomProvider(); unmounted before room resolved`, { roomId: value.roomId,});
-      }
+    void value.room
+      .then((room: Room) => {
+        if (unmounted) {
+          logger.debug(`ChatRoomProvider(); unmounted before room resolved`, { roomId: value.roomId });
+        }
 
-      logger.debug(`ChatRoomProvider(); room resolved`, { roomId: value.roomId,});
+        logger.debug(`ChatRoomProvider(); room resolved`, { roomId: value.roomId });
 
-      resolvedRoom = room;
+        resolvedRoom = room;
 
-      if (attach) {
-        // attachment error and/or room status is available via useRoom
-        // or room.status, no need to do anything with the promise here
-        logger.debug(`ChatRoomProvider(); attaching room`, { roomId: value.roomId,});
-        void room.attach().catch(() => { 
-          // Ignore, the error will be available via various room status properties
-        });
-      }
-    }).catch();
+        if (attach) {
+          // attachment error and/or room status is available via useRoom
+          // or room.status, no need to do anything with the promise here
+          logger.debug(`ChatRoomProvider(); attaching room`, { roomId: value.roomId });
+          void room.attach().catch(() => {
+            // Ignore, the error will be available via various room status properties
+          });
+        }
+      })
+      .catch();
 
     // Cleanup function
     return () => {
       unmounted = true;
-      logger.debug(`ChatRoomProvider(); cleaning up`, { roomId: value.roomId,});
+      logger.debug(`ChatRoomProvider(); cleaning up`, { roomId: value.roomId });
 
       // If we're releasing, release the room. We'll do this in an abortable way so that we don't kill off the value
       // when using StrictMode
       if (release) {
-        logger.debug(`ChatRoomProvider(); releasing room`, { roomId: value.roomId,});
+        logger.debug(`ChatRoomProvider(); releasing room`, { roomId: value.roomId });
         currentReleaseQueue.enqueue(client, value.roomId, value.options);
         return;
       }
 
       // If set, detach the room - it's ok to just do this, because the room doesn't get irreversibly disposed
       if (resolvedRoom && attach) {
-        logger.debug(`ChatRoomProvider(); detaching room`, { roomId: value.roomId,});
+        logger.debug(`ChatRoomProvider(); detaching room`, { roomId: value.roomId });
         void resolvedRoom.detach().catch(() => {
           // Ignore, the error will be available via various room status properties
         });

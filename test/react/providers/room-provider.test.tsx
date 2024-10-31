@@ -44,7 +44,9 @@ describe('ChatRoomProvider', () => {
     render(<TestProvider />);
 
     // Try to get the client to get a room with different options, should fail
-    await vi.waitFor(() => { expect(roomResolved).toBeTruthy(); });
+    await vi.waitFor(() => {
+      expect(roomResolved).toBeTruthy();
+    });
     await expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
@@ -117,11 +119,15 @@ describe('ChatRoomProvider', () => {
     const r = render(<TestProvider />);
 
     // Make sure the room is attaching
-    await vi.waitFor(() => { expect(room.attach).toHaveBeenCalled(); });
+    await vi.waitFor(() => {
+      expect(room.attach).toHaveBeenCalled();
+    });
 
     r.unmount();
     // Make sure the room is detaching
-    await vi.waitFor(() => { expect(room.detach).toHaveBeenCalled(); });
+    await vi.waitFor(() => {
+      expect(room.detach).toHaveBeenCalled();
+    });
 
     // Try to get the client to get a room with different options, should fail
     await expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).rejects.toBeErrorInfoWithCode(40000);

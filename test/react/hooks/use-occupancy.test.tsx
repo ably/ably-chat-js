@@ -10,7 +10,6 @@ import { act, cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useRoomContext } from '../../../src/react/helper/use-room-context.ts';
 import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
@@ -29,7 +28,7 @@ vi.mock('../../../src/react/helper/use-room-context.js', () => ({
 }));
 
 vi.mock('../../../src/react/helper/use-room-status.js', () => ({
-  useRoomStatus: () => ({ status: RoomLifecycle.Attached}),
+  useRoomStatus: () => ({ status: RoomLifecycle.Attached }),
 }));
 
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
@@ -41,7 +40,7 @@ vi.mock('ably');
 const updateMockRoom = (newRoom: Room) => {
   mockRoom = newRoom;
   mockRoomContext = { room: Promise.resolve(newRoom) };
-}
+};
 
 describe('useOccupancy', () => {
   beforeEach(() => {

@@ -61,7 +61,6 @@ export class DefaultRooms implements Rooms {
   private readonly _releasing = new Map<string, { count: number; promise: Promise<void> }>();
   private readonly _logger: Logger;
   private readonly _mtx: Mutex;
-  private opNumber = 1;
 
   /**
    * Constructs a new Rooms instance.
@@ -82,9 +81,9 @@ export class DefaultRooms implements Rooms {
    * @inheritDoc
    */
   get(roomId: string, options: RoomOptions): Promise<Room> {
-    this._logger.debug('Rooms.get(); before mtx', { roomId, opNumber: this.opNumber++ });
+    this._logger.debug('Rooms.get(); before mtx', { roomId });
     return this._mtx.runExclusive(async () => {
-      this._logger.trace('Rooms.get();', { roomId, opNumber: this.opNumber++ });
+      this._logger.trace('Rooms.get();', { roomId });
 
       const existing = this._rooms.get(roomId);
       if (existing) {
@@ -92,7 +91,7 @@ export class DefaultRooms implements Rooms {
           throw new Ably.ErrorInfo('Room already exists with different options', 40000, 400);
         }
 
-        this._logger.debug('Rooms.get(); returning existing room', { roomId, opNumber: this.opNumber++ });
+        this._logger.debug('Rooms.get(); returning existing room', { roomId });
         return existing.promise;
       }
 
@@ -105,13 +104,13 @@ export class DefaultRooms implements Rooms {
         };
 
         this._rooms.set(roomId, entry);
-        this._logger.debug('Rooms.get(); returning new room', { roomId, opNumber: this.opNumber++ });
+        this._logger.debug('Rooms.get(); returning new room', { roomId });
         return entry.promise;
       }
 
-      this._logger.debug('Rooms.get(); waiting for releasing to finish', { roomId: this.opNumber++ });
+      this._logger.debug('Rooms.get(); waiting for releasing to finish', { roomId });
       await releasing.promise;
-      this._logger.debug('Rooms.get(); releasing finished', { roomId: this.opNumber++ });
+      this._logger.debug('Rooms.get(); releasing finished', { roomId });
       return this.get(roomId, options);
     }, 1);
   }
@@ -127,9 +126,9 @@ export class DefaultRooms implements Rooms {
    * @inheritDoc
    */
   release(roomId: string): Promise<void> {
-    this._logger.debug('Rooms.release(); before mtx', { roomId, opNumber: this.opNumber++ });
+    this._logger.debug('Rooms.release(); before mtx', { roomId });
     return this._mtx.runExclusive(async () => {
-      this._logger.trace('Rooms.release();', { roomId, opNumber: this.opNumber++ });
+      this._logger.trace('Rooms.release();', { roomId });
 
       const room = this._rooms.get(roomId);
       const releasing = this._releasing.get(roomId);
@@ -138,9 +137,8 @@ export class DefaultRooms implements Rooms {
       if (!room) {
         // If the room is being released, forward the releasing promise
         if (releasing) {
-          this._logger.debug('Rooms.release(); piggybacking previous release call', {
+          this._logger.debug('Rooms.release(); waiting for previous release call', {
             roomId,
-            opNumber: this.opNumber++,
           });
           return releasing.promise;
         }
@@ -150,7 +148,7 @@ export class DefaultRooms implements Rooms {
       }
 
       // Make sure we no longer keep this room in the map
-      this._logger.debug('Rooms.release(); removing room from map', { roomId, opNumber: this.opNumber++ });
+      this._logger.debug('Rooms.release(); removing room from map', { roomId });
       this._rooms.delete(roomId);
 
       // We have a room and an ongoing release, we keep the count of the latest
@@ -177,10 +175,10 @@ export class DefaultRooms implements Rooms {
 
       // Set the releasing process into motion but don't wait for it to finish
       const releasingPromise = room.room.release().then(() => {
-        this._logger.debug('Rooms.release(); room released', { roomId, opNumber: this.opNumber++ });
+        this._logger.debug('Rooms.release(); room released', { roomId });
         this._releasing.delete(roomId);
       });
-      this._logger.debug('Rooms.release(); setting releasing', { roomId, opNumber: this.opNumber++ });
+      this._logger.debug('Rooms.release(); setting releasing', { roomId });
       this._releasing.set(roomId, { count, promise: releasingPromise });
 
       // At this point, we might come back after the release has finished, so see if we're still releasing

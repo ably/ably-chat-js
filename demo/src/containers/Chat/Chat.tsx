@@ -6,7 +6,7 @@ import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
 import { ConnectionLifecycle, Message, MessageEventPayload, PaginatedResult, Reaction } from '@ably/chat';
 
-export const Chat = (props: {roomId: string, setRoomId: (roomId: string) => void }) => {
+export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => void }) => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
   const [messages, setMessages] = useState<Message[]>([]);
@@ -15,7 +15,11 @@ export const Chat = (props: {roomId: string, setRoomId: (roomId: string) => void
 
   const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
 
-  const { send: sendMessage, getPreviousMessages, roomStatus } = useMessages({
+  const {
+    send: sendMessage,
+    getPreviousMessages,
+    roomStatus,
+  } = useMessages({
     listener: (message: MessageEventPayload) => {
       setMessages((prevMessage) => [...prevMessage, message.message]);
     },
@@ -43,14 +47,14 @@ export const Chat = (props: {roomId: string, setRoomId: (roomId: string) => void
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    chatClient.logger.debug('sendMessage changed')
-  }, [sendMessage])
+    chatClient.logger.debug('sendMessage changed');
+  }, [sendMessage]);
 
   useEffect(() => {
-    chatClient.logger.debug('updating getPreviousMessages useEffect', {getPreviousMessages});
+    chatClient.logger.debug('updating getPreviousMessages useEffect', { getPreviousMessages });
     // try and fetch the messages up to attachment of the messages listener
     if (getPreviousMessages && loading) {
-      chatClient.logger.debug('fetching initial messages', {roomStatus});
+      chatClient.logger.debug('fetching initial messages', { roomStatus });
       getPreviousMessages({ limit: 50 })
         .then((result: PaginatedResult<Message>) => {
           chatClient.logger.debug('getPreviousMessages result', result);
@@ -58,7 +62,7 @@ export const Chat = (props: {roomId: string, setRoomId: (roomId: string) => void
           setLoading(false);
         })
         .catch((error: unknown) => {
-          chatClient.logger.error('Error fetching initial messages', {err: error.toString()});
+          chatClient.logger.error('Error fetching initial messages', { err: error.toString() });
         });
     }
   }, [getPreviousMessages, loading]);
@@ -116,7 +120,7 @@ export const Chat = (props: {roomId: string, setRoomId: (roomId: string) => void
     if (!newRoomId) {
       return;
     }
-    
+
     // Clear the room messages
     setMessages([]);
     setLoading(true);

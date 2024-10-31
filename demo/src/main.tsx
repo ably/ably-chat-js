@@ -43,9 +43,9 @@ const realtimeClient = new Ably.Realtime({
 const chatClient = new ChatClient(realtimeClient, { logLevel: LogLevel.Trace });
 
 const reRender = () => {
-  console.log('did a render')
+  console.log('did a render');
   return true;
-}
+};
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

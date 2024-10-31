@@ -33,7 +33,6 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
   }),
 }));
 
-
 vi.mock('../../../src/react/helper/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
@@ -51,7 +50,7 @@ vi.mock('ably');
 const updateMockRoom = (newRoom: Room) => {
   mockRoom = newRoom;
   mockRoomContext = { room: Promise.resolve(newRoom) };
-}
+};
 
 describe('useMessages', () => {
   beforeEach(() => {
