@@ -36,7 +36,7 @@ describe('useTyping', () => {
 
     // create a second room and attach it, so we can listen for typing events
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // start listening for typing events on room two
@@ -83,7 +83,7 @@ describe('useTyping', () => {
 
     // create a second room and attach it, so we can send typing events
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // store the received typing events for room one

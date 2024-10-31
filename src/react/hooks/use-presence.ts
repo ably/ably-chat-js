@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
 import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -31,6 +32,11 @@ export interface UsePresenceResponse extends ChatStatusResponse {
    * A shortcut to the {@link Presence.update} method.
    */
   readonly update: Presence['update'];
+
+  /**
+   * Provides access to the underlying {@link Presence} instance of the room.
+   */
+  readonly presence?: Presence;
 
   /**
    * Indicates whether the current user is present in the room.
@@ -92,18 +98,21 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
   // enter the room when the hook is mounted
   useEffect(() => {
-    const canJoinPresence = roomStatus === RoomLifecycle.Attached && !INACTIVE_CONNECTION_STATES.has(connectionStatus);
-
-    // wait until the room is attached before attempting to enter, and ensure the connection is active
-    if (!canJoinPresence) {
-      logger.debug('usePresence(); skipping enter room', { roomStatus, connectionStatus, roomId: context.roomId });
-      return;
-    }
-
     logger.debug('usePresence(); entering room', { roomId: context.roomId });
     return wrapRoomPromise(
       context.room,
       (room: Room) => {
+        const canJoinPresence =
+          roomStatus === RoomLifecycle.Attached && !INACTIVE_CONNECTION_STATES.has(connectionStatus);
+
+        // wait until the room is attached before attempting to enter, and ensure the connection is active
+        if (!canJoinPresence) {
+          logger.debug('usePresence(); skipping enter room', { roomStatus, connectionStatus, roomId: context.roomId });
+          return () => {
+            // no-op
+          };
+        }
+
         room.presence
           .enter(dataRef.current?.enterWithData)
           .then(() => {
@@ -178,6 +187,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   );
 
   return {
+    presence: useEventualRoomProperty((room) => room.presence),
     connectionStatus,
     connectionError,
     roomStatus,

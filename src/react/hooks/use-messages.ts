@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
 import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -32,6 +33,11 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * A shortcut to the {@link Messages.get} method.
    */
   readonly get: Messages['get'];
+
+  /**
+   * Provides access to the underlying {@link Messages} instance of the room.
+   */
+  readonly messages?: Messages;
 
   /**
    * Retrieves the previous messages in the room.
@@ -167,6 +173,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   }, [context, logger, onDiscontinuityRef]);
 
   return {
+    messages: useEventualRoomProperty((room) => room.messages),
     send,
     get,
     getPreviousMessages,

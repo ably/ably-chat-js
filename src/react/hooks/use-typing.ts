@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
 import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -40,6 +41,11 @@ export interface UseTypingResponse extends ChatStatusResponse {
    * It automatically updates based on typing events received from the room.
    */
   readonly currentlyTyping: TypingEvent['currentlyTyping'];
+
+  /**
+   * Provides access to the underlying {@link Typing} instance of the room.
+   */
+  readonly typingIndicators?: Typing;
 
   /**
    * A state value representing the current error state of the hook, this will be an instance of {@link Ably.ErrorInfo} or `undefined`.
@@ -177,6 +183,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   const stop = useCallback(() => context.room.then((room) => room.typing.stop()), [context]);
 
   return {
+    typingIndicators: useEventualRoomProperty((room) => room.typing),
     connectionStatus,
     connectionError,
     roomStatus,

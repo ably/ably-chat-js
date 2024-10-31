@@ -27,6 +27,11 @@ export const useRoomStatus = (params?: {
       context.room,
       (room: Room) => {
         logger.debug('useRoomStatus(); subscribing internal listener');
+        // Set instantaneous values
+        setStatus(room.status.current);
+        setError(room.status.error);
+
+        // Add the subscription
         const { off } = room.status.onChange((change) => {
           logger.debug('useRoomStatus(); status change', change);
           setStatus(change.current);
@@ -59,8 +64,6 @@ export const useRoomStatus = (params?: {
         }
 
         logger.debug('useRoomStatus(); setting initial status', { status: room.status.current });
-        setStatus(room.status.current);
-        setError(room.status.error);
         if (onRoomStatusChangeRef) {
           logger.debug('useRoomStatus(); sending initial status event');
           onRoomStatusChangeRef({

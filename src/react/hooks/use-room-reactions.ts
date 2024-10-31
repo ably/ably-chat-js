@@ -3,6 +3,7 @@ import { useCallback, useEffect } from 'react';
 
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
 import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -29,6 +30,11 @@ export interface UseRoomReactionsResponse extends ChatStatusResponse {
    * A shortcut to the {@link RoomReactions.send} method.
    */
   readonly send: RoomReactions['send'];
+
+  /**
+   * Provides access to the underlying {@link RoomReactions} instance of the room.
+   */
+  readonly reactions?: RoomReactions;
 }
 
 /**
@@ -94,6 +100,7 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
   );
 
   return {
+    reactions: useEventualRoomProperty((room) => room.reactions),
     connectionStatus,
     connectionError,
     roomStatus,

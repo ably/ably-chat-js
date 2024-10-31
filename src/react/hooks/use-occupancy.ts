@@ -1,8 +1,9 @@
-import { OccupancyListener } from '@ably/chat';
+import { Occupancy, OccupancyListener } from '@ably/chat';
 import { useEffect, useState } from 'react';
 
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
 import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -35,6 +36,11 @@ export interface UseOccupancyResponse extends ChatStatusResponse {
    * The current number of users present in the room, kept up to date by the hook.
    */
   readonly presenceMembers: number;
+
+  /**
+   * Provides access to the underlying {@link Occupancy} instance of the room.
+   */
+  readonly occupancy?: Occupancy;
 }
 
 /**
@@ -122,6 +128,7 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
   }, [listenerRef, context, logger]);
 
   return {
+    occupancy: useEventualRoomProperty((room) => room.occupancy),
     connectionStatus,
     connectionError,
     roomStatus,

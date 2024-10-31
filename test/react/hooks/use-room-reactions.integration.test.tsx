@@ -36,7 +36,7 @@ describe('useRoomReactions', () => {
 
     // create a second room and attach it, so we can receive reactions
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // store the received reactions
@@ -87,7 +87,7 @@ describe('useRoomReactions', () => {
 
     // create a second room and attach it, so we can send a reaction
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // store the received reactions
@@ -119,6 +119,7 @@ describe('useRoomReactions', () => {
     render(<TestProvider />);
 
     // wait for the room to be attached
+    chatClientOne.logger.info('got here');
     await waitFor(
       () => {
         expect(currentRoomStatus).toBe(RoomLifecycle.Attached);

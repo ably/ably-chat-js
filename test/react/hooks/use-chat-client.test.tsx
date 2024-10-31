@@ -25,7 +25,7 @@ describe('useChatClient', () => {
 
   it('should throw an error if used outside of ChatClientProvider', () => {
     const TestThrowError: React.FC = () => {
-      expect(() => useRoom()).toThrowErrorInfo({
+      expect(() => useChatClient()).toThrowErrorInfo({
         code: 40000,
         message: 'useChatClient hook must be used within a chat client provider',
       });

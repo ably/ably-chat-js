@@ -1,9 +1,10 @@
-import { ErrorCodes, errorInfoIs, PresenceListener, PresenceMember, Room, RoomLifecycle } from '@ably/chat';
+import { ErrorCodes, errorInfoIs, Presence, PresenceListener, PresenceMember, Room, RoomLifecycle } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
 import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -43,6 +44,11 @@ export interface UsePresenceListenerResponse extends ChatStatusResponse {
    * The current state of all the presence members, observed as a whole change, and only emitted while presence is not syncing.
    */
   readonly presenceData: PresenceMember[];
+
+  /**
+   * Provides access to the underlying {@link Presence} instance of the room.
+   */
+  readonly presence?: Presence;
 
   /**
    * The error state of the presence listener.
@@ -300,6 +306,7 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
   }, [context, onDiscontinuityRef, logger]);
 
   return {
+    presence: useEventualRoomProperty((room) => room.presence),
     connectionStatus,
     connectionError,
     roomStatus,
