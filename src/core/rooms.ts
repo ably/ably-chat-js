@@ -58,7 +58,7 @@ export class DefaultRooms implements Rooms {
   private readonly _chatApi: ChatApi;
   private readonly _clientOptions: NormalizedClientOptions;
   private readonly _rooms: Map<string, RoomMapEntry> = new Map<string, RoomMapEntry>();
-  private readonly _releasing = new Map<string, { count: number; promise: Promise<void> }>();
+  private readonly _releasing = new Map<string, { promise: Promise<void> }>();
   private readonly _logger: Logger;
   private readonly _mtx: Mutex;
 
@@ -91,7 +91,7 @@ export class DefaultRooms implements Rooms {
           throw new Ably.ErrorInfo('Room already exists with different options', 40000, 400);
         }
 
-        this._logger.debug('Rooms.get(); returning existing room', { roomId });
+        this._logger.debug('Rooms.get(); returning existing room', { roomId, nonce: existing.room.nonce });
         return existing.promise;
       }
 
@@ -104,7 +104,7 @@ export class DefaultRooms implements Rooms {
         };
 
         this._rooms.set(roomId, entry);
-        this._logger.debug('Rooms.get(); returning new room', { roomId });
+        this._logger.debug('Rooms.get(); returning new room', { roomId, nonce: room.nonce });
         return entry.promise;
       }
 
@@ -112,7 +112,7 @@ export class DefaultRooms implements Rooms {
       await releasing.promise;
       this._logger.debug('Rooms.get(); releasing finished', { roomId });
       return this.get(roomId, options);
-    }, 1);
+    });
   }
 
   /**
@@ -130,12 +130,12 @@ export class DefaultRooms implements Rooms {
     return this._mtx.runExclusive(async () => {
       this._logger.trace('Rooms.release();', { roomId });
 
-      const room = this._rooms.get(roomId);
+      const existing = this._rooms.get(roomId);
       const releasing = this._releasing.get(roomId);
 
       // If the room doesn't currently exist
-      if (!room) {
-        // If the room is being released, forward the releasing promise
+      if (!existing) {
+        // existing the room is being released, forward the releasing promise
         if (releasing) {
           this._logger.debug('Rooms.release(); waiting for previous release call', {
             roomId,
@@ -148,41 +148,19 @@ export class DefaultRooms implements Rooms {
       }
 
       // Make sure we no longer keep this room in the map
-      this._logger.debug('Rooms.release(); removing room from map', { roomId });
+      this._logger.debug('Rooms.release(); removing room from map', { roomId, nonce: existing.room.nonce });
       this._rooms.delete(roomId);
 
-      // We have a room and an ongoing release, we keep the count of the latest
-      // release call.
-      let count = 0;
-      if (releasing) {
-        count = releasing.count + 1;
-      }
-
-      // const releasedPromise = room.room.release().then(() => {
-      //   this._logger.debug('Rooms.release(); room released', { roomId });
-      //   // Remove the room from currently releasing if the count of
-      //   // this callback is at least as high as the current count.
-      //   //
-      //   // This is to handle the case where multiple release calls
-      //   // are made in quick succession. We only want to remove the
-      //   // room from the releasing map if the last ongoing release
-      //   // finished.
-      //   const releasing = this._releasing.get(roomId);
-      //   if (releasing && releasing.count < count) {
-      //     this._releasing.delete(roomId);
-      //   }
-      // });
-
       // Set the releasing process into motion but don't wait for it to finish
-      const releasingPromise = room.room.release().then(() => {
-        this._logger.debug('Rooms.release(); room released', { roomId });
+      const releasingPromise = existing.room.release().then(() => {
+        this._logger.debug('Rooms.release(); room released', { roomId, nonce: existing.room.nonce });
         this._releasing.delete(roomId);
       });
-      this._logger.debug('Rooms.release(); setting releasing', { roomId });
-      this._releasing.set(roomId, { count, promise: releasingPromise });
+      this._logger.debug('Rooms.release(); setting releasing', { roomId, nonce: existing.room.nonce });
+      this._releasing.set(roomId, { promise: releasingPromise });
 
       // At this point, we might come back after the release has finished, so see if we're still releasing
       return releasingPromise;
-    }, 2);
+    });
   }
 }

@@ -296,4 +296,13 @@ export class DefaultRoom implements Room {
     this._logger.trace('Room.release();', { nonce: this._nonce, roomId: this._roomId });
     return this._finalizer();
   }
+
+  /**
+   * A random identifier for the room instance, useful in debugging and logging.
+   *
+   * @returns The nonce.
+   */
+  get nonce(): string {
+    return this._nonce;
+  }
 }
