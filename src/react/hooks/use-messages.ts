@@ -1,12 +1,5 @@
-import {
-  Message,
-  MessageListener,
-  Messages,
-  MessageSubscriptionResponse,
-  PaginatedResult,
-  QueryOptions,
-  SendMessageParams,
-} from '@ably/chat';
+import { MessageListener, Messages, MessageSubscriptionResponse, QueryOptions, SendMessageParams } from '@ably/chat';
+import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
 import { wrapRoomPromise } from '../helper/room-promise.js';
@@ -127,17 +120,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
             // So return a dummy object that should be thrown away anyway
             logger.debug('useMessages(); getPreviousMessages called', { roomId: context.roomId });
             if (unmounted) {
-              return Promise.reject(new Error('Component unmounted'));
-              logger.debug('useMessages(); getPreviousMessages called after unmount', { roomId: context.roomId });
-              return Promise.resolve({
-                items: [],
-                hasNext: () => false,
-                isLast: () => true,
-                next: () => undefined as unknown as Promise<PaginatedResult<Message>> | null,
-                previous: () => undefined as unknown as Promise<PaginatedResult<Message>>,
-                current: () => undefined as unknown as Promise<PaginatedResult<Message>>,
-                first: () => undefined as unknown as Promise<PaginatedResult<Message>>,
-              }) as Promise<PaginatedResult<Message>>;
+              return Promise.reject(new Ably.ErrorInfo('component unmounted', 40000, 400));
             }
             return sub.getPreviousMessages(params);
           };

@@ -7,11 +7,27 @@ import { wrapRoomPromise } from './room-promise.js';
 import { useEventListenerRef } from './use-event-listener-ref.js';
 import { useRoomContext } from './use-room-context.js';
 
+/**
+ * The response object for the useRoomStatus hook.
+ */
 export interface UseRoomStatusResponse {
+  /**
+   * The current status of the room.
+   */
   readonly status: RoomLifecycle;
+
+  /**
+   * The error that caused the room to transition to an errored state.
+   */
   readonly error?: Ably.ErrorInfo;
 }
 
+/**
+ * A hook that returns the current status of the room, and listens for changes to the room status.
+ *
+ * @param params An optional user-provided listener for room status changes.
+ * @returns The current status of the room, and an error if the room is in an errored state.
+ */
 export const useRoomStatus = (params?: {
   onRoomStatusChange?: (change: RoomStatusChange) => void;
 }): UseRoomStatusResponse => {

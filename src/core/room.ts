@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import cloneDeep from 'lodash.clonedeep';
 
 import { ChatApi } from './chat-api.js';
+import { randomId } from './id.js';
 import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
@@ -95,8 +96,6 @@ export interface Room {
    * @returns A copy of the options used to create the room.
    */
   options(): RoomOptions;
-
-  randomRoomId: string;
 }
 
 export class DefaultRoom implements Room {
@@ -112,7 +111,11 @@ export class DefaultRoom implements Room {
   private readonly _status: DefaultStatus;
   private _lifecycleManager: RoomLifecycleManager;
   private readonly _finalizer: () => Promise<void>;
-  readonly randomRoomId;
+
+  /**
+   * A random identifier for the room instance, useful in debugging and logging.
+   */
+  private readonly _nonce: string;
 
   /**
    * Constructs a new Room instance.
@@ -126,8 +129,8 @@ export class DefaultRoom implements Room {
    */
   constructor(roomId: string, options: RoomOptions, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
     validateRoomOptions(options);
-    this.randomRoomId = Math.random().toString(36).slice(7);
-    logger.debug('Room();', { roomId, options, randomRoomId: this.randomRoomId });
+    this._nonce = randomId();
+    logger.debug('Room();', { roomId, options, nonce: this._nonce });
 
     this._roomId = roomId;
     this._options = options;
@@ -273,7 +276,7 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   async attach() {
-    this._logger.trace('Room.attach();', { randomRoomId: this.randomRoomId });
+    this._logger.trace('Room.attach();', { nonce: this._nonce, roomId: this._roomId });
     return this._lifecycleManager.attach();
   }
 
@@ -281,7 +284,7 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   async detach(): Promise<void> {
-    this._logger.trace('Room.detach();');
+    this._logger.trace('Room.detach();', { nonce: this._nonce, roomId: this._roomId });
     return this._lifecycleManager.detach();
   }
 
@@ -290,7 +293,7 @@ export class DefaultRoom implements Room {
    * We guarantee that this does not throw an error.
    */
   release(): Promise<void> {
-    this._logger.trace('Room.release();', { randomRoomId: this.randomRoomId });
+    this._logger.trace('Room.release();', { nonce: this._nonce, roomId: this._roomId });
     return this._finalizer();
   }
 }

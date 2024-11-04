@@ -5,11 +5,19 @@ import { createContext } from 'react';
  * Data type for {@link ChatRoomContext}.
  */
 export interface ChatRoomContextType {
-  /** The room in this context. */
+  /**
+   * Promise that resolves to the chat room.
+   */
   room: Promise<Room>;
 
+  /**
+   * The ID of the room that promise will resolve to.
+   */
   roomId: string;
 
+  /**
+   * Options used to create the room.
+   */
   options: RoomOptions;
 }
 

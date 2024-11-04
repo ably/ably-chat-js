@@ -3,6 +3,13 @@ import { useContext } from 'react';
 
 import { ChatRoomContext, ChatRoomContextType } from '../contexts/chat-room-context.js';
 
+/**
+ * A hook that returns the current ChatRoomContext. This should be used within a ChatRoomProvider.
+ *
+ * @param callingHook The name of the hook that is calling this function, for logging purposes.
+ * @throws {@link Ably.ErrorInfo} if the hook is not used within a ChatRoomProvider.
+ * @returns The ChatRoomContext.
+ */
 export const useRoomContext = (callingHook: string): ChatRoomContextType => {
   const context = useContext(ChatRoomContext);
   if (!context) {
