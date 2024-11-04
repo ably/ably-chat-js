@@ -32,6 +32,7 @@ class DefaultRoomPromise implements RoomPromise {
         return;
       }
 
+      this._logger.debug('DefaultRoomPromise(); mount resolved', { roomId: this._roomId });
       this._onUnmount = this._onResolve(room);
     } catch (error) {
       this._logger.error('DefaultRoomPromise(); mount error', { roomId: this._roomId, error });
@@ -54,15 +55,6 @@ class DefaultRoomPromise implements RoomPromise {
 }
 
 export function wrapRoomPromise(
-  room: Promise<Room>,
-  onResolve: RoomResolutionCallback,
-  logger: Logger,
-  id?: string,
-): RoomPromise {
-  return new DefaultRoomPromise(room, onResolve, logger, id);
-}
-
-export function wrapRoomPromiseWithUnmountError(
   room: Promise<Room>,
   onResolve: RoomResolutionCallback,
   logger: Logger,
