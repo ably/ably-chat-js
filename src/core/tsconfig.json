@@ -10,6 +10,7 @@
     "noImplicitThis": true,
     "esModuleInterop": true,
     "declaration": true,
+    "stripInternal": true,
     "moduleResolution": "Node",
     "skipLibCheck": true,
     "allowJs": true,

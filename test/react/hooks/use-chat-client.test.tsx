@@ -35,7 +35,7 @@ describe('useChatClient', () => {
   });
 
   it('should get the chat client from the context without error and with the correct agent', () => {
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
         <TestComponent
@@ -63,7 +63,7 @@ describe('useChatClient', () => {
       return <TestComponentInner />;
     };
 
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     render(
       <ChatClientProvider client={chatClient}>
         <TestComponentOuter />
@@ -77,8 +77,8 @@ describe('useChatClient', () => {
     expect(client1).toEqual(client2);
   });
   it('should handle context updates correctly', () => {
-    const client1 = newChatClient() as unknown as ChatClient;
-    const client2 = newChatClient() as unknown as ChatClient;
+    const client1 = newChatClient();
+    const client2 = newChatClient();
     const { rerender } = render(
       <ChatClientProvider client={client1}>
         <TestComponent
@@ -113,7 +113,7 @@ describe('useChatClient', () => {
       return <TestComponentInner />;
     };
 
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     render(
       <ChatClientProvider client={chatClient}>
         <div>
@@ -145,8 +145,8 @@ describe('useChatClient', () => {
       return <div />;
     };
 
-    const chatClientInner = newChatClient() as unknown as ChatClient;
-    const chatClientOuter = newChatClient() as unknown as ChatClient;
+    const chatClientInner = newChatClient();
+    const chatClientOuter = newChatClient();
 
     render(
       <ChatClientProvider client={chatClientOuter}>

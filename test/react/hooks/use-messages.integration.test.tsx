@@ -1,4 +1,4 @@
-import { ChatClient, Message, MessageListener, RoomOptionsDefaults, RoomStatus } from '@ably/chat';
+import { Message, MessageListener, RoomOptionsDefaults, RoomStatus } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -31,8 +31,8 @@ describe('useMessages', () => {
 
   it('should send messages correctly', async () => {
     // create new clients
-    const chatClientOne = newChatClient() as unknown as ChatClient;
-    const chatClientTwo = newChatClient() as unknown as ChatClient;
+    const chatClientOne = newChatClient();
+    const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can listen for messages
     const roomId = randomRoomId();
@@ -75,8 +75,8 @@ describe('useMessages', () => {
 
   it('should receive messages on a subscribed listener', async () => {
     // create new clients
-    const chatClientOne = newChatClient() as unknown as ChatClient;
-    const chatClientTwo = newChatClient() as unknown as ChatClient;
+    const chatClientOne = newChatClient();
+    const chatClientTwo = newChatClient();
 
     // create a second room so we can send messages from it
     const roomId = randomRoomId();
@@ -130,8 +130,8 @@ describe('useMessages', () => {
 
   it('should receive previous messages for a subscribed listener', async () => {
     // create new clients
-    const chatClientOne = newChatClient() as unknown as ChatClient;
-    const chatClientTwo = newChatClient() as unknown as ChatClient;
+    const chatClientOne = newChatClient();
+    const chatClientTwo = newChatClient();
 
     // create a second room instance so we can send messages from it
     const roomId = randomRoomId();
@@ -194,7 +194,7 @@ describe('useMessages', () => {
   }, 10000);
 
   it('should reset getPreviousMessages if the listener becomes undefined then redefined', async () => {
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
 
     // create a second room instance so we can send messages from it
     const roomId = randomRoomId();
@@ -328,7 +328,7 @@ describe('useMessages', () => {
   }, 20000);
 
   it('should persist the getPreviousMessages subscription point across renders, if listener remains defined', async () => {
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
 
     // create a second room instance so we can send messages from it
     const roomId = randomRoomId();
