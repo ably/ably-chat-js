@@ -34,7 +34,7 @@ export const useEventualRoom = (): Room | undefined => {
         setRoomState(room);
       })
       .catch((error: unknown) => {
-        logger.error('Failed to get room', { roomId: context.roomId, error });
+        logger.trace('Failed to get room', { roomId: context.roomId, error });
       });
 
     return () => {
@@ -76,7 +76,7 @@ export const useEventualRoomProperty = <T>(onResolve: (room: Room) => T) => {
         setRoomState(onResolveRef(room));
       })
       .catch((error: unknown) => {
-        logger.error('Failed to get room', { roomId: context.roomId, error });
+        logger.trace('Failed to get room', { roomId: context.roomId, error });
       });
 
     return () => {

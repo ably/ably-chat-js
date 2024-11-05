@@ -120,7 +120,8 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
           setCurrentlyTyping(new Set());
         }
       })
-      .catch();
+      .catch(err => {
+      });
 
     return wrapRoomPromise(
       context.room,
