@@ -10,7 +10,7 @@ export interface HandlesDiscontinuity {
    * A promise of the channel that this object is associated with. The promise
    * is resolved when the feature has finished initializing.
    */
-  get channel(): Promise<Ably.RealtimeChannel>;
+  get channel(): Ably.RealtimeChannel;
 
   /**
    * Called when a discontinuity is detected on the channel.

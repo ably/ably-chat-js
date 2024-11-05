@@ -106,7 +106,7 @@ export interface RoomReactions extends EmitsDiscontinuities {
    *
    * @returns A promise of the Ably realtime channel.
    */
-  get channel(): Promise<Ably.RealtimeChannel>;
+  get channel(): Ably.RealtimeChannel;
 }
 
 interface RoomReactionEventsMap {
@@ -135,7 +135,7 @@ export class DefaultRoomReactions
   extends EventEmitter<RoomReactionEventsMap>
   implements RoomReactions, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
-  private readonly _channel: Promise<Ably.RealtimeChannel>;
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
@@ -148,15 +148,10 @@ export class DefaultRoomReactions
    * @param logger An instance of the Logger.
    * @param initAfter A promise that is awaited before creating any channels.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger, initAfter: Promise<void>) {
+  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
-    this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
 
-    // Catch this so it won't send unhandledrejection global event
-    this._channel.catch((error: unknown) => {
-      logger.debug('RoomReactions: channel initialization canceled', { roomId, error });
-    });
-
+    this._channel = this._makeChannel(roomId, realtime);
     this._clientId = clientId;
     this._logger = logger;
   }
@@ -199,9 +194,7 @@ export class DefaultRoomReactions
       },
     };
 
-    return this._channel.then((channel) => {
-      return channel.publish(realtimeMessage);
-    });
+    return this._channel.publish(realtimeMessage);
   }
 
   /**
@@ -237,7 +230,7 @@ export class DefaultRoomReactions
     this.emit(RoomReactionEvents.Reaction, reaction);
   };
 
-  get channel(): Promise<Ably.RealtimeChannel> {
+  get channel(): Ably.RealtimeChannel {
     return this._channel;
   }
 

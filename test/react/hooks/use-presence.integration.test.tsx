@@ -48,7 +48,7 @@ describe('usePresence', () => {
 
     // create a second room and attach it, so we can listen for presence events
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // start listening for presence events on room two

@@ -3,11 +3,14 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { InternalRoomLifecycle } from '../../../src/core/room-status.ts';
 import { usePresence } from '../../../src/react/hooks/use-presence.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
+import { waitForEventualHookValue } from '../../helper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
+let mockRoomContext: { room: Promise<Room> };
 let mockCurrentConnectionStatus: ConnectionStatus;
 let mockCurrentRoomStatus: RoomStatus;
 let mockConnectionError: Ably.ErrorInfo;
@@ -22,12 +25,12 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
   }),
 }));
 
-vi.mock('../../../src/react/hooks/use-room.js', () => ({
-  useRoom: () => ({
-    room: mockRoom,
-    roomStatus: mockCurrentRoomStatus,
-    roomError: mockRoomError,
-  }),
+vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+  useRoomContext: () => mockRoomContext,
+}));
+
+vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+  useRoomStatus: () => ({ status: mockCurrentRoomStatus, error: mockRoomError }),
 }));
 
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
@@ -36,6 +39,12 @@ vi.mock('../../../src/react/hooks/use-logger.js', () => ({
 
 vi.mock('ably');
 
+const updateMockRoom = (newRoom: Room) => {
+  mockRoom = newRoom;
+  (mockRoom as unknown as { _lifecycle: InternalRoomLifecycle })._lifecycle.setStatus({ status: RoomStatus.Attached });
+  mockRoomContext = { room: Promise.resolve(newRoom) };
+};
+
 describe('usePresence', () => {
   beforeEach(() => {
     // create a new mock room before each test, enabling presence
@@ -43,21 +52,23 @@ describe('usePresence', () => {
     mockLogger = makeTestLogger();
     mockCurrentConnectionStatus = ConnectionStatus.Connected;
     mockCurrentRoomStatus = RoomStatus.Attached;
-    mockRoom = makeRandomRoom({
-      options: {
-        presence: {
-          enter: true,
-          subscribe: true,
+    updateMockRoom(
+      makeRandomRoom({
+        options: {
+          presence: {
+            enter: true,
+            subscribe: true,
+          },
         },
-      },
-    });
+      }),
+    );
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  it('should provide the presence instance and chat status response metrics', () => {
+  it('should provide the presence instance and chat status response metrics', async () => {
     // set the connection and room errors to check that they are correctly provided
     mockConnectionError = new Ably.ErrorInfo('test error', 40000, 400);
     mockRoomError = new Ably.ErrorInfo('test error', 40000, 400);
@@ -65,8 +76,8 @@ describe('usePresence', () => {
     const { result } = renderHook(() => usePresence());
 
     // check that the presence instance and metrics are correctly provided
-    expect(result.current.presence).toBe(mockRoom.presence);
-    expect(result.current.isPresent).toBe(false);
+    await waitForEventualHookValue(result, mockRoom.presence, (value) => value.presence);
+    expect(result.current.isPresent).toBe(true);
     expect(result.current.error).toBeUndefined();
 
     // check connection and room metrics are correctly provided
@@ -82,7 +93,9 @@ describe('usePresence', () => {
     const { result, rerender } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
 
     // ensure we have entered presence
-    expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
+    await waitFor(() => {
+      expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
+    });
 
     await waitFor(() => result.current.isPresent);
 
@@ -91,14 +104,16 @@ describe('usePresence', () => {
     expect(result.current.isPresent).toBe(true);
 
     // change the mock room instance
-    mockRoom = makeRandomRoom({
-      options: {
-        presence: {
-          enter: true,
-          subscribe: true,
+    updateMockRoom(
+      makeRandomRoom({
+        options: {
+          presence: {
+            enter: true,
+            subscribe: true,
+          },
         },
-      },
-    });
+      }),
+    );
 
     vi.spyOn(mockRoom.presence, 'enter');
 
@@ -106,7 +121,9 @@ describe('usePresence', () => {
     rerender();
 
     // ensure we have entered presence on the new room instance
-    expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
+    await waitFor(() => {
+      expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
+    });
     await waitFor(() => result.current.isPresent);
     expect(result.current.isPresent).toBe(true);
 
@@ -164,7 +181,9 @@ describe('usePresence', () => {
     const { result } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
 
     // expect the enter method to be called
-    expect(enterSpy).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(enterSpy).toHaveBeenCalled();
+    });
 
     // wait for the error to be set from the useEffect
     await waitFor(
@@ -212,7 +231,7 @@ describe('usePresence', () => {
     }
   });
 
-  it('should subscribe and unsubscribe to discontinuity events', () => {
+  it('should subscribe and unsubscribe to discontinuity events', async () => {
     const mockOff = vi.fn();
     const mockDiscontinuityListener = vi.fn();
 
@@ -228,7 +247,9 @@ describe('usePresence', () => {
 
     // check that the listener was subscribed to the discontinuity events by triggering the listener
     const errorInfo = new Ably.ErrorInfo('test', 50000, 500);
-    expect(discontinuityListener).toBeDefined();
+    await waitFor(() => {
+      expect(discontinuityListener).toBeDefined();
+    });
     discontinuityListener?.(errorInfo);
     expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
 

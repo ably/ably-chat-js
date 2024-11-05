@@ -4,19 +4,22 @@ import {
   MessageListener,
   Messages,
   MessageSubscriptionResponse,
-  PaginatedResult,
   QueryOptions,
   SendMessageParams,
 } from '@ably/chat';
+import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
+import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
+import { useRoomContext } from '../helper/use-room-context.js';
+import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
 import { useLogger } from './use-logger.js';
-import { useRoom } from './use-room.js';
 
 /**
  * The response from the {@link useMessages} hook.
@@ -40,7 +43,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   /**
    * Provides access to the underlying {@link Messages} instance of the room.
    */
-  readonly messages: Messages;
+  readonly messages?: Messages;
 
   /**
    * Retrieves the previous messages in the room.
@@ -82,79 +85,99 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
     onStatusChange: params?.onConnectionStatusChange,
   });
-  const { room, roomError, roomStatus } = useRoom({
-    onStatusChange: params?.onRoomStatusChange,
-  });
+  const context = useRoomContext('useMessages');
+  const { status: roomStatus, error: roomError } = useRoomStatus(params);
 
   const logger = useLogger();
-  logger.trace('useMessages();', { params, roomId: room.roomId });
+  logger.trace('useMessages();', { params, roomId: context.roomId });
 
   // we are storing the params in a ref so that we don't end up with an infinite loop should the user pass
   // in an unstable reference
   const listenerRef = useEventListenerRef(params?.listener);
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
-  const send = useCallback((params: SendMessageParams) => room.messages.send(params), [room]);
-
-  const deleteMessage = useCallback(
-    (message: Message, deleteMessageParams?: DeleteMessageParams) => room.messages.delete(message, deleteMessageParams),
-    [room],
+  const send = useCallback(
+    (params: SendMessageParams) => context.room.then((room) => room.messages.send(params)),
+    [context],
   );
-  const get = useCallback((options: QueryOptions) => room.messages.get(options), [room]);
+  const deleteMessage = useCallback(
+    (message: Message, deleteMessageParams?: DeleteMessageParams) =>
+      context.room.then((room) => room.messages.delete(message, deleteMessageParams)),
+    [context],
+  );
+  const get = useCallback(
+    (options: QueryOptions) => context.room.then((room) => room.messages.get(options)),
+    [context],
+  );
 
   const [getPreviousMessages, setGetPreviousMessages] = useState<MessageSubscriptionResponse['getPreviousMessages']>();
 
   useEffect(() => {
     if (!listenerRef) return;
-    logger.debug('useMessages(); applying listener', { roomId: room.roomId });
-    let unmounted = false;
-    const sub = room.messages.subscribe(listenerRef);
 
-    // set the getPreviousMessages method if a listener is provided
-    setGetPreviousMessages(() => {
-      logger.debug('useMessages(); setting getPreviousMessages state', { roomId: room.roomId });
-      return (params: Omit<QueryOptions, 'direction'>) => {
-        // If we've unmounted, then the subscription is gone and we can't call getPreviousMessages
-        // So return a dummy object that should be thrown away anyway
-        if (unmounted) {
-          logger.debug('useMessages(); getPreviousMessages called after unmount', { roomId: room.roomId });
-          return Promise.resolve({
-            items: [],
-            hasNext: () => false,
-            isLast: () => true,
-            next: () => undefined as unknown as Promise<PaginatedResult<Message>> | null,
-            previous: () => undefined as unknown as Promise<PaginatedResult<Message>>,
-            current: () => undefined as unknown as Promise<PaginatedResult<Message>>,
-            first: () => undefined as unknown as Promise<PaginatedResult<Message>>,
-          }) as Promise<PaginatedResult<Message>>;
-        }
-        return sub.getPreviousMessages(params);
-      };
-    });
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        let unmounted = false;
+        logger.debug('useMessages(); applying listener', { roomId: context.roomId });
+        const sub = room.messages.subscribe(listenerRef);
 
-    return () => {
-      logger.debug('useMessages(); removing listener and getPreviousMessages state', { roomId: room.roomId });
-      unmounted = true;
-      sub.unsubscribe();
-      setGetPreviousMessages(undefined);
-    };
-  }, [room, logger, listenerRef]);
+        // set the getPreviousMessages method if a listener is provided
+        setGetPreviousMessages(() => {
+          logger.debug('useMessages(); setting getPreviousMessages state', {
+            roomId: context.roomId,
+            status: room.status,
+            unmounted,
+          });
+          if (unmounted) {
+            return;
+          }
+
+          return (params: Omit<QueryOptions, 'direction'>) => {
+            // If we've unmounted, then the subscription is gone and we can't call getPreviousMessages
+            // So return a dummy object that should be thrown away anyway
+            logger.debug('useMessages(); getPreviousMessages called', { roomId: context.roomId });
+            if (unmounted) {
+              return Promise.reject(new Ably.ErrorInfo('component unmounted', 40000, 400));
+            }
+            return sub.getPreviousMessages(params);
+          };
+        });
+
+        return () => {
+          logger.debug('useMessages(); removing listener and getPreviousMessages state', { roomId: context.roomId });
+          unmounted = true;
+          sub.unsubscribe();
+          setGetPreviousMessages(undefined);
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, logger, listenerRef]);
 
   useEffect(() => {
     if (!onDiscontinuityRef) return;
-    logger.debug('useMessages(); applying onDiscontinuity listener', { roomId: room.roomId });
-    const { off } = room.messages.onDiscontinuity(onDiscontinuityRef);
-    return () => {
-      logger.debug('useMessages(); removing onDiscontinuity listener', { roomId: room.roomId });
-      off();
-    };
-  }, [room, logger, onDiscontinuityRef]);
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('useMessages(); applying onDiscontinuity listener', { roomId: context.roomId });
+        const { off } = room.messages.onDiscontinuity(onDiscontinuityRef);
+        return () => {
+          logger.debug('useMessages(); removing onDiscontinuity listener', { roomId: context.roomId });
+          off();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, logger, onDiscontinuityRef]);
 
   return {
+    messages: useEventualRoomProperty((room) => room.messages),
     send,
     get,
     deleteMessage,
-    messages: room.messages,
     getPreviousMessages,
     connectionStatus,
     connectionError,
