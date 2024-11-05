@@ -38,8 +38,8 @@ describe('messages integration', () => {
   it<TestContext>('sets the agent version on the channel', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
-    const channel = (await room.messages.channel) as RealtimeChannelWithOptions;
+    const room = await getRandomRoom(chat);
+    const channel = room.messages.channel as RealtimeChannelWithOptions;
 
     expect(channel.channelOptions.params).toEqual(expect.objectContaining({ agent: CHANNEL_OPTIONS_AGENT_STRING }));
   });
@@ -47,7 +47,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to send and receive chat messages', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Attach the room
     await room.attach();
@@ -82,7 +82,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to retrieve chat history', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Publish 3 messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -117,7 +117,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to paginate chat history', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Publish 4 messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -167,7 +167,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to paginate chat history, but backwards', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Publish 4 messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -217,7 +217,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to send, receive and query chat messages with metadata and headers', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Subscribe to messages and add them to a list when they arrive
     const messages: Message[] = [];
@@ -276,7 +276,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to get history for listener from attached timeserial', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Publish some messages
     const message1 = await room.messages.send({ text: 'Hello there!' });
@@ -331,7 +331,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to get history for listener with latest message timeserial', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Subscribe to messages, which will also set up the listener subscription point
     const { getPreviousMessages } = room.messages.subscribe(() => {});
@@ -372,7 +372,7 @@ describe('messages integration', () => {
   it<TestContext>('should be able to get history for multiple listeners', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     await room.messages.send({ text: 'Hello there!' });
     await room.messages.send({ text: 'I have the high ground!' });
@@ -398,7 +398,7 @@ describe('messages integration', () => {
   it<TestContext>('handles discontinuities', async (context) => {
     const { chat } = context;
 
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Attach the room
     await room.attach();
@@ -409,7 +409,7 @@ describe('messages integration', () => {
       discontinuityErrors.push(error);
     });
 
-    const channelSuspendable = (await room.messages.channel) as Ably.RealtimeChannel & {
+    const channelSuspendable = room.messages.channel as Ably.RealtimeChannel & {
       notifyState(state: 'suspended' | 'attached'): void;
     };
 
@@ -447,7 +447,7 @@ describe('messages integration', () => {
   it<TestContext>('handles the room being released before getPreviousMessages is called', async (context) => {
     const chat = context.chat;
     const roomId = randomRoomId();
-    const room = chat.rooms.get(roomId, RoomOptionsDefaults);
+    const room = await chat.rooms.get(roomId, RoomOptionsDefaults);
 
     // Create a subscription to messages
     room.messages.subscribe(() => {});

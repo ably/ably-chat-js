@@ -43,7 +43,7 @@ describe('usePresenceListener', () => {
 
     // create a second room and attach it, so we can send presence events with it
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // store the current presence member state

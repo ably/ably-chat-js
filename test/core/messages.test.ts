@@ -46,11 +46,11 @@ const mockPaginatedResultWithItems = (items: Message[]): MockPaginatedResult => 
 vi.mock('ably');
 
 describe('Messages', () => {
-  beforeEach<TestContext>(async (context) => {
+  beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
-    const channel = await context.room.messages.channel;
+    const channel = context.room.messages.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
     context.emulateBackendStateChange = channelStateEventEmitter(channel);
   });
@@ -393,7 +393,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = await room.messages.channel;
+    const msgChannel = room.messages.channel;
 
     // Force ts to recognize the channel properties
     const channel = msgChannel as RealtimeChannel & {
@@ -453,7 +453,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = await room.messages.channel;
+    const msgChannel = room.messages.channel;
 
     // Force ts to recognize the channel properties
     const channel = msgChannel as RealtimeChannel & {
@@ -490,7 +490,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = await room.messages.channel;
+    const msgChannel = room.messages.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -587,7 +587,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = await room.messages.channel;
+    const msgChannel = room.messages.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -675,7 +675,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = await room.messages.channel;
+    const msgChannel = room.messages.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -778,7 +778,7 @@ describe('Messages', () => {
     // Create a room instance
     const { room } = context;
 
-    const msgChannel = await room.messages.channel;
+    const msgChannel = room.messages.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
