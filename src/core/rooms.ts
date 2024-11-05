@@ -1,9 +1,10 @@
 import * as Ably from 'ably';
-import { Mutex } from 'async-mutex';
 import { dequal } from 'dequal';
 
 import { ChatApi } from './chat-api.js';
 import { ClientOptions, NormalizedClientOptions } from './config.js';
+import { ErrorCodes } from './errors.js';
+import { randomId } from './id.js';
 import { Logger } from './logger.js';
 import { DefaultRoom, Room } from './room.js';
 import { RoomOptions } from './room-options.js';
@@ -45,9 +46,29 @@ export interface Rooms {
   get clientOptions(): ClientOptions;
 }
 
+/**
+ * Represents an entry in the chat room map.
+ */
 interface RoomMapEntry {
+  /**
+   * The promise that will eventually resolve to the room.
+   */
   promise: Promise<DefaultRoom>;
-  room: DefaultRoom;
+
+  /**
+   * A random, internal identifier useful for debugging and logging.
+   */
+  nonce: string;
+
+  /**
+   * The options for the room.
+   */
+  options: RoomOptions;
+
+  /**
+   * An abort controller to abort the get operation if the room is released before the get operation completes.
+   */
+  abort?: AbortController;
 }
 
 /**
@@ -60,7 +81,6 @@ export class DefaultRooms implements Rooms {
   private readonly _rooms: Map<string, RoomMapEntry> = new Map<string, RoomMapEntry>();
   private readonly _releasing = new Map<string, { promise: Promise<void> }>();
   private readonly _logger: Logger;
-  private readonly _mtx: Mutex;
 
   /**
    * Constructs a new Rooms instance.
@@ -74,45 +94,85 @@ export class DefaultRooms implements Rooms {
     this._chatApi = new ChatApi(realtime, logger);
     this._clientOptions = clientOptions;
     this._logger = logger;
-    this._mtx = new Mutex();
   }
 
   /**
    * @inheritDoc
    */
-  get(roomId: string, options: RoomOptions): Promise<Room> {
-    this._logger.debug('Rooms.get(); before mtx', { roomId });
-    return this._mtx.runExclusive(async () => {
-      this._logger.trace('Rooms.get();', { roomId });
+  async get(roomId: string, options: RoomOptions): Promise<Room> {
+    this._logger.trace('Rooms.get();', { roomId });
 
-      const existing = this._rooms.get(roomId);
-      if (existing) {
-        if (!dequal(existing.room.options(), options)) {
-          throw new Ably.ErrorInfo('Room already exists with different options', 40000, 400);
-        }
-
-        this._logger.debug('Rooms.get(); returning existing room', { roomId, nonce: existing.room.nonce });
-        return existing.promise;
+    const existing = this._rooms.get(roomId);
+    if (existing) {
+      if (!dequal(existing.options, options)) {
+        throw new Ably.ErrorInfo('room already exists with different options', 40000, 400);
       }
 
-      const releasing = this._releasing.get(roomId);
-      if (!releasing) {
-        const room = new DefaultRoom(roomId, options, this._realtime, this._chatApi, this._logger);
-        const entry = {
-          promise: Promise.resolve(room),
-          room: room,
-        };
+      this._logger.debug('Rooms.get(); returning existing room', { roomId, nonce: existing.nonce });
+      return existing.promise;
+    }
 
-        this._rooms.set(roomId, entry);
-        this._logger.debug('Rooms.get(); returning new room', { roomId, nonce: room.nonce });
-        return entry.promise;
-      }
+    const releasing = this._releasing.get(roomId);
+    const nonce = randomId();
 
-      this._logger.debug('Rooms.get(); waiting for releasing to finish', { roomId });
-      await releasing.promise;
-      this._logger.debug('Rooms.get(); releasing finished', { roomId });
-      return this.get(roomId, options);
+    // We're not currently releasing the room, so we just make a new one
+    if (!releasing) {
+      const room = this._makeRoom(roomId, nonce, options);
+      const entry = {
+        promise: Promise.resolve(room),
+        nonce: nonce,
+        options: options,
+      };
+
+      this._rooms.set(roomId, entry);
+      this._logger.debug('Rooms.get(); returning new room', { roomId, nonce: room.nonce });
+      return entry.promise;
+    }
+
+    // The room is currently in the process of being released so, we wait for it to finish
+    // we add an abort controller so that if the room is released again whilst we're waiting, we abort the process
+    const abortController = new AbortController();
+    const roomPromise = new Promise<DefaultRoom>((resolve, reject) => {
+      const abortListener = () => {
+        this._logger.debug('Rooms.get(); aborted before init', { roomId });
+        reject(
+          new Ably.ErrorInfo(
+            'room released before get operation could complete',
+            ErrorCodes.RoomReleasedBeforeOperationCompleted,
+            400,
+          ),
+        );
+      };
+
+      abortController.signal.addEventListener('abort', abortListener);
+
+      releasing.promise
+        .then(() => {
+          // We aborted before resolution
+          if (abortController.signal.aborted) {
+            this._logger.debug('Rooms.get(); aborted before releasing promise resolved', { roomId });
+            return;
+          }
+
+          this._logger.debug('Rooms.get(); releasing finished', { roomId });
+          const room = this._makeRoom(roomId, nonce, options);
+          abortController.signal.removeEventListener('abort', abortListener);
+          resolve(room);
+        })
+        .catch((error: unknown) => {
+          reject(error as Error);
+        });
     });
+
+    this._rooms.set(roomId, {
+      promise: roomPromise,
+      options: options,
+      nonce: nonce,
+      abort: abortController,
+    });
+
+    this._logger.debug('Rooms.get(); creating new promise dependent on previous release', { roomId });
+    return roomPromise;
   }
 
   /**
@@ -125,42 +185,63 @@ export class DefaultRooms implements Rooms {
   /**
    * @inheritDoc
    */
-  release(roomId: string): Promise<void> {
-    this._logger.debug('Rooms.release(); before mtx', { roomId });
-    return this._mtx.runExclusive(async () => {
-      this._logger.trace('Rooms.release();', { roomId });
+  async release(roomId: string): Promise<void> {
+    this._logger.trace('Rooms.release();', { roomId });
 
-      const existing = this._rooms.get(roomId);
-      const releasing = this._releasing.get(roomId);
+    const existing = this._rooms.get(roomId);
+    const releasing = this._releasing.get(roomId);
 
-      // If the room doesn't currently exist
-      if (!existing) {
-        // existing the room is being released, forward the releasing promise
-        if (releasing) {
-          this._logger.debug('Rooms.release(); waiting for previous release call', {
-            roomId,
-          });
-          return releasing.promise;
-        }
-
-        // If the room is not releasing, there is nothing else to do
-        return;
+    // If the room doesn't currently exist
+    if (!existing) {
+      // existing the room is being released, forward the releasing promise
+      if (releasing) {
+        this._logger.debug('Rooms.release(); waiting for previous release call', {
+          roomId,
+        });
+        return releasing.promise;
       }
 
-      // Make sure we no longer keep this room in the map
-      this._logger.debug('Rooms.release(); removing room from map', { roomId, nonce: existing.room.nonce });
+      // If the room is not releasing, there is nothing else to do
+      this._logger.debug('Rooms.release(); room does not exist', { roomId });
+      return;
+    }
+
+    // A release is in progress, but its not for the currently requested room instance
+    // ie we called release, then get, then release again
+    // so instead of doing another release process, we just abort the current get
+    if (releasing) {
+      if (existing.abort) {
+        this._logger.debug('Rooms.release(); aborting get call', { roomId, existingNonce: existing.nonce });
+        existing.abort.abort();
+      }
+
       this._rooms.delete(roomId);
+      return;
+    }
 
-      // Set the releasing process into motion but don't wait for it to finish
-      const releasingPromise = existing.room.release().then(() => {
-        this._logger.debug('Rooms.release(); room released', { roomId, nonce: existing.room.nonce });
-        this._releasing.delete(roomId);
-      });
-      this._logger.debug('Rooms.release(); setting releasing', { roomId, nonce: existing.room.nonce });
-      this._releasing.set(roomId, { promise: releasingPromise });
-
-      // At this point, we might come back after the release has finished, so see if we're still releasing
-      return releasingPromise;
+    // Room doesn't exist and we're not releasing, so its just a regular release operation
+    this._rooms.delete(roomId);
+    const releasePromise = existing.promise.then((room) => {
+      this._logger.debug('Rooms.release(); releasing room', { roomId, nonce: existing.nonce });
+      return room.release();
     });
+
+    this._logger.debug('Rooms.release(); creating new release promise', { roomId, nonce: existing.nonce });
+    this._releasing.set(roomId, { promise: releasePromise });
+
+    return releasePromise;
+  }
+
+  /**
+   * makes a new room object
+   *
+   * @param roomId The ID of the room.
+   * @param nonce A random, internal identifier useful for debugging and logging.
+   * @param options The options for the room.
+   *
+   * @returns DefaultRoom A new room object.
+   */
+  private _makeRoom(roomId: string, nonce: string, options: RoomOptions): DefaultRoom {
+    return new DefaultRoom(roomId, nonce, options, this._realtime, this._chatApi, this._logger);
   }
 }

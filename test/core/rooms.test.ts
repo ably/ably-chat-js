@@ -1,8 +1,8 @@
+import { ErrorCodes } from '@ably/chat';
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
-import { DefaultRoom } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { randomRoomId } from '../helper/identifier.ts';
@@ -17,11 +17,41 @@ interface TestContext {
   rooms: Rooms;
 }
 
-describe('Room', () => {
+describe('rooms', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
     const logger = makeTestLogger();
     context.rooms = new DefaultRooms(context.realtime, normalizeClientOptions({}), logger);
+  });
+
+  describe('room get', () => {
+    it<TestContext>('throws error if room with same ID but different options already exists', async (context) => {
+      const roomId = randomRoomId();
+      const roomOptions: RoomOptions = defaultRoomOptions;
+      const room1 = context.rooms.get(roomId, roomOptions);
+      const room2 = context.rooms.get(roomId, { reactions: {} });
+      await expect(room1).resolves.toBeDefined();
+      await expect(room2).rejects.toBeErrorInfo({
+        statusCode: 400,
+        code: 40000,
+        message: 'room already exists with different options',
+      });
+    });
+
+    it<TestContext>('returns a fresh room instance if room does not exist', async (context) => {
+      const roomId = randomRoomId();
+      const roomOptions: RoomOptions = defaultRoomOptions;
+      const room = context.rooms.get(roomId, roomOptions);
+      await expect(room).resolves.toBeDefined();
+    });
+
+    it<TestContext>('returns the same room instance if room already exists', async (context) => {
+      const roomId = randomRoomId();
+      const roomOptions: RoomOptions = defaultRoomOptions;
+      const room1 = await context.rooms.get(roomId, roomOptions);
+      const room2 = await context.rooms.get(roomId, roomOptions);
+      expect(room1).toBe(room2);
+    });
   });
 
   describe('room get-release lifecycle', () => {
@@ -42,39 +72,95 @@ describe('Room', () => {
       expect(room1).not.toBe(room2);
     });
 
-    it<TestContext>('should correctly forward releasing promises to new room instances', async (context) => {
+    it<TestContext>('releasing a room should abort any get operations', async (context) => {
       const roomId = randomRoomId();
       const roomOptions: RoomOptions = defaultRoomOptions;
-      const room1 = await context.rooms.get(roomId, roomOptions);
+      const room1 = context.rooms.get(roomId, roomOptions);
+      const releasePromise1 = context.rooms.release(roomId);
+      const room2 = context.rooms.get(roomId, roomOptions);
+      const releasedPromise2 = context.rooms.release(roomId);
 
-      let resolveReleasePromise: () => void = () => void 0;
-      const releasePromise = new Promise<void>((resolve) => {
-        resolveReleasePromise = resolve;
+      await expect(releasePromise1).resolves.toBeUndefined();
+      await expect(room1).resolves.toBeDefined();
+      await expect(room2).rejects.toBeErrorInfo({
+        statusCode: 400,
+        code: ErrorCodes.RoomReleasedBeforeOperationCompleted,
+        message: 'room released before get operation could complete',
       });
+      await expect(releasedPromise2).resolves.toBeUndefined();
+    });
 
-      vi.spyOn(room1 as DefaultRoom, 'release').mockImplementationOnce(() => {
-        return releasePromise;
+    it<TestContext>('releasing a room should abort any get operations from previous get', async (context) => {
+      const roomId = randomRoomId();
+      const roomOptions: RoomOptions = defaultRoomOptions;
+      const room1 = context.rooms.get(roomId, roomOptions);
+      const releasePromise1 = context.rooms.release(roomId);
+      const room2 = context.rooms.get(roomId, roomOptions);
+      const releasedPromise2 = context.rooms.release(roomId);
+      const room3 = context.rooms.get(roomId, roomOptions);
+      const room4 = context.rooms.get(roomId, roomOptions);
+      const releasePromise3 = context.rooms.release(roomId);
+      const releasePromise4 = context.rooms.release(roomId);
+      const finalRoom = context.rooms.get(roomId, roomOptions);
+
+      await expect(room1).resolves.toBeDefined();
+      await expect(releasePromise1).resolves.toBeUndefined();
+      await expect(room2).rejects.toBeErrorInfo({
+        statusCode: 400,
+        code: ErrorCodes.RoomReleasedBeforeOperationCompleted,
+        message: 'room released before get operation could complete',
       });
-
-      const room2 = await context.rooms.get(roomId, roomOptions);
-
-      // this should forward the previous room's release() promise
-      const secondReleasePromise = (room2 as DefaultRoom).release();
-
-      // test that when we resolve the first promise the second one gets resolved
-      let secondReleasePromiseResolved = false;
-      void secondReleasePromise.then(() => {
-        secondReleasePromiseResolved = true;
+      await expect(releasedPromise2).resolves.toBeUndefined();
+      await expect(room3).rejects.toBeErrorInfo({
+        statusCode: 400,
+        code: ErrorCodes.RoomReleasedBeforeOperationCompleted,
+        message: 'room released before get operation could complete',
       });
+      await expect(room4).rejects.toBeErrorInfo({
+        statusCode: 400,
+        code: ErrorCodes.RoomReleasedBeforeOperationCompleted,
+        message: 'room released before get operation could complete',
+      });
+      await expect(releasePromise3).resolves.toBeUndefined();
+      await expect(releasePromise4).resolves.toBeUndefined();
+      await expect(finalRoom).resolves.toBeDefined();
 
-      // make sure second one doesn't just get resolved by itself
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      expect(secondReleasePromiseResolved).toBeFalsy();
+      const initialRoom = await room1;
+      const finalRoomInstance = await finalRoom;
+      expect(initialRoom).not.toBe(finalRoomInstance);
+    });
 
-      // resolve first, wait for second
-      resolveReleasePromise();
-      await secondReleasePromise;
-      expect(secondReleasePromiseResolved).toBeTruthy();
+    it<TestContext>('multiple gets on a releasing room return the same room instance', async (context) => {
+      const roomId = randomRoomId();
+      const roomOptions: RoomOptions = defaultRoomOptions;
+      const room1 = context.rooms.get(roomId, roomOptions);
+      const releasePromise1 = context.rooms.release(roomId);
+      const room2 = context.rooms.get(roomId, roomOptions);
+      const room3 = context.rooms.get(roomId, roomOptions);
+      const room4 = context.rooms.get(roomId, roomOptions);
+
+      await expect(room1).resolves.toBeDefined();
+      await expect(releasePromise1).resolves.toBeUndefined();
+
+      const resolvedRoom2 = await room2;
+      const resolvedRoom3 = await room3;
+      const resolvedRoom4 = await room4;
+
+      expect(resolvedRoom2).toBe(resolvedRoom3);
+      expect(resolvedRoom2).toBe(resolvedRoom4);
+    });
+
+    it<TestContext>('no-ops if releasing room that does not exist', async (context) => {
+      const roomId = randomRoomId();
+      const releasePromise = context.rooms.release(roomId);
+      await expect(releasePromise).resolves.toBeUndefined();
+    });
+  });
+
+  describe('client options', () => {
+    it<TestContext>('returns the client options', (context) => {
+      const clientOptions = context.rooms.clientOptions;
+      expect(clientOptions).toEqual(normalizeClientOptions({}));
     });
   });
 });

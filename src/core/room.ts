@@ -2,7 +2,6 @@ import * as Ably from 'ably';
 import cloneDeep from 'lodash.clonedeep';
 
 import { ChatApi } from './chat-api.js';
-import { randomId } from './id.js';
 import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
@@ -127,9 +126,16 @@ export class DefaultRoom implements Room {
    * @param logger An instance of the Logger.
    * @param initAfter The room will wait for this promise to finish before initializing
    */
-  constructor(roomId: string, options: RoomOptions, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
+  constructor(
+    roomId: string,
+    nonce: string,
+    options: RoomOptions,
+    realtime: Ably.Realtime,
+    chatApi: ChatApi,
+    logger: Logger,
+  ) {
     validateRoomOptions(options);
-    this._nonce = randomId();
+    this._nonce = nonce;
     logger.debug('Room();', { roomId, options, nonce: this._nonce });
 
     this._roomId = roomId;
