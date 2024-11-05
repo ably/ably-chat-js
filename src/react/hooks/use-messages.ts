@@ -88,7 +88,16 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
   const get = useCallback(
-    (options: QueryOptions) => context.room.then((room) => room.messages.get(options)),
+    (options: QueryOptions) => {
+      const efn = context.efn;
+      return context.room.then((room) => {
+        console.log("calling messages.get at efn", efn, "roomId", room.roomId);
+        return room.messages.get(options).then((response) => {
+          console.log("got result for messages.get at efn", efn, "roomId", room.roomId);
+          return response;
+        });
+      });
+    },
     [context],
   );
 
@@ -97,9 +106,14 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   useEffect(() => {
     if (!listenerRef) return;
 
+    const efn = context.efn;
+
+    console.log("useMessages useEffect: resolved with efn", efn, "roomId", context.roomId);
+
     return wrapRoomPromise(
       context.room,
       (room) => {
+        console.log("wrapped room promise in use-messages at efn", efn, "roomId", room.roomId);
         let unmounted = false;
         logger.debug('useMessages(); applying listener', { roomId: context.roomId });
         const sub = room.messages.subscribe(listenerRef);
@@ -114,15 +128,20 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
           if (unmounted) {
             return;
           }
-
+          console.log("setting previous messages at efn", efn, "roomId", room.roomId);
+          
           return (params: Omit<QueryOptions, 'direction'>) => {
+            console.log("called getPreviousMessages at efn", efn, "roomId", room.roomId);
             // If we've unmounted, then the subscription is gone and we can't call getPreviousMessages
             // So return a dummy object that should be thrown away anyway
             logger.debug('useMessages(); getPreviousMessages called', { roomId: context.roomId });
             if (unmounted) {
               return Promise.reject(new Ably.ErrorInfo('component unmounted', 40000, 400));
             }
-            return sub.getPreviousMessages(params);
+            return sub.getPreviousMessages(params).then((response) => {
+              console.log("resolved getPrevoiusMessages at efn", efn, "roomId", room.roomId);
+              return response;
+            });
           };
         });
 

@@ -19,6 +19,8 @@ export interface ChatRoomContextType {
    * Options used to create the room.
    */
   options: RoomOptions;
+
+  efn: number;
 }
 
 /**

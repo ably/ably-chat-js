@@ -49,7 +49,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
   useEffect(() => {
     chatClient.logger.debug('updating getPreviousMessages useEffect', { getPreviousMessages });
     // try and fetch the messages up to attachment of the messages listener
-    if (getPreviousMessages && loading) {
+    if (getPreviousMessages) {
       chatClient.logger.debug('fetching initial messages', { roomStatus });
       getPreviousMessages({ limit: 50 })
         .then((result: PaginatedResult<Message>) => {
@@ -61,7 +61,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
           chatClient.logger.error('Error fetching initial messages', { err: error });
         });
     }
-  }, [getPreviousMessages, loading]);
+  }, [getPreviousMessages]);
 
   const handleStartTyping = () => {
     start().catch((error: unknown) => {
@@ -111,16 +111,22 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
     window.location.reload();
   }
 
-  function changeRoomId() {
+  function changeRoomId(e : unknown) {
+    (e as Event).preventDefault(); // make sure we don't add a # in url bar
+    // todo: history push state
+
     const newRoomId = prompt('Enter your new roomId');
     if (!newRoomId) {
       return;
     }
 
     // Clear the room messages
+    console.warn("clearing before setting the room ID to", newRoomId);
     setMessages([]);
-    setLoading(true);
+    // setLoading(true);
     setRoomReactions([]);
+
+    // console.warn("setting the room ID to", newRoomId);
     props.setRoomId(newRoomId);
   }
 

@@ -23,6 +23,7 @@ export const useEventualRoom = (): Room | undefined => {
   useEffect(() => {
     logger.debug('useEventualRoom(); running useEffect', { roomId: context.roomId });
     let unmounted = false;
+    const efn = context.efn;
     void context.room
       .then((room: Room) => {
         if (unmounted) {
@@ -31,6 +32,7 @@ export const useEventualRoom = (): Room | undefined => {
         }
 
         logger.debug('useEventualRoom(); resolved', { roomId: context.roomId });
+        console.log("useEventualRoom(); resolved with efn", efn);
         setRoomState(room);
       })
       .catch((error: unknown) => {
@@ -40,6 +42,8 @@ export const useEventualRoom = (): Room | undefined => {
     return () => {
       logger.debug('useEventualRoom(); cleanup', { roomId: context.roomId });
       unmounted = true;
+      console.log("useEventualRoom(); teardown for efn", efn);
+      setRoomState(undefined);
     };
   }, [context, logger]);
 
@@ -82,6 +86,7 @@ export const useEventualRoomProperty = <T>(onResolve: (room: Room) => T) => {
     return () => {
       logger.debug('useEventualRoomProperty(); cleanup', { roomId: context.roomId });
       unmounted = true;
+      setRoomState(undefined);
     };
   }, [context, logger, onResolveRef]);
 

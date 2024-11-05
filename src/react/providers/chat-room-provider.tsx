@@ -69,6 +69,8 @@ interface RoomReleaseOp {
 }
 
 
+let effectRunNum = 0;
+
 /**
  * Provider for a {@link Room}. Must be wrapped in a {@link ChatClientProvider}.
  *
@@ -90,18 +92,22 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
     logger.debug(`ChatRoomProvider(); initializing value`, { roomId, options });
     // const roomPromise = Promise.reject(new Error("room not yet initialised, state is setting up"));
     // roomPromise.catch(); // fake catch not part of chain
-    return { room: new Promise<Room>((resolve, reject) => {}), roomId: roomId, options: options };
+    return { room: new Promise<Room>((resolve, reject) => {}), roomId: roomId, options: options, efn: -1 };
   });
 
   useEffect(() => {
+    const efn = effectRunNum;
+    effectRunNum++;
+    console.log("room changed to: ", roomId, "efn",efn);
     let mounted = true;
     const room = client.rooms.get(roomId, options);
     room.catch(); // fake catch not part of chain
-    setValue({ room: room, roomId, options });
+    setValue({ room: room, roomId, options, efn: efn });
 
     let resolvedRoom: Room | undefined;
     if (attach) {      
       room.then((room) => {
+        console.log("room resolved to: ", roomId, "efn", efn, "mounted", mounted);
         if (!mounted) { return; }
         resolvedRoom = room;
         room.attach().catch();
@@ -109,6 +115,7 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
     }
 
     return () => {
+      console.log("teardown of", roomId, "efn", efn);
       mounted = false;
       if (release) {
         client.rooms.release(roomId).catch();
