@@ -34,6 +34,7 @@
     "build": "npm run build:chat && npm run build:react",
     "build:chat": "vite build --config ./src/core/vite.config.ts --emptyOutDir",
     "build:react": "vite build --config ./src/react/vite.config.ts --emptyOutDir",
+    "build:start-demo": "npm run build && (cd demo && npm start)",
     "prepare": "npm run build",
     "test:typescript": "tsc",
     "demo:reload": "npm run build && cd demo && npm i file:../",
