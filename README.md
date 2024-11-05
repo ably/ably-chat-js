@@ -69,7 +69,7 @@ For browsers, you can also include the Chat SDK directly into your HTML:
 <script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
 <script src="https://cdn.ably.com/lib/ably-chat.umd.cjs-0.js"></script>
 <script>
-  const realtime = new Ably.Realtime({key: 'your-ably-key'})
+  const realtime = new Ably.Realtime({ key: 'your-ably-key' });
   const chatClient = new AblyChat.ChatClient(realtime);
 </script>
 ```
@@ -107,8 +107,8 @@ property to observe the connection state and take action accordingly.
 You can view the current connection status at any time:
 
 ```ts
-const connectionStatus = chat.connection.status.current;
-const connectionError = chat.connection.status.error;
+const connectionStatus = chat.connection.status;
+const connectionError = chat.connection.error;
 ```
 
 ### Subscribing to connection status changes
@@ -116,7 +116,7 @@ const connectionError = chat.connection.status.error;
 You can subscribe to connection status changes by registering a listener, like so:
 
 ```ts
-const { off } = chat.connection.status.onChange((change) => console.log(change));
+const { off } = chat.connection.onStatusChange((change) => console.log(change));
 ```
 
 To stop listening to changes, call the provided `off` method:
@@ -125,10 +125,10 @@ To stop listening to changes, call the provided `off` method:
 off();
 ```
 
-To remove all listeners at the same time, you can call `offAll`:
+To remove all listeners at the same time, you can call `offAllStatusChange`:
 
 ```ts
-chat.connection.status.offAll();
+chat.connection.offAllStatusChange();
 ```
 
 ## Chat rooms
@@ -189,15 +189,13 @@ Note that releasing a room may be optional for many applications.
 
 Monitoring the status of the room is key to a number of common chat features. For example, you might want to display a warning when the room has become detached.
 
-Various aspects of the room's status can be found at the `room.status` property.
-
 ### Current status of a room
 
-To get the current status, you can use the `current` property:
+To get the current status, you can use the `status` property:
 
 ```ts
-const roomStatus = room.status.current;
-const roomError = room.status.error;
+const roomStatus = room.status;
+const roomError = room.error;
 ```
 
 ### Listening to room status updates
@@ -205,7 +203,7 @@ const roomError = room.status.error;
 You can also subscribe to changes in the room status and be notified whenever they happen by registering a listener:
 
 ```ts
-const { off } = room.status.onChange((change) => console.log(change));
+const { off } = room.onStatusChange((change) => console.log(change));
 ```
 
 To stop listening to changes, you can call the provided `off` function:
@@ -217,7 +215,7 @@ off();
 Or you can remove all listeners at once:
 
 ```ts
-room.status.offAll();
+room.offAllStatusChange();
 ```
 
 ## Handling discontinuity
@@ -551,7 +549,11 @@ await room.reactions.send({ type: 'like' });
 You can also add any metadata and headers to reactions:
 
 ```ts
-await room.reactions.send({ type: 'like', metadata: { effect: 'fireworks' }, headers: { streamId: 'basketball-stream' } });
+await room.reactions.send({
+  type: 'like',
+  metadata: { effect: 'fireworks' },
+  headers: { streamId: 'basketball-stream' },
+});
 ```
 
 ### Subscribing to room reactions
@@ -658,7 +660,7 @@ import {
   getEntityTypeFromAblyMessage,
   chatMessageFromAblyMessage,
   reactionFromAblyMessage,
-  ChatEntityType
+  ChatEntityType,
 } from '@ably/chat';
 
 const entityType = getEntityTypeFromAblyMessage(inboundMessage as Ably.InboundMessage);
