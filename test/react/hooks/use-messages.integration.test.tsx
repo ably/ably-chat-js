@@ -36,7 +36,7 @@ describe('useMessages', () => {
 
     // create a second room and attach it, so we can listen for messages
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // start listening for messages
@@ -80,7 +80,7 @@ describe('useMessages', () => {
 
     // create a second room so we can send messages from it
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
 
     // start listening for messages
     const messagesRoomOne: Message[] = [];
@@ -135,7 +135,7 @@ describe('useMessages', () => {
 
     // create a second room instance so we can send messages from it
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // send a few messages before the first room has subscribed
@@ -198,7 +198,7 @@ describe('useMessages', () => {
 
     // create a second room instance so we can send messages from it
     const roomId = randomRoomId();
-    const room = chatClient.rooms.get(roomId, RoomOptionsDefaults);
+    const room = await chatClient.rooms.get(roomId, RoomOptionsDefaults);
     await room.attach();
 
     let lastSeenMessageText: string | undefined;
@@ -332,7 +332,7 @@ describe('useMessages', () => {
 
     // create a second room instance so we can send messages from it
     const roomId = randomRoomId();
-    const room = chatClient.rooms.get(roomId, RoomOptionsDefaults);
+    const room = await chatClient.rooms.get(roomId, RoomOptionsDefaults);
     await room.attach();
 
     let lastSeenMessageText: string | undefined;

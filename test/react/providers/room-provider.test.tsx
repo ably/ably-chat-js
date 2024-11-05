@@ -3,6 +3,7 @@ import { cleanup, render } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { useRoom } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
@@ -15,9 +16,14 @@ describe('ChatRoomProvider', () => {
     cleanup();
   });
 
-  it('should create a provider without error', () => {
+  it('should create a provider without error', async () => {
     const chatClient = newChatClient() as unknown as ChatClient;
+    let roomResolved = false;
     const TestComponent = () => {
+      const { room } = useRoom();
+      if (room) {
+        roomResolved = true;
+      }
       return <div />;
     };
     const roomId = randomRoomId();
@@ -38,13 +44,16 @@ describe('ChatRoomProvider', () => {
     render(<TestProvider />);
 
     // Try to get the client to get a room with different options, should fail
-    expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).toThrowErrorInfoWithCode(40000);
+    await vi.waitFor(() => {
+      expect(roomResolved).toBeTruthy();
+    });
+    await expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
-    expect(() => chatClient.rooms.get(roomId, { reactions: RoomOptionsDefaults.reactions })).toBeTruthy();
+    await chatClient.rooms.get(roomId, { reactions: RoomOptionsDefaults.reactions });
   });
 
-  it('should correctly release rooms', () => {
+  it('should correctly release rooms', async () => {
     const chatClient = newChatClient() as unknown as ChatClient;
     const TestComponent = () => {
       return <div />;
@@ -67,7 +76,7 @@ describe('ChatRoomProvider', () => {
     const r = render(<TestProvider />);
 
     // Try to get the client to get a room with different options, should fail
-    expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).toThrowErrorInfoWithCode(40000);
+    await expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
     expect(() => chatClient.rooms.get(roomId, { reactions: RoomOptionsDefaults.reactions }));
@@ -80,14 +89,14 @@ describe('ChatRoomProvider', () => {
     expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).toBeTruthy();
   });
 
-  it('should attach and detach correctly', () => {
+  it('should attach and detach correctly', async () => {
     const chatClient = newChatClient() as unknown as ChatClient;
     const TestComponent = () => {
       return <div />;
     };
     const roomId = randomRoomId();
 
-    const room = chatClient.rooms.get(roomId, { reactions: RoomOptionsDefaults.reactions });
+    const room = await chatClient.rooms.get(roomId, { reactions: RoomOptionsDefaults.reactions });
     expect(room).toBeTruthy();
 
     vi.spyOn(room, 'attach');
@@ -110,24 +119,28 @@ describe('ChatRoomProvider', () => {
     const r = render(<TestProvider />);
 
     // Make sure the room is attaching
-    expect(room.attach).toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(room.attach).toHaveBeenCalled();
+    });
 
     r.unmount();
     // Make sure the room is detaching
-    expect(room.detach).toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(room.detach).toHaveBeenCalled();
+    });
 
     // Try to get the client to get a room with different options, should fail
-    expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).toThrowErrorInfoWithCode(40000);
+    await expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).rejects.toBeErrorInfoWithCode(40000);
   });
 
-  it('should not attach, detach, or release when not configured to do so', () => {
+  it('should not attach, detach, or release when not configured to do so', async () => {
     const chatClient = newChatClient() as unknown as ChatClient;
     const TestComponent = () => {
       return <div />;
     };
     const roomId = randomRoomId();
 
-    const room = chatClient.rooms.get(roomId, { reactions: RoomOptionsDefaults.reactions });
+    const room = await chatClient.rooms.get(roomId, { reactions: RoomOptionsDefaults.reactions });
     expect(room).toBeTruthy();
 
     vi.spyOn(room, 'attach');
@@ -157,8 +170,8 @@ describe('ChatRoomProvider', () => {
     expect(room.detach).toHaveBeenCalledTimes(0);
 
     // Try to get the client to get a room with different options, should fail (since it should not be released)
-    expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).toThrowErrorInfoWithCode(40000);
+    await expect(() => chatClient.rooms.get(roomId, RoomOptionsDefaults)).rejects.toBeErrorInfoWithCode(40000);
 
-    void chatClient.rooms.release(roomId);
+    await chatClient.rooms.release(roomId);
   });
 });

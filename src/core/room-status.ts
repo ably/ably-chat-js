@@ -8,12 +8,13 @@ import EventEmitter from './utils/event-emitter.js';
  */
 export enum RoomStatus {
   /**
-   * The library is currently initializing the room.
+   * The library is currently initializing the room. This state is a temporary state used in React prior
+   * to the room being resolved.
    */
   Initializing = 'initializing',
 
   /**
-   * A temporary state for when the library is first initialized.
+   * A temporary state for when the room object is first initialized.
    */
   Initialized = 'initialized',
 
@@ -167,7 +168,7 @@ type RoomStatusEventsMap = {
  * @internal
  */
 export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> implements InternalRoomLifecycle {
-  private _status: RoomStatus = RoomStatus.Initializing;
+  private _status: RoomStatus = RoomStatus.Initialized;
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
   private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
@@ -179,7 +180,7 @@ export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> impl
   constructor(logger: Logger) {
     super();
     this._logger = logger;
-    this._status = RoomStatus.Initializing;
+    this._status = RoomStatus.Initialized;
     this._error = undefined;
   }
 

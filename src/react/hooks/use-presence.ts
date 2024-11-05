@@ -1,13 +1,16 @@
-import { ConnectionStatus, Presence, PresenceData, RoomStatus } from '@ably/chat';
+import { ConnectionStatus, Presence, PresenceData, Room, RoomStatus } from '@ably/chat';
 import { type ErrorInfo } from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
+import { useRoomContext } from '../helper/use-room-context.js';
+import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
 import { useLogger } from './use-logger.js';
-import { useRoom } from './use-room.js';
 
 /**
  * The options for the {@link usePresence} hook.
@@ -31,6 +34,11 @@ export interface UsePresenceResponse extends ChatStatusResponse {
   readonly update: Presence['update'];
 
   /**
+   * Provides access to the underlying {@link Presence} instance of the room.
+   */
+  readonly presence?: Presence;
+
+  /**
    * Indicates whether the current user is present in the room.
    */
   readonly isPresent: boolean;
@@ -39,11 +47,6 @@ export interface UsePresenceResponse extends ChatStatusResponse {
    * Indicates if an error occurred while entering or leaving the room.
    */
   readonly error?: ErrorInfo;
-
-  /**
-   * Provides access to the underlying {@link Presence} instance of the room.
-   */
-  readonly presence: Presence;
 }
 
 /**
@@ -64,11 +67,11 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
     onStatusChange: params?.onConnectionStatusChange,
   });
-  const { room, roomError, roomStatus } = useRoom({
-    onStatusChange: params?.onRoomStatusChange,
-  });
+
+  const context = useRoomContext('usePresence');
+  const { status: roomStatus, error: roomError } = useRoomStatus(params);
   const logger = useLogger();
-  logger.trace('usePresence();', { params, roomId: room.roomId });
+  logger.trace('usePresence();', { params, roomId: context.roomId });
 
   const [isPresent, setIsPresent] = useState(false);
   const [error, setError] = useState<ErrorInfo | undefined>();
@@ -92,66 +95,96 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
   // enter the room when the hook is mounted
   useEffect(() => {
-    const canJoinPresence = roomStatus === RoomStatus.Attached && !INACTIVE_CONNECTION_STATES.has(connectionStatus);
-    const canLeavePresence =
-      roomStatusAndConnectionStatusRef.current.roomStatus === RoomStatus.Attached &&
-      !INACTIVE_CONNECTION_STATES.has(roomStatusAndConnectionStatusRef.current.connectionStatus);
+    logger.debug('usePresence(); entering room', { roomId: context.roomId });
+    return wrapRoomPromise(
+      context.room,
+      (room: Room) => {
+        const canJoinPresence =
+          room.status === RoomStatus.Attached && !INACTIVE_CONNECTION_STATES.has(connectionStatus);
 
-    // wait until the room is attached before attempting to enter, and ensure the connection is active
-    if (!canJoinPresence) return;
-    room.presence
-      .enter(dataRef.current?.enterWithData)
-      .then(() => {
-        logger.debug('usePresence(); entered room', { roomId: room.roomId });
-        setIsPresent(true);
-        setError(undefined);
-      })
-      .catch((error: unknown) => {
-        logger.error('usePresence(); error entering room', { error, roomId: room.roomId });
-        setError(error as ErrorInfo);
-      });
+        // wait until the room is attached before attempting to enter, and ensure the connection is active
+        if (!canJoinPresence) {
+          logger.debug('usePresence(); skipping enter room', { roomStatus, connectionStatus, roomId: context.roomId });
+          return () => {
+            // no-op
+          };
+        }
 
-    return () => {
-      // ensure we are still in an attached state before attempting to leave and the connection is active;
-      // a presence.leave call will produce an exception otherwise.
-      if (canLeavePresence) {
         room.presence
-          .leave(dataRef.current?.leaveWithData)
+          .enter(dataRef.current?.enterWithData)
           .then(() => {
-            logger.debug('usePresence(); left room', { roomId: room.roomId });
-            setIsPresent(false);
+            logger.debug('usePresence(); entered room', { roomId: context.roomId });
+            setIsPresent(true);
             setError(undefined);
           })
           .catch((error: unknown) => {
-            logger.error('usePresence(); error leaving room', { error, roomId: room.roomId });
+            logger.error('usePresence(); error entering room', { error, roomId: context.roomId });
             setError(error as ErrorInfo);
           });
-      }
-    };
-  }, [room, connectionStatus, roomStatus, logger]);
+
+        return () => {
+          const canLeavePresence =
+            room.status === RoomStatus.Attached &&
+            !INACTIVE_CONNECTION_STATES.has(roomStatusAndConnectionStatusRef.current.connectionStatus);
+
+          logger.debug('usePresence(); unmounting', {
+            roomId: context.roomId,
+            canLeavePresence,
+            roomStatus,
+            connectionStatus,
+          });
+          if (canLeavePresence) {
+            room.presence
+              .leave(dataRef.current?.leaveWithData)
+              .then(() => {
+                logger.debug('usePresence(); left room', { roomId: context.roomId });
+                setIsPresent(false);
+                setError(undefined);
+              })
+              .catch((error: unknown) => {
+                logger.error('usePresence(); error leaving room', { error, roomId: context.roomId });
+                setError(error as ErrorInfo);
+              });
+          }
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, connectionStatus, roomStatus, logger]);
 
   // if provided, subscribes the user provided onDiscontinuity listener
   useEffect(() => {
     if (!onDiscontinuityRef) return;
-    logger.debug('usePresence(); applying onDiscontinuity listener', { roomId: room.roomId });
-    const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
-    return () => {
-      logger.debug('usePresence(); removing onDiscontinuity listener', { roomId: room.roomId });
-      off();
-    };
-  }, [room, onDiscontinuityRef, logger]);
+    return wrapRoomPromise(
+      context.room,
+      (room: Room) => {
+        const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
+        return () => {
+          logger.debug('usePresence(); removing onDiscontinuity listener', { roomId: context.roomId });
+          off();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, onDiscontinuityRef, logger]);
 
   // memoize the methods to avoid re-renders and ensure the same instance is used
   const update = useCallback(
     (data?: PresenceData) =>
-      room.presence.update(data).then(() => {
-        setIsPresent(true);
-        setError(undefined);
+      context.room.then((room: Room) => {
+        return room.presence.update(data).then(() => {
+          setIsPresent(true);
+          setError(undefined);
+        });
       }),
-    [room],
+
+    [context],
   );
 
   return {
+    presence: useEventualRoomProperty((room) => room.presence),
     connectionStatus,
     connectionError,
     roomStatus,
@@ -159,6 +192,5 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     update,
     isPresent,
     error,
-    presence: room.presence,
   };
 };
