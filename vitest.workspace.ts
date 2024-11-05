@@ -17,7 +17,7 @@ export default defineWorkspace([
     test: {
       globalSetup: './test/helper/test-setup.ts',
       setupFiles: ['./test/helper/expectations.ts'],
-      include: ['test/react/**/*.test.{tsx,jsx}'],
+      include: ['test/react/**/*.test.{tsx,jsx,ts}'],
       name: 'react-hooks',
       environment: 'jsdom',
     },
