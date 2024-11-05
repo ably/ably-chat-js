@@ -1,4 +1,4 @@
-import { ChatClient, RoomOptionsDefaults, RoomStatus } from '@ably/chat';
+import { RoomOptionsDefaults, RoomStatus } from '@ably/chat';
 import { cleanup, configure, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,7 +19,7 @@ describe('ChatRoomProvider', () => {
 
   // This check ensures that a chat room is valid when being used in strict mode
   it('should attach the room in strict mode', async () => {
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     const TestComponent = () => {
       return <div />;
     };

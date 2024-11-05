@@ -1,4 +1,4 @@
-import { ChatClient, RoomOptionsDefaults, RoomStatus, RoomStatusListener } from '@ably/chat';
+import { RoomOptionsDefaults, RoomStatus, RoomStatusListener } from '@ably/chat';
 import { act, cleanup, render, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import React from 'react';
@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatRoomProvider, useRoom, UseRoomResponse } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
-import { newChatClient as newChatClientLib } from '../../helper/chat.ts';
+import { newChatClient } from '../../helper/chat.ts';
 import { randomRoomId } from '../../helper/identifier.ts';
 
 const TestComponent: React.FC<{ callback?: (room: UseRoomResponse) => void }> = ({ callback }) => {
@@ -16,10 +16,6 @@ const TestComponent: React.FC<{ callback?: (room: UseRoomResponse) => void }> = 
 };
 
 vi.mock('ably');
-
-function newChatClient() {
-  return newChatClientLib() as unknown as ChatClient;
-}
 
 describe('useRoom', () => {
   afterEach(() => {
