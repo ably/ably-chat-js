@@ -24,8 +24,8 @@ describe('useOccupancy', () => {
 
     // create two more rooms and attach to contribute towards occupancy metrics
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
-    const roomThree = chatClientThree.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomThree = await chatClientThree.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
     await roomThree.attach();
 

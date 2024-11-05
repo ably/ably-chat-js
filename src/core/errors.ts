@@ -87,6 +87,11 @@ export enum ErrorCodes {
    * An unknown error has happened in the room lifecycle.
    */
   RoomLifecycleError = 102105,
+
+  /**
+   * Room was released before the operation could complete.
+   */
+  RoomReleasedBeforeOperationCompleted = 102106,
 }
 
 /**

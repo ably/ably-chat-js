@@ -1,14 +1,17 @@
-import { ErrorCodes, errorInfoIs, Typing, TypingEvent, TypingListener } from '@ably/chat';
+import { ErrorCodes, errorInfoIs, RoomStatus, Typing, TypingEvent, TypingListener } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
+import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
+import { useRoomContext } from '../helper/use-room-context.js';
+import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
 import { useLogger } from './use-logger.js';
-import { useRoom } from './use-room.js';
 
 /**
  * The parameters for the {@link useTyping} hook.
@@ -42,7 +45,7 @@ export interface UseTypingResponse extends ChatStatusResponse {
   /**
    * Provides access to the underlying {@link Typing} instance of the room.
    */
-  readonly typingIndicators: Typing;
+  readonly typingIndicators?: Typing;
 
   /**
    * A state value representing the current error state of the hook, this will be an instance of {@link Ably.ErrorInfo} or `undefined`.
@@ -63,11 +66,11 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
     onStatusChange: params?.onConnectionStatusChange,
   });
-  const { room, roomError, roomStatus } = useRoom({
-    onStatusChange: params?.onRoomStatusChange,
-  });
+
+  const context = useRoomContext('useTyping');
+  const { status: roomStatus, error: roomError } = useRoomStatus(params);
   const logger = useLogger();
-  logger.trace('useTyping();', { roomId: room.roomId });
+  logger.trace('useTyping();', { roomId: context.roomId });
 
   const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
   const [error, setError] = useState<Ably.ErrorInfo | undefined>();
@@ -89,66 +92,98 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
 
     const setErrorState = (error?: Ably.ErrorInfo) => {
       if (error === undefined) {
-        logger.debug('useTyping(); clearing error state', { roomId: room.roomId });
+        logger.debug('useTyping(); clearing error state', { roomId: context.roomId });
       } else {
-        logger.error('useTyping(); setting error state', { error, roomId: room.roomId });
+        logger.error('useTyping(); setting error state', { error, roomId: context.roomId });
       }
       setError(error);
     };
 
-    room.typing
-      .get()
-      .then((currentlyTyping) => {
-        if (!mounted) return;
-        setCurrentlyTyping(currentlyTyping);
+    void context.room
+      .then((room) => {
+        // If we're not attached, we can't call typing.get() right now
+        if (room.status === RoomStatus.Attached) {
+          return room.typing
+            .get()
+            .then((currentlyTyping) => {
+              if (!mounted) return;
+              setCurrentlyTyping(currentlyTyping);
+            })
+            .catch((error: unknown) => {
+              const errorInfo = error as Ably.ErrorInfo;
+              if (!mounted || errorInfoIs(errorInfo, ErrorCodes.RoomIsReleased)) return;
+
+              setErrorState(errorInfo);
+            });
+        } else {
+          logger.debug('useTyping(); room not attached, setting currentlyTyping to empty', { roomId: context.roomId });
+          setCurrentlyTyping(new Set());
+        }
       })
-      .catch((error: unknown) => {
-        const errorInfo = error as Ably.ErrorInfo;
-        if (!mounted || errorInfoIs(errorInfo, ErrorCodes.RoomIsReleased)) return;
+      .catch();
 
-        setErrorState(errorInfo);
-      });
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('useTyping(); subscribing to typing events', { roomId: context.roomId });
+        const { unsubscribe } = room.typing.subscribe((event) => {
+          setErrorState(undefined);
+          setCurrentlyTyping(event.currentlyTyping);
+        });
 
-    const subscription = room.typing.subscribe((event) => {
-      setErrorState(undefined);
-      setCurrentlyTyping(event.currentlyTyping);
-    });
-
-    // cleanup function
-    return () => {
-      logger.debug('useTyping(); unsubscribing from typing events', { roomId: room.roomId });
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [room, logger]);
+        return () => {
+          logger.debug('useTyping(); unsubscribing from typing events', { roomId: context.roomId });
+          mounted = false;
+          unsubscribe();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, logger]);
 
   // if provided, subscribes the user-provided onDiscontinuity listener
   useEffect(() => {
     if (!onDiscontinuityRef) return;
-    logger.debug('useTyping(); applying onDiscontinuity listener', { roomId: room.roomId });
-    const { off } = room.typing.onDiscontinuity(onDiscontinuityRef);
-    return () => {
-      logger.debug('useTyping(); removing onDiscontinuity listener', { roomId: room.roomId });
-      off();
-    };
-  }, [room, onDiscontinuityRef, logger]);
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('useTyping(); applying onDiscontinuity listener', { roomId: context.roomId });
+        const { off } = room.typing.onDiscontinuity(onDiscontinuityRef);
+        return () => {
+          logger.debug('useTyping(); removing onDiscontinuity listener', { roomId: context.roomId });
+          off();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, onDiscontinuityRef, logger]);
 
   // if provided, subscribe the user-provided listener to TypingEvents
   useEffect(() => {
     if (!listenerRef) return;
-    logger.debug('useTyping(); applying listener', { roomId: room.roomId });
-    const { unsubscribe } = room.typing.subscribe(listenerRef);
-    return () => {
-      logger.debug('useTyping(); removing listener', { roomId: room.roomId });
-      unsubscribe();
-    };
-  }, [room, listenerRef, logger]);
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('useTyping(); applying listener', { roomId: context.roomId });
+        const { unsubscribe } = room.typing.subscribe(listenerRef);
+        return () => {
+          logger.debug('useTyping(); removing listener', { roomId: context.roomId });
+          unsubscribe();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, listenerRef, logger]);
 
   // memoize the methods to avoid re-renders, and ensure the same instance is used
-  const start = useCallback(() => room.typing.start(), [room.typing]);
-  const stop = useCallback(() => room.typing.stop(), [room.typing]);
+  const start = useCallback(() => context.room.then((room) => room.typing.start()), [context]);
+  const stop = useCallback(() => context.room.then((room) => room.typing.stop()), [context]);
 
   return {
+    typingIndicators: useEventualRoomProperty((room) => room.typing),
     connectionStatus,
     connectionError,
     roomStatus,
@@ -157,6 +192,5 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     start,
     stop,
     currentlyTyping,
-    typingIndicators: room.typing,
   };
 };

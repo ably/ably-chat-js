@@ -58,11 +58,11 @@ const waitForMessages = (messages: TypingEvent[], expectedCount: number, timeout
 };
 
 describe('Typing', () => {
-  beforeEach<TestContext>(async (context) => {
+  beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.room = makeRandomRoom(context);
-    const channel = await context.room.typing.channel;
+    const channel = context.room.typing.channel;
     context.emulateBackendPublish = channelPresenceEventEmitter(channel);
   });
 
@@ -90,7 +90,7 @@ describe('Typing', () => {
 
   it<TestContext>('when stop is called, immediately stops typing', async (context) => {
     const { realtime, room } = context;
-    const channel = await room.typing.channel;
+    const channel = room.typing.channel;
     const presence = realtime.channels.get(channel.name).presence;
 
     // If stop is called, it should call leaveClient
@@ -122,7 +122,7 @@ describe('Typing', () => {
       allEvents.push(event);
     });
 
-    const channel = await context.room.typing.channel;
+    const channel = context.room.typing.channel;
 
     let arrayToReturn = presenceGetResponse(['otherClient']);
 
@@ -187,7 +187,7 @@ describe('Typing', () => {
       receivedEvents2.push(event);
     });
 
-    const channel = await context.room.typing.channel;
+    const channel = context.room.typing.channel;
     let arrayToReturn = presenceGetResponse(['otherClient']);
     vi.spyOn(channel.presence, 'get').mockImplementation(() => {
       return Promise.resolve<Ably.PresenceMessage[]>(arrayToReturn);
@@ -290,7 +290,7 @@ describe('Typing', () => {
 
   it<TestContext>('should not emit the same typing set twice', async (context) => {
     const { room } = context;
-    const channel = await context.room.typing.channel;
+    const channel = context.room.typing.channel;
 
     // Add a listener
     const events: TypingEvent[] = [];
@@ -340,7 +340,7 @@ describe('Typing', () => {
 
   it<TestContext>('should retry on failure', async (context) => {
     const { room } = context;
-    const channel = await context.room.typing.channel;
+    const channel = context.room.typing.channel;
 
     // Add a listener
     const events: TypingEvent[] = [];
@@ -371,7 +371,7 @@ describe('Typing', () => {
 
   it<TestContext>('should not return stale responses even if they resolve out of order', async (context) => {
     const { room } = context;
-    const channel = await context.room.typing.channel;
+    const channel = context.room.typing.channel;
 
     // Add a listener
     const events: TypingEvent[] = [];

@@ -97,17 +97,17 @@ const waitForEvent = (
 
 describe('UserPresence', { timeout: 10000 }, () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
-  beforeEach<TestContext>((context) => {
+  beforeEach<TestContext>(async (context) => {
     context.realtime = ablyRealtimeClient();
     const roomId = randomRoomId();
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
-    context.chatRoom = context.chat.rooms.get(roomId, { presence: RoomOptionsDefaults.presence });
+    context.chatRoom = await context.chat.rooms.get(roomId, { presence: RoomOptionsDefaults.presence });
   });
 
   // Test for successful entering with clientId and custom user data
   it<TestContext>('successfully enter presence with clientId and custom user data', async (context) => {
-    const messageChannel = await context.chatRoom.messages.channel;
+    const messageChannel = context.chatRoom.messages.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
       context.realtime,
@@ -131,7 +131,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
   // Test for successful sending of presence update with clientId and custom user data
   it<TestContext>('should successfully send presence update with clientId and custom user data', async (context) => {
-    const messageChannel = await context.chatRoom.messages.channel;
+    const messageChannel = context.chatRoom.messages.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(context.realtime, 'update', messageChannelName, (member) => {
       expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(context.defaultTestClientId);
@@ -150,7 +150,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
   // Test for successful leaving of presence
   it<TestContext>('should successfully leave presence', async (context) => {
-    const messageChannel = await context.chatRoom.messages.channel;
+    const messageChannel = context.chatRoom.messages.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
       context.realtime,
@@ -175,7 +175,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
   // Test for successful fetching of presence users
   it<TestContext>('should successfully fetch presence users ', async (context) => {
-    const { name: channelName } = await context.chatRoom.messages.channel;
+    const { name: channelName } = context.chatRoom.messages.channel;
 
     // Connect 3 clients to the same channel
     const client1 = ablyRealtimeClient({ clientId: 'clientId1' }).channels.get(channelName);
@@ -388,7 +388,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
       discontinuityErrors.push(error);
     });
 
-    const channelSuspendable = (await room.presence.channel) as Ably.RealtimeChannel & {
+    const channelSuspendable = room.presence.channel as Ably.RealtimeChannel & {
       notifyState(state: 'suspended' | 'attached'): void;
     };
 
@@ -426,7 +426,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
   it<TestContext>('prevents presence entry if room option prevents it', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId(), { presence: { enter: false } });
+    const room = await chat.rooms.get(randomRoomId(), { presence: { enter: false } });
 
     await room.attach();
 
@@ -437,7 +437,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
   it<TestContext>('does not receive presence events if room option prevents it', async (context) => {
     const { chat } = context;
 
-    const room = chat.rooms.get(randomRoomId(), { presence: { subscribe: false } });
+    const room = await chat.rooms.get(randomRoomId(), { presence: { subscribe: false } });
 
     await room.attach();
 
@@ -449,7 +449,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
 
     // We need to create another chat client and enter presence on the same room
     const chat2 = newChatClient();
-    const room2 = chat2.rooms.get(room.roomId, { presence: { enter: true } });
+    const room2 = await chat2.rooms.get(room.roomId, { presence: { enter: true } });
 
     // Entering presence
     await room2.attach();
