@@ -109,7 +109,7 @@ export interface Connection {
   /**
    * Removes all listeners that were added by the `onStatusChange` method.
    */
-  offAll(): void;
+  offAllStatusChange(): void;
 }
 
 type ConnectionEventsMap = {
@@ -204,7 +204,7 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
   /**
    * @inheritdoc
    */
-  offAll(): void {
+  offAllStatusChange(): void {
     this.off();
   }
 

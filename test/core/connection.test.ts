@@ -112,7 +112,7 @@ describe('connection', () => {
         reject(new Error('Expected onChange to not be called'));
       });
 
-      connection.offAll();
+      connection.offAllStatusChange();
       context.emulateStateChange({ current: 'connected', previous: 'disconnected' });
       done();
     }));
