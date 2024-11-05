@@ -1,4 +1,4 @@
-import { ChatClient, Reaction, RoomOptionsDefaults, RoomReactionListener, RoomStatus } from '@ably/chat';
+import { Reaction, RoomOptionsDefaults, RoomReactionListener, RoomStatus } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -31,8 +31,8 @@ describe('useRoomReactions', () => {
 
   it('should send a room reaction', async () => {
     // create new clients
-    const chatClientOne = newChatClient() as unknown as ChatClient;
-    const chatClientTwo = newChatClient() as unknown as ChatClient;
+    const chatClientOne = newChatClient();
+    const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can receive reactions
     const roomId = randomRoomId();
@@ -82,8 +82,8 @@ describe('useRoomReactions', () => {
 
   it('should receive room reactions', async () => {
     // create new clients
-    const chatClientOne = newChatClient() as unknown as ChatClient;
-    const chatClientTwo = newChatClient() as unknown as ChatClient;
+    const chatClientOne = newChatClient();
+    const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can send a reaction
     const roomId = randomRoomId();

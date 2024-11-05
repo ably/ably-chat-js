@@ -1,4 +1,4 @@
-import { ChatClient, OccupancyEvent, OccupancyListener, RoomOptionsDefaults } from '@ably/chat';
+import { OccupancyEvent, OccupancyListener, RoomOptionsDefaults } from '@ably/chat';
 import { cleanup, render } from '@testing-library/react';
 import { dequal } from 'dequal';
 import React from 'react';
@@ -18,9 +18,9 @@ describe('useOccupancy', () => {
 
   it('should receive occupancy updates', { timeout: 20000 }, async () => {
     // create new clients
-    const chatClient = newChatClient() as unknown as ChatClient;
-    const chatClientTwo = newChatClient() as unknown as ChatClient;
-    const chatClientThree = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
+    const chatClientTwo = newChatClient();
+    const chatClientThree = newChatClient();
 
     // create two more rooms and attach to contribute towards occupancy metrics
     const roomId = randomRoomId();
