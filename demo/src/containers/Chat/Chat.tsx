@@ -6,7 +6,7 @@ import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
 import { ConnectionStatus, Message, MessageEventPayload, MessageEvents, PaginatedResult, Reaction } from '@ably/chat';
 
-export const Chat = () => {
+export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => void }) => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
   const [messages, setMessages] = useState<Message[]>([]);
@@ -14,6 +14,20 @@ export const Chat = () => {
   const [loading, setLoading] = useState(true);
 
   const isConnected: boolean = currentStatus === ConnectionStatus.Connected;
+
+  const backfillPreviousMessages = (getPreviousMessages: ReturnType<typeof useMessages>['getPreviousMessages']) => {
+    chatClient.logger.debug('backfilling previous messages');
+    if (getPreviousMessages) {
+      getPreviousMessages({ limit: 50 })
+        .then((result: PaginatedResult<Message>) => {
+          setMessages(result.items.filter((m) => !m.isDeleted).reverse());
+          setLoading(false);
+        })
+        .catch((error: unknown) => {
+          chatClient.logger.error('Error fetching initial messages', error);
+        });
+    }
+  };
 
   const {
     send: sendMessage,
@@ -42,8 +56,11 @@ export const Chat = () => {
       // this will trigger a re-fetch of the messages
       setMessages([]);
 
-      // triggers the useEffect to fetch the initial messages again.
+      // set our state to loading, because we'll need to fetch previous messages again
       setLoading(true);
+
+      // Do a message backfill
+      backfillPreviousMessages(getPreviousMessages);
     },
   });
 
@@ -60,21 +77,9 @@ export const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // try and fetch the messages up to attachment of the messages listener
-    if (getPreviousMessages && loading) {
-      getPreviousMessages({ limit: 50 })
-        .then((result: PaginatedResult<Message>) => {
-          // reverse the messages so they are displayed in the correct order
-          // and don't include deleted messages
-          setMessages(result.items.filter((m) => !m.isDeleted).reverse());
-          setLoading(false);
-        })
-        .catch((error: unknown) => {
-          console.error('Error fetching initial messages', error);
-          setLoading(false);
-        });
-    }
-  }, [getPreviousMessages, loading]);
+    chatClient.logger.debug('updating getPreviousMessages useEffect', { getPreviousMessages });
+    backfillPreviousMessages(getPreviousMessages);
+  }, [getPreviousMessages]);
 
   const handleStartTyping = () => {
     start().catch((error: unknown) => {
@@ -124,6 +129,19 @@ export const Chat = () => {
     window.location.reload();
   }
 
+  function changeRoomId() {
+    const newRoomId = prompt('Enter your new roomId');
+    if (!newRoomId) {
+      return;
+    }
+
+    // Clear the room messages
+    setMessages([]);
+    setLoading(true);
+    setRoomReactions([]);
+    props.setRoomId(newRoomId);
+  }
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -148,6 +166,20 @@ export const Chat = () => {
           onClick={changeClientId}
         >
           Change clientId
+        </a>
+        .
+      </div>
+      <div
+        className="text-xs p-3"
+        style={{ backgroundColor: '#333' }}
+      >
+        You are in room <strong>{props.roomId}</strong>.{' '}
+        <a
+          href="#"
+          className="text-blue-600 dark:text-blue-500 hover:underline"
+          onClick={changeRoomId}
+        >
+          Change roomId
         </a>
         .
       </div>
