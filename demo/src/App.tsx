@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useState } from 'react';
 import { Chat } from './containers/Chat';
 import { OccupancyComponent } from './components/OccupancyComponent';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
@@ -23,20 +23,27 @@ let roomId: string;
 
 interface AppProps {}
 
-const App: FC<AppProps> = () => (
-  <ChatRoomProvider
-    id={roomId}
-    release={true}
-    attach={true}
-    options={RoomOptionsDefaults}
-  >
-    <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto' }}>
-      <Chat />
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <UserPresenceComponent />
-        <OccupancyComponent />
+const App: FC<AppProps> = () => {
+  const [roomIdState, setRoomId] = useState(roomId);
+
+  return (
+    <ChatRoomProvider
+      id={roomIdState}
+      release={true}
+      attach={true}
+      options={RoomOptionsDefaults}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto' }}>
+        <Chat
+          setRoomId={setRoomId}
+          roomId={roomIdState}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <UserPresenceComponent />
+          <OccupancyComponent />
+        </div>
       </div>
-    </div>
-  </ChatRoomProvider>
-);
+    </ChatRoomProvider>
+  );
+};
 export default App;
