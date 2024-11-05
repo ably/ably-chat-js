@@ -2,7 +2,7 @@ import { FC, useState } from 'react';
 import { useChatClient, useChatConnection, usePresence, usePresenceListener } from '@ably/chat/react';
 import '../../../styles/global.css';
 import './UserPresenceComponent.css';
-import { ConnectionLifecycle, PresenceMember } from '@ably/chat';
+import { ConnectionStatus, PresenceMember } from '@ably/chat';
 
 interface UserListComponentProps {}
 
@@ -17,7 +17,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
 
   const clientId = useChatClient().clientId;
   const { currentStatus } = useChatConnection();
-  const isConnected = currentStatus === ConnectionLifecycle.Connected;
+  const isConnected = currentStatus === ConnectionStatus.Connected;
 
   const [isOnline, setIsOnline] = useState(true);
 

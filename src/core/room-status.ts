@@ -6,7 +6,7 @@ import EventEmitter from './utils/event-emitter.js';
 /**
  * The different states that a room can be in throughout its lifecycle.
  */
-export enum RoomLifecycle {
+export enum RoomStatus {
   /**
    * The library is currently initializing the room.
    */
@@ -65,12 +65,12 @@ export interface RoomStatusChange {
   /**
    * The new status of the room.
    */
-  current: RoomLifecycle;
+  current: RoomStatus;
 
   /**
    * The previous status of the room.
    */
-  previous: RoomLifecycle;
+  previous: RoomStatus;
 
   /**
    * An error that provides a reason why the room has
@@ -98,11 +98,11 @@ export interface OnRoomStatusChangeResponse {
 /**
  * Represents the status of a Room.
  */
-export interface RoomStatus {
+export interface RoomLifecycle {
   /**
    * The current status of the room.
    */
-  get current(): RoomLifecycle;
+  get status(): RoomStatus;
 
   /**
    * The current error, if any, that caused the room to enter the current status.
@@ -127,7 +127,7 @@ export interface RoomStatus {
  * internal functionality from user listeners.
  * @internal
  */
-export interface InternalRoomStatus extends RoomStatus {
+export interface InternalRoomLifecycle extends RoomLifecycle {
   /**
    * Registers a listener that will be called once when the room status changes.
    * @param listener The function to call when the status changes.
@@ -149,7 +149,7 @@ export interface NewRoomStatus {
   /**
    * The new status of the room.
    */
-  status: RoomLifecycle;
+  status: RoomStatus;
 
   /**
    * An error that provides a reason why the room has
@@ -159,15 +159,15 @@ export interface NewRoomStatus {
 }
 
 type RoomStatusEventsMap = {
-  [key in RoomLifecycle]: RoomStatusChange;
+  [key in RoomStatus]: RoomStatusChange;
 };
 
 /**
  * An implementation of the `Status` interface.
  * @internal
  */
-export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements InternalRoomStatus {
-  private _state: RoomLifecycle = RoomLifecycle.Initializing;
+export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> implements InternalRoomLifecycle {
+  private _status: RoomStatus = RoomStatus.Initializing;
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
   private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
@@ -179,15 +179,15 @@ export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements 
   constructor(logger: Logger) {
     super();
     this._logger = logger;
-    this._state = RoomLifecycle.Initializing;
+    this._status = RoomStatus.Initializing;
     this._error = undefined;
   }
 
   /**
    * @inheritdoc
    */
-  get current(): RoomLifecycle {
-    return this._state;
+  get status(): RoomStatus {
+    return this._status;
   }
 
   /**
@@ -225,10 +225,10 @@ export class DefaultStatus extends EventEmitter<RoomStatusEventsMap> implements 
     const change: RoomStatusChange = {
       current: params.status,
       error: params.error,
-      previous: this._state,
+      previous: this._status,
     };
 
-    this._state = change.current;
+    this._status = change.current;
     this._error = change.error;
     this._logger.info(`Room status changed`, change);
     this._internalEmitter.emit(change.current, change);

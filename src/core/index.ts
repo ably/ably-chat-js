@@ -4,14 +4,13 @@
 
 export { ChatClient } from './chat.js';
 export type { ClientOptions } from './config.js';
-export type { Connection } from './connection.js';
 export type {
-  ConnectionStatus,
+  Connection,
   ConnectionStatusChange,
   ConnectionStatusListener,
   OnConnectionStatusChangeResponse,
-} from './connection-status.js';
-export { ConnectionLifecycle } from './connection-status.js';
+} from './connection.js';
+export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
 export { MessageEvents, PresenceEvents } from './events.js';
@@ -63,8 +62,8 @@ export type {
   RoomReactionsSubscriptionResponse,
   SendReactionParams,
 } from './room-reactions.js';
-export type { OnRoomStatusChangeResponse, RoomStatus, RoomStatusChange, RoomStatusListener } from './room-status.js';
-export { RoomLifecycle } from './room-status.js';
+export type { OnRoomStatusChangeResponse, RoomStatusChange, RoomStatusListener } from './room-status.js';
+export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
 export type { Typing, TypingEvent, TypingListener, TypingSubscriptionResponse } from './typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';

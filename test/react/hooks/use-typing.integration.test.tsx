@@ -1,4 +1,4 @@
-import { ChatClient, RoomLifecycle, RoomOptionsDefaults, TypingEvent, TypingListener } from '@ably/chat';
+import { ChatClient, RoomOptionsDefaults, RoomStatus, TypingEvent, TypingListener } from '@ably/chat';
 import { cleanup, render } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -47,7 +47,7 @@ describe('useTyping', () => {
       const { start, stop, roomStatus } = useTyping();
 
       useEffect(() => {
-        if (roomStatus !== RoomLifecycle.Attached) return;
+        if (roomStatus !== RoomStatus.Attached) return;
         void start().then(() => {
           setTimeout(() => {
             void stop();

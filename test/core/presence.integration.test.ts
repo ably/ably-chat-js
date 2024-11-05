@@ -9,7 +9,7 @@ import { PresenceEvents } from '../../src/core/events.ts';
 import { PresenceData, PresenceEvent } from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptionsDefaults } from '../../src/core/room-options.ts';
-import { RoomLifecycle } from '../../src/core/room-status.ts';
+import { RoomStatus } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -396,13 +396,13 @@ describe('UserPresence', { timeout: 10000 }, () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
+    await waitForRoomStatus(room, RoomStatus.Suspended);
 
     // Force the channel back into attached state - to simulate recovery
     channelSuspendable.notifyState('attached');
 
     // Wait for the room to go into attached
-    await waitForRoomStatus(room.status, RoomLifecycle.Attached);
+    await waitForRoomStatus(room, RoomStatus.Attached);
 
     // Wait for a discontinuity event to be received
     expect(discontinuityErrors.length).toBe(1);
@@ -414,7 +414,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     channelSuspendable.notifyState('suspended');
 
     // Wait for the room to go into suspended
-    await waitForRoomStatus(room.status, RoomLifecycle.Suspended);
+    await waitForRoomStatus(room, RoomStatus.Suspended);
 
     // We shouldn't get any more discontinuity events
     expect(discontinuityErrors.length).toBe(1);

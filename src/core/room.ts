@@ -10,7 +10,13 @@ import { DefaultPresence, Presence } from './presence.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
 import { RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
-import { DefaultStatus, RoomLifecycle, RoomStatus } from './room-status.js';
+import {
+  DefaultRoomLifecycle,
+  InternalRoomLifecycle,
+  OnRoomStatusChangeResponse,
+  RoomStatus,
+  RoomStatusListener,
+} from './room-status.js';
 import { DefaultTyping, Typing } from './typing.js';
 
 /**
@@ -63,16 +69,33 @@ export interface Room {
   get occupancy(): Occupancy;
 
   /**
-   * Returns an object that can be used to observe the status of the room.
+   * The current status of the room.
    *
-   * @returns The status observable.
+   * @returns The current status.
    */
   get status(): RoomStatus;
 
   /**
+   * The current error, if any, that caused the room to enter the current status.
+   */
+  get error(): Ably.ErrorInfo | undefined;
+
+  /**
+   * Registers a listener that will be called whenever the room status changes.
+   * @param listener The function to call when the status changes.
+   * @returns An object that can be used to unregister the listener.
+   */
+  onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse;
+
+  /**
+   * Removes all listeners that were added by the `onStatusChange` method.
+   */
+  offAllStatusChange(): void;
+
+  /**
    * Attaches to the room to receive events in realtime.
    *
-   * If a room fails to attach, it will enter either the {@link RoomLifecycle.Suspended} or {@link RoomLifecycle.Failed} state.
+   * If a room fails to attach, it will enter either the {@link RoomStatus.Suspended} or {@link RoomStatus.Failed} state.
    *
    * If the room enters the failed state, then it will not automatically retry attaching and intervention is required.
    *
@@ -154,7 +177,7 @@ export class DefaultRoom implements Room {
   private readonly _reactions?: DefaultRoomReactions;
   private readonly _occupancy?: DefaultOccupancy;
   private readonly _logger: Logger;
-  private readonly _status: DefaultStatus;
+  private readonly _lifecycle: DefaultRoomLifecycle;
   private _lifecycleManager?: RoomLifecycleManager;
   private _finalizer: () => Promise<void>;
   private readonly _asyncOpsAfter: Promise<void>;
@@ -184,7 +207,7 @@ export class DefaultRoom implements Room {
     this._options = options;
     this._chatApi = chatApi;
     this._logger = logger;
-    this._status = new DefaultStatus(logger);
+    this._lifecycle = new DefaultRoomLifecycle(logger);
 
     // Room initialization: handle the state before features start to be initialized
     // We don't need to catch it here as we immediately go into _asyncOpsAfter where we catch it
@@ -197,7 +220,7 @@ export class DefaultRoom implements Room {
       );
       if (rejectedNow) {
         // when this promise is rejected by calling reject(), the room is released
-        this._status.setStatus({ status: RoomLifecycle.Released });
+        this._lifecycle.setStatus({ status: RoomStatus.Released });
       }
       return initAfter;
     };
@@ -322,7 +345,7 @@ export class DefaultRoom implements Room {
         // - setup finalizer function
         return Promise.all(promises)
           .then((contributors) => {
-            const manager = new RoomLifecycleManager(this._status, contributors.toReversed(), this._logger, 5000);
+            const manager = new RoomLifecycleManager(this._lifecycle, contributors.toReversed(), this._logger, 5000);
             this._lifecycleManager = manager;
 
             let finalized = false;
@@ -337,7 +360,7 @@ export class DefaultRoom implements Room {
                 }
               });
             });
-            this._status.setStatus({ status: RoomLifecycle.Initialized });
+            this._lifecycle.setStatus({ status: RoomStatus.Initialized });
           })
           .catch((error: unknown) => {
             // this should never happen because contributor channel promises
@@ -345,8 +368,8 @@ export class DefaultRoom implements Room {
             // here just in case.
             setFinalizerFunc(() => Promise.resolve());
             this._logger.error('Room features initialization failed', { error: error, roomId: this.roomId });
-            this._status.setStatus({
-              status: RoomLifecycle.Failed,
+            this._lifecycle.setStatus({
+              status: RoomStatus.Failed,
               error: new Ably.ErrorInfo('Room features initialization failed.', 40000, 400, error as Error),
             });
             throw error;
@@ -430,7 +453,28 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get status(): RoomStatus {
-    return this._status;
+    return this._lifecycle.status;
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  get error(): Ably.ErrorInfo | undefined {
+    return this._lifecycle.error;
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse {
+    return this._lifecycle.onChange(listener);
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  offAllStatusChange(): void {
+    this._lifecycle.offAll();
   }
 
   /**
@@ -466,5 +510,14 @@ export class DefaultRoom implements Room {
    */
   initializationStatus(): Promise<void> {
     return this._asyncOpsAfter;
+  }
+
+  /**
+   * @internal
+   *
+   * Returns the rooms lifecycle.
+   */
+  get lifecycle(): InternalRoomLifecycle {
+    return this._lifecycle;
   }
 }

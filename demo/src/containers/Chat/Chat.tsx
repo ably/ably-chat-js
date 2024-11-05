@@ -4,7 +4,7 @@ import { MessageInput } from '../../components/MessageInput';
 import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
 import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
-import { ConnectionLifecycle, Message, MessageEventPayload, PaginatedResult, Reaction } from '@ably/chat';
+import { ConnectionStatus, Message, MessageEventPayload, PaginatedResult, Reaction } from '@ably/chat';
 
 export const Chat = () => {
   const chatClient = useChatClient();
@@ -13,7 +13,7 @@ export const Chat = () => {
   const { currentStatus } = useChatConnection();
   const [loading, setLoading] = useState(true);
 
-  const isConnected: boolean = currentStatus === ConnectionLifecycle.Connected;
+  const isConnected: boolean = currentStatus === ConnectionStatus.Connected;
 
   const { send: sendMessage, getPreviousMessages } = useMessages({
     listener: (message: MessageEventPayload) => {

@@ -3,8 +3,8 @@ import {
   PresenceEvent,
   PresenceListener,
   PresenceMember,
-  RoomLifecycle,
   RoomOptionsDefaults,
+  RoomStatus,
 } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
@@ -49,7 +49,7 @@ describe('usePresenceListener', () => {
     // store the current presence member state
     let currentPresenceData: PresenceMember[] = [];
 
-    let currentRoomStatus: RoomLifecycle;
+    let currentRoomStatus: RoomStatus;
     const TestComponent = ({ listener }: { listener: PresenceListener }) => {
       const { presenceData, roomStatus } = usePresenceListener({ listener });
 
@@ -85,7 +85,7 @@ describe('usePresenceListener', () => {
     // ensure we are attached first
     await waitFor(
       () => {
-        expect(currentRoomStatus).toBe(RoomLifecycle.Attached);
+        expect(currentRoomStatus).toBe(RoomStatus.Attached);
       },
       { timeout: 5000 },
     );

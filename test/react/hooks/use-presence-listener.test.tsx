@@ -1,5 +1,5 @@
 import {
-  ConnectionLifecycle,
+  ConnectionStatus,
   DiscontinuityListener,
   Logger,
   PresenceEvent,
@@ -7,7 +7,7 @@ import {
   PresenceListener,
   PresenceMember,
   Room,
-  RoomLifecycle,
+  RoomStatus,
 } from '@ably/chat';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
@@ -21,8 +21,8 @@ import { makeRandomRoom } from '../../helper/room.ts';
 let mockRoom: Room;
 let mockLogger: Logger;
 
-let mockCurrentConnectionStatus: ConnectionLifecycle;
-let mockCurrentRoomStatus: RoomLifecycle;
+let mockCurrentConnectionStatus: ConnectionStatus;
+let mockCurrentRoomStatus: RoomStatus;
 let mockConnectionError: Ably.ErrorInfo;
 let mockRoomError: Ably.ErrorInfo;
 
@@ -64,8 +64,8 @@ describe('usePresenceListener', () => {
   it('should provide the room presence instance, presence data and correct chat status response metrics', () => {
     mockConnectionError = new Ably.ErrorInfo('test', 500, 50000);
     mockRoomError = new Ably.ErrorInfo('test', 500, 50000);
-    mockCurrentRoomStatus = RoomLifecycle.Attached;
-    mockCurrentConnectionStatus = ConnectionLifecycle.Connected;
+    mockCurrentRoomStatus = RoomStatus.Attached;
+    mockCurrentConnectionStatus = ConnectionStatus.Connected;
 
     const { result } = renderHook(() => usePresenceListener());
 
@@ -74,9 +74,9 @@ describe('usePresenceListener', () => {
     expect(result.current.presenceData).toEqual([]);
 
     // check connection and room metrics are correctly provided
-    expect(result.current.roomStatus).toBe(RoomLifecycle.Attached);
+    expect(result.current.roomStatus).toBe(RoomStatus.Attached);
     expect(result.current.roomError).toBe(mockRoomError);
-    expect(result.current.connectionStatus).toEqual(ConnectionLifecycle.Connected);
+    expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
     expect(result.current.connectionError).toBe(mockConnectionError);
   });
 

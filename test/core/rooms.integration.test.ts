@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
 import { LogLevel } from '../../src/core/logger.ts';
-import { RoomLifecycle } from '../../src/core/room-status.ts';
+import { RoomStatus } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForRoomStatus } from '../helper/room.ts';
 
@@ -46,7 +46,7 @@ describe('Rooms', () => {
     channelFailable.notifyState('failed');
 
     // Wait for room to enter failed state
-    await waitForRoomStatus(room.status, RoomLifecycle.Failed);
+    await waitForRoomStatus(room, RoomStatus.Failed);
 
     // Release the room
     await chat.rooms.release('test');
