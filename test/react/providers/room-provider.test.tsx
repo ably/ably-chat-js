@@ -1,4 +1,4 @@
-import { ChatClient, RoomOptionsDefaults } from '@ably/chat';
+import { RoomOptionsDefaults } from '@ably/chat';
 import { cleanup, render } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -17,7 +17,7 @@ describe('ChatRoomProvider', () => {
   });
 
   it('should create a provider without error', async () => {
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     let roomResolved = false;
     const TestComponent = () => {
       const { room } = useRoom();
@@ -54,7 +54,7 @@ describe('ChatRoomProvider', () => {
   });
 
   it('should correctly release rooms', async () => {
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     const TestComponent = () => {
       return <div />;
     };
@@ -90,7 +90,7 @@ describe('ChatRoomProvider', () => {
   });
 
   it('should attach and detach correctly', async () => {
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     const TestComponent = () => {
       return <div />;
     };
@@ -134,7 +134,7 @@ describe('ChatRoomProvider', () => {
   });
 
   it('should not attach, detach, or release when not configured to do so', async () => {
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     const TestComponent = () => {
       return <div />;
     };

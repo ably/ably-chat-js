@@ -1,4 +1,3 @@
-import { ChatClient } from '@ably/chat';
 import { cleanup, render } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, it, vi } from 'vitest';
@@ -14,7 +13,7 @@ describe('useChatClient', () => {
   });
 
   it('should create a provider without error', () => {
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     const TestComponent = () => {
       return <div />;
     };

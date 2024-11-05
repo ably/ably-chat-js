@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useChatClient } from './use-chat-client.js';
+import { useLogger } from './use-logger.js';
 
 /**
  * The options for the {@link useChatConnection} hook.
@@ -44,7 +45,8 @@ export interface UseChatConnectionResponse {
  */
 export const useChatConnection = (options?: UseChatConnectionOptions): UseChatConnectionResponse => {
   const chatClient = useChatClient();
-  chatClient.logger.trace('useChatConnection();', options);
+  const logger = useLogger();
+  logger.trace('useChatConnection();', options);
 
   // Initialize states with the current values from chatClient
   const [currentStatus, setCurrentStatus] = useState<ConnectionStatus>(chatClient.connection.status);
@@ -63,7 +65,7 @@ export const useChatConnection = (options?: UseChatConnectionOptions): UseChatCo
 
   // Apply the listener to the chatClient's connection status changes to keep the state update across re-renders
   useEffect(() => {
-    chatClient.logger.debug('useChatConnection(); applying internal listener');
+    logger.debug('useChatConnection(); applying internal listener');
     const { off } = chatClient.connection.onStatusChange((change: ConnectionStatusChange) => {
       // Update states with new values
       setCurrentStatus(change.current);
@@ -71,22 +73,22 @@ export const useChatConnection = (options?: UseChatConnectionOptions): UseChatCo
     });
     // Cleanup listener on un-mount
     return () => {
-      chatClient.logger.debug('useChatConnection(); cleaning up listener');
+      logger.debug('useChatConnection(); cleaning up listener');
       off();
     };
-  }, [chatClient.connection, chatClient.logger]);
+  }, [chatClient.connection, logger]);
 
   // Register the listener for the user-provided onStatusChange callback
   useEffect(() => {
     if (!onStatusChangeRef) return;
-    chatClient.logger.debug('useChatConnection(); applying client listener');
+    logger.debug('useChatConnection(); applying client listener');
     const { off } = chatClient.connection.onStatusChange(onStatusChangeRef);
 
     return () => {
-      chatClient.logger.debug('useChatConnection(); cleaning up client listener');
+      logger.debug('useChatConnection(); cleaning up client listener');
       off();
     };
-  }, [chatClient.connection, chatClient.logger, onStatusChangeRef]);
+  }, [chatClient.connection, logger, onStatusChangeRef]);
 
   return {
     currentStatus,

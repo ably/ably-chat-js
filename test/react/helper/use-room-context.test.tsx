@@ -1,15 +1,11 @@
-import { ChatClient, RoomOptionsDefaults } from '@ably/chat';
+import { RoomOptionsDefaults } from '@ably/chat';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { useRoomContext } from '../../../src/react/helper/use-room-context.ts';
 import { ChatRoomProvider } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
-import { newChatClient as newChatClientLib } from '../../helper/chat.ts';
-
-function newChatClient() {
-  return newChatClientLib() as unknown as ChatClient;
-}
+import { newChatClient } from '../../helper/chat.ts';
 
 describe('useRoom', () => {
   afterEach(() => {
