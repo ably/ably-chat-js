@@ -107,7 +107,7 @@ export class DefaultRooms implements Rooms {
   /**
    * @inheritDoc
    */
-  async get(roomId: string, options: RoomOptions): Promise<Room> {
+  get(roomId: string, options: RoomOptions): Promise<Room> {
     this._logger.trace('Rooms.get();', { roomId });
 
     const existing = this._rooms.get(roomId);

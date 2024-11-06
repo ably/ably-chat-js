@@ -91,27 +91,35 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
   const [value, setValue] = useState<ChatRoomContextType>(() => {
     logger.debug(`ChatRoomProvider(); initializing value`, { roomId, options });
     // const roomPromise = Promise.reject(new Error("room not yet initialised, state is setting up"));
-    // roomPromise.catch(); // fake catch not part of chain
-    return { room: new Promise<Room>((resolve, reject) => {}), roomId: roomId, options: options, efn: -1 };
+    // roomPromise.catch(() => void 0); // fake catch not part of chain
+    const roomPromise = client.rooms.get(roomId, options);
+    return { room: roomPromise, roomId: roomId, options: options, efn: -1 };
   });
 
   useEffect(() => {
     const efn = effectRunNum;
     effectRunNum++;
-    console.log("room changed to: ", roomId, "efn",efn);
     let mounted = true;
     const room = client.rooms.get(roomId, options);
-    room.catch(); // fake catch not part of chain
-    setValue({ room: room, roomId, options, efn: efn });
+    room.catch(() => void 0); // fake catch not part of chain
+    setValue(prevRoom => {
+      console.log("setting value for", roomId, "efn", efn, "prevRoom", prevRoom.room, "nowRoom", room, "ctxEfn", prevRoom.efn, "the check", prevRoom.room === room);
+      if (prevRoom.room === room) {
+        console.log("room: ", roomId, "efn",efn, "did not change state");
+        return prevRoom;
+      }
+      console.log("room changed to: ", roomId, "efn",efn, "ctxEfn", prevRoom.efn);
+      return { room: room, roomId, options, efn: efn }
+    });
 
     let resolvedRoom: Room | undefined;
     if (attach) {      
-      room.then((room) => {
+      void room.then((room) => {
         console.log("room resolved to: ", roomId, "efn", efn, "mounted", mounted);
         if (!mounted) { return; }
         resolvedRoom = room;
         room.attach().catch();
-      });
+      }).catch(() => void 0);
     }
 
     return () => {
