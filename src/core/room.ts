@@ -118,6 +118,8 @@ export interface Room {
    * @returns A copy of the options used to create the room.
    */
   options(): RoomOptions;
+
+  release(): Promise<void>;
 }
 
 export class DefaultRoom implements Room {

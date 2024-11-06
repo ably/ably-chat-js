@@ -8,6 +8,7 @@ import { randomId } from './id.js';
 import { Logger } from './logger.js';
 import { DefaultRoom, Room } from './room.js';
 import { RoomOptions } from './room-options.js';
+import { RoomStatus } from './room-status.js';
 
 /**
  * Manages the lifecycle of chat rooms.
@@ -79,6 +80,8 @@ interface RoomMapEntry {
   abort?: AbortController;
 }
 
+type cancelRoomGet = (reason?: any) => void
+
 /**
  * Manages the chat rooms.
  */
@@ -90,6 +93,8 @@ export class DefaultRooms implements Rooms {
   private readonly _releasing = new Map<string, Promise<void>>();
   private readonly _logger: Logger;
 
+  private readonly _roomsMap: Map<string, Room> = new Map<string, Room>();
+  private readonly _roomReleaseBeforeRoomGet: Map<string, { released: Promise<void>, rej: cancelRoomGet }> = new Map<string, {released: Promise<void>, rej: cancelRoomGet }>();
   /**
    * Constructs a new Rooms instance.
    *
@@ -102,6 +107,62 @@ export class DefaultRooms implements Rooms {
     this._chatApi = new ChatApi(realtime, logger);
     this._clientOptions = clientOptions;
     this._logger = logger;
+  }
+
+  getReleasedRoom(roomId: string, cancellable: Boolean = true): Promise<void> {
+    const previousgetReleasedRoom = this._roomReleaseBeforeRoomGet.get(roomId)
+    if (cancellable && previousgetReleasedRoom) {
+      return previousgetReleasedRoom.released
+    }
+    const existing = this._roomsMap.get(roomId);
+    if (existing && existing.status === RoomStatus.Releasing) {
+      const promise = new Promise<void>((res, rej) => {
+        if (cancellable) {
+          this._roomReleaseBeforeRoomGet.set(roomId, {released: promise, rej})
+        }
+        const {off} = existing.onStatusChange(change => {
+            if (change.current === RoomStatus.Released) {
+              if (cancellable) {
+                this._roomReleaseBeforeRoomGet.delete(roomId)
+              }
+              off()
+              res()
+            }
+        })
+      })
+      return promise
+    }
+    return Promise.resolve()
+  }
+
+  getRoom(roomId: string, options: RoomOptions): Promise<Room> {
+    return this.getReleasedRoom(roomId).then(_ => {
+      const room = this._makeRoom(roomId, 'nonceId', options)
+      this._roomsMap.set(roomId, room)
+      return room
+    })
+  }
+  
+  releaseRoom(roomId: string): Promise<void> {
+    const cancelExistingRoomGet = this._roomReleaseBeforeRoomGet.get(roomId)
+    if (cancelExistingRoomGet) {
+      this._roomReleaseBeforeRoomGet.delete(roomId)
+      cancelExistingRoomGet.rej(new Ably.ErrorInfo(
+        'room released before get operation could complete',
+        ErrorCodes.RoomReleasedBeforeOperationCompleted,
+        400,
+      ))
+    }
+    const existing = this._roomsMap.get(roomId);
+    if (existing && existing.status == RoomStatus.Releasing) {
+      return this.getReleasedRoom(roomId, false).then(_ => {
+        this._rooms.delete(roomId)
+      })
+    }
+    if (existing) {
+      return existing.release()
+    }
+    return Promise.resolve()
   }
 
   /**
