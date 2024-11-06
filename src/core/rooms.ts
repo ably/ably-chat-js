@@ -80,7 +80,7 @@ interface RoomMapEntry {
   abort?: AbortController;
 }
 
-type cancelRoomGet = (reason?: any) => void
+type CancelRoomGet = (reason?: Ably.ErrorInfo) => void
 
 /**
  * Manages the chat rooms.
@@ -94,7 +94,7 @@ export class DefaultRooms implements Rooms {
   private readonly _logger: Logger;
 
   private readonly _roomsMap: Map<string, Room> = new Map<string, Room>();
-  private readonly _roomReleaseBeforeRoomGet: Map<string, { released: Promise<void>, rej: cancelRoomGet }> = new Map<string, {released: Promise<void>, rej: cancelRoomGet }>();
+  private readonly _roomReleaseBeforeRoomGet: Map<string, { released: Promise<void>, rej: CancelRoomGet }> = new Map<string, {released: Promise<void>, rej: CancelRoomGet }>();
   /**
    * Constructs a new Rooms instance.
    *
@@ -109,7 +109,7 @@ export class DefaultRooms implements Rooms {
     this._logger = logger;
   }
 
-  getReleasedRoom(roomId: string, cancellable: Boolean = true): Promise<void> {
+  getReleasedRoom(roomId: string, cancellable: boolean): Promise<void> {
     const previousgetReleasedRoom = this._roomReleaseBeforeRoomGet.get(roomId)
     if (cancellable && previousgetReleasedRoom) {
       return previousgetReleasedRoom.released
@@ -136,7 +136,7 @@ export class DefaultRooms implements Rooms {
   }
 
   getRoom(roomId: string, options: RoomOptions): Promise<Room> {
-    return this.getReleasedRoom(roomId).then(_ => {
+    return this.getReleasedRoom(roomId, true).then(_ => {
       const room = this._makeRoom(roomId, 'nonceId', options)
       this._roomsMap.set(roomId, room)
       return room
