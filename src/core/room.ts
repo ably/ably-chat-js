@@ -197,15 +197,7 @@ export class DefaultRoom implements Room {
       features.push(this._occupancy);
     }
 
-    this._lifecycleManager = new RoomLifecycleManager(
-      this._lifecycle,
-      features.toReversed().map((feature) => ({
-        contributor: feature,
-        channel: feature.channel,
-      })),
-      this._logger,
-      5000,
-    );
+    this._lifecycleManager = new RoomLifecycleManager(this._lifecycle, features.toReversed(), this._logger, 5000);
 
     // Setup a finalization function to clean up resources
     let finalized = false;
