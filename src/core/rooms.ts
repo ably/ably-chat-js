@@ -95,6 +95,8 @@ export class DefaultRooms implements Rooms {
 
   private readonly _roomsMap: Map<string, Room> = new Map<string, Room>();
   private readonly _roomReleaseBeforeRoomGet: Map<string, { released: Promise<void>, rej: CancelRoomGet }> = new Map<string, {released: Promise<void>, rej: CancelRoomGet }>();
+  private readonly _releasingRoom = new Map<string, boolean>();
+
   /**
    * Constructs a new Rooms instance.
    *
@@ -109,34 +111,42 @@ export class DefaultRooms implements Rooms {
     this._logger = logger;
   }
 
-  getReleasedRoom(roomId: string, cancellable: boolean): Promise<void> {
-    const previousgetReleasedRoom = this._roomReleaseBeforeRoomGet.get(roomId)
-    if (cancellable && previousgetReleasedRoom) {
-      return previousgetReleasedRoom.released
+  getReleasedOrExistingRoom(roomId: string, releaseCancellable: boolean): Promise<void> | Promise<Room> {
+    if (releaseCancellable) {
+      const previousgetReleasedRoom = this._roomReleaseBeforeRoomGet.get(roomId)
+      if (previousgetReleasedRoom) {
+        return previousgetReleasedRoom.released
+      }
     }
     const existing = this._roomsMap.get(roomId);
-    if (existing && existing.status === RoomStatus.Releasing) {
-      const promise = new Promise<void>((res, rej) => {
-        if (cancellable) {
-          this._roomReleaseBeforeRoomGet.set(roomId, {released: promise, rej})
-        }
-        const {off} = existing.onStatusChange(change => {
-            if (change.current === RoomStatus.Released) {
-              if (cancellable) {
-                this._roomReleaseBeforeRoomGet.delete(roomId)
+    if (existing) {
+      if (this._releasing.has(roomId)) {
+        const promise = new Promise<void>((res, rej) => {
+          if (releaseCancellable) {
+            this._roomReleaseBeforeRoomGet.set(roomId, {released: promise, rej})
+          }
+          const {off} = existing.onStatusChange(change => {
+              if (change.current === RoomStatus.Released) {
+                if (releaseCancellable) {
+                  this._roomReleaseBeforeRoomGet.delete(roomId)
+                }
+                off()
+                res()
               }
-              off()
-              res()
-            }
+          })
         })
-      })
-      return promise
+        return promise
+      }
+      return Promise.resolve(existing)
     }
     return Promise.resolve()
   }
 
   getRoom(roomId: string, options: RoomOptions): Promise<Room> {
-    return this.getReleasedRoom(roomId, true).then(_ => {
+    return this.getReleasedOrExistingRoom(roomId, true).then(existingRoom => {
+      if (existingRoom) {
+        return existingRoom
+      }
       const room = this._makeRoom(roomId, 'nonceId', options)
       this._roomsMap.set(roomId, room)
       return room
@@ -153,16 +163,15 @@ export class DefaultRooms implements Rooms {
         400,
       ))
     }
-    const existing = this._roomsMap.get(roomId);
-    if (existing && existing.status == RoomStatus.Releasing) {
-      return this.getReleasedRoom(roomId, false).then(_ => {
-        this._rooms.delete(roomId)
-      })
-    }
-    if (existing) {
-      return existing.release()
-    }
-    return Promise.resolve()
+    return this.getReleasedOrExistingRoom(roomId, false).then(existingRoom => {
+      if (existingRoom) {
+        this._releasingRoom.set(roomId, true)
+        return existingRoom.release()
+      }
+    }).then(_ => {
+      this._releasingRoom.set(roomId, false)
+      this._roomsMap.delete(roomId)
+    })
   }
 
   /**
