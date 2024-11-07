@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { Chat } from './containers/Chat';
 import { OccupancyComponent } from './components/OccupancyComponent';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
@@ -28,9 +28,25 @@ const App: FC<AppProps> = () => {
   const updateRoomId = (newRoomId: string) => {
     const params = new URLSearchParams(window.location.search);
     params.set('room', newRoomId);
-    history.replaceState(null, '', '?' + params.toString());
+    history.pushState(null, '', '?' + params.toString());
     setRoomId(newRoomId);
   };
+
+  // Add a useEffect that handles the popstate event to update the roomId when
+  // the user navigates back and forth in the browser history.
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const newRoomId = params.get('room') || 'abcd';
+      setRoomId(newRoomId);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   return (
     <ChatRoomProvider

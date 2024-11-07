@@ -158,7 +158,7 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
 
   useEffect(() => {
     logger.debug(`ChatRoomProvider(); running room options change effect`, { roomId, options });
-    if (client == prevClient.current && prevId.current === roomId && prevOptions.current === options) {
+    if (client === prevClient.current && prevId.current === roomId && prevOptions.current === options) {
       return;
     }
 

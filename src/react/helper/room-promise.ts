@@ -68,9 +68,8 @@ class DefaultRoomPromise implements RoomPromise {
   }
 
   /**
-   * Wait for the room promise to resolve, then execute the onResolve callback, if the component
-   * has not been unmounted. If the component has not been unmounted, then use the returned
-   * unmount function to clean up any resources later.
+   * Wait for the room promise to resolve, then execute the onResolve callback, storing its response as an unmount function.
+   * If the component is unmounted before the promise resolves,then this will do nothing.
    *
    * @param promise The promise that resolves to a Room instance.
    * @returns A promise that we simply resolve when its done.
@@ -135,6 +134,7 @@ class DefaultRoomPromise implements RoomPromise {
  *  }, []);
  * ```
  *
+ * @internal
  * @param room The promise that resolves to a Room instance.
  * @param onResolve The callback that is called when the promise resolves to a Room instance.
  * @param logger The logger to use for logging.

@@ -104,7 +104,7 @@ export interface RoomReactions extends EmitsDiscontinuities {
    * Returns an instance of the Ably realtime channel used for room-level reactions.
    * Avoid using this directly unless special features that cannot otherwise be implemented are needed.
    *
-   * @returns A promise of the Ably realtime channel.
+   * @returns The Ably realtime channel.
    */
   get channel(): Ably.RealtimeChannel;
 }
@@ -146,7 +146,6 @@ export class DefaultRoomReactions
    * @param realtime An instance of the Ably Realtime client.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
-   * @param initAfter A promise that is awaited before creating any channels.
    */
   constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
@@ -157,7 +156,7 @@ export class DefaultRoomReactions
   }
 
   /**
-   * Creates the realtime channel for room reactions. Called after initAfter is resolved.
+   * Creates the realtime channel for room reactions.
    */
   private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
     const channel = getChannel(`${roomId}::$chat::$reactions`, realtime);

@@ -46,7 +46,7 @@ export interface Occupancy extends EmitsDiscontinuities {
   /**
    * Get underlying Ably channel for occupancy events.
    *
-   * @returns A promise of the underlying Ably channel for occupancy events.
+   * @returns The underlying Ably channel for occupancy events.
    */
   get channel(): Ably.RealtimeChannel;
 }
@@ -109,7 +109,6 @@ export class DefaultOccupancy
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
-   * @param initAfter A promise that is awaited before creating any channels.
    */
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
     super();
@@ -121,7 +120,7 @@ export class DefaultOccupancy
   }
 
   /**
-   * Creates the realtime channel for occupancy. Called after initAfter is resolved.
+   * Creates the realtime channel for occupancy.
    */
   private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
     const channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });

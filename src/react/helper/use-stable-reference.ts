@@ -10,6 +10,7 @@ type Callback<CallbackArguments extends unknown[], ReturnType> = (...args: Callb
  * This function creates a stable reference to a callback, so that it can be used in a `useEffect` or `useCallback`
  * without causing unnecessary re-renders.
  *
+ * @internal
  * @param callback The callback to turn into a stable reference
  * @returns A stable reference to the callback
  */

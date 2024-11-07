@@ -240,7 +240,7 @@ export interface Messages extends EmitsDiscontinuities {
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
    *
-   * @returns A promise of the realtime channel.
+   * @returns The realtime channel.
    */
   get channel(): Ably.RealtimeChannel;
 }
@@ -272,7 +272,6 @@ export class DefaultMessages
    * @param chatApi An instance of the ChatApi.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
-   * @param initAfter A promise that is awaited before creating any channels.
    */
   constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
@@ -287,7 +286,7 @@ export class DefaultMessages
   }
 
   /**
-   * Creates the realtime channel for messages. Called after initAfter is resolved.
+   * Creates the realtime channel for messages.
    */
   private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
     const channel = getChannel(messagesChannelName(roomId), realtime);

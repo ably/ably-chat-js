@@ -6,12 +6,11 @@ import { useRoomContext } from './use-room-context.js';
 import { useStableReference } from './use-stable-reference.js';
 
 /**
- * Given a room promise, this hook will return the room object once it has been resolved. This is useful
- * in hooks like useRoom to provide a direct reference to the room object, as Promises aren't usually the best
- * thing to be passing around React components.
+ * This hook will take the room promise from the current context and return the room object once it has been resolved.
+ * This is useful in hooks like useRoom to provide a direct reference to the room object, as Promises aren't usually
+ * the best thing to be passing around React components.
  *
- * @param roomId The roomId of the room
- * @param room The room promise that we're waiting to resolve
+ * @internal
  * @returns The room object if it has resolved, otherwise undefined
  */
 export const useEventualRoom = (): Room | undefined => {
@@ -50,10 +49,10 @@ export const useEventualRoom = (): Room | undefined => {
  * Similar to useEventualRoom, but instead of providing the room itself, it provides a property of the room - e.g.
  * Messages. We use this to eventually provide access to underlying room interfaces as non-promise values
  * in hooks like useMessages.
- * @param roomId The roomId of the room
- * @param room The room promise that we're waiting to resolve
- * @param onResolve A function that will be called when the room promise resolves, and will return the property of the room
- * @returns
+ *
+ * @internal
+ * @returns The property of the room object that's been resolved, as returned by the onResolve callback,
+ * or undefined if the room hasn't resolved yet.
  */
 export const useEventualRoomProperty = <T>(onResolve: (room: Room) => T) => {
   const [roomState, setRoomState] = useState<T | undefined>();

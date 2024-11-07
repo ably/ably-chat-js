@@ -6,6 +6,7 @@ import { ChatRoomContext, ChatRoomContextType } from '../contexts/chat-room-cont
 /**
  * A hook that returns the current ChatRoomContext. This should be used within a ChatRoomProvider.
  *
+ * @internal
  * @param callingHook The name of the hook that is calling this function, for logging purposes.
  * @throws {@link Ably.ErrorInfo} if the hook is not used within a ChatRoomProvider.
  * @returns The ChatRoomContext.

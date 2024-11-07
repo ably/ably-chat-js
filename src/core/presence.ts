@@ -178,7 +178,7 @@ export interface Presence extends EmitsDiscontinuities {
 
   /**
    * Get the underlying Ably realtime channel used for presence in this chat room.
-   * @returns A promise of the realtime channel.
+   * @returns The realtime channel.
    */
   get channel(): Ably.RealtimeChannel;
 }
@@ -203,7 +203,6 @@ export class DefaultPresence
    * @param clientId The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    * @param logger An instance of the Logger.
-   * @param initAfter A promise that is awaited before creating any channels.
    */
   constructor(roomId: string, roomOptions: RoomOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
@@ -214,7 +213,7 @@ export class DefaultPresence
   }
 
   /**
-   * Creates the realtime channel for presence. Called after initAfter is resolved.
+   * Creates the realtime channel for presence.
    */
   private _makeChannel(roomId: string, roomOptions: RoomOptions, realtime: Ably.Realtime): Ably.RealtimeChannel {
     // Set our channel modes based on the room options
@@ -249,6 +248,7 @@ export class DefaultPresence
    * @inheritDoc
    */
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
+    this._logger.trace('Presence.get()', { params });
     const userOnPresence = await this._channel.presence.get(params);
 
     // ably-js never emits the 'absent' event, so we can safely ignore it here.

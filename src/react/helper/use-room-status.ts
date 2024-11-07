@@ -23,19 +23,31 @@ export interface UseRoomStatusResponse {
 }
 
 /**
+ * The parameters for the useRoomStatus hook.
+ */
+export interface UseRoomStatusParams {
+  /**
+   * A listener for room status changes.
+   */
+  onRoomStatusChange?: (change: RoomStatusChange) => void;
+}
+
+/**
  * A hook that returns the current status of the room, and listens for changes to the room status.
  *
+ * @internal
  * @param params An optional user-provided listener for room status changes.
  * @returns The current status of the room, and an error if the room is in an errored state.
  */
-export const useRoomStatus = (params?: {
-  onRoomStatusChange?: (change: RoomStatusChange) => void;
-}): UseRoomStatusResponse => {
+export const useRoomStatus = (params?: UseRoomStatusParams): UseRoomStatusResponse => {
   const context = useRoomContext('useRoomStatus');
 
   const [status, setStatus] = useState<RoomStatus>(RoomStatus.Initializing);
   const [error, setError] = useState<Ably.ErrorInfo | undefined>();
   const logger = useLogger();
+
+  // create stable references for the listeners and register the user-provided callbacks
+  const onRoomStatusChangeRef = useEventListenerRef(params?.onRoomStatusChange);
 
   // create an internal listener to update the status
   useEffect(() => {
@@ -65,9 +77,6 @@ export const useRoomStatus = (params?: {
 
     return roomPromise.unmount();
   }, [context, logger]);
-
-  // create stable references for the listeners and register the user-provided callbacks
-  const onRoomStatusChangeRef = useEventListenerRef(params?.onRoomStatusChange);
 
   useEffect(() => {
     const roomPromise = wrapRoomPromise(

@@ -69,7 +69,7 @@ export interface Typing extends EmitsDiscontinuities {
 
   /**
    * Get the Ably realtime channel underpinning typing events.
-   * @returns A promise of the Ably realtime channel.
+   * @returns The Ably realtime channel.
    */
   channel: Ably.RealtimeChannel;
 }
@@ -136,7 +136,6 @@ export class DefaultTyping
    * @param realtime An instance of the Ably Realtime client.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
-   * @param initAfter A promise that is awaited before creating any channels.
    */
   constructor(roomId: string, options: TypingOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
@@ -149,7 +148,7 @@ export class DefaultTyping
   }
 
   /**
-   * Creates the realtime channel for typing indicators. Called after initAfter is resolved.
+   * Creates the realtime channel for typing indicators.
    */
   private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
     const channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
@@ -164,6 +163,7 @@ export class DefaultTyping
    * @inheritDoc
    */
   get(): Promise<Set<string>> {
+    this._logger.trace(`DefaultTyping.get();`);
     return this._channel.presence.get().then((members) => new Set<string>(members.map((m) => m.clientId)));
   }
 
@@ -200,7 +200,7 @@ export class DefaultTyping
 
     // Start typing and emit typingStarted event
     this._startTypingTimer();
-    return this._channel.presence.enterClient(this._clientId).then();
+    return this._channel.presence.enterClient(this._clientId);
   }
 
   /**

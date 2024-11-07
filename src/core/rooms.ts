@@ -29,7 +29,7 @@ export interface Rooms {
    * @param roomId The ID of the room.
    * @param options The options for the room.
    * @throws {@link ErrorInfo} if a room with the same ID but different options already exists.
-   * @returns Room A new or existing Room object.
+   * @returns Room A promise to a new or existing Room object.
    */
   get(roomId: string, options: RoomOptions): Promise<Room>;
 
@@ -201,7 +201,8 @@ export class DefaultRooms implements Rooms {
 
     // If the room doesn't currently exist
     if (!existing) {
-      // existing the room is being released, forward the releasing promise
+      // There's no existing room, but there is a release in progress, so forward that releasing promise
+      // to the caller so they can watch that.
       if (releasing) {
         this._logger.debug('Rooms.release(); waiting for previous release call', {
           roomId,

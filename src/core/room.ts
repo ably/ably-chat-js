@@ -148,7 +148,6 @@ export class DefaultRoom implements Room {
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
-   * @param initAfter The room will wait for this promise to finish before initializing
    */
   constructor(
     roomId: string,

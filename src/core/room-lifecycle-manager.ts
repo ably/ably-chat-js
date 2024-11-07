@@ -111,7 +111,7 @@ export class RoomLifecycleManager {
 
   /**
    * Constructs a new `RoomLifecycleManager` instance.
-   * @param status The status to update.
+   * @param lifecycle The room lifecycle that manages status.
    * @param contributors The features that contribute to the room status.
    * @param logger An instance of the Logger.
    * @param transientDetachTimeout The number of milliseconds to consider a detach to be "transient"
