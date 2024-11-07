@@ -11,7 +11,7 @@ import {
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
-import { MessageEvents } from './events.js';
+import { ChatMessageActions, MessageEvents, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
@@ -26,7 +26,18 @@ import EventEmitter from './utils/event-emitter.js';
  */
 interface MessageEventsMap {
   [MessageEvents.Created]: MessageEventPayload;
+  [MessageEvents.Updated]: MessageEventPayload;
+  [MessageEvents.Deleted]: MessageEventPayload;
 }
+
+/**
+ * Mapping of chat message actions to message events.
+ */
+const MessageActionsToEventsMap: Map<ChatMessageActions, MessageEvents> = new Map<ChatMessageActions, MessageEvents>([
+  [ChatMessageActions.MessageCreate, MessageEvents.Created],
+  [ChatMessageActions.MessageUpdate, MessageEvents.Updated],
+  [ChatMessageActions.MessageDelete, MessageEvents.Deleted],
+]);
 
 /**
  * Options for querying messages in a chat room.
@@ -257,7 +268,7 @@ export class DefaultMessages
 
     addListenerToChannelWithoutAttach({
       listener: this._processEvent.bind(this),
-      events: [MessageEvents.Created],
+      events: [RealtimeMessageNames.ChatMessage],
       channel: channel,
     });
 
@@ -451,6 +462,8 @@ export class DefaultMessages
       new Date(response.createdAt),
       metadata ?? {},
       headers ?? {},
+      ChatMessageActions.MessageCreate,
+      response.timeserial,
     );
   }
 
@@ -459,7 +472,7 @@ export class DefaultMessages
    */
   subscribe(listener: MessageListener): MessageSubscriptionResponse {
     this._logger.trace('Messages.subscribe();');
-    super.on([MessageEvents.Created], listener);
+    super.on([MessageEvents.Created, MessageEvents.Updated, MessageEvents.Deleted], listener);
 
     // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
     const resolvedSubscriptionStart = this._resolveSubscriptionStart();
@@ -498,23 +511,19 @@ export class DefaultMessages
     this._logger.trace('Messages._processEvent();', {
       channelEventMessage,
     });
-    const { name } = channelEventMessage;
-
-    // Send the message to the listeners
-    switch (name) {
-      case MessageEvents.Created: {
-        const message = this._parseNewMessage(channelEventMessage);
-        if (!message) {
-          return;
-        }
-
-        this.emit(MessageEvents.Created, { type: name, message: message });
-        break;
-      }
-      default: {
-        this._logger.warn('Messages._processEvent(); received unknown event', { name });
-      }
+    const { action } = channelEventMessage;
+    const event = MessageActionsToEventsMap.get(action as ChatMessageActions);
+    if (!event) {
+      this._logger.debug('Messages._processEvent(); received unknown message action', { action });
+      return;
     }
+    // Send the message to the listeners
+    const message = this._parseNewMessage(channelEventMessage);
+    if (!message) {
+      return;
+    }
+
+    this.emit(event, { type: event, message: message });
   }
 
   /**

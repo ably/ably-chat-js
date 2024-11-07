@@ -45,7 +45,7 @@ export class ChatApi {
   }
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
-    return this._makeAuthorizedPaginatedRequest<Message>(`/chat/v1/rooms/${roomId}/messages`, params).then((data) => {
+    return this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, params).then((data) => {
       data.items = data.items.map((message) => {
         const metadata = message.metadata as MessageMetadata | undefined;
         const headers = message.headers as MessageHeaders | undefined;
@@ -57,6 +57,11 @@ export class ChatApi {
           new Date(message.createdAt),
           metadata ?? {},
           headers ?? {},
+          message.latestAction,
+          message.latestActionSerial,
+          message.deletedAt ? new Date(message.deletedAt) : undefined,
+          message.updatedAt ? new Date(message.updatedAt) : undefined,
+          message.latestActionDetails,
         );
       });
       return data;
@@ -76,7 +81,7 @@ export class ChatApi {
       body.headers = params.headers;
     }
 
-    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v1/rooms/${roomId}/messages`, 'POST', body);
+    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v2/rooms/${roomId}/messages`, 'POST', body);
   }
 
   async getOccupancy(roomId: string): Promise<OccupancyEvent> {

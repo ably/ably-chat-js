@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
+import { ChatMessageActions } from './events.js';
+import { DefaultMessage, Message, MessageActionDetails, MessageHeaders, MessageMetadata } from './message.js';
 
 interface MessagePayload {
   data?: {
@@ -10,48 +11,106 @@ interface MessagePayload {
   clientId?: string;
   timestamp: number;
   extras?: {
-    timeserial?: string;
     headers?: MessageHeaders;
   };
+
+  serial: string;
+  updatedAt?: number;
+  updateSerial?: string;
+  action: Ably.MessageAction;
+  operation?: Ably.Operation;
 }
 
-export function parseMessage(roomId: string | undefined, message: Ably.InboundMessage): Message {
-  const messageCreatedMessage = message as MessagePayload;
+interface ChatMessageFields {
+  timeserial: string;
+  clientId: string;
+  roomId: string;
+  text: string;
+  createdAt: Date;
+  metadata: MessageMetadata;
+  headers: MessageHeaders;
+  latestAction: ChatMessageActions;
+  latestActionSerial: string;
+  updatedAt?: Date;
+  deletedAt?: Date;
+  operation?: MessageActionDetails;
+}
+
+export function parseMessage(roomId: string | undefined, inboundMessage: Ably.InboundMessage): Message {
+  const message = inboundMessage as MessagePayload;
   if (!roomId) {
     throw new Ably.ErrorInfo(`received incoming message without roomId`, 50000, 500);
   }
 
-  if (!messageCreatedMessage.data) {
+  if (!message.data) {
     throw new Ably.ErrorInfo(`received incoming message without data`, 50000, 500);
   }
 
-  if (!messageCreatedMessage.clientId) {
+  if (!message.clientId) {
     throw new Ably.ErrorInfo(`received incoming message without clientId`, 50000, 500);
   }
 
-  if (!messageCreatedMessage.timestamp) {
+  if (!message.timestamp) {
     throw new Ably.ErrorInfo(`received incoming message without timestamp`, 50000, 500);
   }
 
-  if (messageCreatedMessage.data.text === undefined) {
+  if (message.data.text === undefined) {
     throw new Ably.ErrorInfo(`received incoming message without text`, 50000, 500);
   }
 
-  if (!messageCreatedMessage.extras) {
+  if (!message.extras) {
     throw new Ably.ErrorInfo(`received incoming message without extras`, 50000, 500);
   }
 
-  if (!messageCreatedMessage.extras.timeserial) {
-    throw new Ably.ErrorInfo(`received incoming message without timeserial`, 50000, 500);
+  if (!message.serial) {
+    throw new Ably.ErrorInfo(`received incoming message without serial`, 50000, 500);
   }
 
-  return new DefaultMessage(
-    messageCreatedMessage.extras.timeserial,
-    messageCreatedMessage.clientId,
+  const newMessage: ChatMessageFields = {
+    timeserial: message.serial,
+    clientId: message.clientId,
     roomId,
-    messageCreatedMessage.data.text,
-    new Date(messageCreatedMessage.timestamp),
-    messageCreatedMessage.data.metadata ?? {},
-    messageCreatedMessage.extras.headers ?? {},
+    text: message.data.text,
+    createdAt: new Date(message.timestamp),
+    metadata: message.data.metadata ?? {},
+    headers: message.extras.headers ?? {},
+    latestAction: message.action as ChatMessageActions,
+    latestActionSerial: message.updateSerial ?? message.serial,
+    updatedAt: message.updatedAt ? new Date(message.updatedAt) : undefined,
+    deletedAt: message.updatedAt ? new Date(message.updatedAt) : undefined,
+    operation: message.operation as MessageActionDetails,
+  };
+
+  switch (message.action) {
+    case ChatMessageActions.MessageCreate: {
+      break;
+    }
+    case ChatMessageActions.MessageUpdate:
+    case ChatMessageActions.MessageDelete: {
+      if (!message.updatedAt) {
+        throw new Ably.ErrorInfo(`received incoming ${message.action} without updatedAt`, 50000, 500);
+      }
+      if (!message.updateSerial) {
+        throw new Ably.ErrorInfo(`received incoming ${message.action} without updateSerial`, 50000, 500);
+      }
+      break;
+    }
+    default: {
+      throw new Ably.ErrorInfo(`received incoming message with unhandled action; ${message.action}`, 50000, 500);
+    }
+  }
+  return new DefaultMessage(
+    newMessage.timeserial,
+    newMessage.clientId,
+    newMessage.roomId,
+    newMessage.text,
+    newMessage.createdAt,
+    newMessage.metadata,
+    newMessage.headers,
+    newMessage.latestAction,
+    newMessage.latestActionSerial,
+    newMessage.latestAction === ChatMessageActions.MessageDelete ? newMessage.deletedAt : undefined,
+    newMessage.latestAction === ChatMessageActions.MessageUpdate ? newMessage.updatedAt : undefined,
+    newMessage.operation,
   );
 }

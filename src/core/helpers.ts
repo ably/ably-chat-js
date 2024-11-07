@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { MessageEvents, RoomReactionEvents } from './events.js';
+import { RealtimeMessageNames, RoomReactionEvents } from './events.js';
 import { Message } from './message.js';
 import { parseMessage } from './message-parser.js';
 import { Reaction } from './reaction.js';
@@ -89,7 +89,7 @@ export async function reactionFromEncoded(encoded: unknown): Promise<Reaction> {
  */
 export function getEntityTypeFromAblyMessage(message: Ably.InboundMessage): ChatEntityType {
   switch (message.name) {
-    case MessageEvents.Created: {
+    case RealtimeMessageNames.ChatMessage: {
       return ChatEntityType.ChatMessage;
     }
     case RoomReactionEvents.Reaction: {
