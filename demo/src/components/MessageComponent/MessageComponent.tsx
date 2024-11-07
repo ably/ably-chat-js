@@ -1,6 +1,7 @@
 import { Message } from '@ably/chat';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import clsx from 'clsx';
+import { FaTrash } from 'react-icons/fa6';
 
 function twoDigits(input: number): string {
   if (input === 0) {
@@ -18,12 +19,22 @@ interface MessageProps {
   message: Message;
 
   onMessageClick?(id: string): void;
+
+  onMessageDelete?(msg: Message): void;
 }
 
-export const MessageComponent: React.FC<MessageProps> = ({ id, self = false, message, onMessageClick }) => {
+export const MessageComponent: React.FC<MessageProps> = ({
+  id,
+  self = false,
+  message,
+  onMessageClick,
+  onMessageDelete,
+}) => {
   const handleMessageClick = useCallback(() => {
     onMessageClick?.(id);
   }, [id, onMessageClick]);
+
+  const [hovered, setHovered] = useState(false);
 
   let displayCreatedAt: string;
   if (Date.now() - message.createdAt.getTime() < 1000 * 60 * 60 * 24) {
@@ -43,14 +54,21 @@ export const MessageComponent: React.FC<MessageProps> = ({ id, self = false, mes
       twoDigits(message.createdAt.getMinutes());
   }
 
+  const handleDelete = useCallback(() => {
+    // Add your delete handling logic here
+    onMessageDelete?.(message);
+  }, [message, onMessageDelete]);
+
   return (
     <div
       className="chat-message"
       onClick={handleMessageClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <div className={clsx('flex items-end', { ['justify-end']: self, ['justify-start']: !self })}>
         <div
-          className={clsx('flex flex-col text max-w-xs mx-2', {
+          className={clsx('flex flex-col text max-w-xs mx-2 relative', {
             ['items-end order-1']: self,
             ['items-start order-2']: !self,
           })}
@@ -69,6 +87,15 @@ export const MessageComponent: React.FC<MessageProps> = ({ id, self = false, mes
             })}
           >
             {message.text}
+            {hovered && (
+              <FaTrash
+                className="ml-2 cursor-pointer text-red-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

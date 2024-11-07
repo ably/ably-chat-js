@@ -27,8 +27,15 @@ export {
 } from './helpers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
-export type { Message, MessageActionDetails, MessageHeaders, MessageMetadata } from './message.js';
 export type {
+  Message,
+  MessageActionDetails,
+  MessageActionMetadata,
+  MessageHeaders,
+  MessageMetadata,
+} from './message.js';
+export type {
+  DeleteMessageParams,
   MessageEventPayload,
   MessageListener,
   Messages,

@@ -3,7 +3,7 @@ import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
-import { ChatMessageActions } from '../../src/core/events.ts';
+import { ChatMessageActions, MessageEvents } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { DefaultMessages, MessageEventPayload } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
@@ -80,6 +80,35 @@ describe('Messages', () => {
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
+          roomId: context.room.roomId,
+        }),
+      );
+    });
+
+    it<TestContext>('should be able to delete a message and get it back from response', async (context) => {
+      const { chatApi } = context;
+      const sendTimestamp = Date.now();
+      vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
+        timeserial: 'abcdefghij@1672531200000-123',
+        createdAt: sendTimestamp,
+      });
+
+      const deleteTimestamp = Date.now();
+      vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
+        serial: 'abcdefghij@1672531200000-123:0',
+        deletedAt: deleteTimestamp,
+      });
+
+      const message1 = await context.room.messages.send({ text: 'hello there' });
+      const deleteMessage1 = await context.room.messages.delete(message1);
+
+      expect(deleteMessage1).toEqual(
+        expect.objectContaining({
+          timeserial: 'abcdefghij@1672531200000-123',
+          text: 'hello there',
+          clientId: 'clientId',
+          deletedAt: new Date(deleteTimestamp),
+          deletedBy: 'clientId',
           roomId: context.room.roomId,
         }),
       );
@@ -178,15 +207,33 @@ describe('Messages', () => {
       }));
   });
 
-  it<TestContext>('unsubscribing from messages', (context) => {
+  it<TestContext>('unsubscribes from messages', (context) => {
     const { room } = context;
-
     const receivedMessages: Message[] = [];
+    const receivedDeletions: Message[] = [];
+    const receivedUpdates: Message[] = [];
     const listener = (message: MessageEventPayload) => {
-      receivedMessages.push(message.message);
+      switch (message.type) {
+        case MessageEvents.Created: {
+          receivedMessages.push(message.message);
+          break;
+        }
+        case MessageEvents.Deleted: {
+          receivedDeletions.push(message.message);
+          break;
+        }
+        case MessageEvents.Updated: {
+          receivedUpdates.push(message.message);
+          break;
+        }
+      }
     };
 
     const { unsubscribe } = room.messages.subscribe(listener);
+
+    let publishTimestamp = Date.now();
+    let updateTimestamp = Date.now() + 500;
+    let deletionTimestamp = Date.now() + 1000;
     context.emulateBackendPublish({
       clientId: 'yoda',
       name: 'chat.message',
@@ -196,11 +243,47 @@ describe('Messages', () => {
       serial: 'abcdefghij@1672531200000-123',
       action: ChatMessageActions.MessageCreate,
       extras: {},
-      timestamp: Date.now(),
+      timestamp: publishTimestamp,
+    });
+    context.emulateBackendPublish({
+      clientId: 'yoda',
+      name: 'chat.message',
+      data: {
+        text: 'I have the high ground now',
+      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: ChatMessageActions.MessageUpdate,
+      extras: {},
+      timestamp: publishTimestamp,
+      updatedAt: updateTimestamp,
+      updateSerial: 'abcdefghij@1672531200000-123:0',
+      operation: {
+        clientId: 'yoda',
+      },
+    });
+    context.emulateBackendPublish({
+      clientId: 'yoda',
+      name: 'chat.message',
+      data: {
+        text: 'I have the high ground now',
+      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: ChatMessageActions.MessageDelete,
+      extras: {},
+      timestamp: publishTimestamp,
+      updatedAt: deletionTimestamp,
+      updateSerial: 'abcdefghij@1672531200000-123:0',
+      operation: {
+        clientId: 'yoda',
+      },
     });
 
     unsubscribe();
 
+    // try to send and delete a new message
+    publishTimestamp = Date.now();
+    updateTimestamp = Date.now() + 500;
+    deletionTimestamp = Date.now() + 1000;
     context.emulateBackendPublish({
       clientId: 'yoda2',
       name: 'chat.message',
@@ -212,10 +295,46 @@ describe('Messages', () => {
       extras: {},
       timestamp: Date.now(),
     });
+    context.emulateBackendPublish({
+      clientId: 'yoda2',
+      name: 'chat.message',
+      data: {
+        text: 'I have the high ground now',
+      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: ChatMessageActions.MessageUpdate,
+      extras: {},
+      updatedAt: updateTimestamp,
+      updateSerial: 'abcdefghij@1672531200000-123:0',
+      operation: {
+        clientId: 'yoda',
+      },
+      timestamp: Date.now(),
+    });
+    context.emulateBackendPublish({
+      clientId: 'yoda2',
+      name: 'chat.message',
+      data: {
+        text: 'may the fourth be with you',
+      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: ChatMessageActions.MessageDelete,
+      extras: {},
+      timestamp: publishTimestamp,
+      updatedAt: deletionTimestamp,
+      updateSerial: 'abcdefghij@1672531200000-123:0',
+      operation: {
+        clientId: 'yoda2',
+      },
+    });
 
-    // We should have only received one message
+    // We should have only received one message and one deletion
     expect(receivedMessages).toHaveLength(1);
+    expect(receivedDeletions).toHaveLength(1);
+    expect(receivedUpdates).toHaveLength(1);
     expect(receivedMessages[0]?.clientId).toEqual('yoda');
+    expect(receivedDeletions[0]?.clientId).toEqual('yoda');
+    expect(receivedUpdates[0]?.clientId).toEqual('yoda');
 
     // A double off should not throw
     unsubscribe();
@@ -223,19 +342,53 @@ describe('Messages', () => {
 
   it<TestContext>('unsubscribing from all messages', (context) => {
     const { room } = context;
-
     const receivedMessages: Message[] = [];
+    const receivedDeletions: Message[] = [];
+    const receivedUpdates: Message[] = [];
+
     const listener = (message: MessageEventPayload) => {
-      receivedMessages.push(message.message);
+      switch (message.type) {
+        case MessageEvents.Created: {
+          receivedMessages.push(message.message);
+          break;
+        }
+        case MessageEvents.Deleted: {
+          receivedDeletions.push(message.message);
+          break;
+        }
+        case MessageEvents.Updated: {
+          receivedUpdates.push(message.message);
+          break;
+        }
+      }
     };
 
     const receivedMessages2: Message[] = [];
+    const receivedDeletions2: Message[] = [];
+    const receivedUpdates2: Message[] = [];
+
     const listener2 = (message: MessageEventPayload) => {
-      receivedMessages2.push(message.message);
+      switch (message.type) {
+        case MessageEvents.Created: {
+          receivedMessages2.push(message.message);
+          break;
+        }
+        case MessageEvents.Deleted: {
+          receivedDeletions2.push(message.message);
+          break;
+        }
+        case MessageEvents.Updated: {
+          receivedUpdates2.push(message.message);
+          break;
+        }
+      }
     };
 
     const { unsubscribe } = room.messages.subscribe(listener);
     const { unsubscribe: unsubscribe2 } = room.messages.subscribe(listener2);
+    let publishTimestamp = Date.now();
+    let updateTimestamp = Date.now() + 500;
+    let deletionTimestamp = Date.now() + 1000;
     context.emulateBackendPublish({
       clientId: 'yoda',
       name: 'chat.message',
@@ -245,11 +398,46 @@ describe('Messages', () => {
       serial: 'abcdefghij@1672531200000-123',
       action: ChatMessageActions.MessageCreate,
       extras: {},
-      timestamp: Date.now(),
+      timestamp: publishTimestamp,
+    });
+    context.emulateBackendPublish({
+      clientId: 'yoda',
+      name: 'chat.message',
+      data: {
+        text: 'I have the high ground now',
+      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: ChatMessageActions.MessageUpdate,
+      updatedAt: updateTimestamp,
+      updateSerial: 'abcdefghij@1672531200000-123:0',
+      operation: {
+        clientId: 'yoda',
+      },
+      extras: {},
+      timestamp: publishTimestamp,
+    });
+    context.emulateBackendPublish({
+      clientId: 'yoda',
+      name: 'chat.message',
+      data: {
+        text: 'I have the high ground now',
+      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: ChatMessageActions.MessageDelete,
+      extras: {},
+      timestamp: publishTimestamp,
+      updatedAt: deletionTimestamp,
+      updateSerial: 'abcdefghij@1672531200000-123:0',
+      operation: {
+        clientId: 'yoda',
+      },
     });
 
     room.messages.unsubscribeAll();
 
+    publishTimestamp = Date.now();
+    updateTimestamp = Date.now() + 500;
+    deletionTimestamp = Date.now() + 1000;
     context.emulateBackendPublish({
       clientId: 'yoda2',
       name: 'chat.message',
@@ -261,12 +449,55 @@ describe('Messages', () => {
       extras: {},
       timestamp: Date.now(),
     });
+    context.emulateBackendPublish({
+      clientId: 'yoda',
+      name: 'chat.message',
+      data: {
+        text: 'I have the high ground now',
+      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: ChatMessageActions.MessageUpdate,
+      updatedAt: updateTimestamp,
+      updateSerial: 'abcdefghij@1672531200000-123:0',
+      operation: {
+        clientId: 'yoda',
+      },
+      extras: {},
+      timestamp: publishTimestamp,
+    });
+    context.emulateBackendPublish({
+      clientId: 'yoda2',
+      name: 'chat.message',
+      data: {
+        text: 'I have the high ground now',
+      },
+      serial: 'abcdefghij@1672531200000-123',
+      action: ChatMessageActions.MessageDelete,
+      extras: {},
+      timestamp: publishTimestamp,
+      updatedAt: deletionTimestamp,
+      updateSerial: 'abcdefghij@1672531200000-123:0',
+      operation: {
+        clientId: 'yoda2',
+      },
+    });
 
     // We should have only received one message
     expect(receivedMessages).toHaveLength(1);
     expect(receivedMessages[0]?.clientId).toEqual('yoda');
+
     expect(receivedMessages2).toHaveLength(1);
     expect(receivedMessages2[0]?.clientId).toEqual('yoda');
+
+    expect(receivedDeletions).toHaveLength(1);
+    expect(receivedDeletions[0]?.clientId).toEqual('yoda');
+    expect(receivedDeletions2).toHaveLength(1);
+    expect(receivedDeletions2[0]?.clientId).toEqual('yoda');
+
+    expect(receivedUpdates).toHaveLength(1);
+    expect(receivedUpdates[0]?.clientId).toEqual('yoda');
+    expect(receivedUpdates2).toHaveLength(1);
+    expect(receivedUpdates2[0]?.clientId).toEqual('yoda');
 
     // A double off should not throw
     unsubscribe();
@@ -284,6 +515,20 @@ describe('Messages', () => {
         },
         serial: 'abcdefghij@1672531200000-123',
         action: ChatMessageActions.MessageCreate,
+        extras: {},
+        timestamp: Date.now(),
+      },
+    ],
+    [
+      'unknown action name',
+      {
+        clientId: 'yoda2',
+        name: 'message.foo',
+        data: {
+          text: 'may the fourth be with you',
+        },
+        serial: 'abcdefghij@1672531200000-123',
+        action: 'message.unknown',
         extras: {},
         timestamp: Date.now(),
       },
@@ -339,20 +584,19 @@ describe('Messages', () => {
     ],
 
     [
-      'no timeserial',
+      'no serial',
       {
         clientId: 'yoda2',
         name: 'chat.message',
         data: {
           text: 'may the fourth be with you',
         },
-        extras: {},
         action: ChatMessageActions.MessageCreate,
         timestamp: Date.now(),
       },
     ],
     [
-      'timeserial invalid',
+      'serial invalid',
       {
         name: 'chat.message',
         clientId: 'yoda2',

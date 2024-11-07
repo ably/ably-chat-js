@@ -270,6 +270,23 @@ const message = await room.messages.send({
 });
 ```
 
+### Deleting messages
+
+To delete a message, call `delete` on the `room.messages` property, with the original message you want to delete.
+
+You can supply optional parameters to the `delete` method to provide additional context for the deletion.
+
+These additional parameters are:
+* `description`: a string that can be used to inform others as to why the message was deleted.
+* `metadata`: a map of extra information that can be attached to the deletion message.
+
+The return of this call will be the deleted message, as it would appear to other subscribers of the room.
+This is a _soft delete_ and the message will still be available in the history, but with the `deletedAt` property set.
+
+```ts
+const deletedMessage = await room.messages.delete(message, { description: 'This message was deleted for ...' });
+```
+
 ### Subscribing to incoming messages
 
 To subscribe to incoming messages, call `subscribe` with your listener.

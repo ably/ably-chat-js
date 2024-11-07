@@ -13,7 +13,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { ChatMessageActions, MessageEvents, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
+import { DefaultMessage, Message, MessageActionMetadata, MessageHeaders, MessageMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
@@ -75,6 +75,22 @@ export interface QueryOptions {
    * @defaultValue forwards
    */
   direction?: 'forwards' | 'backwards';
+}
+
+/**
+ * The parameters supplied to delete a message.
+ */
+export interface DeleteMessageParams {
+  /**
+   * The optional description for deleting messages.
+   */
+  description?: string;
+
+  /**
+   * The metadata that will be added to the deletion request. Defaults to empty.
+   *
+   */
+  metadata?: MessageActionMetadata;
 }
 
 /**
@@ -198,6 +214,28 @@ export interface Messages extends EmitsDiscontinuities {
    * @returns A promise that resolves when the message was published.
    */
   send(params: SendMessageParams): Promise<Message>;
+
+  /**
+   * Delete a message in the chat room.
+   *
+   * This method uses the Ably Chat API REST endpoint for deleting messages.
+   * It performs a `soft` delete, meaning the message is marked as deleted.
+   *
+   * Note that the Promise may resolve before OR after the message is deleted
+   * from the realtime channel. This means you may see the message that was just
+   * deleted in a callback to `subscribe` before the returned promise resolves.
+   *
+   * Should you wish to restore a deleted message, and providing you have the appropriate permissions,
+   * you can simply send an update to the original message.
+   * Note: This is subject to change in future versions, whereby a new permissions model will be introduced
+   * and a deleted message may not be restorable in this way.
+   *
+   * @returns A promise that resolves when the message was deleted.
+   * @param message - The message to delete.
+   * @param deleteMessageParams - The optional parameters for deleting the message.
+   * @return A promise that resolves to the deleted message.
+   */
+  delete(message: Message, deleteMessageParams?: DeleteMessageParams): Promise<Message>;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -448,12 +486,11 @@ export class DefaultMessages
    * @throws {@link ErrorInfo} if headers defines any headers prefixed with reserved words.
    */
   async send(params: SendMessageParams): Promise<Message> {
-    this._logger.trace('Messages.send();');
+    this._logger.trace('Messages.send();', { params });
 
     const { text, metadata, headers } = params;
 
     const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
-
     return new DefaultMessage(
       response.timeserial,
       this._clientId,
@@ -465,6 +502,34 @@ export class DefaultMessages
       ChatMessageActions.MessageCreate,
       response.timeserial,
     );
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  async delete(message: Message, params?: DeleteMessageParams): Promise<Message> {
+    this._logger.trace('Messages.delete();', { params });
+    const response = await this._chatApi.deleteMessage(this._roomId, message.timeserial, params);
+    const deletedMessage: Message = new DefaultMessage(
+      message.timeserial,
+      message.clientId,
+      message.roomId,
+      message.text,
+      message.createdAt,
+      message.metadata,
+      message.headers,
+      ChatMessageActions.MessageDelete,
+      response.serial,
+      response.deletedAt ? new Date(response.deletedAt) : undefined,
+      undefined,
+      {
+        clientId: this._clientId,
+        description: params?.description,
+        metadata: params?.metadata,
+      },
+    );
+    this._logger.debug('Messages.delete(); message deleted successfully', { deletedMessage });
+    return deletedMessage;
   }
 
   /**

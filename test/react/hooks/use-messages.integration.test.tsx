@@ -1,4 +1,4 @@
-import { ChatClient, Message, MessageListener, RoomOptionsDefaults, RoomStatus } from '@ably/chat';
+import { ChatClient, Message, MessageEvents, MessageListener, RoomOptionsDefaults, RoomStatus } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -71,6 +71,60 @@ describe('useMessages', () => {
     // expect a message to be received by the second room
     await waitForMessages(messagesRoomTwo, 1);
     expect(messagesRoomTwo[0]?.text).toBe('hello world');
+  }, 10000);
+
+  it('should delete messages correctly', async () => {
+    // create new clients
+    const chatClientOne = newChatClient() as unknown as ChatClient;
+    const chatClientTwo = newChatClient() as unknown as ChatClient;
+
+    // create a second room and attach it, so we can listen for deletions
+    const roomId = randomRoomId();
+    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    await roomTwo.attach();
+
+    // start listening for deletions
+    const deletionsRoomTwo: Message[] = [];
+    roomTwo.messages.subscribe((message) => {
+      if (message.type === MessageEvents.Deleted) {
+        deletionsRoomTwo.push(message.message);
+      }
+    });
+
+    const TestComponent = () => {
+      const { send, deleteMessage, roomStatus } = useMessages();
+
+      useEffect(() => {
+        if (roomStatus === RoomStatus.Attached) {
+          void send({ text: 'hello world' }).then((message) => {
+            void deleteMessage(message, {
+              description: 'deleted',
+              metadata: { reason: 'test' },
+            });
+          });
+        }
+      }, [roomStatus]);
+
+      return null;
+    };
+
+    const TestProvider = () => (
+      <ChatClientProvider client={chatClientOne}>
+        <ChatRoomProvider
+          id={roomId}
+          options={RoomOptionsDefaults}
+        >
+          <TestComponent />
+        </ChatRoomProvider>
+      </ChatClientProvider>
+    );
+
+    render(<TestProvider />);
+
+    // expect a message to be received by the second room
+    await waitForMessages(deletionsRoomTwo, 1);
+    expect(deletionsRoomTwo[0]?.isDeleted).toBe(true);
+    expect(deletionsRoomTwo[0]?.deletedBy).toBe(chatClientOne.clientId);
   }, 10000);
 
   it('should receive messages on a subscribed listener', async () => {

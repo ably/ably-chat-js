@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata } from './message.js';
+import { DefaultMessage, Message, MessageActionMetadata, MessageHeaders, MessageMetadata } from './message.js';
 import { OccupancyEvent } from './occupancy.js';
 import { PaginatedResult } from './query.js';
 
@@ -29,6 +29,23 @@ interface SendMessageParams {
   text: string;
   metadata?: MessageMetadata;
   headers?: MessageHeaders;
+}
+
+interface DeleteMessageParams {
+  description?: string;
+  metadata?: MessageActionMetadata;
+}
+
+export interface DeleteMessageResponse {
+  /**
+   * The serial of the deletion action.
+   */
+  serial: string;
+
+  /**
+   * The timestamp of the deletion action.
+   */
+  deletedAt: number;
 }
 
 /**
@@ -68,6 +85,23 @@ export class ChatApi {
     });
   }
 
+  async deleteMessage(
+    roomId: string,
+    timeserial: string,
+    params?: DeleteMessageParams,
+  ): Promise<DeleteMessageResponse> {
+    const body: { description?: string; metadata?: MessageActionMetadata } = {
+      description: params?.description,
+      metadata: params?.metadata,
+    };
+    return this._makeAuthorizedRequest<DeleteMessageResponse>(
+      `/chat/v2/rooms/${roomId}/messages/${timeserial}/delete`,
+      'POST',
+      body,
+      {},
+    );
+  }
+
   async sendMessage(roomId: string, params: SendMessageParams): Promise<CreateMessageResponse> {
     const body: {
       text: string;
@@ -90,10 +124,11 @@ export class ChatApi {
 
   private async _makeAuthorizedRequest<RES = undefined>(
     url: string,
-    method: 'POST' | 'GET' | ' PUT' | 'DELETE' | 'PATCH',
+    method: 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH',
     body?: unknown,
+    params?: unknown,
   ): Promise<RES> {
-    const response = await this._realtime.request<RES>(method, url, this._apiProtocolVersion, {}, body);
+    const response = await this._realtime.request<RES>(method, url, this._apiProtocolVersion, params, body);
     if (!response.success) {
       this._logger.error('ChatApi._makeAuthorizedRequest(); failed to make request', {
         url,
