@@ -401,24 +401,72 @@ export class RoomLifecycleManager {
     this._logger.debug('RoomLifecycleManager._doRetry(); winding down channels except problem', {
       channel: contributor.channel.name,
     });
-    try {
-      await this._doChannelWindDown(contributor).catch(() => {
+
+    const doWindDown = (contributor: ContributesToRoomLifecycle) => {
+      this._logger.debug('RoomLifecycleManager(); doWindDown loop', {
+        channel: contributor.channel.name,
+      });
+
+      return this._doChannelWindDown(contributor).catch(() => {
+        this._logger.debug('RoomLifecycleManager(); doWindDown catch', {
+          channel: contributor.channel.name,
+        });
+
         // If in doing the wind down, we've entered failed state, then it's game over anyway
         if (this._lifecycle.status === RoomStatus.Failed) {
+          this._logger.debug('RoomLifecycleManager(); doWindDown catch, room in failed state', {
+            channel: contributor.channel.name,
+            roomStatus: this._lifecycle.status,
+            error: this._lifecycle.error,
+          });
           throw new Error('room is in a failed state');
         }
+
+        this._logger.debug('RoomLifecycleManager._doRetry(); wind down failed, retrying', {
+          channel: contributor.channel.name,
+        });
 
         // If not, we wait a short period and then try again
         return new Promise<unknown>((resolve) => {
           setTimeout(() => {
-            resolve(this._doChannelWindDown(contributor));
-          }, 250);
+            this._logger.debug('RoomLifecycleManager._doRetry(); retrying wind down', {
+              channel: contributor.channel.name,
+            });
+            resolve(doWindDown(contributor));
+          }, 2500);
         });
       });
+    };
+
+    try {
+      await doWindDown(contributor);
     } catch {
       // If an error gets through here, then the room has entered the failed state, we're done.
       return;
     }
+
+    // try {
+    //   await this._doChannelWindDown(contributor).catch(() => {
+    //     // If in doing the wind down, we've entered failed state, then it's game over anyway
+    //     if (this._lifecycle.status === RoomStatus.Failed) {
+    //       throw new Error('room is in a failed state');
+    //     }
+
+    //     this._logger.debug('RoomLifecycleManager._doRetry(); wind down failed, retrying', {
+    //       channel: contributor.channel,
+    //     });
+
+    //     // If not, we wait a short period and then try again
+    //     return new Promise<unknown>((resolve) => {
+    //       setTimeout(() => {
+    //         resolve(this._doChannelWindDown(contributor));
+    //       }, 250);
+    //     });
+    //   });
+    // } catch {
+    //   // If an error gets through here, then the room has entered the failed state, we're done.
+    //   return;
+    // }
 
     // If our problem channel has reattached, then we can retry the attach
     if (contributor.channel.state === RoomStatus.Attached) {
@@ -430,17 +478,27 @@ export class RoomLifecycleManager {
     return new Promise<void>((resolve) => {
       const listener = (change: Ably.ChannelStateChange) => {
         if (change.current === RoomStatus.Attached) {
+          this._logger.debug('RoomLifecycleManager._doRetry(); feature reattached via listener', {
+            channel: contributor.channel.name,
+          });
           contributor.channel.off(listener);
           resolve();
           return;
         }
 
         if (change.current === RoomStatus.Failed) {
+          this._logger.error('RoomLifecycleManager._doRetry(); feature entered failed state via listener', {
+            channel: contributor.channel.name,
+            error: change.reason,
+          });
           contributor.channel.off(listener);
           this._lifecycle.setStatus({ status: RoomStatus.Failed, error: change.reason });
           throw change.reason ?? new Ably.ErrorInfo('unknown error in _doRetry', ErrorCodes.RoomLifecycleError, 500);
         }
       };
+      this._logger.debug('RoomLifecycleManager._doRetry(); attaching listener to feature', {
+        channel: contributor.channel.name,
+      });
       contributor.channel.on(listener);
     }).then(() => {
       this._logger.debug('RoomLifecycleManager._doRetry(); feature reattached via listener, retrying attach');
@@ -632,7 +690,7 @@ export class RoomLifecycleManager {
       this._contributors.map(async (contributor) => {
         // If its the contributor we want to wait for a conclusion on, then we should not detach it
         // Unless we're in a failed state, in which case we should detach it
-        if (contributor === except && this._lifecycle.status !== RoomStatus.Failed) {
+        if (contributor.channel === except?.channel && this._lifecycle.status !== RoomStatus.Failed) {
           return;
         }
 
@@ -674,6 +732,11 @@ export class RoomLifecycleManager {
             this._lifecycle.setStatus({ status: RoomStatus.Failed, error: contributorError });
             throw contributorError;
           }
+
+          this._logger.error('RoomLifecycleManager._doChannelWindDown(); failed to detach', {
+            channel: contributor.channel.name,
+            error,
+          });
 
           // We throw an error so that the promise rejects
           throw new Ably.ErrorInfo('detach failure, retry', -1, -1, error as Ably.ErrorInfo);
