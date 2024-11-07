@@ -2,6 +2,31 @@
 
 This document provides a brief guide on how to use custom chat components and hooks provided by the Ably Chat SDK.
 
+## Installation
+
+If you're using **React Native**, you may need to perform extra steps to use the Chat SDK.
+
+The React package is exported as an ESM module `@ably/chat/react`, making use of the `exports` field in `package.json`.
+The Metro bundler used by React Native does not by default utilize this field, leading to imports not being found.
+
+To use Chat with React Native, first set the `type` field of your React Native project to `module` and update your `tsconfig.json`
+to set `"moduleResolution": "Bundler"`. Finally, include the `unstable_enablePackageExports` field in
+your `metro.config.cjs`, which will enable `exports` resolution. For example:
+
+```js
+const { getDefaultConfig } = require('expo/metro-config');
+
+const defaultConfig = getDefaultConfig(__dirname);
+
+module.exports = {
+  ...defaultConfig,
+  resolver: {
+    ...defaultConfig.resolver,
+    unstable_enablePackageExports: true, // Enable 'exports' field in package.json,
+  },
+};
+```
+
 ## ChatClientProvider
 
 This provider is used to provide the `ChatClient` instance to all child components in your React component tree.
