@@ -169,7 +169,7 @@ export class DefaultRooms implements Rooms {
         return existingRoom.release()
       }
     }).then(_ => {
-      this._releasingRoom.set(roomId, false)
+      this._releasingRoom.delete(roomId)
       this._roomsMap.delete(roomId)
     })
   }
