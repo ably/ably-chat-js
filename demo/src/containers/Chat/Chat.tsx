@@ -15,10 +15,23 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
 
   const isConnected: boolean = currentStatus === ConnectionStatus.Connected;
 
+  const backfillPreviousMessages = (getPreviousMessages: ReturnType<typeof useMessages>['getPreviousMessages']) => {
+    chatClient.logger.debug('backfilling previous messages');
+    if (getPreviousMessages) {
+      getPreviousMessages({ limit: 50 })
+        .then((result: PaginatedResult<Message>) => {
+          setMessages(result.items.reverse());
+          setLoading(false);
+        })
+        .catch((error: unknown) => {
+          chatClient.logger.error('Error fetching initial messages', error);
+        });
+    }
+  }
+
   const {
     send: sendMessage,
     getPreviousMessages,
-    roomStatus,
   } = useMessages({
     listener: (message: MessageEventPayload) => {
       setMessages((prevMessage) => [...prevMessage, message.message]);
@@ -29,8 +42,11 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
       // this will trigger a re-fetch of the messages
       setMessages([]);
 
-      // triggers the useEffect to fetch the initial messages again.
+      // set our state to loading, because we'll need to fetch previous messages again
       setLoading(true);
+
+      // Do a message backfill
+      backfillPreviousMessages(getPreviousMessages);
     },
   });
 
@@ -48,19 +64,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
 
   useEffect(() => {
     chatClient.logger.debug('updating getPreviousMessages useEffect', { getPreviousMessages });
-    // try and fetch the messages up to attachment of the messages listener
-    if (getPreviousMessages) {
-      chatClient.logger.debug('fetching initial messages', { roomStatus });
-      getPreviousMessages({ limit: 50 })
-        .then((result: PaginatedResult<Message>) => {
-          chatClient.logger.debug('getPreviousMessages result', result);
-          setMessages(result.items.reverse());
-          setLoading(false);
-        })
-        .catch((error: unknown) => {
-          chatClient.logger.error('Error fetching initial messages', { err: error });
-        });
-    }
+    backfillPreviousMessages(getPreviousMessages);
   }, [getPreviousMessages]);
 
   const handleStartTyping = () => {
