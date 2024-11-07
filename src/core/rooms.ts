@@ -113,9 +113,9 @@ export class DefaultRooms implements Rooms {
 
   getReleasedOrExistingRoom(roomId: string, operationCancellable: boolean): Promise<void> | Promise<Room> {
     if (operationCancellable) {
-      const previousgetReleasedRoom = this._roomReleaseBeforeRoomGet.get(roomId)
-      if (previousgetReleasedRoom) {
-        return previousgetReleasedRoom.released
+      const previousGetRoomPromise = this._roomReleaseBeforeRoomGet.get(roomId)
+      if (previousGetRoomPromise) {
+        return previousGetRoomPromise.released
       }
     }
     const existing = this._roomsMap.get(roomId);
