@@ -111,8 +111,8 @@ export class DefaultRooms implements Rooms {
     this._logger = logger;
   }
 
-  getReleasedOrExistingRoom(roomId: string, releaseCancellable: boolean): Promise<void> | Promise<Room> {
-    if (releaseCancellable) {
+  getReleasedOrExistingRoom(roomId: string, operationCancellable: boolean): Promise<void> | Promise<Room> {
+    if (operationCancellable) {
       const previousgetReleasedRoom = this._roomReleaseBeforeRoomGet.get(roomId)
       if (previousgetReleasedRoom) {
         return previousgetReleasedRoom.released
@@ -122,12 +122,12 @@ export class DefaultRooms implements Rooms {
     if (existing) {
       if (this._releasing.has(roomId)) {
         const promise = new Promise<void>((res, rej) => {
-          if (releaseCancellable) {
+          if (operationCancellable) {
             this._roomReleaseBeforeRoomGet.set(roomId, {released: promise, rej})
           }
           const {off} = existing.onStatusChange(change => {
               if (change.current === RoomStatus.Released) {
-                if (releaseCancellable) {
+                if (operationCancellable) {
                   this._roomReleaseBeforeRoomGet.delete(roomId)
                 }
                 off()
