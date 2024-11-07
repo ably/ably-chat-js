@@ -231,7 +231,10 @@ export class DefaultRooms implements Rooms {
     this._rooms.delete(roomId);
     const releasePromise = existing.promise.then((room) => {
       this._logger.debug('Rooms.release(); releasing room', { roomId, nonce: existing.nonce });
-      return room.release();
+      return room.release().then(() => {
+        this._logger.debug('Rooms.release(); room released', { roomId, nonce: existing.nonce });
+        this._releasing.delete(roomId);
+      });
     });
 
     this._logger.debug('Rooms.release(); creating new release promise', { roomId, nonce: existing.nonce });

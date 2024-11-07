@@ -1,3 +1,4 @@
+import { RoomOptionsDefaults } from '@ably/chat';
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
@@ -28,6 +29,23 @@ describe('Rooms', () => {
     const room = await chat.rooms.get('test', { typing: { timeoutMs: 2000 } });
     expect(room.options().typing?.timeoutMs).toBe(2000);
     expect(room).not.toBe(room1);
+  });
+
+  it('releases and recreates a room in cycle', async () => {
+    // Create a room, then release, then create another room with different options
+    // We include presence options here because that invokes a change to channel modes - which would flag up
+    // an error if we were doing releases in the wrong order etc
+    const chat = newChatClient();
+    const room1 = await chat.rooms.get('test', { typing: { timeoutMs: 1000 }, presence: RoomOptionsDefaults.presence });
+    await room1.attach();
+    await chat.rooms.release('test');
+
+    const room2 = await chat.rooms.get('test', { typing: { timeoutMs: 2000 }, presence: RoomOptionsDefaults.presence });
+    await room2.attach();
+    await chat.rooms.release('test');
+
+    await chat.rooms.get('test', { typing: { timeoutMs: 3000 }, presence: RoomOptionsDefaults.presence });
+    await chat.rooms.release('test');
   });
 
   it('releases a failed room', async () => {

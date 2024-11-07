@@ -141,6 +141,7 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
   // Create an effect that changes the room when the id or options change
   const prevId = useRef(roomId);
   const prevOptions = useRef(options);
+  const prevClient = useRef(client);
   const roomReleaseQueue = useRef(new RoomReleaseQueue(logger));
 
   // update the release queue if the logger changes - as it means we have a new client
@@ -156,28 +157,42 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
   }, [logger]);
 
   useEffect(() => {
-    if (prevId.current === roomId && prevOptions.current === options) {
+    logger.debug(`ChatRoomProvider(); running room options change effect`, { roomId, options });
+    if (client == prevClient.current && prevId.current === roomId && prevOptions.current === options) {
       return;
     }
 
     prevId.current = roomId;
     prevOptions.current = options;
+    prevClient.current = client;
 
     // The room options or id is changing in some way, so we need to release the old room
     // before we create a new one
     setValue((prev: ChatRoomContextType) => {
-      void client.rooms.release(prev.roomId).catch();
+      logger.debug(`ChatRoomProvider(); running options change setValue`, { roomId, options });
+      // If we're releasing, release the room - it's guaranteed to be changing
+      if (release) {
+        logger.debug(`ChatRoomProvider(); releasing value`, { roomId });
+        void client.rooms.release(prev.roomId).catch();
+      } else if (attach) {
+        // If we're not releasing, but we're attaching, detach the room
+        void prev.room.then((room) => {
+          logger.debug(`ChatRoomProvider(); detaching value`, { roomId });
+          void room.detach().catch();
+        });
+      }
+
       logger.debug(`ChatRoomProvider(); updating value`, { roomId, options });
       return { room: client.rooms.get(roomId, options).catch(), roomId, options };
     });
-  }, [client, roomId, options, logger]);
+  }, [client, roomId, options, logger, attach, release]);
 
   // Create an effect that attaches and detaches the room, or releases it when the component unmounts
   useEffect(() => {
     let unmounted = false;
     let resolvedRoom: Room | undefined;
     const currentReleaseQueue = roomReleaseQueue.current;
-    logger.debug(`ChatRoomProvider(); running useEffect`, { roomId: value.roomId });
+    logger.debug(`ChatRoomProvider(); running attachment and release effect`, { roomId: value.roomId });
 
     // If there was a previous release queued for this room, abort it
     currentReleaseQueue.abort(value.roomId, value.options);
@@ -215,10 +230,7 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
         logger.debug(`ChatRoomProvider(); releasing room`, { roomId: value.roomId });
         currentReleaseQueue.enqueue(client, value.roomId, value.options);
         return;
-      }
-
-      // If set, detach the room - it's ok to just do this, because the room doesn't get irreversibly disposed
-      if (resolvedRoom && attach) {
+      } else if (resolvedRoom && attach) {
         logger.debug(`ChatRoomProvider(); detaching room`, { roomId: value.roomId });
         void resolvedRoom.detach().catch(() => {
           // Ignore, the error will be available via various room status properties
