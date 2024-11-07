@@ -74,6 +74,11 @@ For browsers, you can also include the Chat SDK directly into your HTML:
 </script>
 ```
 
+> [!IMPORTANT]
+> If you're using Chat in React Native, please see the additional setup step [here](./src/react/README.md).
+
+## Versioning
+
 The Ably client library follows [Semantic Versioning](http://semver.org/). To lock into a major or minor version of the client library, you can specify a specific version number such as https://cdn.ably.com/lib/ably-chat-0.js for all v0._ versions, or https://cdn.ably.com/lib/ably-chat-0.1.js for all v0.1._ versions, or you can lock into a single release with https://cdn.ably.com/lib/ably-chat-0.1.0.js. See https://github.com/ably/ably-chat-js/tags for a list of tagged releases.
 
 ## Instantiation and authentication
