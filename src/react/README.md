@@ -184,30 +184,38 @@ This hook allows you to access the `Messages` instance of a `Room` from your Rea
 
 **To use this hook, the component calling it must be a child of a `ChatRoomProvider`.**
 
-### Sending And Getting Messages
+### Sending, Deleting And Getting Messages
 
 The hook will provide the `Messages` instance, should you wish to interact with it directly, a `send` method
-that can be used to send a messages to the room, and a `get` method that can be used to retrieve messages from the room.
+that can be used to send a message to the room,
+a `deleteMessage` method that can be used to delete a message from the room,
+and a `get` method that can be used to retrieve messages from the room.
 
 ```tsx
 import { useMessages } from '@ably/chat/react';
+import { Message } from '@ably/chat';
 
 const MyComponent = () => {
-  const { send, get } = useMessages();
-
+  const { send, get, deleteMessage } = useMessages();
+  const [message, setMessage] = useState<Message>();
   const handleGetMessages = () => {
     // fetch the last 3 messages, oldest to newest
     get({ limit: 3, direction: 'forwards' }).then((result) => console.log('Previous messages: ', result.items));
   };
 
   const handleMessageSend = () => {
-    send({ text: 'Hello, World!' });
+    send({ text: 'Hello, World!' }).then((sentMessage) => setMessage(sentMessage));
+  };
+
+  const handleMessageDelete = (message: Message) => {
+    deleteMessage(message, { description: 'deleted by user' });
   };
 
   return (
     <div>
       <button onClick={handleMessageSend}>Send Message</button>
       <button onClick={handleGetMessages}>Get Messages</button>
+      <button onClick={handleMessageDelete}>Delete Message</button>
     </div>
   );
 };

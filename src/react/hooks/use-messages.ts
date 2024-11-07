@@ -1,4 +1,5 @@
 import {
+  DeleteMessageParams,
   Message,
   MessageListener,
   Messages,
@@ -30,6 +31,11 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * A shortcut to the {@link Messages.get} method.
    */
   readonly get: Messages['get'];
+
+  /**
+   * A shortcut to the {@link Messages.delete} method.
+   */
+  readonly deleteMessage: Messages['delete'];
 
   /**
    * Provides access to the underlying {@link Messages} instance of the room.
@@ -89,6 +95,11 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
   const send = useCallback((params: SendMessageParams) => room.messages.send(params), [room]);
+
+  const deleteMessage = useCallback(
+    (message: Message, deleteMessageParams?: DeleteMessageParams) => room.messages.delete(message, deleteMessageParams),
+    [room],
+  );
   const get = useCallback((options: QueryOptions) => room.messages.get(options), [room]);
 
   const [getPreviousMessages, setGetPreviousMessages] = useState<MessageSubscriptionResponse['getPreviousMessages']>();
@@ -142,6 +153,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   return {
     send,
     get,
+    deleteMessage,
     messages: room.messages,
     getPreviousMessages,
     connectionStatus,

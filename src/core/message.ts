@@ -17,7 +17,7 @@ export type MessageHeaders = Headers;
 export type MessageMetadata = Metadata;
 
 /**
- * {@link ActionMetadata} type for a chat message {@link MessageActionDetails}.
+ * {@link ActionMetadata} type for a chat messages {@link MessageActionDetails}.
  */
 export type MessageActionMetadata = ActionMetadata;
 
@@ -34,7 +34,7 @@ export interface MessageActionDetails {
    */
   description?: string;
   /**
-   * The optional {@link MessageActionMetadata} associated with the update or deletion.
+   * The optional metadata associated with the update or deletion.
    */
   metadata?: MessageActionMetadata;
 }

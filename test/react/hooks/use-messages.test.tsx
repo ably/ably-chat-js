@@ -12,6 +12,7 @@ import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatMessageActions } from '../../../src/core/events.ts';
+import { DefaultMessage } from '../../../src/core/message.ts';
 import { PaginatedResult } from '../../../src/core/query.ts';
 import { useMessages } from '../../../src/react/hooks/use-messages.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
@@ -151,7 +152,7 @@ describe('useMessages', () => {
     expect(mockGetPreviousMessages).toHaveBeenCalledTimes(1);
   });
 
-  it('should correctly call the send and get message methods', async () => {
+  it('should correctly call the methods exposed by the hook', async () => {
     const { result } = renderHook(() => useMessages());
 
     // spy on the send method of the messages instance
@@ -160,14 +161,35 @@ describe('useMessages', () => {
     // spy on the get method of the messages instance
     const getSpy = vi.spyOn(mockRoom.messages, 'get').mockResolvedValue({} as unknown as PaginatedResult<Message>);
 
+    const deleteSpy = vi.spyOn(mockRoom.messages, 'delete').mockResolvedValue({} as unknown as Message);
+
+    const message = new DefaultMessage(
+      '108TeGZDQBderu97202638@1719948956834-0',
+      'client-1',
+      'some-room',
+      'I have the high ground now',
+      new Date(1719948956834),
+      {},
+      {},
+      ChatMessageActions.MessageCreate,
+      '108TeGZDQBderu97202638@1719948956834-0:0',
+    );
     // call both methods and ensure they call the underlying messages methods
     await act(async () => {
       await result.current.send({ text: 'test message' });
       await result.current.get({ limit: 10 });
+      await result.current.deleteMessage(message, {
+        description: 'deleted',
+        metadata: { reason: 'test' },
+      });
     });
 
     expect(sendSpy).toHaveBeenCalledWith({ text: 'test message' });
     expect(getSpy).toHaveBeenCalledWith({ limit: 10 });
+    expect(deleteSpy).toHaveBeenCalledWith(message, {
+      description: 'deleted',
+      metadata: { reason: 'test' },
+    });
   });
 
   it('should handle rerender if the room instance changes', () => {
