@@ -40,7 +40,7 @@ export enum ChatMessageActions {
   MessageAnnotationCreate = 'annotation.create',
 
   /** Action applied to a deleted annotation. */
-  MessageAnnotationUpdate = 'annotation.delete',
+  MessageAnnotationDelete = 'annotation.delete',
 
   /** Action applied to a meta occupancy message. */
   MessageMetaOccupancy = 'meta.occupancy',
