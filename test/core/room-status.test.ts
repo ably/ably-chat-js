@@ -8,14 +8,14 @@ const baseError = new Ably.ErrorInfo('error', 500, 50000);
 
 describe('room status', () => {
   it('defaults to initialized', () => {
-    const status = new DefaultRoomLifecycle(makeTestLogger());
+    const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
     expect(status.status).toEqual(RoomStatus.Initialized);
     expect(status.error).toBeUndefined();
   });
 
   it('listeners can be added', () =>
     new Promise<void>((done, reject) => {
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       status.onChange((status) => {
         expect(status.current).toEqual(RoomStatus.Attached);
         expect(status.error).toEqual(baseError);
@@ -28,7 +28,7 @@ describe('room status', () => {
 
   it('listeners can be removed', () =>
     new Promise<void>((done, reject) => {
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       const { off } = status.onChange(() => {
         reject(new Error('Expected onChange to not be called'));
       });
@@ -40,7 +40,7 @@ describe('room status', () => {
 
   it('listeners can all be removed', () =>
     new Promise<void>((done, reject) => {
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       status.onChange(() => {
         reject(new Error('Expected onChange to not be called'));
       });

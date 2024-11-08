@@ -172,13 +172,15 @@ export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> impl
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
   private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
+  private readonly _roomId: string;
 
   /**
    * Constructs a new `DefaultStatus` instance.
    * @param logger The logger to use.
    */
-  constructor(logger: Logger) {
+  constructor(roomId: string, logger: Logger) {
     super();
+    this._roomId = roomId;
     this._logger = logger;
     this._status = RoomStatus.Initialized;
     this._error = undefined;
@@ -231,7 +233,7 @@ export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> impl
 
     this._status = change.current;
     this._error = change.error;
-    this._logger.info(`Room status changed`, change);
+    this._logger.info(`room status changed`, { ...change, roomId: this._roomId });
     this._internalEmitter.emit(change.current, change);
     this.emit(change.current, change);
   }

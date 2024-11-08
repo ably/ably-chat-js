@@ -165,7 +165,7 @@ export class DefaultRoom implements Room {
     this._options = options;
     this._chatApi = chatApi;
     this._logger = logger;
-    this._lifecycle = new DefaultRoomLifecycle(logger);
+    this._lifecycle = new DefaultRoomLifecycle(roomId, logger);
 
     // Setup features
     this._messages = new DefaultMessages(roomId, realtime, this._chatApi, realtime.auth.clientId, logger);

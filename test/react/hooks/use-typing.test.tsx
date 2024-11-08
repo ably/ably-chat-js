@@ -80,7 +80,7 @@ describe('useTyping', () => {
     };
 
     // update the mock room with the new typing object
-    updateMockRoom({ ...mockRoom, _lifecycle: new DefaultRoomLifecycle(mockLogger), typing: mockTyping });
+    updateMockRoom({ ...mockRoom, _lifecycle: new DefaultRoomLifecycle('roomId', mockLogger), typing: mockTyping });
     const { result, unmount } = renderHook(() => useTyping({ listener: mockListener }));
 
     await waitForEventualHookValueToBeDefined(result, (value) => value.typingIndicators);
