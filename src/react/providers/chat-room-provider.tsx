@@ -90,9 +90,9 @@ class RoomReleaseQueue {
         }
 
         this._logger.debug(`RoomReleaseQueue(); releasing room`, { id, options });
-        void client.rooms.release(id).catch();
+        void client.rooms.release(id).catch(() => void 0);
       })
-      .catch()
+      .catch(() => void 0)
       .finally(() => {
         this._logger.debug(`RoomReleaseQueue(); dequeued release`, { id, options });
         this._queue.splice(this._queue.indexOf(op), 1);
@@ -135,13 +135,12 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
   // In StrictMode this will be called twice one after the other, but that's ok
   const [value, setValue] = useState<ChatRoomContextType>(() => {
     logger.debug(`ChatRoomProvider(); initializing value`, { roomId, options });
-    return { room: client.rooms.get(roomId, options).catch(), roomId: roomId, options: options };
+    const room = client.rooms.get(roomId, options);
+    room.catch(() => void 0);
+    return { room: room, roomId: roomId, options: options, client: client };
   });
 
-  // Create an effect that changes the room when the id or options change
-  const prevId = useRef(roomId);
-  const prevOptions = useRef(options);
-  const prevClient = useRef(client);
+  // Create a queue to manage release ops
   const roomReleaseQueue = useRef(new RoomReleaseQueue(logger));
 
   // update the release queue if the logger changes - as it means we have a new client
@@ -156,88 +155,75 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
     roomReleaseQueue.current = new RoomReleaseQueue(logger);
   }, [logger]);
 
+  // Create an effect that manages the room state, handles attaching and releasing
   useEffect(() => {
-    logger.debug(`ChatRoomProvider(); running room options change effect`, { roomId, options });
-    if (client === prevClient.current && prevId.current === roomId && prevOptions.current === options) {
-      return;
-    }
-
-    prevId.current = roomId;
-    prevOptions.current = options;
-    prevClient.current = client;
-
-    // The room options or id is changing in some way, so we need to release the old room
-    // before we create a new one
-    setValue((prev: ChatRoomContextType) => {
-      logger.debug(`ChatRoomProvider(); running options change setValue`, { roomId, options });
-      // If we're releasing, release the room - it's guaranteed to be changing
-      if (release) {
-        logger.debug(`ChatRoomProvider(); releasing value`, { roomId });
-        void client.rooms.release(prev.roomId).catch();
-      } else if (attach) {
-        // If we're not releasing, but we're attaching, detach the room
-        void prev.room.then((room) => {
-          logger.debug(`ChatRoomProvider(); detaching value`, { roomId });
-          void room.detach().catch();
-        });
-      }
-
-      logger.debug(`ChatRoomProvider(); updating value`, { roomId, options });
-      return { room: client.rooms.get(roomId, options).catch(), roomId, options };
-    });
-  }, [client, roomId, options, logger, attach, release]);
-
-  // Create an effect that attaches and detaches the room, or releases it when the component unmounts
-  useEffect(() => {
+    logger.debug(`ChatRoomProvider(); running lifecycle useEffect`, { roomId: roomId });
     let unmounted = false;
     let resolvedRoom: Room | undefined;
     const currentReleaseQueue = roomReleaseQueue.current;
-    logger.debug(`ChatRoomProvider(); running attachment and release effect`, { roomId: value.roomId });
 
-    // If there was a previous release queued for this room, abort it
-    currentReleaseQueue.abort(value.roomId, value.options);
+    // If there was a previous release queued for this room (same id and options), abort it
+    currentReleaseQueue.abort(roomId, options);
 
-    // Get the latest value of the room promise to ensure we're not using stale values
-    void value.room
+    // Get the room promise
+    const room = client.rooms.get(roomId, options);
+    room.catch(() => void 0);
+
+    // If we've had a change in the room id or options, update the value in the state
+    setValue((prev: ChatRoomContextType) => {
+      // If the room id and options haven't changed, then we don't need to do anything
+      if (prev.client === client && prev.roomId === roomId && prev.options === options) {
+        logger.debug(`ChatRoomProvider(); no change in room id or options`, { roomId, options });
+        return prev;
+      }
+
+      logger.debug(`ChatRoomProvider(); updating value`, { roomId, options });
+      return { room: room, roomId, options, client };
+    });
+
+    // Use the room promise to attach
+    void room
       .then((room: Room) => {
         if (unmounted) {
-          logger.debug(`ChatRoomProvider(); unmounted before room resolved`, { roomId: value.roomId });
+          logger.debug(`ChatRoomProvider(); unmounted before room resolved`, { roomId: roomId });
+          return;
         }
 
-        logger.debug(`ChatRoomProvider(); room resolved`, { roomId: value.roomId });
-
+        logger.debug(`ChatRoomProvider(); room resolved`, { roomId: roomId });
         resolvedRoom = room;
 
         if (attach) {
           // attachment error and/or room status is available via useRoom
           // or room.status, no need to do anything with the promise here
-          logger.debug(`ChatRoomProvider(); attaching room`, { roomId: value.roomId });
+          logger.debug(`ChatRoomProvider(); attaching room`, { roomId: roomId });
           void room.attach().catch(() => {
             // Ignore, the error will be available via various room status properties
           });
         }
       })
-      .catch();
+      .catch(() => void 0);
 
     // Cleanup function
     return () => {
       unmounted = true;
-      logger.debug(`ChatRoomProvider(); cleaning up`, { roomId: value.roomId });
+      logger.debug(`ChatRoomProvider(); cleaning up lifecycle useEffect`, { roomId: roomId });
 
       // If we're releasing, release the room. We'll do this in an abortable way so that we don't kill off the value
       // when using StrictMode
       if (release) {
-        logger.debug(`ChatRoomProvider(); releasing room`, { roomId: value.roomId });
-        currentReleaseQueue.enqueue(client, value.roomId, value.options);
+        logger.debug(`ChatRoomProvider(); releasing room`, { roomId: roomId });
+        currentReleaseQueue.enqueue(client, roomId, options);
         return;
       } else if (resolvedRoom && attach) {
-        logger.debug(`ChatRoomProvider(); detaching room`, { roomId: value.roomId });
+        // If we're not releasing, but we are attaching, then we should detach the room, but only iff the room
+        // was resolved in time
+        logger.debug(`ChatRoomProvider(); detaching room`, { roomId: roomId });
         void resolvedRoom.detach().catch(() => {
           // Ignore, the error will be available via various room status properties
         });
       }
     };
-  }, [value, logger, attach, release, client]);
+  }, [roomId, options, logger, attach, release, client]);
 
   return <ChatRoomContext.Provider value={value}>{children}</ChatRoomContext.Provider>;
 };

@@ -20,6 +20,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
     if (getPreviousMessages) {
       getPreviousMessages({ limit: 50 })
         .then((result: PaginatedResult<Message>) => {
+          chatClient.logger.debug('backfilled messages', result);
           setMessages(result.items.filter((m) => !m.isDeleted).reverse());
           setLoading(false);
         })

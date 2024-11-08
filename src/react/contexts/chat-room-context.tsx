@@ -1,4 +1,4 @@
-import { Room, RoomOptions } from '@ably/chat';
+import { ChatClient, Room, RoomOptions } from '@ably/chat';
 import { createContext } from 'react';
 
 /**
@@ -19,6 +19,11 @@ export interface ChatRoomContextType {
    * Options used to create the room.
    */
   options: RoomOptions;
+
+  /**
+   * The chat client used to create the room.
+   */
+  client: ChatClient;
 }
 
 /**
