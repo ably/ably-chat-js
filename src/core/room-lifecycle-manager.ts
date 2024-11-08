@@ -11,10 +11,9 @@ import { DefaultRoomLifecycle, NewRoomStatus, RoomStatus, RoomStatusChange } fro
  */
 export interface ContributesToRoomLifecycle extends HandlesDiscontinuity {
   /**
-   * Gets the channel on which the feature operates. This promise is never
-   * rejected except in the case where room initialization is canceled.
+   * Gets the channel on which the feature operates.
    */
-  get channel(): Promise<Ably.RealtimeChannel>;
+  get channel(): Ably.RealtimeChannel;
 
   /**
    * Gets the ErrorInfo code that should be used when the feature fails to attach.
@@ -30,18 +29,6 @@ export interface ContributesToRoomLifecycle extends HandlesDiscontinuity {
 }
 
 /**
- * This interface represents a feature that contributes to the room lifecycle and
- * exposes its channel directly. Objects of this type are created by awaiting the
- * channel promises of all the {@link ContributesToRoomLifecycle} objects.
- *
- * @internal
- */
-interface ResolvedContributor {
-  channel: Ably.RealtimeChannel;
-  contributor: ContributesToRoomLifecycle;
-}
-
-/**
  * The order of precedence for lifecycle operations, passed to the mutex which allows
  * us to ensure that internal operations take precedence over user-driven operations.
  */
@@ -54,13 +41,13 @@ enum LifecycleOperationPrecedence {
 /**
  * A map of contributors to pending discontinuity events.
  */
-type DiscontinuityEventMap = Map<ResolvedContributor, Ably.ErrorInfo | undefined>;
+type DiscontinuityEventMap = Map<ContributesToRoomLifecycle, Ably.ErrorInfo | undefined>;
 
 /**
  * An internal interface that represents the result of a room attachment operation.
  */
 type RoomAttachmentResult = NewRoomStatus & {
-  failedFeature?: ResolvedContributor;
+  failedFeature?: ContributesToRoomLifecycle;
 };
 
 /**
@@ -76,7 +63,7 @@ export class RoomLifecycleManager {
   /**
    * The features that contribute to the room status.
    */
-  private readonly _contributors: ResolvedContributor[];
+  private readonly _contributors: ContributesToRoomLifecycle[];
   private readonly _logger: Logger;
 
   /**
@@ -92,7 +79,7 @@ export class RoomLifecycleManager {
    * If a channel enters the attaching state (as a result of a server initiated detach), we should initially
    * consider it to be transient and not bother changing the room status.
    */
-  private readonly _transientDetachTimeouts: Map<ResolvedContributor, ReturnType<typeof setTimeout>>;
+  private readonly _transientDetachTimeouts: Map<ContributesToRoomLifecycle, ReturnType<typeof setTimeout>>;
 
   /**
    * This flag indicates whether some sort of controlled operation is in progress (e.g. attaching, detaching, releasing).
@@ -115,7 +102,7 @@ export class RoomLifecycleManager {
    *
    * Used to control whether we should trigger discontinuity events.
    */
-  private _firstAttachesCompleted = new Map<ResolvedContributor, boolean>();
+  private _firstAttachesCompleted = new Map<ContributesToRoomLifecycle, boolean>();
 
   /**
    * Are we in the process of releasing the room?
@@ -124,14 +111,14 @@ export class RoomLifecycleManager {
 
   /**
    * Constructs a new `RoomLifecycleManager` instance.
-   * @param status The status to update.
+   * @param lifecycle The room lifecycle that manages status.
    * @param contributors The features that contribute to the room status.
    * @param logger An instance of the Logger.
    * @param transientDetachTimeout The number of milliseconds to consider a detach to be "transient"
    */
   constructor(
     lifecycle: DefaultRoomLifecycle,
-    contributors: ResolvedContributor[],
+    contributors: ContributesToRoomLifecycle[],
     logger: Logger,
     transientDetachTimeout: number,
   ) {
@@ -200,7 +187,7 @@ export class RoomLifecycleManager {
           channel: contributor.channel.name,
           change,
         });
-        contributor.contributor.discontinuityDetected(change.reason);
+        contributor.discontinuityDetected(change.reason);
       });
 
       // We handle all events except update events here
@@ -325,7 +312,7 @@ export class RoomLifecycleManager {
    * @param contributor The contributor that has detached.
    * @param detachError The error that caused the detachment.
    */
-  private _onChannelSuspension(contributor: ResolvedContributor, detachError?: Ably.ErrorInfo): void {
+  private _onChannelSuspension(contributor: ContributesToRoomLifecycle, detachError?: Ably.ErrorInfo): void {
     this._logger.debug('RoomLifecycleManager._onChannelSuspension();', {
       channel: contributor.channel.name,
       error: detachError,
@@ -372,7 +359,7 @@ export class RoomLifecycleManager {
    * @param contributor The contributor that has entered a suspended state.
    * @returns A promise that resolves when the room is attached, or the room enters a failed state.
    */
-  private async _doRetry(contributor: ResolvedContributor): Promise<void> {
+  private async _doRetry(contributor: ContributesToRoomLifecycle): Promise<void> {
     // A helper that allows us to retry the attach operation
     const doAttachWithRetry = () => {
       this._logger.debug('RoomLifecycleManager.doAttachWithRetry();');
@@ -562,7 +549,7 @@ export class RoomLifecycleManager {
         // We take the status to be whatever caused the error
         attachResult.error = new Ably.ErrorInfo(
           'failed to attach feature',
-          feature.contributor.attachmentErrorCode,
+          feature.attachmentErrorCode,
           500,
           error as Ably.ErrorInfo,
         );
@@ -606,7 +593,7 @@ export class RoomLifecycleManager {
 
     // Iterate the pending discontinuity events and trigger them
     for (const [contributor, error] of this._pendingDiscontinuityEvents) {
-      contributor.contributor.discontinuityDetected(error);
+      contributor.discontinuityDetected(error);
     }
     this._pendingDiscontinuityEvents.clear();
 
@@ -640,7 +627,7 @@ export class RoomLifecycleManager {
    * @param except The contributor to exclude from the detachment.
    * @returns A promise that resolves when all channels are detached.
    */
-  private _doChannelWindDown(except?: ResolvedContributor): Promise<unknown> {
+  private _doChannelWindDown(except?: ContributesToRoomLifecycle): Promise<unknown> {
     return Promise.all(
       this._contributors.map(async (contributor) => {
         // If its the contributor we want to wait for a conclusion on, then we should not detach it
@@ -680,7 +667,7 @@ export class RoomLifecycleManager {
           ) {
             const contributorError = new Ably.ErrorInfo(
               'failed to detach feature',
-              contributor.contributor.detachmentErrorCode,
+              contributor.detachmentErrorCode,
               500,
               error as Ably.ErrorInfo,
             );

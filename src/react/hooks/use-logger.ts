@@ -12,5 +12,5 @@ import { useChatClient } from './use-chat-client.js';
  */
 export const useLogger = (): Logger => {
   const chatClient = useChatClient();
-  return useMemo(() => chatClient.logger, [chatClient]);
+  return useMemo(() => (chatClient as unknown as { logger: Logger }).logger, [chatClient]);
 };

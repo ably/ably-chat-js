@@ -69,9 +69,9 @@ export interface Typing extends EmitsDiscontinuities {
 
   /**
    * Get the Ably realtime channel underpinning typing events.
-   * @returns A promise of the Ably realtime channel.
+   * @returns The Ably realtime channel.
    */
-  channel: Promise<Ably.RealtimeChannel>;
+  channel: Ably.RealtimeChannel;
 }
 
 /**
@@ -115,7 +115,7 @@ export class DefaultTyping
   implements Typing, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _clientId: string;
-  private readonly _channel: Promise<Ably.RealtimeChannel>;
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
@@ -136,24 +136,11 @@ export class DefaultTyping
    * @param realtime An instance of the Ably Realtime client.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
-   * @param initAfter A promise that is awaited before creating any channels.
    */
-  constructor(
-    roomId: string,
-    options: TypingOptions,
-    realtime: Ably.Realtime,
-    clientId: string,
-    logger: Logger,
-    initAfter: Promise<void>,
-  ) {
+  constructor(roomId: string, options: TypingOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
     super();
     this._clientId = clientId;
-    this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
-
-    // Catch this so it won't send unhandledrejection global event
-    this._channel.catch((error: unknown) => {
-      logger.debug('Typing: channel initialization canceled', { roomId, error });
-    });
+    this._channel = this._makeChannel(roomId, realtime);
 
     // Timeout for typing
     this._typingTimeoutMs = options.timeoutMs;
@@ -161,7 +148,7 @@ export class DefaultTyping
   }
 
   /**
-   * Creates the realtime channel for typing indicators. Called after initAfter is resolved.
+   * Creates the realtime channel for typing indicators.
    */
   private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
     const channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
@@ -176,15 +163,14 @@ export class DefaultTyping
    * @inheritDoc
    */
   get(): Promise<Set<string>> {
-    return this._channel.then((channel) =>
-      channel.presence.get().then((members) => new Set<string>(members.map((m) => m.clientId))),
-    );
+    this._logger.trace(`DefaultTyping.get();`);
+    return this._channel.presence.get().then((members) => new Set<string>(members.map((m) => m.clientId)));
   }
 
   /**
    * @inheritDoc
    */
-  get channel(): Promise<Ably.RealtimeChannel> {
+  get channel(): Ably.RealtimeChannel {
     return this._channel;
   }
 
@@ -214,8 +200,7 @@ export class DefaultTyping
 
     // Start typing and emit typingStarted event
     this._startTypingTimer();
-    const channel = await this.channel;
-    return channel.presence.enterClient(this._clientId).then();
+    return this._channel.presence.enterClient(this._clientId);
   }
 
   /**
@@ -230,8 +215,7 @@ export class DefaultTyping
     }
 
     // Will throw an error if the user is not typing
-    const channel = await this.channel;
-    return channel.presence.leaveClient(this._clientId);
+    return this._channel.presence.leaveClient(this._clientId);
   }
 
   /**

@@ -49,7 +49,7 @@ describe('Chat', () => {
 
   it('should work using basic auth', async () => {
     const chat = newChatClient({}, ablyRealtimeClient({}));
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Send a message, and expect it to succeed
     const message = await room.messages.send({ text: 'my message' });
@@ -68,7 +68,7 @@ describe('Chat', () => {
 
   it('should work using msgpack', async () => {
     const chat = newChatClient(undefined, ablyRealtimeClient({ useBinaryProtocol: true }));
-    const room = getRandomRoom(chat);
+    const room = await getRandomRoom(chat);
 
     // Send a message, and expect it to succeed
     const message = await room.messages.send({ text: 'my message' });

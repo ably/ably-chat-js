@@ -16,9 +16,7 @@ interface TestContext {
 
 vi.mock('ably');
 
-interface MockContributor {
-  contributor: ContributesToRoomLifecycle;
-  channel: Ably.RealtimeChannel;
+interface MockContributor extends ContributesToRoomLifecycle {
   emulateStateChange: (change: Ably.ChannelStateChange, update?: boolean) => void;
 }
 
@@ -194,12 +192,9 @@ const makeMockContributor = (
 ): MockContributor => {
   const contributor: MockContributor = {
     channel: channel,
-    contributor: {
-      discontinuityDetected() {},
-      attachmentErrorCode,
-      detachmentErrorCode,
-      channel: Promise.resolve(channel),
-    },
+    discontinuityDetected() {},
+    attachmentErrorCode,
+    detachmentErrorCode,
     emulateStateChange(change: Ably.ChannelStateChange, update?: boolean) {
       vi.spyOn(contributor.channel, 'state', 'get').mockReturnValue(change.current);
       vi.spyOn(contributor.channel, 'errorReason', 'get').mockReturnValue(change.reason ?? baseError);
@@ -219,7 +214,7 @@ const makeMockContributor = (
   );
   vi.spyOn(channel, 'state', 'get').mockReturnValue('initialized');
   vi.spyOn(channel, 'errorReason', 'get').mockReturnValue(new Ably.ErrorInfo('error', 500, 50000));
-  vi.spyOn(contributor.contributor, 'discontinuityDetected');
+  vi.spyOn(contributor, 'discontinuityDetected');
 
   return contributor;
 };
@@ -250,7 +245,7 @@ describe('room lifecycle manager', () => {
     it<TestContext>('resolves to attached immediately if already attached', (context) =>
       new Promise<void>((resolve, reject) => {
         // Force our status and contributors into attached
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Attached,
           previous: 'initialized',
@@ -277,7 +272,7 @@ describe('room lifecycle manager', () => {
     it<TestContext>('resolves to attached if existing attempt completes', async (context) =>
       new Promise<void>((resolve, reject) => {
         // Force our status and contributors into attached
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Attached,
           previous: 'initialized',
@@ -308,7 +303,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('fails if the room is in the released state', async (context) => {
       // Force our status into released
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Detached,
         previous: 'initialized',
@@ -327,7 +322,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('fails if the room is in the releasing state', async (context) => {
       // Force our status into released
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Detached,
         previous: 'initialized',
@@ -346,7 +341,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('goes via the attaching state', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Initialized,
         previous: 'initialized',
@@ -390,7 +385,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('attaches channels in sequence', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Initialized,
         previous: 'initialized',
@@ -437,7 +432,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('rolls back channel attachments on channel suspending and retries', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Initialized,
         previous: 'initialized',
@@ -522,7 +517,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('rolls back channel attachments on channel failure', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Initialized,
         previous: 'initialized',
@@ -581,7 +576,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('rolls back channel attachments on channel entering unexpected state', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Initialized,
         previous: 'initialized',
@@ -640,7 +635,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('rolls back until everything completes', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Initialized,
         previous: 'initialized',
@@ -710,7 +705,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('sets status to failed if rollback fails', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Initialized,
         previous: 'initialized',
@@ -771,7 +766,7 @@ describe('room lifecycle manager', () => {
       vi.useFakeTimers();
 
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Initialized,
         previous: 'initialized',
@@ -866,7 +861,7 @@ describe('room lifecycle manager', () => {
   describe('detachment lifecycle', () => {
     it<TestContext>('resolves to detached immediately if already detached', async (context) => {
       // Force our status and contributors into detached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Detached,
         previous: 'initialized',
@@ -885,7 +880,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('rejects detach if already in failed state', async (context) => {
       // Force our status and contributors into detached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Detached,
         previous: 'initialized',
@@ -905,7 +900,7 @@ describe('room lifecycle manager', () => {
     it<TestContext>('resolves to detached if existing attempt completes', (context) =>
       new Promise<void>((resolve, reject) => {
         // Force our status and contributors into detached
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Detached,
           previous: 'initialized',
@@ -936,7 +931,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('fails if the room is in the released state', async (context) => {
       // Force our status into released
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -955,7 +950,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('fails if the room is in the releasing state', async (context) => {
       // Force our status into released
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -974,7 +969,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('goes via the detaching state', async (context) => {
       // Force our status and contributors into detached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Initialized,
         previous: 'initialized',
@@ -1018,7 +1013,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('detaches channels in sequence', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1062,7 +1057,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('detaches all channels but enters failed state if one fails', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1112,7 +1107,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('keeps detaching until everything completes', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1168,7 +1163,7 @@ describe('room lifecycle manager', () => {
       vi.useFakeTimers();
 
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1270,7 +1265,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('handles transient detaches', (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1310,7 +1305,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('handles transient detaches with multiple contributors', (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1387,7 +1382,7 @@ describe('room lifecycle manager', () => {
     // Transient detach is where the channel goes back to attaching as a result of a DETACHED protocol message
     test<TestContext>('transitions to attaching when transient detach times out', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1441,7 +1436,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('transitions to failed if an underlying channel fails', (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1501,7 +1496,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('recovers from an underlying channel entering the suspended state', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1575,7 +1570,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('recovers from a re-attachment cycle without detaching channels', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1649,7 +1644,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('recovers from a suspended channel via retries', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1755,7 +1750,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('recovers from a suspended channel via many retries', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -1946,7 +1941,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('enters failed if a contributor fails during retry', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -2066,7 +2061,7 @@ describe('room lifecycle manager', () => {
     describe('via update', () => {
       it<TestContext>('ignores a discontinuity event if the channel never made it to attached', async (context) => {
         // Force our status and contributors into initialized
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Initialized,
           previous: 'initialized',
@@ -2101,7 +2096,7 @@ describe('room lifecycle manager', () => {
         expect(status.status).toEqual(RoomStatus.Suspended);
 
         // We should not have seen a discontinuity event
-        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now try to attach again
         mockChannelAttachSuccess(context.firstContributor.channel);
@@ -2111,12 +2106,12 @@ describe('room lifecycle manager', () => {
         expect(status.status).toEqual(RoomStatus.Attached);
 
         // But we still shouldn't have seen a discontinuity event
-        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
       });
 
       it<TestContext>('registers a discontinuity event immediately if fully attached and an update event is received', async (context) => {
         // Force our status and contributors into attached
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Attached,
           previous: 'initialized',
@@ -2164,12 +2159,12 @@ describe('room lifecycle manager', () => {
 
         // Our first contributor should have registered a discontinuity event
         expect(status.status).toEqual(RoomStatus.Attached);
-        expect(context.firstContributor.contributor.discontinuityDetected).toBeCalledWith(baseError);
+        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
       });
 
       it<TestContext>('registers a discontinuity after re-attachment if room is detached at the time', async (context) => {
         // Force our status and contributors into attached
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Attached,
           previous: 'initialized',
@@ -2224,19 +2219,19 @@ describe('room lifecycle manager', () => {
 
         // We shouldn't have registered a discontinuity event yet
         expect(status.status).toEqual(RoomStatus.Detached);
-        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now re-attach the room
         await monitor.attach();
 
         // Our first contributor should have registered a discontinuity event now
         expect(status.status).toEqual(RoomStatus.Attached);
-        expect(context.firstContributor.contributor.discontinuityDetected).toBeCalledWith(baseError);
+        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
       });
 
       it<TestContext>('should prefer the first discontinuity event if multiple are received', async (context) => {
         // Force our status and contributors into attached
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Attached,
           previous: 'initialized',
@@ -2303,20 +2298,20 @@ describe('room lifecycle manager', () => {
 
         // We shouldn't have registered a discontinuity event yet
         expect(status.status).toEqual(RoomStatus.Detached);
-        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now re-attach the room
         await monitor.attach();
 
         // Our first contributor should have registered a discontinuity event now
         expect(status.status).toEqual(RoomStatus.Attached);
-        expect(context.firstContributor.contributor.discontinuityDetected).toBeCalledWith(error1);
+        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(error1);
       });
     });
 
     describe('via attach event', () => {
       it<TestContext>('does not register a discontinuity event on initial attach', async (context) => {
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Initialized,
           previous: 'initialized',
@@ -2334,12 +2329,12 @@ describe('room lifecycle manager', () => {
 
         // We shouldn't have registered a discontinuity event
         expect(status.status).toEqual(RoomStatus.Attached);
-        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
       });
 
       it<TestContext>('registers a discontinuity immediately post-attach if one of the attach events was a failed resume', async (context) => {
         // Force our status and contributors into initialized
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Initialized,
           previous: 'initialized',
@@ -2383,7 +2378,7 @@ describe('room lifecycle manager', () => {
 
         // There should be no discontinuity event yet
         expect(status.status).toEqual(RoomStatus.Detached);
-        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now do a re-attach, but make the first channel fail to resume
         mockChannelAttachSuccessWithResumeFailure(context.firstContributor.channel);
@@ -2393,12 +2388,12 @@ describe('room lifecycle manager', () => {
 
         // Our first contributor should have registered a discontinuity event now
         expect(status.status).toEqual(RoomStatus.Attached);
-        expect(context.firstContributor.contributor.discontinuityDetected).toBeCalledWith(baseError);
+        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(baseError);
       });
 
       it<TestContext>('prefers the first discontinuity event if multiple are received', async (context) => {
         // Force our status and contributors into initialized
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Initialized,
           previous: 'initialized',
@@ -2442,7 +2437,7 @@ describe('room lifecycle manager', () => {
 
         // There should be no discontinuity event yet
         expect(status.status).toEqual(RoomStatus.Detached);
-        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now we attach again, but fail the second channel so we get a detach event
         const firstError = new Ably.ErrorInfo('first', 1, 1);
@@ -2462,7 +2457,7 @@ describe('room lifecycle manager', () => {
         expect(status.status).toEqual(RoomStatus.Suspended);
 
         // And still no discontinuity event
-        expect(context.firstContributor.contributor.discontinuityDetected).not.toHaveBeenCalled();
+        expect(context.firstContributor.discontinuityDetected).not.toHaveBeenCalled();
 
         // Now we attach in full with a second resume fail
         const secondError = new Ably.ErrorInfo('second', 2, 2);
@@ -2483,14 +2478,14 @@ describe('room lifecycle manager', () => {
 
         // Our first contributor should have registered a discontinuity event now
         expect(status.status).toEqual(RoomStatus.Attached);
-        expect(context.firstContributor.contributor.discontinuityDetected).toBeCalledWith(firstError);
+        expect(context.firstContributor.discontinuityDetected).toBeCalledWith(firstError);
       });
     });
   });
 
   describe('release lifecycle', () => {
     it<TestContext>('resolves immediately if the room is already released', async (context) => {
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       status.setStatus({ status: RoomStatus.Released });
 
       const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
@@ -2499,7 +2494,7 @@ describe('room lifecycle manager', () => {
     });
 
     it<TestContext>('resolves immediately and transitions to released if the room is detached', async (context) => {
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Detached,
         previous: 'initialized',
@@ -2520,7 +2515,7 @@ describe('room lifecycle manager', () => {
         vi.useFakeTimers();
 
         // Force our status and contributors into detached
-        const status = new DefaultRoomLifecycle(makeTestLogger());
+        const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
         context.firstContributor.emulateStateChange({
           current: AblyChannelState.Attached,
           previous: 'initialized',
@@ -2566,7 +2561,7 @@ describe('room lifecycle manager', () => {
       }));
 
     it<TestContext>('transitions via releasing', async (context) => {
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -2589,7 +2584,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('detaches all contributors during release', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -2633,7 +2628,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('allows channels detaching into failed', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -2677,7 +2672,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('allows channels detaching into suspended', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',
@@ -2729,7 +2724,7 @@ describe('room lifecycle manager', () => {
 
     it<TestContext>('continues to run the detach cycle until a resolution is reached', async (context) => {
       // Force our status and contributors into attached
-      const status = new DefaultRoomLifecycle(makeTestLogger());
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
       context.firstContributor.emulateStateChange({
         current: AblyChannelState.Attached,
         previous: 'initialized',

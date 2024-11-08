@@ -17,8 +17,10 @@ import { PaginatedResult } from '../../../src/core/query.ts';
 import { useMessages } from '../../../src/react/hooks/use-messages.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
+import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
+let mockRoomContext: { room: Promise<Room> };
 let mockCurrentConnectionStatus: ConnectionStatus;
 let mockCurrentRoomStatus: RoomStatus;
 let mockConnectionError: Ably.ErrorInfo;
@@ -33,12 +35,12 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
   }),
 }));
 
-vi.mock('../../../src/react/hooks/use-room.js', () => ({
-  useRoom: () => ({
-    room: mockRoom,
-    roomStatus: mockCurrentRoomStatus,
-    roomError: mockRoomError,
-  }),
+vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+  useRoomContext: () => mockRoomContext,
+}));
+
+vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+  useRoomStatus: () => ({ status: mockCurrentRoomStatus, error: mockRoomError }),
 }));
 
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
@@ -47,6 +49,11 @@ vi.mock('../../../src/react/hooks/use-logger.js', () => ({
 
 vi.mock('ably');
 
+const updateMockRoom = (newRoom: Room) => {
+  mockRoom = newRoom;
+  mockRoomContext = { room: Promise.resolve(newRoom) };
+};
+
 describe('useMessages', () => {
   beforeEach(() => {
     // create a new mock room before each test, enabling messages
@@ -54,14 +61,14 @@ describe('useMessages', () => {
     testLogger = makeTestLogger();
     mockCurrentConnectionStatus = ConnectionStatus.Connected;
     mockCurrentRoomStatus = RoomStatus.Attached;
-    mockRoom = makeRandomRoom({});
+    updateMockRoom(makeRandomRoom({}));
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  it('should provide the messages instance and chat status response metrics', () => {
+  it('should provide the messages instance and chat status response metrics', async () => {
     // set the connection and room errors to check that they are correctly provided
     mockConnectionError = new Ably.ErrorInfo('test error', 40000, 400);
     mockRoomError = new Ably.ErrorInfo('test error', 40000, 400);
@@ -69,7 +76,7 @@ describe('useMessages', () => {
     const { result } = renderHook(() => useMessages());
 
     // check that the messages instance and metrics are correctly provided
-    expect(result.current.messages).toBe(mockRoom.messages);
+    await waitForEventualHookValue(result, mockRoom.messages, (value) => value.messages);
 
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomStatus.Attached);
@@ -96,6 +103,7 @@ describe('useMessages', () => {
       }),
     );
 
+    await waitForEventualHookValueToBeDefined(result, (value) => value.getPreviousMessages);
     const getPreviousMessages = result.current.getPreviousMessages;
 
     // verify that subscribe was called with the mock listener on mount by invoking it
@@ -192,23 +200,24 @@ describe('useMessages', () => {
     });
   });
 
-  it('should handle rerender if the room instance changes', () => {
+  it('should handle rerender if the room instance changes', async () => {
     const { result, rerender } = renderHook(() => useMessages());
 
     // check the initial state of the messages instance
+    await waitForEventualHookValue(result, mockRoom.messages, (value) => value.messages);
     expect(result.current.messages).toBe(mockRoom.messages);
 
     // change the mock room instance
-    mockRoom = makeRandomRoom({});
+    updateMockRoom(makeRandomRoom({}));
 
     // re-render to trigger the useEffect
     rerender();
 
     // check that the messages instance is updated
-    expect(result.current.messages).toBe(mockRoom.messages);
+    await waitForEventualHookValue(result, mockRoom.messages, (value) => value.messages);
   });
 
-  it('should subscribe and unsubscribe to discontinuity events', () => {
+  it('should subscribe and unsubscribe to discontinuity events', async () => {
     const mockOff = vi.fn();
     const mockDiscontinuityListener = vi.fn();
 
@@ -224,7 +233,7 @@ describe('useMessages', () => {
 
     // check that the listener was subscribed to the discontinuity events by invoking it
     const errorInfo = new Ably.ErrorInfo('test error', 40000, 400);
-    expect(discontinuityListener).toBeDefined();
+    await vi.waitFor(() => discontinuityListener !== undefined);
     discontinuityListener?.(errorInfo);
     expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
 

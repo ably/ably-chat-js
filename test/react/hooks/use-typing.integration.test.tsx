@@ -1,4 +1,4 @@
-import { ChatClient, RoomOptionsDefaults, RoomStatus, TypingEvent, TypingListener } from '@ably/chat';
+import { RoomOptionsDefaults, RoomStatus, TypingEvent, TypingListener } from '@ably/chat';
 import { cleanup, render } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -31,12 +31,12 @@ describe('useTyping', () => {
 
   it('should send typing events', async () => {
     // create new clients
-    const chatClientOne = newChatClient() as unknown as ChatClient;
-    const chatClientTwo = newChatClient() as unknown as ChatClient;
+    const chatClientOne = newChatClient();
+    const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can listen for typing events
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // start listening for typing events on room two
@@ -78,12 +78,12 @@ describe('useTyping', () => {
   }, 10000);
   it('should subscribe and correctly listen for typing events', async () => {
     // create new clients
-    const chatClientOne = newChatClient() as unknown as ChatClient;
-    const chatClientTwo = newChatClient() as unknown as ChatClient;
+    const chatClientOne = newChatClient();
+    const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can send typing events
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // store the received typing events for room one

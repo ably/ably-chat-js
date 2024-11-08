@@ -1,4 +1,4 @@
-import { ChatClient, PresenceData, PresenceEvent, PresenceEvents, RoomOptionsDefaults } from '@ably/chat';
+import { PresenceData, PresenceEvent, PresenceEvents, RoomOptionsDefaults } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -43,12 +43,12 @@ describe('usePresence', () => {
 
   it('should send presence events', async () => {
     // create new clients
-    const chatClientOne = newChatClient() as unknown as ChatClient;
-    const chatClientTwo = newChatClient() as unknown as ChatClient;
+    const chatClientOne = newChatClient();
+    const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can listen for presence events
     const roomId = randomRoomId();
-    const roomTwo = chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
     await roomTwo.attach();
 
     // start listening for presence events on room two

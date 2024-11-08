@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { Chat } from './containers/Chat';
 import { OccupancyComponent } from './components/OccupancyComponent';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
@@ -23,20 +23,49 @@ let roomId: string;
 
 interface AppProps {}
 
-const App: FC<AppProps> = () => (
-  <ChatRoomProvider
-    id={roomId}
-    release={true}
-    attach={true}
-    options={RoomOptionsDefaults}
-  >
-    <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto' }}>
-      <Chat />
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <UserPresenceComponent />
-        <OccupancyComponent />
+const App: FC<AppProps> = () => {
+  const [roomIdState, setRoomId] = useState(roomId);
+  const updateRoomId = (newRoomId: string) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('room', newRoomId);
+    history.pushState(null, '', '?' + params.toString());
+    setRoomId(newRoomId);
+  };
+
+  // Add a useEffect that handles the popstate event to update the roomId when
+  // the user navigates back and forth in the browser history.
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const newRoomId = params.get('room') || 'abcd';
+      setRoomId(newRoomId);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  return (
+    <ChatRoomProvider
+      id={roomIdState}
+      release={true}
+      attach={true}
+      options={RoomOptionsDefaults}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto' }}>
+        <Chat
+          setRoomId={updateRoomId}
+          roomId={roomIdState}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <UserPresenceComponent />
+          <OccupancyComponent />
+        </div>
       </div>
-    </div>
-  </ChatRoomProvider>
-);
+    </ChatRoomProvider>
+  );
+};
 export default App;

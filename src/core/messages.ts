@@ -240,9 +240,9 @@ export interface Messages extends EmitsDiscontinuities {
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
    *
-   * @returns A promise of the realtime channel.
+   * @returns The realtime channel.
    */
-  get channel(): Promise<Ably.RealtimeChannel>;
+  get channel(): Ably.RealtimeChannel;
 }
 
 /**
@@ -253,7 +253,7 @@ export class DefaultMessages
   implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _roomId: string;
-  private readonly _channel: Promise<Ably.RealtimeChannel>;
+  private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
   private readonly _listenerSubscriptionPoints: Map<
@@ -272,25 +272,12 @@ export class DefaultMessages
    * @param chatApi An instance of the ChatApi.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
-   * @param initAfter A promise that is awaited before creating any channels.
    */
-  constructor(
-    roomId: string,
-    realtime: Ably.Realtime,
-    chatApi: ChatApi,
-    clientId: string,
-    logger: Logger,
-    initAfter: Promise<void>,
-  ) {
+  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
     this._roomId = roomId;
 
-    this._channel = initAfter.then(() => this._makeChannel(roomId, realtime));
-
-    // Catch this so it won't send unhandledrejection global event
-    this._channel.catch((error: unknown) => {
-      logger.debug('Messages: channel initialization canceled', { roomId, error });
-    });
+    this._channel = this._makeChannel(roomId, realtime);
 
     this._chatApi = chatApi;
     this._clientId = clientId;
@@ -299,7 +286,7 @@ export class DefaultMessages
   }
 
   /**
-   * Creates the realtime channel for messages. Called after initAfter is resolved.
+   * Creates the realtime channel for messages.
    */
   private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
     const channel = getChannel(messagesChannelName(roomId), realtime);
@@ -398,7 +385,7 @@ export class DefaultMessages
   private async _resolveSubscriptionStart(): Promise<{
     fromSerial: string;
   }> {
-    const channelWithProperties = await this._getChannelProperties();
+    const channelWithProperties = this._getChannelProperties();
 
     // If we are attached, we can resolve with the channelSerial
     if (channelWithProperties.state === 'attached') {
@@ -412,14 +399,11 @@ export class DefaultMessages
     return this._subscribeAtChannelAttach();
   }
 
-  private async _getChannelProperties(): Promise<
-    Ably.RealtimeChannel & {
-      properties: { attachSerial: string | undefined; channelSerial: string | undefined };
-    }
-  > {
+  private _getChannelProperties(): Ably.RealtimeChannel & {
+    properties: { attachSerial: string | undefined; channelSerial: string | undefined };
+  } {
     // Get the attachSerial from the channel properties
-    const channel = await this._channel;
-    return channel as Ably.RealtimeChannel & {
+    return this._channel as Ably.RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
         channelSerial: string | undefined;
@@ -428,7 +412,7 @@ export class DefaultMessages
   }
 
   private async _subscribeAtChannelAttach(): Promise<{ fromSerial: string }> {
-    const channelWithProperties = await this._getChannelProperties();
+    const channelWithProperties = this._getChannelProperties();
     return new Promise((resolve, reject) => {
       // Check if the state is now attached
       if (channelWithProperties.state === 'attached') {
@@ -468,7 +452,7 @@ export class DefaultMessages
   /**
    * @inheritdoc Messages
    */
-  get channel(): Promise<Ably.RealtimeChannel> {
+  get channel(): Ably.RealtimeChannel {
     return this._channel;
   }
 

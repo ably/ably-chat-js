@@ -143,18 +143,24 @@ chat.connection.offAllStatusChange();
 You can create or retrieve a chat room with name `"basketball-stream"` this way:
 
 ```ts
-const room = chat.rooms.get('basketball-stream', { reactions: RoomOptionsDefaults.reactions });
+const room = await chat.rooms.get('basketball-stream', { reactions: RoomOptionsDefaults.reactions });
 ```
 
-The second argument to `rooms.get` is a `RoomOptions` argument, which tells the Chat SDK what features you would like your room to use and how they should be configured. For example, you can set the timeout between keystrokes for typing events as part of the room options. Sensible defaults for each
-of the features are provided for your convenience:
+The second argument to `rooms.get` is a `RoomOptions` argument, which tells the Chat SDK what features you would like your room to use and how they should be configured.
 
-- A typing timeout (time of inactivity before typing stops) of 10 seconds.
+For example, you can set the timeout between keystrokes for typing events as part of the room options. Sensible defaults for each of the features are provided for your convenience:
+
+- A typing timeout (time of inactivity before typing stops) of 5 seconds.
 - Entry into, and subscription to, presence.
 
 The defaults options for each feature may be viewed [here](https://github.com/ably/ably-chat-js/blob/main/src/RoomOptions.ts).
 
 In order to use the same room but with different options, you must first `release` the room before requesting an instance with the changed options (see below for more information on releasing rooms).
+
+Note that:
+
+- If a `release` call is currently in progress for the room (see below), then a call to `get` will wait for that to resolve before resolving itself.
+- If a `get` call is currently in progress for the room and `release` is called, the `get` call will reject.
 
 ### Attaching to a room
 

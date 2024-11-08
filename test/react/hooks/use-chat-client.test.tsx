@@ -6,7 +6,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RealtimeWithOptions } from '../../../src/core/realtime-extensions.ts';
 import { VERSION } from '../../../src/core/version.ts';
 import { useChatClient } from '../../../src/react/hooks/use-chat-client.ts';
-import { useRoom } from '../../../src/react/hooks/use-room.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 
@@ -25,7 +24,7 @@ describe('useChatClient', () => {
 
   it('should throw an error if used outside of ChatClientProvider', () => {
     const TestThrowError: React.FC = () => {
-      expect(() => useRoom()).toThrowErrorInfo({
+      expect(() => useChatClient()).toThrowErrorInfo({
         code: 40000,
         message: 'useChatClient hook must be used within a chat client provider',
       });
@@ -36,7 +35,7 @@ describe('useChatClient', () => {
   });
 
   it('should get the chat client from the context without error and with the correct agent', () => {
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
         <TestComponent
@@ -64,7 +63,7 @@ describe('useChatClient', () => {
       return <TestComponentInner />;
     };
 
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     render(
       <ChatClientProvider client={chatClient}>
         <TestComponentOuter />
@@ -78,8 +77,8 @@ describe('useChatClient', () => {
     expect(client1).toEqual(client2);
   });
   it('should handle context updates correctly', () => {
-    const client1 = newChatClient() as unknown as ChatClient;
-    const client2 = newChatClient() as unknown as ChatClient;
+    const client1 = newChatClient();
+    const client2 = newChatClient();
     const { rerender } = render(
       <ChatClientProvider client={client1}>
         <TestComponent
@@ -114,7 +113,7 @@ describe('useChatClient', () => {
       return <TestComponentInner />;
     };
 
-    const chatClient = newChatClient() as unknown as ChatClient;
+    const chatClient = newChatClient();
     render(
       <ChatClientProvider client={chatClient}>
         <div>
@@ -146,8 +145,8 @@ describe('useChatClient', () => {
       return <div />;
     };
 
-    const chatClientInner = newChatClient() as unknown as ChatClient;
-    const chatClientOuter = newChatClient() as unknown as ChatClient;
+    const chatClientInner = newChatClient();
+    const chatClientOuter = newChatClient();
 
     render(
       <ChatClientProvider client={chatClientOuter}>
