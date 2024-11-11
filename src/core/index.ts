@@ -35,6 +35,7 @@ export type {
   MessageMetadata,
 } from './message.js';
 export type {
+  ActionDetails,
   DeleteMessageParams,
   MessageEventPayload,
   MessageListener,
@@ -42,6 +43,7 @@ export type {
   MessageSubscriptionResponse,
   QueryOptions,
   SendMessageParams,
+  UpdateMessageParams,
 } from './messages.js';
 export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener, OccupancySubscriptionResponse } from './occupancy.js';

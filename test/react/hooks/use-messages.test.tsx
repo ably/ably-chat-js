@@ -175,7 +175,6 @@ describe('useMessages', () => {
       'client-1',
       'some-room',
       'I have the high ground now',
-      new Date(1719948956834),
       {},
       {},
       ChatMessageActions.MessageCreate,

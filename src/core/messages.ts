@@ -78,20 +78,26 @@ export interface QueryOptions {
 }
 
 /**
- * The parameters supplied to delete a message.
+ * The parameters supplied to a message action like delete or update.
  */
-export interface DeleteMessageParams {
+export interface ActionDetails {
   /**
-   * The optional description for deleting messages.
+   * Optional description for the message action.
    */
   description?: string;
 
   /**
-   * The metadata that will be added to the deletion request. Defaults to empty.
+   * Optional metadata that will be added to the action. Defaults to empty.
    *
    */
   metadata?: MessageActionMetadata;
 }
+
+/**
+ * Parameters for deleting a message.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface DeleteMessageParams extends ActionDetails {}
 
 /**
  * Params for sending a text message. Only `text` is mandatory.
@@ -133,6 +139,17 @@ export interface SendMessageParams {
    */
   headers?: MessageHeaders;
 }
+
+/**
+ * Params for updating a message. It accepts all parameters that sending a
+ * message accepts.
+ *
+ * Note that updating a message replaces the whole previous message, so all
+ * metadata and headers that should be kept must be set in the update request,
+ * or they will be lost.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface UpdateMessageParams extends SendMessageParams {}
 
 /**
  * Payload for a message event.
@@ -232,10 +249,26 @@ export interface Messages extends EmitsDiscontinuities {
    *
    * @returns A promise that resolves when the message was deleted.
    * @param message - The message to delete.
-   * @param deleteMessageParams - The optional parameters for deleting the message.
+   * @param deleteMessageParams - Optional details to record about the delete action.
    * @return A promise that resolves to the deleted message.
    */
   delete(message: Message, deleteMessageParams?: DeleteMessageParams): Promise<Message>;
+
+  /**
+   * Update a message in the chat room.
+   *
+   * Note that the Promise may resolve before OR after the updated message is
+   * received from the realtime channel. This means you may see the update that
+   * was just sent in a callback to `subscribe` before the returned promise
+   * resolves.
+   *
+   * @param message The message to update.
+   * @param update The new message content including headers and metadata. This
+   * fully replaces the old content. Everything that's not set will be removed.
+   * @param details Optional details to record about the update action.
+   * @returns A promise of the updated message.
+   */
+  update(message: Message, update: UpdateMessageParams, details?: ActionDetails): Promise<Message>;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -478,11 +511,37 @@ export class DefaultMessages
       this._clientId,
       this._roomId,
       text,
-      new Date(response.createdAt),
       metadata ?? {},
       headers ?? {},
       ChatMessageActions.MessageCreate,
       response.serial,
+    );
+  }
+
+  async update(message: Message, update: UpdateMessageParams, details?: ActionDetails): Promise<Message> {
+    this._logger.trace('Messages.update();', { message, update, details });
+
+    const response = await this._chatApi.updateMessage(this._roomId, message.serial, {
+      ...details,
+      message: update,
+    });
+
+    return new DefaultMessage(
+      message.serial,
+      message.clientId,
+      this._roomId,
+      update.text,
+      update.metadata ?? {},
+      update.headers ?? {},
+      ChatMessageActions.MessageUpdate,
+      response.serial,
+      undefined,
+      response.updatedAt ? new Date(response.updatedAt) : undefined,
+      {
+        clientId: this._clientId,
+        description: details?.description,
+        metadata: details?.metadata,
+      },
     );
   }
 
@@ -497,7 +556,6 @@ export class DefaultMessages
       message.clientId,
       message.roomId,
       message.text,
-      message.createdAt,
       message.metadata,
       message.headers,
       ChatMessageActions.MessageDelete,

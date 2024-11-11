@@ -209,10 +209,10 @@ This hook allows you to access the `Messages` instance of a `Room` from your Rea
 
 **To use this hook, the component calling it must be a child of a `ChatRoomProvider`.**
 
-### Sending, Deleting And Getting Messages
+### Sending, Updating, Deleting and Getting Messages
 
 The hook will provide the `Messages` instance, should you wish to interact with it directly, a `send` method
-that can be used to send a message to the room,
+that can be used to send a message to the room, an `update` method for updating messages,
 a `deleteMessage` method that can be used to delete a message from the room,
 and a `get` method that can be used to retrieve messages from the room.
 
@@ -221,7 +221,7 @@ import { useMessages } from '@ably/chat/react';
 import { Message } from '@ably/chat';
 
 const MyComponent = () => {
-  const { send, get, deleteMessage } = useMessages();
+  const { send, get, update, deleteMessage } = useMessages();
   const [message, setMessage] = useState<Message>();
   const handleGetMessages = () => {
     // fetch the last 3 messages, oldest to newest
@@ -236,11 +236,26 @@ const MyComponent = () => {
     deleteMessage(message, { description: 'deleted by user' });
   };
 
+  const handleUpdateMessage = (message: Message) => {
+    const newText = prompt('Enter new text');
+    if (!newText) {
+      return;
+    }
+    update(message, { text: newText }, { description: 'updated by user' });
+  };
+
   return (
     <div>
       <button onClick={handleMessageSend}>Send Message</button>
       <button onClick={handleGetMessages}>Get Messages</button>
-      <button onClick={handleMessageDelete}>Delete Message</button>
+
+      {messages.map((msg) => (
+        <div key={msg.serial}>
+          <span>{msg.text}</span>
+          <button onClick={() => handleMessageDelete(msg)}>Delete</button>
+          <button onClick={() => handleUpdateMessage(msg)}>Update</button>
+        </div>
+      ))}
     </div>
   );
 };

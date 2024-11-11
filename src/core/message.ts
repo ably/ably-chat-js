@@ -203,13 +203,13 @@ export interface Message {
 export class DefaultMessage implements Message {
   private readonly _calculatedOriginSerial: Serial;
   private readonly _calculatedActionSerial: Serial;
+  public readonly createdAt: Date;
 
   constructor(
     public readonly serial: string,
     public readonly clientId: string,
     public readonly roomId: string,
     public readonly text: string,
-    public readonly createdAt: Date,
     public readonly metadata: MessageMetadata,
     public readonly headers: MessageHeaders,
     public readonly latestAction: ChatMessageActions,
@@ -224,6 +224,7 @@ export class DefaultMessage implements Message {
   ) {
     this._calculatedOriginSerial = DefaultSerial.calculateSerial(serial);
     this._calculatedActionSerial = DefaultSerial.calculateSerial(latestActionSerial);
+    this.createdAt = new Date(this._calculatedOriginSerial.timestamp);
 
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
