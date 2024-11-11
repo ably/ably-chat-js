@@ -22,7 +22,7 @@ interface MessagePayload {
 }
 
 interface ChatMessageFields {
-  timeserial: string;
+  serial: string;
   clientId: string;
   roomId: string;
   text: string;
@@ -67,7 +67,7 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
   }
 
   const newMessage: ChatMessageFields = {
-    timeserial: message.serial,
+    serial: message.serial,
     clientId: message.clientId,
     roomId,
     text: message.data.text,
@@ -100,7 +100,7 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     }
   }
   return new DefaultMessage(
-    newMessage.timeserial,
+    newMessage.serial,
     newMessage.clientId,
     newMessage.roomId,
     newMessage.text,

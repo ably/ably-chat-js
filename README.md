@@ -635,13 +635,14 @@ For example, if you have the following item reach your integration:
             "id": "chat:6TP2sA:some-room:a4534b0ab37bdd5:0",
             "clientId": "user1",
             "timestamp": 1720954404104,
+            "serial": "108iZpUxQBe4Vv35120919@1720954404104-0",
+            "action": 1,
             "encoding": "json",
             "extras": {
-              "timeserial": "108iZpUxQBe4Vv35120919@1720954404104-0",
               "headers": {}
             },
             "data": "{\"text\":\"some text data\",\"metadata\":{}}",
-            "name": "message.created"
+            "name": "chat.message"
           }
         ]
       }

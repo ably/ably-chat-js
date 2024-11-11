@@ -5,8 +5,6 @@
   "maxNumberOfProblems": 100,
   "words": [
     "realtime",
-    "timeserial",
-    "timeserials",
     "inband",
     "typers",
     "msgpack",

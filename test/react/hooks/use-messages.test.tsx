@@ -112,8 +112,7 @@ describe('useMessages', () => {
       message: {
         timestamp: new Date(),
         text: 'test message',
-        timeserial: '123',
-        action: ChatMessageActions.MessageCreate,
+        serial: '123',
         clientId: '123',
         roomId: '123',
         createdAt: new Date(),

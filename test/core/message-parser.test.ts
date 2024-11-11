@@ -187,7 +187,7 @@ describe('parseMessage', () => {
     const result = parseMessage('room1', message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
-    expect(result.timeserial).toBe('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
+    expect(result.serial).toBe('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
     expect(result.clientId).toBe('client1');
     expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
@@ -226,7 +226,7 @@ describe('parseMessage', () => {
     const result = parseMessage('room1', message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
-    expect(result.timeserial).toBe('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
+    expect(result.serial).toBe('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
     expect(result.clientId).toBe('client1');
     expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
@@ -271,7 +271,7 @@ describe('parseMessage', () => {
     const result = parseMessage('room1', message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
-    expect(result.timeserial).toBe('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
+    expect(result.serial).toBe('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
     expect(result.clientId).toBe('client1');
     expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
