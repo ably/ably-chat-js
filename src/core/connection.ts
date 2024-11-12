@@ -112,9 +112,7 @@ export interface Connection {
   offAllStatusChange(): void;
 }
 
-type ConnectionEventsMap = {
-  [key in ConnectionStatus]: ConnectionStatusChange;
-};
+type ConnectionEventsMap = Record<ConnectionStatus, ConnectionStatusChange>;
 
 /**
  * An implementation of the `Connection` interface.

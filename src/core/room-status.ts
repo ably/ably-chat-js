@@ -159,9 +159,7 @@ export interface NewRoomStatus {
   error?: Ably.ErrorInfo;
 }
 
-type RoomStatusEventsMap = {
-  [key in RoomStatus]: RoomStatusChange;
-};
+type RoomStatusEventsMap = Record<RoomStatus, RoomStatusChange>;
 
 /**
  * An implementation of the `Status` interface.

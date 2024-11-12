@@ -58,7 +58,7 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.S
  * A hook that provides access to the {@link Presence} instance in the room.
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
  * On calling, the hook will `enter` the room with the provided data and `leave` the room when the component unmounts.
- * The {@link isPresent} flag will indicate when the user has become present in the room.
+ * The {@link UsePresenceResponse.isPresent} flag will indicate when the user has become present in the room.
  *
  * @param params - Allows the registering of optional callbacks.
  * @returns UsePresenceResponse - An object containing the {@link Presence} instance and methods to interact with it.
