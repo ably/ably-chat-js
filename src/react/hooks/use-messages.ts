@@ -83,7 +83,7 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
  * A hook that provides access to the {@link Messages} instance in the room.
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
  * If a listener is provided, it will subscribe to new messages in the room,
- * and will also set the {@link getPreviousMessages}.
+ * and will also set the {@link UseMessagesResponse.getPreviousMessages}.
  *
  * @param params - Allows the registering of optional callbacks.
  * @returns UsePresenceResponse - An object containing the {@link Messages} instance and methods to interact with it.

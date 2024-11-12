@@ -10,6 +10,11 @@
   "visibilityFilters": {
     "external": true
   },
+  "externalSymbolLinkMappings": {
+    "ably": {
+      "*": "https://sdk.ably.com/builds/ably/ably-js/main/typedoc/",
+    }
+  },
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
