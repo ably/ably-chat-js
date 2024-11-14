@@ -789,8 +789,8 @@ export class RoomLifecycleManager {
         return;
       }
 
-      // If we're already detached, then we can transition to released immediately
-      if (this._lifecycle.status === RoomStatus.Detached) {
+      // If we're already detached, or we never attached in the first place, then we can transition to released immediately
+      if (this._lifecycle.status === RoomStatus.Detached || this._lifecycle.status === RoomStatus.Initialized) {
         this._lifecycle.setStatus({ status: RoomStatus.Released });
         return;
       }

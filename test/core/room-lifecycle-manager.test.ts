@@ -2510,6 +2510,23 @@ describe('room lifecycle manager', () => {
       await waitForRoomLifecycleStatus(status, RoomStatus.Released);
     });
 
+    it<TestContext>('resolves immediately and transitions to released if the room is initialized', async (context) => {
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Detached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      status.setStatus({ status: RoomStatus.Initialized });
+
+      const monitor = new RoomLifecycleManager(status, [context.firstContributor], makeTestLogger(), 5);
+
+      await expect(monitor.release()).resolves.toBeUndefined();
+
+      await waitForRoomLifecycleStatus(status, RoomStatus.Released);
+    });
+
     it<TestContext>('resolves to released if existing attempt completes', (context) =>
       new Promise<void>((resolve, reject) => {
         vi.useFakeTimers();
