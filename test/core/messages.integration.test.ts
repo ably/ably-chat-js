@@ -11,6 +11,7 @@ import { RoomStatus } from '../../src/core/room-status.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { randomRoomId } from '../helper/identifier.ts';
+import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { getRandomRoom, waitForRoomStatus } from '../helper/room.ts';
 
 interface TestContext {
@@ -307,6 +308,56 @@ describe('messages integration', () => {
 
   it<TestContext>('should be able to paginate chat history', async (context) => {
     const { chat } = context;
+
+    const room = await getRandomRoom(chat);
+
+    // Publish 4 messages
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const message2 = await room.messages.send({ text: 'I have the high ground!' });
+    const message3 = await room.messages.send({ text: 'You underestimate my power!' });
+    const message4 = await room.messages.send({ text: "Don't try it!" });
+
+    // Do a history request to get the first 3 messages
+    const history1 = await room.messages.get({ limit: 3, direction: 'forwards' });
+
+    expect(history1.items).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        serial: message1.serial,
+      }),
+      expect.objectContaining({
+        text: 'I have the high ground!',
+        clientId: chat.clientId,
+        serial: message2.serial,
+      }),
+      expect.objectContaining({
+        text: 'You underestimate my power!',
+        clientId: chat.clientId,
+        serial: message3.serial,
+      }),
+    ]);
+
+    // We should have a "next" link in the response
+    expect(history1.hasNext()).toBe(true);
+
+    // Do a history request to get the next 2 messages
+    const history2 = await history1.next();
+
+    expect(history2?.items).toEqual([
+      expect.objectContaining({
+        text: "Don't try it!",
+        clientId: chat.clientId,
+        serial: message4.serial,
+      }),
+    ]);
+
+    // We shouldn't have a "next" link in the response
+    expect(history2?.hasNext()).toBe(false);
+  });
+
+  it<TestContext>('should be able to paginate chat history (msgpack)', async () => {
+    const chat = newChatClient(undefined, ablyRealtimeClient({ useBinaryProtocol: true }));
 
     const room = await getRandomRoom(chat);
 
