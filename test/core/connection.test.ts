@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ErrorInfo } from '../../__mocks__/ably/index.ts';
-import { ConnectionStatus, DefaultConnection } from '../../src/core/connection.ts';
+import { ConnectionStatus, ConnectionStatusChange, DefaultConnection } from '../../src/core/connection.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 
 interface TestContext {
@@ -59,6 +59,9 @@ describe('connection', () => {
       context.channelLevelListeners.add(listener);
 
       context.emulateStateChange = (stateChange: Ably.ConnectionStateChange) => {
+        vi.spyOn(connection, 'state', 'get').mockReturnValue(stateChange.current);
+        vi.spyOn(connection, 'errorReason', 'get').mockReturnValue(stateChange.reason as ErrorInfo);
+
         for (const cb of context.channelLevelListeners) {
           cb(stateChange);
         }
@@ -195,71 +198,146 @@ describe('connection', () => {
     },
   );
 
-  it<TestContext>('handles transient disconnections', (context) =>
-    new Promise<void>((done) => {
-      // Start the channel in a connected state
-      vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue('connected');
-      vi.spyOn(context.realtime.connection, 'errorReason', 'get').mockReturnValue(
-        new Ably.ErrorInfo('error', 500, 99999),
-      );
+  it<TestContext>('handles transient disconnections', async (context) => {
+    // Start the channel in a connected state
+    vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue('connected');
+    vi.spyOn(context.realtime.connection, 'errorReason', 'get').mockReturnValue(
+      new Ably.ErrorInfo('error', 500, 99999),
+    );
 
-      const connection = new DefaultConnection(context.realtime, makeTestLogger());
-      expect(connection.status).toEqual(ConnectionStatus.Connected);
+    const connection = new DefaultConnection(context.realtime, makeTestLogger());
+    expect(connection.status).toEqual(ConnectionStatus.Connected);
 
-      // Set a listener that stores the state change
-      const stateChanges: ConnectionStatus[] = [];
-      connection.onStatusChange((status) => {
-        stateChanges.push(status.current);
-      });
+    // Set a listener that stores the state change
+    const stateChanges: ConnectionStatus[] = [];
+    connection.onStatusChange((status) => {
+      stateChanges.push(status.current);
+    });
 
-      // Transition to a disconnected state
-      context.emulateStateChange({ current: 'disconnected', previous: 'connected' });
+    // Transition to a disconnected state
+    context.emulateStateChange({ current: 'disconnected', previous: 'connected' });
 
-      // Wait for 3 seconds (well below the transient timeout)
-      void new Promise((resolve) => setTimeout(resolve, 3000)).then(() => {
-        // Transition back to a connected state
-        context.emulateStateChange({ current: 'connected', previous: 'disconnected' });
+    // Wait for 3 seconds (well below the transient timeout)
+    await new Promise((resolve) => setTimeout(resolve, 3000)).then(() => {
+      // Transition back to a connected state
+      context.emulateStateChange({ current: 'connected', previous: 'disconnected' });
 
-        // Assert that we have only seen the connected state
-        expect(stateChanges).toEqual([]);
+      // Assert that we have only seen the connected state
+      expect(stateChanges).toEqual([]);
+    });
+  });
 
-        done();
-      });
-    }));
+  it<TestContext>('handles transient disconnections with intermediate state changes', async (context) => {
+    // Start the channel in a connected state
+    vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue('connected');
+    vi.spyOn(context.realtime.connection, 'errorReason', 'get').mockReturnValue(
+      new Ably.ErrorInfo('error', 500, 99999),
+    );
 
-  it<TestContext>(
-    'emits disconnections after a period of time',
-    (context) =>
-      new Promise<void>((done) => {
-        // Start the channel in a connected state
-        vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue('connected');
-        vi.spyOn(context.realtime.connection, 'errorReason', 'get').mockReturnValue(
-          new Ably.ErrorInfo('error', 500, 99999),
-        );
+    const connection = new DefaultConnection(context.realtime, makeTestLogger());
+    expect(connection.status).toEqual(ConnectionStatus.Connected);
 
-        const connection = new DefaultConnection(context.realtime, makeTestLogger());
-        expect(connection.status).toEqual(ConnectionStatus.Connected);
+    // Set a listener that stores the state change
+    const stateChanges: ConnectionStatus[] = [];
+    connection.onStatusChange((status) => {
+      stateChanges.push(status.current);
+    });
 
-        // Set a listener that stores the state change
-        const stateChanges: ConnectionStatus[] = [];
-        connection.onStatusChange((status) => {
-          stateChanges.push(status.current);
-        });
+    // Transition to a disconnected state
+    const disconnectError = new Ably.ErrorInfo('error', 500, 99999);
+    context.emulateStateChange({ current: 'disconnected', previous: 'connected', reason: disconnectError });
 
-        // Transition to a disconnected state
-        context.emulateStateChange({ current: 'disconnected', previous: 'connected' });
+    // Now transition to a connecting state
+    context.emulateStateChange({ current: 'connecting', previous: 'disconnected' });
 
-        // Wait for longer than the transient timeout
-        void new Promise((resolve) => setTimeout(resolve, 6000)).then(() => {
-          // Transition back to a connected state
-          context.emulateStateChange({ current: 'connected', previous: 'disconnected' });
+    // Wait for 3 seconds (well below the transient timeout)
+    await new Promise((resolve) => setTimeout(resolve, 3000)).then(() => {
+      // Transition back to a connected state
+      context.emulateStateChange({ current: 'connected', previous: 'disconnected' });
 
-          // Assert that we have only seen the connected state
-          expect(stateChanges).toEqual([ConnectionStatus.Disconnected, ConnectionStatus.Connected]);
+      // Assert that we have only seen the connected state
+      expect(stateChanges).toEqual([]);
+    });
+  });
 
-          done();
-        });
-      }),
-    10000,
-  );
+  it<TestContext>('emits disconnections after a period of time', async (context) => {
+    // Start the channel in a connected state
+    vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue('connected');
+    vi.spyOn(context.realtime.connection, 'errorReason', 'get').mockReturnValue(
+      new Ably.ErrorInfo('error', 500, 99999),
+    );
+
+    const connection = new DefaultConnection(context.realtime, makeTestLogger());
+    expect(connection.status).toEqual(ConnectionStatus.Connected);
+
+    // Set a listener that stores the state change
+    const stateChanges: ConnectionStatusChange[] = [];
+    connection.onStatusChange((status) => {
+      stateChanges.push(status);
+    });
+
+    // Transition to a disconnected state
+    const disconnectError = new Ably.ErrorInfo('error', 500, 99999);
+    context.emulateStateChange({ current: 'disconnected', previous: 'connected', reason: disconnectError });
+
+    // Wait for longer than the transient timeout
+    await new Promise((resolve) => setTimeout(resolve, 6000)).then(() => {
+      // Transition back to a connected state
+      context.emulateStateChange({ current: 'connected', previous: 'disconnected' });
+
+      // Assert that we have only seen the connected state
+      expect(stateChanges.map((change) => change.current)).toEqual([
+        ConnectionStatus.Disconnected,
+        ConnectionStatus.Connected,
+      ]);
+
+      // The first change should have the disconnect error
+      expect(stateChanges[0]?.error).toEqual(disconnectError);
+    });
+  }, 10000);
+
+  it<TestContext>('emits disconnections after a period of time to an intermediate state', async (context) => {
+    // Start the channel in a connected state
+    vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue('connected');
+    vi.spyOn(context.realtime.connection, 'errorReason', 'get').mockReturnValue(
+      new Ably.ErrorInfo('error', 500, 99999),
+    );
+
+    const connection = new DefaultConnection(context.realtime, makeTestLogger());
+    expect(connection.status).toEqual(ConnectionStatus.Connected);
+
+    // Set a listener that stores the state change
+    const stateChanges: ConnectionStatusChange[] = [];
+    connection.onStatusChange((status) => {
+      stateChanges.push(status);
+    });
+
+    // Transition to a disconnected state
+    const disconnectError = new Ably.ErrorInfo('error', 500, 99999);
+    context.emulateStateChange({ current: 'disconnected', previous: 'connected', reason: disconnectError });
+
+    // Now transition to a connecting state
+    context.emulateStateChange({ current: 'connecting', previous: 'disconnected' });
+
+    // Now transition to a disconnected state
+    context.emulateStateChange({ current: 'disconnected', previous: 'connecting' });
+
+    // Now transition to a connecting state
+    context.emulateStateChange({ current: 'connecting', previous: 'disconnected' });
+
+    // Wait for longer than the transient timeout
+    await new Promise((resolve) => setTimeout(resolve, 8000)).then(() => {
+      // Transition back to a connected state
+      context.emulateStateChange({ current: 'connected', previous: 'connecting' });
+
+      // Assert that we have only seen the connected state
+      expect(stateChanges.map((change) => change.current)).toEqual([
+        ConnectionStatus.Connecting,
+        ConnectionStatus.Connected,
+      ]);
+
+      // The first change should have the disconnect error
+      expect(stateChanges[0]?.error).toEqual(disconnectError);
+    });
+  }, 10000);
 });
