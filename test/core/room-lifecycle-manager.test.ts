@@ -18,6 +18,9 @@ vi.mock('ably');
 
 interface MockContributor extends ContributesToRoomLifecycle {
   emulateStateChange: (change: Ably.ChannelStateChange, update?: boolean) => void;
+
+  // We override the channel so that it can be set in some scenarios
+  channel: Ably.RealtimeChannel;
 }
 
 const baseError = new Ably.ErrorInfo('error', 500, 50000);
@@ -1731,6 +1734,114 @@ describe('room lifecycle manager', () => {
       expect(context.thirdContributor.channel.attach).toHaveBeenCalled();
 
       // We should have seen feature 2's error come through during the attach sequence
+      expect(feature2AttachError).toBeErrorInfo({
+        code: ErrorCodes.PresenceAttachmentFailed,
+        cause: {
+          code: 1001,
+        },
+      });
+
+      // We should have seen a sequence of statuses
+      expect(observedStatuses).toEqual([
+        RoomStatus.Suspended,
+        RoomStatus.Attaching,
+        RoomStatus.Suspended,
+        RoomStatus.Attaching,
+        RoomStatus.Attached,
+      ]);
+    });
+
+    it<TestContext>('does not wind down contributors with shared channel', async (context) => {
+      // Force our status and contributors into attached
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      context.secondContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError2,
+      });
+      context.thirdContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'initialized',
+        resumed: false,
+        reason: baseError,
+      });
+      // We'll give the second contributor the same channel as the third
+      context.secondContributor.channel = context.thirdContributor.channel;
+      status.setStatus({ status: RoomStatus.Attached });
+
+      // Mock channel detachment results
+      mockChannelDetachSuccess(context.firstContributor.channel);
+      mockChannelDetachSuccess(context.secondContributor.channel);
+      mockChannelDetachSuccess(context.thirdContributor.channel);
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const monitor = new RoomLifecycleManager(
+        status,
+        [context.firstContributor, context.secondContributor, context.thirdContributor],
+        makeTestLogger(),
+        5,
+      );
+
+      // Mock channel re-attachment results
+      mockChannelAttachSuccess(context.firstContributor.channel);
+      mockChannelAttachFailureThenSuccess(context.secondContributor.channel, AblyChannelState.Suspended, 1001);
+
+      // Observations
+      let feature2AttachError: Ably.ErrorInfo | undefined;
+      const observedStatuses: RoomStatus[] = [];
+      status.onChange((newStatus) => {
+        if (newStatus.current === RoomStatus.Suspended) {
+          feature2AttachError = newStatus.error;
+        }
+
+        observedStatuses.push(newStatus.current);
+      });
+
+      // Transition the first contributor to detached
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Suspended,
+        previous: 'attached',
+        resumed: false,
+        reason: baseError,
+      });
+
+      // Check that the status is as expected
+      await waitForRoomLifecycleStatus(status, RoomStatus.Suspended);
+
+      // Now transition the first contributor to attached again
+      context.firstContributor.emulateStateChange({
+        current: AblyChannelState.Attached,
+        previous: 'suspended',
+        resumed: false,
+        reason: baseError,
+      });
+
+      // We should be in attached state
+      await waitForRoomLifecycleStatus(status, RoomStatus.Attached);
+
+      // The first feature will have detach called during the second feature failure sequence
+      // The second and third features will have detach called twice (once by each), as they share a channel. This
+      // is as a result of the first feature failing (initial wind down).
+      expect(context.firstContributor.channel.detach).toBeCalledTimes(1);
+      expect(context.secondContributor.channel.detach).toBeCalledTimes(2);
+      expect(context.thirdContributor.channel.detach).toHaveBeenCalledTimes(2);
+
+      // Feature 1 will have attach called twice. First time once it recovers from suspended, second when feature
+      // 2 recovers.
+      // Features 2 and 3 will have attach called 3 times in total. Once during the re-attach and failure sequence
+      // when feature 1 recovers, then twice after feature 2 recovers.
+      expect(context.firstContributor.channel.attach).toHaveBeenCalledTimes(2);
+      expect(context.secondContributor.channel.attach).toHaveBeenCalledTimes(3);
+      expect(context.thirdContributor.channel.attach).toHaveBeenCalledTimes(3);
+
+      // We should have seen feature 1's error come through during the attach sequence as they share a channel
       expect(feature2AttachError).toBeErrorInfo({
         code: ErrorCodes.PresenceAttachmentFailed,
         cause: {
