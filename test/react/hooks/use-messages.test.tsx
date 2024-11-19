@@ -171,14 +171,15 @@ describe('useMessages', () => {
     const deleteSpy = vi.spyOn(mockRoom.messages, 'delete').mockResolvedValue({} as unknown as Message);
 
     const message = new DefaultMessage(
-      '108TeGZDQBderu97202638@1719948956834-0',
+      '01719948956834-000@108TeGZDQBderu97202638',
       'client-1',
       'some-room',
       'I have the high ground now',
       {},
       {},
+      new Date(1719948956834),
       ChatMessageActions.MessageCreate,
-      '108TeGZDQBderu97202638@1719948956834-0:0',
+      '01719948956834-000@108TeGZDQBderu97202638',
     );
     // call both methods and ensure they call the underlying messages methods
     await act(async () => {

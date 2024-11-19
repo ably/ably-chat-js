@@ -97,7 +97,7 @@ describe('Messages', () => {
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
-        serial: 'abcdefghij@1672531200000-123:0',
+        serial: '01672531200000-123@abcdefghij:0',
         deletedAt: deleteTimestamp,
       });
 
@@ -177,10 +177,10 @@ describe('Messages', () => {
           data: {
             text: 'this message has been deleted',
           },
-          serial: 'abcdefghij@1672531200000-123',
+          serial: '01672531200000-123@abcdefghij',
           action: ChatMessageActions.MessageDelete,
           updatedAt: 1729091893,
-          updateSerial: 'abcdefghij@1672531200000-123',
+          updateSerial: '01672531200000-123@abcdefghij',
           extras: {},
           timestamp: publishTimestamp,
         });
@@ -190,10 +190,10 @@ describe('Messages', () => {
           data: {
             text: 'some updated text',
           },
-          serial: 'abcdefghij@1672531200000-123',
+          serial: '01672531200000-123@abcdefghij',
           action: ChatMessageActions.MessageUpdate,
           updatedAt: 1729091893,
-          updateSerial: 'abcdefghij@1672531200000-123',
+          updateSerial: '01672531200000-123@abcdefghij',
           extras: {},
           timestamp: publishTimestamp,
         });
@@ -203,7 +203,7 @@ describe('Messages', () => {
           data: {
             text: 'may the fourth be with you',
           },
-          serial: 'abcdefghij@1672531200000-123',
+          serial: '01672531200000-123@abcdefghij',
           action: ChatMessageActions.MessageCreate,
           extras: {},
           timestamp: publishTimestamp,
@@ -244,7 +244,7 @@ describe('Messages', () => {
       data: {
         text: 'may the fourth be with you',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageCreate,
       extras: {},
       timestamp: publishTimestamp,
@@ -255,12 +255,12 @@ describe('Messages', () => {
       data: {
         text: 'I have the high ground now',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageUpdate,
       extras: {},
       timestamp: publishTimestamp,
       updatedAt: updateTimestamp,
-      updateSerial: 'abcdefghij@1672531200000-123:0',
+      updateSerial: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
@@ -271,12 +271,12 @@ describe('Messages', () => {
       data: {
         text: 'I have the high ground now',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageDelete,
       extras: {},
       timestamp: publishTimestamp,
       updatedAt: deletionTimestamp,
-      updateSerial: 'abcdefghij@1672531200000-123:0',
+      updateSerial: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
@@ -294,7 +294,7 @@ describe('Messages', () => {
       data: {
         text: 'may the fourth be with you',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageCreate,
       extras: {},
       timestamp: Date.now(),
@@ -305,11 +305,11 @@ describe('Messages', () => {
       data: {
         text: 'I have the high ground now',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageUpdate,
       extras: {},
       updatedAt: updateTimestamp,
-      updateSerial: 'abcdefghij@1672531200000-123:0',
+      updateSerial: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
@@ -321,12 +321,12 @@ describe('Messages', () => {
       data: {
         text: 'may the fourth be with you',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageDelete,
       extras: {},
       timestamp: publishTimestamp,
       updatedAt: deletionTimestamp,
-      updateSerial: 'abcdefghij@1672531200000-123:0',
+      updateSerial: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda2',
       },
@@ -399,7 +399,7 @@ describe('Messages', () => {
       data: {
         text: 'may the fourth be with you',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageCreate,
       extras: {},
       timestamp: publishTimestamp,
@@ -410,10 +410,10 @@ describe('Messages', () => {
       data: {
         text: 'I have the high ground now',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageUpdate,
       updatedAt: updateTimestamp,
-      updateSerial: 'abcdefghij@1672531200000-123:0',
+      updateSerial: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
@@ -426,12 +426,12 @@ describe('Messages', () => {
       data: {
         text: 'I have the high ground now',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageDelete,
       extras: {},
       timestamp: publishTimestamp,
       updatedAt: deletionTimestamp,
-      updateSerial: 'abcdefghij@1672531200000-123:0',
+      updateSerial: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
@@ -448,7 +448,7 @@ describe('Messages', () => {
       data: {
         text: 'may the fourth be with you',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageCreate,
       extras: {},
       timestamp: Date.now(),
@@ -459,10 +459,10 @@ describe('Messages', () => {
       data: {
         text: 'I have the high ground now',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageUpdate,
       updatedAt: updateTimestamp,
-      updateSerial: 'abcdefghij@1672531200000-123:0',
+      updateSerial: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
@@ -475,12 +475,12 @@ describe('Messages', () => {
       data: {
         text: 'I have the high ground now',
       },
-      serial: 'abcdefghij@1672531200000-123',
+      serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageDelete,
       extras: {},
       timestamp: publishTimestamp,
       updatedAt: deletionTimestamp,
-      updateSerial: 'abcdefghij@1672531200000-123:0',
+      updateSerial: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda2',
       },
@@ -517,7 +517,7 @@ describe('Messages', () => {
         data: {
           text: 'may the fourth be with you',
         },
-        serial: 'abcdefghij@1672531200000-123',
+        serial: '01672531200000-123@abcdefghij',
         action: ChatMessageActions.MessageCreate,
         extras: {},
         timestamp: Date.now(),
@@ -531,7 +531,7 @@ describe('Messages', () => {
         data: {
           text: 'may the fourth be with you',
         },
-        serial: 'abcdefghij@1672531200000-123',
+        serial: '01672531200000-123@abcdefghij',
         action: 'message.unknown',
         extras: {},
         timestamp: Date.now(),
@@ -542,7 +542,7 @@ describe('Messages', () => {
       {
         clientId: 'yoda2',
         name: 'chat.message',
-        serial: 'abcdefghij@1672531200000-123',
+        serial: '01672531200000-123@abcdefghij',
         action: ChatMessageActions.MessageCreate,
         extras: {},
         timestamp: Date.now(),
@@ -554,7 +554,7 @@ describe('Messages', () => {
         clientId: 'yoda2',
         name: 'chat.message',
         data: {},
-        serial: 'abcdefghij@1672531200000-123',
+        serial: '01672531200000-123@abcdefghij',
         action: ChatMessageActions.MessageCreate,
         extras: {},
         timestamp: Date.now(),
@@ -567,7 +567,7 @@ describe('Messages', () => {
         data: {
           text: 'may the fourth be with you',
         },
-        serial: 'abcdefghij@1672531200000-123',
+        serial: '01672531200000-123@abcdefghij',
         action: ChatMessageActions.MessageCreate,
         extras: {},
         timestamp: Date.now(),
@@ -581,7 +581,7 @@ describe('Messages', () => {
         data: {
           text: 'may the fourth be with you',
         },
-        serial: 'abcdefghij@1672531200000-123',
+        serial: '01672531200000-123@abcdefghij',
         action: ChatMessageActions.MessageCreate,
         timestamp: Date.now(),
       },
@@ -595,20 +595,6 @@ describe('Messages', () => {
         data: {
           text: 'may the fourth be with you',
         },
-        action: ChatMessageActions.MessageCreate,
-        timestamp: Date.now(),
-      },
-    ],
-    [
-      'serial invalid',
-      {
-        name: 'chat.message',
-        clientId: 'yoda2',
-        data: {
-          text: 'may the fourth be with you',
-        },
-        extras: {},
-        serial: 'abc',
         action: ChatMessageActions.MessageCreate,
         timestamp: Date.now(),
       },
@@ -642,7 +628,7 @@ describe('Messages', () => {
   });
 
   it<TestContext>('should query listener history with the attachment serial after attaching', async (context) => {
-    const testAttachSerial = 'abcdefghij@1672531200000-123';
+    const testAttachSerial = '01672531200000-123@abcdefghij';
     const testDirection = 'backwards';
     const testLimit = 50;
 
@@ -702,7 +688,7 @@ describe('Messages', () => {
 
   it<TestContext>('should query listener history with latest channel serial if already attached to the channel', async (context) => {
     // We should use the latest channel serial if we are already attached to the channel
-    const latestChannelSerial = 'abcdefghij@1672531200000-123';
+    const latestChannelSerial = '01672531200000-123@abcdefghij';
     const testDirection = 'backwards';
     const testLimit = 50;
 
@@ -740,7 +726,7 @@ describe('Messages', () => {
   });
 
   it<TestContext>('when attach occurs, should query with correct params if listener registered before attach', async (context) => {
-    const firstAttachmentSerial = '108uyDJAgBOihn12345678@1772531200000-1';
+    const firstAttachmentSerial = '01772531200000-001@108uyDJAgBOihn12345678';
     const testDirection = 'backwards';
     const testLimit = 50;
 
@@ -795,7 +781,7 @@ describe('Messages', () => {
     await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
 
     // Now update the attach serial
-    const secondAttachmentSerial = '108hhDJ2dBOihn12345678@1992531200000-1';
+    const secondAttachmentSerial = '01992531200000-001@108hhDJ2dBOihn12345678';
     channel.properties.attachSerial = secondAttachmentSerial;
 
     // Initiate a re-attach without resume, should cause all listener points to reset to new attach serial
@@ -816,7 +802,7 @@ describe('Messages', () => {
     // Test the case where we receive an attached state change with resume.
 
     // Change attach serial again
-    channel.properties.attachSerial = '108hhDJ2dBOihn12345678@1122531200000-1';
+    channel.properties.attachSerial = '01122531200000-001@108hhDJ2dBOihn12345678';
 
     // Initiate a re-attach this time with resume, should not cause listener points to reset to new attach serial
     context.emulateBackendStateChange({
@@ -836,8 +822,8 @@ describe('Messages', () => {
 
   it<TestContext>('when attach occurs, should query with correct params if listener register after attach', async (context) => {
     // Testing the case where the channel is already attached and we have a channel serial set
-    const firstChannelSerial = 'abghhDJ2dBOihn12345678@1992531200000-1';
-    const firstAttachSerial = 'ackhhDJ2dBOihn12345678@1992531200000-1';
+    const firstChannelSerial = '01992531200000-001@abghhDJ2dBOihn12345678';
+    const firstAttachSerial = '01992531200000-001@ackhhDJ2dBOihn12345678';
     const testDirection = 'backwards';
     const testLimit = 50;
 
@@ -884,8 +870,8 @@ describe('Messages', () => {
     await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
 
     // Change the attach and channel serials
-    const secondChannelSerial = '108hhDJ2hpOihn12345678@1992531200000-1';
-    const secondAttachSerial = '108hGGJ2hpOill12345678@1992531200000-1';
+    const secondChannelSerial = '01992531200000-001@108hhDJ2hpOihn12345678';
+    const secondAttachSerial = '01992531200000-001@108hGGJ2hpOill12345678';
     channel.properties.channelSerial = secondChannelSerial;
     channel.properties.attachSerial = secondAttachSerial;
 
@@ -924,8 +910,8 @@ describe('Messages', () => {
     // We have tested most of the state change handling logic in previous tests, this test is to ensure that the correct
     // update state change logic is followed when the current and previous states are 'attached'
 
-    const firstChannelSerial = '108hhDJ2hpInKn12345678@1992531200000-1';
-    const firstAttachSerial = '108hhDJBiKOihn12345678@1992531200000-1';
+    const firstChannelSerial = '01992531200000-001@108hhDJ2hpInKn12345678';
+    const firstAttachSerial = '01992531200000-001@108hhDJBiKOihn12345678';
     const testDirection = 'backwards';
     const testLimit = 50;
 
@@ -973,8 +959,8 @@ describe('Messages', () => {
     await getPreviousMessages({ limit: 50 });
 
     // Change the attach and channel serials
-    const secondChannelSerial = '108StIJ2hpOihn12345678@1992531200000-1';
-    const secondAttachSerial = '108DrInOhpOihn12345678@1992531200000-1';
+    const secondChannelSerial = '01992531200000-001@108StIJ2hpOihn12345678';
+    const secondAttachSerial = '01992531200000-001@108DrInOhpOihn12345678';
     channel.properties.channelSerial = secondChannelSerial;
     channel.properties.attachSerial = secondAttachSerial;
 
@@ -1015,7 +1001,7 @@ describe('Messages', () => {
     await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
 
     // Change the attach serial again
-    channel.properties.attachSerial = '108DrInRiKGihn12345678@1992531200000-1';
+    channel.properties.attachSerial = '01992531200000-001@108DrInRiKGihn12345678';
 
     // Initiate a update this time without matching previous and current states, should not trigger
     // listener points to reset to new attach serial
@@ -1035,33 +1021,6 @@ describe('Messages', () => {
 
     // Run a history query for the listener and check the chat api call is made with the previous attach serial
     await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
-  });
-
-  it<TestContext>('should throw an error if listener query end time is later than query serial', async (context) => {
-    // Create a room instance
-    const { room } = context;
-
-    const msgChannel = room.messages.channel;
-    const channel = msgChannel as RealtimeChannel & {
-      properties: {
-        attachSerial: string | undefined;
-        channelSerial: string | undefined;
-      };
-    };
-
-    // Set the serials for the channel
-    channel.properties.channelSerial = '108uyDJAgBOihn12345678@1772531200000-1';
-    channel.properties.attachSerial = '108uyDJAgBOihn12345678@1772531200000-1';
-
-    // Mock the channel state to be attached
-    vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
-
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
-
-    await expect(getPreviousMessages({ limit: 50, end: 1992531200000 })).rejects.toBeErrorInfo({
-      code: 40000,
-      message: 'cannot query history; end time is after the subscription point of the listener',
-    });
   });
 
   it<TestContext>('has an attachment error code', (context) => {

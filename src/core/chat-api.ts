@@ -112,6 +112,7 @@ export class ChatApi {
         message.text,
         metadata ?? {},
         headers ?? {},
+        new Date(message.createdAt),
         message.latestAction,
         message.latestActionSerial,
         message.deletedAt ? new Date(message.deletedAt) : undefined,

@@ -18,9 +18,9 @@ describe('parseMessage', () => {
       roomId: 'room1',
       message: {
         clientId: 'client1',
-        timestamp: 1234567890,
+        timestamp: 1728402074206,
         extras: {},
-        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageActions.MessageCreate,
       },
       expectedError: 'received incoming message without data',
@@ -30,9 +30,9 @@ describe('parseMessage', () => {
       roomId: 'room1',
       message: {
         data: { text: 'hello' },
-        timestamp: 1234567890,
+        timestamp: 1728402074206,
         extras: {},
-        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageActions.MessageCreate,
       },
       expectedError: 'received incoming message without clientId',
@@ -43,9 +43,9 @@ describe('parseMessage', () => {
       message: {
         data: {},
         clientId: 'client1',
-        timestamp: 1234567890,
+        timestamp: 1728402074206,
         extras: {},
-        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageActions.MessageCreate,
       },
       expectedError: 'received incoming message without text',
@@ -56,8 +56,8 @@ describe('parseMessage', () => {
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
-        timestamp: 1234567890,
-        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        timestamp: 1728402074206,
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageActions.MessageCreate,
       },
       expectedError: 'received incoming message without extras',
@@ -68,7 +68,7 @@ describe('parseMessage', () => {
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
-        timestamp: 1234567890,
+        timestamp: 1728402074206,
         extras: {},
         action: ChatMessageActions.MessageCreate,
       },
@@ -80,9 +80,9 @@ describe('parseMessage', () => {
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
-        timestamp: 1234567890,
+        timestamp: 1728402074206,
         extras: {},
-        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: 'unhandled.action',
       },
       expectedError: 'received incoming message with unhandled action; unhandled.action',
@@ -93,12 +93,12 @@ describe('parseMessage', () => {
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
-        timestamp: 1234567890,
+        timestamp: 1728402074206,
         extras: {},
-        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageActions.MessageUpdate,
         updatedAt: undefined,
-        updateSerial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        updateSerial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       },
       expectedError: 'received incoming message.update without updatedAt',
     },
@@ -108,9 +108,9 @@ describe('parseMessage', () => {
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
-        timestamp: 1234567890,
+        timestamp: 1728402074206,
         extras: {},
-        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageActions.MessageUpdate,
         updatedAt: 1234567890,
         updateSerial: undefined,
@@ -123,11 +123,11 @@ describe('parseMessage', () => {
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
-        timestamp: 1234567890,
+        timestamp: 1728402074206,
         extras: {},
-        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         updatedAt: undefined,
-        updateSerial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        updateSerial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageActions.MessageDelete,
       },
       expectedError: 'received incoming message.delete without updatedAt',
@@ -138,9 +138,9 @@ describe('parseMessage', () => {
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
-        timestamp: 1234567890,
+        timestamp: 1728402074206,
         extras: {},
-        serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         updatedAt: 1234567890,
         updateSerial: undefined,
         action: ChatMessageActions.MessageDelete,
@@ -167,15 +167,15 @@ describe('parseMessage', () => {
         headers: { headerKey: 'headerValue' },
       },
       updatedAt: 1728402074206,
-      updateSerial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+      updateSerial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       action: ChatMessageActions.MessageCreate,
-      serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+      serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
     } as Ably.InboundMessage;
 
     const result = parseMessage('room1', message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
-    expect(result.serial).toBe('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
+    expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.clientId).toBe('client1');
     expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
@@ -200,21 +200,21 @@ describe('parseMessage', () => {
       id: 'message-id',
       data: { text: 'hello', metadata: { key: 'value' } },
       clientId: 'client1',
-      timestamp: 1234567890,
+      timestamp: 1728402074206,
       extras: {
         headers: { headerKey: 'headerValue' },
       },
       action: ChatMessageActions.MessageUpdate,
-      serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+      serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       updatedAt: 1728402074206,
-      updateSerial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+      updateSerial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       operation: { clientId: 'client2', description: 'update message', metadata: { 'custom-update': 'some flag' } },
     } as Ably.InboundMessage;
 
     const result = parseMessage('room1', message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
-    expect(result.serial).toBe('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
+    expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.clientId).toBe('client1');
     expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
@@ -224,7 +224,7 @@ describe('parseMessage', () => {
     expect(result.updatedAt).toEqual(new Date(1728402074206));
     expect(result.updatedBy).toBe('client2');
     expect(result.latestAction).toEqual(ChatMessageActions.MessageUpdate);
-    expect(result.latestActionSerial).toEqual('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
+    expect(result.latestActionSerial).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.latestActionDetails).toEqual({
       clientId: 'client2',
       description: 'update message',
@@ -241,14 +241,14 @@ describe('parseMessage', () => {
       id: 'message-id',
       data: { text: 'hello', metadata: { key: 'value' } },
       clientId: 'client1',
-      timestamp: 1234567890,
+      timestamp: 1728402074206,
       extras: {
         headers: { headerKey: 'headerValue' },
       },
       action: ChatMessageActions.MessageDelete,
-      serial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+      serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       updatedAt: 1728402074206,
-      updateSerial: 'cbfkKvEYgBhDaZ38195418@1728402074206-0:0',
+      updateSerial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       operation: {
         clientId: 'client2',
         description: 'delete message',
@@ -259,7 +259,7 @@ describe('parseMessage', () => {
     const result = parseMessage('room1', message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
-    expect(result.serial).toBe('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
+    expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.clientId).toBe('client1');
     expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
@@ -268,7 +268,7 @@ describe('parseMessage', () => {
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
     expect(result.deletedAt).toEqual(new Date(1728402074206));
     expect(result.deletedBy).toBe('client2');
-    expect(result.latestActionSerial).toEqual('cbfkKvEYgBhDaZ38195418@1728402074206-0:0');
+    expect(result.latestActionSerial).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.latestActionDetails).toEqual({
       clientId: 'client2',
       description: 'delete message',

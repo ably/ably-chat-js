@@ -28,6 +28,7 @@ interface ChatMessageFields {
   text: string;
   metadata: MessageMetadata;
   headers: MessageHeaders;
+  createdAt: Date;
   latestAction: ChatMessageActions;
   latestActionSerial: string;
   updatedAt?: Date;
@@ -68,6 +69,7 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     text: message.data.text,
     metadata: message.data.metadata ?? {},
     headers: message.extras.headers ?? {},
+    createdAt: new Date(message.timestamp),
     latestAction: message.action as ChatMessageActions,
     latestActionSerial: message.updateSerial ?? message.serial,
     updatedAt: message.updatedAt ? new Date(message.updatedAt) : undefined,
@@ -100,6 +102,7 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     newMessage.text,
     newMessage.metadata,
     newMessage.headers,
+    newMessage.createdAt,
     newMessage.latestAction,
     newMessage.latestActionSerial,
     newMessage.latestAction === ChatMessageActions.MessageDelete ? newMessage.deletedAt : undefined,
