@@ -8,7 +8,7 @@
 
 Ably Chat is a set of purpose-built APIs for a host of chat features enabling you to create 1:1, 1:Many, Many:1 and Many:Many chat rooms for any scale. It is designed to meet a wide range of chat use cases, such as livestreams, in-game communication, customer support, or social interactions in SaaS products. Built on [Ably's](https://ably.com/) core service, it abstracts complex details to enable efficient chat architectures.
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > This SDK is currently under development. If you are interested in being an early adopter and providing feedback then you can [sign up to the private beta](https://forms.gle/vB2kXhCXrTQpzHLu5) and are welcome to [provide us with feedback](https://forms.gle/mBw9M53NYuCBLFpMA). Coming soon: chat moderation, editing and deleting messages.
 
 Get started using the [📚 documentation](https://ably.com/docs/products/chat) and [🚀check out the live demo](https://ably-livestream-chat-demo.vercel.app/), or [📘 browse the API reference](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/).
@@ -87,7 +87,7 @@ To instantiate the Chat SDK, create an [Ably client](https://ably.com/docs/getti
 Chat constructor:
 
 ```ts
-import ChatClient from '@ably/chat';
+import { ChatClient } from '@ably/chat';
 import * as Ably from 'ably';
 
 const ably = new Ably.Realtime({ key: '<API-key>', clientId: '<client-ID>' });
