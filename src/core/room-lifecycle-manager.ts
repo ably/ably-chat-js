@@ -31,11 +31,13 @@ export interface ContributesToRoomLifecycle extends HandlesDiscontinuity {
 /**
  * The order of precedence for lifecycle operations, passed to the mutex which allows
  * us to ensure that internal operations take precedence over user-driven operations.
+ *
+ * The higher the number, the higher the priority.
  */
 enum LifecycleOperationPrecedence {
-  Internal = 0,
+  Internal = 2,
   Release = 1,
-  AttachOrDetach = 2,
+  AttachOrDetach = 0,
 }
 
 /**
