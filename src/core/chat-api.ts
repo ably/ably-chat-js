@@ -60,6 +60,7 @@ interface UpdateMessageParams {
   /** Metadata of the update action */
   metadata?: MessageActionMetadata;
 }
+
 interface DeleteMessageParams {
   /** Description of the delete action */
   description?: string;
@@ -96,25 +97,44 @@ export class ChatApi {
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, params).then((data) => {
-      data.items = data.items.map((message) => {
-        const metadata = message.metadata as MessageMetadata | undefined;
-        const headers = message.headers as MessageHeaders | undefined;
-        return new DefaultMessage(
-          message.serial,
-          message.clientId,
-          message.roomId,
-          message.text,
-          metadata ?? {},
-          headers ?? {},
-          message.latestAction,
-          message.latestActionSerial,
-          message.deletedAt ? new Date(message.deletedAt) : undefined,
-          message.updatedAt ? new Date(message.updatedAt) : undefined,
-          message.latestActionDetails,
-        );
-      });
-      return data;
+      return this._recursivePaginateMessages(data);
     });
+  }
+
+  private _recursivePaginateMessages(data: PaginatedResult<Message>): PaginatedResult<Message> {
+    const mapToDefaultMessage = (message: Message): DefaultMessage => {
+      const metadata = message.metadata as MessageMetadata | undefined;
+      const headers = message.headers as MessageHeaders | undefined;
+      return new DefaultMessage(
+        message.serial,
+        message.clientId,
+        message.roomId,
+        message.text,
+        metadata ?? {},
+        headers ?? {},
+        message.latestAction,
+        message.latestActionSerial,
+        message.deletedAt ? new Date(message.deletedAt) : undefined,
+        message.updatedAt ? new Date(message.updatedAt) : undefined,
+        message.latestActionDetails,
+      );
+    };
+
+    const paginatedResult: PaginatedResult<Message> = {} as PaginatedResult<Message>;
+    paginatedResult.items = data.items.map((payload) => mapToDefaultMessage(payload));
+
+    // Recursively map the next paginated data
+    paginatedResult.next = () =>
+      data.next().then((nextData) => {
+        // eslint-disable-next-line unicorn/no-null
+        return nextData ? this._recursivePaginateMessages(nextData) : null;
+      });
+
+    paginatedResult.first = () => data.first().then((firstData) => this._recursivePaginateMessages(firstData));
+
+    paginatedResult.current = () => data.current().then((currentData) => this._recursivePaginateMessages(currentData));
+
+    return { ...data, ...paginatedResult };
   }
 
   async deleteMessage(roomId: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {

@@ -352,8 +352,63 @@ describe('messages integration', () => {
       }),
     ]);
 
+    const history1Item = history1.items[0];
+    const history2Item = history2?.items[0];
+
+    if (!history1Item) expect.fail('expected history1Item to be defined');
+    if (!history2Item) expect.fail('expected history2Item to be defined');
+
+    // Ensure that items in `next` pagination can call `Message` functions
+    expect(history1Item.before(history2Item)).toBe(true);
+    expect(history2Item.after(history1Item)).toBe(true);
+
+    // Ensure that `current` pagination method works
+    const current = await history2.current();
+    expect(current.items).toEqual([
+      expect.objectContaining({
+        text: "Don't try it!",
+        clientId: chat.clientId,
+        serial: message4.serial,
+      }),
+    ]);
+
+    const currentItem = current.items[0];
+
+    if (!currentItem) {
+      expect.fail('expected currentItem to be defined');
+    }
+    // Ensure the items in the `current` pagination can call `Message` functions
+    expect(currentItem.equal(history2Item)).toBe(true);
+
+    // Ensure that `first` pagination method works
+    const first = await history2.first();
+    expect(first.items).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        serial: message1.serial,
+      }),
+      expect.objectContaining({
+        text: 'I have the high ground!',
+        clientId: chat.clientId,
+        serial: message2.serial,
+      }),
+      expect.objectContaining({
+        text: 'You underestimate my power!',
+        clientId: chat.clientId,
+        serial: message3.serial,
+      }),
+    ]);
+
+    const firstItem = first.items[0];
+    if (!firstItem) {
+      expect.fail('expected firstItem to be defined');
+    }
+    // Ensure the items in the `first` pagination can call `Message` functions
+    expect(firstItem.equal(history1Item)).toBe(true);
+
     // We shouldn't have a "next" link in the response
-    expect(history2?.hasNext()).toBe(false);
+    expect(history2.hasNext()).toBe(false);
   });
 
   it<TestContext>('should be able to paginate chat history (msgpack)', async () => {
