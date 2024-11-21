@@ -5,6 +5,16 @@ import * as Ably from 'ably';
  */
 export enum ErrorCodes {
   /**
+   * The message was rejected before publishing by a rule on the chat room.
+   */
+  MessageRejectedByBeforePublishRule = 42211,
+
+  /**
+   * The message was rejected before publishing by a moderation rule on the chat room.
+   */
+  MessageRejectedByModeration = 42213,
+
+  /**
    * The messages feature failed to attach.
    */
   MessagesAttachmentFailed = 102001,
