@@ -1,10 +1,10 @@
 import {
-  ActionDetails,
   DeleteMessageParams,
   Message,
   MessageListener,
   Messages,
   MessageSubscriptionResponse,
+  OperationDetails,
   QueryOptions,
   SendMessageParams,
   UpdateMessageParams,
@@ -117,7 +117,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
   const update = useCallback(
-    (message: Message, update: UpdateMessageParams, details?: ActionDetails) =>
+    (message: Message, update: UpdateMessageParams, details?: OperationDetails) =>
       context.room.then((room) => room.messages.update(message, update, details)),
     [context],
   );

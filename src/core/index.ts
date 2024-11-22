@@ -2,7 +2,6 @@
  * @module chat-js
  */
 
-export type { ActionMetadata } from './action-metadata.js';
 export { ChatClient } from './chat.js';
 export type { ClientOptions } from './config.js';
 export type {
@@ -27,26 +26,21 @@ export {
 } from './helpers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
+export type { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata, Operation } from './message.js';
 export type {
-  Message,
-  MessageActionDetails,
-  MessageActionMetadata,
-  MessageHeaders,
-  MessageMetadata,
-} from './message.js';
-export type {
-  ActionDetails,
   DeleteMessageParams,
   MessageEventPayload,
   MessageListener,
   Messages,
   MessageSubscriptionResponse,
+  OperationDetails,
   QueryOptions,
   SendMessageParams,
   UpdateMessageParams,
 } from './messages.js';
 export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener, OccupancySubscriptionResponse } from './occupancy.js';
+export type { OperationMetadata } from './operation-metadata.js';
 export type {
   Presence,
   PresenceData,

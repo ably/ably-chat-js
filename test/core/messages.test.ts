@@ -89,7 +89,7 @@ describe('Messages', () => {
     it<TestContext>('should be able to delete a message and get it back from response', async (context) => {
       const { chatApi } = context;
       const sendTimestamp = Date.now();
-      const sendSerial = 'abcdefghij@' + String(sendTimestamp) + '-123';
+      const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
         createdAt: sendTimestamp,
@@ -97,8 +97,8 @@ describe('Messages', () => {
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
-        serial: '01672531200000-123@abcdefghij:0',
-        deletedAt: deleteTimestamp,
+        version: '01672531200001-123@abcdefghij:0',
+        timestamp: deleteTimestamp,
       });
 
       const message1 = await context.room.messages.send({ text: 'hello there' });
@@ -109,12 +109,13 @@ describe('Messages', () => {
           serial: sendSerial,
           text: 'hello there',
           clientId: 'clientId',
-          deletedAt: new Date(deleteTimestamp),
-          deletedBy: 'clientId',
+          timestamp: new Date(deleteTimestamp),
           createdAt: new Date(sendTimestamp),
           roomId: context.room.roomId,
         }),
       );
+
+      expect(deleteMessage1.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
     });
   });
 
@@ -183,6 +184,7 @@ describe('Messages', () => {
           extras: {},
           timestamp: publishTimestamp,
           createdAt: publishTimestamp,
+          operation: { clientId: 'yoda' },
         });
         context.emulateBackendPublish({
           clientId: 'yoda',
@@ -196,6 +198,7 @@ describe('Messages', () => {
           extras: {},
           timestamp: publishTimestamp,
           createdAt: publishTimestamp,
+          operation: { clientId: 'yoda' },
         });
         context.emulateBackendPublish({
           clientId: 'yoda',
@@ -203,6 +206,7 @@ describe('Messages', () => {
           data: {
             text: 'may the fourth be with you',
           },
+          version: '01672531200000-123@abcdefghij',
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageActions.MessageCreate,
           extras: {},
@@ -246,9 +250,11 @@ describe('Messages', () => {
         text: 'may the fourth be with you',
       },
       serial: '01672531200000-123@abcdefghij',
+      version: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageCreate,
       extras: {},
       timestamp: publishTimestamp,
+      createdAt: publishTimestamp,
     });
     context.emulateBackendPublish({
       clientId: 'yoda',
@@ -259,7 +265,8 @@ describe('Messages', () => {
       serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageUpdate,
       extras: {},
-      timestamp: publishTimestamp,
+      timestamp: updateTimestamp,
+      createdAt: publishTimestamp,
       version: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
@@ -274,7 +281,7 @@ describe('Messages', () => {
       serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageDelete,
       extras: {},
-      timestamp: publishTimestamp,
+      timestamp: deletionTimestamp,
       createdAt: publishTimestamp,
       version: '01672531200000-123@abcdefghij:0',
       operation: {
@@ -282,57 +289,66 @@ describe('Messages', () => {
       },
     });
 
+    expect(receivedMessages).toHaveLength(1);
+    expect(receivedDeletions).toHaveLength(1);
+    expect(receivedUpdates).toHaveLength(1);
+    expect(receivedMessages[0]?.clientId).toEqual('yoda');
+    expect(receivedDeletions[0]?.clientId).toEqual('yoda');
+    expect(receivedUpdates[0]?.clientId).toEqual('yoda');
+
     unsubscribe();
 
-    // try to send and delete a new message
+    // send, update and delete again when unsubscribed
     publishTimestamp = Date.now();
     updateTimestamp = Date.now() + 500;
     deletionTimestamp = Date.now() + 1000;
     context.emulateBackendPublish({
-      clientId: 'yoda2',
+      clientId: 'yoda',
       name: 'chat.message',
       data: {
         text: 'may the fourth be with you',
       },
-      serial: '01672531200000-123@abcdefghij',
+      serial: '01672535500000-123@abcdefghij',
+      version: '01672535500000-123@abcdefghij',
       action: ChatMessageActions.MessageCreate,
       extras: {},
+      timestamp: publishTimestamp,
       createdAt: publishTimestamp,
     });
     context.emulateBackendPublish({
-      clientId: 'yoda2',
+      clientId: 'yoda',
       name: 'chat.message',
       data: {
         text: 'I have the high ground now',
       },
-      serial: '01672531200000-123@abcdefghij',
+      serial: '01672535500000-123@abcdefghij',
       action: ChatMessageActions.MessageUpdate,
       extras: {},
-      version: '01672531200000-123@abcdefghij:0',
+      timestamp: updateTimestamp,
+      createdAt: publishTimestamp,
+      version: '01672535600000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
-      createdAt: publishTimestamp,
-      timestamp: updateTimestamp,
     });
     context.emulateBackendPublish({
-      clientId: 'yoda2',
+      clientId: 'yoda',
       name: 'chat.message',
       data: {
-        text: 'may the fourth be with you',
+        text: 'I have the high ground now',
       },
-      serial: '01672531200000-123@abcdefghij',
+      serial: '01672535500000-123@abcdefghij',
       action: ChatMessageActions.MessageDelete,
       extras: {},
-      createdAt: publishTimestamp,
       timestamp: deletionTimestamp,
-      version: '01672531200000-123@abcdefghij:0',
+      createdAt: publishTimestamp,
+      version: '01672535700000-123@abcdefghij:0',
       operation: {
-        clientId: 'yoda2',
+        clientId: 'yoda',
       },
     });
 
-    // We should have only received one message and one deletion
+    // We should not have received anything new
     expect(receivedMessages).toHaveLength(1);
     expect(receivedDeletions).toHaveLength(1);
     expect(receivedUpdates).toHaveLength(1);
@@ -390,6 +406,7 @@ describe('Messages', () => {
 
     const { unsubscribe } = room.messages.subscribe(listener);
     const { unsubscribe: unsubscribe2 } = room.messages.subscribe(listener2);
+
     let publishTimestamp = Date.now();
     let updateTimestamp = Date.now() + 500;
     let deletionTimestamp = Date.now() + 1000;
@@ -400,6 +417,7 @@ describe('Messages', () => {
         text: 'may the fourth be with you',
       },
       serial: '01672531200000-123@abcdefghij',
+      version: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageCreate,
       extras: {},
       timestamp: publishTimestamp,
@@ -438,6 +456,22 @@ describe('Messages', () => {
       },
     });
 
+    // We should have received the message above and the update and delete
+    expect(receivedMessages).toHaveLength(1);
+    expect(receivedMessages[0]?.clientId).toEqual('yoda');
+    expect(receivedMessages2).toHaveLength(1);
+    expect(receivedMessages2[0]?.clientId).toEqual('yoda');
+
+    expect(receivedDeletions).toHaveLength(1);
+    expect(receivedDeletions[0]?.clientId).toEqual('yoda');
+    expect(receivedDeletions2).toHaveLength(1);
+    expect(receivedDeletions2[0]?.clientId).toEqual('yoda');
+
+    expect(receivedUpdates).toHaveLength(1);
+    expect(receivedUpdates[0]?.clientId).toEqual('yoda');
+    expect(receivedUpdates2).toHaveLength(1);
+    expect(receivedUpdates2[0]?.clientId).toEqual('yoda');
+
     room.messages.unsubscribeAll();
 
     publishTimestamp = Date.now();
@@ -450,6 +484,7 @@ describe('Messages', () => {
         text: 'may the fourth be with you',
       },
       serial: '01672531200000-123@abcdefghij',
+      version: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageCreate,
       extras: {},
       createdAt: publishTimestamp,
@@ -488,10 +523,9 @@ describe('Messages', () => {
       },
     });
 
-    // We should have only received one message
+    // We should not have received anything new - do same assertions again
     expect(receivedMessages).toHaveLength(1);
     expect(receivedMessages[0]?.clientId).toEqual('yoda');
-
     expect(receivedMessages2).toHaveLength(1);
     expect(receivedMessages2[0]?.clientId).toEqual('yoda');
 

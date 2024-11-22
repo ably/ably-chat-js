@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageActionMetadata, MessageHeaders, MessageMetadata } from './message.js';
+import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { OccupancyEvent } from './occupancy.js';
 import { PaginatedResult } from './query.js';
 
@@ -31,17 +31,24 @@ interface SendMessageParams {
   headers?: MessageHeaders;
 }
 
-export interface DeleteMessageResponse {
+/**
+ * Represents the response for deleting or updating a message.
+ */
+interface MessageOperationResponse {
   /**
-   * The serial of the deletion action.
+   * The new message version.
    */
-  serial: string;
+  version: string;
 
   /**
-   * The timestamp of the deletion action.
+   * The timestamp of the operation.
    */
-  deletedAt: number;
+  timestamp: number;
 }
+
+export type UpdateMessageResponse = MessageOperationResponse;
+
+export type DeleteMessageResponse = MessageOperationResponse;
 
 interface UpdateMessageParams {
   /**
@@ -58,7 +65,7 @@ interface UpdateMessageParams {
   description?: string;
 
   /** Metadata of the update action */
-  metadata?: MessageActionMetadata;
+  metadata?: MessageOperationMetadata;
 }
 
 interface DeleteMessageParams {
@@ -66,19 +73,7 @@ interface DeleteMessageParams {
   description?: string;
 
   /** Metadata of the delete action */
-  metadata?: MessageActionMetadata;
-}
-
-interface UpdateMessageResponse {
-  /**
-   * The serial of the update action.
-   */
-  serial: string;
-
-  /**
-   * The timestamp of when the update occurred.
-   */
-  updatedAt: number;
+  metadata?: MessageOperationMetadata;
 }
 
 /**
@@ -112,12 +107,11 @@ export class ChatApi {
         message.text,
         metadata ?? {},
         headers ?? {},
-        new Date(message.createdAt),
-        message.latestAction,
-        message.latestActionSerial,
-        message.deletedAt ? new Date(message.deletedAt) : undefined,
-        message.updatedAt ? new Date(message.updatedAt) : undefined,
-        message.latestActionDetails,
+        message.action,
+        message.version,
+        (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
+        new Date(message.timestamp),
+        message.operation,
       );
     };
 
@@ -139,7 +133,7 @@ export class ChatApi {
   }
 
   async deleteMessage(roomId: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
-    const body: { description?: string; metadata?: MessageActionMetadata } = {
+    const body: { description?: string; metadata?: MessageOperationMetadata } = {
       description: params?.description,
       metadata: params?.metadata,
     };

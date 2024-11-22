@@ -304,17 +304,17 @@ const updatedMessage = await room.messages.update(message,
 
 `updatedMessage` is a Message object with all updates applied. As with sending and deleting, the promise may resolve after the updated message is received via the messages subscription.
 
-A `Message` that was updated will have `updatedAt` and `updatedBy` fields set, and `isUpdated()` will return `true`.
+A `Message` that was updated will have values for `updatedAt` and `updatedBy`, and `isUpdated()` will return `true`.
 
 Note that if you delete an updated message, it is no longer considered _updated_. Only the last operation takes effect.
 
 #### Handling updates in realtime
 
-Updated messages received from realtime have the `latestAction` parameter set to `ChatMessageActions.MessageUpdate`, and the event received has the `type` set to `MessageEvents.Updated`. Updated messages are full copies of the message, meaning that all that is needed to keep a state or UI up to date is to replace the old message with the received one.
+Updated messages received from realtime have the `action` parameter set to `ChatMessageActions.MessageUpdate`, and the event received has the `type` set to `MessageEvents.Updated`. Updated messages are full copies of the message, meaning that all that is needed to keep a state or UI up to date is to replace the old message with the received one.
 
-In rare occasions updates might arrive over realtime out of order. To keep a correct state, the `Message` interface provides methods to compare two instances of the same base message to determine which one is newer: `actionBefore()`, `actionAfter()`, and `actionEqual()`.
+In rare occasions updates might arrive over realtime out of order. To keep a correct state, compare the `version` lexicographically (string compare). Alternatively, the `Message` interface provides convenience methods to compare two instances of the same base message to determine which version is newer: `versionBefore()`, `versionAfter()`, and `versionEqual()`.
 
-The same out-of-order situation can happen between updates received over realtime and HTTP responses. In the situation where two concurrent edits happen, both might be received via realtime before the HTTP response of the first one arrives. Always use `actionAfter()`, `actionBefore()`, or `actionEqual()` to determine which instance of a `Message` is newer.
+The same out-of-order situation can happen between updates received over realtime and HTTP responses. In the situation where two concurrent updates happen, both might be received via realtime before the HTTP response of the first one arrives. Always compare the message `version` to determine which instance of a `Message` is newer.
 
 Example for handling updates:
 ```typescript
@@ -325,7 +325,7 @@ room.messages.subscribe(event => {
     case MessageEvents.Updated: {
       const serial = event.message.serial;
       const index = messages.findIndex((m) => m.serial === serial);
-      if (index !== -1 && messages[index].actionBefore(event.message)) {
+      if (index !== -1 && messages[index].version < event.message.version) {
         messages[index] = event.message;
       }
       break;

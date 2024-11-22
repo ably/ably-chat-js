@@ -5,24 +5,6 @@ import { ChatMessageActions } from '../../src/core/events.ts';
 import { DefaultMessage } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
-  it('should correctly parse createdAt from serial', () => {
-    const serial = '01672531200000-123@abcdefghij';
-
-    const message = new DefaultMessage(
-      serial,
-      'clientId',
-      'roomId',
-      'hello there',
-      {},
-      {},
-      new Date(1672531200000),
-      ChatMessageActions.MessageCreate,
-      serial,
-    );
-
-    expect(message.createdAt).toEqual(new Date(1672531200000));
-  });
-
   it('is the same as another message', () => {
     const firstSerial = '01672531200000-123@abcdefghij';
     const secondSerial = '01672531200000-123@abcdefghij';
@@ -34,9 +16,10 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
-      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       firstSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
     );
     const secondMessage = new DefaultMessage(
       secondSerial,
@@ -45,9 +28,10 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
-      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       secondSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
     );
 
     expect(firstMessage.equal(secondMessage)).toBe(true);
@@ -64,9 +48,10 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
-      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       firstSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
     );
     const secondMessage = new DefaultMessage(
       secondSerial,
@@ -75,9 +60,10 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
-      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       secondSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
     );
 
     expect(firstMessage.equal(secondMessage)).toBe(false);
@@ -94,9 +80,10 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
-      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       firstSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
     );
     const secondMessage = new DefaultMessage(
       secondSerial,
@@ -105,9 +92,10 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
-      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       secondSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
     );
 
     expect(firstMessage.before(secondMessage)).toBe(true);
@@ -123,9 +111,10 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
-      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       firstSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
     );
     const secondMessage = new DefaultMessage(
       secondSerial,
@@ -134,15 +123,16 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
-      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       secondSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
     );
 
     expect(firstMessage.after(secondMessage)).toBe(true);
   });
 
-  describe('message actions', () => {
+  describe('message versions', () => {
     it('is deleted', () => {
       const firstSerial = '01672531200000-124@abcdefghij:0';
       const firstMessage = new DefaultMessage(
@@ -152,11 +142,10 @@ describe('ChatMessage', () => {
         'hello there',
         {},
         {},
-        new Date(1672531200000),
         ChatMessageActions.MessageDelete,
-        '01672531200000-123@abcdefghij:0',
+        '01672531300000-123@abcdefghij:0',
+        new Date(1672531200000),
         new Date(1672531300000),
-        undefined,
         {
           clientId: 'clientId2',
         },
@@ -174,10 +163,9 @@ describe('ChatMessage', () => {
         'hello there',
         {},
         {},
-        new Date(1672531200000),
         ChatMessageActions.MessageUpdate,
         '01672531200000-123@abcdefghij:0',
-        undefined,
+        new Date(1672531200000),
         new Date(1672531300000),
         { clientId: 'clientId2' },
       );
@@ -185,12 +173,12 @@ describe('ChatMessage', () => {
       expect(firstMessage.updatedBy).toBe('clientId2');
     });
 
-    it(`throws an error when trying to compare actions belonging to different origin messages`, () => {
+    it(`should throw an error when trying to compare versions belonging to different origin messages`, () => {
       const firstSerial = '01672531200000-124@abcdefghij';
       const secondSerial = '01672531200000-123@abcdefghij';
 
-      const firstActionSerial = '01672531200000-123@abcdefghij:0';
-      const secondActionSerial = '01672531200000-123@abcdefghij:0';
+      const firstVersion = '01672531200000-123@abcdefghij:0';
+      const secondVersion = '01672531200000-123@abcdefghij:0';
 
       const firstMessage = new DefaultMessage(
         firstSerial,
@@ -199,9 +187,10 @@ describe('ChatMessage', () => {
         'hello there',
         {},
         {},
-        new Date(1672531200000),
         ChatMessageActions.MessageUpdate,
-        firstActionSerial,
+        firstVersion,
+        new Date(1672531200000),
+        new Date(1672531200000),
       );
       const secondMessage = new DefaultMessage(
         secondSerial,
@@ -210,63 +199,74 @@ describe('ChatMessage', () => {
         'hello there',
         {},
         {},
-        new Date(1672531200000),
         ChatMessageActions.MessageUpdate,
-        secondActionSerial,
+        secondVersion,
+        new Date(1672531200000),
+        new Date(1672531200000),
       );
 
-      expect(() => firstMessage.actionEqual(secondMessage)).toThrowErrorInfo({
+      expect(() => firstMessage.versionEqual(secondMessage)).toThrowErrorInfo({
         code: 50000,
-        message: 'actionEqual(): Cannot compare actions, message serials must be equal',
+        message: 'versionEqual(): Cannot compare versions, message serials must be equal',
+      });
+
+      expect(() => firstMessage.versionBefore(secondMessage)).toThrowErrorInfo({
+        code: 50000,
+        message: 'versionBefore(): Cannot compare versions, message serials must be equal',
+      });
+
+      expect(() => firstMessage.versionAfter(secondMessage)).toThrowErrorInfo({
+        code: 50000,
+        message: 'versionAfter(): Cannot compare versions, message serials must be equal',
       });
     });
 
     describe.each([
       [
-        'returns true when this message action is the same as another',
+        'returns true when this message version is the same as another',
         {
-          firstActionSerial: '01672531200000-123@abcdefghij:0',
-          secondActionSerial: '01672531200000-123@abcdefghij:0',
-          action: 'actionEqual',
+          firstVersion: '01672531200000-123@abcdefghij:0',
+          secondVersion: '01672531200000-123@abcdefghij:0',
+          action: 'versionEqual',
           expected: (firstMessage: Message, secondMessage: Message) => {
-            expect(firstMessage.actionEqual(secondMessage)).toBe(true);
+            expect(firstMessage.versionEqual(secondMessage)).toBe(true);
           },
         },
       ],
       [
-        'returns false when this message action is not same as another message action',
+        'returns false when this message version is not same as another message version',
         {
-          firstActionSerial: '01672531200000-123@abcdefghij:0',
-          secondActionSerial: '01672531200000-124@abcdefghij:0',
-          action: 'actionEqual',
+          firstVersion: '01672531200000-123@abcdefghij:0',
+          secondVersion: '01672531200000-124@abcdefghij:0',
+          action: 'versionEqual',
           expected: (firstMessage: Message, secondMessage: Message) => {
-            expect(firstMessage.actionEqual(secondMessage)).toBe(false);
+            expect(firstMessage.versionEqual(secondMessage)).toBe(false);
           },
         },
       ],
       [
-        'returns true when this message action is before another message action',
+        'returns true when this message version is before another message version',
         {
-          firstActionSerial: '01672531200000-123@abcdefghij:0',
-          secondActionSerial: '01672531200000-124@abcdefghij:0',
-          action: 'actionBefore',
+          firstVersion: '01672531200000-123@abcdefghij:0',
+          secondVersion: '01672531200000-124@abcdefghij:0',
+          action: 'versionBefore',
           expected: (firstMessage: Message, secondMessage: Message) => {
-            expect(firstMessage.actionBefore(secondMessage)).toBe(true);
+            expect(firstMessage.versionBefore(secondMessage)).toBe(true);
           },
         },
       ],
       [
-        'returns true when this message action is after another message action',
+        'returns true when this message version is after another message version',
         {
-          firstActionSerial: '01672531200000-124@abcdefghij:0',
-          secondActionSerial: '01672531200000-123@abcdefghij:0',
-          action: 'actionAfter',
+          firstVersion: '01672531200000-124@abcdefghij:0',
+          secondVersion: '01672531200000-123@abcdefghij:0',
+          action: 'versionAfter',
           expected: (firstMessage: Message, secondMessage: Message) => {
-            expect(firstMessage.actionAfter(secondMessage)).toBe(true);
+            expect(firstMessage.versionAfter(secondMessage)).toBe(true);
           },
         },
       ],
-    ])('compare message action serials', (name, { firstActionSerial, secondActionSerial, expected }) => {
+    ])('compare message versions', (name, { firstVersion, secondVersion, expected }) => {
       it(name, () => {
         const messageSerial = '01672531200000-123@abcdefghij';
         const firstMessage = new DefaultMessage(
@@ -276,9 +276,10 @@ describe('ChatMessage', () => {
           'hello there',
           {},
           {},
-          new Date(1672531200000),
           ChatMessageActions.MessageUpdate,
-          firstActionSerial,
+          firstVersion,
+          new Date(1672531200000),
+          new Date(1672531200001),
         );
         const secondMessage = new DefaultMessage(
           messageSerial,
@@ -287,9 +288,10 @@ describe('ChatMessage', () => {
           'hello there',
           {},
           {},
-          new Date(1672531200000),
           ChatMessageActions.MessageUpdate,
-          secondActionSerial,
+          secondVersion,
+          new Date(1672531200000),
+          new Date(1672531200001),
         );
         expected(firstMessage, secondMessage);
       });

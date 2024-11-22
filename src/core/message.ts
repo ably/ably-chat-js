@@ -1,9 +1,9 @@
 import { ErrorInfo } from 'ably';
 
-import { ActionMetadata } from './action-metadata.js';
 import { ChatMessageActions } from './events.js';
 import { Headers } from './headers.js';
 import { Metadata } from './metadata.js';
+import { OperationMetadata } from './operation-metadata.js';
 
 /**
  * {@link Headers} type for chat messages.
@@ -16,14 +16,14 @@ export type MessageHeaders = Headers;
 export type MessageMetadata = Metadata;
 
 /**
- * {@link ActionMetadata} type for a chat messages {@link MessageActionDetails}.
+ * {@link OperationMetadata} type for a chat messages {@link Operation}.
  */
-export type MessageActionMetadata = ActionMetadata;
+export type MessageOperationMetadata = OperationMetadata;
 
 /**
  * Represents the detail of a message deletion or update.
  */
-export interface MessageActionDetails {
+export interface Operation {
   /**
    * The optional clientId of the user who performed the update or deletion.
    */
@@ -35,7 +35,7 @@ export interface MessageActionDetails {
   /**
    * The optional metadata associated with the update or deletion.
    */
-  metadata?: MessageActionMetadata;
+  metadata?: MessageOperationMetadata;
 }
 
 /**
@@ -97,73 +97,79 @@ export interface Message {
   readonly headers: MessageHeaders;
 
   /**
-   * The latest action of the message. This can be used to determine if the message was created, updated, or deleted.
+   * The action type of the message. This can be used to determine if the message was created, updated, or deleted.
    */
-  readonly latestAction: ChatMessageActions;
+  readonly action: ChatMessageActions;
 
   /**
-   * A unique identifier for the latest action that updated the message. This is only set for update and deletes.
+   * A unique identifier for the latest version of this message.
    */
-  readonly latestActionSerial: string;
+  readonly version: string;
 
   /**
-   * The details of the latest action that updated the message. This is only set for update and delete actions.
+   * The timestamp at which this version was updated, deleted, or created.
    */
-  readonly latestActionDetails?: MessageActionDetails;
+  readonly timestamp: Date;
+
+  /**
+   * The details of the operation that updated the message. This is only set for update and delete actions. It contains
+   * information about the operation: the clientId of the user who performed the operation, a description, and metadata.
+   */
+  readonly operation?: Operation;
 
   /**
    * Indicates if the message has been updated.
    */
-  readonly isUpdated: boolean;
+  get isUpdated(): boolean;
 
   /**
    * Indicates if the message has been deleted.
    */
-  readonly isDeleted: boolean;
+  get isDeleted(): boolean;
 
   /**
    * The clientId of the user who deleted the message.
    */
-  readonly deletedBy?: string;
+  get deletedBy(): string | undefined;
 
   /**
    * The clientId of the user who updated the message.
    */
-  readonly updatedBy?: string;
+  get updatedBy(): string | undefined;
 
   /**
    * The timestamp at which the message was deleted.
    */
-  readonly deletedAt?: Date;
+  get deletedAt(): Date | undefined;
 
   /**
    * The timestamp at which the message was updated.
    */
-  readonly updatedAt?: Date;
+  get updatedAt(): Date | undefined;
 
   /**
-   * Determines if the action of this message is before the action of the given message.
+   * Determines if the version of this message is older than the version of the given message.
    * @param message The message to compare against.
-   * @returns true if the action of this message is before the given message.
-   * @throws {@link ErrorInfo} if both message serials do not match, or if {@link latestActionSerial} of either is invalid.
+   * @returns true if the version of this message is before the given message.
+   * @throws {@link ErrorInfo} if both message serials do not match.
    */
-  actionBefore(message: Message): boolean;
+  versionBefore(message: Message): boolean;
 
   /**
-   * Determines if the action of this message is after the action of the given message.
+   * Determines if the version of this message is newer than the version of the given message.
    * @param message The message to compare against.
-   * @returns true if the action of this message is after the given message.
-   * @throws {@link ErrorInfo} if both message serials do not match, or if {@link latestActionSerial} of either is invalid.
+   * @returns true if the version of this message is after the given message.
+   * @throws {@link ErrorInfo} if both message serials do not match.
    */
-  actionAfter(message: Message): boolean;
+  versionAfter(message: Message): boolean;
 
   /**
-   * Determines if the action of this message is equal to the action of the given message.
+   * Determines if the version of this message is the same as to the version of the given message.
    * @param message The message to compare against.
-   * @returns true if the action of this message is equal to the given message.
-   * @throws {@link ErrorInfo} if both message serials do not match, or if {@link latestActionSerial} of either is invalid.
+   * @returns true if the version of this message is equal to the given message.
+   * @throws {@link ErrorInfo} if both message serials do not match.
    */
-  actionEqual(message: Message): boolean;
+  versionEqual(message: Message): boolean;
 
   /**
    * Determines if this message was created before the given message. This comparison is based on
@@ -187,6 +193,9 @@ export interface Message {
 
   /**
    * Determines if this message is equal to the given message.
+   *
+   * Note that this method compares messages based on {@link Message.serial} alone. It returns true if the
+   * two messages represent different versions of the same message.
    * @param message The message to compare against.
    * @returns true if this message is equal to the given message.
    * @throws {@link ErrorInfo} if serials of either message is invalid.
@@ -207,62 +216,65 @@ export class DefaultMessage implements Message {
     public readonly text: string,
     public readonly metadata: MessageMetadata,
     public readonly headers: MessageHeaders,
+    public readonly action: ChatMessageActions,
+    public readonly version: string,
     public readonly createdAt: Date,
-    public readonly latestAction: ChatMessageActions,
-
-    // the `latestActionSerial` will be set to the current message `serial` for new messages,
-    // else it will be set to the `updateSerial` corresponding to whatever action
-    // (update/delete) that was just performed.
-    public readonly latestActionSerial: string,
-    public readonly deletedAt?: Date,
-    public readonly updatedAt?: Date,
-    public readonly latestActionDetails?: MessageActionDetails,
+    public readonly timestamp: Date,
+    public readonly operation?: Operation,
   ) {
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
   }
 
   get isUpdated(): boolean {
-    return this.updatedAt !== undefined;
+    return this.action === ChatMessageActions.MessageUpdate;
   }
 
   get isDeleted(): boolean {
-    return this.deletedAt !== undefined;
+    return this.action === ChatMessageActions.MessageDelete;
   }
 
   get updatedBy(): string | undefined {
-    return this.latestAction === ChatMessageActions.MessageUpdate ? this.latestActionDetails?.clientId : undefined;
+    return this.isUpdated ? this.operation?.clientId : undefined;
   }
 
   get deletedBy(): string | undefined {
-    return this.latestAction === ChatMessageActions.MessageDelete ? this.latestActionDetails?.clientId : undefined;
+    return this.isDeleted ? this.operation?.clientId : undefined;
   }
 
-  actionBefore(message: Message): boolean {
-    // Check to ensure the messages are the same before comparing operation order
-    if (!this.equal(message)) {
-      throw new ErrorInfo('actionBefore(): Cannot compare actions, message serials must be equal', 50000, 500);
-    }
-
-    return this.latestActionSerial < message.latestActionSerial;
+  get updatedAt(): Date | undefined {
+    return this.isUpdated ? this.timestamp : undefined;
   }
 
-  actionAfter(message: Message): boolean {
-    // Check to ensure the messages are the same before comparing operation order
-    if (!this.equal(message)) {
-      throw new ErrorInfo('actionAfter(): Cannot compare actions, message serials must be equal', 50000, 500);
-    }
-
-    return this.latestActionSerial > message.latestActionSerial;
+  get deletedAt(): Date | undefined {
+    return this.isDeleted ? this.timestamp : undefined;
   }
 
-  actionEqual(message: Message): boolean {
+  versionBefore(message: Message): boolean {
     // Check to ensure the messages are the same before comparing operation order
     if (!this.equal(message)) {
-      throw new ErrorInfo('actionEqual(): Cannot compare actions, message serials must be equal', 50000, 500);
+      throw new ErrorInfo('versionBefore(): Cannot compare versions, message serials must be equal', 50000, 500);
     }
 
-    return this.latestActionSerial === message.latestActionSerial;
+    return this.version < message.version;
+  }
+
+  versionAfter(message: Message): boolean {
+    // Check to ensure the messages are the same before comparing operation order
+    if (!this.equal(message)) {
+      throw new ErrorInfo('versionAfter(): Cannot compare versions, message serials must be equal', 50000, 500);
+    }
+
+    return this.version > message.version;
+  }
+
+  versionEqual(message: Message): boolean {
+    // Check to ensure the messages are the same before comparing operation order
+    if (!this.equal(message)) {
+      throw new ErrorInfo('versionEqual(): Cannot compare versions, message serials must be equal', 50000, 500);
+    }
+
+    return this.version === message.version;
   }
 
   before(message: Message): boolean {
