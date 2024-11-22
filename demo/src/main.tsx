@@ -25,7 +25,7 @@ const clientId = (function () {
 
 // use this for local development with local realtime
 //
-// const ablyClient = new Ably.Realtime({
+// const realtimeClient = new Ably.Realtime({
 //   authUrl: `/api/ably-token-request?clientId=${clientId}`,
 //   port: 8081,
 //   environment: 'local',

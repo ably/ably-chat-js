@@ -18,7 +18,6 @@ import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import { DefaultSerial } from './serial.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -371,23 +370,6 @@ export class DefaultMessages
     // Get the subscription point of the listener
     const subscriptionPointParams = await subscriptionPoint;
 
-    // Check the end time does not occur after the fromSerial time
-    const parseSerial = DefaultSerial.calculateSerial(subscriptionPointParams.fromSerial);
-    if (params.end && params.end > parseSerial.timestamp) {
-      this._logger.error(
-        `DefaultSubscriptionManager.getBeforeSubscriptionStart(); end time is after the subscription point of the listener`,
-        {
-          endTime: params.end,
-          subscriptionTime: parseSerial.timestamp,
-        },
-      );
-      throw new Ably.ErrorInfo(
-        'cannot query history; end time is after the subscription point of the listener',
-        40000,
-        400,
-      ) as unknown as Error;
-    }
-
     // Query messages from the subscription point to the start of the time window
     return this._chatApi.getMessages(this._roomId, {
       ...params,
@@ -513,6 +495,7 @@ export class DefaultMessages
       text,
       metadata ?? {},
       headers ?? {},
+      new Date(response.createdAt),
       ChatMessageActions.MessageCreate,
       response.serial,
     );
@@ -533,6 +516,7 @@ export class DefaultMessages
       update.text,
       update.metadata ?? {},
       update.headers ?? {},
+      message.createdAt,
       ChatMessageActions.MessageUpdate,
       response.serial,
       undefined,
@@ -558,6 +542,7 @@ export class DefaultMessages
       message.text,
       message.metadata,
       message.headers,
+      message.createdAt,
       ChatMessageActions.MessageDelete,
       response.serial,
       response.deletedAt ? new Date(response.deletedAt) : undefined,

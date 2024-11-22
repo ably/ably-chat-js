@@ -6,7 +6,7 @@ import { DefaultMessage } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
   it('should correctly parse createdAt from serial', () => {
-    const serial = 'abcdefghij@1672531200000-123';
+    const serial = '01672531200000-123@abcdefghij';
 
     const message = new DefaultMessage(
       serial,
@@ -15,6 +15,7 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
+      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       serial,
     );
@@ -23,8 +24,8 @@ describe('ChatMessage', () => {
   });
 
   it('is the same as another message', () => {
-    const firstSerial = 'abcdefghij@1672531200000-123';
-    const secondSerial = 'abcdefghij@1672531200000-123';
+    const firstSerial = '01672531200000-123@abcdefghij';
+    const secondSerial = '01672531200000-123@abcdefghij';
 
     const firstMessage = new DefaultMessage(
       firstSerial,
@@ -33,6 +34,7 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
+      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       firstSerial,
     );
@@ -43,6 +45,7 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
+      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       secondSerial,
     );
@@ -51,8 +54,8 @@ describe('ChatMessage', () => {
   });
 
   it('is not the same as another message', () => {
-    const firstSerial = 'abcdefghij@1672531200000-123';
-    const secondSerial = 'abcdefghij@1672531200000-124';
+    const firstSerial = '01672531200000-123@abcdefghij';
+    const secondSerial = '01672531200000-124@abcdefghij';
 
     const firstMessage = new DefaultMessage(
       firstSerial,
@@ -61,6 +64,7 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
+      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       firstSerial,
     );
@@ -71,6 +75,7 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
+      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       secondSerial,
     );
@@ -79,8 +84,8 @@ describe('ChatMessage', () => {
   });
 
   it('is before another message', () => {
-    const firstSerial = 'abcdefghij@1672531200000-123';
-    const secondSerial = 'abcdefghij@1672531200000-124';
+    const firstSerial = '01672531200000-123@abcdefghij';
+    const secondSerial = '01672531200000-124@abcdefghij';
 
     const firstMessage = new DefaultMessage(
       firstSerial,
@@ -89,6 +94,7 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
+      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       firstSerial,
     );
@@ -99,6 +105,7 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
+      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       secondSerial,
     );
@@ -106,8 +113,8 @@ describe('ChatMessage', () => {
     expect(firstMessage.before(secondMessage)).toBe(true);
   });
   it('is after another message', () => {
-    const firstSerial = 'abcdefghij@1672531200000-124';
-    const secondSerial = 'abcdefghij@1672531200000-123';
+    const firstSerial = '01672531200000-124@abcdefghij';
+    const secondSerial = '01672531200000-123@abcdefghij';
 
     const firstMessage = new DefaultMessage(
       firstSerial,
@@ -116,6 +123,7 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
+      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       firstSerial,
     );
@@ -126,6 +134,7 @@ describe('ChatMessage', () => {
       'hello there',
       {},
       {},
+      new Date(1672531200000),
       ChatMessageActions.MessageCreate,
       secondSerial,
     );
@@ -133,27 +142,9 @@ describe('ChatMessage', () => {
     expect(firstMessage.after(secondMessage)).toBe(true);
   });
 
-  it('throws an error with an invalid serial', () => {
-    expect(() => {
-      new DefaultMessage(
-        'not a valid serial',
-        'clientId',
-        'roomId',
-        'hello there',
-        {},
-        {},
-        ChatMessageActions.MessageCreate,
-        'not a valid serial',
-      );
-    }).toThrowErrorInfo({
-      code: 50000,
-      message: 'invalid serial',
-    });
-  });
-
   describe('message actions', () => {
     it('is deleted', () => {
-      const firstSerial = 'abcdefghij@1672531200000-124:0';
+      const firstSerial = '01672531200000-124@abcdefghij:0';
       const firstMessage = new DefaultMessage(
         firstSerial,
         'clientId',
@@ -161,8 +152,9 @@ describe('ChatMessage', () => {
         'hello there',
         {},
         {},
+        new Date(1672531200000),
         ChatMessageActions.MessageDelete,
-        'abcdefghij@1672531200000-123:0',
+        '01672531200000-123@abcdefghij:0',
         new Date(1672531300000),
         undefined,
         {
@@ -174,7 +166,7 @@ describe('ChatMessage', () => {
     });
 
     it('is updated', () => {
-      const firstSerial = 'abcdefghij@1672531200000-124';
+      const firstSerial = '01672531200000-124@abcdefghij';
       const firstMessage = new DefaultMessage(
         firstSerial,
         'clientId',
@@ -182,8 +174,9 @@ describe('ChatMessage', () => {
         'hello there',
         {},
         {},
+        new Date(1672531200000),
         ChatMessageActions.MessageUpdate,
-        'abcdefghij@1672531200000-123:0',
+        '01672531200000-123@abcdefghij:0',
         undefined,
         new Date(1672531300000),
         { clientId: 'clientId2' },
@@ -193,11 +186,11 @@ describe('ChatMessage', () => {
     });
 
     it(`throws an error when trying to compare actions belonging to different origin messages`, () => {
-      const firstSerial = 'abcdefghij@1672531200000-124';
-      const secondSerial = 'abcdefghij@1672531200000-123';
+      const firstSerial = '01672531200000-124@abcdefghij';
+      const secondSerial = '01672531200000-123@abcdefghij';
 
-      const firstActionSerial = 'abcdefghij@1672531200000-123:0';
-      const secondActionSerial = 'abcdefghij@1672531200000-123:0';
+      const firstActionSerial = '01672531200000-123@abcdefghij:0';
+      const secondActionSerial = '01672531200000-123@abcdefghij:0';
 
       const firstMessage = new DefaultMessage(
         firstSerial,
@@ -206,6 +199,7 @@ describe('ChatMessage', () => {
         'hello there',
         {},
         {},
+        new Date(1672531200000),
         ChatMessageActions.MessageUpdate,
         firstActionSerial,
       );
@@ -216,6 +210,7 @@ describe('ChatMessage', () => {
         'hello there',
         {},
         {},
+        new Date(1672531200000),
         ChatMessageActions.MessageUpdate,
         secondActionSerial,
       );
@@ -230,8 +225,8 @@ describe('ChatMessage', () => {
       [
         'returns true when this message action is the same as another',
         {
-          firstActionSerial: 'abcdefghij@1672531200000-123:0',
-          secondActionSerial: 'abcdefghij@1672531200000-123:0',
+          firstActionSerial: '01672531200000-123@abcdefghij:0',
+          secondActionSerial: '01672531200000-123@abcdefghij:0',
           action: 'actionEqual',
           expected: (firstMessage: Message, secondMessage: Message) => {
             expect(firstMessage.actionEqual(secondMessage)).toBe(true);
@@ -241,8 +236,8 @@ describe('ChatMessage', () => {
       [
         'returns false when this message action is not same as another message action',
         {
-          firstActionSerial: 'abcdefghij@1672531200000-123:0',
-          secondActionSerial: 'abcdefghij@1672531200000-124:0',
+          firstActionSerial: '01672531200000-123@abcdefghij:0',
+          secondActionSerial: '01672531200000-124@abcdefghij:0',
           action: 'actionEqual',
           expected: (firstMessage: Message, secondMessage: Message) => {
             expect(firstMessage.actionEqual(secondMessage)).toBe(false);
@@ -252,8 +247,8 @@ describe('ChatMessage', () => {
       [
         'returns true when this message action is before another message action',
         {
-          firstActionSerial: 'abcdefghij@1672531200000-123:0',
-          secondActionSerial: 'abcdefghij@1672531200000-124:0',
+          firstActionSerial: '01672531200000-123@abcdefghij:0',
+          secondActionSerial: '01672531200000-124@abcdefghij:0',
           action: 'actionBefore',
           expected: (firstMessage: Message, secondMessage: Message) => {
             expect(firstMessage.actionBefore(secondMessage)).toBe(true);
@@ -263,8 +258,8 @@ describe('ChatMessage', () => {
       [
         'returns true when this message action is after another message action',
         {
-          firstActionSerial: 'abcdefghij@1672531200000-124:0',
-          secondActionSerial: 'abcdefghij@1672531200000-123:0',
+          firstActionSerial: '01672531200000-124@abcdefghij:0',
+          secondActionSerial: '01672531200000-123@abcdefghij:0',
           action: 'actionAfter',
           expected: (firstMessage: Message, secondMessage: Message) => {
             expect(firstMessage.actionAfter(secondMessage)).toBe(true);
@@ -273,7 +268,7 @@ describe('ChatMessage', () => {
       ],
     ])('compare message action serials', (name, { firstActionSerial, secondActionSerial, expected }) => {
       it(name, () => {
-        const messageSerial = 'abcdefghij@1672531200000-123';
+        const messageSerial = '01672531200000-123@abcdefghij';
         const firstMessage = new DefaultMessage(
           messageSerial,
           'clientId',
@@ -281,6 +276,7 @@ describe('ChatMessage', () => {
           'hello there',
           {},
           {},
+          new Date(1672531200000),
           ChatMessageActions.MessageUpdate,
           firstActionSerial,
         );
@@ -291,6 +287,7 @@ describe('ChatMessage', () => {
           'hello there',
           {},
           {},
+          new Date(1672531200000),
           ChatMessageActions.MessageUpdate,
           secondActionSerial,
         );

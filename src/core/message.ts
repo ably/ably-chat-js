@@ -4,7 +4,6 @@ import { ActionMetadata } from './action-metadata.js';
 import { ChatMessageActions } from './events.js';
 import { Headers } from './headers.js';
 import { Metadata } from './metadata.js';
-import { DefaultSerial, Serial } from './serial.js';
 
 /**
  * {@link Headers} type for chat messages.
@@ -201,10 +200,6 @@ export interface Message {
  * Allows for comparison of messages based on their serials.
  */
 export class DefaultMessage implements Message {
-  private readonly _calculatedOriginSerial: Serial;
-  private readonly _calculatedActionSerial: Serial;
-  public readonly createdAt: Date;
-
   constructor(
     public readonly serial: string,
     public readonly clientId: string,
@@ -212,6 +207,7 @@ export class DefaultMessage implements Message {
     public readonly text: string,
     public readonly metadata: MessageMetadata,
     public readonly headers: MessageHeaders,
+    public readonly createdAt: Date,
     public readonly latestAction: ChatMessageActions,
 
     // the `latestActionSerial` will be set to the current message `serial` for new messages,
@@ -222,10 +218,6 @@ export class DefaultMessage implements Message {
     public readonly updatedAt?: Date,
     public readonly latestActionDetails?: MessageActionDetails,
   ) {
-    this._calculatedOriginSerial = DefaultSerial.calculateSerial(serial);
-    this._calculatedActionSerial = DefaultSerial.calculateSerial(latestActionSerial);
-    this.createdAt = new Date(this._calculatedOriginSerial.timestamp);
-
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
   }
@@ -251,7 +243,8 @@ export class DefaultMessage implements Message {
     if (!this.equal(message)) {
       throw new ErrorInfo('actionBefore(): Cannot compare actions, message serials must be equal', 50000, 500);
     }
-    return this._calculatedActionSerial.before(message.latestActionSerial);
+
+    return this.latestActionSerial < message.latestActionSerial;
   }
 
   actionAfter(message: Message): boolean {
@@ -259,7 +252,8 @@ export class DefaultMessage implements Message {
     if (!this.equal(message)) {
       throw new ErrorInfo('actionAfter(): Cannot compare actions, message serials must be equal', 50000, 500);
     }
-    return this._calculatedActionSerial.after(message.latestActionSerial);
+
+    return this.latestActionSerial > message.latestActionSerial;
   }
 
   actionEqual(message: Message): boolean {
@@ -267,18 +261,19 @@ export class DefaultMessage implements Message {
     if (!this.equal(message)) {
       throw new ErrorInfo('actionEqual(): Cannot compare actions, message serials must be equal', 50000, 500);
     }
-    return this._calculatedActionSerial.equal(message.latestActionSerial);
+
+    return this.latestActionSerial === message.latestActionSerial;
   }
 
   before(message: Message): boolean {
-    return this._calculatedOriginSerial.before(message.serial);
+    return this.serial < message.serial;
   }
 
   after(message: Message): boolean {
-    return this._calculatedOriginSerial.after(message.serial);
+    return this.serial > message.serial;
   }
 
   equal(message: Message): boolean {
-    return this._calculatedOriginSerial.equal(message.serial);
+    return this.serial === message.serial;
   }
 }

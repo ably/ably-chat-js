@@ -13,7 +13,7 @@ const TEST_ENVELOPED_MESSAGE = {
   timestamp: 1719948956834,
   encoding: 'json',
   action: 1,
-  serial: '108TeGZDQBderu97202638@1719948956834-0',
+  serial: '01719948956834-000@108TeGZDQBderu97202638',
   extras: {
     headers: {},
   },
@@ -29,7 +29,7 @@ const TEST_ENVELOPED_ROOM_REACTION = {
   encoding: 'json',
   data: '{"type":"like"}',
   name: 'roomReaction',
-  serial: '108TeGZDQBderu97202638@1719948956834-0',
+  serial: '01719948956834-000@108TeGZDQBderu97202638',
   action: 1,
 };
 
@@ -39,14 +39,15 @@ describe('helpers', () => {
       const result = await chatMessageFromEncoded(TEST_ENVELOPED_MESSAGE);
       expect(result).toEqual(
         new DefaultMessage(
-          '108TeGZDQBderu97202638@1719948956834-0',
+          '01719948956834-000@108TeGZDQBderu97202638',
           'user1',
           'some-room',
           'I have the high ground now',
           {},
           {},
+          new Date(1719948956834),
           ChatMessageActions.MessageCreate,
-          '108TeGZDQBderu97202638@1719948956834-0',
+          '01719948956834-000@108TeGZDQBderu97202638',
         ),
       );
     });
@@ -59,7 +60,7 @@ describe('helpers', () => {
           timestamp: 1719948956834,
           encoding: 'json',
           action: 1,
-          serial: '108TeGZDQBderu97202638@1719948956834-0',
+          serial: '01719948956834-000@108TeGZDQBderu97202638',
           extras: {
             headers: {},
           },
