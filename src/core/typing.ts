@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { dequal } from 'dequal';
 
-import { getChannel } from './channel.js';
+import { ChannelManager } from './channel-manager.js';
 import {
   DiscontinuityEmitter,
   DiscontinuityListener,
@@ -133,14 +133,20 @@ export class DefaultTyping
    * Constructs a new `DefaultTyping` instance.
    * @param roomId The unique identifier of the room.
    * @param options The options for typing in the room.
-   * @param realtime An instance of the Ably Realtime client.
+   * @param channelManager The channel manager for the room.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, options: TypingOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
+  constructor(
+    roomId: string,
+    options: TypingOptions,
+    channelManager: ChannelManager,
+    clientId: string,
+    logger: Logger,
+  ) {
     super();
     this._clientId = clientId;
-    this._channel = this._makeChannel(roomId, realtime);
+    this._channel = this._makeChannel(roomId, channelManager);
 
     // Timeout for typing
     this._typingTimeoutMs = options.timeoutMs;
@@ -150,8 +156,8 @@ export class DefaultTyping
   /**
    * Creates the realtime channel for typing indicators.
    */
-  private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
-    const channel = getChannel(`${roomId}::$chat::$typingIndicators`, realtime);
+  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
+    const channel = channelManager.get(`${roomId}::$chat::$typingIndicators`);
     addListenerToChannelPresenceWithoutAttach({
       listener: this._internalSubscribeToEvents.bind(this),
       channel: channel,

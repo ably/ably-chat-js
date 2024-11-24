@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
-import { getChannel, messagesChannelName } from './channel.js';
+import { messagesChannelName } from './channel.js';
+import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import {
   DiscontinuityEmitter,
@@ -300,16 +301,16 @@ export class DefaultMessages
   /**
    * Constructs a new `DefaultMessages` instance.
    * @param roomId The unique identifier of the room.
-   * @param realtime An instance of the Ably Realtime client.
+   * @param channelManager An instance of the ChannelManager.
    * @param chatApi An instance of the ChatApi.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, clientId: string, logger: Logger) {
+  constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
     this._roomId = roomId;
 
-    this._channel = this._makeChannel(roomId, realtime);
+    this._channel = this._makeChannel(roomId, channelManager);
 
     this._chatApi = chatApi;
     this._clientId = clientId;
@@ -320,8 +321,8 @@ export class DefaultMessages
   /**
    * Creates the realtime channel for messages.
    */
-  private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
-    const channel = getChannel(messagesChannelName(roomId), realtime);
+  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
+    const channel = channelManager.get(messagesChannelName(roomId));
 
     addListenerToChannelWithoutAttach({
       listener: this._processEvent.bind(this),
