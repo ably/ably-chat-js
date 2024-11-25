@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Ably from 'ably';
+import { ClientOptions } from 'ably';
 import { ChatClient, LogLevel } from '@ably/chat';
 import { nanoid } from 'nanoid';
 import App from './App.tsx';
@@ -23,22 +24,41 @@ const clientId = (function () {
   return newClientId;
 })();
 
-// use this for local development with local realtime
-//
-// const realtimeClient = new Ably.Realtime({
-//   authUrl: `/api/ably-token-request?clientId=${clientId}`,
-//   port: 8081,
-//   environment: 'local',
-//   tls: false,
-//   clientId,
-// });
+// This is a config useful for the Ably team to work on new features before they are released.
+// In real apps, developers building with the Ably Chat SDK only need to use Ably Production.
+const getRealtimeOptions = () => {
+  const environment = import.meta?.env?.VITE_ABLY_CHAT_ENV;
+  const realtimeOptions: ClientOptions = {
+    authUrl: `/api/ably-token-request?clientId=${clientId}`,
+    clientId,
+  };
+  switch (environment) {
+    case 'local': {
+      console.log('Using local Ably environment');
+      realtimeOptions.environment = 'local';
+      realtimeOptions.port = 8081;
+      realtimeOptions.tls = false;
+      break;
+    }
+    case 'sandbox':
+      console.log('Using sandbox Ably environment');
+      realtimeOptions.environment = 'sandbox';
+      break;
+    case 'production':
+    case undefined:
+      console.log('Using production Ably environment');
+      realtimeOptions.restHost = import.meta?.env?.VITE_ABLY_HOST ? import.meta.env.VITE_ABLY_HOST : undefined;
+      realtimeOptions.realtimeHost = import.meta?.env?.VITE_ABLY_HOST ? import.meta.env.VITE_ABLY_HOST : undefined;
+      break;
+    default:
+      throw new Error(
+        `Unknown environment: ${environment}, please set VITE_ABLY_CHAT_ENV to one of 'local', 'sandbox', or 'production'`,
+      );
+  }
+  return realtimeOptions;
+};
 
-const realtimeClient = new Ably.Realtime({
-  authUrl: `/api/ably-token-request?clientId=${clientId}`,
-  restHost: import.meta?.env?.VITE_ABLY_HOST ? import.meta.env.VITE_ABLY_HOST : undefined,
-  realtimeHost: import.meta?.env?.VITE_ABLY_HOST ? import.meta.env.VITE_ABLY_HOST : undefined,
-  clientId,
-});
+const realtimeClient = new Ably.Realtime(getRealtimeOptions());
 
 const chatClient = new ChatClient(realtimeClient, { logLevel: LogLevel.Info });
 
