@@ -632,7 +632,7 @@ export class RoomLifecycleManager {
       this._contributors.map(async (contributor) => {
         // If its the contributor we want to wait for a conclusion on, then we should not detach it
         // Unless we're in a failed state, in which case we should detach it
-        if (contributor === except && this._lifecycle.status !== RoomStatus.Failed) {
+        if (contributor.channel === except?.channel && this._lifecycle.status !== RoomStatus.Failed) {
           return;
         }
 
