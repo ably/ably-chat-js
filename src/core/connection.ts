@@ -156,16 +156,21 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
       // If we're in the disconnected state, assume it's transient and set a timeout to propagate the change
       if (chatState === ConnectionStatus.Disconnected && !this._transientTimeout) {
         this._transientTimeout = setTimeout(() => {
-          this._transientTimeout = undefined;
-          this._applyStatusChange(stateChange);
+          this._onTransientDisconnectTimeout(stateChange);
         }, TRANSIENT_TIMEOUT);
         return;
       }
 
-      // If we're in any state other than disconnected, and we have a transient timeout, clear it
       if (this._transientTimeout) {
-        clearTimeout(this._transientTimeout);
-        this._transientTimeout = undefined;
+        // If we're in the connecting state, or disconnected state, and we have a transient timeout, we should ignore it -
+        // if we can reach connected in a reasonable time, we can assume the disconnect was transient and suppress the
+        // change
+        if (chatState === ConnectionStatus.Connecting || chatState === ConnectionStatus.Disconnected) {
+          this._logger.debug('ignoring transient state due to transient disconnect timeout', stateChange);
+          return;
+        }
+
+        this._cancelTransientDisconnectTimeout();
       }
 
       this._applyStatusChange(stateChange);
@@ -222,6 +227,32 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
       default: {
         return status as ConnectionStatus;
       }
+    }
+  }
+
+  /**
+   * Handles a transient disconnect timeout.
+   *
+   * @param statusChange The change in status.
+   */
+  private _onTransientDisconnectTimeout(statusChange: ConnectionStatusChange): void {
+    this._logger.debug('transient disconnect timeout reached');
+    this._cancelTransientDisconnectTimeout();
+
+    // When we apply the status change, we should apply whatever the current state is at the time
+    this._applyStatusChange({
+      ...statusChange,
+      current: this._mapAblyStatusToChat(this._connection.state),
+    });
+  }
+
+  /**
+   * Cancels the transient disconnect timeout.
+   */
+  private _cancelTransientDisconnectTimeout(): void {
+    if (this._transientTimeout) {
+      clearTimeout(this._transientTimeout);
+      this._transientTimeout = undefined;
     }
   }
 }
