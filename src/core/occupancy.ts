@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
-import { getChannel, messagesChannelName } from './channel.js';
+import { messagesChannelName } from './channel.js';
+import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import {
   DiscontinuityEmitter,
@@ -106,15 +107,15 @@ export class DefaultOccupancy
   /**
    * Constructs a new `DefaultOccupancy` instance.
    * @param roomId The unique identifier of the room.
-   * @param realtime An instance of the Ably Realtime client.
+   * @param channelManager An instance of the ChannelManager.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, chatApi: ChatApi, logger: Logger) {
+  constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, logger: Logger) {
     super();
 
     this._roomId = roomId;
-    this._channel = this._makeChannel(roomId, realtime);
+    this._channel = this._makeChannel(roomId, channelManager);
     this._chatApi = chatApi;
     this._logger = logger;
   }
@@ -122,8 +123,8 @@ export class DefaultOccupancy
   /**
    * Creates the realtime channel for occupancy.
    */
-  private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
-    const channel = getChannel(messagesChannelName(roomId), realtime, { params: { occupancy: 'metrics' } });
+  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
+    const channel = channelManager.get(DefaultOccupancy.channelName(roomId));
     addListenerToChannelWithoutAttach({
       listener: this._internalOccupancyListener.bind(this),
       events: ['[meta]occupancy'],
@@ -243,5 +244,25 @@ export class DefaultOccupancy
    */
   get detachmentErrorCode(): ErrorCodes {
     return ErrorCodes.OccupancyDetachmentFailed;
+  }
+
+  /**
+   * Merges the channel options for the room with the ones required for presence.
+   *
+   * @param roomOptions The room options to merge for.
+   * @returns A function that merges the channel options for the room with the ones required for presence.
+   */
+  static channelOptionMerger(): ChannelOptionsMerger {
+    return (options) => ({ ...options, params: { ...options.params, occupancy: 'metrics' } });
+  }
+
+  /**
+   * Returns the channel name for the presence channel.
+   *
+   * @param roomId The unique identifier of the room.
+   * @returns The channel name for the presence channel.
+   */
+  static channelName(roomId: string): string {
+    return messagesChannelName(roomId);
   }
 }

@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
-import { getChannel, messagesChannelName } from './channel.js';
+import { messagesChannelName } from './channel.js';
+import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
 import {
   DiscontinuityEmitter,
   DiscontinuityListener,
@@ -198,16 +199,15 @@ export class DefaultPresence
   /**
    * Constructs a new `DefaultPresence` instance.
    * @param roomId The unique identifier of the room.
-   * @param roomOptions The room options for presence.
-   * @param realtime An instance of the Ably Realtime client.
+   * @param channelManager The channel manager to use for creating the presence channel.
    * @param clientId The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, roomOptions: RoomOptions, realtime: Ably.Realtime, clientId: string, logger: Logger) {
+  constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
     super();
 
-    this._channel = this._makeChannel(roomId, roomOptions, realtime);
+    this._channel = this._makeChannel(roomId, channelManager);
     this._clientId = clientId;
     this._logger = logger;
   }
@@ -215,18 +215,8 @@ export class DefaultPresence
   /**
    * Creates the realtime channel for presence.
    */
-  private _makeChannel(roomId: string, roomOptions: RoomOptions, realtime: Ably.Realtime): Ably.RealtimeChannel {
-    // Set our channel modes based on the room options
-    const channelModes = ['PUBLISH', 'SUBSCRIBE'] as Ably.ChannelMode[];
-    if (roomOptions.presence?.enter === undefined || roomOptions.presence.enter) {
-      channelModes.push('PRESENCE');
-    }
-
-    if (roomOptions.presence?.subscribe === undefined || roomOptions.presence.subscribe) {
-      channelModes.push('PRESENCE_SUBSCRIBE');
-    }
-
-    const channel = getChannel(messagesChannelName(roomId), realtime, { modes: channelModes });
+  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
+    const channel = channelManager.get(DefaultPresence.channelName(roomId));
 
     addListenerToChannelPresenceWithoutAttach({
       listener: this.subscribeToEvents.bind(this),
@@ -417,5 +407,36 @@ export class DefaultPresence
    */
   get detachmentErrorCode(): ErrorCodes {
     return ErrorCodes.PresenceDetachmentFailed;
+  }
+
+  /**
+   * Merges the channel options for the room with the ones required for presence.
+   *
+   * @param roomOptions The room options to merge for.
+   * @returns A function that merges the channel options for the room with the ones required for presence.
+   */
+  static channelOptionMerger(roomOptions: RoomOptions): ChannelOptionsMerger {
+    return (options) => {
+      const channelModes = ['PUBLISH', 'SUBSCRIBE'] as Ably.ChannelMode[];
+      if (roomOptions.presence?.enter === undefined || roomOptions.presence.enter) {
+        channelModes.push('PRESENCE');
+      }
+
+      if (roomOptions.presence?.subscribe === undefined || roomOptions.presence.subscribe) {
+        channelModes.push('PRESENCE_SUBSCRIBE');
+      }
+
+      return { ...options, modes: channelModes };
+    };
+  }
+
+  /**
+   * Returns the channel name for the presence channel.
+   *
+   * @param roomId The unique identifier of the room.
+   * @returns The channel name for the presence channel.
+   */
+  static channelName(roomId: string): string {
+    return messagesChannelName(roomId);
   }
 }

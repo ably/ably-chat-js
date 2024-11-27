@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { getChannel } from './channel.js';
+import { ChannelManager } from './channel-manager.js';
 import {
   DiscontinuityEmitter,
   DiscontinuityListener,
@@ -143,14 +143,14 @@ export class DefaultRoomReactions
   /**
    * Constructs a new `DefaultRoomReactions` instance.
    * @param roomId The unique identifier of the room.
-   * @param realtime An instance of the Ably Realtime client.
+   * @param channelManager The ChannelManager instance.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, realtime: Ably.Realtime, clientId: string, logger: Logger) {
+  constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
     super();
 
-    this._channel = this._makeChannel(roomId, realtime);
+    this._channel = this._makeChannel(roomId, channelManager);
     this._clientId = clientId;
     this._logger = logger;
   }
@@ -158,8 +158,8 @@ export class DefaultRoomReactions
   /**
    * Creates the realtime channel for room reactions.
    */
-  private _makeChannel(roomId: string, realtime: Ably.Realtime): Ably.RealtimeChannel {
-    const channel = getChannel(`${roomId}::$chat::$reactions`, realtime);
+  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
+    const channel = channelManager.get(`${roomId}::$chat::$reactions`);
     addListenerToChannelWithoutAttach({
       listener: this._forwarder.bind(this),
       events: [RoomReactionEvents.Reaction],

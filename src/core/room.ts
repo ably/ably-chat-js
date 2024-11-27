@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import cloneDeep from 'lodash.clonedeep';
 
+import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
@@ -167,32 +168,34 @@ export class DefaultRoom implements Room {
     this._logger = logger;
     this._lifecycle = new DefaultRoomLifecycle(roomId, logger);
 
+    const channelManager = this._getChannelManager(options, realtime, logger);
+
     // Setup features
-    this._messages = new DefaultMessages(roomId, realtime, this._chatApi, realtime.auth.clientId, logger);
+    this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, logger);
 
     const features: ContributesToRoomLifecycle[] = [this._messages];
 
     if (options.presence) {
       this._logger.debug('enabling presence on room', { roomId });
-      this._presence = new DefaultPresence(roomId, options, realtime, realtime.auth.clientId, logger);
+      this._presence = new DefaultPresence(roomId, channelManager, realtime.auth.clientId, logger);
       features.push(this._presence);
     }
 
     if (options.typing) {
       this._logger.debug('enabling typing on room', { roomId });
-      this._typing = new DefaultTyping(roomId, options.typing, realtime, realtime.auth.clientId, logger);
+      this._typing = new DefaultTyping(roomId, options.typing, channelManager, realtime.auth.clientId, logger);
       features.push(this._typing);
     }
 
     if (options.reactions) {
       this._logger.debug('enabling reactions on room', { roomId });
-      this._reactions = new DefaultRoomReactions(roomId, realtime, realtime.auth.clientId, logger);
+      this._reactions = new DefaultRoomReactions(roomId, channelManager, realtime.auth.clientId, logger);
       features.push(this._reactions);
     }
 
     if (options.occupancy) {
       this._logger.debug('enabling occupancy on room', { roomId });
-      this._occupancy = new DefaultOccupancy(roomId, realtime, this._chatApi, logger);
+      this._occupancy = new DefaultOccupancy(roomId, channelManager, this._chatApi, logger);
       features.push(this._occupancy);
     }
 
@@ -210,11 +213,32 @@ export class DefaultRoom implements Room {
       await this._lifecycleManager.release();
 
       for (const feature of features) {
-        realtime.channels.release(feature.channel.name);
+        channelManager.release(feature.channel.name);
       }
 
       finalized = true;
     };
+  }
+
+  /**
+   * Gets the channel manager for the room, which handles merging channel options together and creating channels.
+   *
+   * @param options The room options.
+   * @param realtime  An instance of the Ably Realtime client.
+   * @param logger An instance of the Logger.
+   */
+  private _getChannelManager(options: RoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
+    const manager = new ChannelManager(realtime, logger);
+
+    if (options.occupancy) {
+      manager.mergeOptions(DefaultOccupancy.channelName(this._roomId), DefaultOccupancy.channelOptionMerger());
+    }
+
+    if (options.presence) {
+      manager.mergeOptions(DefaultPresence.channelName(this._roomId), DefaultPresence.channelOptionMerger(options));
+    }
+
+    return manager;
   }
 
   /**
