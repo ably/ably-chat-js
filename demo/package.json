@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@ably/chat": "file:..",
-    "ably": "^2.5.0",
+    "ably": "ably/ably-js#mutable-messages-with-submodule-test",
     "clsx": "^2.1.1",
     "nanoid": "^5.0.8",
     "react": "^18.3.1",
