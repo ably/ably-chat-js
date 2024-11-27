@@ -15,8 +15,8 @@ interface MessagePayload {
   };
 
   serial: string;
-  updatedAt?: number;
-  updateSerial?: string;
+  createdAt: number;
+  version?: string;
   action: Ably.MessageAction;
   operation?: Ably.Operation;
 }
@@ -69,11 +69,11 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     text: message.data.text,
     metadata: message.data.metadata ?? {},
     headers: message.extras.headers ?? {},
-    createdAt: new Date(message.timestamp),
+    createdAt: new Date(message.createdAt),
     latestAction: message.action as ChatMessageActions,
-    latestActionSerial: message.updateSerial ?? message.serial,
-    updatedAt: message.updatedAt ? new Date(message.updatedAt) : undefined,
-    deletedAt: message.updatedAt ? new Date(message.updatedAt) : undefined,
+    latestActionSerial: message.version ?? message.serial,
+    updatedAt: message.timestamp ? new Date(message.timestamp) : undefined,
+    deletedAt: message.timestamp ? new Date(message.timestamp) : undefined,
     operation: message.operation as MessageActionDetails,
   };
 
@@ -83,11 +83,8 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     }
     case ChatMessageActions.MessageUpdate:
     case ChatMessageActions.MessageDelete: {
-      if (!message.updatedAt) {
-        throw new Ably.ErrorInfo(`received incoming ${message.action} without updatedAt`, 50000, 500);
-      }
-      if (!message.updateSerial) {
-        throw new Ably.ErrorInfo(`received incoming ${message.action} without updateSerial`, 50000, 500);
+      if (!message.version) {
+        throw new Ably.ErrorInfo(`received incoming ${message.action} without version`, 50000, 500);
       }
       break;
     }

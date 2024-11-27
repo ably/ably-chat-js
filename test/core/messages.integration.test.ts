@@ -35,7 +35,15 @@ const waitForMessages = (messages: Message[], expectedCount: number) => {
 
 describe('messages integration', () => {
   beforeEach<TestContext>((context) => {
-    context.chat = newChatClient();
+    context.chat = newChatClient(
+      undefined,
+      ablyRealtimeClient({
+        logLevel: 4,
+        logHandler: (message) => {
+          console.log(message);
+        },
+      }),
+    );
   });
 
   it<TestContext>('sets the agent version on the channel', async (context) => {
