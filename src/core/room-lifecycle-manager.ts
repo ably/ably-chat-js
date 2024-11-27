@@ -31,11 +31,13 @@ export interface ContributesToRoomLifecycle extends HandlesDiscontinuity {
 /**
  * The order of precedence for lifecycle operations, passed to the mutex which allows
  * us to ensure that internal operations take precedence over user-driven operations.
+ *
+ * The higher the number, the higher the priority.
  */
 enum LifecycleOperationPrecedence {
-  Internal = 0,
+  Internal = 2,
   Release = 1,
-  AttachOrDetach = 2,
+  AttachOrDetach = 0,
 }
 
 /**
@@ -126,12 +128,6 @@ export class RoomLifecycleManager {
     this._contributors = contributors;
     this._transientDetachTimeouts = new Map();
     this._lifecycle = lifecycle;
-
-    // This shouldn't be the case except in testing, but if we're already attached, then we should consider
-    // ourselves not in the middle of an operation and thus consider channel events.
-    if (this._lifecycle.status !== RoomStatus.Attached) {
-      this._operationInProgress = true;
-    }
 
     this._setupContributorListeners(transientDetachTimeout);
   }
@@ -229,7 +225,7 @@ export class RoomLifecycleManager {
               channel: contributor.channel.name,
             });
             this._clearAllTransientDetachTimeouts();
-            this._operationInProgress = true;
+            this._startLifecycleOperation();
             this._lifecycle.setStatus({
               status: RoomStatus.Failed,
               error: change.reason,
@@ -321,7 +317,7 @@ export class RoomLifecycleManager {
     // We freeze our state, so that individual channel state changes do not affect the room status
     // We also set our room state to the state of the contributor
     // We clear all the transient detach timeouts, because we're closing all the channels
-    this._operationInProgress = true;
+    this._startLifecycleOperation();
     this._clearAllTransientDetachTimeouts();
 
     // We enter the protected block with priority Internal, so take precedence over user-driven actions
@@ -361,6 +357,7 @@ export class RoomLifecycleManager {
    */
   private async _doRetry(contributor: ContributesToRoomLifecycle): Promise<void> {
     // A helper that allows us to retry the attach operation
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     const doAttachWithRetry = () => {
       this._logger.debug('RoomLifecycleManager.doAttachWithRetry();');
       this._lifecycle.setStatus({ status: RoomStatus.Attaching });
@@ -374,13 +371,16 @@ export class RoomLifecycleManager {
         // If we're in failed, then we should wind down all the channels, eventually - but we're done here
         if (result.status === RoomStatus.Failed) {
           void this._mtx.runExclusive(
-            () => this._runDownChannelsOnFailedAttach(),
+            () =>
+              this._runDownChannelsOnFailedAttach().finally(() => {
+                this._endLifecycleOperation();
+              }),
             LifecycleOperationPrecedence.Internal,
           );
           return;
         }
 
-        // If we're in suspended, then we should wait for the channel to reattach, but wait for it to do so
+        // If we're in suspended, then we should wait for the channel to reattach and then try again
         if (result.status === RoomStatus.Suspended) {
           const failedFeature = result.failedFeature;
           if (!failedFeature) {
@@ -393,7 +393,8 @@ export class RoomLifecycleManager {
           return this._doRetry(failedFeature).catch();
         }
 
-        // We attached, huzzah!
+        // We attached, huzzah! It's the end of the loop
+        this._endLifecycleOperation();
       });
     };
 
@@ -404,6 +405,9 @@ export class RoomLifecycleManager {
     try {
       await this._doChannelWindDown(contributor).catch(() => {
         // If in doing the wind down, we've entered failed state, then it's game over anyway
+        // TODO: Another PR, but in the even if we get a failed channel, we still need to do the wind down
+        // of other channels for atomicity.
+        // https://github.com/ably/ably-chat-js/issues/416
         if (this._lifecycle.status === RoomStatus.Failed) {
           throw new Error('room is in a failed state');
         }
@@ -417,11 +421,12 @@ export class RoomLifecycleManager {
       });
     } catch {
       // If an error gets through here, then the room has entered the failed state, we're done.
+      this._endLifecycleOperation();
       return;
     }
 
     // If our problem channel has reattached, then we can retry the attach
-    if (contributor.channel.state === RoomStatus.Attached) {
+    if (contributor.channel.state === 'attached') {
       this._logger.debug('RoomLifecycleManager._doRetry(); feature reattached, retrying attach');
       return doAttachWithRetry();
     }
@@ -429,15 +434,19 @@ export class RoomLifecycleManager {
     // Otherwise, wait for our problem channel to re-attach and try again
     return new Promise<void>((resolve) => {
       const listener = (change: Ably.ChannelStateChange) => {
-        if (change.current === RoomStatus.Attached) {
+        if (change.current === 'attached') {
           contributor.channel.off(listener);
           resolve();
           return;
         }
 
-        if (change.current === RoomStatus.Failed) {
+        if (change.current === 'failed') {
           contributor.channel.off(listener);
           this._lifecycle.setStatus({ status: RoomStatus.Failed, error: change.reason });
+
+          // Its ok to just set operation in progress = false and return here
+          // As every other channel is wound down.
+          this._endLifecycleOperation();
           throw change.reason ?? new Ably.ErrorInfo('unknown error in _doRetry', ErrorCodes.RoomLifecycleError, 500);
         }
       };
@@ -487,7 +496,7 @@ export class RoomLifecycleManager {
 
       // At this point, we force the room status to be attaching
       this._clearAllTransientDetachTimeouts();
-      this._operationInProgress = true;
+      this._startLifecycleOperation();
       this._lifecycle.setStatus({ status: RoomStatus.Attaching });
 
       return this._doAttach().then((result: RoomAttachmentResult) => {
@@ -495,7 +504,7 @@ export class RoomLifecycleManager {
         if (result.status === RoomStatus.Failed) {
           this._logger.debug('RoomLifecycleManager.attach(); room entered failed, winding down channels', { result });
           void this._mtx.runExclusive(
-            () => this._runDownChannelsOnFailedAttach(),
+            () => this._runDownChannelsOnFailedAttach().finally(() => (this._operationInProgress = false)),
             LifecycleOperationPrecedence.Internal,
           );
 
@@ -589,7 +598,7 @@ export class RoomLifecycleManager {
 
     // We successfully attached all the channels - set our status to attached, start listening changes in channel status
     this._lifecycle.setStatus(attachResult);
-    this._operationInProgress = false;
+    this._endLifecycleOperation();
 
     // Iterate the pending discontinuity events and trigger them
     for (const [contributor, error] of this._pendingDiscontinuityEvents) {
@@ -713,7 +722,7 @@ export class RoomLifecycleManager {
       }
 
       // We force the room status to be detaching
-      this._operationInProgress = true;
+      this._startLifecycleOperation();
       this._clearAllTransientDetachTimeouts();
       this._lifecycle.setStatus({ status: RoomStatus.Detaching });
 
@@ -762,6 +771,9 @@ export class RoomLifecycleManager {
       // If we've made it this far, then we're done
       done = true;
     }
+
+    // The process is finished, so set operationInProgress to false
+    this._endLifecycleOperation();
 
     // If we aren't in the failed state, then we're detached
     if (this._lifecycle.status !== RoomStatus.Failed) {
@@ -819,7 +831,7 @@ export class RoomLifecycleManager {
 
       // We force the room status to be releasing
       this._clearAllTransientDetachTimeouts();
-      this._operationInProgress = true;
+      this._startLifecycleOperation();
       this._releaseInProgress = true;
       this._lifecycle.setStatus({ status: RoomStatus.Releasing });
 
@@ -888,7 +900,24 @@ export class RoomLifecycleManager {
       }),
     ).then(() => {
       this._releaseInProgress = false;
+      this._endLifecycleOperation();
       this._lifecycle.setStatus({ status: RoomStatus.Released });
     });
+  }
+
+  /**
+   * Starts the room lifecycle operation.
+   */
+  private _startLifecycleOperation(): void {
+    this._logger.debug('RoomLifecycleManager._startLifecycleOperation();');
+    this._operationInProgress = true;
+  }
+
+  /**
+   * Ends the room lifecycle operation.
+   */
+  private _endLifecycleOperation(): void {
+    this._logger.debug('RoomLifecycleManager._endLifecycleOperation();');
+    this._operationInProgress = false;
   }
 }
