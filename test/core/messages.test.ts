@@ -179,10 +179,10 @@ describe('Messages', () => {
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageActions.MessageDelete,
-          updatedAt: 1729091893,
-          updateSerial: '01672531200000-123@abcdefghij',
+          version: '01672531200000-123@abcdefghij',
           extras: {},
           timestamp: publishTimestamp,
+          createdAt: publishTimestamp,
         });
         context.emulateBackendPublish({
           clientId: 'yoda',
@@ -192,10 +192,10 @@ describe('Messages', () => {
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageActions.MessageUpdate,
-          updatedAt: 1729091893,
-          updateSerial: '01672531200000-123@abcdefghij',
+          version: '01672531200000-123@abcdefghij',
           extras: {},
           timestamp: publishTimestamp,
+          createdAt: publishTimestamp,
         });
         context.emulateBackendPublish({
           clientId: 'yoda',
@@ -207,6 +207,7 @@ describe('Messages', () => {
           action: ChatMessageActions.MessageCreate,
           extras: {},
           timestamp: publishTimestamp,
+          createdAt: publishTimestamp,
         });
       }));
   });
@@ -259,8 +260,7 @@ describe('Messages', () => {
       action: ChatMessageActions.MessageUpdate,
       extras: {},
       timestamp: publishTimestamp,
-      updatedAt: updateTimestamp,
-      updateSerial: '01672531200000-123@abcdefghij:0',
+      version: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
@@ -275,8 +275,8 @@ describe('Messages', () => {
       action: ChatMessageActions.MessageDelete,
       extras: {},
       timestamp: publishTimestamp,
-      updatedAt: deletionTimestamp,
-      updateSerial: '01672531200000-123@abcdefghij:0',
+      createdAt: publishTimestamp,
+      version: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
@@ -297,7 +297,7 @@ describe('Messages', () => {
       serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageCreate,
       extras: {},
-      timestamp: Date.now(),
+      createdAt: publishTimestamp,
     });
     context.emulateBackendPublish({
       clientId: 'yoda2',
@@ -308,12 +308,12 @@ describe('Messages', () => {
       serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageUpdate,
       extras: {},
-      updatedAt: updateTimestamp,
-      updateSerial: '01672531200000-123@abcdefghij:0',
+      version: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
-      timestamp: Date.now(),
+      createdAt: publishTimestamp,
+      timestamp: updateTimestamp,
     });
     context.emulateBackendPublish({
       clientId: 'yoda2',
@@ -324,9 +324,9 @@ describe('Messages', () => {
       serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageDelete,
       extras: {},
-      timestamp: publishTimestamp,
-      updatedAt: deletionTimestamp,
-      updateSerial: '01672531200000-123@abcdefghij:0',
+      createdAt: publishTimestamp,
+      timestamp: deletionTimestamp,
+      version: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda2',
       },
@@ -403,6 +403,7 @@ describe('Messages', () => {
       action: ChatMessageActions.MessageCreate,
       extras: {},
       timestamp: publishTimestamp,
+      createdAt: publishTimestamp,
     });
     context.emulateBackendPublish({
       clientId: 'yoda',
@@ -412,13 +413,13 @@ describe('Messages', () => {
       },
       serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageUpdate,
-      updatedAt: updateTimestamp,
-      updateSerial: '01672531200000-123@abcdefghij:0',
+      version: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
       extras: {},
-      timestamp: publishTimestamp,
+      timestamp: updateTimestamp,
+      createdAt: publishTimestamp,
     });
     context.emulateBackendPublish({
       clientId: 'yoda',
@@ -429,9 +430,9 @@ describe('Messages', () => {
       serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageDelete,
       extras: {},
-      timestamp: publishTimestamp,
-      updatedAt: deletionTimestamp,
-      updateSerial: '01672531200000-123@abcdefghij:0',
+      timestamp: deletionTimestamp,
+      createdAt: publishTimestamp,
+      version: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
@@ -451,7 +452,8 @@ describe('Messages', () => {
       serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageCreate,
       extras: {},
-      timestamp: Date.now(),
+      createdAt: publishTimestamp,
+      timestamp: publishTimestamp,
     });
     context.emulateBackendPublish({
       clientId: 'yoda',
@@ -461,13 +463,13 @@ describe('Messages', () => {
       },
       serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageUpdate,
-      updatedAt: updateTimestamp,
-      updateSerial: '01672531200000-123@abcdefghij:0',
+      version: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda',
       },
       extras: {},
-      timestamp: publishTimestamp,
+      createdAt: publishTimestamp,
+      timestamp: updateTimestamp,
     });
     context.emulateBackendPublish({
       clientId: 'yoda2',
@@ -478,9 +480,9 @@ describe('Messages', () => {
       serial: '01672531200000-123@abcdefghij',
       action: ChatMessageActions.MessageDelete,
       extras: {},
-      timestamp: publishTimestamp,
-      updatedAt: deletionTimestamp,
-      updateSerial: '01672531200000-123@abcdefghij:0',
+      createdAt: publishTimestamp,
+      timestamp: deletionTimestamp,
+      version: '01672531200000-123@abcdefghij:0',
       operation: {
         clientId: 'yoda2',
       },
@@ -521,6 +523,7 @@ describe('Messages', () => {
         action: ChatMessageActions.MessageCreate,
         extras: {},
         timestamp: Date.now(),
+        createdAt: Date.now(),
       },
     ],
     [
@@ -535,6 +538,7 @@ describe('Messages', () => {
         action: 'message.unknown',
         extras: {},
         timestamp: Date.now(),
+        createdAt: Date.now(),
       },
     ],
     [
@@ -546,6 +550,7 @@ describe('Messages', () => {
         action: ChatMessageActions.MessageCreate,
         extras: {},
         timestamp: Date.now(),
+        createdAt: Date.now(),
       },
     ],
     [
@@ -558,6 +563,7 @@ describe('Messages', () => {
         action: ChatMessageActions.MessageCreate,
         extras: {},
         timestamp: Date.now(),
+        createdAt: Date.now(),
       },
     ],
     [
@@ -571,6 +577,7 @@ describe('Messages', () => {
         action: ChatMessageActions.MessageCreate,
         extras: {},
         timestamp: Date.now(),
+        createdAt: Date.now(),
       },
     ],
     [
@@ -584,6 +591,7 @@ describe('Messages', () => {
         serial: '01672531200000-123@abcdefghij',
         action: ChatMessageActions.MessageCreate,
         timestamp: Date.now(),
+        createdAt: Date.now(),
       },
     ],
 
@@ -597,6 +605,7 @@ describe('Messages', () => {
         },
         action: ChatMessageActions.MessageCreate,
         timestamp: Date.now(),
+        createdAt: Date.now(),
       },
     ],
   ])('invalid incoming messages', (name: string, inboundMessage: unknown) => {
