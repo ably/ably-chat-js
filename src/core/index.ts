@@ -42,6 +42,7 @@ export type {
   Messages,
   MessageSubscriptionResponse,
   QueryOptions,
+  ResultOrder,
   SendMessageParams,
   UpdateMessageParams,
 } from './messages.js';
