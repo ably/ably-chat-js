@@ -287,17 +287,20 @@ To update an existing message, call `update` on the `room.messages` property, wi
 the updated fields, and optional operation details to provide extra context for the update.
 
 The optional operation details are:
-* `description`: a string that can be used to inform others as to why the message was updated.
-* `metadata`: a map of extra information that can be attached to the update operation.
+
+- `description`: a string that can be used to inform others as to why the message was updated.
+- `metadata`: a map of extra information that can be attached to the update operation.
 
 Example
+
 ```typescript
-const updatedMessage = await room.messages.update(message,
+const updatedMessage = await room.messages.update(
+  message,
   {
-    text: "hello, this is edited",
+    text: 'hello, this is edited',
   },
   {
-    description: "edit example",
+    description: 'edit example',
   },
 );
 ```
@@ -317,10 +320,11 @@ In rare occasions updates might arrive over realtime out of order. To keep a cor
 The same out-of-order situation can happen between updates received over realtime and HTTP responses. In the situation where two concurrent updates happen, both might be received via realtime before the HTTP response of the first one arrives. Always compare the message `version` to determine which instance of a `Message` is newer.
 
 Example for handling updates:
-```typescript
-const messages : Message[] = []; // assuming this is where state is kept
 
-room.messages.subscribe(event => {
+```typescript
+const messages: Message[] = []; // assuming this is where state is kept
+
+room.messages.subscribe((event) => {
   switch (event.type) {
     case MessageEvents.Updated: {
       const serial = event.message.serial;
@@ -342,18 +346,19 @@ To delete a message, call `delete` on the `room.messages` property, with the ori
 You can supply optional parameters to the `delete` method to provide additional context for the deletion.
 
 These additional parameters are:
-* `description`: a string that can be used to inform others as to why the message was deleted.
-* `metadata`: a map of extra information that can be attached to the deletion message.
+
+- `description`: a string that can be used to inform others as to why the message was deleted.
+- `metadata`: a map of extra information that can be attached to the deletion message.
 
 The return of this call will be the deleted message, as it would appear to other subscribers of the room.
 This is a _soft delete_ and the message will still be available in the history.
 
 Example
+
 ```ts
-const deletedMessage = await room.messages.delete(message,
-        { 
-          description: 'This message was deleted for ...'
-        });
+const deletedMessage = await room.messages.delete(message, {
+  description: 'This message was deleted for ...',
+});
 ```
 
 `deletedMessage` is a Message object with the deletion applied. As with sending, the promise may resolve after the deletion message is received via the messages subscription.
@@ -386,10 +391,11 @@ In short, always use `actionAfter()`,
 `actionBefore()`, or `actionEqual()` to determine the global ordering of two `Message` actions.
 
 Example for handling deletes:
-```typescript
-const messages : Message[] = []; // assuming this is where state is kept
 
-room.messages.subscribe(event => {
+```typescript
+const messages: Message[] = []; // assuming this is where state is kept
+
+room.messages.subscribe((event) => {
   switch (event.type) {
     case MessageEvents.Deleted: {
       const serial = event.message.serial;
@@ -401,8 +407,9 @@ room.messages.subscribe(event => {
     }
     // other event types (ie. created and updated) omitted
   }
-})
+});
 ```
+
 ### Subscribing to incoming messages
 
 To subscribe to incoming messages, call `subscribe` with your listener.
@@ -431,7 +438,7 @@ The messages object also exposes the `get` method which can be used to request h
 to the given criteria. It returns a paginated response that can be used to request more messages.
 
 ```typescript
-const historicalMessages = await room.messages.get({ direction: 'backwards', limit: 50 });
+const historicalMessages = await room.messages.get({ orderBy: OrderBy.NewestFirst, limit: 50 });
 console.log(historicalMessages.items);
 if (historicalMessages.hasNext()) {
   const next = await historicalMessages.next();

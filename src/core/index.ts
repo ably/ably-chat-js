@@ -34,6 +34,7 @@ export type {
   Messages,
   MessageSubscriptionResponse,
   OperationDetails,
+  OrderBy,
   QueryOptions,
   SendMessageParams,
   UpdateMessageParams,

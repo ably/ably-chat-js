@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
 import { ChatMessageActions, MessageEvents } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
-import { DefaultMessages, MessageEventPayload } from '../../src/core/messages.ts';
+import { DefaultMessages, MessageEventPayload, OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
 import {
   channelEventEmitter,
@@ -672,14 +672,14 @@ describe('Messages', () => {
 
   it<TestContext>('should query listener history with the attachment serial after attaching', async (context) => {
     const testAttachSerial = '01672531200000-123@abcdefghij';
-    const testDirection = 'backwards';
+    const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
     const { room, chatApi } = context;
 
     vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
       expect(roomId).toEqual(room.roomId);
-      expect(params.direction).toEqual(testDirection);
+      expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(testAttachSerial);
       return Promise.resolve(mockPaginatedResultWithItems([]));
@@ -732,14 +732,14 @@ describe('Messages', () => {
   it<TestContext>('should query listener history with latest channel serial if already attached to the channel', async (context) => {
     // We should use the latest channel serial if we are already attached to the channel
     const latestChannelSerial = '01672531200000-123@abcdefghij';
-    const testDirection = 'backwards';
+    const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
     const { room, chatApi } = context;
 
     vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
       expect(roomId).toEqual(room.roomId);
-      expect(params.direction).toEqual(testDirection);
+      expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(latestChannelSerial);
       return Promise.resolve(mockPaginatedResultWithItems([]));
@@ -770,7 +770,7 @@ describe('Messages', () => {
 
   it<TestContext>('when attach occurs, should query with correct params if listener registered before attach', async (context) => {
     const firstAttachmentSerial = '01772531200000-001@108uyDJAgBOihn12345678';
-    const testDirection = 'backwards';
+    const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
     let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
@@ -815,7 +815,7 @@ describe('Messages', () => {
     // Check we are using the attachSerial
     expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
       expect(roomId).toEqual(room.roomId);
-      expect(params.direction).toEqual(testDirection);
+      expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstAttachmentSerial);
     };
@@ -867,7 +867,7 @@ describe('Messages', () => {
     // Testing the case where the channel is already attached and we have a channel serial set
     const firstChannelSerial = '01992531200000-001@abghhDJ2dBOihn12345678';
     const firstAttachSerial = '01992531200000-001@ackhhDJ2dBOihn12345678';
-    const testDirection = 'backwards';
+    const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
     let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
@@ -904,7 +904,7 @@ describe('Messages', () => {
     // Check we are using the channel serial
     expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
       expect(roomId).toEqual(room.roomId);
-      expect(params.direction).toEqual(testDirection);
+      expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstChannelSerial);
     };
@@ -955,7 +955,7 @@ describe('Messages', () => {
 
     const firstChannelSerial = '01992531200000-001@108hhDJ2hpInKn12345678';
     const firstAttachSerial = '01992531200000-001@108hhDJBiKOihn12345678';
-    const testDirection = 'backwards';
+    const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
     let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
@@ -993,7 +993,7 @@ describe('Messages', () => {
     // Check we are using the channel serial
     expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
       expect(roomId).toEqual(room.roomId);
-      expect(params.direction).toEqual(testDirection);
+      expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstChannelSerial);
     };

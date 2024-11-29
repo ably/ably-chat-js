@@ -1,9 +1,10 @@
-import { ChatMessageActions, Message } from '@ably/chat';
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
-import { MessageEvents } from '../../src/core/events.ts';
+import { ChatMessageActions, MessageEvents } from '../../src/core/events.ts';
+import { Message } from '../../src/core/message.ts';
+import { OrderBy } from '../../src/core/messages.ts';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
 import { RoomOptionsDefaults } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
@@ -230,7 +231,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get all 3 messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history = await room.messages.get({ limit: 3, direction: 'forwards' });
+    const history = await room.messages.get({ limit: 3, orderBy: OrderBy.OldestFirst });
 
     expect(history.items).toEqual([
       expect.objectContaining({
@@ -267,7 +268,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the deleted message
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history = await room.messages.get({ limit: 3, direction: 'forwards' });
+    const history = await room.messages.get({ limit: 3, orderBy: OrderBy.OldestFirst });
 
     expect(history.items).toEqual([
       expect.objectContaining({
@@ -308,7 +309,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the update message
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history = await room.messages.get({ limit: 3, direction: 'forwards' });
+    const history = await room.messages.get({ limit: 3, orderBy: OrderBy.OldestFirst });
 
     expect(history.items).toEqual([
       expect.objectContaining({
@@ -345,7 +346,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the first 3 messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history1 = await room.messages.get({ limit: 3, direction: 'forwards' });
+    const history1 = await room.messages.get({ limit: 3, orderBy: OrderBy.OldestFirst });
 
     expect(history1.items).toEqual([
       expect.objectContaining({
@@ -451,7 +452,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the first 3 messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history1 = await room.messages.get({ limit: 3, direction: 'forwards' });
+    const history1 = await room.messages.get({ limit: 3, orderBy: OrderBy.OldestFirst });
 
     expect(history1.items).toEqual([
       expect.objectContaining({
@@ -502,7 +503,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the last 3 messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history1 = await room.messages.get({ limit: 3, direction: 'backwards' });
+    const history1 = await room.messages.get({ limit: 3, orderBy: OrderBy.NewestFirst });
 
     expect(history1.items).toEqual([
       expect.objectContaining({
@@ -591,7 +592,7 @@ describe('messages integration', { timeout: 10000 }, () => {
     ]);
 
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history = await room.messages.get({ limit: 2, direction: 'forwards' });
+    const history = await room.messages.get({ limit: 2, orderBy: OrderBy.OldestFirst });
 
     expect(history.items.length).toEqual(2);
     expect(history.items, 'history messages to match').toEqual([
