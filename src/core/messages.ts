@@ -70,9 +70,9 @@ export interface QueryOptions {
    * The direction to query messages in.
    * If `forwards`, the response will include messages from the start of the time window to the end.
    * If `backwards`, the response will include messages from the end of the time window to the start.
-   * If not provided, the default is `forwards`.
+   * If not provided, the default is `backwards`.
    *
-   * @defaultValue forwards
+   * @defaultValue backwards
    */
   direction?: 'forwards' | 'backwards';
 }
