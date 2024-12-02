@@ -306,23 +306,6 @@ export class DefaultMessages
     // Get the subscription point of the listener
     const subscriptionPointParams = await subscriptionPoint;
 
-    // Check the end time does not occur after the fromSerial time
-    const parseSerial = DefaultTimeserial.calculateTimeserial(subscriptionPointParams.fromSerial);
-    if (params.end && params.end > parseSerial.timestamp) {
-      this._logger.error(
-        `DefaultSubscriptionManager.getBeforeSubscriptionStart(); end time is after the subscription point of the listener`,
-        {
-          endTime: params.end,
-          subscriptionTime: parseSerial.timestamp,
-        },
-      );
-      throw new Ably.ErrorInfo(
-        'cannot query history; end time is after the subscription point of the listener',
-        40000,
-        400,
-      ) as unknown as Error;
-    }
-
     // Query messages from the subscription point to the start of the time window
     return this._chatApi.getMessages(this._roomId, {
       ...params,

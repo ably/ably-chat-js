@@ -830,33 +830,6 @@ describe('Messages', () => {
     await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
   });
 
-  it<TestContext>('should throw an error if listener query end time is later than query timeserial', async (context) => {
-    // Create a room instance
-    const { room } = context;
-
-    const msgChannel = await room.messages.channel;
-    const channel = msgChannel as RealtimeChannel & {
-      properties: {
-        attachSerial: string | undefined;
-        channelSerial: string | undefined;
-      };
-    };
-
-    // Set the timeserials for the channel
-    channel.properties.channelSerial = '108uyDJAgBOihn12345678@1772531200000-1';
-    channel.properties.attachSerial = '108uyDJAgBOihn12345678@1772531200000-1';
-
-    // Mock the channel state to be attached
-    vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
-
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
-
-    await expect(getPreviousMessages({ limit: 50, end: 1992531200000 })).rejects.toBeErrorInfo({
-      code: 40000,
-      message: 'cannot query history; end time is after the subscription point of the listener',
-    });
-  });
-
   it<TestContext>('has an attachment error code', (context) => {
     expect((context.room.messages as DefaultMessages).attachmentErrorCode).toBe(102001);
   });
