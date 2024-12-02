@@ -9,16 +9,16 @@
   "react-native": "dist/react/ably-chat-react.umd.cjs",
   "exports": {
     ".": {
+      "react-native": "./dist/chat/ably-chat.umd.cjs",
       "types": "./dist/chat/index.d.ts",
       "import": "./dist/chat/ably-chat.js",
-      "require": "./dist/chat/ably-chat.umd.cjs",
-      "react-native": "./dist/chat/ably-chat.umd.cjs"
+      "require": "./dist/chat/ably-chat.umd.cjs"
     },
     "./react": {
+      "react-native": "./dist/react/ably-chat-react.umd.cjs",
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/ably-chat-react.js",
-      "require": "./dist/react/ably-chat-react.umd.cjs",
-      "react-native": "./dist/react/ably-chat-react.umd.cjs"
+      "require": "./dist/react/ably-chat-react.umd.cjs"
     },
     "./package.json": "./package.json"
   },
@@ -99,7 +99,7 @@
     "typedoc": "^0.27.2",
     "typedoc-plugin-no-inherit": "^1.4.0",
     "typescript": "^5.5.2",
-    "vite": "^5.3.2",
+    "vite": "^6.0.2",
     "vite-plugin-dts": "^4.2.4",
     "vitest": "^2.1.3"
   },
