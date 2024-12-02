@@ -145,7 +145,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
             return;
           }
 
-          return (params: Omit<QueryOptions, 'direction'>) => {
+          return (params: Omit<QueryOptions, 'orderBy'>) => {
             // If we've unmounted, then the subscription is gone and we can't call getPreviousMessages
             // So return a dummy object that should be thrown away anyway
             logger.debug('useMessages(); getPreviousMessages called', { roomId: context.roomId });

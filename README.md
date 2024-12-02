@@ -386,7 +386,7 @@ The messages object also exposes the `get` method which can be used to request h
 to the given criteria. It returns a paginated response that can be used to request more messages.
 
 ```typescript
-const historicalMessages = await room.messages.get({ direction: 'backwards', limit: 50 });
+const historicalMessages = await room.messages.get({ orderBy: ResultOrder.NewestFirst, limit: 50 });
 console.log(historicalMessages.items);
 if (historicalMessages.hasNext()) {
   const next = await historicalMessages.next();

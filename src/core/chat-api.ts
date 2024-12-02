@@ -2,13 +2,14 @@ import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageActionMetadata, MessageHeaders, MessageMetadata } from './message.js';
+import { ResultOrder } from './messages.js';
 import { OccupancyEvent } from './occupancy.js';
 import { PaginatedResult } from './query.js';
 
 export interface GetMessagesQueryParams {
   start?: number;
   end?: number;
-  direction?: 'forwards' | 'backwards';
+  orderBy?: ResultOrder;
   limit?: number;
   /**
    * Serial indicating the starting point for message retrieval.
@@ -19,6 +20,14 @@ export interface GetMessagesQueryParams {
    */
   fromSerial?: string;
 }
+
+/**
+ * In the REST API, we currently use the `direction` query parameter to specify the order of messages instead
+ * of orderBy. So define this type for conversion purposes.
+ */
+type ApiGetMessagesQueryParams = Omit<GetMessagesQueryParams, 'orderBy'> & {
+  direction?: 'forwards' | 'backwards';
+};
 
 export interface CreateMessageResponse {
   serial: string;
@@ -96,9 +105,18 @@ export class ChatApi {
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
     roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, params).then((data) => {
-      return this._recursivePaginateMessages(data);
-    });
+
+    // convert the params into internal format
+    const apiParams: ApiGetMessagesQueryParams = { ...params };
+    if (params.orderBy) {
+      apiParams.direction = params.orderBy === ResultOrder.OldestFirst ? 'forwards' : 'backwards';
+    }
+
+    return this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, apiParams).then(
+      (data) => {
+        return this._recursivePaginateMessages(data);
+      },
+    );
   }
 
   private _recursivePaginateMessages(data: PaginatedResult<Message>): PaginatedResult<Message> {
