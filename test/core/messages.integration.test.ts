@@ -284,8 +284,8 @@ describe('messages integration', { timeout: 10000 }, () => {
     expect(history.items[0]?.isUpdated).toBe(false);
     expect(history.items[0]?.isDeleted).toBe(true);
     expect(history.items[0]?.deletedAt).toEqual(deletedMessage1.deletedAt);
-    // todo: uncomment when operation is returned correctly in history endpoint
-    // expect(history.items[0]?.deletedBy).toEqual(deletedMessage1.deletedBy);
+    expect(history.items[0]?.deletedBy).toEqual(deletedMessage1.deletedBy);
+    expect(history.items[0]?.operation?.description).toEqual('Deleted message');
 
     // We shouldn't have a "next" link in the response
     expect(history.hasNext()).toBe(false);
@@ -325,8 +325,8 @@ describe('messages integration', { timeout: 10000 }, () => {
     expect(history.items[0]?.isUpdated).toBe(true);
     expect(history.items[0]?.isDeleted).toBe(false);
     expect(history.items[0]?.updatedAt).toEqual(updatedMessage1.updatedAt);
-    // todo: uncomment when operation is returned correctly in history endpoint
-    // expect(history.items[0]?.updatedBy).toEqual(updatedMessage1.updatedBy);
+    expect(history.items[0]?.updatedBy).toEqual(updatedMessage1.updatedBy);
+    expect(history.items[0]?.operation?.description).toEqual('updated message');
 
     // We shouldn't have a "next" link in the response
     expect(history.hasNext()).toBe(false);
