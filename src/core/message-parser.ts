@@ -53,6 +53,14 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     throw new Ably.ErrorInfo(`received incoming message without version`, 50000, 500);
   }
 
+  if (!message.createdAt) {
+    throw new Ably.ErrorInfo(`received incoming message without createdAt`, 50000, 500);
+  }
+
+  if (!message.timestamp) {
+    throw new Ably.ErrorInfo(`received incoming message without timestamp`, 50000, 500);
+  }
+
   switch (message.action) {
     case ChatMessageActions.MessageCreate:
     case ChatMessageActions.MessageUpdate:
