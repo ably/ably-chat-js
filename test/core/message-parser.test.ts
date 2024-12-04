@@ -76,8 +76,23 @@ describe('parseMessage', () => {
         createdAt: 1728402074206,
         extras: {},
         action: ChatMessageActions.MessageCreate,
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       },
       expectedError: 'received incoming message without serial',
+    },
+    {
+      description: 'message.version is undefined',
+      roomId: 'room1',
+      message: {
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: {},
+        action: ChatMessageActions.MessageCreate,
+      },
+      expectedError: 'received incoming message without version',
     },
     {
       description: 'message.action is unhandled',
@@ -89,39 +104,10 @@ describe('parseMessage', () => {
         createdAt: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: 'unhandled.action',
       },
       expectedError: 'received incoming message with unhandled action; unhandled.action',
-    },
-    {
-      description: 'message.version is undefined for update',
-      roomId: 'room1',
-      message: {
-        data: { text: 'hello' },
-        clientId: 'client1',
-        createdAt: 1728402074206,
-        extras: {},
-        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        action: ChatMessageActions.MessageUpdate,
-        timestamp: 1234567890,
-        version: undefined,
-      },
-      expectedError: 'received incoming message.update without version',
-    },
-    {
-      description: 'message.version is undefined for deletion',
-      roomId: 'room1',
-      message: {
-        data: { text: 'hello' },
-        clientId: 'client1',
-        createdAt: 1728402074206,
-        extras: {},
-        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        timestamp: 1234567890,
-        version: undefined,
-        action: ChatMessageActions.MessageDelete,
-      },
-      expectedError: 'received incoming message.delete without version',
     },
   ])('should throw an error ', ({ description, roomId, message, expectedError }) => {
     it(`should throw an error if ${description}`, () => {
@@ -167,8 +153,8 @@ describe('parseMessage', () => {
     expect(result.updatedAt).toBeUndefined();
     expect(result.updatedBy).toBeUndefined();
 
-    expect(result.latestAction).toEqual(ChatMessageActions.MessageCreate);
-    expect(result.latestActionDetails).toBeUndefined();
+    expect(result.action).toEqual(ChatMessageActions.MessageCreate);
+    expect(result.operation).toBeUndefined();
   });
 
   it('should return a DefaultMessage instance for a valid updated message', () => {
@@ -199,9 +185,9 @@ describe('parseMessage', () => {
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
     expect(result.updatedAt).toEqual(new Date(1728402074206));
     expect(result.updatedBy).toBe('client2');
-    expect(result.latestAction).toEqual(ChatMessageActions.MessageUpdate);
-    expect(result.latestActionSerial).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
-    expect(result.latestActionDetails).toEqual({
+    expect(result.action).toEqual(ChatMessageActions.MessageUpdate);
+    expect(result.version).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
+    expect(result.operation).toEqual({
       clientId: 'client2',
       description: 'update message',
       metadata: { 'custom-update': 'some flag' },
@@ -244,8 +230,8 @@ describe('parseMessage', () => {
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
     expect(result.deletedAt).toEqual(new Date(1728402074206));
     expect(result.deletedBy).toBe('client2');
-    expect(result.latestActionSerial).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
-    expect(result.latestActionDetails).toEqual({
+    expect(result.version).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
+    expect(result.operation).toEqual({
       clientId: 'client2',
       description: 'delete message',
       metadata: { 'custom-warning': 'this is a warning' },

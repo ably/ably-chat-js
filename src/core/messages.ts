@@ -14,7 +14,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { ChatMessageActions, MessageEvents, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageActionMetadata, MessageHeaders, MessageMetadata } from './message.js';
+import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
@@ -80,7 +80,7 @@ export interface QueryOptions {
 /**
  * The parameters supplied to a message action like delete or update.
  */
-export interface ActionDetails {
+export interface OperationDetails {
   /**
    * Optional description for the message action.
    */
@@ -90,14 +90,14 @@ export interface ActionDetails {
    * Optional metadata that will be added to the action. Defaults to empty.
    *
    */
-  metadata?: MessageActionMetadata;
+  metadata?: MessageOperationMetadata;
 }
 
 /**
  * Parameters for deleting a message.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DeleteMessageParams extends ActionDetails {}
+export interface DeleteMessageParams extends OperationDetails {}
 
 /**
  * Params for sending a text message. Only `text` is mandatory.
@@ -268,7 +268,7 @@ export interface Messages extends EmitsDiscontinuities {
    * @param details Optional details to record about the update action.
    * @returns A promise of the updated message.
    */
-  update(message: Message, update: UpdateMessageParams, details?: ActionDetails): Promise<Message>;
+  update(message: Message, update: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -496,13 +496,14 @@ export class DefaultMessages
       text,
       metadata ?? {},
       headers ?? {},
-      new Date(response.createdAt),
       ChatMessageActions.MessageCreate,
       response.serial,
+      new Date(response.createdAt),
+      new Date(response.createdAt), // timestamp is the same as createdAt for new messages
     );
   }
 
-  async update(message: Message, update: UpdateMessageParams, details?: ActionDetails): Promise<Message> {
+  async update(message: Message, update: UpdateMessageParams, details?: OperationDetails): Promise<Message> {
     this._logger.trace('Messages.update();', { message, update, details });
 
     const response = await this._chatApi.updateMessage(this._roomId, message.serial, {
@@ -510,24 +511,26 @@ export class DefaultMessages
       message: update,
     });
 
-    return new DefaultMessage(
+    const updatedMessage = new DefaultMessage(
       message.serial,
       message.clientId,
       this._roomId,
       update.text,
       update.metadata ?? {},
       update.headers ?? {},
-      message.createdAt,
       ChatMessageActions.MessageUpdate,
-      response.serial,
-      undefined,
-      response.updatedAt ? new Date(response.updatedAt) : undefined,
+      response.version,
+      new Date(message.createdAt),
+      new Date(response.timestamp),
       {
         clientId: this._clientId,
         description: details?.description,
         metadata: details?.metadata,
       },
     );
+
+    this._logger.debug('Messages.update(); message update successfully', { updatedMessage });
+    return updatedMessage;
   }
 
   /**
@@ -535,25 +538,27 @@ export class DefaultMessages
    */
   async delete(message: Message, params?: DeleteMessageParams): Promise<Message> {
     this._logger.trace('Messages.delete();', { params });
+
     const response = await this._chatApi.deleteMessage(this._roomId, message.serial, params);
+
     const deletedMessage: Message = new DefaultMessage(
       message.serial,
       message.clientId,
-      message.roomId,
+      this._roomId,
       message.text,
       message.metadata,
       message.headers,
-      message.createdAt,
       ChatMessageActions.MessageDelete,
-      response.serial,
-      response.deletedAt ? new Date(response.deletedAt) : undefined,
-      message.updatedAt,
+      response.version,
+      new Date(message.createdAt),
+      new Date(response.timestamp),
       {
         clientId: this._clientId,
         description: params?.description,
         metadata: params?.metadata,
       },
     );
+
     this._logger.debug('Messages.delete(); message deleted successfully', { deletedMessage });
     return deletedMessage;
   }

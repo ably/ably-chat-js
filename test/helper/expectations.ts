@@ -1,15 +1,12 @@
 import * as Ably from 'ably';
 import { expect } from 'vitest';
 
-const extractCommonKeys = (received: unknown, expected: unknown): Set<string> => {
-  const receivedKeys = new Set(Object.keys(received as Ably.ErrorInfo));
-  const expectedKeys = new Set(Object.keys(expected as Ably.ErrorInfo));
-
-  return new Set([...expectedKeys].filter((key) => receivedKeys.has(key)));
+const extractExpectedKeys = (expected: unknown): Set<string> => {
+  return new Set(Object.keys(expected as Ably.ErrorInfo));
 };
 
 const actualErrorInfo = (received: unknown, expected: unknown): Record<string, unknown> => {
-  const commonKeys = extractCommonKeys(received, expected);
+  const commonKeys = extractExpectedKeys(expected);
 
   const returnVal = Object.fromEntries(
     [...commonKeys].map((key) => [key, (received as Ably.ErrorInfo)[key as keyof Ably.ErrorInfo]]),
@@ -23,14 +20,6 @@ const actualErrorInfo = (received: unknown, expected: unknown): Record<string, u
   }
 
   return returnVal;
-};
-
-const expectedErrorInfo = (received: unknown, expected: unknown): Record<string, unknown> => {
-  const commonKeys = extractCommonKeys(received, expected);
-
-  return Object.fromEntries(
-    [...commonKeys].map((key) => [key, (expected as Ably.ErrorInfo)[key as keyof Ably.ErrorInfo]]),
-  );
 };
 
 export interface ErrorInfoCompareType {
@@ -51,7 +40,7 @@ const toBeErrorInfo = (received: unknown, expected: ErrorInfoCompareType): Check
   if (!(received instanceof Ably.ErrorInfo)) {
     return {
       pass: false,
-      message: () => `Expected ErrorInfo`,
+      message: () => `Expected ErrorInfo, found ${typeof received}`,
       expected: expected,
       actual: received,
     };
@@ -67,7 +56,7 @@ const toBeErrorInfo = (received: unknown, expected: ErrorInfoCompareType): Check
     message: () => {
       return `Expected matching ErrorInfo`;
     },
-    expected: expectedErrorInfo(received, expected),
+    expected: expected,
     actual: actualErrorInfo(received, expected),
   };
 };

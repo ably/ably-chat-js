@@ -199,9 +199,9 @@ describe('useMessages', () => {
     expect(update?.updatedBy).toBe(chatClientOne.clientId);
     expect(update?.text).toBe('hello universe');
     expect(update?.metadata).toEqual({ icon: 'universe' });
-    expect(update?.latestAction).toBe(ChatMessageActions.MessageUpdate);
-    expect(update?.latestActionDetails?.description).toBe('make it better');
-    expect(update?.latestActionDetails?.metadata).toEqual({ something: 'else' });
+    expect(update?.action).toBe(ChatMessageActions.MessageUpdate);
+    expect(update?.operation?.description).toBe('make it better');
+    expect(update?.operation?.metadata).toEqual({ something: 'else' });
   }, 10000);
 
   it('should receive messages on a subscribed listener', async () => {
@@ -316,6 +316,7 @@ describe('useMessages', () => {
     if (!getPreviousMessagesRoomOne) {
       expect.fail('getPreviousMessages was not defined');
     }
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
     const results = await getPreviousMessagesRoomOne({ limit: 30 });
 
     expect(results.items.length).toBe(3);
@@ -387,6 +388,7 @@ describe('useMessages', () => {
     if (!getPreviousMessages) {
       expect.fail('getPreviousMessages was not defined');
     }
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
     const results = await getPreviousMessages({ limit: 3 });
 
     // Check we get the expected messages
@@ -431,6 +433,7 @@ describe('useMessages', () => {
     );
 
     // Check we get the expected messages
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
     const results2 = await getPreviousMessages({ limit: 3 });
     expect(results2.items.length).toBe(3);
     const messageTexts2 = results2.items.map((item) => item.text);
@@ -450,6 +453,7 @@ describe('useMessages', () => {
     );
 
     // Do a get previous messages call, we should still get the same messages
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
     const results3 = await getPreviousMessages({ limit: 3 });
     expect(results3.items.length).toBe(3);
     const messageTexts3 = results3.items.map((item) => item.text);
@@ -521,6 +525,7 @@ describe('useMessages', () => {
     if (!getPreviousMessages) {
       expect.fail('getPreviousMessages was not defined');
     }
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
     const results = await getPreviousMessages({ limit: 3 });
 
     // Check we get the expected messages
@@ -540,8 +545,8 @@ describe('useMessages', () => {
     await room.messages.send({ text: 'Tis but a scratch' });
     await room.messages.send({ text: 'Time is an illusion. Lunchtime doubly so.' });
 
-    // Wait 2 seconds to make sure all messages are received
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Wait 3 seconds to make sure all messages are received
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const results2 = await getPreviousMessages({ limit: 3 });
 

@@ -37,8 +37,8 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
         return prevMessages;
       }
 
-      // skip update if the received action is not newer
-      if (!prevMessages[index].actionBefore(message)) {
+      // skip update if the received version is not newer
+      if (!prevMessages[index].versionBefore(message)) {
         return prevMessages;
       }
 

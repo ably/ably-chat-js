@@ -60,6 +60,7 @@ describe('Chat', () => {
     expect(occupancy).toEqual(expect.objectContaining({ connections: 1, presenceMembers: 0 }));
 
     // Request history, and expect it to succeed
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for cassandra
     const history = await room.messages.get({ limit: 1 });
     expect(history.items).toEqual(
       expect.arrayContaining([expect.objectContaining({ text: 'my message', clientId: chat.clientId })]),
@@ -79,6 +80,7 @@ describe('Chat', () => {
     expect(occupancy).toEqual(expect.objectContaining({ connections: 1, presenceMembers: 0 }));
 
     // Request history, and expect it to succeed
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
     const history = await room.messages.get({ limit: 1 });
     expect(history.items).toEqual(
       expect.arrayContaining([expect.objectContaining({ text: 'my message', clientId: chat.clientId })]),
