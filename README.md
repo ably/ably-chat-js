@@ -153,7 +153,7 @@ For example, you can set the timeout between keystrokes for typing events as par
 - A typing timeout (time of inactivity before typing stops) of 5 seconds.
 - Entry into, and subscription to, presence.
 
-The defaults options for each feature may be viewed [here](https://github.com/ably/ably-chat-js/blob/main/src/RoomOptions.ts).
+The defaults options for each feature may be viewed [here](https://github.com/ably/ably-chat-js/blob/main/src/core/room-options.ts).
 
 In order to use the same room but with different options, you must first `release` the room before requesting an instance with the changed options (see below for more information on releasing rooms).
 
