@@ -346,21 +346,66 @@ These additional parameters are:
 * `metadata`: a map of extra information that can be attached to the deletion message.
 
 The return of this call will be the deleted message, as it would appear to other subscribers of the room.
-This is a _soft delete_ and the message will still be available in the history, but with the `deletedAt` property set.
+This is a _soft delete_ and the message will still be available in the history.
 
+Example
 ```ts
-const deletedMessage = await room.messages.delete(message, { description: 'This message was deleted for ...' });
+const deletedMessage = await room.messages.delete(message,
+        { 
+          description: 'This message was deleted for ...'
+        });
 ```
 
-Note that you can update deleted messages, which will effectively undo the delete. Only the last operation on a message takes effect.
+`deletedMessage` is a Message object with the deletion applied. As with sending, the promise may resolve after the deletion message is received via the messages subscription.
 
-### Subscribing to incoming messages
+A `Message` that was deleted will have `deletedAt` and `deletedBy` fields set, and `isDeleted()` will return `true`.
 
-To subscribe to incoming messages, call `subscribe` with your listener.
+Note that you can update deleted messages, which will effectively undo the deletion. Only the last operation on a message takes effect.
 
 ```ts
 const { unsubscribe } = room.messages.subscribe((msg) => console.log(msg));
 ```
+
+#### Handling deletes in realtime
+
+Deletion messages received from realtime have the `action` parameter set to `ChatMessageActions.MessageDelete`, and the event received has the `type` set to `MessageEvents.Deleted`.
+Just like `updates`, `deletion` messages are also full copies of the message, meaning that all that is needed to keep a state or UI up to date is to replace the old message with the received one.
+
+On rare occasions, deletes and updates might arrive over realtime out of order.
+That is to say, should two concurrent actions happen in disparate regions, you will likely receive the action processed in the region closest to you first.
+When the second action arrives, you will need to determine the order of these actions;
+this is done by comparing their respective global orders, determined by the `version` field of the message.
+
+To keep a correct state, the `Message` interface provides methods to compare two instances of the same base message to determine which action is newer:`actionBefore()`, `actionAfter()`, and `actionEqual()`.
+
+The same out-of-order situation can happen between deletions received over realtime and HTTP responses.
+
+In the situation where two concurrent deletes happen, both might be received via realtime before the HTTP response of the first one arrives.
+
+In short, always use `actionAfter()`,
+`actionBefore()`, or `actionEqual()` to determine the global ordering of two `Message` actions.
+
+Example for handling deletes:
+```typescript
+const messages : Message[] = []; // assuming this is where state is kept
+
+room.messages.subscribe(event => {
+  switch (event.type) {
+    case MessageEvents.Deleted: {
+      const serial = event.message.serial;
+      const index = messages.findIndex((m) => m.serial === serial);
+      if (index !== -1 && messages[index].actionBefore(event.message)) {
+        messages[index] = event.message;
+      }
+      break;
+    }
+    // other event types (ie. created and updated) omitted
+  }
+})
+```
+### Subscribing to incoming messages
+
+To subscribe to incoming messages, call `subscribe` with your listener.
 
 ### Unsubscribing from incoming messages
 
