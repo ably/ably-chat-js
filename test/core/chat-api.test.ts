@@ -70,4 +70,20 @@ describe('config', () => {
       statusCode: 400,
     });
   });
+
+  it('throws errors if invalid OrderBy used on history request', async () => {
+    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const chatApi = new ChatApi(realtime, makeTestLogger());
+
+    vi.spyOn(realtime, 'request');
+
+    // @ts-expect-error Testing invalid OrderBy
+    await expect(chatApi.getMessages('test', { orderBy: 'foo' })).rejects.toBeErrorInfo({
+      message: 'invalid orderBy value: foo',
+      code: 40000,
+      statusCode: 400,
+    });
+
+    expect(realtime.request).not.toHaveBeenCalled();
+  });
 });

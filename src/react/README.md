@@ -225,7 +225,7 @@ const MyComponent = () => {
   const [message, setMessage] = useState<Message>();
   const handleGetMessages = () => {
     // fetch the last 3 messages, oldest to newest
-    get({ limit: 3, direction: 'forwards' }).then((result) => console.log('Previous messages: ', result.items));
+    get({ limit: 3, orderBy: OrderBy.oldestFirst }).then((result) => console.log('Previous messages: ', result.items));
   };
 
   const handleMessageSend = () => {

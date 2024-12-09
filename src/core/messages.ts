@@ -40,6 +40,21 @@ const MessageActionsToEventsMap: Map<ChatMessageActions, MessageEvents> = new Ma
 ]);
 
 /**
+ * The order in which results should be returned when performing a paginated query (e.g. message history).
+ */
+export enum OrderBy {
+  /**
+   * Return results in ascending order (oldest first).
+   */
+  OldestFirst = 'oldestFirst',
+
+  /**
+   * Return results in descending order (newest first).
+   */
+  NewestFirst = 'newestFirst',
+}
+
+/**
  * Options for querying messages in a chat room.
  */
 export interface QueryOptions {
@@ -68,13 +83,13 @@ export interface QueryOptions {
 
   /**
    * The direction to query messages in.
-   * If `forwards`, the response will include messages from the start of the time window to the end.
-   * If `backwards`, the response will include messages from the end of the time window to the start.
-   * If not provided, the default is `backwards`.
+   * If {@link OrderBy.OldestFirst}, the response will include messages from the start of the time window to the end.
+   * If {@link OrderBy.NewestFirst}, the response will include messages from the end of the time window to the start.
+   * If not provided, the default is {@link OrderBy.NewestFirst}.
    *
-   * @defaultValue backwards
+   * @defaultValue {@link OrderBy.NewestFirst}
    */
-  direction?: 'forwards' | 'backwards';
+  orderBy?: OrderBy;
 }
 
 /**
@@ -186,7 +201,7 @@ export interface MessageSubscriptionResponse {
    * @param params Options for the history query.
    * @returns A promise that resolves with the paginated result of messages, in newest-to-oldest order.
    */
-  getPreviousMessages(params: Omit<QueryOptions, 'direction'>): Promise<PaginatedResult<Message>>;
+  getPreviousMessages(params: Omit<QueryOptions, 'orderBy'>): Promise<PaginatedResult<Message>>;
 }
 
 /**
@@ -351,7 +366,7 @@ export class DefaultMessages
    */
   private async _getBeforeSubscriptionStart(
     listener: MessageListener,
-    params: Omit<QueryOptions, 'direction'>,
+    params: Omit<QueryOptions, 'orderBy'>,
   ): Promise<PaginatedResult<Message>> {
     this._logger.trace(`DefaultSubscriptionManager.getBeforeSubscriptionStart();`);
 
@@ -374,7 +389,7 @@ export class DefaultMessages
     // Query messages from the subscription point to the start of the time window
     return this._chatApi.getMessages(this._roomId, {
       ...params,
-      direction: 'backwards',
+      orderBy: OrderBy.NewestFirst,
       ...subscriptionPointParams,
     });
   }
@@ -589,7 +604,7 @@ export class DefaultMessages
         this._logger.trace('Messages.unsubscribe();');
         super.off(listener);
       },
-      getPreviousMessages: (params: Omit<QueryOptions, 'direction'>) =>
+      getPreviousMessages: (params: Omit<QueryOptions, 'orderBy'>) =>
         this._getBeforeSubscriptionStart(listener, params),
     };
   }

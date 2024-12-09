@@ -2,13 +2,14 @@ import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
+import { OrderBy } from './messages.js';
 import { OccupancyEvent } from './occupancy.js';
 import { PaginatedResult } from './query.js';
 
 export interface GetMessagesQueryParams {
   start?: number;
   end?: number;
-  direction?: 'forwards' | 'backwards';
+  orderBy?: OrderBy;
   limit?: number;
   /**
    * Serial indicating the starting point for message retrieval.
@@ -19,6 +20,14 @@ export interface GetMessagesQueryParams {
    */
   fromSerial?: string;
 }
+
+/**
+ * In the REST API, we currently use the `direction` query parameter to specify the order of messages instead
+ * of orderBy. So define this type for conversion purposes.
+ */
+type ApiGetMessagesQueryParams = Omit<GetMessagesQueryParams, 'orderBy'> & {
+  direction?: 'forwards' | 'backwards';
+};
 
 export interface CreateMessageResponse {
   serial: string;
@@ -91,9 +100,29 @@ export class ChatApi {
 
   async getMessages(roomId: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
     roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, params).then((data) => {
-      return this._recursivePaginateMessages(data);
-    });
+
+    // convert the params into internal format
+    const apiParams: ApiGetMessagesQueryParams = { ...params };
+    if (params.orderBy) {
+      switch (params.orderBy) {
+        case OrderBy.NewestFirst: {
+          apiParams.direction = 'backwards';
+          break;
+        }
+        case OrderBy.OldestFirst: {
+          apiParams.direction = 'forwards';
+          break;
+        }
+        default: {
+          // in vanilla JS use-cases, without types, we need to check non-enum values
+          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+          throw new Ably.ErrorInfo(`invalid orderBy value: ${params.orderBy}`, 40000, 400);
+        }
+      }
+    }
+
+    const data = await this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, apiParams);
+    return this._recursivePaginateMessages(data);
   }
 
   private _recursivePaginateMessages(data: PaginatedResult<Message>): PaginatedResult<Message> {
