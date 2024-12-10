@@ -24,6 +24,29 @@ body {
   min-height: 100vh;
 }
 
+.chat-box {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr auto;
+  height: 100%;
+}
+
+.chat-window {
+  height: 500px;
+  min-height: max(100%, 500px);
+  overflow-y: auto; /* Allows scroll the window when messages are added beyond the max height */
+  padding: 1rem; /* Adds padding */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.5) rgba(255, 255, 255, 0.1);
+}
+
+.typing-indicator-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+}
+
 .reactions-picker > a {
   display: inline-block;
   padding: 5px;
