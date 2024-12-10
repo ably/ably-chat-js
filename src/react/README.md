@@ -222,14 +222,14 @@ import { Message } from '@ably/chat';
 
 const MyComponent = () => {
   const { send, get, update, deleteMessage } = useMessages();
-  const [message, setMessage] = useState<Message>();
+  const [messages, setMessages] = useState<Message[]>([]);
   const handleGetMessages = () => {
     // fetch the last 3 messages, oldest to newest
     get({ limit: 3, orderBy: OrderBy.oldestFirst }).then((result) => console.log('Previous messages: ', result.items));
   };
 
   const handleMessageSend = () => {
-    send({ text: 'Hello, World!' }).then((sentMessage) => setMessage(sentMessage));
+    send({ text: 'Hello, World!' }).then((sentMessage) => setMessages((prevMessages) => [...prevMessages, sentMessage]));
   };
 
   const handleMessageDelete = (message: Message) => {
