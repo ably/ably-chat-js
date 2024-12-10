@@ -69,10 +69,10 @@ class DefaultRoomPromise implements RoomPromise {
 
   /**
    * Wait for the room promise to resolve, then execute the onResolve callback, storing its response as an unmount function.
-   * If the component is unmounted before the promise resolves,then this will do nothing.
+   * If the component is unmounted before the promise resolves, then this will do nothing.
    *
    * @param promise The promise that resolves to a Room instance.
-   * @returns A promise that we simply resolve when its done.
+   * @returns A promise that we simply resolve when it's done.
    */
   async mount(promise: Promise<Room>): Promise<void> {
     this._logger.debug('DefaultRoomPromise(); mount', { roomId: this._roomId });

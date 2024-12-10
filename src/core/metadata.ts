@@ -6,7 +6,7 @@
  * emojis, etc.
  *
  * Do not use metadata for authoritative information. There is no server-side
- * validation. When reading the metadata treat it like user input.
+ * validation. When reading the metadata, treat it like user input.
  *
  */
 export type Metadata = Record<string, unknown>;
