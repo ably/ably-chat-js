@@ -61,7 +61,7 @@ export type DeleteMessageResponse = MessageOperationResponse;
 
 interface UpdateMessageParams {
   /**
-   * Message data to update. All fields are updated and if omitted they are
+   * Message data to update. All fields are updated and, if omitted, they are
    * set to empty.
    */
   message: {
