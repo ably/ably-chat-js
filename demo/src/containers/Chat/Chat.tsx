@@ -3,7 +3,7 @@ import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
 import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
 import { ReactionInput } from '../../components/ReactionInput';
-import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent/ConnectionStatusComponent.tsx';
+import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent';
 import { ConnectionStatus, Message, MessageEventPayload, MessageEvents, PaginatedResult, Reaction } from '@ably/chat';
 
 export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => void }) => {
@@ -20,7 +20,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
     if (getPreviousMessages) {
       getPreviousMessages({ limit: 50 })
         .then((result: PaginatedResult<Message>) => {
-          chatClient.logger.debug('backfilled messages', result);
+          chatClient.logger.debug('backfilled messages', result.items);
           setMessages(result.items.filter((m) => !m.isDeleted).reverse());
           setLoading(false);
         })
