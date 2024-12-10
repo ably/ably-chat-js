@@ -55,7 +55,9 @@ const App: FC<AppProps> = () => {
       attach={true}
       options={RoomOptionsDefaults}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto' }}>
+      <div
+        style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto', height: '650px' }}
+      >
         <Chat
           setRoomId={updateRoomId}
           roomId={roomIdState}

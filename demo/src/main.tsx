@@ -60,7 +60,7 @@ const getRealtimeOptions = () => {
 
 const realtimeClient = new Ably.Realtime(getRealtimeOptions());
 
-const chatClient = new ChatClient(realtimeClient, { logLevel: LogLevel.Info });
+const chatClient = new ChatClient(realtimeClient, { logLevel: LogLevel.Debug });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
