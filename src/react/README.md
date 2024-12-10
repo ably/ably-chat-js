@@ -229,11 +229,15 @@ const MyComponent = () => {
   };
 
   const handleMessageSend = () => {
-    send({ text: 'Hello, World!' }).then((sentMessage) => setMessages((prevMessages) => [...prevMessages, sentMessage]));
+    send({ text: 'Hello, World!' }).then((sentMessage) =>
+      setMessages((prevMessages) => [...prevMessages, sentMessage]),
+    );
   };
 
   const handleMessageDelete = (message: Message) => {
-    deleteMessage(message, { description: 'deleted by user' });
+    deleteMessage(message, { description: 'deleted by user' }).then((deletedMessage) =>
+      console.log('Deleted message: ', deletedMessage),
+    );
   };
 
   const handleUpdateMessage = (message: Message) => {
@@ -241,7 +245,9 @@ const MyComponent = () => {
     if (!newText) {
       return;
     }
-    update(message, { text: newText }, { description: 'updated by user' });
+    update(message, { text: newText }, { description: 'updated by user' }).then((updatedMessage) =>
+      console.log('Updated message: ', updatedMessage),
+    );
   };
 
   return (
