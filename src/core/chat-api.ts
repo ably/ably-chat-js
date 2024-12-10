@@ -55,9 +55,9 @@ interface MessageOperationResponse {
   timestamp: number;
 }
 
-export type UpdateMessageResponse = MessageOperationResponse;
+type UpdateMessageResponse = MessageOperationResponse;
 
-export type DeleteMessageResponse = MessageOperationResponse;
+type DeleteMessageResponse = MessageOperationResponse;
 
 interface UpdateMessageParams {
   /**
