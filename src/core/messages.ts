@@ -133,7 +133,7 @@ export interface SendMessageParams {
    * emojis, etc.
    *
    * Do not use metadata for authoritative information. There is no server-side
-   * validation. When reading the metadata treat it like user input.
+   * validation. When reading the metadata, treat it like user input.
    *
    */
   metadata?: MessageMetadata;
@@ -143,12 +143,12 @@ export interface SendMessageParams {
    *
    * The headers are a flat key-value map and are sent as part of the realtime
    * message's extras inside the `headers` property. They can serve similar
-   * purposes as the metadata but they are read by Ably and can be used for
+   * purposes as the metadata, but they are read by Ably and can be used for
    * features such as
    * [subscription filters](https://faqs.ably.com/subscription-filters).
    *
    * Do not use the headers for authoritative information. There is no
-   * server-side validation. When reading the headers treat them like user
+   * server-side validation. When reading the headers, treat them like user
    * input.
    *
    */
@@ -219,7 +219,7 @@ export interface Messages extends EmitsDiscontinuities {
   subscribe(listener: MessageListener): MessageSubscriptionResponse;
 
   /**
-   * Unsubscribe all listeners from new messages in from chat room.
+   * Unsubscribe all listeners from new messages in the chat room.
    */
   unsubscribeAll(): void;
 
