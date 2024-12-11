@@ -9,7 +9,7 @@
 Ably Chat is a set of purpose-built APIs for a host of chat features enabling you to create 1:1, 1:Many, Many:1 and Many:Many chat rooms for any scale. It is designed to meet a wide range of chat use cases, such as livestreams, in-game communication, customer support, or social interactions in SaaS products. Built on [Ably's](https://ably.com/) core service, it abstracts complex details to enable efficient chat architectures.
 
 > [!IMPORTANT]
-> This SDK is currently under development. If you are interested in being an early adopter and providing feedback then you can [sign up to the private beta](https://forms.gle/vB2kXhCXrTQpzHLu5) and are welcome to [provide us with feedback](https://forms.gle/mBw9M53NYuCBLFpMA). Coming soon: chat moderation, editing and deleting messages.
+> This SDK is currently under development. If you are interested in being an early adopter and providing feedback then you can [sign up to the private beta](https://forms.gle/vB2kXhCXrTQpzHLu5) and are welcome to [provide us with feedback](https://forms.gle/mBw9M53NYuCBLFpMA). Coming soon: chat moderation, simplified granular permissions and message reactions.
 
 Get started using the [📚 documentation](https://ably.com/docs/products/chat) and [🚀check out the live demo](https://ably-livestream-chat-demo.vercel.app/), or [📘 browse the API reference](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/).
 
@@ -283,8 +283,7 @@ const message = await room.messages.send({
 
 ### Updating messages
 
-To update an existing message, call `update` on the `room.messages` property, with the original message you want to update,
-the updated fields, and optional operation details to provide extra context for the update.
+To update an existing message, call `update` on the `room.messages` property, with the original message you want to update, the updated fields, and optional operation details to provide extra context for the update.
 
 The optional operation details are:
 
@@ -309,15 +308,15 @@ const updatedMessage = await room.messages.update(
 
 A `Message` that was updated will have values for `updatedAt` and `updatedBy`, and `isUpdated()` will return `true`.
 
-Note that if you delete an updated message, it is no longer considered _updated_. Only the last operation takes effect.
+Note that if you delete an updated message, it is no longer considered _updated_. Only the latest operation takes effect.
 
 #### Handling updates in realtime
 
-Updated messages received from realtime have the `action` parameter set to `ChatMessageActions.MessageUpdate`, and the event received has the `type` set to `MessageEvents.Updated`. Updated messages are full copies of the message, meaning that all that is needed to keep a state or UI up to date is to replace the old message with the received one.
+Updated messages received from the server have the `action` parameter set to `ChatMessageActions.MessageUpdate`, and the event received has the `type` set to `MessageEvents.Updated`. Updated messages are full copies of the message, meaning that all that is needed to keep a state or UI up to date is to replace the old message with the received one.
 
-In rare occasions updates might arrive over realtime out of order. To keep a correct state, compare the `version` lexicographically (string compare). Alternatively, the `Message` interface provides convenience methods to compare two instances of the same base message to determine which version is newer: `versionBefore()`, `versionAfter()`, and `versionEqual()`.
+On rare occasions updates might arrive from the server out of order (in terms of the global order in which these events occur). An example of this is when messages are transiting between regions, and latencies between nearby regions is lower than those further away. To deterministically determine whether an update should supersede the current version, simply compare the `version` strings using the standard `<` and `>` operators. Alternatively, the `Message` interface provides convenience methods to compare two instances of the same base message to determine which version is newer: `versionBefore()`, `versionAfter()`, and `versionEqual()`.
 
-The same out-of-order situation can happen between updates received over realtime and HTTP responses. In the situation where two concurrent updates happen, both might be received via realtime before the HTTP response of the first one arrives. Always compare the message `version` to determine which instance of a `Message` is newer.
+The same out-of-order situation can happen between updates received over realtime and HTTP responses (e.g. when updating a message). In the situation where two concurrent updates happen, both might be received via realtime before the HTTP response of the first one arrives. Always compare the message `version` to determine which instance of a `Message` is newer.
 
 Example for handling updates:
 
@@ -373,22 +372,13 @@ const { unsubscribe } = room.messages.subscribe((msg) => console.log(msg));
 
 #### Handling deletes in realtime
 
-Deletion messages received from realtime have the `action` parameter set to `ChatMessageActions.MessageDelete`, and the event received has the `type` set to `MessageEvents.Deleted`.
-Just like `updates`, `deletion` messages are also full copies of the message, meaning that all that is needed to keep a state or UI up to date is to replace the old message with the received one.
+Deletion messages received from the server have the `action` parameter set to `ChatMessageActions.MessageDelete`, and the event received has the `type` set to `MessageEvents.Deleted`. Similar to `updates`, `deletion` messages are also full copies of the message, meaning that all that is needed to keep a state or UI up to date is to replace the old message with the received one.
 
-On rare occasions, deletes and updates might arrive over realtime out of order.
-That is to say, should two concurrent actions happen in disparate regions, you will likely receive the action processed in the region closest to you first.
-When the second action arrives, you will need to determine the order of these actions;
-this is done by comparing their respective global orders, determined by the `version` field of the message.
+On rare occasions, deletes and updates might arrive over realtime out of order. Again, should two concurrent actions happen in disparate regions, you will likely receive the action processed in the region closest to you first, for example.
 
-To keep a correct state, the `Message` interface provides methods to compare two instances of the same base message to determine which action is newer:`actionBefore()`, `actionAfter()`, and `actionEqual()`.
+When the second action arrives, you will need to determine the order of these actions; this is done deterministically by comparing the `version` field of the messages, using the standard `<` and `>` operators. For convenience, the `Message` interface provides methods to compare two instances of the same base message to determine which action is newer:`versionBefore()`, `versionAfter()`, and `versionEqual()`.
 
-The same out-of-order situation can happen between deletions received over realtime and HTTP responses.
-
-In the situation where two concurrent deletes happen, both might be received via realtime before the HTTP response of the first one arrives.
-
-In short, always use `actionAfter()`,
-`actionBefore()`, or `actionEqual()` to determine the global ordering of two `Message` actions.
+The same out-of-order situation can happen between deletions received over realtime and HTTP responses, whereby both might be received via realtime before the HTTP response of the first one arrives.
 
 Example for handling deletes:
 
@@ -400,7 +390,7 @@ room.messages.subscribe((event) => {
     case MessageEvents.Deleted: {
       const serial = event.message.serial;
       const index = messages.findIndex((m) => m.serial === serial);
-      if (index !== -1 && messages[index].actionBefore(event.message)) {
+      if (index !== -1 && messages[index].versionBefore(event.message)) {
         messages[index] = event.message;
       }
       break;

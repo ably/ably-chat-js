@@ -55,13 +55,13 @@ interface MessageOperationResponse {
   timestamp: number;
 }
 
-export type UpdateMessageResponse = MessageOperationResponse;
+type UpdateMessageResponse = MessageOperationResponse;
 
-export type DeleteMessageResponse = MessageOperationResponse;
+type DeleteMessageResponse = MessageOperationResponse;
 
 interface UpdateMessageParams {
   /**
-   * Message data to update. All fields are updated and if omitted they are
+   * Message data to update. All fields are updated and, if omitted, they are
    * set to empty.
    */
   message: {
