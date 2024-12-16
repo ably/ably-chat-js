@@ -2,6 +2,37 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.3.0](https://github.com/ably/ably-chat-js/tree/0.3.0) (2024-12-17)
+
+### Breaking Changes
+
+Please see `UPGRADING.md` for full guidance on upgrading from version 0.2.1 and before.
+
+- The default typing timeout has now been reduced to 5 seconds. [#361](https://github.com/ably/ably-chat-js/pull/361)
+- Room and Connection status types have been renamed. [#382](https://github.com/ably/ably-chat-js/pull/382)
+- Renamed the `timeserial` field on the `Message` type to `serial`. Messages may now be compared for global order by string comparison of this field.
+- `Rooms.get` is now asynchronous and returns a `Promise` that will resolve once any `release` operations on the room are complete. [#387](https://github.com/ably/ably-chat-js/pull/387).
+- The `Room.channel` property is now an instance of `Ably.RealtimeChannel`, rather than a `Promise`. [#387](https://github.com/ably/ably-chat-js/pull/387)
+- In React, accessing the room via `useRoom`, or properties of the room via other hooks, now returns `ValueType | undefined`. Once the room's promise is resolved (see above), this will update to the actual value. [#387](https://github.com/ably/ably-chat-js/pull/387)
+- The default Room status is now `Initialized`. The `Initializing` status is retained for use in React when the room has not yet been resolved. [#387](https://github.com/ably/ably-chat-js/pull/387)
+- The `direction` argument to message history has been replaced by `orderBy`, which uses a new enum `OrderBy` with values `OldestFirst` and `NewestFirst`. Its behavior is identical to `direction: forwards | backwards`.
+
+### New Features
+
+- Added new fields to Messages to support editing and deleting. [#362](https://github.com/ably/ably-chat-js/pull/362)
+- Added the ability to delete messages in the chat. [#365](https://github.com/ably/ably-chat-js/pull/365)
+- Added the ability to edit messages in the chat. [#378](https://github.com/ably/ably-chat-js/pull/378)
+
+### Fixed Bugs
+
+- The Room will now transition immediately to `released` if `release` is called whilst its status is `Initialized`. [#400](https://github.com/ably/ably-chat-js/pull/400)
+- When paginating messages (e.g. via `getPreviousMessages`) the objects returned by successive pages will now fully implement the `Message` interface. Previously they were simple JSON objects after the first page. [#403](https://github.com/ably/ably-chat-js/pull/403).
+- Fixed a bug whereby a room may get stuck in the `Suspended` status after network issues. [#409](https://github.com/ably/ably-chat-js/pull/409)
+
+### Other Changes
+
+- `ably-chat` is no longer a reserved key on Message and Reaction metadata/headers. [#374](https://github.com/ably/ably-chat-js/pull/374)
+
 ## [0.2.1](https://github.com/ably/ably-chat-js/tree/0.2.1) (2024-09-18)
 
 - Fixed a bug that can lead to unhandled promise rejections and error logs when a room is released prior to initialization, particularly in React [#352](https://github.com/ably/ably-chat-js/pull/352)

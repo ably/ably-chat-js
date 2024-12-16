@@ -57,7 +57,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    *
    * This method is available only if a {@link MessageListener} has been provided in the {@link UseMessagesParams}.
    * Calling will return a promise that resolves to a paginated response of the previous messages received in the room,
-   * up until the listener was attached, in the oldest to newest order.
+   * up until the listener was attached, in newest-to-oldest order.
    *
    * It is advised to call this method after any discontinuity event; to retrieve messages that may have been missed
    * before the listener was re-attached.

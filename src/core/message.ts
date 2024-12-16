@@ -92,7 +92,7 @@ export interface Message {
    * This value is always set. If there are no headers, this is an empty object.
    *
    * Do not use the headers for authoritative information. There is no server-side
-   * validation. When reading the headers treat them like user input.
+   * validation. When reading the headers, treat them like user input.
    */
   readonly headers: MessageHeaders;
 
@@ -112,7 +112,7 @@ export interface Message {
   readonly timestamp: Date;
 
   /**
-   * The details of the operation that updated the message. This is only set for update and delete actions. It contains
+   * The details of the operation that modified the message. This is only set for update and delete actions. It contains
    * information about the operation: the clientId of the user who performed the operation, a description, and metadata.
    */
   readonly operation?: Operation;
