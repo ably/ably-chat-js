@@ -44,7 +44,8 @@
   },
   "files": [
     "dist/**",
-    "src/**"
+    "src/**",
+    "react-native/**"
   ],
   "repository": {
     "type": "git",
