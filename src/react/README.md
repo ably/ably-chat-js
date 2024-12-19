@@ -9,7 +9,9 @@ If you're using **React Native**, you may need to perform extra steps to use the
 The React package is exported as an ESM module `@ably/chat/react`, making use of the `exports` field in `package.json`.
 The Metro bundler used by React Native does not by default utilize this field, leading to imports not being found.
 
-To use Chat with React Native, first set the `type` field of your React Native project to `module` and update your `tsconfig.json`
+### Option 1: Enable Package Exports
+
+React Native has started to support the `exports` field of `package.json`. To use Chat with React Native in this way, first set the `type` field of your React Native project to `module` and update your `tsconfig.json`
 to set `"moduleResolution": "Bundler"`. Finally, include the `unstable_enablePackageExports` field in
 your `metro.config.cjs`, which will enable `exports` resolution. For example:
 
@@ -26,6 +28,22 @@ module.exports = {
   },
 };
 ```
+
+### Option 2: Use Pseudo-package
+
+If the above isn't an option for you, you can instead use the `@ably/chat-react-native` pseudo-package with the Metro/Expo defaults.
+
+To do this, add the following to your `package.json`:
+
+```json
+{
+  "dependencies": {
+    "@ably/chat-react-native": "file:./node_modules/@ably/chat/react-native"
+  }
+}
+```
+
+Then, replace any imports of `@ably/chat/react` with `@ably/chat-react-native`.
 
 ## ChatClientProvider
 
