@@ -19,9 +19,10 @@
       - The second number represents a minor release, which lets users know new functionality or features have been added.
       - The third number represents a patch release, which represents bug-fixes and may be used when no action should be required from users.
    2. The commit should update `package.json` and `package-lock.json`. Running `npm install` after changing `package.json` will update `package-lock.json`.
-   3. The commit should also update `version.ts` to set the agent headers.
-   4. Update the `CHANGELOG.md` with any customer-affecting changes since the last release.
-   5. Update the README.md for any references to the new version.
+   3. The commit should also update `react-native/package.json` to the appropriate version.
+   4. The commit should also update `version.ts` to set the agent headers.
+   5. Update the `CHANGELOG.md` with any customer-affecting changes since the last release.
+   6. Update the README.md for any references to the new version.
 3. Merge the commit into main.
 4. Tag a release using [Github releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release). The version needs to match the one from the commit. Use the "Generate release notes" button to
    add changelog notes and update as required.

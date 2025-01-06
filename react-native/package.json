@@ -1,0 +1,6 @@
+{
+  "name": "@ably/chat-react-native",
+  "version": "0.3.0",
+  "main": "../chat/dist/react/ably-chat-react.umd.cjs",
+  "types": "../chat/dist/react/index.d.ts"
+}
