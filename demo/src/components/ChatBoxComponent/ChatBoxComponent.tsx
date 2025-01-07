@@ -155,13 +155,13 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   }, [messages, loading]);
 
   return (
-    <div className="chat-box">
+    <div
+      id="messages"
+      className="chat-window"
+    >
       {loading && <div className="text-center m-auto">loading...</div>}
       {!loading && (
-        <div
-          id="messages"
-          className="chat-window"
-        >
+        <>
           {messages.map((msg) => (
             <MessageComponent
               key={msg.serial}
@@ -172,7 +172,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
             ></MessageComponent>
           ))}
           <div ref={messagesEndRef} />
-        </div>
+        </>
       )}
     </div>
   );

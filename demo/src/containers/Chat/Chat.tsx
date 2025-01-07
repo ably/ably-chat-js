@@ -61,10 +61,10 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
   }
 
   return (
-    <div>
+    <>
       {!isConnected && <div className="text-center m-auto">loading...</div>}
       {isConnected && (
-        <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col h-full">
+        <div className="flex-1 p:2 sm:p-12 justify-between flex flex-col chat-box-wrapper">
           <ConnectionStatusComponent />
           <div
             className="text-xs p-3"
@@ -100,6 +100,6 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
           <ReactionComponent />
         </div>
       )}
-    </div>
+    </>
   );
 };

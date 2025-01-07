@@ -21,19 +21,16 @@ body {
   margin: 0 auto;
   place-items: center;
   min-width: 320px;
-  min-height: 100vh;
+  height: 100vh;
 }
 
-.chat-box {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr auto;
-  height: 100%;
+.chat-box-wrapper {
+  height: 100vh;
+  min-height: 300px;
 }
 
 .chat-window {
-  height: 500px;
-  min-height: max(100%, 500px);
+  height: 100%;
   overflow-y: auto; /* Allows scroll the window when messages are added beyond the max height */
   padding: 1rem; /* Adds padding */
   scrollbar-width: thin;
