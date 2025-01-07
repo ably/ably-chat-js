@@ -13,6 +13,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
+import { ChatPresenceData, PresenceDataContribution } from './presence-data-manager.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { TypingOptions } from './room-options.js';
@@ -128,6 +129,7 @@ export class DefaultTyping
   private _currentlyTyping: Set<string> = new Set<string>();
   private _retryTimeout: ReturnType<typeof setTimeout> | undefined;
   private _numRetries = 0;
+  private readonly _presenceDataContribution: PresenceDataContribution;
 
   /**
    * Constructs a new `DefaultTyping` instance.
@@ -141,6 +143,7 @@ export class DefaultTyping
     roomId: string,
     options: TypingOptions,
     channelManager: ChannelManager,
+    presenceDataContribution: PresenceDataContribution,
     clientId: string,
     logger: Logger,
   ) {
@@ -151,13 +154,15 @@ export class DefaultTyping
     // Timeout for typing
     this._typingTimeoutMs = options.timeoutMs;
     this._logger = logger;
+    this._presenceDataContribution = presenceDataContribution;
   }
 
   /**
    * Creates the realtime channel for typing indicators.
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(`${roomId}::$chat::$typingIndicators`);
+    // We now assume that presence and typing share a channel for this POC
+    const channel = channelManager.get(`${roomId}::$chat::$chatMessages`);
     addListenerToChannelPresenceWithoutAttach({
       listener: this._internalSubscribeToEvents.bind(this),
       channel: channel,
@@ -170,7 +175,14 @@ export class DefaultTyping
    */
   get(): Promise<Set<string>> {
     this._logger.trace(`DefaultTyping.get();`);
-    return this._channel.presence.get().then((members) => new Set<string>(members.map((m) => m.clientId)));
+    return this._channel.presence
+      .get()
+      .then(
+        (members) =>
+          new Set<string>(
+            members.filter((m) => (m.data ? (m.data as ChatPresenceData).typing : false)).map((m) => m.clientId),
+          ),
+      );
   }
 
   /**
@@ -206,7 +218,10 @@ export class DefaultTyping
 
     // Start typing and emit typingStarted event
     this._startTypingTimer();
-    return this._channel.presence.enterClient(this._clientId);
+    await this._presenceDataContribution.set((currentPresenceData: ChatPresenceData) => ({
+      ...currentPresenceData,
+      typing: true,
+    }));
   }
 
   /**
@@ -220,8 +235,12 @@ export class DefaultTyping
       this._timerId = undefined;
     }
 
-    // Will throw an error if the user is not typing
-    return this._channel.presence.leaveClient(this._clientId);
+    // When we stop typing, remove the typing flag from the presence data by deleting the typing key
+    await this._presenceDataContribution.remove((currentPresenceData: ChatPresenceData) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { typing, ...rest } = currentPresenceData;
+      return rest;
+    });
   }
 
   /**

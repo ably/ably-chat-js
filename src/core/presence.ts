@@ -13,6 +13,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
+import { ChatPresenceData, PresenceDataContribution } from './presence-data-manager.js';
 import { addListenerToChannelPresenceWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { RoomOptions } from './room-options.js';
@@ -195,6 +196,7 @@ export class DefaultPresence
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
+  private readonly _presenceDataContribution: PresenceDataContribution;
 
   /**
    * Constructs a new `DefaultPresence` instance.
@@ -204,12 +206,19 @@ export class DefaultPresence
    * A channel can have multiple connections using the same clientId.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
+  constructor(
+    roomId: string,
+    channelManager: ChannelManager,
+    presenceDataContribution: PresenceDataContribution,
+    clientId: string,
+    logger: Logger,
+  ) {
     super();
 
     this._channel = this._makeChannel(roomId, channelManager);
     this._clientId = clientId;
     this._logger = logger;
+    this._presenceDataContribution = presenceDataContribution;
   }
 
   /**
@@ -242,15 +251,17 @@ export class DefaultPresence
     const userOnPresence = await this._channel.presence.get(params);
 
     // ably-js never emits the 'absent' event, so we can safely ignore it here.
-    return userOnPresence.map((user) => ({
-      clientId: user.clientId,
-      action: user.action as PresenceEvents,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      data: user.data?.userCustomData as PresenceData,
-      updatedAt: user.timestamp,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      extras: user.extras,
-    }));
+    return userOnPresence
+      .filter((user) => (user.data as AblyPresenceData | undefined)?.userCustomData)
+      .map((user) => ({
+        clientId: user.clientId,
+        action: user.action as PresenceEvents,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        data: user.data?.userCustomData as PresenceData,
+        updatedAt: user.timestamp,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        extras: user.extras,
+      }));
   }
 
   /**
@@ -268,10 +279,16 @@ export class DefaultPresence
    */
   async enter(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.enter()`, { data });
-    const presenceEventToSend: AblyPresenceData = {
+
+    // TODO: We can now collapse enter, update and leave into two methods, something like
+    // Set - indicates you're online, so "present" in the traditional sense
+    // Unset - indicates you're offline, so "absent" in the traditional sense
+    // "Online data" or something like that
+    // For brevity in this POC, we'll keep the three methods separate
+    await this._presenceDataContribution.set((current: ChatPresenceData) => ({
+      ...current,
       userCustomData: data,
-    };
-    return this._channel.presence.enterClient(this._clientId, presenceEventToSend);
+    }));
   }
 
   /**
@@ -281,10 +298,10 @@ export class DefaultPresence
    */
   async update(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.update()`, { data });
-    const presenceEventToSend: AblyPresenceData = {
+    await this._presenceDataContribution.set((current: ChatPresenceData) => ({
+      ...current,
       userCustomData: data,
-    };
-    return this._channel.presence.updateClient(this._clientId, presenceEventToSend);
+    }));
   }
 
   /**
@@ -294,10 +311,10 @@ export class DefaultPresence
    */
   async leave(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.leave()`, { data });
-    const presenceEventToSend: AblyPresenceData = {
+    await this._presenceDataContribution.remove((current: ChatPresenceData) => ({
+      ...current,
       userCustomData: data,
-    };
-    return this._channel.presence.leaveClient(this._clientId, presenceEventToSend);
+    }));
   }
 
   /**
@@ -359,6 +376,13 @@ export class DefaultPresence
    * the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
   subscribeToEvents = (member: Ably.PresenceMessage) => {
+    // TODO: Without the line below, things will break if someone's not in presence but is typing
+    // The way we solve this? We'd have to have a standalone "present set" just for online users aside
+    // from ably-js, to allow us to decide if someone is "truly leaving". It feels like we're gonna be reinventing the wheel here.
+    // if (!(member.data as AblyPresenceData | undefined)?.userCustomData) {
+    //   return;
+    // }
+
     try {
       // Ably-js never emits the 'absent' event, so we can safely ignore it here.
       this.emit(member.action as PresenceEvents, {
