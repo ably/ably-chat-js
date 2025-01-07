@@ -14,6 +14,7 @@ import * as Ably from 'ably';
  * InterfaceEventEmitter.
  */
 type Callback<EventsMap> = (arg: EventsMap[keyof EventsMap]) => void;
+type CallbackSingle<K> = (arg: K) => void;
 
 /**
  * This interface extends the Ably.EventEmitter interface to add a type-safe
@@ -22,6 +23,24 @@ type Callback<EventsMap> = (arg: EventsMap[keyof EventsMap]) => void;
  */
 interface InterfaceEventEmitter<EventsMap> extends Ably.EventEmitter<Callback<EventsMap>, void, keyof EventsMap> {
   emit<K extends keyof EventsMap>(event: K, arg: EventsMap[K]): void;
+
+  on<K extends keyof EventsMap>(event: K, callback: CallbackSingle<EventsMap[K]>): void;
+  on<K1 extends keyof EventsMap, K2 extends keyof EventsMap>(
+    events: [K1, K2],
+    callback: CallbackSingle<EventsMap[K1] | EventsMap[K2]>,
+  ): void;
+  on<K1 extends keyof EventsMap, K2 extends keyof EventsMap, K3 extends keyof EventsMap>(
+    events: [K1, K2, K3],
+    callback: CallbackSingle<EventsMap[K1] | EventsMap[K2] | EventsMap[K3]>,
+  ): void;
+  on(events: (keyof EventsMap)[], callback: Callback<EventsMap>): void;
+  on(callback: Callback<EventsMap>): void;
+
+  off<K extends keyof EventsMap>(event: K, listener: CallbackSingle<EventsMap[K]>): void;
+  off(listener: Callback<EventsMap>): void;
+  off<K extends EventsMap[keyof EventsMap]>(listener: CallbackSingle<K>): void;
+
+  off(): void;
 }
 
 /**

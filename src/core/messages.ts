@@ -14,30 +14,27 @@ import {
 import { ErrorCodes } from './errors.js';
 import { ChatMessageActions, MessageEvents, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
+import {
+  DefaultMessage,
+  Message,
+  MessageHeaders,
+  MessageMetadata,
+  MessageOperationMetadata,
+  MessageReactionSummary,
+} from './message.js';
+import {
+  MessageActionsToEventsMap,
+  MessageEventsMap,
+  MessageListener,
+  MessageListenerObject,
+} from './message-events.js';
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import EventEmitter from './utils/event-emitter.js';
 
-/**
- * Event names and their respective payloads emitted by the messages feature.
- */
-interface MessageEventsMap {
-  [MessageEvents.Created]: MessageEventPayload;
-  [MessageEvents.Updated]: MessageEventPayload;
-  [MessageEvents.Deleted]: MessageEventPayload;
-}
-
-/**
- * Mapping of chat message actions to message events.
- */
-const MessageActionsToEventsMap: Map<ChatMessageActions, MessageEvents> = new Map<ChatMessageActions, MessageEvents>([
-  [ChatMessageActions.MessageCreate, MessageEvents.Created],
-  [ChatMessageActions.MessageUpdate, MessageEvents.Updated],
-  [ChatMessageActions.MessageDelete, MessageEvents.Deleted],
-]);
+const ReactionEmojiV1 = 'reaction:emoji.v1';
 
 /**
  * The order in which results should be returned when performing a paginated query (e.g. message history).
@@ -167,27 +164,6 @@ export interface SendMessageParams {
 export interface UpdateMessageParams extends SendMessageParams {}
 
 /**
- * Payload for a message event.
- */
-export interface MessageEventPayload {
-  /**
-   * The type of the message event.
-   */
-  type: MessageEvents;
-
-  /**
-   * The message that was received.
-   */
-  message: Message;
-}
-
-/**
- * A listener for message events in a chat room.
- * @param event The message event that was received.
- */
-export type MessageListener = (event: MessageEventPayload) => void;
-
-/**
  * A response object that allows you to control a message subscription.
  */
 export interface MessageSubscriptionResponse {
@@ -216,7 +192,7 @@ export interface Messages extends EmitsDiscontinuities {
    * @param listener callback that will be called
    * @returns A response object that allows you to control the subscription.
    */
-  subscribe(listener: MessageListener): MessageSubscriptionResponse;
+  subscribe(listener: MessageListener | MessageListenerObject): MessageSubscriptionResponse;
 
   /**
    * Unsubscribe all listeners from new messages in the chat room.
@@ -286,6 +262,11 @@ export interface Messages extends EmitsDiscontinuities {
   update(message: Message, update: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
+   * Add a reaction to a message.
+   */
+  react(message: Message, reaction: string): Promise<void>;
+
+  /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
    *
    * @returns The realtime channel.
@@ -296,22 +277,20 @@ export interface Messages extends EmitsDiscontinuities {
 /**
  * @inheritDoc
  */
-export class DefaultMessages
-  extends EventEmitter<MessageEventsMap>
-  implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultMessages implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle {
   private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
   private readonly _listenerSubscriptionPoints: Map<
-    MessageListener,
+    MessageListenerObject,
     Promise<{
       fromSerial: string;
     }>
   >;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
+  private _emitter = new EventEmitter<MessageEventsMap>();
 
   /**
    * Constructs a new `DefaultMessages` instance.
@@ -322,7 +301,6 @@ export class DefaultMessages
    * @param logger An instance of the Logger.
    */
   constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, clientId: string, logger: Logger) {
-    super();
     this._roomId = roomId;
 
     this._channel = this._makeChannel(roomId, channelManager);
@@ -330,7 +308,7 @@ export class DefaultMessages
     this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
-    this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
+    this._listenerSubscriptionPoints = new Map<MessageListenerObject, Promise<{ fromSerial: string }>>();
   }
 
   /**
@@ -341,7 +319,7 @@ export class DefaultMessages
 
     addListenerToChannelWithoutAttach({
       listener: this._processEvent.bind(this),
-      events: [RealtimeMessageNames.ChatMessage],
+      // events: [RealtimeMessageNames.ChatMessage],
       channel: channel,
     });
 
@@ -365,7 +343,7 @@ export class DefaultMessages
    * @inheritdoc Messages
    */
   private async _getBeforeSubscriptionStart(
-    listener: MessageListener,
+    listener: MessageListenerObject,
     params: Omit<QueryOptions, 'orderBy'>,
   ): Promise<PaginatedResult<Message>> {
     this._logger.trace(`DefaultSubscriptionManager.getBeforeSubscriptionStart();`);
@@ -578,12 +556,35 @@ export class DefaultMessages
     return deletedMessage;
   }
 
+  react(message: Message, reaction: string): Promise<void> {
+    this._logger.trace('Messages.react();', { message, reaction });
+    return this._chatApi.reactToMessage(this._roomId, message.serial, reaction);
+  }
+
   /**
    * @inheritdoc Messages
    */
-  subscribe(listener: MessageListener): MessageSubscriptionResponse {
-    this._logger.trace('Messages.subscribe();');
-    super.on([MessageEvents.Created, MessageEvents.Updated, MessageEvents.Deleted], listener);
+  subscribe(listener: MessageListener | MessageListenerObject): MessageSubscriptionResponse {
+    this._logger.trace('Messages.subscribe();', { listener });
+
+    if (typeof listener === 'function') {
+      return this.subscribe({ messages: listener });
+    }
+
+    const messagesListener = listener.messages;
+    if (messagesListener) {
+      this._emitter.on([MessageEvents.Created, MessageEvents.Updated, MessageEvents.Deleted], messagesListener);
+    }
+
+    const reactionsListener = listener.reactions;
+    if (reactionsListener) {
+      this._emitter.on(MessageEvents.ReactionCreated, reactionsListener);
+    }
+
+    const summariesListener = listener.summaries;
+    if (summariesListener) {
+      this._emitter.on(MessageEvents.ReactionSummary, summariesListener);
+    }
 
     // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
     const resolvedSubscriptionStart = this._resolveSubscriptionStart();
@@ -602,7 +603,15 @@ export class DefaultMessages
         // Remove the listener from the subscription points
         this._listenerSubscriptionPoints.delete(listener);
         this._logger.trace('Messages.unsubscribe();');
-        super.off(listener);
+        if (messagesListener) {
+          this._emitter.off(messagesListener);
+        }
+        if (reactionsListener) {
+          this._emitter.off(reactionsListener);
+        }
+        if (summariesListener) {
+          this._emitter.off(summariesListener);
+        }
       },
       getPreviousMessages: (params: Omit<QueryOptions, 'orderBy'>) =>
         this._getBeforeSubscriptionStart(listener, params),
@@ -614,7 +623,7 @@ export class DefaultMessages
    */
   unsubscribeAll(): void {
     this._logger.trace('Messages.unsubscribeAll();');
-    super.off();
+    this._emitter.off();
     this._listenerSubscriptionPoints.clear();
   }
 
@@ -622,19 +631,71 @@ export class DefaultMessages
     this._logger.trace('Messages._processEvent();', {
       channelEventMessage,
     });
-    const { action } = channelEventMessage;
-    const event = MessageActionsToEventsMap.get(action as ChatMessageActions);
-    if (!event) {
-      this._logger.debug('Messages._processEvent(); received unknown message action', { action });
-      return;
-    }
-    // Send the message to the listeners
-    const message = this._parseNewMessage(channelEventMessage);
-    if (!message) {
+    const action = channelEventMessage.action;
+    const messageEvent = MessageActionsToEventsMap.get(action as ChatMessageActions);
+
+    if (channelEventMessage.name === RealtimeMessageNames.ChatMessage && messageEvent) {
+      this._logger.trace('Messages._processEvent(): detected chat message event', { messageEvent });
+      // this is a chat messages
+      const message = this._parseNewMessage(channelEventMessage);
+      if (!message) {
+        this._logger.trace('Messages._processEvent(): message could not be parsed, ignoring', { channelEventMessage });
+        return;
+      }
+      this._emitter.emit(messageEvent, { type: messageEvent, message: message, messageSerial: message.serial });
       return;
     }
 
-    this.emit(event, { type: event, message: message });
+    // annotation create
+    if (channelEventMessage.action === ChatMessageActions.MessageAnnotationCreate && // message reactions
+      channelEventMessage.refType === ReactionEmojiV1) {
+        this._logger.trace('Messages._processEvent(): detected new message reaction', { channelEventMessage });
+        this._emitter.emit(MessageEvents.ReactionCreated, {
+          type: MessageEvents.ReactionCreated,
+          reaction: {
+            reaction: channelEventMessage.data,
+            refSerial: channelEventMessage.refSerial!,
+            clientId: channelEventMessage.clientId!,
+          },
+          messageSerial: channelEventMessage.refSerial!,
+        });
+        return;
+      }
+
+    // todo: annotation remove
+    if (channelEventMessage.action === ChatMessageActions.MessageAnnotationDelete) {
+      if (channelEventMessage.refType === ReactionEmojiV1) {
+        // reaction remove
+      }
+      return;
+    }
+
+    if ((channelEventMessage.action as any) === ChatMessageActions.MessageAnnotationSummary) {
+      // reaction summaries (for annotation refType "reaction:emoji.v1")
+      const emojis =
+        ((channelEventMessage as any).summary?.data?.namespaces?.reaction?.emojiV1 as unknown as Record<
+          string,
+          { total: string; clientIds: string[]; reaction: string }
+        >) || {};
+      const reactions = new Map<string, MessageReactionSummary>();
+      for (const emoji in emojis) {
+        reactions.set(emoji, {
+          count: Number.parseInt(emojis[emoji]?.total as unknown as string) ?? 0,
+          clientIds: emojis[emoji]?.clientIds ?? [],
+          reaction: emoji,
+        });
+      }
+
+      this._emitter.emit(MessageEvents.ReactionSummary, {
+        type: MessageEvents.ReactionSummary,
+        summary: {
+          refSerial: channelEventMessage.refSerial!,
+          reactions: reactions,
+          timestamp: new Date(channelEventMessage.timestamp),
+        },
+        messageSerial: channelEventMessage.refSerial!,
+      });
+    }
   }
 
   /**
