@@ -31,6 +31,8 @@ const App: FC<AppProps> = () => {
     setRoomId(newRoomId);
   };
 
+  const [doPresence, setDoPresence] = useState(true);
+
   // Add a useEffect that handles the popstate event to update the roomId when
   // the user navigates back and forth in the browser history.
   useEffect(() => {
@@ -62,7 +64,8 @@ const App: FC<AppProps> = () => {
           roomId={roomIdState}
         />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <UserPresenceComponent />
+          <button onClick={() => setDoPresence(!doPresence)}>Do presence toggle</button>
+          {doPresence && <UserPresenceComponent />}
           <OccupancyComponent />
         </div>
       </div>
