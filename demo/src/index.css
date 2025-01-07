@@ -57,9 +57,26 @@ body {
 }
 
 .chat-message .buttons {
-  display: none;
+  display: inline-block;
+  opacity: 0;
+  transition: all 0.1s ease-in-out;
 }
 
 .chat-message:hover .buttons {
-  display: block;
+  display: inline-block;
+  opacity: 1;
+}
+
+.chat-message .message-reactions > a {
+  opacity: 0.8;
+  transition: all 0.1s ease-in-out;
+  display: inline-block;
+  padding-left: 2px;
+  padding-right: 2px;
+  filter: grayscale(100%);
+}
+.chat-message .message-reactions > a:hover {
+  transform: scale(1.3);
+  opacity: 1;
+  filter: none;
 }

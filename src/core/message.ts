@@ -1,7 +1,13 @@
 import { ErrorInfo } from 'ably';
 
-import { ChatMessageActions } from './events.js';
+import { ChatMessageActions, MessageEvents } from './events.js';
 import { Headers } from './headers.js';
+import {
+  AnyMessageEvent,
+  MessageEventPayload,
+  MessageReactionPayload,
+  MessageReactionSummaryPayload,
+} from './message-events.js';
 import { Metadata } from './metadata.js';
 import { OperationMetadata } from './operation-metadata.js';
 
@@ -118,6 +124,17 @@ export interface Message {
   readonly operation?: Operation;
 
   /**
+   * The reactions summary of reactions for the message. This is an object where the key is the reaction (ie. the emoji)
+   * and the value is a {@link MessageReactionSummary} object, where count and clientIds can be found for each reaction.
+   */
+  readonly reactions: Map<string, MessageReactionSummary>;
+
+  /**
+   * Applies the event to this message to produce a new message. `this` remains unchanged.
+   */
+  apply(event: AnyMessageEvent): Message;
+
+  /**
    * Indicates if the message has been updated.
    */
   get isUpdated(): boolean;
@@ -203,12 +220,38 @@ export interface Message {
   equal(message: Message): boolean;
 }
 
+/** Represents an individual message reaction. */
+export interface MessageReaction {
+  /** The reaction (ie. the emoji). */
+  reaction: string;
+
+  /** The clientId of the user who reacted. */
+  clientId: string;
+
+  /** The timestamp at which the reaction was created. */
+  createdAt: Date;
+}
+
+/** Represents the summary of a single reaction for a message. */
+export interface MessageReactionSummary {
+  /** The reaction (ie. the emoji). */
+  reaction: string;
+
+  /** The count of reactions. */
+  count: number;
+
+  /** Deduplicated list of users that have reacted. */
+  clientIds: string[];
+}
+
 /**
  * An implementation of the Message interface for chat messages.
  *
  * Allows for comparison of messages based on their serials.
  */
 export class DefaultMessage implements Message {
+  public readonly reactions: Map<string, MessageReactionSummary>;
+
   constructor(
     public readonly serial: string,
     public readonly clientId: string,
@@ -221,7 +264,9 @@ export class DefaultMessage implements Message {
     public readonly createdAt: Date,
     public readonly timestamp: Date,
     public readonly operation?: Operation,
+    reactions?: Map<string, MessageReactionSummary>,
   ) {
+    this.reactions = reactions ?? new Map();
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
   }
@@ -288,4 +333,105 @@ export class DefaultMessage implements Message {
   equal(message: Message): boolean {
     return this.serial === message.serial;
   }
+
+  apply(event: AnyMessageEvent): Message {
+    if (event.messageSerial !== this.serial) {
+      throw new ErrorInfo('apply(): Cannot apply event to message, serials do not match', 50000, 500);
+    }
+
+    switch (event.type) {
+      case MessageEvents.Created: {
+        // created events shouldn't get here, we'll treat as no-op
+        return this;
+      }
+      case MessageEvents.Deleted:
+      case MessageEvents.Updated: {
+        event = event as MessageEventPayload;
+        if (this.version >= event.message.version) {
+          // received older version, no-op
+          return this;
+        }
+        return DefaultMessage.clone(event.message, { reactions: this.reactions });
+      }
+      case MessageEvents.ReactionCreated: {
+        const reactions = cloneReactions(this.reactions);
+        event = event as MessageReactionPayload;
+        const r = reactions.get(event.reaction.reaction);
+        if (r) {
+          r.count++;
+          if (!r.clientIds.includes(event.reaction.clientId)) {
+            r.clientIds.push(event.reaction.clientId);
+          }
+        } else {
+          reactions.set(event.reaction.reaction, {
+            reaction: event.reaction.reaction,
+            count: 1,
+            clientIds: [event.reaction.clientId],
+          });
+        }
+        return DefaultMessage.clone(this, { reactions });
+      }
+      case MessageEvents.ReactionDeleted: {
+        event = event as MessageReactionPayload;
+        // if the reaction doesn't exist return same Message object early
+        if (!this.reactions.get(event.reaction.reaction)) {
+          return this;
+        }
+        const reactions = cloneReactions(this.reactions);
+        const r = reactions.get(event.reaction.reaction);
+        if (r) {
+          r.count--;
+          const idx = r.clientIds.indexOf(event.reaction.clientId);
+          if (idx !== -1) {
+            r.clientIds.splice(idx, 1);
+          }
+          return DefaultMessage.clone(this, { reactions });
+        }
+        // if no change return same object
+        // this should be unreachable but the if(r) above makes typescript happy
+        return this;
+      }
+      case MessageEvents.ReactionSummary: {
+        event = event as MessageReactionSummaryPayload;
+        const reactions: typeof this.reactions = new Map();
+        for (const r of event.summary.reactions.values()) {
+          reactions.set(r.reaction, r);
+        }
+        return DefaultMessage.clone(this, { reactions });
+      }
+    }
+
+    console.log("unreachable code reached in apply() method of DefaultMessage for event", event);
+    return this;
+  }
+
+  // Clone a message, optionally replace the given fields
+  private static clone(source: Message, replace?: Partial<Message>): DefaultMessage {
+    return new DefaultMessage(
+      replace?.serial ?? source.serial,
+      replace?.clientId ?? source.clientId,
+      replace?.roomId ?? source.roomId,
+      replace?.text ?? source.text,
+      replace?.metadata ?? source.metadata, // deep clone?
+      replace?.headers ?? source.headers, // deep clone?
+      replace?.action ?? source.action,
+      replace?.version ?? source.version,
+      replace?.createdAt ?? source.createdAt,
+      replace?.timestamp ?? source.timestamp,
+      replace?.operation ?? source.operation, // deep clone?
+      replace?.reactions ?? source.reactions, // deep clone?
+    );
+  }
+}
+
+function cloneReactions(obj: Map<string, MessageReactionSummary>): Map<string, MessageReactionSummary> {
+  const clone = new Map<string, MessageReactionSummary>();
+  for (const [key, value] of obj.entries()) {
+    clone.set(key, {
+      clientIds: value.clientIds.slice(),
+      count: value.count,
+      reaction: value.reaction,
+    });
+  }
+  return clone;
 }

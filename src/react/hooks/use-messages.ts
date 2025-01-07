@@ -6,7 +6,9 @@ import {
   MessageSubscriptionResponse,
   OperationDetails,
   QueryOptions,
+  ReactionsListener,
   SendMessageParams,
+  SummariesListener,
   UpdateMessageParams,
 } from '@ably/chat';
 import * as Ably from 'ably';
@@ -48,6 +50,11 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly deleteMessage: Messages['delete'];
 
   /**
+   * A shortcut to the {@link Messages.react} method.
+   */
+  readonly react: Messages['react'];
+
+  /**
    * Provides access to the underlying {@link Messages} instance of the room.
    */
   readonly messages?: Messages;
@@ -71,12 +78,16 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly getPreviousMessages?: MessageSubscriptionResponse['getPreviousMessages'];
 }
 
-export interface UseMessagesParams extends StatusParams, Listenable<MessageListener> {
+export interface UseMessagesParams extends StatusParams {
   /**
    * An optional listener that can be provided to receive new messages in the room.
    * The listener is removed when the component unmounts.
    */
   listener?: MessageListener;
+
+  reactionsListener?: ReactionsListener;
+
+  summariesListener?: SummariesListener;
 }
 
 /**
@@ -101,6 +112,9 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   // we are storing the params in a ref so that we don't end up with an infinite loop should the user pass
   // in an unstable reference
   const listenerRef = useEventListenerRef(params?.listener);
+  const reactionsListenerRef = useEventListenerRef(params?.reactionsListener);
+  const summariesListenerRef = useEventListenerRef(params?.summariesListener);
+
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
   const send = useCallback(
@@ -121,18 +135,26 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
       context.room.then((room) => room.messages.update(message, update, details)),
     [context],
   );
+  const react = useCallback(
+    (message: Message, reaction: string) => context.room.then((room) => room.messages.react(message, reaction)),
+    [context],
+  );
 
   const [getPreviousMessages, setGetPreviousMessages] = useState<MessageSubscriptionResponse['getPreviousMessages']>();
 
   useEffect(() => {
-    if (!listenerRef) return;
-
+    if (!listenerRef && !reactionsListenerRef && !summariesListenerRef) return;
     return wrapRoomPromise(
       context.room,
       (room) => {
         let unmounted = false;
         logger.debug('useMessages(); applying listener', { roomId: context.roomId });
-        const sub = room.messages.subscribe(listenerRef);
+
+        const sub = room.messages.subscribe({
+          messages: listenerRef,
+          reactions: reactionsListenerRef,
+          summaries: summariesListenerRef,
+        });
 
         // set the getPreviousMessages method if a listener is provided
         setGetPreviousMessages(() => {
@@ -166,7 +188,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
       logger,
       context.roomId,
     ).unmount();
-  }, [context, logger, listenerRef]);
+  }, [context, logger, listenerRef, reactionsListenerRef, summariesListenerRef]);
 
   useEffect(() => {
     if (!onDiscontinuityRef) return;
@@ -192,6 +214,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     get,
     deleteMessage,
     getPreviousMessages,
+    react,
     connectionStatus,
     connectionError,
     roomStatus,

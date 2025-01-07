@@ -10,6 +10,8 @@ interface MessageProps {
   onMessageUpdate?(message: Message): void;
 
   onMessageDelete?(msg: Message): void;
+
+  onMessageReact?(message: Message, reaction: string): void;
 }
 
 const shortDateTimeFormatter = new Intl.DateTimeFormat('default', {
@@ -37,6 +39,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
   message,
   onMessageUpdate,
   onMessageDelete,
+  onMessageReact,
 }) => {
   const handleMessageUpdate = useCallback(
     (e: React.UIEvent) => {
@@ -52,6 +55,57 @@ export const MessageComponent: React.FC<MessageProps> = ({
       onMessageDelete?.(message);
     },
     [message, onMessageDelete],
+  );
+
+  const handleReaction = useCallback(
+    (reaction: string) => {
+      onMessageReact?.(message, reaction);
+    },
+    [message, onMessageReact],
+  );
+
+  const currentReactions = message.reactions;
+  const reactionsWithCounts = ['👍', '🚀', '🔥', '❤️'].map((emoji) => {
+    const count = currentReactions.get(emoji)?.count || 0;
+    return { emoji, count};
+  })
+
+  const messageReactionsUI = (
+    <span className="message-reactions">
+      {reactionsWithCounts.map((rwc) => (
+        <a
+          key={rwc.emoji}
+          onClick={(e) => {
+            e.preventDefault();
+            handleReaction(rwc.emoji);
+          }}
+          href="#"
+        >
+          {rwc.emoji}
+          {rwc.count > 0 ? "(" + rwc.count + ")" : ""}
+        </a>
+      ))}
+    </span>
+  );
+  const messageActionsUI = (
+    <div
+      className="buttons"
+      role="group"
+      aria-label="Message actions"
+    >
+      {!self && <>{messageReactionsUI} | </>}
+      <FaPencil
+        className="cursor-pointer text-gray-100 m-1 hover:text-gray-500 inline-block"
+        onClick={handleMessageUpdate}
+        aria-label="Edit message"
+      ></FaPencil>
+      <FaTrash
+        className="cursor-pointer text-red-500 m-1 hover:text-red-700 inline-block"
+        onClick={handleMessageDelete}
+        aria-label="Delete message"
+      />
+      {self && <> | {messageReactionsUI} </>}
+    </div>
   );
 
   return (
@@ -85,28 +139,13 @@ export const MessageComponent: React.FC<MessageProps> = ({
           </div>
           <div
             className={clsx('px-4 py-2 rounded-lg inline-block', {
-              ['rounded-br bg-blue-600 text-white']: self,
-              ['rounded-bl justify-start bg-gray-300 text-gray-600']: !self,
+              ['rounded-br bg-blue-600 text-white ml-4']: self,
+              ['rounded-bl justify-start bg-gray-300 text-gray-600 mr-4']: !self,
             })}
           >
             {message.text}
           </div>
-          <div
-            className="buttons"
-            role="group"
-            aria-label="Message actions"
-          >
-            <FaPencil
-              className="cursor-pointer text-gray-100 m-1 hover:text-gray-500 inline-block"
-              onClick={handleMessageUpdate}
-              aria-label="Edit message"
-            ></FaPencil>
-            <FaTrash
-              className="cursor-pointer text-red-500 m-1 hover:text-red-700 inline-block"
-              onClick={handleMessageDelete}
-              aria-label="Delete message"
-            />
-          </div>
+          {messageActionsUI}
         </div>
       </div>
     </div>
