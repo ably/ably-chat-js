@@ -7,6 +7,7 @@ import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
+import { DefaultPresenceDataManager } from './presence-data-manager.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
 import { RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
@@ -169,6 +170,11 @@ export class DefaultRoom implements Room {
     this._lifecycle = new DefaultRoomLifecycle(roomId, logger);
 
     const channelManager = this._getChannelManager(options, realtime, logger);
+    const presenceDataManager = new DefaultPresenceDataManager(
+      realtime.channels.get(DefaultPresence.channelName(roomId)),
+      realtime.auth.clientId,
+      logger,
+    );
 
     // Setup features
     this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, logger);
@@ -177,13 +183,26 @@ export class DefaultRoom implements Room {
 
     if (options.presence) {
       this._logger.debug('enabling presence on room', { roomId });
-      this._presence = new DefaultPresence(roomId, channelManager, realtime.auth.clientId, logger);
+      this._presence = new DefaultPresence(
+        roomId,
+        channelManager,
+        presenceDataManager.newContributor(),
+        realtime.auth.clientId,
+        logger,
+      );
       features.push(this._presence);
     }
 
     if (options.typing) {
       this._logger.debug('enabling typing on room', { roomId });
-      this._typing = new DefaultTyping(roomId, options.typing, channelManager, realtime.auth.clientId, logger);
+      this._typing = new DefaultTyping(
+        roomId,
+        options.typing,
+        channelManager,
+        presenceDataManager.newContributor(),
+        realtime.auth.clientId,
+        logger,
+      );
       features.push(this._typing);
     }
 

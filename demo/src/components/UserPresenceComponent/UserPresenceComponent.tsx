@@ -33,6 +33,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   };
 
   const renderPresentMember = (presentMember: PresenceMember, index: number) => {
+    console.log('presentMember', presentMember);
     const { status } = presentMember.data as { status: string };
     if (presentMember.clientId === clientId) {
       return <li key={index}>{`👤 You - ${status}`}</li>;
