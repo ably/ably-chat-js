@@ -7,7 +7,7 @@ export default defineConfig({
   root: resolve(__dirname, '.'),
   plugins: [dts({ insertTypesEntry: true })],
   build: {
-    outDir: '../../dist/core',
+    outDir: '../dist/chat',
     lib: {
       entry: resolve(__dirname, 'index.ts'),
       name: 'AblyChat',
@@ -16,7 +16,7 @@ export default defineConfig({
     rollupOptions: {
       // We currently suggest that ably be installed as a separate dependency, so lets
       // not bundle it.
-      external: ['ably'],
+      external: ['ably', 'react', 'react-dom', 'react/jsx-runtime'],
     },
     sourcemap: true,
   },

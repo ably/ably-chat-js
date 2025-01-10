@@ -1,5 +1,8 @@
-import { ChatClient, Room, RoomOptions } from '@ably/chat';
 import { createContext } from 'react';
+
+import { ChatClient } from '../../core/chat.js';
+import { Room } from '../../core/room.js';
+import { RoomOptions } from '../../core/room-options.js';
 
 /**
  * Data type for {@link ChatRoomContext}.

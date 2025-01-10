@@ -1,6 +1,8 @@
-import { ConnectionStatusChange, Room, RoomStatusChange } from '@ably/chat';
 import { useCallback } from 'react';
 
+import { ConnectionStatusChange } from '../../core/connection.js';
+import { Room } from '../../core/room.js';
+import { RoomStatusChange } from '../../core/room-status.js';
 import { useEventualRoom } from '../helper/use-eventual-room.js';
 import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';

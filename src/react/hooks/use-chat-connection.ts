@@ -1,7 +1,12 @@
-import { Connection, ConnectionStatus, ConnectionStatusChange, ConnectionStatusListener } from '@ably/chat';
 import { ErrorInfo } from 'ably';
 import { useEffect, useState } from 'react';
 
+import {
+  Connection,
+  ConnectionStatus,
+  ConnectionStatusChange,
+  ConnectionStatusListener,
+} from '../../core/connection.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useChatClient } from './use-chat-client.js';
 import { useLogger } from './use-logger.js';

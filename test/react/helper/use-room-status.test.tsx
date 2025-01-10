@@ -1,9 +1,11 @@
-import { Logger, Room, RoomOptionsDefaults, RoomStatus, RoomStatusChange } from '@ably/chat';
 import { cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { InternalRoomLifecycle } from '../../../src/core/room-status.ts';
+import { Logger } from '../../../src/core/logger.ts';
+import { Room } from '../../../src/core/room.ts';
+import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
+import { InternalRoomLifecycle, RoomStatus, RoomStatusChange } from '../../../src/core/room-status.ts';
 import { useRoomStatus } from '../../../src/react/helper/use-room-status.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';

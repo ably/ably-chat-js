@@ -1,6 +1,5 @@
 import React from 'react';
-import { useChatConnection } from '@ably/chat/react';
-import { ConnectionStatus } from '@ably/chat';
+import { ConnectionStatus, useChatConnection } from '@ably/chat';
 
 export const ConnectionStatusComponent: React.FC = () => {
   const { currentStatus } = useChatConnection();

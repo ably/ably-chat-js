@@ -1,8 +1,10 @@
-import { PresenceEvent, PresenceListener, PresenceMember, RoomOptionsDefaults, RoomStatus } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { PresenceEvent, PresenceListener, PresenceMember } from '../../../src/core/presence.ts';
+import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
+import { RoomStatus } from '../../../src/core/room-status.ts';
 import { usePresenceListener } from '../../../src/react/hooks/use-presence-listener.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';

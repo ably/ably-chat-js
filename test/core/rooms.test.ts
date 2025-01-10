@@ -1,10 +1,10 @@
-import { ErrorCodes } from '@ably/chat';
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
+import { ErrorCodes } from '../../src/index.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';

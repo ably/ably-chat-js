@@ -1,6 +1,6 @@
-import { Logger } from '@ably/chat';
 import { useMemo } from 'react';
 
+import { Logger } from '../../core/logger.js';
 import { useChatClient } from './use-chat-client.js';
 
 /**

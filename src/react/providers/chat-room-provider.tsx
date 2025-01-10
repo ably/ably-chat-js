@@ -1,7 +1,11 @@
 // imported for docs linking
-import { ChatClient, Logger, Room, RoomOptions, type RoomOptionsDefaults } from '@ably/chat'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
 
+import { ChatClient } from '../../core/chat.js';
+import { Logger } from '../../core/logger.js';
+import { Room } from '../../core/room.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { RoomOptions, type RoomOptionsDefaults } from '../../core/room-options.js';
 import { ChatRoomContext, ChatRoomContextType } from '../contexts/chat-room-context.js';
 import { useChatClient } from '../hooks/use-chat-client.js';
 import { useLogger } from '../hooks/use-logger.js';

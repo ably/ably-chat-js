@@ -19,11 +19,11 @@ async function run() {
     path: '.',
     // Comma separated directories (relative to `path`) to upload
     // TODO: Update this when we release React
-    includeDirs: 'dist/chat',
+    includeDirs: 'dist/core',
     // Comma separated directories (relative to `path`) to exclude from upload
     excludeDirs: 'node_modules,.git',
     // Regex to match files against for upload
-    fileRegex: '^(ably-chat(-react)?)?\\.(umd\\.c)?js$',
+    fileRegex: '^(ably-chat)?\\.(umd\\.c)?js$',
     ...argv,
   };
 

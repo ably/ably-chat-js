@@ -1,16 +1,13 @@
-import {
-  ChatClient,
-  ChatMessageActions,
-  Message,
-  MessageEvents,
-  MessageListener,
-  RoomOptionsDefaults,
-  RoomStatus,
-} from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { ChatClient } from '../../../src/core/chat.ts';
+import { ChatMessageActions, MessageEvents } from '../../../src/core/events.ts';
+import { Message } from '../../../src/core/message.ts';
+import { MessageListener } from '../../../src/core/messages.ts';
+import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
+import { RoomStatus } from '../../../src/core/room-status.ts';
 import { useMessages } from '../../../src/react/hooks/use-messages.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';

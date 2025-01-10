@@ -1,8 +1,7 @@
-import { Message } from '@ably/chat';
 import { describe, expect, it } from 'vitest';
 
 import { ChatMessageActions } from '../../src/core/events.ts';
-import { DefaultMessage } from '../../src/core/message.ts';
+import { DefaultMessage, Message } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
   it('is the same as another message', () => {

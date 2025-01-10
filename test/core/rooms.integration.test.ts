@@ -1,9 +1,9 @@
-import { RoomOptionsDefaults } from '@ably/chat';
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
 import { LogLevel } from '../../src/core/logger.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
+import { RoomOptionsDefaults } from '../../src/index.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForRoomStatus } from '../helper/room.ts';
 

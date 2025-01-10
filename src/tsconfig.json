@@ -1,15 +1,6 @@
 {
-  "include": [
-    "./hooks/**/*.ts",
-    "./hooks/**/*.tsx",
-    "index.ts",
-    "./types/**/*.ts",
-    "./types/**/*.tsx",
-    "./contexts/**/*.ts",
-    "./contexts/**/*.tsx",
-    "./providers/**/*.ts",
-    "./providers/**/*.tsx"
-  ],
+  "include": ["./**/*.ts"],
+  "exclude": ["./fakes/**/*.ts"],
   "compilerOptions": {
     "rootDir": ".",
     "target": "es6",
@@ -19,18 +10,16 @@
     "noImplicitThis": true,
     "esModuleInterop": true,
     "declaration": true,
-    "moduleResolution": "node",
+    "stripInternal": true,
+    "moduleResolution": "Node",
     "skipLibCheck": true,
     "allowJs": true,
-    "jsx": "react-jsx",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "strictNullChecks": true,
     "noUncheckedIndexedAccess": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["node"],
-    "paths": {
-      "@ably/chat": ["../../dist/chat"]
-    }
+    "jsx": "react-jsx"
   }
 }

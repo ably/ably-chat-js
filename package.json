@@ -6,19 +6,13 @@
   "main": "dist/chat/ably-chat.umd.cjs",
   "browser": "dist/chat/ably-chat.js",
   "types": "dist/chat/index.d.ts",
-  "react-native": "dist/react/ably-chat-react.umd.cjs",
+  "react-native": "dist/chat/ably-chat.umd.cjs",
   "exports": {
     ".": {
       "react-native": "./dist/chat/ably-chat.umd.cjs",
       "types": "./dist/chat/index.d.ts",
       "import": "./dist/chat/ably-chat.js",
       "require": "./dist/chat/ably-chat.umd.cjs"
-    },
-    "./react": {
-      "react-native": "./dist/react/ably-chat-react.umd.cjs",
-      "types": "./dist/react/index.d.ts",
-      "import": "./dist/react/ably-chat-react.js",
-      "require": "./dist/react/ably-chat-react.umd.cjs"
     },
     "./package.json": "./package.json"
   },
@@ -31,9 +25,9 @@
     "test:chat": "vitest run --project chat",
     "test:react": "vitest run --project react-hooks",
     "test:watch": "vitest watch",
-    "build": "npm run build:chat && npm run build:react",
-    "build:chat": "vite build --config ./src/core/vite.config.ts --emptyOutDir",
-    "build:react": "vite build --config ./src/react/vite.config.ts --emptyOutDir",
+    "build": "npm run build:chat && npm run build:core",
+    "build:chat": "vite build --config ./src/vite.config.ts --emptyOutDir",
+    "build:core": "vite build --config ./src/core/vite.config.ts --emptyOutDir",
     "build:start-demo": "npm run build && (cd demo && npm start)",
     "prepare": "npm run build",
     "test:typescript": "tsc",
@@ -44,8 +38,7 @@
   },
   "files": [
     "dist/**",
-    "src/**",
-    "react-native/**"
+    "src/**"
   ],
   "repository": {
     "type": "git",
@@ -64,7 +57,17 @@
   },
   "homepage": "https://github.com/ably/ably-chat-js#readme",
   "peerDependencies": {
-    "ably": "^2.6.2"
+    "ably": "^2.6.2",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.0",
@@ -73,7 +76,8 @@
     "@testing-library/react": "^16.0.0",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/lodash.clonedeep": "^4.5.9",
-    "@types/react": "^18.3.3",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.9.0",
     "@typescript-eslint/parser": "^8.9.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -95,8 +99,8 @@
     "jsonwebtoken": "^9.0.2",
     "minimist": "^1.2.8",
     "prettier": "^3.3.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "typedoc": "^0.27.2",
     "typedoc-plugin-no-inherit": "^1.4.0",
     "typescript": "^5.5.2",

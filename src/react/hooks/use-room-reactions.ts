@@ -1,6 +1,6 @@
-import { RoomReactionListener, RoomReactions, SendReactionParams } from '@ably/chat';
 import { useCallback, useEffect } from 'react';
 
+import { RoomReactionListener, RoomReactions, SendReactionParams } from '../../core/room-reactions.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
