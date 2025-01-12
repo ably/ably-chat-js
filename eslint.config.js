@@ -51,6 +51,7 @@ export default [
       'plugin:import/recommended',
       'plugin:compat/recommended',
       'plugin:unicorn/recommended',
+      'plugin:node/recommended',
     ),
   ),
   {
@@ -94,6 +95,7 @@ export default [
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
       'unicorn/filename-case': 'error',
+      'node/no-missing-import': 'off',
 
       '@typescript-eslint/naming-convention': [
         'error',
