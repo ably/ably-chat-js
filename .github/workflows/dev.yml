@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+env:
+  BASE_NODE_VERSION: 20
+
 jobs:
   audit:
     runs-on: ubuntu-latest
@@ -15,7 +18,7 @@ jobs:
           submodules: true
       - uses: actions/setup-node@v1
         with:
-          node-version: 20
+          node-version: ${{ env.BASE_NODE_VERSION }}
       - run: npm ci
       - run: npm audit --production
   format-check:
@@ -26,7 +29,7 @@ jobs:
           submodules: true
       - uses: actions/setup-node@v1
         with:
-          node-version: 20
+          node-version: ${{ env.BASE_NODE_VERSION }}
       - run: npm ci
       - run: npm run format:check
   lint:
@@ -37,7 +40,7 @@ jobs:
           submodules: true
       - uses: actions/setup-node@v1
         with:
-          node-version: 20
+          node-version: ${{ env.BASE_NODE_VERSION }}
       - run: npm ci
       - run: npm run lint
   test-typescript:
@@ -48,7 +51,7 @@ jobs:
           submodules: true
       - uses: actions/setup-node@v1
         with:
-          node-version: 20
+          node-version: ${{ env.BASE_NODE_VERSION }}
       - run: npm ci
       - run: npm run test:typescript
   test:
@@ -56,17 +59,21 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    name: test node ${{ matrix.node-version }}
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
       - uses: actions/setup-node@v1
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
       - run: npm ci
       - run: npm run test
       - uses: davelosert/vitest-coverage-report-action@v2
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'ably/ably-chat-js' && always()
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'ably/ably-chat-js' && matrix.node-version == ${{ env.BASE_NODE_VERSION }} && always()
   build:
     runs-on: ubuntu-latest
     steps:
@@ -75,7 +82,7 @@ jobs:
           submodules: true
       - uses: actions/setup-node@v1
         with:
-          node-version: 20
+          node-version: ${{ env.BASE_NODE_VERSION }}
       - run: npm ci
       - run: npm run build
   demo-app:
@@ -86,7 +93,7 @@ jobs:
           submodules: true
       - uses: actions/setup-node@v1
         with:
-          node-version: 20
+          node-version: ${{ env.BASE_NODE_VERSION }}
       - name: npm ci (lib)
         run: npm ci
       - name: npm build (lib)

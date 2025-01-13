@@ -57,7 +57,7 @@
   },
   "homepage": "https://github.com/ably/ably-chat-js#readme",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=18.0.0"
   },
   "peerDependencies": {
     "ably": "^2.6.2",
