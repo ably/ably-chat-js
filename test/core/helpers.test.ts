@@ -12,7 +12,7 @@ const TEST_ENVELOPED_MESSAGE = {
   clientId: 'user1',
   timestamp: 1719948956834,
   encoding: 'json',
-  action: 1,
+  action: 0,
   version: '01719948956834-000@108TeGZDQBderu97202638',
   extras: {
     headers: {},

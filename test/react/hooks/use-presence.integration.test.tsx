@@ -1,6 +1,6 @@
 import { PresenceData, PresenceEvent, PresenceEvents, RoomOptionsDefaults } from '@ably/chat';
 import { cleanup, render, waitFor } from '@testing-library/react';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { usePresence } from '../../../src/react/hooks/use-presence.ts';
@@ -78,22 +78,25 @@ describe('usePresence', () => {
 
       return null;
     };
-
-    const TestProvider = () => (
+    const Providers = ({ children }: React.PropsWithChildren) => (
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
           id={roomId}
           options={RoomOptionsDefaults}
         >
-          <TestComponent
-            enterWithData={'test enter'}
-            leaveWithData={'test leave'}
-          />
+          {children}
         </ChatRoomProvider>
       </ChatClientProvider>
     );
 
-    const { unmount } = render(<TestProvider />);
+    const { unmount, rerender } = render(
+      <Providers>
+        <TestComponent
+          enterWithData={'test enter'}
+          leaveWithData={'test leave'}
+        />
+      </Providers>,
+    );
 
     await waitFor(
       () => {
@@ -112,13 +115,16 @@ describe('usePresence', () => {
       presenceEventsRoomTwo,
     );
 
-    // unmount the component
-    unmount();
+    // Remove TestComponent while keeping Providers intact
+    rerender(<Providers></Providers>);
 
     // expect a presence leave event from the test component to be received by the second room
     await waitToReceivePresenceEvent(
       { clientId: chatClientOne.clientId, event: PresenceEvents.Leave, data: 'test leave' },
       presenceEventsRoomTwo,
     );
+
+    // cleanup
+    unmount();
   }, 20000);
 });
