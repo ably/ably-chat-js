@@ -2,6 +2,14 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.3.1](https://github.com/ably/ably-chat-js/tree/0.3.1) (2025-01-14)
+
+### Fixes
+
+There are no API changes, but this release is required to support a change in the underlying message attributes.
+
+- Upgraded the `package.json` dependency of `ably-js` to v2.6.2 [#449](https://github.com/ably/ably-chat-js/pull/449)
+
 ## [0.3.0](https://github.com/ably/ably-chat-js/tree/0.3.0) (2025-01-06)
 
 ### Breaking Changes
