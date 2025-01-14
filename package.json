@@ -64,7 +64,7 @@
   },
   "homepage": "https://github.com/ably/ably-chat-js#readme",
   "peerDependencies": {
-    "ably": "^2.6.1"
+    "ably": "github:ably/ably-js#fix-not-populating-serial"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.0",
