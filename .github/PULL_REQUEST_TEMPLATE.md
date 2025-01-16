@@ -3,7 +3,7 @@
 * Provide name of JIRA ticket that this PR is related to (if applicable).
     * e.g. [CHA-101] - this will automatically link the PR to the JIRA ticket.
 * Provide names of any related DRs (if applicable).
-* Provide links to any related PRs
+* Provide links to any related PRs (including documentation)
 
 ### Description
 
@@ -19,7 +19,7 @@
 * [ ] Integration tests created (if applicable).
 * [ ] Follow coding style guidelines found [here](https://github.com/ably/engineering/tree/main/best-practices).
 * [ ] TypeDoc updated (if applicable).
-* [ ] (Optional) Update documentation for new features.
+* [ ] Updated the [website documentation](https://github.com/ably/docs) (if applicable).
 * [ ] Browser tests created (if applicable).
 * [ ] In repo demo app updated (if applicable).
 
