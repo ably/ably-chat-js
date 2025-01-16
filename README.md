@@ -25,6 +25,8 @@ This SDK supports the following platforms:
 
 **React Native** We aim to support all platforms supported by React Native. If you find any issues please raise an issue or contact us.
 
+**Android and iOS** are also supported by the [Kotlin](https://github.com/ably/ably-chat-kotlin) and [Swift](https://github.com/ably/ably-chat-swift) SDKs respectively.
+
 ## Supported chat features
 
 This project is under development so we will be incrementally adding new features. At this stage, you'll find APIs for the following chat features:
