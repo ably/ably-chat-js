@@ -28,9 +28,17 @@ export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
 export type { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata, Operation } from './message.js';
 export type {
-  DeleteMessageParams,
   MessageEventPayload,
   MessageListener,
+  MessageReactionPayload,
+  MessageReactionSummaryPayload,
+  ReactionsListener,
+  SummariesListener,
+} from './message-events.js';
+export type { Snapshot } from './message-window.js';
+export { MessageWindow } from './message-window.js';
+export type {
+  DeleteMessageParams,
   Messages,
   MessageSubscriptionResponse,
   OperationDetails,

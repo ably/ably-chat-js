@@ -10,6 +10,15 @@ export enum MessageEvents {
 
   /** Fires when a chat message is deleted. */
   Deleted = 'message.deleted',
+
+  /** Fires when a chat message reaction is created. */
+  ReactionCreated = 'reaction.created',
+
+  /** Fires when a chat message reaction is deleted. */
+  ReactionDeleted = 'reaction.deleted',
+
+  /** Fires when a message reaction summary is received. */
+  ReactionSummary = 'reaction.summary',
 }
 
 /**
@@ -44,6 +53,9 @@ export enum ChatMessageActions {
 
   /** Action applied to a meta occupancy message. */
   MessageMetaOccupancy = 'meta.occupancy',
+
+  /** Action applied to an annotation summary message. */
+  MessageAnnotationSummary = 7,
 }
 
 /**

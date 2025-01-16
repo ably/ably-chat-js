@@ -202,6 +202,18 @@ export class ChatApi {
     );
   }
 
+  async reactToMessage(roomId: string, serial: string, reaction: string): Promise<void> {
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest(`/channels/${roomId}::$chat::$chatMessages/messages`, 'POST', {
+      action: 4,
+      data: reaction,
+      refType: 'reaction:emoji.v1',
+      refSerial: serial,
+    }).then((response) => {
+      console.log('response from sending reaction:', response);
+    });
+  }
+
   async getOccupancy(roomId: string): Promise<OccupancyEvent> {
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');

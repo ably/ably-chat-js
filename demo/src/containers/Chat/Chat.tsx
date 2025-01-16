@@ -4,119 +4,89 @@ import { MessageInput } from '../../components/MessageInput';
 import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
 import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent';
-import { ConnectionStatus, Message, MessageEventPayload, MessageEvents, PaginatedResult, Reaction } from '@ably/chat';
+import {
+  ConnectionStatus,
+  Message,
+  MessageEventPayload,
+  MessageEvents,
+  MessageWindow,
+  PaginatedResult,
+  Reaction,
+  Room,
+  Snapshot,
+} from '@ably/chat';
 
 export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => void }) => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [snapshot, setSnapshot] = useState<Snapshot>({ messages: [] });
   const { currentStatus } = useChatConnection();
   const [loading, setLoading] = useState(true);
 
   const isConnected: boolean = currentStatus === ConnectionStatus.Connected;
 
-  const backfillPreviousMessages = (getPreviousMessages: ReturnType<typeof useMessages>['getPreviousMessages']) => {
-    chatClient.logger.debug('backfilling previous messages');
-    if (getPreviousMessages) {
-      getPreviousMessages({ limit: 50 })
-        .then((result: PaginatedResult<Message>) => {
-          chatClient.logger.debug('backfilled messages', result.items);
-          setMessages(result.items.filter((m) => !m.isDeleted).reverse());
-          setLoading(false);
-        })
-        .catch((error: unknown) => {
-          chatClient.logger.error('Error fetching initial messages', error);
-        });
-    }
-  };
+  // const backfillPreviousMessages = (getPreviousMessages: ReturnType<typeof useMessages>['getPreviousMessages']) => {
+  //   chatClient.logger.debug('backfilling previous messages');
+  //   if (getPreviousMessages) {
+  //     getPreviousMessages({ limit: 50 })
+  //       .then((result: PaginatedResult<Message>) => {
+  //         chatClient.logger.debug('backfilled messages', result.items);
+  //         setMessages(result.items.filter((m) => !m.isDeleted).reverse());
+  //         setLoading(false);
+  //       })
+  //       .catch((error: unknown) => {
+  //         chatClient.logger.error('Error fetching initial messages', error);
+  //       });
+  //   }
+  // };
 
-  const handleUpdatedMessage = (message: Message) => {
-    setMessages((prevMessages) => {
-      const index = prevMessages.findIndex((m) => m.serial === message.serial);
-      if (index === -1) {
-        return prevMessages;
-      }
-
-      // skip update if the received version is not newer
-      if (!prevMessages[index].versionBefore(message)) {
-        return prevMessages;
-      }
-
-      const updatedArray = [...prevMessages];
-      updatedArray[index] = message;
-      return updatedArray;
-    });
-  };
+  const useMsgResponse = useMessages({});
 
   const {
     send: sendMessage,
-    getPreviousMessages,
     deleteMessage,
     update,
-  } = useMessages({
-    listener: (message: MessageEventPayload) => {
-      switch (message.type) {
-        case MessageEvents.Created: {
-          setMessages((prevMessages) => {
-            // if already exists do nothing
-            const index = prevMessages.findIndex((m) => m.serial === message.message.serial);
-            if (index !== -1) {
-              return prevMessages;
-            }
+    react: reactToMessage,
+    messages: untypedMessagesObject,
+  } = useMsgResponse;
 
-            // if the message is not in the list, add it
-            const newArray = [...prevMessages, message.message];
+  const messagesObj = untypedMessagesObject as Room['messages'];
 
-            // and put it at the right place
-            for (let i = newArray.length - 1; i > 1; i--) {
-              if (newArray[i].before(newArray[i - 1])) {
-                const temp = newArray[i];
-                newArray[i] = newArray[i - 1];
-                newArray[i - 1] = temp;
-              }
-            }
+  useEffect(() => {
+    if (!messagesObj) {
+      return;
+    }
+    setLoading(true);
 
-            return newArray;
-          });
-          break;
-        }
-        case MessageEvents.Deleted: {
-          setMessages((prevMessage) => {
-            const updatedArray = prevMessage.filter((m) => {
-              return m.serial !== message.message.serial;
-            });
+    let mounted = true;
 
-            // don't change state if deleted message is not in the current list
-            if (prevMessage.length === updatedArray.length) {
-              return prevMessage;
-            }
+    const msgWindow = new MessageWindow();
+    const windowSub = msgWindow.subscribe((snapshot) => {
+      console.log("received snapshot:" ,snapshot);
+      setSnapshot(snapshot);
+    });
 
-            return updatedArray;
-          });
-          break;
-        }
-        case MessageEvents.Updated: {
-          handleUpdatedMessage(message.message);
-          break;
-        }
-        default: {
-          console.error('Unknown message', message);
-        }
-      }
-    },
-    onDiscontinuity: (discontinuity) => {
-      console.log('Discontinuity', discontinuity);
-      // reset the messages when a discontinuity is detected,
-      // this will trigger a re-fetch of the messages
-      setMessages([]);
+    const s = messagesObj.subscribe(msgWindow);
+    msgWindow
+      .backfillHistory(
+        s.getPreviousMessages({ limit: 50 }).then((result) => {
+          if (!mounted) {
+            return null;
+          }
+          setLoading(false);
+          return result;
+        }),
+      )
+      .catch((error: unknown) => {
+        console.error('Error fetching initial messages', error);
+      });
 
-      // set our state to loading, because we'll need to fetch previous messages again
-      setLoading(true);
-
-      // Do a message backfill
-      backfillPreviousMessages(getPreviousMessages);
-    },
-  });
+    return () => {
+      mounted = false;
+      s.unsubscribe();
+      windowSub.unsubscribe();
+    };
+  }, [messagesObj]);
 
   const { start, stop, currentlyTyping, error: typingError } = useTyping();
   const [roomReactions, setRoomReactions] = useState<Reaction[]>([]);
@@ -129,11 +99,6 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
 
   // Used to anchor the scroll to the bottom of the chat
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    chatClient.logger.debug('updating getPreviousMessages useEffect', { getPreviousMessages });
-    backfillPreviousMessages(getPreviousMessages);
-  }, [getPreviousMessages]);
 
   const handleStartTyping = () => {
     start().catch((error: unknown) => {
@@ -190,7 +155,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
     }
 
     // Clear the room messages
-    setMessages([]);
+    setSnapshot({ messages: [] });
     setLoading(true);
     setRoomReactions([]);
     props.setRoomId(newRoomId);
@@ -204,7 +169,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
     if (!loading) {
       scrollToBottom();
     }
-  }, [messages, loading]);
+  }, [snapshot, loading]);
 
   const onUpdateMessage = useCallback(
     (message: Message) => {
@@ -217,8 +182,8 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
         metadata: message.metadata,
         headers: message.headers,
       })
-        .then((updatedMessage: Message) => {
-          handleUpdatedMessage(updatedMessage);
+        .then((_updatedMessage: Message) => {
+          // optional: handle updated message
         })
         .catch((error: unknown) => {
           console.warn('failed to update message', error);
@@ -229,11 +194,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
 
   const onDeleteMessage = useCallback(
     (message: Message) => {
-      deleteMessage(message, { description: 'deleted by user' }).then((deletedMessage: Message) => {
-        setMessages((prevMessages) => {
-          return prevMessages.filter((m) => m.serial !== deletedMessage.serial);
-        });
-      });
+      deleteMessage(message, { description: 'deleted by user' }).then((deletedMessage: Message) => {});
     },
     [deleteMessage],
   );
@@ -273,15 +234,16 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
       {!loading && (
         <div
           id="messages"
-          className="w-96 flex flex-auto flex-col space-y-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
+          className="w-96 flex flex-auto flex-col p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
         >
-          {messages.map((msg) => (
+          {snapshot.messages.map((msg) => (
             <MessageComponent
               key={msg.serial}
               self={msg.clientId === clientId}
               message={msg}
               onMessageDelete={onDeleteMessage}
               onMessageUpdate={onUpdateMessage}
+              onMessageReact={reactToMessage}
             ></MessageComponent>
           ))}
           <div ref={messagesEndRef} />
