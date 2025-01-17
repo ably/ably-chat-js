@@ -2,6 +2,14 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.4.0](https://github.com/ably/ably-chat-js/tree/0.4.0) (2025-01-20)
+
+### Breaking Changes
+
+Please see `UPGRADING.md` for full guidance on upgrading from version 0.3.1 and before.
+
+- The `@ably/chat/react` and `@ably/chat/react-native` packages have been removed. All React imports are in the base `@ably/chat` package.
+
 ## [0.3.1](https://github.com/ably/ably-chat-js/tree/0.3.1) (2025-01-14)
 
 ### Fixes

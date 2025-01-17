@@ -2,6 +2,44 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## <= 0.3.1 to 0.4.0
+
+### React Package Removed
+
+**Expected Impact: High**
+
+The `@ably/chat/react` and `@ably/chat/react-native` packages have been removed. All React imports are in the base `@ably/chat` package.
+
+#### React
+
+Before:
+
+```ts
+import { Message } from '@ably/chat';
+import { useMessages } from '@ably/chat/react';
+```
+
+After:
+
+```ts
+import { Message, useMessages } from '@ably/chat';
+```
+
+#### React Native
+
+Before:
+
+```ts
+import { Message } from '@ably/chat';
+import { useMessages } from '@ably/chat-react-native';
+```
+
+After:
+
+```ts
+import { Message, useMessages } from '@ably/chat';
+```
+
 ## <= 0.2.1 to 0.3.0
 
 ### Room and Connection Status Types
