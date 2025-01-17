@@ -1,7 +1,9 @@
-import { Logger, Room, RoomOptionsDefaults } from '@ably/chat';
 import { cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { Logger } from '../../../src/core/logger.ts';
+import { Room } from '../../../src/core/room.ts';
+import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
 import { useEventualRoom, useEventualRoomProperty } from '../../../src/react/helper/use-eventual-room.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';

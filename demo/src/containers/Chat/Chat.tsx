@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MessageComponent } from '../../components/MessageComponent';
 import { MessageInput } from '../../components/MessageInput';
-import { useChatClient, useChatConnection, useMessages, useRoomReactions, useTyping } from '@ably/chat/react';
 import { ReactionInput } from '../../components/ReactionInput';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent';
-import { ConnectionStatus, Message, MessageEventPayload, MessageEvents, PaginatedResult, Reaction } from '@ably/chat';
+import {
+  ConnectionStatus,
+  Message,
+  MessageEventPayload,
+  MessageEvents,
+  PaginatedResult,
+  Reaction,
+  useChatClient,
+  useChatConnection,
+  useMessages,
+  useRoomReactions,
+  useTyping,
+} from '@ably/chat';
 
 export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => void }) => {
   const chatClient = useChatClient();
@@ -16,16 +27,14 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
   const isConnected: boolean = currentStatus === ConnectionStatus.Connected;
 
   const backfillPreviousMessages = (getPreviousMessages: ReturnType<typeof useMessages>['getPreviousMessages']) => {
-    chatClient.logger.debug('backfilling previous messages');
     if (getPreviousMessages) {
       getPreviousMessages({ limit: 50 })
         .then((result: PaginatedResult<Message>) => {
-          chatClient.logger.debug('backfilled messages', result.items);
           setMessages(result.items.filter((m) => !m.isDeleted).reverse());
           setLoading(false);
         })
         .catch((error: unknown) => {
-          chatClient.logger.error('Error fetching initial messages', error);
+          console.error('Failed to backfill previous messages', error);
         });
     }
   };
@@ -131,7 +140,6 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    chatClient.logger.debug('updating getPreviousMessages useEffect', { getPreviousMessages });
     backfillPreviousMessages(getPreviousMessages);
   }, [getPreviousMessages]);
 

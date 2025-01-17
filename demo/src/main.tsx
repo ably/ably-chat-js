@@ -2,11 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Ably from 'ably';
 import { ClientOptions } from 'ably';
-import { ChatClient, LogLevel } from '@ably/chat';
+import { ChatClient, LogLevel, ChatClientProvider } from '@ably/chat';
 import { nanoid } from 'nanoid';
 import App from './App.tsx';
 import './index.css';
-import { ChatClientProvider } from '@ably/chat/react';
 import { AblyProvider } from 'ably/react';
 
 // Generate a random clientId and remember it for the length of the session, so

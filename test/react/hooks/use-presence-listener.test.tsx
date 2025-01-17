@@ -1,20 +1,15 @@
-import {
-  ConnectionStatus,
-  DiscontinuityListener,
-  Logger,
-  PresenceEvent,
-  PresenceEvents,
-  PresenceListener,
-  PresenceMember,
-  Room,
-  RoomStatus,
-} from '@ably/chat';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { ErrorInfo } from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { InternalRoomLifecycle } from '../../../src/core/room-status.ts';
+import { ConnectionStatus } from '../../../src/core/connection.ts';
+import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
+import { PresenceEvents } from '../../../src/core/events.ts';
+import { Logger } from '../../../src/core/logger.ts';
+import { PresenceEvent, PresenceListener, PresenceMember } from '../../../src/core/presence.ts';
+import { Room } from '../../../src/core/room.ts';
+import { InternalRoomLifecycle, RoomStatus } from '../../../src/core/room-status.ts';
 import { usePresenceListener } from '../../../src/react/hooks/use-presence-listener.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';

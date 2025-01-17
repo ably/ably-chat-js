@@ -1,7 +1,8 @@
-import { RoomOptionsDefaults, RoomStatus } from '@ably/chat';
 import { cleanup, configure, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
+import { RoomStatus } from '../../../src/core/room-status.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';

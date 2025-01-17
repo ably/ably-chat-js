@@ -2,8 +2,7 @@ import { FC, useEffect, useState } from 'react';
 import { Chat } from './containers/Chat';
 import { OccupancyComponent } from './components/OccupancyComponent';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
-import { ChatRoomProvider } from '@ably/chat/react';
-import { RoomOptionsDefaults } from '@ably/chat';
+import { RoomOptionsDefaults, ChatRoomProvider } from '@ably/chat';
 
 // We read the roomID from the URL query string and default to 'abcd' if none
 // provided. We make sure the URL is updated to always include the roomId. This

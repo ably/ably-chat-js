@@ -1,15 +1,12 @@
-import {
-  ConnectionStatus,
-  DiscontinuityListener,
-  OccupancyEvent,
-  OccupancyListener,
-  Room,
-  RoomStatus,
-} from '@ably/chat';
 import { act, cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ConnectionStatus } from '../../../src/core/connection.ts';
+import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
+import { OccupancyEvent, OccupancyListener } from '../../../src/core/occupancy.ts';
+import { Room } from '../../../src/core/room.ts';
+import { RoomStatus } from '../../../src/core/room-status.ts';
 import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';

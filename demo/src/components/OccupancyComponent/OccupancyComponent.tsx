@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { useOccupancy } from '@ably/chat/react';
+import { useOccupancy } from '@ably/chat';
 import './OccupancyComponent.css';
 
 /**

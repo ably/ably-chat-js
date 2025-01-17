@@ -1,19 +1,15 @@
-import {
-  ConnectionStatus,
-  DiscontinuityListener,
-  Message,
-  MessageEvents,
-  MessageListener,
-  Room,
-  RoomStatus,
-} from '@ably/chat';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatMessageActions } from '../../../src/core/events.ts';
-import { DefaultMessage } from '../../../src/core/message.ts';
+import { ConnectionStatus } from '../../../src/core/connection.ts';
+import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
+import { ChatMessageActions, MessageEvents } from '../../../src/core/events.ts';
+import { DefaultMessage, Message } from '../../../src/core/message.ts';
+import { MessageListener } from '../../../src/core/messages.ts';
 import { PaginatedResult } from '../../../src/core/query.ts';
+import { Room } from '../../../src/core/room.ts';
+import { RoomStatus } from '../../../src/core/room-status.ts';
 import { useMessages } from '../../../src/react/hooks/use-messages.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';

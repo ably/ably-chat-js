@@ -1,5 +1,7 @@
-import { ConnectionStatusChange, RoomStatusChange } from '@ably/chat';
 import * as Ably from 'ably';
+
+import { ConnectionStatusChange } from '../../core/connection.js';
+import { RoomStatusChange } from '../../core/room-status.js';
 
 /**
  * Parameters for registering callbacks to receive status changes from

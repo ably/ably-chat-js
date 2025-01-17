@@ -1,7 +1,9 @@
-import { ErrorCodes, errorInfoIs, RoomStatus, Typing, TypingEvent, TypingListener } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
+import { ErrorCodes, errorInfoIs } from '../../core/errors.js';
+import { RoomStatus } from '../../core/room-status.js';
+import { Typing, TypingEvent, TypingListener } from '../../core/typing.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';

@@ -1,4 +1,4 @@
-import { OccupancyEvent } from '@ably/chat';
+import { OccupancyEvent } from '../../src/core/occupancy.ts';
 
 export function waitForExpectedInbandOccupancy(
   occupancyEvents: OccupancyEvent[],

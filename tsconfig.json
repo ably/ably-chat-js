@@ -37,7 +37,6 @@
     ],
     "paths": {
         "@ably/chat": ["./dist/chat"],
-        "@ably/chat/react": ["./dist/react"]
     }
   }
 }

@@ -1,6 +1,6 @@
-import { Room } from '@ably/chat';
 import { describe, expect, it, vi } from 'vitest';
 
+import { Room } from '../../../src/core/room.ts';
 import { wrapRoomPromise } from '../../../src/react/helper/room-promise.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';

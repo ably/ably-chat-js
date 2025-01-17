@@ -1,7 +1,10 @@
-import { ErrorCodes, errorInfoIs, Presence, PresenceListener, PresenceMember, Room, RoomStatus } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { ErrorCodes, errorInfoIs } from '../../core/errors.js';
+import { Presence, PresenceListener, PresenceMember } from '../../core/presence.js';
+import { Room } from '../../core/room.js';
+import { RoomStatus } from '../../core/room-status.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
@@ -82,11 +85,11 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
 
   const receivedEventNumber = useRef(0);
   const triggeredEventNumber = useRef(0);
-  const retryTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const retryTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const numRetries = useRef(0);
   const latestPresentData = useRef<PresenceMember[]>([]);
   const [presenceData, setPresenceData] = useState<PresenceMember[]>([]);
-  const errorRef = useRef<Ably.ErrorInfo | undefined>();
+  const errorRef = useRef<Ably.ErrorInfo | undefined>(undefined);
 
   const [error, setError] = useState<Ably.ErrorInfo | undefined>();
 

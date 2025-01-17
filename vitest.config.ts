@@ -5,7 +5,7 @@ export default defineConfig({
     coverage: {
       enabled: true,
       include: ['src/**/*'],
-      exclude: ['src/core/index.ts', 'src/react/index.ts', 'src/utils/**/*'],
+      exclude: ['src/core/index.ts', 'src/react/index.ts', 'src/index.ts', 'src/utils/**/*'],
       reporter: ['text', 'html', 'json-summary', 'json'],
       reportOnFailure: true,
       thresholds: {

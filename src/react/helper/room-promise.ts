@@ -1,4 +1,5 @@
-import { Logger, Room } from '@ably/chat';
+import { Logger } from '../../core/logger.js';
+import { Room } from '../../core/room.js';
 
 /**
  * RoomPromise is a wrapper around a promise that resolves to a Room instance.

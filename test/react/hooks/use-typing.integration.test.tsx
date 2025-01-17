@@ -1,8 +1,10 @@
-import { RoomOptionsDefaults, RoomStatus, TypingEvent, TypingListener } from '@ably/chat';
 import { cleanup, render } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
+import { RoomStatus } from '../../../src/core/room-status.ts';
+import { TypingEvent, TypingListener } from '../../../src/core/typing.ts';
 import { useTyping } from '../../../src/react/hooks/use-typing.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
