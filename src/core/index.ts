@@ -64,8 +64,11 @@ export { RoomOptionsDefaults } from './room-options.js';
 export type {
   RoomReactionListener,
   RoomReactions,
+  RoomReactionsEvent,
+  RoomReactionsListener,
   RoomReactionsSubscriptionResponse,
   SendReactionParams,
+  SendRoomReactionsParams,
 } from './room-reactions.js';
 export type { OnRoomStatusChangeResponse, RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';

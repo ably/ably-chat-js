@@ -207,6 +207,16 @@ export class ChatApi {
     return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
   }
 
+  async publishRoomReaction(roomId: string, reactions: Record<string, number>): Promise<void> {
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest(`/chat/v2/rooms/${roomId}/reactions`, 'POST', reactions);
+  }
+
+  async getRoomReactions(roomId: string): Promise<Record<string, number>> {
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest<Record<string, number>>(`/chat/v2/rooms/${roomId}/reactions`, 'GET');
+  }
+
   private async _makeAuthorizedRequest<RES = undefined>(
     url: string,
     method: 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH',

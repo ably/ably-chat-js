@@ -1,10 +1,10 @@
 import { FC } from 'react';
-import { SendReactionParams } from '@ably/chat';
+import { SendRoomReactionsParams } from '@ably/chat';
 
 interface ReactionInputProps {
   reactions: string[];
 
-  onSend(params: SendReactionParams): void;
+  onSend(params: SendRoomReactionsParams): void;
 
   disabled: boolean;
 }
@@ -21,7 +21,7 @@ export const ReactionInput: FC<ReactionInputProps> = ({ reactions, onSend, disab
       onClick={(e) => {
         e.preventDefault();
         if (!disabled) {
-          onSend({ type: reaction });
+          onSend({reactions: { [reaction]: 1}});
         }
       }}
       href="#"

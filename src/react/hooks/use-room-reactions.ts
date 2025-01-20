@@ -1,6 +1,11 @@
 import { useCallback, useEffect } from 'react';
 
-import { RoomReactionListener, RoomReactions, SendReactionParams } from '../../core/room-reactions.js';
+import {
+  RoomReactionListener,
+  RoomReactions,
+  RoomReactionsListener,
+  SendReactionParams,
+} from '../../core/room-reactions.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
@@ -20,6 +25,8 @@ export interface UseRoomReactionsParams extends StatusParams, Listenable<RoomRea
    * A listener that will be called whenever a reaction is sent to the room.
    */
   listener?: RoomReactionListener;
+
+  newListener?: RoomReactionsListener;
 }
 
 /**
@@ -30,6 +37,8 @@ export interface UseRoomReactionsResponse extends ChatStatusResponse {
    * A shortcut to the {@link RoomReactions.send} method.
    */
   readonly send: RoomReactions['send'];
+
+  readonly react: RoomReactions['react'];
 
   /**
    * Provides access to the underlying {@link RoomReactions} instance of the room.
@@ -56,6 +65,7 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
 
   // create stable references for the listeners
   const listenerRef = useEventListenerRef(params?.listener);
+  const newListenerRef = useEventListenerRef(params?.newListener);
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
   // if provided, subscribes the user provided discontinuity listener
@@ -94,8 +104,30 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
     ).unmount();
   }, [context, listenerRef, logger]);
 
+  useEffect(() => {
+    if (!newListenerRef) return;
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('useRoomReactions(); applying listener', { roomId: context.roomId });
+        const { unsubscribe } = room.reactions.subscribeNew(newListenerRef);
+        return () => {
+          logger.debug('useRoomReactions(); removing listener', { roomId: context.roomId });
+          unsubscribe();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, newListenerRef, logger]);
+
   const send = useCallback(
     (params: SendReactionParams) => context.room.then((room) => room.reactions.send(params)),
+    [context],
+  );
+
+  const react = useCallback(
+    (arg: { reactions: Record<string, number> }) => context.room.then((room) => room.reactions.react(arg)),
     [context],
   );
 
@@ -106,5 +138,6 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
     roomStatus,
     roomError,
     send,
+    react,
   };
 };

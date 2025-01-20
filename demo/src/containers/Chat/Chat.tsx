@@ -9,7 +9,7 @@ import {
   MessageEventPayload,
   MessageEvents,
   PaginatedResult,
-  Reaction,
+  RoomReactionsEvent,
   useChatClient,
   useChatConnection,
   useMessages,
@@ -128,11 +128,11 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
   });
 
   const { start, stop, currentlyTyping, error: typingError } = useTyping();
-  const [roomReactions, setRoomReactions] = useState<Reaction[]>([]);
+  const [roomReactions, setRoomReactions] = useState<Record<string, number>>({});
 
-  const { send: sendReaction } = useRoomReactions({
-    listener: (reaction: Reaction) => {
-      setRoomReactions([...roomReactions, reaction]);
+  const { react } = useRoomReactions({
+    newListener: (reactions: RoomReactionsEvent) => {
+      setRoomReactions(reactions.reactions);
     },
   });
 
@@ -200,7 +200,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
     // Clear the room messages
     setMessages([]);
     setLoading(true);
-    setRoomReactions([]);
+    setRoomReactions({});
     props.setRoomId(newRoomId);
   }
 
@@ -318,15 +318,20 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
       <div>
         <ReactionInput
           reactions={[]}
-          onSend={sendReaction}
+          onSend={react}
           disabled={!isConnected}
         ></ReactionInput>
       </div>
       <div>
         Received reactions:{' '}
-        {roomReactions.map((r, idx) => (
-          <span key={idx}>{r.type}</span>
-        ))}{' '}
+        {
+          Object.entries(roomReactions).map(([reaction, count]) => (
+            <span key={reaction}>
+              {reaction} ({count}) {' '}
+            </span>
+          ))
+        }
+        {' '}
       </div>
     </div>
   );

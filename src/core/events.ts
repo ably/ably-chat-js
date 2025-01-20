@@ -84,4 +84,5 @@ export enum RoomReactionEvents {
    * Event triggered when a room reaction was received.
    */
   Reaction = 'roomReaction',
+  ReactionPolled = 'roomReactionPolled',
 }

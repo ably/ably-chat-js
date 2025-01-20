@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChannelManager } from './channel-manager.js';
+import { ChatApi } from './chat-api.js';
 import {
   DiscontinuityEmitter,
   DiscontinuityListener,
@@ -60,12 +61,22 @@ export interface SendReactionParams {
   headers?: ReactionHeaders;
 }
 
+export interface SendRoomReactionsParams {
+  reactions: Record<string, number>;
+}
+
+export interface RoomReactionsEvent {
+  reactions: Record<string, number>;
+}
+
 /**
  * The listener function type for room-level reactions.
  *
  * @param reaction The reaction that was received.
  */
 export type RoomReactionListener = (reaction: Reaction) => void;
+
+export type RoomReactionsListener = (event: RoomReactionsEvent) => void;
 
 /**
  * This interface is used to interact with room-level reactions in a chat room: subscribing to reactions and sending them.
@@ -87,6 +98,8 @@ export interface RoomReactions extends EmitsDiscontinuities {
    */
   send(params: SendReactionParams): Promise<void>;
 
+  react(params: SendRoomReactionsParams): Promise<void>;
+
   /**
    * Subscribe to receive room-level reactions.
    *
@@ -94,6 +107,8 @@ export interface RoomReactions extends EmitsDiscontinuities {
    * @returns A response object that allows you to control the subscription.
    */
   subscribe(listener: RoomReactionListener): RoomReactionsSubscriptionResponse;
+
+  subscribeNew(listener: RoomReactionsListener): RoomReactionsSubscriptionResponse;
 
   /**
    * Unsubscribe all listeners from receiving room-level reaction events.
@@ -111,6 +126,10 @@ export interface RoomReactions extends EmitsDiscontinuities {
 
 interface RoomReactionEventsMap {
   [RoomReactionEvents.Reaction]: Reaction;
+}
+
+interface NewRoomReactionEventsMap {
+  [RoomReactionEvents.ReactionPolled]: RoomReactionsEvent;
 }
 
 interface ReactionPayload {
@@ -136,9 +155,12 @@ export class DefaultRoomReactions
   implements RoomReactions, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _channel: Ably.RealtimeChannel;
+  private readonly _roomId: string;
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
+  private readonly _chatApi: ChatApi;
+  private readonly _newReactionListeners = new EventEmitter<NewRoomReactionEventsMap>();
 
   /**
    * Constructs a new `DefaultRoomReactions` instance.
@@ -147,12 +169,39 @@ export class DefaultRoomReactions
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
+  constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
 
     this._channel = this._makeChannel(roomId, channelManager);
+    this._roomId = roomId;
+    this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
+
+    // Start up a function that runs on a timer, and every 5 seconds, it will poll the reactions
+    // for the room and emit them to the newReactionListeners.
+    let pollInProgress = false;
+    setInterval(() => {
+      // TODO: Dont poll if not attached
+      // TODO: Stop if released
+      if (pollInProgress) {
+        return;
+      }
+
+      pollInProgress = true;
+
+      this._chatApi
+        .getRoomReactions(roomId)
+        .then((reactions) => {
+          this._newReactionListeners.emit(RoomReactionEvents.ReactionPolled, { reactions });
+        })
+        .catch((error: unknown) => {
+          this._logger.error('failed to poll room reactions;', { error: error as Ably.ErrorInfo });
+        })
+        .finally(() => {
+          pollInProgress = false;
+        });
+    }, 2000);
   }
 
   /**
@@ -196,6 +245,24 @@ export class DefaultRoomReactions
     return this._channel.publish(realtimeMessage);
   }
 
+  react(params: SendRoomReactionsParams): Promise<void> {
+    this._logger.trace('RoomReactions.react();', params);
+
+    const { reactions } = params;
+
+    const payload: Record<string, number> = reactions;
+
+    // Check all numbers are integers between 1 and 100
+    for (const reaction in payload) {
+      const count = payload[reaction];
+      if (count === undefined || !Number.isInteger(count) || count < 1 || count > 100) {
+        return Promise.reject(new Ably.ErrorInfo('unable to send reaction; invalid reaction count', 40000, 400));
+      }
+    }
+
+    return this._chatApi.publishRoomReaction(this._roomId, payload);
+  }
+
   /**
    * @inheritDoc Reactions
    */
@@ -207,6 +274,18 @@ export class DefaultRoomReactions
       unsubscribe: () => {
         this._logger.trace('RoomReactions.unsubscribe();');
         this.off(listener);
+      },
+    };
+  }
+
+  subscribeNew(listener: RoomReactionsListener): RoomReactionsSubscriptionResponse {
+    this._logger.trace(`RoomReactions.subscribeNew();`);
+    this._newReactionListeners.on(listener);
+
+    return {
+      unsubscribe: () => {
+        this._logger.trace('RoomReactions.unsubscribe();');
+        this._newReactionListeners.off(listener);
       },
     };
   }

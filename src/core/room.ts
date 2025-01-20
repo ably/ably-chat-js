@@ -189,7 +189,7 @@ export class DefaultRoom implements Room {
 
     if (options.reactions) {
       this._logger.debug('enabling reactions on room', { roomId });
-      this._reactions = new DefaultRoomReactions(roomId, channelManager, realtime.auth.clientId, logger);
+      this._reactions = new DefaultRoomReactions(roomId, channelManager, chatApi, realtime.auth.clientId, logger);
       features.push(this._reactions);
     }
 
