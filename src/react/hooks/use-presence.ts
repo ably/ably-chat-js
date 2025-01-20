@@ -22,19 +22,19 @@ export interface UsePresenceParams extends StatusParams {
   /**
    * The data to enter the room with. Any JSON serializable data can be provided.
    */
-  enterWithData?: PresenceData;
+  onlineWithData?: PresenceData;
 
   /**
    * The data to leave the room with. Any JSON serializable data can be provided.
    */
-  leaveWithData?: PresenceData;
+  offlineWithData?: PresenceData;
 }
 
 export interface UsePresenceResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Presence.update} method.
    */
-  readonly update: Presence['update'];
+  readonly setOnlineWithData: Presence['setOnlineWithData'];
 
   /**
    * Provides access to the underlying {@link Presence} instance of the room.
@@ -44,7 +44,7 @@ export interface UsePresenceResponse extends ChatStatusResponse {
   /**
    * Indicates whether the current user is present in the room.
    */
-  readonly isPresent: boolean;
+  readonly isOnline: boolean;
 
   /**
    * Indicates if an error occurred while entering or leaving the room.
@@ -76,7 +76,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   const logger = useLogger();
   logger.trace('usePresence();', { params, roomId: context.roomId });
 
-  const [isPresent, setIsPresent] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
   const [error, setError] = useState<ErrorInfo | undefined>();
 
   // store the roomStatus in a ref to ensure the correct value is used in the effect cleanup
@@ -112,12 +112,11 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
             // no-op
           };
         }
-
         room.presence
-          .enter(dataRef.current?.enterWithData)
+          .setOnlineWithData(dataRef.current?.onlineWithData)
           .then(() => {
             logger.debug('usePresence(); entered room', { roomId: context.roomId });
-            setIsPresent(true);
+            setIsOnline(true);
             setError(undefined);
           })
           .catch((error: unknown) => {
@@ -138,10 +137,10 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
           });
           if (canLeavePresence) {
             room.presence
-              .leave(dataRef.current?.leaveWithData)
+              .setOfflineWithData(dataRef.current?.offlineWithData)
               .then(() => {
                 logger.debug('usePresence(); left room', { roomId: context.roomId });
-                setIsPresent(false);
+                setIsOnline(false);
                 setError(undefined);
               })
               .catch((error: unknown) => {
@@ -174,11 +173,11 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   }, [context, onDiscontinuityRef, logger]);
 
   // memoize the methods to avoid re-renders and ensure the same instance is used
-  const update = useCallback(
+  const setOnlineWithData = useCallback(
     (data?: PresenceData) =>
       context.room.then((room: Room) => {
-        return room.presence.update(data).then(() => {
-          setIsPresent(true);
+        return room.presence.setOnlineWithData(data).then(() => {
+          setIsOnline(true);
           setError(undefined);
         });
       }),
@@ -192,8 +191,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     connectionError,
     roomStatus,
     roomError,
-    update,
-    isPresent,
+    setOnlineWithData,
+    isOnline,
     error,
   };
 };

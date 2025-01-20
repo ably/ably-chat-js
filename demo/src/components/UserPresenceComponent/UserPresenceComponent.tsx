@@ -3,7 +3,7 @@ import '../../../styles/global.css';
 import './UserPresenceComponent.css';
 import {
   ConnectionStatus,
-  PresenceMember,
+  OnlineMember,
   useChatClient,
   useChatConnection,
   usePresence,
@@ -14,7 +14,7 @@ interface UserListComponentProps {}
 
 export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
-  const { update, isPresent, error } = usePresence({ enterWithData: { status: '💻 Online' } });
+  const { setOnlineWithData, isOnline, error } = usePresence({ onlineWithData: { status: '💻 Online' } });
   const { presenceData } = usePresenceListener({
     listener: (event: unknown) => {
       console.log('Presence data changed', { event });
@@ -25,11 +25,11 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const { currentStatus } = useChatConnection();
   const isConnected = currentStatus === ConnectionStatus.Connected;
 
-  const [isOnline, setIsOnline] = useState(true);
+  const [isAway, setIsAway] = useState(true);
 
   const handleUpdateButtonClick = () => {
-    setIsOnline(!isOnline);
-    update({ status: isOnline ? '🔄 Away' : '💻 Online' }).catch((error: unknown) => {
+    setIsAway(!isAway);
+    setOnlineWithData({ status: isAway ? '🔄 Away' : '💻 Online' }).catch((error: unknown) => {
       console.error('Error updating presence:', error);
     });
   };
@@ -38,8 +38,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
     setIsPanelOpen(!isPanelOpen);
   };
 
-  const renderPresentMember = (presentMember: PresenceMember, index: number) => {
-    console.log('presentMember', presentMember);
+  const renderPresentMember = (presentMember: OnlineMember, index: number) => {
     const { status } = presentMember.data as { status: string };
     if (presentMember.clientId === clientId) {
       return <li key={index}>{`👤 You - ${status}`}</li>;
@@ -71,7 +70,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
               <div className="actions">
                 <button
                   onClick={handleUpdateButtonClick}
-                  disabled={!isConnected || !isPresent}
+                  disabled={!isConnected || !isOnline}
                   className="btn update disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   {isOnline ? '🔄 Appear Away' : '💻 Appear Online'}

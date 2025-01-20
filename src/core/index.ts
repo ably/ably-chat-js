@@ -43,12 +43,12 @@ export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener, OccupancySubscriptionResponse } from './occupancy.js';
 export type { OperationMetadata } from './operation-metadata.js';
 export type {
+  OnlineMember,
+  OnlineStatusListener,
   Presence,
   PresenceData,
-  PresenceEvent,
-  PresenceListener,
-  PresenceMember,
   PresenceSubscriptionResponse,
+  UserStatusEvent,
 } from './presence.js';
 export type { PaginatedResult } from './query.js';
 export type { Reaction } from './reaction.js';

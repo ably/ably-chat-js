@@ -16,7 +16,7 @@ import {
   InternalRoomLifecycle,
   OnRoomStatusChangeResponse,
   RoomStatus,
-  RoomStatusListener,
+  RoomStatusListener
 } from './room-status.js';
 import { DefaultTyping, Typing } from './typing.js';
 
