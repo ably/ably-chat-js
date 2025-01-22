@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChannelManager } from './channel-manager.js';
+import { ChatApi } from './chat-api.js';
 import {
   DiscontinuityEmitter,
   DiscontinuityListener,
@@ -139,6 +140,8 @@ export class DefaultRoomReactions
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
+  private readonly _chatApi: ChatApi;
+  private readonly _roomId: string;
 
   /**
    * Constructs a new `DefaultRoomReactions` instance.
@@ -147,10 +150,12 @@ export class DefaultRoomReactions
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
+  constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, clientId: string, logger: Logger) {
     super();
 
+    this._roomId = roomId;
     this._channel = this._makeChannel(roomId, channelManager);
+    this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
   }
@@ -180,20 +185,7 @@ export class DefaultRoomReactions
       return Promise.reject(new Ably.ErrorInfo('unable to send reaction; type not set and it is required', 40001, 400));
     }
 
-    const payload: ReactionPayload = {
-      type: type,
-      metadata: metadata ?? {},
-    };
-
-    const realtimeMessage: Ably.Message = {
-      name: RoomReactionEvents.Reaction,
-      data: payload,
-      extras: {
-        headers: headers ?? {},
-      },
-    };
-
-    return this._channel.publish(realtimeMessage);
+    return this._chatApi.sendEphemeralRoomReaction(this._roomId, { type, metadata, headers });
   }
 
   /**

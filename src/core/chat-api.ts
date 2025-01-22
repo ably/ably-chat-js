@@ -5,6 +5,7 @@ import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperat
 import { OrderBy } from './messages.js';
 import { OccupancyEvent } from './occupancy.js';
 import { PaginatedResult } from './query.js';
+import { SendReactionParams } from './room-reactions.js';
 
 export interface GetMessagesQueryParams {
   start?: number;
@@ -190,6 +191,22 @@ export class ChatApi {
     }
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v2/rooms/${roomId}/messages`, 'POST', body);
+  }
+
+  async sendEphemeralRoomReaction(roomId: string, params: SendReactionParams): Promise<void> {
+    const body: {
+      type: string;
+      metadata?: MessageMetadata;
+      headers?: MessageHeaders;
+    } = { type: params.type };
+    if (params.metadata) {
+      body.metadata = params.metadata;
+    }
+    if (params.headers) {
+      body.headers = params.headers;
+    }
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest(`/chat/v2/rooms/${roomId}/reactions`, 'POST', body);
   }
 
   async updateMessage(roomId: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
