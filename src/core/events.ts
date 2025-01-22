@@ -55,7 +55,7 @@ export enum ChatMessageActions {
   MessageMetaOccupancy = 'meta.occupancy',
 
   /** Action applied to an annotation summary message. */
-  MessageAnnotationSummary = 7,
+  MessageAnnotationSummary = 'message.summary',
 }
 
 /**

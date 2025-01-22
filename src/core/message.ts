@@ -5,11 +5,11 @@ import { Headers } from './headers.js';
 import {
   AnyMessageEvent,
   MessageEventPayload,
-  MessageReactionPayload,
   MessageReactionSummaryPayload,
 } from './message-events.js';
 import { Metadata } from './metadata.js';
 import { OperationMetadata } from './operation-metadata.js';
+
 
 /**
  * {@link Headers} type for chat messages.
@@ -238,10 +238,16 @@ export interface MessageReactionSummary {
   reaction: string;
 
   /** The count of reactions. */
-  count: number;
+  total: number;
+
+  /** Total score of reactions */
+  score: number;
+
+  /** Mode B simulation for oneOfEach - num clients. Same as length of the keys of clientIds */
+  numClients: number;
 
   /** Deduplicated list of users that have reacted. */
-  clientIds: string[];
+  clientIds: { [clientId: string]: { total: number; score: number } };
 }
 
 /**
@@ -354,39 +360,40 @@ export class DefaultMessage implements Message {
         return DefaultMessage.clone(event.message, { reactions: this.reactions });
       }
       case MessageEvents.ReactionCreated: {
-        const reactions = cloneReactions(this.reactions);
-        event = event as MessageReactionPayload;
-        const r = reactions.get(event.reaction.reaction);
-        if (r) {
-          r.count++;
-          if (!r.clientIds.includes(event.reaction.clientId)) {
-            r.clientIds.push(event.reaction.clientId);
-          }
-        } else {
-          reactions.set(event.reaction.reaction, {
-            reaction: event.reaction.reaction,
-            count: 1,
-            clientIds: [event.reaction.clientId],
-          });
-        }
-        return DefaultMessage.clone(this, { reactions });
+        // const reactions = cloneReactions(this.reactions);
+        // event = event as MessageReactionPayload;
+        // const r = reactions.get(event.reaction.reaction);
+        // if (r) {
+        //   r.count++;
+        //   if (!r.clientIds.includes(event.reaction.clientId)) {
+        //     r.clientIds.push(event.reaction.clientId);
+        //   }
+        // } else {
+        //   reactions.set(event.reaction.reaction, {
+        //     reaction: event.reaction.reaction,
+        //     count: 1,
+        //     clientIds: [event.reaction.clientId],
+        //   });
+        // }
+        // return DefaultMessage.clone(this, { reactions });
+        return this;
       }
       case MessageEvents.ReactionDeleted: {
-        event = event as MessageReactionPayload;
-        // if the reaction doesn't exist return same Message object early
-        if (!this.reactions.get(event.reaction.reaction)) {
-          return this;
-        }
-        const reactions = cloneReactions(this.reactions);
-        const r = reactions.get(event.reaction.reaction);
-        if (r) {
-          r.count--;
-          const idx = r.clientIds.indexOf(event.reaction.clientId);
-          if (idx !== -1) {
-            r.clientIds.splice(idx, 1);
-          }
-          return DefaultMessage.clone(this, { reactions });
-        }
+        // event = event as MessageReactionPayload;
+        // // if the reaction doesn't exist return same Message object early
+        // if (!this.reactions.get(event.reaction.reaction)) {
+        //   return this;
+        // }
+        // const reactions = cloneReactions(this.reactions);
+        // const r = reactions.get(event.reaction.reaction);
+        // if (r) {
+        //   r.count--;
+        //   const idx = r.clientIds.indexOf(event.reaction.clientId);
+        //   if (idx !== -1) {
+        //     r.clientIds.splice(idx, 1);
+        //   }
+        //   return DefaultMessage.clone(this, { reactions });
+        // }
         // if no change return same object
         // this should be unreachable but the if(r) above makes typescript happy
         return this;
@@ -399,10 +406,10 @@ export class DefaultMessage implements Message {
         }
         return DefaultMessage.clone(this, { reactions });
       }
+      default: {
+        return this;
+      }
     }
-
-    console.log("unreachable code reached in apply() method of DefaultMessage for event", event);
-    return this;
   }
 
   // Clone a message, optionally replace the given fields
@@ -412,26 +419,14 @@ export class DefaultMessage implements Message {
       replace?.clientId ?? source.clientId,
       replace?.roomId ?? source.roomId,
       replace?.text ?? source.text,
-      replace?.metadata ?? source.metadata, // deep clone?
-      replace?.headers ?? source.headers, // deep clone?
+      replace?.metadata ?? structuredClone(source.metadata), // deep clone?
+      replace?.headers ?? structuredClone(source.headers), // deep clone?
       replace?.action ?? source.action,
       replace?.version ?? source.version,
       replace?.createdAt ?? source.createdAt,
       replace?.timestamp ?? source.timestamp,
-      replace?.operation ?? source.operation, // deep clone?
-      replace?.reactions ?? source.reactions, // deep clone?
+      replace?.operation ?? structuredClone(source.operation), // deep clone?
+      replace?.reactions ?? structuredClone(source.reactions), // deep clone?
     );
   }
-}
-
-function cloneReactions(obj: Map<string, MessageReactionSummary>): Map<string, MessageReactionSummary> {
-  const clone = new Map<string, MessageReactionSummary>();
-  for (const [key, value] of obj.entries()) {
-    clone.set(key, {
-      clientIds: value.clientIds.slice(),
-      count: value.count,
-      reaction: value.reaction,
-    });
-  }
-  return clone;
 }

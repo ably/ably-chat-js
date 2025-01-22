@@ -50,9 +50,19 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly deleteMessage: Messages['delete'];
 
   /**
-   * A shortcut to the {@link Messages.react} method.
+   * A shortcut to the {@link Messages.reactions.add} method.
    */
-  readonly react: Messages['react'];
+  readonly addReaction: Messages["reactions"]["add"];
+
+  /**
+   * A shortcut to the {@link Messages.reactions.remove} method.
+   */
+  readonly removeReaction: Messages["reactions"]["remove"];
+
+  /**
+   * A shortcut to the {@link Messages.reactions.removeAll} method.
+   */
+  readonly removeAllReactions: Messages["reactions"]["removeAll"];
 
   /**
    * Provides access to the underlying {@link Messages} instance of the room.
@@ -135,10 +145,22 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
       context.room.then((room) => room.messages.update(message, update, details)),
     [context],
   );
-  const react = useCallback(
-    (message: Message, reaction: string) => context.room.then((room) => room.messages.react(message, reaction)),
+
+  const addReaction = useCallback(
+    (message: Message, reaction: string, score: number = 1, unique : boolean = false) => context.room.then((room) => room.messages.reactions.add(message, reaction, score, unique)),
     [context],
   );
+
+  const removeReaction = useCallback(
+    (message: Message, reaction: string) => context.room.then((room) => room.messages.reactions.remove(message, reaction)),
+    [context],
+  );
+
+  const removeAllReactions = useCallback(
+    (message: Message) => context.room.then((room) => room.messages.reactions.removeAll(message)),
+    [context],
+  );
+
 
   const [getPreviousMessages, setGetPreviousMessages] = useState<MessageSubscriptionResponse['getPreviousMessages']>();
 
@@ -214,7 +236,9 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     get,
     deleteMessage,
     getPreviousMessages,
-    react,
+    addReaction,
+    removeReaction,
+    removeAllReactions,
     connectionStatus,
     connectionError,
     roomStatus,

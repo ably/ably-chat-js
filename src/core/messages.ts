@@ -262,9 +262,9 @@ export interface Messages extends EmitsDiscontinuities {
   update(message: Message, update: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
-   * Add a reaction to a message.
+   * Message reactions
    */
-  react(message: Message, reaction: string): Promise<void>;
+  reactions : DefaultMessageReactions;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -272,6 +272,26 @@ export interface Messages extends EmitsDiscontinuities {
    * @returns The realtime channel.
    */
   get channel(): Ably.RealtimeChannel;
+}
+
+export class DefaultMessageReactions {
+  private readonly _chatApi: ChatApi;
+
+  constructor(chatApi: ChatApi) {
+    this._chatApi = chatApi;
+  }
+
+  add(message : Message, reaction : string, score : number = 1, unique : boolean = false) {
+    return this._chatApi.addMessageReaction(message.roomId, message.serial, reaction, score, unique);
+  }
+
+  remove(message : Message, reaction : string) {
+    return this._chatApi.removeMessageReaction(message.roomId, message.serial, reaction);
+  }
+
+  removeAll(message : Message) {
+    return this._chatApi.removeAllMessageReactions(message.roomId, message.serial);
+  }
 }
 
 /**
@@ -292,6 +312,8 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
   private _emitter = new EventEmitter<MessageEventsMap>();
 
+  public reactions : DefaultMessageReactions;
+
   /**
    * Constructs a new `DefaultMessages` instance.
    * @param roomId The unique identifier of the room.
@@ -309,6 +331,8 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
     this._clientId = clientId;
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListenerObject, Promise<{ fromSerial: string }>>();
+
+    this.reactions = new DefaultMessageReactions(chatApi);
   }
 
   /**
@@ -556,11 +580,6 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
     return deletedMessage;
   }
 
-  react(message: Message, reaction: string): Promise<void> {
-    this._logger.trace('Messages.react();', { message, reaction });
-    return this._chatApi.reactToMessage(this._roomId, message.serial, reaction);
-  }
-
   /**
    * @inheritdoc Messages
    */
@@ -634,6 +653,8 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
     const action = channelEventMessage.action;
     const messageEvent = MessageActionsToEventsMap.get(action as ChatMessageActions);
 
+    console.log("processing event with action", action, "is message event", messageEvent, "and the raw event is", channelEventMessage);
+
     if (channelEventMessage.name === RealtimeMessageNames.ChatMessage && messageEvent) {
       this._logger.trace('Messages._processEvent(): detected chat message event', { messageEvent });
       // this is a chat messages
@@ -647,7 +668,7 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
     }
 
     // annotation create
-    if (channelEventMessage.action === ChatMessageActions.MessageAnnotationCreate && // message reactions
+    if ((action as unknown) === ChatMessageActions.MessageAnnotationCreate && // message reactions
       channelEventMessage.refType === ReactionEmojiV1) {
         this._logger.trace('Messages._processEvent(): detected new message reaction', { channelEventMessage });
         this._emitter.emit(MessageEvents.ReactionCreated, {
@@ -663,28 +684,53 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
       }
 
     // todo: annotation remove
-    if (channelEventMessage.action === ChatMessageActions.MessageAnnotationDelete) {
+    if ((action as unknown) === ChatMessageActions.MessageAnnotationDelete) {
       if (channelEventMessage.refType === ReactionEmojiV1) {
         // reaction remove
       }
       return;
     }
 
-    if ((channelEventMessage.action as any) === ChatMessageActions.MessageAnnotationSummary) {
+    if (action === ChatMessageActions.MessageAnnotationSummary) {
       // reaction summaries (for annotation refType "reaction:emoji.v1")
       const emojis =
-        ((channelEventMessage as any).summary?.data?.namespaces?.reaction?.emojiV1 as unknown as Record<
+        ((channelEventMessage as any).summary?.data?.namespaces?.reaction?.emoji_v1 as unknown as Record<
           string,
-          { total: string; clientIds: string[]; reaction: string }
+          { total: string; score : string; clientIds: {total : string, score : string}[]; reaction: string }
         >) || {};
+
+      console.log("processing reaction summary event with emojis", emojis);
       const reactions = new Map<string, MessageReactionSummary>();
       for (const emoji in emojis) {
+
+        const clientIdData = emojis[emoji]?.clientIds;
+        const clientIds : MessageReactionSummary["clientIds"] = {};
+        if (clientIdData) {
+          for (const client in clientIdData) {
+            let score : number = 0;
+            if (clientIdData[client]?.score) {
+              score = parseInt(clientIdData[client].score);
+              if (score < 0) { score = 0; }
+            }
+            let total : number = 0;
+            if (clientIdData[client]?.total) {
+              total = parseInt(clientIdData[client].total);
+              if (total < 0) { total = 0; }
+            }
+            clientIds[client] = { score: score, total: total };
+          }
+        }
+
         reactions.set(emoji, {
-          count: Number.parseInt(emojis[emoji]?.total as unknown as string) ?? 0,
-          clientIds: emojis[emoji]?.clientIds ?? [],
+          total: Number.parseInt(emojis[emoji]?.total as unknown as string) ?? 0,
+          score: Number.parseInt(emojis[emoji]?.score as unknown as string) ?? 0,
+          numClients: Object.keys(clientIds).length,
+          clientIds: clientIds,
           reaction: emoji,
         });
       }
+
+      console.log("about to trigger CHAT summary event with reactions" ,reactions);
 
       this._emitter.emit(MessageEvents.ReactionSummary, {
         type: MessageEvents.ReactionSummary,

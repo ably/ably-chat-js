@@ -46,7 +46,9 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
     send: sendMessage,
     deleteMessage,
     update,
-    react: reactToMessage,
+    addReaction,
+    removeReaction,
+    removeAllReactions,
     messages: untypedMessagesObject,
   } = useMsgResponse;
 
@@ -243,7 +245,8 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
               message={msg}
               onMessageDelete={onDeleteMessage}
               onMessageUpdate={onUpdateMessage}
-              onMessageReact={reactToMessage}
+              onAddReaction={addReaction}
+              onRemoveReaction={removeReaction}
             ></MessageComponent>
           ))}
           <div ref={messagesEndRef} />

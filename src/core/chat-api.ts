@@ -202,15 +202,40 @@ export class ChatApi {
     );
   }
 
-  async reactToMessage(roomId: string, serial: string, reaction: string): Promise<void> {
+  async addMessageReaction(roomId: string, serial: string, reaction: string, score : number = 1, unique : boolean = false): Promise<void> {
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest(`/channels/${roomId}::$chat::$chatMessages/messages`, 'POST', {
-      action: 4,
-      data: reaction,
+      action: 5,
+      data: JSON.stringify({emoji: reaction, score: score, unique: unique}),
       refType: 'reaction:emoji.v1',
       refSerial: serial,
     }).then((response) => {
       console.log('response from sending reaction:', response);
+    });
+  }
+
+  async removeAllMessageReactions(roomId: string, serial: string): Promise<void> {
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest(`/channels/${roomId}::$chat::$chatMessages/messages`, 'POST', {
+      action: 6,
+      data: "",
+      refType: 'reaction:emoji.v1',
+      refSerial: serial,
+    }).then((response) => {
+      console.log('response from removing all reactions:', response);
+    });
+  }
+
+
+  async removeMessageReaction(roomId: string, serial: string, reaction: string): Promise<void> {
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest(`/channels/${roomId}::$chat::$chatMessages/messages`, 'POST', {
+      action: 6,
+      data: JSON.stringify({emoji: reaction}),
+      refType: 'reaction:emoji.v1',
+      refSerial: serial,
+    }).then((response) => {
+      console.log(`response from removing '${reaction}' reaction:`, response);
     });
   }
 

@@ -11,7 +11,9 @@ interface MessageProps {
 
   onMessageDelete?(msg: Message): void;
 
-  onMessageReact?(message: Message, reaction: string): void;
+  onAddReaction?(message: Message, reaction: string, score?: number, unique?: boolean): void;
+  
+  onRemoveReaction?(message: Message, reaction: string): void;
 }
 
 const shortDateTimeFormatter = new Intl.DateTimeFormat('default', {
@@ -39,7 +41,8 @@ export const MessageComponent: React.FC<MessageProps> = ({
   message,
   onMessageUpdate,
   onMessageDelete,
-  onMessageReact,
+  onAddReaction,
+  onRemoveReaction,
 }) => {
   const handleMessageUpdate = useCallback(
     (e: React.UIEvent) => {
@@ -57,35 +60,85 @@ export const MessageComponent: React.FC<MessageProps> = ({
     [message, onMessageDelete],
   );
 
-  const handleReaction = useCallback(
-    (reaction: string) => {
-      onMessageReact?.(message, reaction);
-    },
-    [message, onMessageReact],
-  );
-
   const currentReactions = message.reactions;
   const reactionsWithCounts = ['👍', '🚀', '🔥', '❤️'].map((emoji) => {
-    const count = currentReactions.get(emoji)?.count || 0;
-    return { emoji, count};
+    const data = currentReactions.get(emoji);
+
+    const clientIdArr : {clientId : string, total:  number, score : number}[] = [];
+    if (data?.clientIds) {
+      for (let clientId in data.clientIds) {
+        clientIdArr.push({ clientId, score: data.clientIds[clientId].score, total: data.clientIds[clientId].total });
+      }
+    }
+    if (data) {
+      console.log("for emoji", emoji, "data", data, "clientIdArr", clientIdArr);
+    }
+
+    return { emoji, data, clientIdArr };
   })
 
   const messageReactionsUI = (
-    <span className="message-reactions">
+    <div className="message-reactions">
       {reactionsWithCounts.map((rwc) => (
-        <a
+        <div
+        className="message-reaction"
           key={rwc.emoji}
-          onClick={(e) => {
-            e.preventDefault();
-            handleReaction(rwc.emoji);
-          }}
-          href="#"
         >
-          {rwc.emoji}
-          {rwc.count > 0 ? "(" + rwc.count + ")" : ""}
-        </a>
+          <a href="#" onClick={(e) => {
+            e.preventDefault();
+            onAddReaction?.(message, rwc.emoji, 1, false);
+          }}>{rwc.emoji}</a>
+          {rwc.data?.score && rwc.data?.score > 0 ? "(" + rwc.data.score + ")" : ""}
+          <div className="message-reaction-menu">
+            <ul>
+              <li><a href="#" onClick={(e) => {
+                e.preventDefault();
+                onAddReaction?.(message, rwc.emoji, 1, false);
+              }}>Add reaction (default)</a></li>
+              <li><a href="#" onClick={(e) => {
+                e.preventDefault();
+                onAddReaction?.(message, rwc.emoji, 1, true);
+              }}>Add unique reaction</a></li>
+              <li><a href="#" onClick={(e) => {
+                e.preventDefault();
+                let scoreStr = prompt("Enter score");
+                if (!scoreStr) return;
+                let score = parseInt(scoreStr);
+                if (!score || score <= 0) return;
+                onAddReaction?.(message, rwc.emoji, score, false);
+              }}>Add reaction with score</a></li>
+              <li><a href="#" onClick={(e) => {
+                e.preventDefault();
+                let scoreStr = prompt("Enter score");
+                if (!scoreStr) return;
+                let score = parseInt(scoreStr);
+                if (!score || score <= 0) return;
+                onAddReaction?.(message, rwc.emoji, score, true);
+              }}>Add unique reaction with score</a></li>
+              <li><a href="#" onClick={(e) => {
+                e.preventDefault();
+                onRemoveReaction?.(message, rwc.emoji);
+              }}>Remove reaction</a></li>
+            </ul>
+            <div>
+              <p>
+                <strong>Score:</strong> {rwc.data?.score && rwc.data?.score > 0 ? "(" + rwc.data.score + ")" : "-"}.
+                <strong>Total:</strong> {rwc.data?.total && rwc.data?.total > 0 ? "(" + rwc.data.total + ")" : "-"}.
+              </p>
+              {rwc.clientIdArr.length > 0 ? (
+              <ul>
+                {rwc.clientIdArr.map((clientIdData) => (
+                  <li key={clientIdData.clientId}>
+                    <strong>{clientIdData.clientId}</strong> - Score: {clientIdData.score} - Total: {clientIdData.total}
+                  </li>
+                ))}
+              </ul>
+              ) : ""}
+            </div>
+          </div>
+        </div>
       ))}
-    </span>
+    </div>
   );
   const messageActionsUI = (
     <div

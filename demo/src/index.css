@@ -67,6 +67,41 @@ body {
   opacity: 1;
 }
 
+
+.message-reactions {
+  display: inline-block;
+}
+
+.message-reaction-menu {
+  display: none;
+}
+
+.message-reaction {
+  display: inline-block;
+  position: relative;
+}
+
+.message-reaction:hover .message-reaction-menu {
+  display: block;
+  position: absolute;
+  right: 10%;
+  width: 200px;
+  z-index: 10000;
+  background: black;
+}
+
+.message-reaction-menu a {
+  display: block;
+  padding: 5px;
+}
+
+.message-reaction-menu a:hover {
+  display: block;
+  padding: 5px;
+  background: red;
+}
+
+
 .chat-message .message-reactions > a {
   opacity: 0.8;
   transition: all 0.1s ease-in-out;
