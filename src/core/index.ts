@@ -13,6 +13,7 @@ export type {
 export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
+export type { MessageEventPayload } from './events.js';
 export { ChatMessageActions, MessageEvents, PresenceEvents } from './events.js';
 export type { Headers } from './headers.js';
 export {
@@ -29,7 +30,6 @@ export { LogLevel } from './logger.js';
 export type { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata, Operation } from './message.js';
 export type {
   DeleteMessageParams,
-  MessageEventPayload,
   MessageListener,
   Messages,
   MessageSubscriptionResponse,

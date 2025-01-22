@@ -126,6 +126,7 @@ describe('useMessages', () => {
         before: vi.fn(),
         after: vi.fn(),
         equal: vi.fn(),
+        with: vi.fn(),
         headers: {},
         metadata: {},
       },

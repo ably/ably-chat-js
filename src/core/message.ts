@@ -1,6 +1,6 @@
 import { ErrorInfo } from 'ably';
 
-import { ChatMessageActions } from './events.js';
+import { ChatMessageActions, MessageEventPayload, MessageEvents } from './events.js';
 import { Headers } from './headers.js';
 import { Metadata } from './metadata.js';
 import { OperationMetadata } from './operation-metadata.js';
@@ -201,6 +201,17 @@ export interface Message {
    * @throws {@link ErrorInfo} if serials of either message is invalid.
    */
   equal(message: Message): boolean;
+
+  /**
+   * Creates a new message instance with the event applied.
+   *
+   * @param event The event to be applied to the returned message.
+   * @throws {@link ErrorInfo} if the event is for a different message.
+   * @throws {@link ErrorInfo} if the event is a {@link MessageEvents.Created}.
+   * @returns A new message instance with the event applied. If the event is a no-op, such
+   *    as an event for an old version, the same message is returned (not a copy).
+   */
+  with(event: MessageEventPayload): Message;
 }
 
 /**
@@ -287,5 +298,17 @@ export class DefaultMessage implements Message {
 
   equal(message: Message): boolean {
     return this.serial === message.serial;
+  }
+
+  with(event: MessageEventPayload): Message {
+    if (event.type === MessageEvents.Created) {
+      throw new ErrorInfo('cannot apply a created event to a message', 40000, 400);
+    }
+
+    if (event.message.serial !== this.serial) {
+      throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
+    }
+
+    return this.version >= event.message.version ? this : event.message;
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ChatMessageActions } from '../../src/core/events.ts';
+import { ChatMessageActions, MessageEventPayload, MessageEvents } from '../../src/core/events.ts';
 import { DefaultMessage, Message } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
@@ -99,6 +99,7 @@ describe('ChatMessage', () => {
 
     expect(firstMessage.before(secondMessage)).toBe(true);
   });
+
   it('is after another message', () => {
     const firstSerial = '01672531200000-124@abcdefghij';
     const secondSerial = '01672531200000-123@abcdefghij';
@@ -294,6 +295,175 @@ describe('ChatMessage', () => {
         );
         expected(firstMessage, secondMessage);
       });
+    });
+  });
+
+  describe('apply events with with()', () => {
+    const message = new DefaultMessage(
+      '01672531200000-123@abcdefghij',
+      'yoda',
+      'rebel-alliance-general',
+      'hello there',
+      {},
+      {},
+      ChatMessageActions.MessageCreate,
+      '01672531200100-123@abcdefghij',
+      new Date(1672531200000),
+      new Date(1672531200000),
+      undefined,
+    );
+
+    it('should throw an error if different messages', () => {
+      const serial = '01672531200000-123@abcdefgxyz';
+      const eventMessage = new DefaultMessage(
+        serial,
+        'yoda',
+        'rebel-alliance-general',
+        'hello there',
+        {},
+        {},
+        ChatMessageActions.MessageUpdate,
+        '01672531200500-123@abcdefghij',
+        new Date(1672531200000),
+        new Date(1672531200500),
+        { clientId: 'luke' },
+      );
+
+      const event: MessageEventPayload = {
+        type: MessageEvents.Updated,
+        message: eventMessage,
+      };
+
+      expect(() => message.with(event)).toThrowErrorInfo({
+        code: 40000,
+        statusCode: 400,
+        message: 'cannot apply event for a different message',
+      });
+    });
+
+    it('should throw an error for create events messages', () => {
+      const eventMessage = new DefaultMessage(
+        message.serial,
+        'yoda',
+        'rebel-alliance-general',
+        'hello there',
+        {},
+        {},
+        ChatMessageActions.MessageCreate,
+        '01672531200500-123@abcdefghij',
+        new Date(1672531200000),
+        new Date(1672531200500),
+        { clientId: 'luke' },
+      );
+
+      const event: MessageEventPayload = {
+        type: MessageEvents.Created,
+        message: eventMessage,
+      };
+
+      expect(() => message.with(event)).toThrowErrorInfo({
+        code: 40000,
+        statusCode: 400,
+        message: 'cannot apply a created event to a message',
+      });
+    });
+
+    it('should correctly apply an UPDATE', () => {
+      const eventMessage = new DefaultMessage(
+        message.serial,
+        'yoda',
+        'rebel-alliance-general',
+        'hi!',
+        {},
+        {},
+        ChatMessageActions.MessageUpdate,
+        '01672531209999-123@abcdefghij',
+        new Date(1672531200000),
+        new Date(1672531209999),
+        { clientId: 'luke' },
+      );
+
+      const event: MessageEventPayload = {
+        type: MessageEvents.Updated,
+        message: eventMessage,
+      };
+
+      const newMessage = message.with(event);
+      expect(newMessage !== message).toBe(true);
+      expect(newMessage).toEqual(eventMessage);
+    });
+
+    it('should correctly apply a DELETE', () => {
+      const eventMessage = new DefaultMessage(
+        message.serial,
+        'yoda',
+        'rebel-alliance-general',
+        'hola',
+        {},
+        {},
+        ChatMessageActions.MessageDelete,
+        '01672531209999-123@abcdefghij',
+        new Date(1672531200000),
+        new Date(1672531209999),
+        { clientId: 'luke' },
+      );
+
+      const event: MessageEventPayload = {
+        type: MessageEvents.Updated,
+        message: eventMessage,
+      };
+
+      const newMessage = message.with(event);
+      expect(newMessage !== message).toBe(true);
+      expect(newMessage).toEqual(eventMessage);
+    });
+
+    it('should ignore outdated versions', () => {
+      const eventMessage = new DefaultMessage(
+        message.serial,
+        'yoda',
+        'rebel-alliance-general',
+        'old one',
+        {},
+        {},
+        ChatMessageActions.MessageUpdate,
+        '01672531200000-123@abcdefghij',
+        new Date(1672531200000),
+        new Date(1672531209999),
+        { clientId: 'luke' },
+      );
+
+      const event: MessageEventPayload = {
+        type: MessageEvents.Updated,
+        message: eventMessage,
+      };
+
+      const newMessage = message.with(event);
+      expect(newMessage === message).toBe(true);
+    });
+
+    it('should ignore equal versions', () => {
+      const eventMessage = new DefaultMessage(
+        message.serial,
+        'yoda',
+        'rebel-alliance-general',
+        'old one',
+        {},
+        {},
+        ChatMessageActions.MessageUpdate,
+        message.version,
+        new Date(1672531200000),
+        new Date(1672531209999),
+        { clientId: 'luke' },
+      );
+
+      const event: MessageEventPayload = {
+        type: MessageEvents.Updated,
+        message: eventMessage,
+      };
+
+      const newMessage = message.with(event);
+      expect(newMessage === message).toBe(true);
     });
   });
 });
