@@ -81,7 +81,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
     <div className="message-reactions">
       {reactionsWithCounts.map((rwc) => (
         <div
-        className="message-reaction"
+        className={"message-reaction "+(self ? "message-reaction-self" : "message-reaction-other")}
           key={rwc.emoji}
         >
           <a href="#" onClick={(e) => {

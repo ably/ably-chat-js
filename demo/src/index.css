@@ -81,10 +81,22 @@ body {
   position: relative;
 }
 
+.message-reaction:hover {
+  background: black;
+}
+
+.message-reaction-self .message-reaction-menu {
+  right: 10%;
+}
+
+.message-reaction-other .message-reaction-menu {
+  left: 10%;
+}
+
+
 .message-reaction:hover .message-reaction-menu {
   display: block;
   position: absolute;
-  right: 10%;
   width: 200px;
   z-index: 10000;
   background: black;
