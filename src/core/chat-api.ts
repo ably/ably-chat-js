@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
-import { OrderBy } from './messages.js';
+import { MessageReactionMode, OrderBy } from './messages.js';
 import { OccupancyEvent } from './occupancy.js';
 import { PaginatedResult } from './query.js';
 
@@ -202,11 +202,11 @@ export class ChatApi {
     );
   }
 
-  async addMessageReaction(roomId: string, serial: string, reaction: string, score : number = 1, unique : boolean = false): Promise<void> {
+  async addMessageReaction(roomId: string, serial: string, reaction: string, score : number = 1, mode : MessageReactionMode = MessageReactionMode.Add): Promise<void> {
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest(`/channels/${roomId}::$chat::$chatMessages/messages`, 'POST', {
       action: 5,
-      data: JSON.stringify({emoji: reaction, score: score, unique: unique}),
+      data: JSON.stringify({emoji: reaction, score: score, mode: mode}),
       refType: 'reaction:emoji.v1',
       refSerial: serial,
     }).then((response) => {

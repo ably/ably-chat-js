@@ -86,7 +86,7 @@ body {
 }
 
 .message-reaction-self .message-reaction-menu {
-  right: 10%;
+  right: -30px;
 }
 
 .message-reaction-other .message-reaction-menu {

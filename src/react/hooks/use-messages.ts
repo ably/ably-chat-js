@@ -10,6 +10,7 @@ import {
   SendMessageParams,
   SummariesListener,
   UpdateMessageParams,
+  MessageReactionMode
 } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
@@ -146,8 +147,8 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
 
-  const addReaction = useCallback(
-    (message: Message, reaction: string, score: number = 1, unique : boolean = false) => context.room.then((room) => room.messages.reactions.add(message, reaction, score, unique)),
+  const addReaction : Messages["reactions"]["add"] = useCallback(
+    (message, reaction, score = 1, mode = MessageReactionMode.Add) => context.room.then((room) => room.messages.reactions.add(message, reaction, score, mode)),
     [context],
   );
 

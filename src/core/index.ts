@@ -47,6 +47,7 @@ export type {
   SendMessageParams,
   UpdateMessageParams,
 } from './messages.js';
+export { MessageReactionMode } from './messages.js';
 export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener, OccupancySubscriptionResponse } from './occupancy.js';
 export type { OperationMetadata } from './operation-metadata.js';

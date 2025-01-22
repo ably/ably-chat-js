@@ -1,4 +1,4 @@
-import { Message } from '@ably/chat';
+import { Message, MessageReactionMode } from '@ably/chat';
 import React, { useCallback } from 'react';
 import clsx from 'clsx';
 import { FaPencil, FaTrash } from 'react-icons/fa6';
@@ -11,7 +11,7 @@ interface MessageProps {
 
   onMessageDelete?(msg: Message): void;
 
-  onAddReaction?(message: Message, reaction: string, score?: number, unique?: boolean): void;
+  onAddReaction?(message: Message, reaction: string, score?: number, mode?: MessageReactionMode): void;
   
   onRemoveReaction?(message: Message, reaction: string): void;
 }
@@ -86,39 +86,59 @@ export const MessageComponent: React.FC<MessageProps> = ({
         >
           <a href="#" onClick={(e) => {
             e.preventDefault();
-            onAddReaction?.(message, rwc.emoji, 1, false);
+            onAddReaction?.(message, rwc.emoji, 1, MessageReactionMode.Add);
           }}>{rwc.emoji}</a>
           {rwc.data?.score && rwc.data?.score > 0 ? "(" + rwc.data.score + ")" : ""}
           <div className="message-reaction-menu">
             <ul>
               <li><a href="#" onClick={(e) => {
                 e.preventDefault();
-                onAddReaction?.(message, rwc.emoji, 1, false);
-              }}>Add reaction (default)</a></li>
+                onAddReaction?.(message, rwc.emoji, 1, MessageReactionMode.Add);
+              }}>Add {rwc.emoji} reaction (default)</a></li>
+              
               <li><a href="#" onClick={(e) => {
                 e.preventDefault();
-                onAddReaction?.(message, rwc.emoji, 1, true);
-              }}>Add unique reaction</a></li>
+                onAddReaction?.(message, rwc.emoji, 1, MessageReactionMode.Unique);
+              }}>Add unique {rwc.emoji} reaction</a></li>
+
+              <li><a href="#" onClick={(e) => {
+                e.preventDefault();
+                onAddReaction?.(message, rwc.emoji, 1, MessageReactionMode.Replace);
+              }}>Replace {rwc.emoji} reaction</a></li>
+
+
               <li><a href="#" onClick={(e) => {
                 e.preventDefault();
                 let scoreStr = prompt("Enter score");
                 if (!scoreStr) return;
                 let score = parseInt(scoreStr);
                 if (!score || score <= 0) return;
-                onAddReaction?.(message, rwc.emoji, score, false);
-              }}>Add reaction with score</a></li>
+                onAddReaction?.(message, rwc.emoji, score, MessageReactionMode.Add);
+              }}>Add {rwc.emoji} reaction with score</a></li>
+              
               <li><a href="#" onClick={(e) => {
                 e.preventDefault();
                 let scoreStr = prompt("Enter score");
                 if (!scoreStr) return;
                 let score = parseInt(scoreStr);
                 if (!score || score <= 0) return;
-                onAddReaction?.(message, rwc.emoji, score, true);
-              }}>Add unique reaction with score</a></li>
+                onAddReaction?.(message, rwc.emoji, score, MessageReactionMode.Unique);
+              }}>Add unique {rwc.emoji} reaction with score</a></li>
+
+              <li><a href="#" onClick={(e) => {
+                e.preventDefault();
+                let scoreStr = prompt("Enter score");
+                if (!scoreStr) return;
+                let score = parseInt(scoreStr);
+                if (!score || score <= 0) return;
+                onAddReaction?.(message, rwc.emoji, score, MessageReactionMode.Replace);
+              }}>Replace {rwc.emoji} reaction with score</a></li>
+
+              
               <li><a href="#" onClick={(e) => {
                 e.preventDefault();
                 onRemoveReaction?.(message, rwc.emoji);
-              }}>Remove reaction</a></li>
+              }}>Remove {rwc.emoji} reaction</a></li>
             </ul>
             <div>
               <p>

@@ -274,6 +274,12 @@ export interface Messages extends EmitsDiscontinuities {
   get channel(): Ably.RealtimeChannel;
 }
 
+export enum MessageReactionMode {
+  Add = "add",
+  Replace = "replace",
+  Unique = "unique",
+}
+
 export class DefaultMessageReactions {
   private readonly _chatApi: ChatApi;
 
@@ -281,8 +287,8 @@ export class DefaultMessageReactions {
     this._chatApi = chatApi;
   }
 
-  add(message : Message, reaction : string, score : number = 1, unique : boolean = false) {
-    return this._chatApi.addMessageReaction(message.roomId, message.serial, reaction, score, unique);
+  add(message : Message, reaction : string, score : number = 1, mode : MessageReactionMode = MessageReactionMode.Add) {
+    return this._chatApi.addMessageReaction(message.roomId, message.serial, reaction, score, mode);
   }
 
   remove(message : Message, reaction : string) {
