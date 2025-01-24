@@ -1,5 +1,5 @@
 import { MessageComponent } from '../MessageComponent';
-import { useChatClient, useMessages } from '@ably/chat';
+import { useChatClient, useMessages } from '@ably/chat-react';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { Message, MessageEventPayload, MessageEvents, PaginatedResult } from '@ably/chat';
 import { ErrorInfo } from 'ably';

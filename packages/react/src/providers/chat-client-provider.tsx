@@ -30,9 +30,9 @@ export interface ChatClientProviderProps {
  *
  * @param {ChatClientProviderProps} props - The props for the {@link ChatClientProvider} component.
  *
- * @returns {ChatClientProvider} component.
+ * @returns {typeof ChatClientProvider} component.
  */
-export const ChatClientProvider = ({ children, client }: ChatClientProviderProps) => {
+export const ChatClientProvider: React.FC<ChatClientProviderProps> = ({ children, client }) => {
   const context = React.useContext(ChatClientContext);
   const value: ChatClientContextValue = React.useMemo(() => {
     // Set the internal useReact option to true to enable React-specific agent.

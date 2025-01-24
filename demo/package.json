@@ -13,7 +13,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ably/chat": "file:..",
+    "@ably/chat": "file:../packages/core",
+    "@ably/chat-react": "file:../packages/react",
     "ably": "^2.6.2",
     "clsx": "^2.1.1",
     "nanoid": "^5.0.9",

@@ -4,12 +4,8 @@ import './UserPresenceComponent.css';
 import {
   ConnectionStatus,
   PresenceMember,
-  useChatClient,
-  useChatConnection,
-  usePresence,
-  usePresenceListener,
 } from '@ably/chat';
-
+import { useChatClient, useChatConnection, usePresence, usePresenceListener } from '@ably/chat-react';
 interface UserListComponentProps {}
 
 export const UserPresenceComponent: FC<UserListComponentProps> = () => {

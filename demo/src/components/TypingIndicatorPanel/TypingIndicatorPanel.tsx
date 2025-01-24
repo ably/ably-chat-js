@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { useChatClient, useTyping } from '@ably/chat';
+import { useChatClient, useTyping } from '@ably/chat-react';
 
 interface TypingIndicatorPanelProps {}
 
