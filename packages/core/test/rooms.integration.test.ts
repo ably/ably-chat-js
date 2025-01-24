@@ -1,11 +1,11 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
+import { newChatClient } from '../../shared/testhelper/chat.ts';
+import { waitForRoomStatus } from '../../shared/testhelper/room.ts';
 import { LogLevel } from '../src/logger.ts';
-import { RoomStatus } from '../srcatus.ts';
-import { RoomOptionsDefaults } from '../../../src/index.ts';
-import { newChatClient } from '../../../test/helper/chat.ts';
-import { waitForRoomStatus } from '../../../test/helper/room.ts';
+import { RoomOptionsDefaults } from '../src/room-options.ts';
+import { RoomStatus } from '../src/room-status.ts';
 
 describe('Rooms', () => {
   it('throws an error if you create the same room with different options', async () => {

@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
+import { newChatClient } from '../../shared/testhelper/chat.ts';
+import { testClientOptions } from '../../shared/testhelper/options.ts';
+import { ablyRealtimeClient } from '../../shared/testhelper/realtime-client.ts';
+import { getRandomRoom } from '../../shared/testhelper/room.ts';
 import { ChatClient } from '../src/chat.ts';
 import { ConnectionStatus } from '../src/connection.ts';
 import { LogLevel } from '../src/logger.ts';
 import { RealtimeWithOptions } from '../src/realtime-extensions.ts';
 import { VERSION } from '../src/version.ts';
-import { newChatClient } from '../helper/chat.ts';
-import { testClientOptions } from '../helper/options.ts';
-import { ablyRealtimeClient } from '../helper/realtime-client.ts';
-import { getRandomRoom } from '../helper/room.ts';
 
 const waitForConnectionStatus = (chat: ChatClient, state: ConnectionStatus) => {
   return new Promise<void>((resolve, reject) => {

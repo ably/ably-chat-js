@@ -1,13 +1,13 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { newChatClient } from '../../shared/testhelper/chat.ts';
+import { getRandomRoom, waitForRoomStatus } from '../../shared/testhelper/room.ts';
 import { ChatClient } from '../src/chat.ts';
-import { Reaction } from '../srcn.ts';
-import { RealtimeChannelWithOptions } from '../srce-extensions.ts';
-import { RoomStatus } from '../srcatus.ts';
-import { CHANNEL_OPTIONS_AGENT_STRING } from '../src.ts';
-import { newChatClient } from '../../../test/helper/chat.ts';
-import { getRandomRoom, waitForRoomStatus } from '../../../test/helper/room.ts';
+import { Reaction } from '../src/reaction.ts';
+import { RealtimeChannelWithOptions } from '../src/realtime-extensions.ts';
+import { RoomStatus } from '../src/room-status.ts';
+import { CHANNEL_OPTIONS_AGENT_STRING } from '../src/version.ts';
 
 interface TestContext {
   chat: ChatClient;

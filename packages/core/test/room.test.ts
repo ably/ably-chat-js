@@ -1,18 +1,18 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { randomRoomId } from '../../shared/testhelper/identifier.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { ablyRealtimeClient } from '../../shared/testhelper/realtime-client.ts';
+import { defaultRoomOptions, waitForRoomStatus } from '../../shared/testhelper/room.ts';
 import { ChatApi } from '../src/chat-api.ts';
-import { randomId } from '../src
-import { DefaultRoom, Room } from '../src';
-import { RoomLifecycleManager } from '../srcfecycle-manager.ts';
-import { RoomOptions, RoomOptionsDefaults } from '../srctions.ts';
-import { RoomStatus } from '../srcatus.ts';
-import { DefaultTyping } from '../srcts';
-import { CHANNEL_OPTIONS_AGENT_STRING, DEFAULT_CHANNEL_OPTIONS } from '../src.ts';
-import { randomRoomId } from '../../../test/helper/identifier.ts';
-import { makeTestLogger } from '../../../test/helper/logger.ts';
-import { ablyRealtimeClient } from '../../../test/helper/realtime-client.ts';
-import { defaultRoomOptions, waitForRoomStatus } from '../../../test/helper/room.ts';
+import { randomId } from '../src/id.ts';
+import { DefaultRoom, Room } from '../src/room.ts';
+import { RoomLifecycleManager } from '../src/room-lifecycle-manager.ts';
+import { RoomOptions, RoomOptionsDefaults } from '../src/room-options.ts';
+import { RoomStatus } from '../src/room-status.ts';
+import { DefaultTyping } from '../src/typing.ts';
+import { CHANNEL_OPTIONS_AGENT_STRING, DEFAULT_CHANNEL_OPTIONS } from '../src/version.ts';
 
 vi.mock('ably');
 

@@ -2,19 +2,19 @@ import * as Ably from 'ably';
 import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatApi, GetMessagesQueryParams } from '../src/chat-api.ts';
-import { ChatMessageActions, MessageEvents } from '../srcts';
-import { Message } from '../src.ts';
-import { DefaultMessages, MessageEventPayload, OrderBy } from '../srcs.ts';
-import { Room } from '../src';
 import {
   channelEventEmitter,
   ChannelEventEmitterReturnType,
   channelStateEventEmitter,
   ChannelStateEventEmitterReturnType,
-} from '../../../test/helper/channel.ts';
-import { makeTestLogger } from '../../../test/helper/logger.ts';
-import { makeRandomRoom } from '../../../test/helper/room.ts';
+} from '../../shared/testhelper/channel.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { makeRandomRoom } from '../../shared/testhelper/room.ts';
+import { ChatApi, GetMessagesQueryParams } from '../src/chat-api.ts';
+import { ChatMessageActions, MessageEvents } from '../src/events.ts';
+import { Message } from '../src/message.ts';
+import { DefaultMessages, MessageEventPayload, OrderBy } from '../src/messages.ts';
+import { Room } from '../src/room.ts';
 
 interface TestContext {
   realtime: Ably.Realtime;

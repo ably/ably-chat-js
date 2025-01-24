@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { newChatClient } from '../../shared/testhelper/chat.ts';
+import { getRandomRoom } from '../../shared/testhelper/room.ts';
 import { ChatClient } from '../src/chat.ts';
-import { DefaultRoom, Room } from '../src';
-import { RoomStatus } from '../srcatus.ts';
-import { newChatClient } from '../../../test/helper/chat.ts';
-import { getRandomRoom } from '../../../test/helper/room.ts';
+import { DefaultRoom, Room } from '../src/room.ts';
+import { RoomStatus } from '../src/room-status.ts';
 
 interface TestContext {
   chat: ChatClient;

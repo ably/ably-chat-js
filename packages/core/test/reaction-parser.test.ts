@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
 import { DefaultReaction } from '../src/reaction.js';
-import { parseReaction } from '../srcn-parser.js';
+import { parseReaction } from '../src/reaction-parser.js';
 
 describe('parseReaction', () => {
   describe.each([

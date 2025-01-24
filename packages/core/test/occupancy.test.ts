@@ -1,12 +1,12 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { channelEventEmitter } from '../../shared/testhelper/channel.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { makeRandomRoom } from '../../shared/testhelper/room.ts';
 import { ChatApi } from '../src/chat-api.ts';
-import { DefaultOccupancy, OccupancyEvent } from '../srccy.ts';
-import { Room } from '../src';
-import { channelEventEmitter } from '../../../test/helper/channel.ts';
-import { makeTestLogger } from '../../../test/helper/logger.ts';
-import { makeRandomRoom } from '../../../test/helper/room.ts';
+import { DefaultOccupancy, OccupancyEvent } from '../src/occupancy.ts';
+import { Room } from '../src/room.ts';
 
 interface TestContext {
   realtime: Ably.Realtime;

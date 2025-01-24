@@ -1,8 +1,8 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
-import { DefaultRoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
-import { makeTestLogger } from '../helper/logger.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { DefaultRoomLifecycle, RoomStatus } from '../src/room-status.ts';
 
 const baseError = new Ably.ErrorInfo('error', 500, 50000);
 

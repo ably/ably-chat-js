@@ -1,10 +1,13 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { randomRoomId } from '../../shared/testhelper/identifier.ts';
+import { ablyRealtimeClient } from '../../shared/testhelper/realtime-client.ts';
 import { PresenceEvents } from '../src/events.ts';
-import { addListenerToChannelPresenceWithoutAttach, addListenerToChannelWithoutAttach } from '../srce-extensions.ts';
-import { randomRoomId } from '../../../test/helper/identifier.ts';
-import { ablyRealtimeClient } from '../../../test/helper/realtime-client.ts';
+import {
+  addListenerToChannelPresenceWithoutAttach,
+  addListenerToChannelWithoutAttach,
+} from '../src/realtime-extensions.ts';
 
 interface TestContext {
   realtime: Ably.Realtime;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ChatMessageActions } from '../src/events.ts';
-import { DefaultMessage, Message } from '../src.ts';
+import { DefaultMessage, Message } from '../src/message.ts';
 
 describe('ChatMessage', () => {
   it('is the same as another message', () => {

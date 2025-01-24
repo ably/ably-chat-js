@@ -1,13 +1,13 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
+import { ChannelEventEmitterReturnType, channelPresenceEventEmitter } from '../../shared/testhelper/channel.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { makeRandomRoom } from '../../shared/testhelper/room.ts';
 import { ChatClient } from '../src/chat.ts';
 import { ChatApi } from '../src/chat-api.ts';
 import { Room } from '../src/room.ts';
 import { DefaultTyping, TypingEvent } from '../src/typing.ts';
-import { ChannelEventEmitterReturnType, channelPresenceEventEmitter } from '../helper/channel.ts';
-import { makeTestLogger } from '../helper/logger.ts';
-import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
   realtime: Ably.Realtime;
@@ -351,11 +351,9 @@ describe('Typing', () => {
     let callNum = 0;
     vi.spyOn(channel.presence, 'get').mockImplementation(() => {
       callNum++;
-      if (callNum === 1) {
-        return Promise.reject<Ably.PresenceMessage[]>(new Error('faked error'));
-      } else {
-        return Promise.resolve<Ably.PresenceMessage[]>(presenceGetResponse(['client1']));
-      }
+      return callNum === 1
+        ? Promise.reject<Ably.PresenceMessage[]>(new Error('faked error'))
+        : Promise.resolve<Ably.PresenceMessage[]>(presenceGetResponse(['client1']));
     });
 
     context.emulateBackendPublish({

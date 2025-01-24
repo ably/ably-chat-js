@@ -3,16 +3,16 @@ import * as Ably from 'ably';
 import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { randomClientId, randomRoomId } from '../../shared/testhelper/identifier.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { ablyRealtimeClient } from '../../shared/testhelper/realtime-client.ts';
+import { waitForRoomStatus } from '../../shared/testhelper/room.ts';
 import { normalizeClientOptions } from '../src/config.ts';
-import { Room } from '../src';
-import { RoomOptionsDefaults } from '../srctions.ts';
-import { RoomStatus } from '../srcatus.ts';
-import { DefaultRooms, Rooms } from '../srcs';
-import { TypingEvent } from '../srcts';
-import { randomClientId, randomRoomId } from '../../../test/helper/identifier.ts';
-import { makeTestLogger } from '../../../test/helper/logger.ts';
-import { ablyRealtimeClient } from '../../../test/helper/realtime-client.ts';
-import { waitForRoomStatus } from '../../../test/helper/room.ts';
+import { Room } from '../src/room.ts';
+import { RoomOptionsDefaults } from '../src/room-options.ts';
+import { RoomStatus } from '../src/room-status.ts';
+import { DefaultRooms, Rooms } from '../src/rooms.ts';
+import { TypingEvent } from '../src/typing.ts';
 
 const TEST_TIMEOUT = 10000;
 

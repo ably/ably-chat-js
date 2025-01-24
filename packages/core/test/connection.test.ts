@@ -1,9 +1,9 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ErrorInfo } from '../../__mocks__/ably/index.ts';
-import { ConnectionStatus, ConnectionStatusChange, DefaultConnection } from '../../src/core/connection.ts';
-import { makeTestLogger } from '../helper/logger.ts';
+import { ErrorInfo } from '../../../__mocks__/ably/index.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { ConnectionStatus, ConnectionStatusChange, DefaultConnection } from '../src/connection.ts';
 
 interface TestContext {
   realtime: Ably.Realtime;

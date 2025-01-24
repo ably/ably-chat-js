@@ -4,16 +4,16 @@ import { PresenceAction, Realtime } from 'ably';
 import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { newChatClient } from '../../shared/testhelper/chat.ts';
+import { randomRoomId } from '../../shared/testhelper/identifier.ts';
+import { ablyRealtimeClient } from '../../shared/testhelper/realtime-client.ts';
+import { waitForRoomStatus } from '../../shared/testhelper/room.ts';
 import { ChatClient } from '../src/chat.ts';
-import { PresenceEvents } from '../srcts';
-import { PresenceData, PresenceEvent } from '../srce.ts';
-import { Room } from '../src';
-import { RoomOptionsDefaults } from '../srctions.ts';
-import { RoomStatus } from '../srcatus.ts';
-import { newChatClient } from '../../../test/helper/chat.ts';
-import { randomRoomId } from '../../../test/helper/identifier.ts';
-import { ablyRealtimeClient } from '../../../test/helper/realtime-client.ts';
-import { waitForRoomStatus } from '../../../test/helper/room.ts';
+import { PresenceEvents } from '../src/events.ts';
+import { PresenceData, PresenceEvent } from '../src/presence.ts';
+import { Room } from '../src/room.ts';
+import { RoomOptionsDefaults } from '../src/room-options.ts';
+import { RoomStatus } from '../src/room-status.ts';
 
 // Define the test context interface
 interface TestContext {

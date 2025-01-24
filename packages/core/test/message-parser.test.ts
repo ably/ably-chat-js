@@ -2,8 +2,8 @@ import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
 import { ChatMessageActions } from '../src/events.ts';
-import { DefaultMessage } from '../src.ts';
-import { parseMessage } from '../src-parser.js';
+import { DefaultMessage } from '../src/message.ts';
+import { parseMessage } from '../src/message-parser.js';
 
 describe('parseMessage', () => {
   describe.each([

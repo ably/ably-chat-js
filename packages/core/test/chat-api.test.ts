@@ -1,8 +1,8 @@
 import * as Ably from 'ably';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ChatApi } from '../../src/core/chat-api.ts';
-import { makeTestLogger } from '../helper/logger.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { ChatApi } from '../src/chat-api.ts';
 
 vi.mock('ably');
 

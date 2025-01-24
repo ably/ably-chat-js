@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { normalizeClientOptions } from '../src/config.ts';
-import { LogLevel } from '../srcts';
+import { LogLevel } from '../src/logger.ts';
 
 describe('config', () => {
   it('normalizes client options with no options', () => {

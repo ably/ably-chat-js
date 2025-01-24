@@ -1,14 +1,14 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { newChatClient } from '../../shared/testhelper/chat.ts';
+import { waitForExpectedInbandOccupancy } from '../../shared/testhelper/common.ts';
+import { ablyRealtimeClientWithToken } from '../../shared/testhelper/realtime-client.ts';
+import { getRandomRoom, waitForRoomStatus } from '../../shared/testhelper/room.ts';
 import { ChatClient } from '../src/chat.ts';
-import { OccupancyEvent } from '../srccy.ts';
-import { Room } from '../src';
-import { RoomStatus } from '../srcatus.ts';
-import { newChatClient } from '../../../test/helper/chat.ts';
-import { waitForExpectedInbandOccupancy } from '../../../test/helper/common.ts';
-import { ablyRealtimeClientWithToken } from '../../../test/helper/realtime-client.ts';
-import { getRandomRoom, waitForRoomStatus } from '../../../test/helper/room.ts';
+import { OccupancyEvent } from '../src/occupancy.ts';
+import { Room } from '../src/room.ts';
+import { RoomStatus } from '../src/room-status.ts';
 
 interface TestContext {
   chat: ChatClient;

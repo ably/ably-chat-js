@@ -1,10 +1,10 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { randomClientId } from '../../shared/testhelper/identifier.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
 import { ChannelManager, ChannelOptionsMerger } from '../src/channel-manager.ts';
-import { DEFAULT_CHANNEL_OPTIONS } from '../src.ts';
-import { randomClientId } from '../../../test/helper/identifier.ts';
-import { makeTestLogger } from '../../../test/helper/logger.ts';
+import { DEFAULT_CHANNEL_OPTIONS } from '../src/version.ts';
 
 interface TestContext {
   mockRealtime: Ably.Realtime;

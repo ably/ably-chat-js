@@ -1,11 +1,11 @@
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, test, vi } from 'vitest';
 
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { waitForRoomError, waitForRoomLifecycleStatus } from '../../shared/testhelper/room.ts';
 import { ErrorCodes } from '../src/errors.ts';
-import { ContributesToRoomLifecycle, RoomLifecycleManager } from '../srcfecycle-manager.ts';
-import { DefaultRoomLifecycle, RoomStatus } from '../srcatus.ts';
-import { makeTestLogger } from '../../../test/helper/logger.ts';
-import { waitForRoomError, waitForRoomLifecycleStatus } from '../../../test/helper/room.ts';
+import { ContributesToRoomLifecycle, RoomLifecycleManager } from '../src/room-lifecycle-manager.ts';
+import { DefaultRoomLifecycle, RoomStatus } from '../src/room-status.ts';
 
 interface TestContext {
   realtime: Ably.Realtime;

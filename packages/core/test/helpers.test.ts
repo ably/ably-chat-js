@@ -1,13 +1,8 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
-import { ChatMessageActions, RealtimeMessageNames } from '../src/events.js';
-import { RoomReactionEvents } from '../srcts';
-import {../src
-  chatMessageFromEncoded,../src
-  getEntityTypeFromEncoded,../src
-  reactionFromEncoded,
-} from '../src/helpers.js';
+import { ChatMessageActions, RealtimeMessageNames, RoomReactionEvents } from '../src/events.js';
+import { chatMessageFromEncoded, getEntityTypeFromEncoded, reactionFromEncoded } from '../src/helpers.js';
 import { DefaultMessage } from '../src/message.js';
 import { DefaultReaction } from '../src/reaction.js';
 

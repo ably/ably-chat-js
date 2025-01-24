@@ -1,14 +1,14 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { randomRoomId } from '../../shared/testhelper/identifier.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { ablyRealtimeClient } from '../../shared/testhelper/realtime-client.ts';
+import { defaultRoomOptions } from '../../shared/testhelper/room.ts';
 import { normalizeClientOptions } from '../src/config.ts';
-import { RoomOptions } from '../srctions.ts';
-import { DefaultRooms, Rooms } from '../srcs';
-import { ErrorCodes } from '../../../src/index.ts';
-import { randomRoomId } from '../../../test/helper/identifier.ts';
-import { makeTestLogger } from '../../../test/helper/logger.ts';
-import { ablyRealtimeClient } from '../../../test/helper/realtime-client.ts';
-import { defaultRoomOptions } from '../../../test/helper/room.ts';
+import { ErrorCodes } from '../src/errors.ts';
+import { RoomOptions } from '../src/room-options.ts';
+import { DefaultRooms, Rooms } from '../src/rooms.ts';
 
 vi.mock('ably');
 
