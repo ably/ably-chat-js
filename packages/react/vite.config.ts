@@ -7,7 +7,7 @@ export default defineConfig({
   root: resolve(__dirname, '.'),
   plugins: [dts({ insertTypesEntry: true })],
   build: {
-    outDir: '../dist/chat',
+    outDir: './dist/chat',
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'AblyChat',
