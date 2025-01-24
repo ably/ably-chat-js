@@ -18,6 +18,7 @@
     "resolveJsonModule": true,
     "strictNullChecks": true,
     "noUncheckedIndexedAccess": true,
+    "noEmit": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["node"],
     "jsx": "react-jsx"
