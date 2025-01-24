@@ -3,12 +3,12 @@ import * as Ably from 'ably';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
-import { RoomStatus, RoomStatusListener } from '../../../src/core/room-status.ts';
-import { ChatRoomProvider, useRoom, UseRoomResponse } from '../../../src/react/index.ts';
-import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
-import { newChatClient } from '../../helper/chat.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { RoomOptionsDefaults } from '../../../core/src/room-options.ts';
+import { RoomStatus, RoomStatusListener } from '../../../core/src/room-status.ts';
+import { ChatRoomProvider, useRoom, UseRoomResponse } from '../../src/index.ts';
+import { ChatClientProvider } from '../../src/providers/chat-client-provider.tsx';
+import { newChatClient } from '../../../shared/testhelper/chat.ts';
+import { randomRoomId } from '../../../shared/testhelper/identifier.ts';
 
 const TestComponent: React.FC<{ callback?: (room: UseRoomResponse) => void }> = ({ callback }) => {
   const response = useRoom();

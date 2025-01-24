@@ -2,33 +2,33 @@ import { act, cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionStatus } from '../../../src/core/connection.ts';
-import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { OccupancyEvent, OccupancyListener } from '../../../src/core/occupancy.ts';
-import { Room } from '../../../src/core/room.ts';
-import { RoomStatus } from '../../../src/core/room-status.ts';
-import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
-import { makeTestLogger } from '../../helper/logger.ts';
-import { makeRandomRoom } from '../../helper/room.ts';
-import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
+import { ConnectionStatus } from '../../../core/src/connection.ts';
+import { DiscontinuityListener } from '../../../core/src/discontinuity.ts';
+import { OccupancyEvent, OccupancyListener } from '../../../core/src/occupancy.ts';
+import { Room } from '../../../core/src/room.ts';
+import { RoomStatus } from '../../../core/src/room-status.ts';
+import { useOccupancy } from '../../src/hooks/use-occupancy.ts';
+import { makeTestLogger } from '../../../shared/testhelper/logger.ts';
+import { makeRandomRoom } from '../../../shared/testhelper/room.ts';
+import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../../shared/testhelper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
 let mockRoomContext: { room: Promise<Room> };
 let mockLogger: ReturnType<typeof makeTestLogger>;
 
 // apply mocks for the useChatConnection and useRoom hooks
-vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
+vi.mock('../../src/hooks/use-chat-connection.js', () => ({
   useChatConnection: () => ({ currentStatus: ConnectionStatus.Connected }),
 }));
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../src/helper/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
 
-vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+vi.mock('../../src/helper/use-room-status.js', () => ({
   useRoomStatus: () => ({ status: RoomStatus.Attached }),
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../src/hooks/use-logger.js', () => ({
   useLogger: () => mockLogger,
 }));
 

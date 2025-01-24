@@ -1,6 +1,6 @@
+import { Occupancy, OccupancyListener } from '@ably/chat';
 import { useEffect, useState } from 'react';
 
-import { Occupancy, OccupancyListener } from '../../core/occupancy.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';

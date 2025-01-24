@@ -1,7 +1,5 @@
+import { ConnectionStatus, RoomStatus } from '@ably/chat';
 import * as Ably from 'ably';
-
-import { ConnectionStatus } from '../../core/connection.js';
-import { RoomStatus } from '../../core/room-status.js';
 
 /**
  * Common status variables for chat features. Most hooks in this library

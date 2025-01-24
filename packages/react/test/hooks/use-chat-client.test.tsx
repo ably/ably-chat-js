@@ -2,12 +2,12 @@ import { cleanup, render } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatClient } from '../../../src/core/chat.ts';
-import { RealtimeWithOptions } from '../../../src/core/realtime-extensions.ts';
-import { VERSION } from '../../../src/core/version.ts';
-import { useChatClient } from '../../../src/react/hooks/use-chat-client.ts';
-import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
-import { newChatClient } from '../../helper/chat.ts';
+import { ChatClient } from '../../../core/src/chat.ts';
+import { RealtimeWithOptions } from '../../../core/src/realtime-extensions.ts';
+import { VERSION } from '../../../core/src/version.ts';
+import { useChatClient } from '../../src/hooks/use-chat-client.ts';
+import { ChatClientProvider } from '../../src/providers/chat-client-provider.tsx';
+import { newChatClient } from '../../../shared/testhelper/chat.ts';
 
 const TestComponent: React.FC<{ callback: (client: ChatClient) => void }> = ({ callback }) => {
   const chatClient = useChatClient();

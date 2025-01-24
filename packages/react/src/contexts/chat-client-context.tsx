@@ -1,6 +1,5 @@
+import { ChatClient } from '@ably/chat';
 import React from 'react';
-
-import { ChatClient } from '../../core/chat.js';
 
 /**
  * The Context key to handle global context for the {@link ChatClient}.

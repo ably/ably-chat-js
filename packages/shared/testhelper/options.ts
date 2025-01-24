@@ -1,5 +1,5 @@
-import { ClientOptions, normalizeClientOptions, NormalizedClientOptions } from '../../src/core/config.js';
-import { LogLevel } from '../../src/core/logger.js';
+import { ClientOptions, normalizeClientOptions, NormalizedClientOptions } from '../../core/src/config.js';
+import { LogLevel } from '../../core/src/logger.js';
 
 const defaults: NormalizedClientOptions = {
   logLevel: LogLevel.Error,

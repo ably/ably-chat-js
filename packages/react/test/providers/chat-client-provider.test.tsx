@@ -2,8 +2,8 @@ import { cleanup, render } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, it, vi } from 'vitest';
 
-import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
-import { newChatClient } from '../../helper/chat.ts';
+import { ChatClientProvider } from '../../src/providers/chat-client-provider.tsx';
+import { newChatClient } from '../../../shared/testhelper/chat.ts';
 
 vi.mock('ably');
 

@@ -1,9 +1,6 @@
-import * as Ably from 'ably';
-import { useCallback, useEffect, useState } from 'react';
-
-import { Message } from '../../core/message.js';
 import {
   DeleteMessageParams,
+  Message,
   MessageListener,
   Messages,
   MessageSubscriptionResponse,
@@ -11,7 +8,10 @@ import {
   QueryOptions,
   SendMessageParams,
   UpdateMessageParams,
-} from '../../core/messages.js';
+} from '@ably/chat';
+import * as Ably from 'ably';
+import { useCallback, useEffect, useState } from 'react';
+
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';

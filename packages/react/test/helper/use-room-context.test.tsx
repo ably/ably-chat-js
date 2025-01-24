@@ -1,11 +1,11 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
-import { useRoomContext } from '../../../src/react/helper/use-room-context.ts';
-import { ChatRoomProvider } from '../../../src/react/index.ts';
-import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
-import { newChatClient } from '../../helper/chat.ts';
+import { RoomOptionsDefaults } from '../../../core/src/room-options.ts';
+import { useRoomContext } from '../../src/helper/use-room-context.ts';
+import { ChatRoomProvider } from '../../src/index.ts';
+import { ChatClientProvider } from '../../src/providers/chat-client-provider.tsx';
+import { newChatClient } from '../../src/helper/chat.ts';
 
 describe('useRoom', () => {
   afterEach(() => {

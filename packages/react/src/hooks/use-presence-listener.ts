@@ -1,10 +1,7 @@
+import { ErrorCodes, errorInfoIs, Presence, PresenceListener, PresenceMember, Room, RoomStatus } from '@ably/chat';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ErrorCodes, errorInfoIs } from '../../core/errors.js';
-import { Presence, PresenceListener, PresenceMember } from '../../core/presence.js';
-import { Room } from '../../core/room.js';
-import { RoomStatus } from '../../core/room-status.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';

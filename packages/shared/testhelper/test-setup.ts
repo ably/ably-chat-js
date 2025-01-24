@@ -1,4 +1,4 @@
-import testAppSetup from '../../ably-common/test-resources/test-app-setup.json';
+import testAppSetup from '../../../ably-common/test-resources/test-app-setup.json';
 import { isNonSandboxEnvironment } from './environment.js';
 
 // Setup creates a new app in the sandbox environment and sets the key

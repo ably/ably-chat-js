@@ -9,8 +9,8 @@
   "scripts": {
     "lint": "eslint . && npm run cspell",
     "lint:fix": "eslint --fix .",
-    "format": "prettier --write src test __mocks__ demo/src",
-    "format:check": "prettier --check src test __mocks__ demo/src",
+    "format": "prettier --write packages __mocks__ demo/src",
+    "format:check": "prettier --check packages __mocks__ demo/src",
     "test": "vitest run",
     "test:watch": "vitest watch",
     "build": "npm run build --workspaces",

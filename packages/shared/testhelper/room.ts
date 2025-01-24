@@ -1,13 +1,13 @@
 import * as Ably from 'ably';
 import { vi } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat.ts';
-import { ChatApi } from '../../src/core/chat-api.ts';
-import { ErrorCodes } from '../../src/core/errors.ts';
-import { randomId } from '../../src/core/id.ts';
-import { DefaultRoom, Room } from '../../src/core/room.ts';
-import { RoomOptions, RoomOptionsDefaults } from '../../src/core/room-options.ts';
-import { RoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
+import { ChatClient } from '../../core/src/chat.ts';
+import { ChatApi } from '../../core/src/chat-api.ts';
+import { ErrorCodes } from '../../core/src/errors.ts';
+import { randomId } from '../../core/src/id.ts';
+import { DefaultRoom, Room } from '../../core/src/room.ts';
+import { RoomOptions, RoomOptionsDefaults } from '../../core/src/room-options.ts';
+import { RoomLifecycle, RoomStatus } from '../../core/src/room-status.ts';
 import { randomRoomId } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
 import { ablyRealtimeClient } from './realtime-client.ts';

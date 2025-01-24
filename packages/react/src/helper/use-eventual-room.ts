@@ -1,6 +1,6 @@
+import { Room } from '@ably/chat';
 import { useEffect, useState } from 'react';
 
-import { Room } from '../../core/room.js';
 import { useLogger } from '../hooks/use-logger.js';
 import { useRoomContext } from './use-room-context.js';
 import { useStableReference } from './use-stable-reference.js';

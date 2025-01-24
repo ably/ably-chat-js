@@ -2,17 +2,17 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatClient } from '../../../src/core/chat.ts';
-import { ChatMessageActions, MessageEvents } from '../../../src/core/events.ts';
-import { Message } from '../../../src/core/message.ts';
-import { MessageListener } from '../../../src/core/messages.ts';
-import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
-import { RoomStatus } from '../../../src/core/room-status.ts';
-import { useMessages } from '../../../src/react/hooks/use-messages.ts';
-import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
-import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
-import { newChatClient } from '../../helper/chat.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { ChatClient } from '../../../core/src/chat.ts';
+import { ChatMessageActions, MessageEvents } from '../../../core/src/events.ts';
+import { Message } from '../../../core/src/message.ts';
+import { MessageListener } from '../../../core/src/messages.ts';
+import { RoomOptionsDefaults } from '../../../core/src/room-options.ts';
+import { RoomStatus } from '../../../core/src/room-status.ts';
+import { useMessages } from '../../src/hooks/use-messages.ts';
+import { ChatClientProvider } from '../../src/providers/chat-client-provider.tsx';
+import { ChatRoomProvider } from '../../src/providers/chat-room-provider.tsx';
+import { newChatClient } from '../../../shared/testhelper/chat.ts';
+import { randomRoomId } from '../../../shared/testhelper/identifier.ts';
 
 function waitForMessages(messages: Message[], expectedCount: number) {
   return new Promise<void>((resolve, reject) => {

@@ -1,8 +1,7 @@
+import { Room, RoomStatus, RoomStatusChange } from '@ably/chat';
 import * as Ably from 'ably';
 import { useEffect, useState } from 'react';
 
-import { Room } from '../../core/room.js';
-import { RoomStatus, RoomStatusChange } from '../../core/room-status.js';
 import { useLogger } from '../hooks/use-logger.js';
 import { wrapRoomPromise } from './room-promise.js';
 import { useEventListenerRef } from './use-event-listener-ref.js';

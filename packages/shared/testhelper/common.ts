@@ -1,4 +1,4 @@
-import { OccupancyEvent } from '../../src/core/occupancy.ts';
+import { OccupancyEvent } from '../../core/src/occupancy.ts';
 
 export function waitForExpectedInbandOccupancy(
   occupancyEvents: OccupancyEvent[],

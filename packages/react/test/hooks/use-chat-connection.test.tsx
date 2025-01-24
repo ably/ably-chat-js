@@ -2,9 +2,9 @@ import { act, cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionStatus, ConnectionStatusChange, ConnectionStatusListener } from '../../../src/core/connection.ts';
-import { useChatConnection } from '../../../src/react/hooks/use-chat-connection.ts';
-import { makeTestLogger } from '../../helper/logger.ts';
+import { ConnectionStatus, ConnectionStatusChange, ConnectionStatusListener } from '../../../core/src/connection.ts';
+import { useChatConnection } from '../../src/hooks/use-chat-connection.ts';
+import { makeTestLogger } from '../../../shared/testhelper/logger.ts';
 
 let mockCallbacks: ConnectionStatusListener[] = [];
 
@@ -35,7 +35,7 @@ const publishStatusChange = (statusChange: ConnectionStatusChange) => {
 };
 
 // Mock the useChatClient hook
-vi.mock('../../../src/react/hooks/use-chat-client.ts', () => {
+vi.mock('../../src/hooks/use-chat-client.ts', () => {
   return {
     useChatClient: () => mockChatClient,
   };

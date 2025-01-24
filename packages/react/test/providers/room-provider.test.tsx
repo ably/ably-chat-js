@@ -2,12 +2,12 @@ import { cleanup, render } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
-import { useRoom } from '../../../src/react/index.ts';
-import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
-import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
-import { newChatClient } from '../../helper/chat.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { RoomOptionsDefaults } from '../../../core/src/room-options.ts';
+import { useRoom } from '../../src/index.ts';
+import { ChatClientProvider } from '../../src/providers/chat-client-provider.tsx';
+import { ChatRoomProvider } from '../../src/providers/chat-room-provider.tsx';
+import { newChatClient } from '../../../shared/testhelper/chat.ts';
+import { randomRoomId } from '../../../shared/testhelper/identifier.ts';
 
 vi.mock('ably');
 

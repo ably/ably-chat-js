@@ -1,22 +1,22 @@
 import { cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Logger } from '../../../src/core/logger.ts';
-import { Room } from '../../../src/core/room.ts';
-import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
-import { useEventualRoom, useEventualRoomProperty } from '../../../src/react/helper/use-eventual-room.ts';
-import { makeTestLogger } from '../../helper/logger.ts';
-import { makeRandomRoom } from '../../helper/room.ts';
+import { Logger } from '../../../core/src/logger.ts';
+import { Room } from '../../../core/src/room.ts';
+import { RoomOptionsDefaults } from '../../../core/src/room-options.ts';
+import { useEventualRoom, useEventualRoomProperty } from '../../src/helper/use-eventual-room.ts';
+import { makeTestLogger } from '../../shared/testhelper/logger.ts';
+import { makeRandomRoom } from '../../shared/testhelper/room.ts';
 
 let mockRoom: Room;
 let mockRoomContext: { room: Promise<Room> };
 let mockLogger: Logger;
 
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../src/helper/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../src/hooks/use-logger.js', () => ({
   useLogger: () => mockLogger,
 }));
 

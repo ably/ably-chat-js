@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { Room } from '../../../src/core/room.ts';
-import { wrapRoomPromise } from '../../../src/react/helper/room-promise.ts';
-import { makeTestLogger } from '../../helper/logger.ts';
-import { makeRandomRoom } from '../../helper/room.ts';
+import { makeTestLogger } from '../../../shared/testhelper/logger.ts';
+import { Room } from '../../../core/src/room.ts';
+import { wrapRoomPromise } from '../../src/helper/room-promise.ts';
+import { makeRandomRoom } from '../../shared/testhelper/room.ts';
 
 describe('room-promise', () => {
   it('should mount and unmount with promise resolution', async () => {

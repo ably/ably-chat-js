@@ -2,18 +2,18 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionStatus } from '../../../src/core/connection.ts';
-import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { ChatMessageActions, MessageEvents } from '../../../src/core/events.ts';
-import { DefaultMessage, Message } from '../../../src/core/message.ts';
-import { MessageListener } from '../../../src/core/messages.ts';
-import { PaginatedResult } from '../../../src/core/query.ts';
-import { Room } from '../../../src/core/room.ts';
-import { RoomStatus } from '../../../src/core/room-status.ts';
-import { useMessages } from '../../../src/react/hooks/use-messages.ts';
-import { makeTestLogger } from '../../helper/logger.ts';
-import { makeRandomRoom } from '../../helper/room.ts';
-import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
+import { ConnectionStatus } from '../../../core/src/connection.ts';
+import { DiscontinuityListener } from '../../../core/src/discontinuity.ts';
+import { ChatMessageActions, MessageEvents } from '../../../core/src/events.ts';
+import { DefaultMessage, Message } from '../../../core/src/message.ts';
+import { MessageListener } from '../../../core/src/messages.ts';
+import { PaginatedResult } from '../../../core/src/query.ts';
+import { Room } from '../../../core/src/room.ts';
+import { RoomStatus } from '../../../core/src/room-status.ts';
+import { useMessages } from '../../src/hooks/use-messages.ts';
+import { makeTestLogger } from '../../../shared/testhelper/logger.ts';
+import { makeRandomRoom } from '../../../shared/testhelper/room.ts';
+import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../../shared/testhelper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
 let mockRoomContext: { room: Promise<Room> };
@@ -24,22 +24,22 @@ let mockRoomError: Ably.ErrorInfo;
 let testLogger: ReturnType<typeof makeTestLogger>;
 
 // apply mocks for the useChatConnection and useRoom hooks
-vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
+vi.mock('../../src/hooks/use-chat-connection.js', () => ({
   useChatConnection: () => ({
     currentStatus: mockCurrentConnectionStatus,
     error: mockConnectionError,
   }),
 }));
 
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../src/helper/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
 
-vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+vi.mock('../../src/helper/use-room-status.js', () => ({
   useRoomStatus: () => ({ status: mockCurrentRoomStatus, error: mockRoomError }),
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../src/hooks/use-logger.js', () => ({
   useLogger: () => testLogger,
 }));
 

@@ -88,9 +88,5 @@
   "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "^4.18",
     "@rollup/rollup-linux-x64-gnu": "^4.18"
-  },
-  "browserslist": [
-    "defaults",
-    "not op_mini all"
-  ]
+  }
 }

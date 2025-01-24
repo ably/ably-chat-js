@@ -2,14 +2,14 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionStatus } from '../../../src/core/connection.ts';
-import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { Room } from '../../../src/core/room.ts';
-import { InternalRoomLifecycle, RoomStatus } from '../../../src/core/room-status.ts';
-import { usePresence } from '../../../src/react/hooks/use-presence.ts';
-import { makeTestLogger } from '../../helper/logger.ts';
-import { makeRandomRoom } from '../../helper/room.ts';
-import { waitForEventualHookValue } from '../../helper/wait-for-eventual-hook.ts';
+import { ConnectionStatus } from '../../../core/src/connection.ts';
+import { DiscontinuityListener } from '../../../core/src/discontinuity.ts';
+import { Room } from '../../../core/src/room.ts';
+import { InternalRoomLifecycle, RoomStatus } from '../../../core/src/room-status.ts';
+import { usePresence } from '../../src/hooks/use-presence.ts';
+import { makeTestLogger } from '../../../shared/testhelper/logger.ts';
+import { makeRandomRoom } from '../../../shared/testhelper/room.ts';
+import { waitForEventualHookValue } from '../../../shared/testhelper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
 let mockRoomContext: { room: Promise<Room> };
@@ -20,22 +20,22 @@ let mockRoomError: Ably.ErrorInfo;
 let mockLogger: ReturnType<typeof makeTestLogger>;
 
 // apply mocks for the useChatConnection and useRoom hooks
-vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
+vi.mock('../../src/hooks/use-chat-connection.js', () => ({
   useChatConnection: () => ({
     currentStatus: mockCurrentConnectionStatus,
     error: mockConnectionError,
   }),
 }));
 
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../src/helper/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
 
-vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+vi.mock('../../src/helper/use-room-status.js', () => ({
   useRoomStatus: () => ({ status: mockCurrentRoomStatus, error: mockRoomError }),
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../src/hooks/use-logger.js', () => ({
   useLogger: () => mockLogger,
 }));
 
