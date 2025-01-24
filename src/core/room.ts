@@ -6,8 +6,7 @@ import { ChatApi } from './chat-api.js';
 import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
-import { DefaultPresence, Presence } from './presence.js';
-import { DefaultPresenceDataManager } from './presence-data-manager.js';
+import { DefaultPresenceDataManager, DefaultPresenceManager } from './presence-data-manager.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
 import { RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
@@ -16,9 +15,9 @@ import {
   InternalRoomLifecycle,
   OnRoomStatusChangeResponse,
   RoomStatus,
-  RoomStatusListener
+  RoomStatusListener,
 } from './room-status.js';
-import { DefaultTyping, Typing } from './typing.js';
+import { DefaultUserStatus, UserStatus } from './user-status.js';
 
 /**
  * Represents a chat room.
@@ -38,12 +37,13 @@ export interface Room {
   get messages(): Messages;
 
   /**
-   * Allows you to subscribe to presence events in the room.
+   * Allows you to subscribe to access different user status features, such as
+   * online-status and typing indicators.
    *
-   * @throws {@link ErrorInfo}} if presence is not enabled for the room.
-   * @returns The presence instance for the room.
+   * @throws {@link ErrorInfo} if user-status is not enabled for the room.
+   * @returns The user-status instance for the room.
    */
-  get presence(): Presence;
+  get userStatus(): UserStatus;
 
   /**
    * Allows you to interact with room-level reactions.
@@ -52,14 +52,6 @@ export interface Room {
    * @returns The room reactions instance for the room.
    */
   get reactions(): RoomReactions;
-
-  /**
-   * Allows you to interact with typing events in the room.
-   *
-   * @throws {@link ErrorInfo} if typing is not enabled for the room.
-   * @returns The typing instance for the room.
-   */
-  get typing(): Typing;
 
   /**
    * Allows you to interact with occupancy metrics for the room.
@@ -127,8 +119,7 @@ export class DefaultRoom implements Room {
   private readonly _options: RoomOptions;
   private readonly _chatApi: ChatApi;
   private readonly _messages: DefaultMessages;
-  private readonly _typing?: DefaultTyping;
-  private readonly _presence?: DefaultPresence;
+  private readonly _userStatus?: DefaultUserStatus;
   private readonly _reactions?: DefaultRoomReactions;
   private readonly _occupancy?: DefaultOccupancy;
   private readonly _logger: Logger;
@@ -170,8 +161,8 @@ export class DefaultRoom implements Room {
     this._lifecycle = new DefaultRoomLifecycle(roomId, logger);
 
     const channelManager = this._getChannelManager(options, realtime, logger);
-    const presenceDataManager = new DefaultPresenceDataManager(
-      realtime.channels.get(DefaultPresence.channelName(roomId)),
+    const presenceManager = new DefaultPresenceManager(
+      realtime.channels.get(DefaultUserStatus.channelName(roomId)),
       realtime.auth.clientId,
       logger,
     );
@@ -181,29 +172,17 @@ export class DefaultRoom implements Room {
 
     const features: ContributesToRoomLifecycle[] = [this._messages];
 
-    if (options.presence) {
-      this._logger.debug('enabling presence on room', { roomId });
-      this._presence = new DefaultPresence(
+    if (options.userStatus) {
+      this._logger.debug('enabling userStatus on room', { roomId });
+      this._userStatus = new DefaultUserStatus(
         roomId,
-        channelManager,
-        presenceDataManager.newContributor(),
         realtime.auth.clientId,
         logger,
-      );
-      features.push(this._presence);
-    }
-
-    if (options.typing) {
-      this._logger.debug('enabling typing on room', { roomId });
-      this._typing = new DefaultTyping(
-        roomId,
-        options.typing,
         channelManager,
-        presenceDataManager.newContributor(),
-        realtime.auth.clientId,
-        logger,
+        presenceManager,
+        options.userStatus,
       );
-      features.push(this._typing);
+      features.push(this._userStatus);
     }
 
     if (options.reactions) {
@@ -253,8 +232,8 @@ export class DefaultRoom implements Room {
       manager.mergeOptions(DefaultOccupancy.channelName(this._roomId), DefaultOccupancy.channelOptionMerger());
     }
 
-    if (options.presence) {
-      manager.mergeOptions(DefaultPresence.channelName(this._roomId), DefaultPresence.channelOptionMerger(options));
+    if (options.userStatus) {
+      manager.mergeOptions(DefaultUserStatus.channelName(this._roomId), DefaultUserStatus.channelOptionMerger(options));
     }
 
     return manager;
@@ -284,13 +263,13 @@ export class DefaultRoom implements Room {
   /**
    * @inheritdoc Room
    */
-  get presence(): Presence {
-    if (!this._presence) {
-      this._logger.error('Presence is not enabled for this room');
-      throw new Ably.ErrorInfo('Presence is not enabled for this room', 40000, 400);
+  get userStatus(): UserStatus {
+    if (!this._userStatus) {
+      this._logger.error('UserStatus is not enabled for this room');
+      throw new Ably.ErrorInfo('UserStatus is not enabled for this room', 40000, 400);
     }
 
-    return this._presence;
+    return this._userStatus;
   }
 
   /**
@@ -303,18 +282,6 @@ export class DefaultRoom implements Room {
     }
 
     return this._reactions;
-  }
-
-  /**
-   * @inheritdoc Room
-   */
-  get typing(): Typing {
-    if (!this._typing) {
-      this._logger.error('Typing is not enabled for this room');
-      throw new Ably.ErrorInfo('Typing is not enabled for this room', 40000, 400);
-    }
-
-    return this._typing;
   }
 
   /**

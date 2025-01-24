@@ -3,9 +3,9 @@ import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { PresenceEvents } from '../../../src/core/events.ts';
-import { PresenceData, PresenceEvent } from '../../../src/core/presence.ts';
+import { OnlineStatusData, PresenceEvent } from '../../../src/core/online-status.ts';
 import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
-import { usePresence } from '../../../src/react/hooks/use-presence.ts';
+import { usePresence } from '../../../src/react/hooks/use-online-status.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
@@ -63,8 +63,8 @@ describe('usePresence', () => {
       enterWithData,
       leaveWithData,
     }: {
-      enterWithData: PresenceData;
-      leaveWithData: PresenceData;
+      enterWithData: OnlineStatusData;
+      leaveWithData: OnlineStatusData;
     }) => {
       const { update, isPresent } = usePresence({ enterWithData, leaveWithData });
 

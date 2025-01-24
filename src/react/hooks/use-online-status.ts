@@ -2,7 +2,7 @@ import { type ErrorInfo } from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ConnectionStatus } from '../../core/connection.js';
-import { Presence, PresenceData } from '../../core/presence.js';
+import { OnlineStatus, OnlineStatusData } from '../../core/online-status.js';
 import { Room } from '../../core/room.js';
 import { RoomStatus } from '../../core/room-status.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
@@ -16,33 +16,33 @@ import { useChatConnection } from './use-chat-connection.js';
 import { useLogger } from './use-logger.js';
 
 /**
- * The options for the {@link usePresence} hook.
+ * The options for the {@link useOnlineStatus} hook.
  */
-export interface UsePresenceParams extends StatusParams {
+export interface UseOnlineStatusParams extends StatusParams {
   /**
-   * The data to enter the room with. Any JSON serializable data can be provided.
+   * Data to be sent when the user goes online. Any JSON serializable data can be provided.
    */
-  onlineWithData?: PresenceData;
+  onlineWithData?: OnlineStatusData;
 
   /**
-   * The data to leave the room with. Any JSON serializable data can be provided.
+   * Data to be sent when the user goes offline. Any JSON serializable data can be provided.
    */
-  offlineWithData?: PresenceData;
+  offlineWithData?: OnlineStatusData;
 }
 
-export interface UsePresenceResponse extends ChatStatusResponse {
+export interface UseOnlineStatusResponse extends ChatStatusResponse {
   /**
-   * A shortcut to the {@link Presence.update} method.
+   * A shortcut to the {@link OnlineStatus.setOnlineStatus} method.
    */
-  readonly setOnlineWithData: Presence['setOnlineWithData'];
+  readonly setOnlineStatus: OnlineStatus['setOnlineStatus'];
 
   /**
-   * Provides access to the underlying {@link Presence} instance of the room.
+   * Provides access to the underlying {@link OnlineStatus} instance of the room.
    */
-  readonly presence?: Presence;
+  readonly onlineStatus?: OnlineStatus;
 
   /**
-   * Indicates whether the current user is present in the room.
+   * Indicates whether the current user is online in the room.
    */
   readonly isOnline: boolean;
 
@@ -58,23 +58,23 @@ export interface UsePresenceResponse extends ChatStatusResponse {
 const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.Suspended, ConnectionStatus.Failed]);
 
 /**
- * A hook that provides access to the {@link Presence} instance in the room.
+ * A hook that provides access to the {@link OnlineStatus} instance in the room.
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
- * On calling, the hook will `enter` the room with the provided data and `leave` the room when the component unmounts.
- * The {@link UsePresenceResponse.isPresent} flag will indicate when the user has become present in the room.
+ * On calling, the hook will set the user to `online` in the room with the provided data and `offline` when the component unmounts.
+ * The {@link UseOnlineStatusResponse.isOnline} flag will indicate when the user is online in the room.
  *
  * @param params - Allows the registering of optional callbacks.
- * @returns UsePresenceResponse - An object containing the {@link Presence} instance and methods to interact with it.
+ * @returns UseOnlineStatusResponse - An object containing the {@link OnlineStatus} instance and methods to interact with it.
  */
-export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => {
+export const useOnlineStatus = (params?: UseOnlineStatusParams): UseOnlineStatusResponse => {
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
     onStatusChange: params?.onConnectionStatusChange,
   });
 
-  const context = useRoomContext('usePresence');
+  const context = useRoomContext('useOnlineStatus');
   const { status: roomStatus, error: roomError } = useRoomStatus(params);
   const logger = useLogger();
-  logger.trace('usePresence();', { params, roomId: context.roomId });
+  logger.trace('useOnlineStatus();', { params, roomId: context.roomId });
 
   const [isOnline, setIsOnline] = useState(false);
   const [error, setError] = useState<ErrorInfo | undefined>();
@@ -96,31 +96,35 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     roomStatusAndConnectionStatusRef.current = { roomStatus, connectionStatus };
   }, [roomStatus, connectionStatus]);
 
-  // enter the room when the hook is mounted
+  // set status as online in the room when the hook is mounted
   useEffect(() => {
-    logger.debug('usePresence(); entering room', { roomId: context.roomId });
+    logger.debug('useOnlineStatus(); updating online status in the room', { roomId: context.roomId });
     return wrapRoomPromise(
       context.room,
       (room: Room) => {
-        const canJoinPresence =
-          room.status === RoomStatus.Attached && !INACTIVE_CONNECTION_STATES.has(connectionStatus);
+        const canSetOnline = room.status === RoomStatus.Attached && !INACTIVE_CONNECTION_STATES.has(connectionStatus);
 
-        // wait until the room is attached before attempting to enter, and ensure the connection is active
-        if (!canJoinPresence) {
-          logger.debug('usePresence(); skipping enter room', { roomStatus, connectionStatus, roomId: context.roomId });
+        // wait until the room is attached before attempting to set online, and ensure the connection is active
+        if (!canSetOnline) {
+          logger.debug('useOnlineStatus(); skipping updating of online status', {
+            roomStatus,
+            connectionStatus,
+            roomId: context.roomId,
+          });
           return () => {
             // no-op
           };
         }
-        room.presence
-          .setOnlineWithData(dataRef.current?.onlineWithData)
+
+        room.userStatus.onlineStatus
+          .setOnlineStatus(dataRef.current?.onlineWithData)
           .then(() => {
-            logger.debug('usePresence(); entered room', { roomId: context.roomId });
+            logger.debug('useOnlineStatus(); set user as online in the room', { roomId: context.roomId });
             setIsOnline(true);
             setError(undefined);
           })
           .catch((error: unknown) => {
-            logger.error('usePresence(); error entering room', { error, roomId: context.roomId });
+            logger.error('useOnlineStatus(); error setting as online in room', { error, roomId: context.roomId });
             setError(error as ErrorInfo);
           });
 
@@ -129,22 +133,25 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
             room.status === RoomStatus.Attached &&
             !INACTIVE_CONNECTION_STATES.has(roomStatusAndConnectionStatusRef.current.connectionStatus);
 
-          logger.debug('usePresence(); unmounting', {
+          logger.debug('useOnlineStatus(); unmounting', {
             roomId: context.roomId,
             canLeavePresence,
             roomStatus,
             connectionStatus,
           });
           if (canLeavePresence) {
-            room.presence
-              .setOfflineWithData(dataRef.current?.offlineWithData)
+            room.userStatus.onlineStatus
+              .setOfflineStatus(dataRef.current?.offlineWithData)
               .then(() => {
-                logger.debug('usePresence(); left room', { roomId: context.roomId });
+                logger.debug('useOnlineStatus(); set user offline in the room', { roomId: context.roomId });
                 setIsOnline(false);
                 setError(undefined);
               })
               .catch((error: unknown) => {
-                logger.error('usePresence(); error leaving room', { error, roomId: context.roomId });
+                logger.error('useOnlineStatus(); error setting as offline in the room', {
+                  error,
+                  roomId: context.roomId,
+                });
                 setError(error as ErrorInfo);
               });
           }
@@ -161,9 +168,9 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     return wrapRoomPromise(
       context.room,
       (room: Room) => {
-        const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
+        const { off } = room.userStatus.onDiscontinuity(onDiscontinuityRef);
         return () => {
-          logger.debug('usePresence(); removing onDiscontinuity listener', { roomId: context.roomId });
+          logger.debug('useOnlineStatus(); removing onDiscontinuity listener', { roomId: context.roomId });
           off();
         };
       },
@@ -173,10 +180,10 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   }, [context, onDiscontinuityRef, logger]);
 
   // memoize the methods to avoid re-renders and ensure the same instance is used
-  const setOnlineWithData = useCallback(
-    (data?: PresenceData) =>
+  const setOnlineStatus = useCallback(
+    (data?: OnlineStatusData) =>
       context.room.then((room: Room) => {
-        return room.presence.setOnlineWithData(data).then(() => {
+        return room.userStatus.onlineStatus.setOnlineStatus(data).then(() => {
           setIsOnline(true);
           setError(undefined);
         });
@@ -186,12 +193,12 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   );
 
   return {
-    presence: useEventualRoomProperty((room) => room.presence),
+    onlineStatus: useEventualRoomProperty((room) => room.userStatus.onlineStatus),
     connectionStatus,
     connectionError,
     roomStatus,
     roomError,
-    setOnlineWithData,
+    setOnlineStatus,
     isOnline,
     error,
   };

@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
-import { DefaultPresence } from '../../src/core/presence.ts';
+import { DefaultPresence } from '../../src/core/online-status.ts';
 import { Room } from '../../src/core/room.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';

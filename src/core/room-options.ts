@@ -1,33 +1,23 @@
 import * as Ably from 'ably';
 
 /**
+ * Represents the default options for typing in a chat room.
+ */
+export const TypingOptionsDefaults = {
+  timeoutMs: 5000,
+};
+
+/**
  * Represents the default options for a chat room.
  */
 export const RoomOptionsDefaults = {
   /**
-   * The default presence options for a chat room.
+   * The default user-status options for a chat room. Includes default options for online status and typing.
    */
-  presence: {
-    /**
-     * The client should be able to enter presence.
-     */
-    enter: true,
-
-    /**
-     * The client should be able to subscribe to presence.
-     */
-    subscribe: true,
-  } as PresenceOptions,
-
-  /**
-   * The default typing options for a chat room.
-   */
-  typing: {
-    /**
-     * The default timeout for typing events in milliseconds.
-     */
-    timeoutMs: 5000,
-  } as TypingOptions,
+  userStatus: {
+    onlineStatusOptions: {} as OnlineStatusOptions,
+    typingOptions: TypingOptionsDefaults,
+  },
 
   /**
    * The default reactions options for a chat room.
@@ -41,25 +31,27 @@ export const RoomOptionsDefaults = {
 };
 
 /**
- * Represents the presence options for a chat room.
+ * Represents the user-status options for a chat room.
  */
-export interface PresenceOptions {
+export interface UserStatusOptions {
   /**
-   * Whether the underlying Realtime channel should use the presence enter mode, allowing entry into presence.
-   * This property does not affect the presence lifecycle, and users must still call {@link Presence.enter}
-   * in order to enter presence.
-   * @defaultValue true
+   * The typing options for the room.
    */
-  enter?: boolean;
+  typingOptions?: TypingOptions;
+  /**
+   * The online-status options for the room.
+   */
+  onlineStatusOptions?: OnlineStatusOptions;
 
-  /**
-   * Whether the underlying Realtime channel should use the presence subscribe mode, allowing subscription to presence.
-   * This property does not affect the presence lifecycle, and users must still call {@link Presence.subscribe}
-   * in order to subscribe to presence.
-   * @defaultValue true
-   */
+  // TODO - Figure out if we need these and how they interact with the above
+  update?: boolean;
   subscribe?: boolean;
 }
+
+/**
+ * Represents the online-status options for a chat room.
+ */
+export type OnlineStatusOptions = object;
 
 /**
  * Represents the typing options for a chat room.
@@ -88,17 +80,10 @@ export type OccupancyOptions = object;
  */
 export interface RoomOptions {
   /**
-   * The presence options for the room. To enable presence in the room, set this property. You may
-   * use {@link RoomOptionsDefaults.presence} to enable presence with default options.
-   * @defaultValue undefined
+   * The user-status options for the room. To enable user status in the room, set this property. You may use
+   * {@link RoomOptionsDefaults.userStatus} to enable user status with default options.
    */
-  presence?: PresenceOptions;
-
-  /**
-   * The typing options for the room. To enable typing in the room, set this property. You may use
-   * {@link RoomOptionsDefaults.typing} to enable typing with default options.
-   */
-  typing?: TypingOptions;
+  userStatus?: UserStatusOptions;
 
   /**
    * The reactions options for the room. To enable reactions in the room, set this property. You may use
@@ -123,7 +108,7 @@ const invalidRoomConfiguration = (reason: string): Error =>
   new Ably.ErrorInfo(`invalid room configuration: ${reason}`, 40001, 400);
 
 export const validateRoomOptions = (options: RoomOptions): void => {
-  if (options.typing && options.typing.timeoutMs <= 0) {
+  if (options.userStatus?.typingOptions?.timeoutMs && options.userStatus.typingOptions.timeoutMs <= 0) {
     throw invalidRoomConfiguration('typing timeout must be greater than 0');
   }
 };

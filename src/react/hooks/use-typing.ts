@@ -2,8 +2,8 @@ import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
 import { ErrorCodes, errorInfoIs } from '../../core/errors.js';
-import { Presence, TypingListener,UserStatusEvent } from '../../core/presence.js';
 import { RoomStatus } from '../../core/room-status.js';
+import { Typing, TypingEvent, TypingListener } from '../../core/typing.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
@@ -31,23 +31,23 @@ export interface UseTypingResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Typing.start} method.
    */
-  readonly start: Presence['startTyping'];
+  readonly start: Typing['start'];
 
   /**
    * A shortcut to the {@link Typing.stop} method.
    */
-  readonly stop: Presence['stopTyping'];
+  readonly stop: Typing['stop'];
 
   /**
    * A state value representing the set of client IDs that are currently typing in the room.
    * It automatically updates based on typing events received from the room.
    */
-  readonly currentlyTyping: UserStatusEvent['currentlyTyping'];
+  readonly currentlyTyping: TypingEvent['currentlyTyping'];
 
   /**
    * Provides access to the underlying {@link Typing} instance of the room.
    */
-  readonly typingIndicators?: Presence;
+  readonly typingIndicators?: Typing;
 
   /**
    * A state value representing the current error state of the hook, this will be an instance of {@link Ably.ErrorInfo} or `undefined`.
@@ -105,8 +105,8 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       .then((room) => {
         // If we're not attached, we can't call typing.get() right now
         if (room.status === RoomStatus.Attached) {
-          return room.presence
-            .getTyping()
+          return room.userStatus.typing
+            .get()
             .then((currentlyTyping) => {
               if (!mounted) return;
               setCurrentlyTyping(currentlyTyping);
@@ -128,7 +128,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       context.room,
       (room) => {
         logger.debug('useTyping(); subscribing to typing events', { roomId: context.roomId });
-        const { unsubscribe } = room.presence.subscribeTypingStatusEvents((event) => {
+        const { unsubscribe } = room.userStatus.typing.subscribe((event) => {
           setErrorState(undefined);
           setCurrentlyTyping(event.currentlyTyping);
         });
@@ -151,7 +151,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       context.room,
       (room) => {
         logger.debug('useTyping(); applying onDiscontinuity listener', { roomId: context.roomId });
-        const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
+        const { off } = room.userStatus.onDiscontinuity(onDiscontinuityRef);
         return () => {
           logger.debug('useTyping(); removing onDiscontinuity listener', { roomId: context.roomId });
           off();
@@ -169,7 +169,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       context.room,
       (room) => {
         logger.debug('useTyping(); applying listener', { roomId: context.roomId });
-        const { unsubscribe } = room.presence.subscribeTypingStatusEvents(listenerRef);
+        const { unsubscribe } = room.userStatus.typing.subscribe(listenerRef);
         return () => {
           logger.debug('useTyping(); removing listener', { roomId: context.roomId });
           unsubscribe();
@@ -181,11 +181,11 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   }, [context, listenerRef, logger]);
 
   // memoize the methods to avoid re-renders, and ensure the same instance is used
-  const start = useCallback(() => context.room.then((room) => room.presence.startTyping()), [context]);
-  const stop = useCallback(() => context.room.then((room) => room.presence.stopTyping()), [context]);
+  const start = useCallback(() => context.room.then((room) => room.userStatus.typing.start()), [context]);
+  const stop = useCallback(() => context.room.then((room) => room.userStatus.typing.stop()), [context]);
 
   return {
-    typingIndicators: useEventualRoomProperty((room) => room.presence),
+    typingIndicators: useEventualRoomProperty((room) => room.userStatus.typing),
     connectionStatus,
     connectionError,
     roomStatus,

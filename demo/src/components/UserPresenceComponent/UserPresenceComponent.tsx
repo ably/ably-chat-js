@@ -6,16 +6,16 @@ import {
   OnlineMember,
   useChatClient,
   useChatConnection,
-  usePresence,
-  usePresenceListener,
+  useOnlineStatus,
+  useOnlineStatusListener,
 } from '@ably/chat';
 
 interface UserListComponentProps {}
 
 export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
-  const { setOnlineWithData, isOnline, error } = usePresence({ onlineWithData: { status: '💻 Online' } });
-  const { presenceData } = usePresenceListener({
+  const { setOnlineStatus, isOnline, error } = useOnlineStatus({ onlineWithData: { status: '💻 Online' } });
+  const { onlineMembers } = useOnlineStatusListener({
     listener: (event: unknown) => {
       console.log('Presence data changed', { event });
     },
@@ -29,7 +29,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
 
   const handleUpdateButtonClick = () => {
     setIsAway(!isAway);
-    setOnlineWithData({ status: isAway ? '🔄 Away' : '💻 Online' }).catch((error: unknown) => {
+    setOnlineStatus({ status: isAway ? '🔄 Away' : '💻 Online' }).catch((error: unknown) => {
       console.error('Error updating presence:', error);
     });
   };
@@ -38,12 +38,12 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
     setIsPanelOpen(!isPanelOpen);
   };
 
-  const renderPresentMember = (presentMember: OnlineMember, index: number) => {
-    const { status } = presentMember.data as { status: string };
-    if (presentMember.clientId === clientId) {
+  const renderOnlineMember = (onlineMember: OnlineMember, index: number) => {
+    const { status } = onlineMember.data as { status: string };
+    if (onlineMember.clientId === clientId) {
       return <li key={index}>{`👤 You - ${status}`}</li>;
     }
-    return <li key={index}>{`${presentMember.clientId} - ${status}`}</li>;
+    return <li key={index}>{`${onlineMember.clientId} - ${status}`}</li>;
   };
 
   return (
@@ -65,7 +65,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
             <>
               <div className="user-list">
                 <h2>Present Users</h2>
-                <ul>{presenceData.map(renderPresentMember)}</ul>
+                <ul>{onlineMembers.map(renderOnlineMember)}</ul>
               </div>
               <div className="actions">
                 <button
