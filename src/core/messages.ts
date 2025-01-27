@@ -26,7 +26,10 @@ import {
   MessageActionsToEventsMap,
   MessageEventsMap,
   MessageListener,
-  MessageListenerObject,
+  MessageReactionEvent,
+  MessageReactionSummaryEvent,
+  ReactionsListener,
+  ReactionSummaryListener,
 } from './message-events.js';
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
@@ -192,7 +195,7 @@ export interface Messages extends EmitsDiscontinuities {
    * @param listener callback that will be called
    * @returns A response object that allows you to control the subscription.
    */
-  subscribe(listener: MessageListener | MessageListenerObject): MessageSubscriptionResponse;
+  subscribe(listener: MessageListener): MessageSubscriptionResponse;
 
   /**
    * Unsubscribe all listeners from new messages in the chat room.
@@ -280,11 +283,106 @@ export enum MessageReactionMode {
   Unique = "unique",
 }
 
+interface ReactionEventsMap {
+  [MessageEvents.ReactionCreated]: MessageReactionEvent;
+  [MessageEvents.ReactionDeleted]: MessageReactionEvent;
+  [MessageEvents.ReactionSummary]: MessageReactionSummaryEvent;
+}
+
 export class DefaultMessageReactions {
   private readonly _chatApi: ChatApi;
+  private readonly _channel : Ably.RealtimeChannel;
+  private readonly _emitter = new EventEmitter<ReactionEventsMap>();
+  private readonly _logger: Logger;
 
-  constructor(chatApi: ChatApi) {
+  constructor(logger : Logger, chatApi: ChatApi, channel : Ably.RealtimeChannel) {
+    this._logger = logger;
     this._chatApi = chatApi;
+    this._channel = channel;
+
+    addListenerToChannelWithoutAttach({
+      listener: this._processEvent.bind(this),
+      channel: channel,
+    });
+  }
+
+  private _processEvent(channelEventMessage: Ably.InboundMessage) {
+    const action = channelEventMessage.action;
+
+    // annotation create
+    if ((action as unknown) === ChatMessageActions.MessageAnnotationCreate && // message reactions
+      channelEventMessage.refType === ReactionEmojiV1) {
+        this._logger.trace('Messages._processEvent(): detected new message reaction', { channelEventMessage });
+        this._emitter.emit(MessageEvents.ReactionCreated, {
+          type: MessageEvents.ReactionCreated,
+          reaction: {
+            reaction: channelEventMessage.data,
+            refSerial: channelEventMessage.refSerial!,
+            clientId: channelEventMessage.clientId!,
+          },
+        });
+        return;
+      }
+
+    // todo: annotation remove
+    if ((action as unknown) === ChatMessageActions.MessageAnnotationDelete) {
+      if (channelEventMessage.refType === ReactionEmojiV1) {
+        // reaction remove
+      }
+      return;
+    }
+
+    if (action === ChatMessageActions.MessageAnnotationSummary) {
+      // reaction summaries (for annotation refType "reaction:emoji.v1")
+      const emojis =
+        ((channelEventMessage as any).summary?.data?.namespaces?.reaction?.emoji_v1 as unknown as Record<
+          string,
+          { total: string; score : string; clientIds: {total : string, score : string}[]; reaction: string }
+        >) || {};
+
+      console.log("processing reaction summary event with emojis", emojis);
+      const reactions = new Map<string, MessageReactionSummary>();
+      for (const emoji in emojis) {
+
+        const clientIdData = emojis[emoji]?.clientIds;
+        const clientIds : MessageReactionSummary["clientIds"] = {};
+        if (clientIdData) {
+          for (const client in clientIdData) {
+            let score : number = 0;
+            if (clientIdData[client]?.score) {
+              score = parseInt(clientIdData[client].score);
+              if (score < 0) { score = 0; }
+            }
+            let total : number = 0;
+            if (clientIdData[client]?.total) {
+              total = parseInt(clientIdData[client].total);
+              if (total < 0) { total = 0; }
+            }
+            clientIds[client] = { score: score, total: total };
+          }
+        }
+
+        reactions.set(emoji, {
+          total: Number.parseInt(emojis[emoji]?.total as unknown as string) ?? 0,
+          score: Number.parseInt(emojis[emoji]?.score as unknown as string) ?? 0,
+          numClients: Object.keys(clientIds).length,
+          clientIds: clientIds,
+          reaction: emoji,
+        });
+      }
+
+      console.log("about to trigger CHAT summary event with reactions" ,reactions);
+
+      this._emitter.emit(MessageEvents.ReactionSummary, {
+        type: MessageEvents.ReactionSummary,
+        summary: {
+          refSerial: channelEventMessage.refSerial!,
+          reactions: reactions,
+          timestamp: new Date(channelEventMessage.timestamp),
+        },
+      });
+    }
+    
   }
 
   add(message : Message, reaction : string, score : number = 1, mode : MessageReactionMode = MessageReactionMode.Add) {
@@ -298,6 +396,22 @@ export class DefaultMessageReactions {
   removeAll(message : Message) {
     return this._chatApi.removeAllMessageReactions(message.roomId, message.serial);
   }
+
+  subscribe(listener : ReactionsListener) : { unsubscribe : () => void } {
+    const uniqueListener = (event : MessageReactionEvent) => listener(event);
+    this._emitter.on([MessageEvents.ReactionCreated, MessageEvents.ReactionDeleted], uniqueListener);
+    return { unsubscribe: () => {
+      this._emitter.off(uniqueListener);
+    } };
+  }
+
+  subscribeSummaries(listener : ReactionSummaryListener) : { unsubscribe : () => void } {
+    const uniqueListener = (event : MessageReactionSummaryEvent) => listener(event);
+    this._emitter.on(MessageEvents.ReactionSummary, uniqueListener);
+    return { unsubscribe: () => {
+      this._emitter.off(uniqueListener);
+    } };
+  }
 }
 
 /**
@@ -309,7 +423,7 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
   private readonly _listenerSubscriptionPoints: Map<
-    MessageListenerObject,
+    MessageListener,
     Promise<{
       fromSerial: string;
     }>
@@ -336,9 +450,9 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
     this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
-    this._listenerSubscriptionPoints = new Map<MessageListenerObject, Promise<{ fromSerial: string }>>();
+    this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
 
-    this.reactions = new DefaultMessageReactions(chatApi);
+    this.reactions = new DefaultMessageReactions(logger, chatApi, this._channel);
   }
 
   /**
@@ -373,7 +487,7 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
    * @inheritdoc Messages
    */
   private async _getBeforeSubscriptionStart(
-    listener: MessageListenerObject,
+    listener: MessageListener,
     params: Omit<QueryOptions, 'orderBy'>,
   ): Promise<PaginatedResult<Message>> {
     this._logger.trace(`DefaultSubscriptionManager.getBeforeSubscriptionStart();`);
@@ -589,27 +703,9 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
   /**
    * @inheritdoc Messages
    */
-  subscribe(listener: MessageListener | MessageListenerObject): MessageSubscriptionResponse {
+  subscribe(listener: MessageListener): MessageSubscriptionResponse {
     this._logger.trace('Messages.subscribe();', { listener });
-
-    if (typeof listener === 'function') {
-      return this.subscribe({ messages: listener });
-    }
-
-    const messagesListener = listener.messages;
-    if (messagesListener) {
-      this._emitter.on([MessageEvents.Created, MessageEvents.Updated, MessageEvents.Deleted], messagesListener);
-    }
-
-    const reactionsListener = listener.reactions;
-    if (reactionsListener) {
-      this._emitter.on(MessageEvents.ReactionCreated, reactionsListener);
-    }
-
-    const summariesListener = listener.summaries;
-    if (summariesListener) {
-      this._emitter.on(MessageEvents.ReactionSummary, summariesListener);
-    }
+    this._emitter.on([MessageEvents.Created, MessageEvents.Updated, MessageEvents.Deleted], listener);
 
     // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
     const resolvedSubscriptionStart = this._resolveSubscriptionStart();
@@ -628,15 +724,7 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
         // Remove the listener from the subscription points
         this._listenerSubscriptionPoints.delete(listener);
         this._logger.trace('Messages.unsubscribe();');
-        if (messagesListener) {
-          this._emitter.off(messagesListener);
-        }
-        if (reactionsListener) {
-          this._emitter.off(reactionsListener);
-        }
-        if (summariesListener) {
-          this._emitter.off(summariesListener);
-        }
+        this._emitter.off(listener);
       },
       getPreviousMessages: (params: Omit<QueryOptions, 'orderBy'>) =>
         this._getBeforeSubscriptionStart(listener, params),
@@ -659,8 +747,6 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
     const action = channelEventMessage.action;
     const messageEvent = MessageActionsToEventsMap.get(action as ChatMessageActions);
 
-    console.log("processing event with action", action, "is message event", messageEvent, "and the raw event is", channelEventMessage);
-
     if (channelEventMessage.name === RealtimeMessageNames.ChatMessage && messageEvent) {
       this._logger.trace('Messages._processEvent(): detected chat message event', { messageEvent });
       // this is a chat messages
@@ -669,84 +755,8 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
         this._logger.trace('Messages._processEvent(): message could not be parsed, ignoring', { channelEventMessage });
         return;
       }
-      this._emitter.emit(messageEvent, { type: messageEvent, message: message, messageSerial: message.serial });
+      this._emitter.emit(messageEvent, { type: messageEvent, message: message });
       return;
-    }
-
-    // annotation create
-    if ((action as unknown) === ChatMessageActions.MessageAnnotationCreate && // message reactions
-      channelEventMessage.refType === ReactionEmojiV1) {
-        this._logger.trace('Messages._processEvent(): detected new message reaction', { channelEventMessage });
-        this._emitter.emit(MessageEvents.ReactionCreated, {
-          type: MessageEvents.ReactionCreated,
-          reaction: {
-            reaction: channelEventMessage.data,
-            refSerial: channelEventMessage.refSerial!,
-            clientId: channelEventMessage.clientId!,
-          },
-          messageSerial: channelEventMessage.refSerial!,
-        });
-        return;
-      }
-
-    // todo: annotation remove
-    if ((action as unknown) === ChatMessageActions.MessageAnnotationDelete) {
-      if (channelEventMessage.refType === ReactionEmojiV1) {
-        // reaction remove
-      }
-      return;
-    }
-
-    if (action === ChatMessageActions.MessageAnnotationSummary) {
-      // reaction summaries (for annotation refType "reaction:emoji.v1")
-      const emojis =
-        ((channelEventMessage as any).summary?.data?.namespaces?.reaction?.emoji_v1 as unknown as Record<
-          string,
-          { total: string; score : string; clientIds: {total : string, score : string}[]; reaction: string }
-        >) || {};
-
-      console.log("processing reaction summary event with emojis", emojis);
-      const reactions = new Map<string, MessageReactionSummary>();
-      for (const emoji in emojis) {
-
-        const clientIdData = emojis[emoji]?.clientIds;
-        const clientIds : MessageReactionSummary["clientIds"] = {};
-        if (clientIdData) {
-          for (const client in clientIdData) {
-            let score : number = 0;
-            if (clientIdData[client]?.score) {
-              score = parseInt(clientIdData[client].score);
-              if (score < 0) { score = 0; }
-            }
-            let total : number = 0;
-            if (clientIdData[client]?.total) {
-              total = parseInt(clientIdData[client].total);
-              if (total < 0) { total = 0; }
-            }
-            clientIds[client] = { score: score, total: total };
-          }
-        }
-
-        reactions.set(emoji, {
-          total: Number.parseInt(emojis[emoji]?.total as unknown as string) ?? 0,
-          score: Number.parseInt(emojis[emoji]?.score as unknown as string) ?? 0,
-          numClients: Object.keys(clientIds).length,
-          clientIds: clientIds,
-          reaction: emoji,
-        });
-      }
-
-      console.log("about to trigger CHAT summary event with reactions" ,reactions);
-
-      this._emitter.emit(MessageEvents.ReactionSummary, {
-        type: MessageEvents.ReactionSummary,
-        summary: {
-          refSerial: channelEventMessage.refSerial!,
-          reactions: reactions,
-          timestamp: new Date(channelEventMessage.timestamp),
-        },
-        messageSerial: channelEventMessage.refSerial!,
-      });
     }
   }
 

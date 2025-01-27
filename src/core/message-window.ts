@@ -3,13 +3,11 @@ import { PaginatedResult } from 'ably';
 import { MessageEvents } from './events';
 import { Message } from './message';
 import {
-  AnyMessageEvent,
-  MessageEventPayload,
-  MessageListenerObject,
+  MessageEvent,
   MessageReaction,
-  MessageReactionPayload,
+  MessageReactionEvent,
   MessageReactionSummaries,
-  MessageReactionSummaryPayload,
+  MessageReactionSummaryEvent,
 } from './message-events';
 import { MessageSubscriptionResponse } from './messages';
 import { Room } from './room';
@@ -26,17 +24,12 @@ interface Subscription {
   unsubscribe(): void;
 }
 
-export class MessageWindow implements MessageListenerObject {
+export class MessageWindow {
   private _snapshot: Snapshot;
   private _emitter = new EventEmitter<{ snapshot: Snapshot }>();
 
   constructor() {
     this._snapshot = { messages: [] };
-
-
-    // this.messages = this.messages.bind(this);
-    // this.reactions = this.reactions.bind(this);
-    // this.summaries = this.summaries.bind(this);
   }
 
   public subscribe(listener: (snapshot: Snapshot) => void): Subscription {
@@ -98,29 +91,43 @@ export class MessageWindow implements MessageListenerObject {
   /**
    * This method is called by room.messages.subscribe. Not part of the public API for this class.
    */
-  public messages = (event: MessageEventPayload) => {
+  public messagesListener = (event: MessageEvent) => {
     if (event.type === MessageEvents.Created) {
       this._processNewMessage(event);
       return;
     }
-    this._processEvent(event);
+    // update or delete events
+    this._updateAtSerial(event.message.serial, event);
   };
 
   /**
    * This method is called by room.messages.subscribe. Not part of the public API for this class.
    */
-  public reactions = (event: MessageReactionPayload) => {
-    // rely on summaries only, ignore individual reactions
+  public summariesListener = (event: MessageReactionSummaryEvent) => {
+    const serial = event.summary.refSerial;
+    this._updateAtSerial(serial, event);
   };
 
-  /**
-   * This method is called by room.messages.subscribe. Not part of the public API for this class.
-   */
-  public summaries = (event: MessageReactionSummaryPayload) => {
-    this._processEvent(event);
-  };
+  private _updateAtSerial(serial : string, event : MessageReactionSummaryEvent | MessageEvent) {
+    const idx = this._snapshot.messages.findIndex((m) => m.serial === serial);
+    if (idx === -1) {
+      // message doesn't exist, do nothing
+      return;
+    }
 
-  private _processNewMessage(event: MessageEventPayload) {
+    // update message in messages list
+    const foundMessage = this._snapshot.messages[idx]!;
+    const newMessage = foundMessage.with(event);
+
+    // if the message has changed, update and publish the new snapshot
+    if (newMessage !== foundMessage) {
+      this._snapshot.messages[idx] = foundMessage.with(event);
+      this._updateSnapshot();
+    }
+
+  }
+
+  private _processNewMessage(event: MessageEvent) {
     const message = event.message;
     const idx = this._snapshot.messages.findLastIndex((m) => m.serial === message.serial);
     if (idx !== -1) {
@@ -142,41 +149,6 @@ export class MessageWindow implements MessageListenerObject {
     }
 
     this._updateSnapshot();
-  }
-
-  private _processEvent(event: AnyMessageEvent) {
-    const messageSerial = event.messageSerial;
-    const idx = this._snapshot.messages.findIndex((m) => m.serial === messageSerial);
-    if (idx === -1) {
-      // message doesn't exist, if it's an update or delete and within scope, add to list
-      if (event.type === MessageEvents.Updated || event.type === MessageEvents.Deleted) {
-        event = event as MessageEventPayload;
-        if (this._snapshot.messages.length === 0) {
-          this._snapshot.messages.push(event.message);
-          this._updateSnapshot();
-        } else {
-          // if the message is newer than the first message in the list, add it
-          // use message create processing to ensure it'll be added in the right place
-          const firstSerial = this._snapshot.messages[0]?.serial!;
-          if (event.messageSerial > firstSerial) {
-            this._processNewMessage(event);
-          }
-        }
-      }
-
-      // otherwise do nothing
-      return;
-    }
-
-    // update message in messages list
-    const foundMessage = this._snapshot.messages[idx]!;
-    const newMessage = foundMessage.apply(event);
-
-    // if the message has changed, update and publish the new snapshot
-    if (newMessage !== foundMessage) {
-      this._snapshot.messages[idx] = foundMessage.apply(event);
-      this._updateSnapshot();
-    }
   }
 
   // make a new shallow copy of the snapshot object and publish it

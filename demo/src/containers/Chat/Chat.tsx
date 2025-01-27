@@ -68,7 +68,8 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
       setSnapshot(snapshot);
     });
 
-    const s = messagesObj.subscribe(msgWindow);
+    const s = messagesObj.subscribe(msgWindow.messagesListener);
+    const rs = messagesObj.reactions.subscribeSummaries(msgWindow.summariesListener);
     msgWindow
       .backfillHistory(
         s.getPreviousMessages({ limit: 50 }).then((result) => {
@@ -86,6 +87,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
     return () => {
       mounted = false;
       s.unsubscribe();
+      rs.unsubscribe();
       windowSub.unsubscribe();
     };
   }, [messagesObj]);

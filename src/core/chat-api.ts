@@ -141,6 +141,7 @@ export class ChatApi {
         (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
         new Date(message.timestamp),
         message.operation,
+        message.reactions,
       );
     };
 

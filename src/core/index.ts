@@ -28,12 +28,12 @@ export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
 export type { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata, Operation } from './message.js';
 export type {
-  MessageEventPayload,
+  MessageEvent as MessageEventPayload,
   MessageListener,
-  MessageReactionPayload,
-  MessageReactionSummaryPayload,
+  MessageReactionEvent as MessageReactionPayload,
+  MessageReactionSummaryEvent as MessageReactionSummaryPayload,
   ReactionsListener,
-  SummariesListener,
+  ReactionSummaryListener as SummariesListener,
 } from './message-events.js';
 export type { Snapshot } from './message-window.js';
 export { MessageWindow } from './message-window.js';

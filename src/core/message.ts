@@ -3,12 +3,12 @@ import { ErrorInfo } from 'ably';
 import { ChatMessageActions, MessageEvents } from './events.js';
 import { Headers } from './headers.js';
 import {
-  AnyMessageEvent,
-  MessageEventPayload,
-  MessageReactionSummaryPayload,
+  MessageEvent,
+  MessageReactionSummaryEvent,
 } from './message-events.js';
 import { Metadata } from './metadata.js';
 import { OperationMetadata } from './operation-metadata.js';
+import { MessageEventPayload } from './index.js';
 
 
 /**
@@ -132,7 +132,7 @@ export interface Message {
   /**
    * Applies the event to this message to produce a new message. `this` remains unchanged.
    */
-  apply(event: AnyMessageEvent): Message;
+  with(event: MessageEvent | MessageReactionSummaryEvent): Message;
 
   /**
    * Indicates if the message has been updated.
@@ -272,6 +272,9 @@ export class DefaultMessage implements Message {
     public readonly operation?: Operation,
     reactions?: Map<string, MessageReactionSummary>,
   ) {
+    if (reactions && !(reactions instanceof Map)) {
+      reactions = new Map(Object.entries(reactions));
+    }
     this.reactions = reactions ?? new Map();
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
@@ -340,11 +343,7 @@ export class DefaultMessage implements Message {
     return this.serial === message.serial;
   }
 
-  apply(event: AnyMessageEvent): Message {
-    if (event.messageSerial !== this.serial) {
-      throw new ErrorInfo('apply(): Cannot apply event to message, serials do not match', 50000, 500);
-    }
-
+  with(event: MessageEvent | MessageReactionSummaryEvent): Message {
     switch (event.type) {
       case MessageEvents.Created: {
         // created events shouldn't get here, we'll treat as no-op
@@ -352,54 +351,21 @@ export class DefaultMessage implements Message {
       }
       case MessageEvents.Deleted:
       case MessageEvents.Updated: {
-        event = event as MessageEventPayload;
+        event = event as MessageEvent;
+        if (event.message.serial !== this.serial) {
+          throw new ErrorInfo('apply(): Cannot apply event to message, serials do not match', 50000, 500);
+        }
         if (this.version >= event.message.version) {
           // received older version, no-op
           return this;
         }
         return DefaultMessage.clone(event.message, { reactions: this.reactions });
       }
-      case MessageEvents.ReactionCreated: {
-        // const reactions = cloneReactions(this.reactions);
-        // event = event as MessageReactionPayload;
-        // const r = reactions.get(event.reaction.reaction);
-        // if (r) {
-        //   r.count++;
-        //   if (!r.clientIds.includes(event.reaction.clientId)) {
-        //     r.clientIds.push(event.reaction.clientId);
-        //   }
-        // } else {
-        //   reactions.set(event.reaction.reaction, {
-        //     reaction: event.reaction.reaction,
-        //     count: 1,
-        //     clientIds: [event.reaction.clientId],
-        //   });
-        // }
-        // return DefaultMessage.clone(this, { reactions });
-        return this;
-      }
-      case MessageEvents.ReactionDeleted: {
-        // event = event as MessageReactionPayload;
-        // // if the reaction doesn't exist return same Message object early
-        // if (!this.reactions.get(event.reaction.reaction)) {
-        //   return this;
-        // }
-        // const reactions = cloneReactions(this.reactions);
-        // const r = reactions.get(event.reaction.reaction);
-        // if (r) {
-        //   r.count--;
-        //   const idx = r.clientIds.indexOf(event.reaction.clientId);
-        //   if (idx !== -1) {
-        //     r.clientIds.splice(idx, 1);
-        //   }
-        //   return DefaultMessage.clone(this, { reactions });
-        // }
-        // if no change return same object
-        // this should be unreachable but the if(r) above makes typescript happy
-        return this;
-      }
       case MessageEvents.ReactionSummary: {
-        event = event as MessageReactionSummaryPayload;
+        event = event as MessageReactionSummaryEvent;
+        if (event.summary.refSerial !== this.serial) {
+          throw new ErrorInfo('apply(): Cannot apply event to message, serials do not match', 50000, 500);
+        }
         const reactions: typeof this.reactions = new Map();
         for (const r of event.summary.reactions.values()) {
           reactions.set(r.reaction, r);
@@ -419,14 +385,14 @@ export class DefaultMessage implements Message {
       replace?.clientId ?? source.clientId,
       replace?.roomId ?? source.roomId,
       replace?.text ?? source.text,
-      replace?.metadata ?? structuredClone(source.metadata), // deep clone?
-      replace?.headers ?? structuredClone(source.headers), // deep clone?
+      replace?.metadata ?? structuredClone(source.metadata),
+      replace?.headers ?? structuredClone(source.headers),
       replace?.action ?? source.action,
       replace?.version ?? source.version,
       replace?.createdAt ?? source.createdAt,
       replace?.timestamp ?? source.timestamp,
-      replace?.operation ?? structuredClone(source.operation), // deep clone?
-      replace?.reactions ?? structuredClone(source.reactions), // deep clone?
+      replace?.operation ?? structuredClone(source.operation),
+      replace?.reactions ?? structuredClone(source.reactions),
     );
   }
 }

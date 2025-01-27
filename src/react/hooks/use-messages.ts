@@ -166,18 +166,14 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   const [getPreviousMessages, setGetPreviousMessages] = useState<MessageSubscriptionResponse['getPreviousMessages']>();
 
   useEffect(() => {
-    if (!listenerRef && !reactionsListenerRef && !summariesListenerRef) return;
+    if (!listenerRef) return;
     return wrapRoomPromise(
       context.room,
       (room) => {
         let unmounted = false;
         logger.debug('useMessages(); applying listener', { roomId: context.roomId });
 
-        const sub = room.messages.subscribe({
-          messages: listenerRef,
-          reactions: reactionsListenerRef,
-          summaries: summariesListenerRef,
-        });
+        const sub = room.messages.subscribe(listenerRef);
 
         // set the getPreviousMessages method if a listener is provided
         setGetPreviousMessages(() => {
@@ -211,7 +207,49 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
       logger,
       context.roomId,
     ).unmount();
-  }, [context, logger, listenerRef, reactionsListenerRef, summariesListenerRef]);
+  }, [context, logger, listenerRef]);
+
+  useEffect(() => {
+    if (!summariesListenerRef) return;
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        let unmounted = false;
+        logger.debug('useMessages(); applying listener', { roomId: context.roomId });
+
+        const sub = room.messages.reactions.subscribeSummaries(summariesListenerRef);
+
+        return () => {
+          logger.debug('useMessages(); removing listener and getPreviousMessages state', { roomId: context.roomId });
+          unmounted = true;
+          sub.unsubscribe();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, logger, summariesListenerRef]);
+
+  useEffect(() => {
+    if (!reactionsListenerRef) return;
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        let unmounted = false;
+        logger.debug('useMessages(); applying listener', { roomId: context.roomId });
+
+        const sub = room.messages.reactions.subscribe(reactionsListenerRef);
+
+        return () => {
+          logger.debug('useMessages(); removing listener and getPreviousMessages state', { roomId: context.roomId });
+          unmounted = true;
+          sub.unsubscribe();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, logger, reactionsListenerRef]);
 
   useEffect(() => {
     if (!onDiscontinuityRef) return;
