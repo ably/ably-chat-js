@@ -9,8 +9,8 @@
   "license": "MIT",
   "dependencies": {
     "@netlify/functions": "^2.8.2",
-    "@types/node": "^22.10.3",
-    "ably": "^2.6.0",
+    "@types/node": "^22.10.10",
+    "ably": "^2.6.2",
     "dotenv": "^16.4.7",
     "typescript": "^5.7.2"
   }
