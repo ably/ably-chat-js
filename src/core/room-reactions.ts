@@ -162,6 +162,10 @@ export class DefaultRoomReactions
   private readonly _chatApi: ChatApi;
   private readonly _newReactionListeners = new EventEmitter<NewRoomReactionEventsMap>();
 
+  // Add polling state variables
+  private pollInProgress = false;
+  private pollScheduled = false;
+
   /**
    * Constructs a new `DefaultRoomReactions` instance.
    * @param roomId The unique identifier of the room.
@@ -177,41 +181,16 @@ export class DefaultRoomReactions
     this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
-
-    // Start up a function that runs on a timer, and every 5 seconds, it will poll the reactions
-    // for the room and emit them to the newReactionListeners.
-    let pollInProgress = false;
-    setInterval(() => {
-      // TODO: Dont poll if not attached
-      // TODO: Stop if released
-      if (pollInProgress) {
-        return;
-      }
-
-      pollInProgress = true;
-
-      this._chatApi
-        .getRoomReactions(roomId)
-        .then((reactions) => {
-          this._newReactionListeners.emit(RoomReactionEvents.ReactionPolled, { reactions });
-        })
-        .catch((error: unknown) => {
-          this._logger.error('failed to poll room reactions;', { error: error as Ably.ErrorInfo });
-        })
-        .finally(() => {
-          pollInProgress = false;
-        });
-    }, 2000);
   }
 
   /**
    * Creates the realtime channel for room reactions.
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(`${roomId}::$chat::$reactions`);
+    const channel = channelManager.get(`${roomId}::$chat::$chatMessages`);
     addListenerToChannelWithoutAttach({
       listener: this._forwarder.bind(this),
-      events: [RoomReactionEvents.Reaction],
+      events: [RoomReactionEvents.Reaction, 'state_change'],
       channel: channel,
     });
     return channel;
@@ -300,12 +279,45 @@ export class DefaultRoomReactions
 
   // parses reactions from realtime channel into Reaction objects and forwards them to the EventEmitter
   private _forwarder = (inbound: Ably.InboundMessage) => {
+    this._logger.trace('RoomReactions._forwarder();', { name: inbound.name });
+    if (inbound.name === 'state_change') {
+      this._handleStateChange();
+      return;
+    }
+
     const reaction = this._parseNewReaction(inbound, this._clientId);
     if (!reaction) {
       // ignore non-reactions
       return;
     }
     this.emit(RoomReactionEvents.Reaction, reaction);
+  };
+
+  // Add polling handler method
+  private _handleStateChange = () => {
+    if (this.pollInProgress) {
+      this.pollScheduled = true;
+      return;
+    }
+
+    this.pollInProgress = true;
+
+    this._logger.debug('polling room reactions');
+    this._chatApi
+      .getRoomReactions(this._roomId)
+      .then((reactions) => {
+        this._newReactionListeners.emit(RoomReactionEvents.ReactionPolled, { reactions });
+      })
+      .catch((error: unknown) => {
+        this._logger.error('failed to poll room reactions;', { error: error as Ably.ErrorInfo });
+      })
+      .finally(() => {
+        this.pollInProgress = false;
+        if (this.pollScheduled) {
+          this.pollScheduled = false;
+          this._handleStateChange();
+        }
+      });
   };
 
   get channel(): Ably.RealtimeChannel {
