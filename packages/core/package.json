@@ -21,7 +21,8 @@
     "test:watch": "vitest watch",
     "build": "vite build --emptyOutDir",
     "prepare": "npm run build",
-    "test:typescript": "tsc"
+    "test:typescript": "tsc",
+    "postinstall": "npm run build"
   },
   "files": [
     "dist/**",
