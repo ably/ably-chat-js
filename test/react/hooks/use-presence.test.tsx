@@ -6,7 +6,7 @@ import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
 import { Room } from '../../../src/core/room.ts';
 import { InternalRoomLifecycle, RoomStatus } from '../../../src/core/room-status.ts';
-import { usePresence } from '../../../src/react/hooks/use-presence.ts';
+import { usePresence } from '../../../src/react/hooks/use-online-status.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
 import { waitForEventualHookValue } from '../../helper/wait-for-eventual-hook.ts';

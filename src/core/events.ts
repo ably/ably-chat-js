@@ -48,6 +48,10 @@ export enum ChatMessageActions {
   MessageMetaOccupancy = 'meta.occupancy',
 }
 
+export enum OnlineStatusEvents {
+  OnlineStatusChange = 'online.status.change',
+}
+
 /**
  * Enum representing presence events.
  */
@@ -75,6 +79,10 @@ export enum PresenceEvents {
 export enum TypingEvents {
   /** The set of currently typing users has changed. */
   Changed = 'typing.changed',
+}
+
+export enum UserStatusEvents {
+  UserStatusChange = 'user.status.change',
 }
 
 /**

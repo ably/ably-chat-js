@@ -43,19 +43,19 @@ export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener, OccupancySubscriptionResponse } from './occupancy.js';
 export type { OperationMetadata } from './operation-metadata.js';
 export type {
-  Presence,
-  PresenceData,
-  PresenceEvent,
-  PresenceListener,
-  PresenceMember,
-  PresenceSubscriptionResponse,
-} from './presence.js';
+  DefaultOnlineStatus,
+  OnlineMember,
+  OnlineStatus,
+  OnlineStatusData,
+  OnlineStatusListener,
+  OnlineStatusSubscriptionResponse,
+} from './online-status.js';
 export type { PaginatedResult } from './query.js';
 export type { Reaction } from './reaction.js';
 export type { Room } from './room.js';
 export type {
   OccupancyOptions,
-  PresenceOptions,
+  OnlineStatusOptions,
   RoomOptions,
   RoomReactionsOptions,
   TypingOptions,

@@ -7,10 +7,10 @@ import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
 import { PresenceEvents } from '../../../src/core/events.ts';
 import { Logger } from '../../../src/core/logger.ts';
-import { PresenceEvent, PresenceListener, PresenceMember } from '../../../src/core/presence.ts';
+import { PresenceEvent, OnlineStatusListener, PresenceMember } from '../../../src/core/online-status.ts';
 import { Room } from '../../../src/core/room.ts';
 import { InternalRoomLifecycle, RoomStatus } from '../../../src/core/room-status.ts';
-import { usePresenceListener } from '../../../src/react/hooks/use-presence-listener.ts';
+import { usePresenceListener } from '../../../src/react/hooks/use-online-status-listener.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
 import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
@@ -90,9 +90,9 @@ describe('usePresenceListener', () => {
     const mockListener = vi.fn();
     const mockUnsubscribe = vi.fn();
 
-    const presenceListeners = new Set<PresenceListener | undefined>();
+    const presenceListeners = new Set<OnlineStatusListener | undefined>();
 
-    vi.spyOn(mockRoom.presence, 'subscribe').mockImplementation((listener: PresenceListener | undefined) => {
+    vi.spyOn(mockRoom.presence, 'subscribe').mockImplementation((listener: OnlineStatusListener | undefined) => {
       presenceListeners.add(listener);
       return { unsubscribe: mockUnsubscribe };
     });
@@ -216,7 +216,7 @@ describe('usePresenceListener', () => {
     // spy on the get method of the presence instance and throw an error
     vi.spyOn(mockRoom.presence, 'get').mockRejectedValue(new ErrorInfo('test', 500, 50000));
 
-    let subscribedListener: PresenceListener | undefined;
+    let subscribedListener: OnlineStatusListener | undefined;
 
     // spy on the subscribe method of the presence instance
     vi.spyOn(mockRoom.presence, 'subscribe').mockImplementation((listener) => {
@@ -290,10 +290,10 @@ describe('usePresenceListener', () => {
   });
 
   it('should retry updating the presence state on failure', async () => {
-    let subscribedListener: PresenceListener | undefined;
+    let subscribedListener: OnlineStatusListener | undefined;
 
     // spy on the subscribe method of the room presence instance
-    vi.spyOn(mockRoom.presence, 'subscribe').mockImplementation((listener?: PresenceListener) => {
+    vi.spyOn(mockRoom.presence, 'subscribe').mockImplementation((listener?: OnlineStatusListener) => {
       subscribedListener = listener;
       return { unsubscribe: vi.fn() };
     });
@@ -367,10 +367,10 @@ describe('usePresenceListener', () => {
   }, 10000);
 
   it('should not return stale presence data even if they resolve out of order', async () => {
-    let subscribedListener: PresenceListener | undefined;
+    let subscribedListener: OnlineStatusListener | undefined;
 
     // spy on the subscribe method of the room presence instance
-    vi.spyOn(mockRoom.presence, 'subscribe').mockImplementation((listener?: PresenceListener) => {
+    vi.spyOn(mockRoom.presence, 'subscribe').mockImplementation((listener?: OnlineStatusListener) => {
       subscribedListener = listener;
       return { unsubscribe: vi.fn() };
     });

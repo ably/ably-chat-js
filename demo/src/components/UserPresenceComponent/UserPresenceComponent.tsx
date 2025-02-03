@@ -3,19 +3,19 @@ import '../../../styles/global.css';
 import './UserPresenceComponent.css';
 import {
   ConnectionStatus,
-  PresenceMember,
+  OnlineMember,
   useChatClient,
   useChatConnection,
-  usePresence,
-  usePresenceListener,
+  useOnlineStatus,
+  useOnlineStatusListener,
 } from '@ably/chat';
 
 interface UserListComponentProps {}
 
 export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
-  const { update, isPresent, error } = usePresence({ enterWithData: { status: '💻 Online' } });
-  const { presenceData } = usePresenceListener({
+  const { setOnlineStatus, isOnline, error } = useOnlineStatus({ onlineWithData: { status: '💻 Online' } });
+  const { onlineMembers } = useOnlineStatusListener({
     listener: (event: unknown) => {
       console.log('Presence data changed', { event });
     },
@@ -25,11 +25,11 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const { currentStatus } = useChatConnection();
   const isConnected = currentStatus === ConnectionStatus.Connected;
 
-  const [isOnline, setIsOnline] = useState(true);
+  const [isAway, setIsAway] = useState(true);
 
   const handleUpdateButtonClick = () => {
-    setIsOnline(!isOnline);
-    update({ status: isOnline ? '🔄 Away' : '💻 Online' }).catch((error: unknown) => {
+    setIsAway(!isAway);
+    setOnlineStatus({ status: isAway ? '🔄 Away' : '💻 Online' }).catch((error: unknown) => {
       console.error('Error updating presence:', error);
     });
   };
@@ -38,12 +38,12 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
     setIsPanelOpen(!isPanelOpen);
   };
 
-  const renderPresentMember = (presentMember: PresenceMember, index: number) => {
-    const { status } = presentMember.data as { status: string };
-    if (presentMember.clientId === clientId) {
+  const renderOnlineMember = (onlineMember: OnlineMember, index: number) => {
+    const { status } = onlineMember.data as { status: string };
+    if (onlineMember.clientId === clientId) {
       return <li key={index}>{`👤 You - ${status}`}</li>;
     }
-    return <li key={index}>{`${presentMember.clientId} - ${status}`}</li>;
+    return <li key={index}>{`${onlineMember.clientId} - ${status}`}</li>;
   };
 
   return (
@@ -65,12 +65,12 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
             <>
               <div className="user-list">
                 <h2>Present Users</h2>
-                <ul>{presenceData.map(renderPresentMember)}</ul>
+                <ul>{onlineMembers.map(renderOnlineMember)}</ul>
               </div>
               <div className="actions">
                 <button
                   onClick={handleUpdateButtonClick}
-                  disabled={!isConnected || !isPresent}
+                  disabled={!isConnected || !isOnline}
                   className="btn update disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
                   {isOnline ? '🔄 Appear Away' : '💻 Appear Online'}

@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { PresenceEvents } from '../../src/core/events.ts';
-import { PresenceData, PresenceEvent } from '../../src/core/presence.ts';
+import { OnlineStatusData, PresenceEvent } from '../../src/core/online-status.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptionsDefaults } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
@@ -183,7 +183,7 @@ describe('UserPresence', { timeout: 10000 }, () => {
     const client3 = ablyRealtimeClient({ clientId: 'clientId3' }).channels.get(channelName);
 
     // Data payload to check if the custom data is fetched correctly
-    const testData: PresenceData = {
+    const testData: OnlineStatusData = {
       userCustomData: { customKeyOne: 1 },
     };
 
