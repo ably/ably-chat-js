@@ -1,3 +1,5 @@
+import { Message } from './message.js';
+
 /**
  * All chat message events.
  */
@@ -84,4 +86,19 @@ export enum RoomReactionEvents {
    * Event triggered when a room reaction was received.
    */
   Reaction = 'roomReaction',
+}
+
+/**
+ * Payload for a message event.
+ */
+export interface MessageEventPayload {
+  /**
+   * The type of the message event.
+   */
+  type: MessageEvents;
+
+  /**
+   * The message that was received.
+   */
+  message: Message;
 }

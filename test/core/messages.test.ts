@@ -3,9 +3,9 @@ import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
-import { ChatMessageActions, MessageEvents } from '../../src/core/events.ts';
+import { ChatMessageActions, MessageEventPayload, MessageEvents } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
-import { DefaultMessages, MessageEventPayload, OrderBy } from '../../src/core/messages.ts';
+import { DefaultMessages, OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
 import {
   channelEventEmitter,

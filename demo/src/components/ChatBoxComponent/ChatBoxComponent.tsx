@@ -23,7 +23,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
               return prevMessages;
             }
 
-            // if the message is not in the list, add it
+            // if the message is not in the list, make a new list that contains it
             const newArray = [...prevMessages, message.message];
 
             // and put it at the right place
@@ -33,23 +33,26 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
           });
           break;
         }
+        case MessageEvents.Updated:
         case MessageEvents.Deleted: {
-          setMessages((prevMessage) => {
-            const updatedArray = prevMessage.filter((m) => {
-              return m.serial !== message.message.serial;
-            });
-
-            // don't change state if deleted message is not in the current list
-            if (prevMessage.length === updatedArray.length) {
-              return prevMessage;
+          setMessages((prevMessages) => {
+            const index = prevMessages.findIndex((m) => m.serial === message.message.serial);
+            if (index === -1) {
+              return prevMessages;
             }
 
+            const newMessage = prevMessages[index].with(message);
+
+            // if no change, do nothing
+            if (newMessage === prevMessages[index]) {
+              return prevMessages;
+            }
+
+            // copy array and replace the message
+            const updatedArray = prevMessages.slice();
+            updatedArray[index] = newMessage;
             return updatedArray;
           });
-          break;
-        }
-        case MessageEvents.Updated: {
-          handleUpdatedMessage(message.message);
           break;
         }
         default: {
@@ -75,7 +78,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
     if (getPreviousMessages) {
       getPreviousMessages({ limit: 50 })
         .then((result: PaginatedResult<Message>) => {
-          setMessages(result.items.filter((m) => !m.isDeleted).reverse());
+          setMessages(result.items.reverse());
           setLoading(false);
         })
         .catch((error: ErrorInfo) => {
@@ -84,20 +87,17 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
     }
   };
 
-  const handleUpdatedMessage = (message: Message) => {
+  const handleRESTMessageUpdate = (updatedMessage: Message) => {
     setMessages((prevMessages) => {
-      const index = prevMessages.findIndex((m) => m.serial === message.serial);
+      const index = prevMessages.findIndex((m) => m.serial === updatedMessage.serial);
       if (index === -1) {
         return prevMessages;
       }
-
-      // skip update if the received version is not newer
-      if (!prevMessages[index].versionBefore(message)) {
+      if (updatedMessage.version <= prevMessages[index].version) {
         return prevMessages;
       }
-
-      const updatedArray = [...prevMessages];
-      updatedArray[index] = message;
+      const updatedArray = prevMessages.slice();
+      updatedArray[index] = updatedMessage;
       return updatedArray;
     });
   };
@@ -114,7 +114,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
         headers: message.headers,
       })
         .then((updatedMessage: Message) => {
-          handleUpdatedMessage(updatedMessage);
+          handleRESTMessageUpdate(updatedMessage);
         })
         .catch((error: unknown) => {
           console.warn('Failed to update message', error);
@@ -126,9 +126,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const onDeleteMessage = useCallback(
     (message: Message) => {
       deleteMessage(message, { description: 'deleted by user' }).then((deletedMessage: Message) => {
-        setMessages((prevMessages) => {
-          return prevMessages.filter((m) => m.serial !== deletedMessage.serial);
-        });
+        handleRESTMessageUpdate(deletedMessage);
       });
     },
     [deleteMessage],
@@ -160,15 +158,37 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
           id="messages"
           className="chat-window"
         >
-          {messages.map((msg) => (
-            <MessageComponent
-              key={msg.serial}
-              self={msg.clientId === clientId}
-              message={msg}
-              onMessageDelete={onDeleteMessage}
-              onMessageUpdate={onUpdateMessage}
-            ></MessageComponent>
-          ))}
+          {messages.map((msg) => {
+            if (msg.isDeleted) {
+              return (
+                <div
+                  key={msg.serial}
+                  className="deleted-message"
+                >
+                  This message was deleted.
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onUpdateMessage(msg);
+                    }}
+                  >
+                    Edit
+                  </a>
+                  .
+                </div>
+              );
+            }
+            return (
+              <MessageComponent
+                key={msg.serial}
+                self={msg.clientId === clientId}
+                message={msg}
+                onMessageDelete={onDeleteMessage}
+                onMessageUpdate={onUpdateMessage}
+              ></MessageComponent>
+            );
+          })}
           <div ref={messagesEndRef} />
         </div>
       )}

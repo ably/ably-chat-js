@@ -12,7 +12,7 @@ import {
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
-import { ChatMessageActions, MessageEvents, RealtimeMessageNames } from './events.js';
+import { ChatMessageActions, MessageEventPayload, MessageEvents, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
@@ -165,21 +165,6 @@ export interface SendMessageParams {
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface UpdateMessageParams extends SendMessageParams {}
-
-/**
- * Payload for a message event.
- */
-export interface MessageEventPayload {
-  /**
-   * The type of the message event.
-   */
-  type: MessageEvents;
-
-  /**
-   * The message that was received.
-   */
-  message: Message;
-}
 
 /**
  * A listener for message events in a chat room.

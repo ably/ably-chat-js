@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+a {
+  color: rgb(37 99 235);
+}
+
+a:hover {
+  color: rgb(66, 126, 255);
+  text-decoration: underline;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -52,10 +61,12 @@ body {
   padding: 5px;
   margin-right: 2px;
   transition: all 100ms;
+  text-decoration: none;
 }
 
 .reactions-picker > a:hover {
   scale: 1.5;
+  text-decoration: none;
 }
 
 .reactions-picker > a:active {
@@ -85,4 +96,12 @@ body {
 
 .chat-message:hover .buttons {
   display: block;
+}
+
+.deleted-message {
+  color: gray;
+  margin: 10px;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.1);
 }
