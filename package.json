@@ -18,7 +18,7 @@
   },
   "scripts": {
     "lint": "eslint . && npm run cspell",
-    "lint:fix": "eslint --fix .",
+    "lint:fix": "eslint --fix .; npm run format",
     "format": "prettier --write src test __mocks__ demo/src",
     "format:check": "prettier --check src test __mocks__ demo/src",
     "test": "vitest run",
