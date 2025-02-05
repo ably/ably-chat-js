@@ -5,7 +5,7 @@ import { ChatApi } from '../../src/core/chat-api.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
-import { RoomOptions, RoomOptionsDefaults } from '../../src/core/room-options.ts';
+import { DefaultRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING, DEFAULT_CHANNEL_OPTIONS } from '../../src/core/version.ts';
@@ -44,10 +44,10 @@ describe('Room', () => {
 
   describe.each([
     ['messages', {}, (room: Room) => room.messages],
-    ['presence', { presence: RoomOptionsDefaults.presence }, (room: Room) => room.presence],
-    ['occupancy', { occupancy: RoomOptionsDefaults.occupancy }, (room: Room) => room.occupancy],
-    ['typing', { typing: RoomOptionsDefaults.typing }, (room: Room) => room.typing],
-    ['reactions', { reactions: RoomOptionsDefaults.reactions }, (room: Room) => room.reactions],
+    ['presence', { presence: DefaultRoomOptions.presence }, (room: Room) => room.presence],
+    ['occupancy', { occupancy: DefaultRoomOptions.occupancy }, (room: Room) => room.occupancy],
+    ['typing', { typing: DefaultRoomOptions.typing }, (room: Room) => room.typing],
+    ['reactions', { reactions: DefaultRoomOptions.reactions }, (room: Room) => room.reactions],
   ])('feature configured', (description: string, options: RoomOptions, featureLoader: (room: Room) => unknown) => {
     it<TestContext>(`should not throw an error when trying to access ${description} whilst enabled`, (context) => {
       const room = context.getRoom(options);
@@ -251,7 +251,7 @@ describe('Room', () => {
     });
 
     it<TestContext>('should only release with enabled features', async (context) => {
-      const room = context.getRoom({ typing: RoomOptionsDefaults.typing }) as DefaultRoom;
+      const room = context.getRoom({ typing: DefaultRoomOptions.typing }) as DefaultRoom;
       const lifecycleManager = (room as unknown as { _lifecycleManager: RoomLifecycleManager })._lifecycleManager;
 
       // Setup spies on the realtime client and the room lifecycle manager

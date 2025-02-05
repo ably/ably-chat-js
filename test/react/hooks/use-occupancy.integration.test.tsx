@@ -4,7 +4,7 @@ import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { OccupancyEvent, OccupancyListener } from '../../../src/core/occupancy.ts';
-import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
+import { DefaultRoomOptions } from '../../../src/core/room-options.ts';
 import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
@@ -25,8 +25,8 @@ describe('useOccupancy', () => {
 
     // create two more rooms and attach to contribute towards occupancy metrics
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, RoomOptionsDefaults);
-    const roomThree = await chatClientThree.rooms.get(roomId, RoomOptionsDefaults);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, DefaultRoomOptions);
+    const roomThree = await chatClientThree.rooms.get(roomId, DefaultRoomOptions);
     await roomTwo.attach();
     await roomThree.attach();
 
@@ -52,7 +52,7 @@ describe('useOccupancy', () => {
       <ChatClientProvider client={chatClient}>
         <ChatRoomProvider
           id={roomId}
-          options={RoomOptionsDefaults}
+          options={DefaultRoomOptions}
         >
           <TestComponent listener={(occupancyEvent) => occupancyEvents.push(occupancyEvent)} />
         </ChatRoomProvider>

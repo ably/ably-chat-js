@@ -3,7 +3,7 @@ import * as Ably from 'ably';
 /**
  * Represents the default options for a chat room.
  */
-export const RoomOptionsDefaults = {
+export const DefaultRoomOptions = {
   /**
    * The default presence options for a chat room.
    */
@@ -89,26 +89,26 @@ export type OccupancyOptions = object;
 export interface RoomOptions {
   /**
    * The presence options for the room. To enable presence in the room, set this property. You may
-   * use {@link RoomOptionsDefaults.presence} to enable presence with default options.
+   * use {@link DefaultRoomOptions.presence} to enable presence with default options.
    * @defaultValue undefined
    */
   presence?: PresenceOptions;
 
   /**
    * The typing options for the room. To enable typing in the room, set this property. You may use
-   * {@link RoomOptionsDefaults.typing} to enable typing with default options.
+   * {@link DefaultRoomOptions.typing} to enable typing with default options.
    */
   typing?: TypingOptions;
 
   /**
    * The reactions options for the room. To enable reactions in the room, set this property. You may use
-   * {@link RoomOptionsDefaults.reactions} to enable reactions with default options.
+   * {@link DefaultRoomOptions.reactions} to enable reactions with default options.
    */
   reactions?: RoomReactionsOptions;
 
   /**
    * The occupancy options for the room. To enable occupancy in the room, set this property. You may use
-   * {@link RoomOptionsDefaults.occupancy} to enable occupancy with default options.
+   * {@link DefaultRoomOptions.occupancy} to enable occupancy with default options.
    */
   occupancy?: OccupancyOptions;
 }
