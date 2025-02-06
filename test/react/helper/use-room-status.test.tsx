@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Logger } from '../../../src/core/logger.ts';
 import { Room } from '../../../src/core/room.ts';
-import { RoomOptionsDefaults } from '../../../src/core/room-options.ts';
+import { DefaultRoomOptions } from '../../../src/core/room-options.ts';
 import { InternalRoomLifecycle, RoomStatus, RoomStatusChange } from '../../../src/core/room-status.ts';
 import { useRoomStatus } from '../../../src/react/helper/use-room-status.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
@@ -33,7 +33,7 @@ const updateMockRoom = (newRoom: Room) => {
 describe('useRoomStatus', () => {
   beforeEach(() => {
     mockLogger = makeTestLogger();
-    updateMockRoom(makeRandomRoom({ options: RoomOptionsDefaults }));
+    updateMockRoom(makeRandomRoom({ options: DefaultRoomOptions }));
   });
 
   afterEach(() => {

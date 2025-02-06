@@ -6,7 +6,7 @@ import { ChatApi } from '../../src/core/chat-api.ts';
 import { ErrorCodes } from '../../src/core/errors.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
-import { RoomOptions, RoomOptionsDefaults } from '../../src/core/room-options.ts';
+import { DefaultRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
 import { randomRoomId } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
@@ -32,7 +32,7 @@ export const getRandomRoom = async (chat: ChatClient): Promise<Room> =>
 
 // Return a default set of room options
 export const defaultRoomOptions: RoomOptions = {
-  ...RoomOptionsDefaults,
+  ...DefaultRoomOptions,
 };
 
 // Makes a room with the given (or default) options, as a standalone room aside from the chat client

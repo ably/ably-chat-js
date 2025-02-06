@@ -60,7 +60,7 @@ export type {
   RoomReactionsOptions,
   TypingOptions,
 } from './room-options.js';
-export { RoomOptionsDefaults } from './room-options.js';
+export { DefaultRoomOptions } from './room-options.js';
 export type {
   RoomReactionListener,
   RoomReactions,

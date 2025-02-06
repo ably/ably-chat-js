@@ -5,7 +5,7 @@ import { ChatClient } from '../../core/chat.js';
 import { Logger } from '../../core/logger.js';
 import { Room } from '../../core/room.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { RoomOptions, type RoomOptionsDefaults } from '../../core/room-options.js';
+import { type DefaultRoomOptions, RoomOptions } from '../../core/room-options.js';
 import { ChatRoomContext, ChatRoomContextType } from '../contexts/chat-room-context.js';
 import { useChatClient } from '../hooks/use-chat-client.js';
 import { useLogger } from '../hooks/use-logger.js';
@@ -19,15 +19,15 @@ export interface ChatRoomProviderProps {
 
   /**
    * The options to use when creating the room. A convenient default value is
-   * provided by {@link RoomOptionsDefaults}, but it must explicitly be set
+   * provided by {@link DefaultRoomOptions}, but it must explicitly be set
    * here.
    *
-   * {@link RoomOptionsDefaults} can also be used partially, for example:
+   * {@link DefaultRoomOptions} can also be used partially, for example:
    *
    * ```tsx
    * <ChatRoomProvider id="room-id" options={{
-   *   presence: RoomOptionsDefaults.presence,
-   *   reactions: RoomOptionsDefaults.reactions,
+   *   presence: DefaultRoomOptions.presence,
+   *   reactions: DefaultRoomOptions.reactions,
    * }} />
    * ```
    *
