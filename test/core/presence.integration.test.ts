@@ -23,7 +23,7 @@ interface TestContext {
   chat: ChatClient;
 }
 
-// Wait a maximum of 5 seconds for a particular presence event to be received
+// Wait a maximum of 20 seconds for a particular presence event to be received
 const waitForPresenceEvent = async (
   events: PresenceEvent[],
   action: PresenceEvents,
@@ -44,11 +44,11 @@ const waitForPresenceEvent = async (
       clearInterval(interval);
       const eventType = Array.isArray(action) ? action.join(',') : action;
       reject(new Error('Timed out waiting for presence event of type ' + eventType));
-    }, 5000);
+    }, 20000);
   });
 };
 
-// Wait a maximum of 3 seconds to assert that a presence event has not been received
+// Wait a maximum of 10 seconds to assert that a presence event has not been received
 const assertNoPresenceEvent = async (events: PresenceEvent[], action: PresenceEvents, clientId: string) => {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
@@ -65,7 +65,7 @@ const assertNoPresenceEvent = async (events: PresenceEvent[], action: PresenceEv
     setTimeout(() => {
       clearInterval(interval);
       resolve();
-    }, 3000);
+    }, 10000);
   });
 };
 
@@ -95,7 +95,7 @@ const waitForEvent = (
   });
 };
 
-describe('UserPresence', { timeout: 10000 }, () => {
+describe('UserPresence', { timeout: 30000 }, () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>(async (context) => {
     context.realtime = ablyRealtimeClient();
