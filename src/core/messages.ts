@@ -12,7 +12,17 @@ import {
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
-import { ChatMessageActions, MessageEventPayload, MessageEvents, RealtimeMessageNames } from './events.js';
+import {
+  ChatMessageActions,
+  ManyReactionSummary,
+  MessageEventPayload,
+  MessageEvents,
+  MessageReactionSummaryEvent,
+  ReactionRefType,
+  RealtimeMessageNames,
+  SingleReactionSummary,
+  UniqueReactionSummary,
+} from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
@@ -270,11 +280,141 @@ export interface Messages extends EmitsDiscontinuities {
   update(message: Message, update: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
+   * Add, remove and subscribe to message reactions.
+   */
+  reactions: Reactions;
+
+  /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
    *
    * @returns The realtime channel.
    */
   get channel(): Ably.RealtimeChannel;
+}
+
+interface MessageReactionEvent {
+  type: 'message-reaction-create' | 'message-reaction-remove';
+  timestamp: Date;
+  refSerial: string;
+}
+
+export type MessageReactionListener = (event: MessageReactionSummaryEvent) => void;
+export type MessageRawReactionListener = (event: MessageReactionEvent) => void;
+
+export interface Unsubscribable {
+  unsubscribe: () => void;
+}
+
+interface Reactions {
+  add(message: Message, refType: ReactionRefType, reaction: string, score?: number): Promise<void>;
+  remove(message: Message, refType: ReactionRefType, reaction: string): Promise<void>;
+  subscribe(listener: MessageReactionListener): Unsubscribable;
+  subscribeRaw(listener: MessageRawReactionListener): Unsubscribable;
+}
+
+export class DefaultMessageReactions implements Reactions {
+  private _emitter = new EventEmitter<{ reaction: MessageReactionEvent; summary: MessageReactionSummaryEvent }>();
+
+  constructor(
+    private readonly _logger: Logger,
+    private readonly _api: ChatApi,
+    private readonly _channel: Ably.RealtimeChannel,
+  ) {
+    this._channel.annotations.subscribe(this._processAnnotationEvent.bind(this));
+  }
+
+  private _processAnnotationEvent(event: Ably.Annotation) {
+    console.log('ably-chat-js: annotation received:', event);
+  }
+
+  private _processMessageEvent(event: Ably.InboundMessage) {
+    // only process summary events
+    if (event.action !== ChatMessageActions.MessageAnnotationSummary) {
+      return;
+    }
+    // they must have a refSerial
+    if (!event.refSerial) {
+      return;
+    }
+    // they must have a version
+    if (!event.version) {
+      return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
+    const unique: Record<string, UniqueReactionSummary> = (event.summary || {})[ReactionRefType.Unique] || {};
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
+    const single: Record<string, SingleReactionSummary> = (event.summary || {})[ReactionRefType.Single] || {};
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
+    const many: Record<string, ManyReactionSummary> = (event.summary || {})[ReactionRefType.Many] || {};
+
+    this._emitter.emit('summary', {
+      type: 'message-reaction-summary',
+      timestamp: new Date(event.timestamp),
+      refSerial: event.refSerial,
+      version: event.version,
+      unique: unique,
+      single: single,
+      many: many,
+    });
+  }
+
+  add(message: { serial: string }, refType: ReactionRefType, reaction: string, score?: number): Promise<void> {
+    if (score !== undefined && refType != ReactionRefType.Many) {
+      throw new Ably.ErrorInfo('message reaction score is only supported for reaction:many.v1', 40000, 400);
+    }
+
+    if (refType === ReactionRefType.Many) {
+      score = score && score >= 1 ? score : 1;
+      return this._channel.annotations.publish(
+        message.serial,
+        refType,
+        JSON.stringify({ emoji: reaction, count: score }),
+      );
+    }
+
+    return this._channel.annotations.publish(message.serial, refType, reaction);
+  }
+
+  remove(message: Message, refType: ReactionRefType, reaction: string): Promise<void> {
+    return (this._channel.annotations as any).delete(message.serial, refType, reaction) as Promise<void>;
+  }
+
+  /**
+   * Subscribe to message reaction summaries. Use this to keep message reaction
+   * counts up to date efficiently in the UI.
+   * @param listener
+   * @returns
+   */
+  subscribe(listener: MessageReactionListener): Unsubscribable {
+    const unique = (event: MessageReactionSummaryEvent) => {
+      listener(event);
+    };
+    this._emitter.on('summary', unique);
+    return {
+      unsubscribe: () => {
+        this._emitter.off(unique);
+      },
+    };
+  }
+
+  /**
+   * Subscribe to individual reaction events.
+   * @param listener
+   * @returns
+   */
+  subscribeRaw(listener: MessageRawReactionListener): Unsubscribable {
+    // todo: maybe throw error if single reaction subscription not configured on realtime channel
+    const unique = (event: MessageReactionEvent) => {
+      listener(event);
+    };
+    this._emitter.on('reaction', unique);
+    return {
+      unsubscribe: () => {
+        this._emitter.off(unique);
+      },
+    };
+  }
 }
 
 /**
@@ -297,6 +437,8 @@ export class DefaultMessages
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
+  public readonly reactions: Reactions;
+
   /**
    * Constructs a new `DefaultMessages` instance.
    * @param roomId The unique identifier of the room.
@@ -315,6 +457,8 @@ export class DefaultMessages
     this._clientId = clientId;
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
+
+    this.reactions = new DefaultMessageReactions(this._logger, this._chatApi, this._channel);
   }
 
   /**
@@ -603,6 +747,7 @@ export class DefaultMessages
     this._logger.trace('Messages._processEvent();', {
       channelEventMessage,
     });
+    console.log("got message: ", channelEventMessage);
     const { action } = channelEventMessage;
     const event = MessageActionsToEventsMap.get(action as ChatMessageActions);
     if (!event) {
