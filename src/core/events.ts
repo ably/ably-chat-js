@@ -35,11 +35,8 @@ export enum ChatMessageActions {
   /** Action applied to a deleted message. */
   MessageDelete = 'message.delete',
 
-  /** Action applied to a new annotation. */
-  MessageAnnotationCreate = 'annotation.create',
-
-  /** Action applied to a deleted annotation. */
-  MessageAnnotationDelete = 'annotation.delete',
+  /** Action applied to an annotation summary message. */
+  MessageAnnotationSummary = 'message.summary',
 
   /** Action applied to a meta occupancy message. */
   MessageMetaOccupancy = 'meta.occupancy',
@@ -98,4 +95,156 @@ export interface MessageEvent {
    * The message that was received.
    */
   message: Message;
+}
+
+/**
+ * All annotation types supported by Chat Message Reactions.
+ */
+export enum MessageReactionType {
+  /**
+   * Allows for at most one reaction per client per message. If a client reacts
+   * to a message a second time, only the second reaction is counted in the
+   * summary.
+   *
+   * This is similar to reactions on iMessage, Facebook Messenger or WhatsApp.
+   */
+  Unique = 'reaction:unique.v1',
+
+  /**
+   * Allows for at most one reaction of each type per client per message. It is
+   * possible for a client to add multiple reactions to the same message as
+   * long as they are different (eg different emojis). Duplicates are not
+   * counted in the summary.
+   *
+   * This is similar to reactions on Slack.
+   */
+  Distinct = 'reaction:distinct.v1',
+
+  /**
+   * Allows any number of reactions, including repeats, and they are counted in
+   * the summary. The reaction payload also includes a count of how many times
+   * each reaction should be counted (defaults to 1 if not set).
+   *
+   * This is similar to the clap feature on Medium or how room reactions work.
+   */
+  Multiple = 'reaction:multiple.v1',
+}
+
+/**
+ * Represents the summary of reactions of type @link{MessageReactionType.Unique}.
+ */
+export interface UniqueReactionSummary {
+  /**
+   * Total number of reactions.
+   */
+  total: number;
+
+  /**
+   * List of client IDs that reacted to the message.
+   */
+  clientIds: string[];
+}
+
+/**
+ * Represents the summary of reactions of type @link{MessageReactionType.Distinct}.
+ */
+export interface DistinctReactionSummary {
+  /**
+   * Total number of reactions.
+   */
+  total: number;
+
+  /**
+   * List of client IDs that reacted to the message.
+   */
+  clientIds: string[];
+}
+
+/**
+ * Represents the summary of reactions of type @link{MessageReactionType.Multiple}.
+ */
+export interface MultipleReactionSummary {
+  /**
+   * Total number of reactions, where each reaction can count more than once,
+   * controlled by its `count` property.
+   */
+  total: number;
+
+  /**
+   * List of client IDs that reacted to the message, with the total count for
+   * each client.
+   */
+  clientIds: Record<string, number>;
+}
+
+/**
+ * Enum representing different message reaction events in the chat system.
+ * @enum {string}
+ */
+export enum MessageReactionEvents {
+  /**
+   * A reaction was added to a message.
+   */
+  Create = 'reaction.create',
+  /**
+   * A reaction was removed from a message.
+   */
+  Delete = 'reaction.delete',
+  /**
+   * A reactions summary was updated for a message.
+   */
+  Summary = 'reaction.summary',
+}
+
+/**
+ * Represents an individual message reaction event.
+ */
+export interface MessageReactionRawEvent {
+  /** Whether reaction was added or removed */
+  type: MessageReactionEvents.Create | MessageReactionEvents.Delete;
+
+  /** Serial of the message this reaction is for */
+  messageSerial: string;
+
+  /** Type of reaction */
+  reactionType: MessageReactionType;
+
+  /** The reaction (typically an emoji) */
+  reaction: string;
+
+  /** Count of the reaction (only for type Multiple, if set) */
+  count?: number;
+
+  /** The client ID of the user who added/removed the reaction */
+  clientId: string;
+
+  /** The timestamp of this event */
+  timestamp: Date;
+}
+
+/**
+ * Event interface representing a summary of message reactions.
+ * This event aggregates different types of reactions (single, distinct, counter) for a specific message.
+ */
+export interface MessageReactionSummaryEvent {
+  /** The type of the event */
+  type: MessageReactionEvents.Summary;
+
+  /** When the summary was generated */
+  timestamp: Date;
+
+  /** Reference to the original message's serial number */
+  messageSerial: string;
+
+  /** Version of the summary event */
+  version: string;
+
+  /** Map of unique-type reactions summaries */
+  unique: Record<string, UniqueReactionSummary>;
+
+  /** Map of distinct-type reactions summaries */
+  distinct: Record<string, DistinctReactionSummary>;
+
+  /** Map of multiple-type reactions summaries */
+  multiple: Record<string, MultipleReactionSummary>;
 }
