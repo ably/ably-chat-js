@@ -14,7 +14,7 @@ export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
 export type { MessageEventPayload } from './events.js';
-export { ChatMessageActions, MessageEvents, PresenceEvents } from './events.js';
+export { ChatMessageActions, MessageEvents, PresenceEvents, ReactionRefType } from './events.js';
 export type { Headers } from './headers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
@@ -22,6 +22,8 @@ export type { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata
 export type {
   DeleteMessageParams,
   MessageListener,
+  MessageRawReactionListener,
+  MessageReactionListener,
   Messages,
   MessageSubscriptionResponse,
   OperationDetails,

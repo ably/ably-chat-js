@@ -1,15 +1,21 @@
-import { Message } from '@ably/chat';
+import { Message, ReactionRefType, useChatClient } from '@ably/chat';
 import React, { useCallback } from 'react';
 import clsx from 'clsx';
 import { FaPencil, FaTrash } from 'react-icons/fa6';
+import { MessageReactionsSingle, MessageReactionsUnique, MessageReactionsMany } from '../MessageReactions';
 
 interface MessageProps {
   self?: boolean;
   message: Message;
 
+  reactionRefType?: ReactionRefType;
+
   onMessageUpdate?(message: Message): void;
 
   onMessageDelete?(msg: Message): void;
+
+  onReactionAdd?(msg: Message, refType: string, reaction: string, score?: number): void;
+  onReactionRemove?(msg: Message, refType: string, reaction: string): void;
 }
 
 const shortDateTimeFormatter = new Intl.DateTimeFormat('default', {
@@ -35,9 +41,16 @@ function shortDate(date: Date): string {
 export const MessageComponent: React.FC<MessageProps> = ({
   self = false,
   message,
+  reactionRefType = ReactionRefType.Single,
   onMessageUpdate,
   onMessageDelete,
+  onReactionAdd,
+  onReactionRemove,
 }) => {
+
+  const client = useChatClient();
+  const clientId = client.clientId;
+
   const handleMessageUpdate = useCallback(
     (e: React.UIEvent) => {
       e.stopPropagation();
@@ -53,6 +66,43 @@ export const MessageComponent: React.FC<MessageProps> = ({
     },
     [message, onMessageDelete],
   );
+
+  let reactionsUI = <></>;
+
+  if (onReactionAdd && onReactionRemove) {
+    switch (reactionRefType) {
+      case ReactionRefType.Unique: {
+        reactionsUI = (
+          <MessageReactionsUnique
+            message={message}
+            clientId={clientId}
+            onReactionAdd={onReactionAdd}
+            onReactionRemove={onReactionRemove}
+          />
+        );
+        break;
+      }
+      case ReactionRefType.Single: {
+        reactionsUI = (
+          <MessageReactionsSingle
+            message={message}
+            clientId={clientId}
+            onReactionAdd={onReactionAdd}
+            onReactionRemove={onReactionRemove}
+          />
+        );
+        break;
+      }
+      case ReactionRefType.Many: {
+        reactionsUI = (<MessageReactionsMany
+          message={message}
+          onReactionAdd={onReactionAdd}
+          onReactionRemove={onReactionRemove}
+        />);
+        break;
+      }
+    }      
+  }
 
   return (
     <div className="chat-message">
@@ -106,6 +156,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
               onClick={handleMessageDelete}
               aria-label="Delete message"
             />
+            {reactionsUI}
           </div>
         </div>
       </div>
