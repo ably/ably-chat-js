@@ -33,13 +33,17 @@ jobs:
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
+        # Only run this step if it's a PR from the main repository, as forks won't have the necessary secrets
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
         with:
           aws-region: eu-west-2
           role-to-assume: arn:aws:iam::${{ secrets.ABLY_AWS_ACCOUNT_ID_SDK }}:role/ably-sdk-builds-ably-chat-js
-          role-session-name: "${{ github.run_id }}-${{ github.run_number }}"
+          role-session-name: '${{ github.run_id }}-${{ github.run_number }}'
 
       - name: Upload Documentation
         uses: ably/sdk-upload-action@v2
+        # Only run this step if it's a PR from the main repository, as forks won't have the necessary secrets
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
         with:
           sourcePath: typedoc/generated
           githubToken: ${{ secrets.GITHUB_TOKEN }}
