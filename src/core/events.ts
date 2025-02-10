@@ -1,3 +1,5 @@
+import * as Ably from 'ably';
+
 import { Message } from './message.js';
 
 /**
@@ -35,11 +37,8 @@ export enum ChatMessageActions {
   /** Action applied to a deleted message. */
   MessageDelete = 'message.delete',
 
-  /** Action applied to a new annotation. */
-  MessageAnnotationCreate = 'annotation.create',
-
-  /** Action applied to a deleted annotation. */
-  MessageAnnotationDelete = 'annotation.delete',
+  /** Action applied to an annotation summary message. */
+  MessageAnnotationSummary = 'message.summary',
 
   /** Action applied to a meta occupancy message. */
   MessageMetaOccupancy = 'meta.occupancy',
@@ -98,4 +97,112 @@ export interface MessageEvent {
    * The message that was received.
    */
   message: Message;
+}
+
+/**
+ * All annotation types supported by Chat Message Reactions.
+ */
+export enum MessageReactionType {
+  /**
+   * Allows for at most one reaction per client per message. If a client reacts
+   * to a message a second time, only the second reaction is counted in the
+   * summary.
+   *
+   * This is similar to reactions on iMessage, Facebook Messenger or WhatsApp.
+   */
+  Unique = 'reaction:unique.v1',
+
+  /**
+   * Allows for at most one reaction of each type per client per message. It is
+   * possible for a client to add multiple reactions to the same message as
+   * long as they are different (eg different emojis). Duplicates are not
+   * counted in the summary.
+   *
+   * This is similar to reactions on Slack.
+   */
+  Distinct = 'reaction:distinct.v1',
+
+  /**
+   * Allows any number of reactions, including repeats, and they are counted in
+   * the summary. The reaction payload also includes a count of how many times
+   * each reaction should be counted (defaults to 1 if not set).
+   *
+   * This is similar to the clap feature on Medium or how room reactions work.
+   */
+  Multiple = 'reaction:multiple.v1',
+}
+
+/**
+ * Enum representing different message reaction events in the chat system.
+ * @enum {string}
+ */
+export enum MessageReactionEvents {
+  /**
+   * A reaction was added to a message.
+   */
+  Create = 'reaction.create',
+  /**
+   * A reaction was removed from a message.
+   */
+  Delete = 'reaction.delete',
+  /**
+   * A reactions summary was updated for a message.
+   */
+  Summary = 'reaction.summary',
+}
+
+/**
+ * Represents an individual message reaction event.
+ */
+export interface MessageReactionRawEvent {
+  /** Whether reaction was added or removed */
+  type: MessageReactionEvents.Create | MessageReactionEvents.Delete;
+
+  /** The timestamp of this event */
+  timestamp: Date;
+
+  /** The message reaction that was received. */
+  reaction: {
+    /** Serial of the message this reaction is for */
+    messageSerial: string;
+
+    /** Type of reaction */
+    type: MessageReactionType;
+
+    /** The reaction (typically an emoji) */
+    reaction: string;
+
+    /** Count of the reaction (only for type Multiple, if set) */
+    count?: number;
+
+    /** The client ID of the user who added/removed the reaction */
+    clientId: string;
+  };
+}
+
+/**
+ * Event interface representing a summary of message reactions.
+ * This event aggregates different types of reactions (single, distinct, counter) for a specific message.
+ */
+export interface MessageReactionSummaryEvent {
+  /** The type of the event */
+  type: MessageReactionEvents.Summary;
+
+  /** The message reactions summary. */
+  summary: {
+    /** When the summary was generated */
+    timestamp: Date;
+
+    /** Reference to the original message's serial number */
+    messageSerial: string;
+
+    /** Map of unique-type reactions summaries */
+    unique: Ably.SummaryUniqueValues;
+
+    /** Map of distinct-type reactions summaries */
+    distinct: Ably.SummaryDistinctValues;
+
+    /** Map of multiple-type reactions summaries */
+    multiple: Ably.SummaryMultipleValues;
+  };
 }

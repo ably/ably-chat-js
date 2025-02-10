@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ChatMessageActions, MessageEvent, MessageEvents } from '../../src/core/events.ts';
-import { DefaultMessage, Message } from '../../src/core/message.ts';
+import { DefaultMessage, emptyMessageReactions, Message } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
   it('is the same as another message', () => {
@@ -19,6 +19,7 @@ describe('ChatMessage', () => {
       firstSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
     const secondMessage = new DefaultMessage(
       secondSerial,
@@ -31,6 +32,7 @@ describe('ChatMessage', () => {
       secondSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
 
     expect(firstMessage.equal(secondMessage)).toBe(true);
@@ -51,6 +53,7 @@ describe('ChatMessage', () => {
       firstSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
     const secondMessage = new DefaultMessage(
       secondSerial,
@@ -63,6 +66,7 @@ describe('ChatMessage', () => {
       secondSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
 
     expect(firstMessage.equal(secondMessage)).toBe(false);
@@ -83,6 +87,7 @@ describe('ChatMessage', () => {
       firstSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
     const secondMessage = new DefaultMessage(
       secondSerial,
@@ -95,6 +100,7 @@ describe('ChatMessage', () => {
       secondSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
 
     expect(firstMessage.isSameAs(secondMessage)).toBe(true);
@@ -115,6 +121,7 @@ describe('ChatMessage', () => {
       firstSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
     const secondMessage = new DefaultMessage(
       secondSerial,
@@ -127,6 +134,7 @@ describe('ChatMessage', () => {
       secondSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
 
     expect(firstMessage.isSameAs(secondMessage)).toBe(false);
@@ -147,6 +155,7 @@ describe('ChatMessage', () => {
       firstSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
     const secondMessage = new DefaultMessage(
       secondSerial,
@@ -159,6 +168,7 @@ describe('ChatMessage', () => {
       secondSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
 
     expect(firstMessage.before(secondMessage)).toBe(true);
@@ -179,6 +189,7 @@ describe('ChatMessage', () => {
       firstSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
     const secondMessage = new DefaultMessage(
       secondSerial,
@@ -191,6 +202,7 @@ describe('ChatMessage', () => {
       secondSerial,
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
     );
 
     expect(firstMessage.after(secondMessage)).toBe(true);
@@ -210,6 +222,7 @@ describe('ChatMessage', () => {
         '01672531300000-123@abcdefghij:0',
         new Date(1672531200000),
         new Date(1672531300000),
+        emptyMessageReactions(),
         {
           clientId: 'clientId2',
         },
@@ -231,6 +244,7 @@ describe('ChatMessage', () => {
         '01672531200000-123@abcdefghij:0',
         new Date(1672531200000),
         new Date(1672531300000),
+        emptyMessageReactions(),
         { clientId: 'clientId2' },
       );
       expect(firstMessage.isUpdated).toBe(true);
@@ -255,6 +269,7 @@ describe('ChatMessage', () => {
         firstVersion,
         new Date(1672531200000),
         new Date(1672531200000),
+        emptyMessageReactions(),
       );
       const secondMessage = new DefaultMessage(
         secondSerial,
@@ -267,6 +282,7 @@ describe('ChatMessage', () => {
         secondVersion,
         new Date(1672531200000),
         new Date(1672531200000),
+        emptyMessageReactions(),
       );
 
       expect(firstMessage.isSameVersionAs(secondMessage)).toBe(false);
@@ -333,6 +349,7 @@ describe('ChatMessage', () => {
           firstVersion,
           new Date(1672531200000),
           new Date(1672531200001),
+          emptyMessageReactions(),
         );
         const secondMessage = new DefaultMessage(
           messageSerial,
@@ -345,6 +362,7 @@ describe('ChatMessage', () => {
           secondVersion,
           new Date(1672531200000),
           new Date(1672531200001),
+          emptyMessageReactions(),
         );
         expected(firstMessage, secondMessage);
       });
@@ -363,6 +381,7 @@ describe('ChatMessage', () => {
       '01672531200100-123@abcdefghij',
       new Date(1672531200000),
       new Date(1672531200000),
+      emptyMessageReactions(),
       undefined,
     );
 
@@ -379,6 +398,7 @@ describe('ChatMessage', () => {
         '01672531200500-123@abcdefghij',
         new Date(1672531200000),
         new Date(1672531200500),
+        emptyMessageReactions(),
         { clientId: 'luke' },
       );
 
@@ -406,6 +426,7 @@ describe('ChatMessage', () => {
         '01672531200500-123@abcdefghij',
         new Date(1672531200000),
         new Date(1672531200500),
+        emptyMessageReactions(),
         { clientId: 'luke' },
       );
 
@@ -433,6 +454,7 @@ describe('ChatMessage', () => {
         '01672531209999-123@abcdefghij',
         new Date(1672531200000),
         new Date(1672531209999),
+        emptyMessageReactions(),
         { clientId: 'luke' },
       );
 
@@ -458,6 +480,7 @@ describe('ChatMessage', () => {
         '01672531209999-123@abcdefghij',
         new Date(1672531200000),
         new Date(1672531209999),
+        emptyMessageReactions(),
         { clientId: 'luke' },
       );
 
@@ -483,6 +506,7 @@ describe('ChatMessage', () => {
         '01672531200000-123@abcdefghij',
         new Date(1672531200000),
         new Date(1672531209999),
+        emptyMessageReactions(),
         { clientId: 'luke' },
       );
 
@@ -507,6 +531,7 @@ describe('ChatMessage', () => {
         message.version,
         new Date(1672531200000),
         new Date(1672531209999),
+        emptyMessageReactions(),
         { clientId: 'luke' },
       );
 
@@ -533,6 +558,7 @@ describe('ChatMessage', () => {
         'version1',
         new Date(1672531200000),
         new Date(1672531200000),
+        emptyMessageReactions(),
       );
 
       const copiedMessage = originalMessage.copy({
@@ -564,13 +590,32 @@ describe('ChatMessage', () => {
         'version1',
         new Date(1672531200000),
         new Date(1672531200000),
+        {
+          unique: {
+            '👍': { total: 2, clientIds: ['a', 'b'] },
+          },
+          distinct: {
+            '👍': { total: 2, clientIds: ['a', 'b'] },
+            '🚀': { total: 1, clientIds: ['a'] },
+          },
+          multiple: {
+            '👍': { total: 10, clientIds: { a: 6, b: 4 }, totalUnidentified: 0 },
+            '🚀': { total: 1, clientIds: { a: 1 }, totalUnidentified: 0 },
+          },
+        },
+        { clientId: 'luke' },
       );
 
       const copiedMessage = originalMessage.copy();
 
       expect(copiedMessage.text).toBe(originalMessage.text);
-      expect(copiedMessage.metadata).toEqual(originalMessage.metadata);
-      expect(copiedMessage.headers).toEqual(originalMessage.headers);
+
+      expect(copiedMessage.metadata).toEqual(originalMessage.metadata); // must be equal
+      expect(copiedMessage.metadata).not.toBe(originalMessage.metadata); // but not same object
+
+      expect(copiedMessage.headers).toEqual(originalMessage.headers); // must be equal
+      expect(copiedMessage.headers).not.toBe(originalMessage.headers); // but not same object
+
       expect(copiedMessage.serial).toBe(originalMessage.serial);
       expect(copiedMessage.clientId).toBe(originalMessage.clientId);
       expect(copiedMessage.roomId).toBe(originalMessage.roomId);
@@ -578,6 +623,12 @@ describe('ChatMessage', () => {
       expect(copiedMessage.version).toBe(originalMessage.version);
       expect(copiedMessage.createdAt).toEqual(originalMessage.createdAt);
       expect(copiedMessage.timestamp).toEqual(originalMessage.timestamp);
+
+      expect(copiedMessage.reactions).toEqual(originalMessage.reactions); // must be equal
+      expect(copiedMessage.reactions).not.toBe(originalMessage.reactions); // but not same object
+
+      expect(copiedMessage.operation).toEqual(originalMessage.operation); // must be equal
+      expect(copiedMessage.operation).not.toBe(originalMessage.operation); // but not same object
     });
 
     it('ensures deep copy of metadata and headers', () => {
@@ -592,6 +643,7 @@ describe('ChatMessage', () => {
         'version1',
         new Date(1672531200000),
         new Date(1672531200000),
+        emptyMessageReactions(),
       );
 
       const copiedMessage = originalMessage.copy();
@@ -622,6 +674,7 @@ describe('ChatMessage', () => {
         'version1',
         new Date(1672531200000),
         new Date(1672531200000),
+        emptyMessageReactions(),
       );
 
       const copiedMessage = originalMessage.copy({

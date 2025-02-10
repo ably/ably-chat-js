@@ -1,10 +1,12 @@
 import * as Ably from 'ably';
 import cloneDeep from 'lodash.clonedeep';
 
+import { messagesChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
+import { DefaultMessageReactions } from './messages-reactions.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
@@ -169,7 +171,14 @@ export class DefaultRoom implements Room {
     const channelManager = (this._channelManager = this._getChannelManager(options, realtime, this._logger));
 
     // Setup features
-    this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, this._logger);
+    this._messages = new DefaultMessages(
+      roomId,
+      options.messages ?? {},
+      channelManager,
+      this._chatApi,
+      realtime.auth.clientId,
+      this._logger,
+    );
 
     const features: ContributesToRoomLifecycle[] = [this._messages];
 
@@ -227,6 +236,19 @@ export class DefaultRoom implements Room {
    */
   private _getChannelManager(options: NormalizedRoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
     const manager = new ChannelManager(realtime, logger, options.isReactClient);
+
+    // add PUBLISH and SUBSCRIBE channel models for messages channel which are required
+    // other modes are added by individual features
+    manager.mergeOptions(messagesChannelName(this._roomId), (options) => {
+      const modes = options.modes ?? [];
+      modes.push('PUBLISH', 'SUBSCRIBE');
+      return {
+        ...options,
+        modes,
+      };
+    });
+
+    manager.mergeOptions(messagesChannelName(this._roomId), DefaultMessageReactions.channelOptionMerger(options));
 
     if (options.occupancy) {
       manager.mergeOptions(DefaultOccupancy.channelName(this._roomId), DefaultOccupancy.channelOptionMerger());

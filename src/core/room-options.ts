@@ -1,5 +1,7 @@
 import * as Ably from 'ably';
 
+import { MessageReactionType } from './events.js';
+
 /**
  * A set of example options for a Chat room that enables all features, this is
  * useful for testing and demonstration purposes.
@@ -39,7 +41,41 @@ export const AllFeaturesEnabled = {
    * The default occupancy options for a chat room.
    */
   occupancy: {} as OccupancyOptions,
+
+  /**
+   * The default options for messages.
+   */
+  messages: {
+    rawMessageReactions: true,
+    defaultMessageReactionType: MessageReactionType.Distinct,
+  } as MessageOptions,
 };
+
+/**
+ * Represents the message options for a chat room.
+ */
+export interface MessageOptions {
+  /**
+   * Whether to enable receiving raw individual message reactions from the
+   * realtime channel. Set to true if subscribing to raw message reactions.
+   *
+   * Note reaction summaries (aggregates) are always available regardless of
+   * this setting.
+   *
+   * @defaultValue true
+   */
+  rawMessageReactions?: boolean;
+
+  /**
+   * The default message reaction type to use for sending message reactions.
+   *
+   * Any message reaction type can be sent regardless of this setting by specifying the `type` parameter
+   * in the {@link MessagesReactions.add} method.
+   *
+   * @defaultValue {@link MessageReactionType.Distinct}
+   */
+  defaultMessageReactionType?: MessageReactionType;
+}
 
 /**
  * Represents the presence options for a chat room.
@@ -112,6 +148,12 @@ export interface RoomOptions {
    * {@link AllFeaturesEnabled.occupancy} to enable occupancy with default options.
    */
   occupancy?: OccupancyOptions;
+
+  /**
+   * The message options for the room. Messages are always enabled, this object is for additional
+   * configuration. You may use {@link AllFeaturesEnabled.messages} or leave empty to use the defaults.
+   */
+  messages?: MessageOptions;
 }
 
 /**

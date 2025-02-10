@@ -397,7 +397,7 @@ export class DefaultPresence implements Presence, HandlesDiscontinuity, Contribu
    */
   static channelOptionMerger(roomOptions: RoomOptions): ChannelOptionsMerger {
     return (options) => {
-      const channelModes = ['PUBLISH', 'SUBSCRIBE'] as Ably.ChannelMode[];
+      const channelModes = options.modes ?? [];
       if (roomOptions.presence?.enter === undefined || roomOptions.presence.enter) {
         channelModes.push('PRESENCE');
       }

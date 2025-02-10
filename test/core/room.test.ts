@@ -102,7 +102,58 @@ describe('Room', () => {
         // Check that the shared channel for messages, occupancy and presence was called with the correct options
         const expectedMessagesChannelOptions = {
           params: { occupancy: 'metrics', agent: agentString },
-          modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE'],
+          modes: [
+            'PUBLISH',
+            'SUBSCRIBE',
+            'ANNOTATION_PUBLISH',
+            'ANNOTATION_SUBSCRIBE',
+            'PRESENCE',
+            'PRESENCE_SUBSCRIBE',
+          ],
+          attachOnSubscribe: false,
+        };
+
+        expect(context.realtime.channels.get).toHaveBeenCalledTimes(5);
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+          1,
+          room.messages.channel.name,
+          expectedMessagesChannelOptions,
+        );
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+          2,
+          room.messages.channel.name,
+          expectedMessagesChannelOptions,
+        );
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+          5,
+          room.messages.channel.name,
+          expectedMessagesChannelOptions,
+        );
+
+        // Check that the reactions and typing channels were called with the default options
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(3, room.typing.channel.name, defaultOptions);
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(4, room.reactions.channel.name, defaultOptions);
+      });
+    },
+  );
+
+  describe.each([
+    ['vanilla JS', false, CHANNEL_OPTIONS_AGENT_STRING, DEFAULT_CHANNEL_OPTIONS],
+    ['react', true, CHANNEL_OPTIONS_AGENT_STRING_REACT, DEFAULT_CHANNEL_OPTIONS_REACT],
+  ])(
+    'should not have ANNOTATION_SUBSCRIBE if raw annotations disabled: %s',
+    (description: string, setReact: boolean, agentString: string, defaultOptions: unknown) => {
+      it<TestContext>('applies the correct options', (context) => {
+        vi.spyOn(context.realtime.channels, 'get');
+        const room = context.getRoom(
+          { ...AllFeaturesEnabled, messages: { rawMessageReactions: false } },
+          setReact,
+        ) as DefaultRoom;
+
+        // Check that the shared channel for messages, occupancy and presence was called with the correct options
+        const expectedMessagesChannelOptions = {
+          params: { occupancy: 'metrics', agent: agentString },
+          modes: ['PUBLISH', 'SUBSCRIBE', 'ANNOTATION_PUBLISH', 'PRESENCE', 'PRESENCE_SUBSCRIBE'],
           attachOnSubscribe: false,
         };
 
