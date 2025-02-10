@@ -1,6 +1,14 @@
 import { ErrorInfo } from 'ably';
 
-import { ChatMessageActions, MessageEvent, MessageEvents } from './events.js';
+import {
+  ChatMessageActions,
+  ManyReactionSummary,
+  MessageEvent,
+  MessageEvents,
+  MessageReactionSummaryEvent,
+  SingleReactionSummary,
+  UniqueReactionSummary,
+} from './events.js';
 import { Headers } from './headers.js';
 import { Metadata } from './metadata.js';
 import { OperationMetadata } from './operation-metadata.js';
@@ -117,6 +125,8 @@ export interface Message {
    */
   readonly operation?: Operation;
 
+  readonly reactions: MessageReactions;
+
   /**
    * Indicates if the message has been updated.
    */
@@ -229,7 +239,7 @@ export interface Message {
    * @returns A new message instance with the event applied. If the event is a no-op, such
    *    as an event for an old version, the same message is returned (not a copy).
    */
-  with(event: MessageEvent): Message;
+  with(event: MessageEvent | MessageReactionSummaryEvent): Message;
 
   /**
    * Creates a copy of the message with fields replaced per the parameters.
@@ -259,6 +269,12 @@ export interface MessageCopyParams {
    */
   headers?: MessageHeaders;
 }
+interface MessageReactions {
+  version: string;
+  unique: Record<string, UniqueReactionSummary>;
+  single: Record<string, SingleReactionSummary>;
+  many: Record<string, ManyReactionSummary>;
+}
 
 /**
  * An implementation of the Message interface for chat messages.
@@ -266,6 +282,8 @@ export interface MessageCopyParams {
  * Allows for comparison of messages based on their serials.
  */
 export class DefaultMessage implements Message {
+  public readonly reactions: MessageReactions;
+
   constructor(
     public readonly serial: string,
     public readonly clientId: string,
@@ -278,8 +296,21 @@ export class DefaultMessage implements Message {
     public readonly createdAt: Date,
     public readonly timestamp: Date,
     public readonly operation?: Operation,
+    reactions?: MessageReactions,
   ) {
+    // Make sure reactions are always set as empty even if none provided
+    this.reactions = reactions ?? {
+      version: '',
+      unique: {},
+      single: {},
+      many: {},
+    };
+
     // The object is frozen after constructing to enforce readonly at runtime too
+    Object.freeze(this.reactions);
+    Object.freeze(this.reactions.many);
+    Object.freeze(this.reactions.single);
+    Object.freeze(this.reactions.unique);
     Object.freeze(this);
   }
 
@@ -347,20 +378,43 @@ export class DefaultMessage implements Message {
     return this.equal(message);
   }
 
-  with(event: MessageEvent): Message {
+  with(event: MessageEvent | MessageReactionSummaryEvent): Message {
     if (event.type === MessageEvents.Created) {
       throw new ErrorInfo('cannot apply a created event to a message', 40000, 400);
     }
 
+    // reaction summary
+    if (event.type === 'message-reaction-summary') {
+      if (event.refSerial !== this.serial) {
+        throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
+      }
+
+      if (this.reactions.version >= event.version) {
+        return this;
+      }
+
+      const newReactions: MessageReactions = {
+        version: event.version,
+        unique: structuredClone(event.unique),
+        single: structuredClone(event.single),
+        many: structuredClone(event.many),
+      };
+
+      return DefaultMessage._clone(this, { reactions: newReactions });
+    }
+
+    // message event (update or delete)
     if (event.message.serial !== this.serial) {
       throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
     }
 
-    return this.version >= event.message.version ? this : event.message;
-  }
+    // event is older, keep this instead
+    if (this.version >= event.message.version) {
+      return this;
+    }
 
-  copy(params: MessageCopyParams = {}): Message {
-    return DefaultMessage._clone(this, params);
+    // event is newer, copy reactions from this and make new message from event
+    return DefaultMessage._clone(event.message, { reactions: this.reactions });
   }
 
   // Clone a message, optionally replace the given fields
@@ -377,6 +431,11 @@ export class DefaultMessage implements Message {
       replace?.createdAt ?? source.createdAt,
       replace?.timestamp ?? source.timestamp,
       replace?.operation ?? structuredClone(source.operation),
+      replace?.reactions ?? structuredClone(source.reactions),
     );
+  }
+
+  copy(params: MessageCopyParams = {}): Message {
+    return DefaultMessage._clone(this, params);
   }
 }

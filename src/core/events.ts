@@ -35,11 +35,8 @@ export enum ChatMessageActions {
   /** Action applied to a deleted message. */
   MessageDelete = 'message.delete',
 
-  /** Action applied to a new annotation. */
-  MessageAnnotationCreate = 'annotation.create',
-
-  /** Action applied to a deleted annotation. */
-  MessageAnnotationDelete = 'annotation.delete',
+  /** Action applied to an annotation summary message. */
+  MessageAnnotationSummary = 'message.summary',
 
   /** Action applied to a meta occupancy message. */
   MessageMetaOccupancy = 'meta.occupancy',
@@ -98,4 +95,37 @@ export interface MessageEvent {
    * The message that was received.
    */
   message: Message;
+}
+
+export enum ReactionRefType {
+  Unique = 'reaction:emoji-single.v1',
+  Single = 'reaction:emoji.v1',
+  Many = 'reaction:emoji-counter.v1',
+}
+
+export interface UniqueReactionSummary {
+  total: number;
+  clientIds: string[];
+}
+
+export interface SingleReactionSummary {
+  total: number;
+  clientIds: string[];
+}
+
+export interface ManyReactionSummary {
+  total: number;
+  clientIds: Record<string, number>;
+}
+
+export interface MessageReactionSummaryEvent {
+  type: 'message-reaction-summary';
+  timestamp: Date;
+  refSerial: string; // serial of the message this summary is for
+
+  version: string;
+
+  unique: Record<string, UniqueReactionSummary>;
+  single: Record<string, SingleReactionSummary>;
+  many: Record<string, ManyReactionSummary>;
 }

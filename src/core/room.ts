@@ -13,6 +13,7 @@ import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus, RoomStatusListener } from './room-status.js';
 import { StatusSubscription } from './subscription.js';
 import { DefaultTyping, Typing } from './typing.js';
+import { messagesChannelName } from './channel.js';
 
 /**
  * Represents a chat room.
@@ -233,6 +234,16 @@ export class DefaultRoom implements Room {
     if (options.presence) {
       manager.mergeOptions(DefaultPresence.channelName(this._roomId), DefaultPresence.channelOptionMerger(options));
     }
+
+    manager.mergeOptions(messagesChannelName(this._roomId), (opts) => {
+      if (opts.modes) {
+        opts.modes.push("annotation_publish");
+        opts.modes.push("annotation_subscribe");
+      } else {
+        opts.modes = ["publish", "subscribe", "presence_subscribe", "presence", "annotation_publish", "annotation_subscribe"];
+      }
+      return opts;
+    });
 
     return manager;
   }
