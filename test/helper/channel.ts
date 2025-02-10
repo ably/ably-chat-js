@@ -56,3 +56,21 @@ export const channelPresenceEventEmitter = (
     channelWithEmitter.presence.subscriptions.emit(arg.action, arg);
   };
 };
+
+export const channelAnnotationEventEmitter = (
+  channel: Ably.RealtimeChannel,
+): ChannelEventEmitterReturnType<Partial<Ably.Annotation>> => {
+  const channelWithEmitter = channel as Ably.RealtimeChannel & {
+    annotations: {
+      subscriptions: Emitter;
+    };
+  };
+
+  return (arg: Partial<Ably.Annotation>) => {
+    if (!arg.action) {
+      throw new Error('annotation action is required');
+    }
+
+    channelWithEmitter.annotations.subscriptions.emit(arg.action, arg);
+  };
+};
