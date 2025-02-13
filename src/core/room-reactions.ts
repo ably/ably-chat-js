@@ -14,7 +14,6 @@ import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
 import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
 import { parseReaction } from './reaction-parser.js';
-import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -160,11 +159,10 @@ export class DefaultRoomReactions
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
     const channel = channelManager.get(`${roomId}::$chat::$reactions`);
-    addListenerToChannelWithoutAttach({
-      listener: this._forwarder.bind(this),
-      events: [RoomReactionEvents.Reaction],
-      channel: channel,
-    });
+
+    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
+    void channel.subscribe([RoomReactionEvents.Reaction], this._forwarder.bind(this));
+
     return channel;
   }
 

@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { at } from 'vitest/dist/chunks/reporters.D7Jzd9GS';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { randomId } from '../../src/core/id.ts';
@@ -85,6 +86,7 @@ describe('Room', () => {
     const expectedMessagesChannelOptions = {
       params: { occupancy: 'metrics', agent: CHANNEL_OPTIONS_AGENT_STRING },
       modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE'],
+      attachOnSubscribe: false,
     };
 
     expect(context.realtime.channels.get).toHaveBeenCalledTimes(5);
