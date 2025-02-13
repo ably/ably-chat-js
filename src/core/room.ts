@@ -8,7 +8,7 @@ import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
-import { RoomOptions, validateRoomOptions } from './room-options.js';
+import { NormalizedRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
 import {
   DefaultRoomLifecycle,
@@ -134,6 +134,7 @@ export class DefaultRoom implements Room {
   private readonly _lifecycle: DefaultRoomLifecycle;
   private readonly _lifecycleManager: RoomLifecycleManager;
   private readonly _finalizer: () => Promise<void>;
+  private readonly _channelManager: ChannelManager;
 
   /**
    * A random identifier for the room instance, useful in debugging and logging.
@@ -153,7 +154,7 @@ export class DefaultRoom implements Room {
   constructor(
     roomId: string,
     nonce: string,
-    options: RoomOptions,
+    options: NormalizedRoomOptions,
     realtime: Ably.Realtime,
     chatApi: ChatApi,
     logger: Logger,
@@ -168,7 +169,7 @@ export class DefaultRoom implements Room {
     this._logger = logger;
     this._lifecycle = new DefaultRoomLifecycle(roomId, logger);
 
-    const channelManager = this._getChannelManager(options, realtime, logger);
+    const channelManager = (this._channelManager = this._getChannelManager(options, realtime, logger));
 
     // Setup features
     this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, logger);
@@ -227,8 +228,8 @@ export class DefaultRoom implements Room {
    * @param realtime  An instance of the Ably Realtime client.
    * @param logger An instance of the Logger.
    */
-  private _getChannelManager(options: RoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
-    const manager = new ChannelManager(realtime, logger);
+  private _getChannelManager(options: NormalizedRoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
+    const manager = new ChannelManager(realtime, logger, options.isReactClient);
 
     if (options.occupancy) {
       manager.mergeOptions(DefaultOccupancy.channelName(this._roomId), DefaultOccupancy.channelOptionMerger());
@@ -379,5 +380,9 @@ export class DefaultRoom implements Room {
    */
   get lifecycle(): InternalRoomLifecycle {
     return this._lifecycle;
+  }
+
+  get channelManager(): ChannelManager {
+    return this._channelManager;
   }
 }

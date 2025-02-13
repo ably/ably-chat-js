@@ -6,7 +6,7 @@ import { ChatApi } from '../../src/core/chat-api.ts';
 import { ErrorCodes } from '../../src/core/errors.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
-import { DefaultRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
+import { DefaultRoomOptions, normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
 import { randomRoomId } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
@@ -46,5 +46,12 @@ export const makeRandomRoom = (params: {
   const realtime = params.realtime ?? ablyRealtimeClient();
   const chatApi = params.chatApi ?? new ChatApi(realtime, logger);
 
-  return new DefaultRoom(randomRoomId(), randomId(), params.options ?? defaultRoomOptions, realtime, chatApi, logger);
+  return new DefaultRoom(
+    randomRoomId(),
+    randomId(),
+    normalizeRoomOptions(params.options ?? defaultRoomOptions, false),
+    realtime,
+    chatApi,
+    logger,
+  );
 };

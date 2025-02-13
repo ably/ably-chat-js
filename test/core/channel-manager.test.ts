@@ -16,7 +16,7 @@ vi.mock('ably');
 describe('ChannelManager', () => {
   beforeEach<TestContext>((context) => {
     context.mockRealtime = new Ably.Realtime({ clientId: randomClientId() });
-    context.channelManager = new ChannelManager(context.mockRealtime, makeTestLogger());
+    context.channelManager = new ChannelManager(context.mockRealtime, makeTestLogger(), false);
 
     vi.spyOn(context.mockRealtime.channels, 'get').mockReturnValue({} as Ably.RealtimeChannel);
     vi.spyOn(context.mockRealtime.channels, 'release');

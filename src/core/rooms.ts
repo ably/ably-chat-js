@@ -7,7 +7,7 @@ import { ErrorCodes } from './errors.js';
 import { randomId } from './id.js';
 import { Logger } from './logger.js';
 import { DefaultRoom, Room } from './room.js';
-import { RoomOptions } from './room-options.js';
+import { normalizeRoomOptions, RoomOptions } from './room-options.js';
 
 /**
  * Manages the lifecycle of chat rooms.
@@ -89,6 +89,7 @@ export class DefaultRooms implements Rooms {
   private readonly _rooms: Map<string, RoomMapEntry> = new Map<string, RoomMapEntry>();
   private readonly _releasing = new Map<string, Promise<void>>();
   private readonly _logger: Logger;
+  private _isReact = false;
 
   /**
    * Constructs a new Rooms instance.
@@ -254,6 +255,21 @@ export class DefaultRooms implements Rooms {
    * @returns DefaultRoom A new room object.
    */
   private _makeRoom(roomId: string, nonce: string, options: RoomOptions): DefaultRoom {
-    return new DefaultRoom(roomId, nonce, options, this._realtime, this._chatApi, this._logger);
+    return new DefaultRoom(
+      roomId,
+      nonce,
+      normalizeRoomOptions(options, this._isReact),
+      this._realtime,
+      this._chatApi,
+      this._logger,
+    );
+  }
+
+  /**
+   * Sets react JS mode.
+   */
+  useReact(): void {
+    this._logger.trace('Rooms.useReact();');
+    this._isReact = true;
   }
 }

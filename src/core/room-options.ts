@@ -114,6 +114,16 @@ export interface RoomOptions {
 }
 
 /**
+ * Represents the normalized options for a chat room.
+ */
+export interface NormalizedRoomOptions extends RoomOptions {
+  /**
+   * Are we running the client in a React environment?
+   */
+  isReactClient: boolean;
+}
+
+/**
  * Creates an {@link ErrorInfo} for invalid room configuration.
  *
  * @param reason The reason for the invalid room configuration.
@@ -126,4 +136,11 @@ export const validateRoomOptions = (options: RoomOptions): void => {
   if (options.typing && options.typing.timeoutMs <= 0) {
     throw invalidRoomConfiguration('typing timeout must be greater than 0');
   }
+};
+
+export const normalizeRoomOptions = (options: RoomOptions, react: boolean): NormalizedRoomOptions => {
+  return {
+    ...options,
+    isReactClient: react,
+  };
 };

@@ -1,15 +1,19 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { at } from 'vitest/dist/chunks/reporters.D7Jzd9GS';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
-import { DefaultRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
+import { DefaultRoomOptions, normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
-import { CHANNEL_OPTIONS_AGENT_STRING, DEFAULT_CHANNEL_OPTIONS } from '../../src/core/version.ts';
+import {
+  CHANNEL_OPTIONS_AGENT_STRING,
+  CHANNEL_OPTIONS_AGENT_STRING_REACT,
+  DEFAULT_CHANNEL_OPTIONS,
+  DEFAULT_CHANNEL_OPTIONS_REACT,
+} from '../../src/core/version.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -19,7 +23,7 @@ vi.mock('ably');
 
 interface TestContext {
   realtime: Ably.Realtime;
-  getRoom: (options: RoomOptions) => Room;
+  getRoom: (options: RoomOptions, useReact?: boolean) => Room;
 }
 
 describe('Room', () => {
@@ -27,8 +31,15 @@ describe('Room', () => {
     context.realtime = ablyRealtimeClient();
     const logger = makeTestLogger();
     const chatApi = new ChatApi(context.realtime, logger);
-    context.getRoom = (options: RoomOptions) =>
-      new DefaultRoom(randomRoomId(), randomId(), options, context.realtime, chatApi, logger);
+    context.getRoom = (options: RoomOptions, useReact?: boolean) =>
+      new DefaultRoom(
+        randomRoomId(),
+        randomId(),
+        normalizeRoomOptions(options, useReact ?? false),
+        context.realtime,
+        chatApi,
+        logger,
+      );
   });
 
   describe.each([
@@ -78,42 +89,46 @@ describe('Room', () => {
     });
   });
 
-  it<TestContext>('should apply channel options via the channel manager', (context) => {
-    vi.spyOn(context.realtime.channels, 'get');
-    const room = context.getRoom(defaultRoomOptions) as DefaultRoom;
+  describe.each([
+    ['vanilla JS', false, CHANNEL_OPTIONS_AGENT_STRING, DEFAULT_CHANNEL_OPTIONS],
+    ['react', true, CHANNEL_OPTIONS_AGENT_STRING_REACT, DEFAULT_CHANNEL_OPTIONS_REACT],
+  ])(
+    'should apply channel options %s',
+    (description: string, setReact: boolean, agentString: string, defaultOptions: unknown) => {
+      it<TestContext>('applies the correct options', (context) => {
+        vi.spyOn(context.realtime.channels, 'get');
+        const room = context.getRoom(defaultRoomOptions, setReact) as DefaultRoom;
 
-    // Check that the shared channel for messages, occupancy and presence was called with the correct options
-    const expectedMessagesChannelOptions = {
-      params: { occupancy: 'metrics', agent: CHANNEL_OPTIONS_AGENT_STRING },
-      modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE'],
-      attachOnSubscribe: false,
-    };
+        // Check that the shared channel for messages, occupancy and presence was called with the correct options
+        const expectedMessagesChannelOptions = {
+          params: { occupancy: 'metrics', agent: agentString },
+          modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE'],
+          attachOnSubscribe: false,
+        };
 
-    expect(context.realtime.channels.get).toHaveBeenCalledTimes(5);
-    expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-      1,
-      room.messages.channel.name,
-      expectedMessagesChannelOptions,
-    );
-    expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-      2,
-      room.messages.channel.name,
-      expectedMessagesChannelOptions,
-    );
-    expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-      5,
-      room.messages.channel.name,
-      expectedMessagesChannelOptions,
-    );
+        expect(context.realtime.channels.get).toHaveBeenCalledTimes(5);
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+          1,
+          room.messages.channel.name,
+          expectedMessagesChannelOptions,
+        );
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+          2,
+          room.messages.channel.name,
+          expectedMessagesChannelOptions,
+        );
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+          5,
+          room.messages.channel.name,
+          expectedMessagesChannelOptions,
+        );
 
-    // Check that the reactions and typing channels were called with the default options
-    expect(context.realtime.channels.get).toHaveBeenNthCalledWith(3, room.typing.channel.name, DEFAULT_CHANNEL_OPTIONS);
-    expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-      4,
-      room.reactions.channel.name,
-      DEFAULT_CHANNEL_OPTIONS,
-    );
-  });
+        // Check that the reactions and typing channels were called with the default options
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(3, room.typing.channel.name, defaultOptions);
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(4, room.reactions.channel.name, defaultOptions);
+      });
+    },
+  );
 
   describe('room status', () => {
     it<TestContext>('should have a room status and error', async (context) => {
