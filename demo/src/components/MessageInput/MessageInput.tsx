@@ -1,12 +1,12 @@
 import { ChangeEventHandler, FC, FormEventHandler, useEffect, useRef, useState } from 'react';
-import { useChatConnection, useMessages, useTyping } from '@ably/chat';
+import { useChatConnection, useMessages } from '@ably/chat';
 import { ConnectionStatus } from '@ably/chat';
 
 interface MessageInputProps {}
 
 export const MessageInput: FC<MessageInputProps> = ({}) => {
   const { send } = useMessages();
-  const { start, stop } = useTyping();
+  // const { start, stop } = useTyping();
   const { currentStatus } = useChatConnection();
   const [shouldDisable, setShouldDisable] = useState(true);
 
@@ -15,16 +15,16 @@ export const MessageInput: FC<MessageInputProps> = ({}) => {
     setShouldDisable(currentStatus !== ConnectionStatus.Connected);
   }, [currentStatus]);
 
-  const handleStartTyping = () => {
-    start().catch((error: unknown) => {
-      console.error('Failed to start typing indicator', error);
-    });
-  };
-  const handleStopTyping = () => {
-    stop().catch((error: unknown) => {
-      console.error('Failed to stop typing indicator', error);
-    });
-  };
+  // const handleStartTyping = () => {
+  //   start().catch((error: unknown) => {
+  //     console.error('Failed to start typing indicator', error);
+  //   });
+  // };
+  // const handleStopTyping = () => {
+  //   stop().catch((error: unknown) => {
+  //     console.error('Failed to stop typing indicator', error);
+  //   });
+  // };
 
   const handleValueChange: ChangeEventHandler<HTMLInputElement> = ({ target }) => {
     // Typing indicators start method should be called with every keystroke since
@@ -32,10 +32,10 @@ export const MessageInput: FC<MessageInputProps> = ({}) => {
     //
     // The timeout duration can be configured when initializing the room.
     if (target.value && target.value.length > 0) {
-      handleStartTyping();
+      // handleStartTyping();
     } else {
       // For good UX we should stop typing indicators as soon as the input field is empty.
-      handleStopTyping();
+      // handleStopTyping();
     }
   };
 
@@ -63,7 +63,7 @@ export const MessageInput: FC<MessageInputProps> = ({}) => {
       });
 
     // stop typing indicators
-    handleStopTyping();
+    // handleStopTyping();
   };
 
   return (

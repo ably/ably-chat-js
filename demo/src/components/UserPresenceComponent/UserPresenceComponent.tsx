@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import '../../../styles/global.css';
 import './UserPresenceComponent.css';
 import {
@@ -15,11 +15,15 @@ interface UserListComponentProps {}
 export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const { update, isPresent, error } = usePresence({ enterWithData: { status: '💻 Online' } });
-  const { presenceData } = usePresenceListener({
+  const { presenceData, isSyncing } = usePresenceListener({
     listener: (event: unknown) => {
       console.log('Presence data changed', { event });
     },
   });
+
+  useEffect(() => {
+    console.log('Presence set data changed', { presenceData });
+  }, [presenceData]);
 
   const clientId = useChatClient().clientId;
   const { currentStatus } = useChatConnection();
@@ -56,7 +60,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
       >
         {isPanelOpen ? 'Hide Panel' : 'Show Panel'}
       </button>
-      {isPanelOpen && (
+      {isPanelOpen && !isSyncing && (
         <div className="user-presence-container">
           {error ? (
             <div className="error-message">
