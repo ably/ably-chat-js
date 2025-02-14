@@ -18,7 +18,7 @@ import {
   RoomStatus,
   RoomStatusListener,
 } from './room-status.js';
-import { DefaultTyping, Typing } from './typing.js';
+// import { DefaultTyping, Typing } from './typing.js';
 
 /**
  * Represents a chat room.
@@ -53,13 +53,13 @@ export interface Room {
    */
   get reactions(): RoomReactions;
 
-  /**
-   * Allows you to interact with typing events in the room.
-   *
-   * @throws {@link ErrorInfo} if typing is not enabled for the room.
-   * @returns The typing instance for the room.
-   */
-  get typing(): Typing;
+  // /**
+  //  * Allows you to interact with typing events in the room.
+  //  *
+  //  * @throws {@link ErrorInfo} if typing is not enabled for the room.
+  //  * @returns The typing instance for the room.
+  //  */
+  // get typing(): Typing;
 
   /**
    * Allows you to interact with occupancy metrics for the room.
@@ -127,7 +127,7 @@ export class DefaultRoom implements Room {
   private readonly _options: RoomOptions;
   private readonly _chatApi: ChatApi;
   private readonly _messages: DefaultMessages;
-  private readonly _typing?: DefaultTyping;
+  // private readonly _typing?: DefaultTyping;
   private readonly _presence?: DefaultPresence;
   private readonly _reactions?: DefaultRoomReactions;
   private readonly _occupancy?: DefaultOccupancy;
@@ -194,18 +194,18 @@ export class DefaultRoom implements Room {
       features.push(this._presence);
     }
 
-    if (options.typing) {
-      this._logger.debug('enabling typing on room', { roomId });
-      this._typing = new DefaultTyping(
-        roomId,
-        options.typing,
-        channelManager,
-        presenceDataManager.newContributor(),
-        realtime.auth.clientId,
-        logger,
-      );
-      features.push(this._typing);
-    }
+    // if (options.presence?.typingOptions) {
+    //   this._logger.debug('enabling typing on room', { roomId });
+    //   this._typing = new DefaultTyping(
+    //     roomId,
+    //     options.presence.typingOptions,
+    //     channelManager,
+    //     presenceDataManager.newContributor(),
+    //     realtime.auth.clientId,
+    //     logger,
+    //   );
+    //   features.push(this._typing);
+    // }
 
     if (options.reactions) {
       this._logger.debug('enabling reactions on room', { roomId });
@@ -304,18 +304,6 @@ export class DefaultRoom implements Room {
     }
 
     return this._reactions;
-  }
-
-  /**
-   * @inheritdoc Room
-   */
-  get typing(): Typing {
-    if (!this._typing) {
-      this._logger.error('Typing is not enabled for this room');
-      throw new Ably.ErrorInfo('Typing is not enabled for this room', 40000, 400);
-    }
-
-    return this._typing;
   }
 
   /**

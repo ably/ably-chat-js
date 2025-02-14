@@ -216,10 +216,10 @@ export class DefaultTyping
 
     // Start typing and emit typingStarted event
     this._startTypingTimer();
-    await this._presenceDataContribution.set((currentPresenceData: ChatPresenceData) => ({
-      ...currentPresenceData,
-      typing: true,
-    }));
+    // await this._presenceDataContribution.set((currentPresenceData: ChatPresenceData) => ({
+    //   ...currentPresenceData,
+    //   typing: true,
+    // }));
   }
 
   /**

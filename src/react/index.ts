@@ -24,7 +24,7 @@ export {
   type UseRoomReactionsParams,
   type UseRoomReactionsResponse,
 } from './hooks/use-room-reactions.js';
-export { type TypingParams, useTyping, type UseTypingResponse } from './hooks/use-typing.js';
+// export { type TypingParams, useTyping, type UseTypingResponse } from './hooks/use-typing.js';
 export { ChatClientProvider, type ChatClientProviderProps } from './providers/chat-client-provider.js';
 export { ChatRoomProvider, type ChatRoomProviderProps } from './providers/chat-room-provider.js';
 export { type ChatStatusResponse } from './types/chat-status-response.js';

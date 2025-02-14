@@ -1,33 +1,25 @@
 import * as Ably from 'ably';
 
 /**
+ * Represents the default options for typing in a chat room.
+ */
+export const TypingOptionsDefaults = {
+  timeoutMs: 5000,
+};
+
+/**
  * Represents the default options for a chat room.
  */
 export const DefaultRoomOptions = {
   /**
    * The default presence options for a chat room.
+   * Includes default options for entering/subscribing to presence and typing timeout.
    */
   presence: {
-    /**
-     * The client should be able to enter presence.
-     */
+    typingOptions: TypingOptionsDefaults,
     enter: true,
-
-    /**
-     * The client should be able to subscribe to presence.
-     */
     subscribe: true,
-  } as PresenceOptions,
-
-  /**
-   * The default typing options for a chat room.
-   */
-  typing: {
-    /**
-     * The default timeout for typing events in milliseconds.
-     */
-    timeoutMs: 5000,
-  } as TypingOptions,
+  },
 
   /**
    * The default reactions options for a chat room.
@@ -45,18 +37,17 @@ export const DefaultRoomOptions = {
  */
 export interface PresenceOptions {
   /**
-   * Whether the underlying Realtime channel should use the presence enter mode, allowing entry into presence.
-   * This property does not affect the presence lifecycle, and users must still call {@link Presence.enter}
-   * in order to enter presence.
-   * @defaultValue true
+   * The typing options for the room.
+   */
+  typingOptions?: TypingOptions;
+
+  /**
+   * Determines whether the user should be allowed to enter the room.
    */
   enter?: boolean;
 
   /**
-   * Whether the underlying Realtime channel should use the presence subscribe mode, allowing subscription to presence.
-   * This property does not affect the presence lifecycle, and users must still call {@link Presence.subscribe}
-   * in order to subscribe to presence.
-   * @defaultValue true
+   * Determines whether the user should be allowed to subscribe to presence events in the room.
    */
   subscribe?: boolean;
 }
@@ -133,7 +124,7 @@ const invalidRoomConfiguration = (reason: string): Error =>
   new Ably.ErrorInfo(`invalid room configuration: ${reason}`, 40001, 400);
 
 export const validateRoomOptions = (options: RoomOptions): void => {
-  if (options.typing && options.typing.timeoutMs <= 0) {
+  if (options.presence?.typingOptions?.timeoutMs && options.presence.typingOptions.timeoutMs <= 0) {
     throw invalidRoomConfiguration('typing timeout must be greater than 0');
   }
 };
