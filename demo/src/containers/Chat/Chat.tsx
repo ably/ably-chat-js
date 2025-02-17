@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MessageInput } from '../../components/MessageInput';
 import { useChatClient, useChatConnection, ConnectionStatus } from '@ably/chat';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent';
-// import { TypingIndicatorPanel } from '../../components/TypingIndicatorPanel';
+import { TypingIndicatorPanel } from '../../components/TypingIndicatorPanel';
 import { ChatBoxComponent } from '../../components/ChatBoxComponent';
 import { ReactionComponent } from '../../components/ReactionComponent';
 
@@ -94,7 +94,7 @@ export const Chat = (props: { roomId: string; setRoomId: (roomId: string) => voi
             .
           </div>
           <ChatBoxComponent />
-          {/*<TypingIndicatorPanel />*/}
+          <TypingIndicatorPanel />
           <MessageInput />
           <ReactionComponent />
         </div>
