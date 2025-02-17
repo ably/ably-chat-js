@@ -256,34 +256,24 @@ export class DefaultPresence
     return this._channel;
   }
 
-  /**
-   * @inheritDoc
-   */
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     this._logger.trace('Presence.get()', { params });
-    const userOnPresence = await this._channel.presence.get(params);
-    const presentUsers = userOnPresence.filter((user) => {
-      const action = (user.data as ChatPresenceData).presence?.action;
-      // If the latest chat presence action is 'enter' or 'update', the user is considered present
-      return action === 'enter' || action === 'update';
-    });
-    return presentUsers.map((user) => ({
-      connectionId: user.connectionId,
-      clientId: user.clientId,
-      action: 'present' as PresenceEvents,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      data: user.data?.presence.userCustomData as PresenceData,
-      updatedAt: user.timestamp,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      extras: user.extras,
-    }));
+    // Fetch the list of presence messages from the channel
+    const presenceMessages = await this._channel.presence.get(params);
+    // Filter valid presence actions (e.g., 'enter' or 'update') and transform data
+    return presenceMessages
+      .filter((message) => {
+        const presenceAction = (message.data as ChatPresenceData).presence?.action;
+        return presenceAction === 'enter' || presenceAction === 'update' || presenceAction === 'present';
+      })
+      .map((filteredMessage) => this._presenceMessageToPresenceMember(filteredMessage));
   }
 
   /**
    * @inheritDoc
    */
   async isUserPresent(clientId: string): Promise<boolean> {
-    const presenceSet = await this._channel.presence.get({ clientId: clientId });
+    const presenceSet = await this.get({ clientId });
     return presenceSet.length > 0;
   }
 
@@ -428,142 +418,162 @@ export class DefaultPresence
   };
 
   private _presenceMessageToPresenceMember(presenceMessage: Ably.PresenceMessage): PresenceMember {
-    const chatPresenceData = presenceMessage.data as ChatPresenceData;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const { connectionId, clientId, timestamp, extras, data } = presenceMessage;
+    const chatPresenceData = data as ChatPresenceData;
     return {
-      connectionId: presenceMessage.connectionId,
-      clientId: presenceMessage.clientId,
+      connectionId,
+      clientId,
       action: 'present' as PresenceEvents,
       data: chatPresenceData.presence?.userCustomData,
-      updatedAt: presenceMessage.timestamp,
+      updatedAt: timestamp,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      extras: presenceMessage.extras,
+      extras: extras,
     };
   }
 
   private _chatPresenceEventFromPresenceMessage(presenceMessage: Ably.PresenceMessage): PresenceEvent | undefined {
-    const realtimeMessageAction = presenceMessage.action as PresenceEvents;
-    const presenceData = presenceMessage.data as ChatPresenceData;
-    const eventType = presenceData.type;
-    const chatPresenceData = presenceData.presence;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const { action, clientId, timestamp, data } = presenceMessage;
+    const presenceData = data as ChatPresenceData;
 
-    // If the base realtime action is `leave`, the chat action should also be `leave`
-    // In the case of a synthetic leave event, we cannot rely on the chatPresenceData to determine the chat action
-    if (realtimeMessageAction === PresenceEvents.Leave) {
-      return {
-        action: 'leave' as PresenceEvents,
-        clientId: presenceMessage.clientId,
-        timestamp: presenceMessage.timestamp,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        data: presenceMessage.data?.presence.userCustomData as PresenceData,
-      };
-    }
-
-    // If the event type is not a chat presence event, we can ignore this presence message
-    if (eventType !== 'chat.presence') {
+    // If the presence data or its type is not valid, ignore this message
+    if (!presenceData.presence || presenceData.type !== 'chat.presence') {
+      this._logger.debug('Skipping non-chat presence event', { action });
       return;
     }
 
-    // We should have chat presence data at this stage as we have already checked the event type
-    if (!chatPresenceData) {
-      throw new Ably.ErrorInfo('chat presence data is missing', 40000, 400);
-    }
-
-    // If this is a `present` event, we can return the current data
-    if (realtimeMessageAction === PresenceEvents.Present) {
+    // Map Ably action "leave" directly to a chat leave event
+    if (action === PresenceEvents.Leave) {
       return {
-        action: 'present' as PresenceEvents,
-        clientId: presenceMessage.clientId,
-        timestamp: presenceMessage.timestamp,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        data: presenceMessage.data?.presence.userCustomData as PresenceData,
+        action: PresenceEvents.Leave,
+        clientId,
+        timestamp,
+        data: presenceData.presence.userCustomData,
       };
     }
 
+    // Map other valid actions like "enter", "update", and "present"
     return {
-      action: chatPresenceData.action as PresenceEvents,
-      clientId: presenceMessage.clientId,
-      timestamp: presenceMessage.timestamp,
-      data: chatPresenceData.userCustomData,
+      action: presenceData.presence.action as PresenceEvents,
+      clientId,
+      timestamp,
+      data: presenceData.presence.userCustomData,
     };
   }
 
   private _processPresenceSetChange(presenceSetChange: Ably.PresenceSetChange): void {
     const { members, current, previous, syncInProgress } = presenceSetChange;
-    this._logger.debug('Processing presence set change', { current, syncInProgress});
+    this._logger.debug('Processing presence set change', { current, syncInProgress });
 
     const chatCurrentEvent = this._chatPresenceEventFromPresenceMessage(current);
-    // If the current event is not a chat presence event, we should ignore this presence set change
+
+    // If we are not dealing with a valid chat presence event, ignore this message
     if (!chatCurrentEvent) {
+      this._logger.debug('Skipping non-chat presence event', { current });
       return;
     }
 
-    // Build the previous event, it may be undefined if this is the first presence set change
-    const chatPreviousEvent = previous ? this._chatPresenceEventFromPresenceMessage(previous) : undefined;
-
-    // Sync in progress: Reprocess the entire set of members till we are synced
     if (syncInProgress) {
-      this._presenceMembers = members.map((member) => this._presenceMessageToPresenceMember(member));
-      this._logger.debug('Sync in progress, replacing members list with new set');
-      this._onPresenceSetChangeEmitter.emit('presenceSetChange', {
-        members: [...this._presenceMembers],
-        current: chatCurrentEvent,
-        previous: chatPreviousEvent,
-        syncInProgress,
-      });
-      return;
+      // We can't rely on individual presence messages during sync, so we replace the list
+      // as a whole until the sync is complete
+      this._handleSyncInProgress(members);
+    } else {
+      // We can now manually update the presence set based on the current event as
+      // we are no longer in a sync state
+      this._handleSyncComplete(current, chatCurrentEvent);
     }
 
-    // Now we are synced, we can begin to process individual presence events.
-    // First, check if we have a member that matches the current presence event
-    const presentMember = this._presenceMembers.find(
+    // Build the previous event if it exists
+    const chatPreviousEvent = previous
+      ? this._chatPresenceEventFromPresenceMessage(previous)
+      : undefined;
+
+    // Emit the presence set change event
+    this._emitPresenceSetChange(chatCurrentEvent, chatPreviousEvent, syncInProgress);
+  }
+
+
+  private _handleSyncInProgress(members: Ably.PresenceMessage[]): void {
+    this._presenceMembers = members.map((member) =>
+      this._presenceMessageToPresenceMember(member),
+    );
+    this._logger.debug('Sync in progress, replacing members list with new set.');
+  }
+
+  private _handleSyncComplete(
+    current: Ably.PresenceMessage,
+    chatCurrentEvent: PresenceEvent,
+  ): void {
+    const presentMember = this._findPresenceMember(current);
+
+    if (presentMember) {
+      this._updateOrRemoveMember(current, chatCurrentEvent);
+    } else {
+      this._addNewMember(current, chatCurrentEvent);
+    }
+  }
+
+  /**
+   * Finds a presence member by matching `clientId` and `connectionId`.
+   */
+  private _findPresenceMember(current: Ably.PresenceMessage): PresenceMember | undefined {
+    return this._presenceMembers.find(
       (member) => member.clientId === current.clientId && member.connectionId === current.connectionId,
     );
+  }
 
-    // Handle case where member already exists in the list
-    if (presentMember) {
-      switch (chatCurrentEvent.action) {
-        case PresenceEvents.Leave: {
-          // Remove the member from the list
-          this._presenceMembers = this._presenceMembers.filter(
-            (member) => member.clientId !== current.clientId || member.connectionId !== current.connectionId,
-          );
-          break;
-        }
-        case PresenceEvents.Enter:
-        case PresenceEvents.Present:
-        case PresenceEvents.Update: {
-          // Update the member in the list
-          this._presenceMembers = this._presenceMembers.map((member) => {
-            if (member.clientId === current.clientId && member.connectionId === current.connectionId) {
-              return this._presenceMessageToPresenceMember(current);
-            }
-            return member;
-          });
-        }
+  /**
+   * Updates or removes a presence member based on the current event's action.
+   */
+  private _updateOrRemoveMember(current: Ably.PresenceMessage, chatCurrentEvent: PresenceEvent): void {
+    switch (chatCurrentEvent.action) {
+      case PresenceEvents.Leave: {
+        this._presenceMembers = this._presenceMembers.filter(
+          (member) => member.clientId !== current.clientId || member.connectionId !== current.connectionId,
+        );
+        break;
       }
-    } else {
-      switch (chatCurrentEvent.action) {
-        case PresenceEvents.Leave: {
-          // Possible if some other client leaves before this client joins and we get a synthetic leave event
-          this._logger.debug('Presence member not found in list, expected leave event', { current });
-          break;
-        }
-        case PresenceEvents.Enter:
-        case PresenceEvents.Update:
-        case PresenceEvents.Present: {
-          // When joining presence, we should get `present` messages for members already in the room, after which
-          // we should get `enter` messages for new members joining the room
-          this._presenceMembers.push(this._presenceMessageToPresenceMember(current));
-        }
+      case PresenceEvents.Enter:
+      case PresenceEvents.Present:
+      case PresenceEvents.Update: {
+        this._presenceMembers = this._presenceMembers.map((member) =>
+          member.clientId === current.clientId && member.connectionId === current.connectionId
+            ? this._presenceMessageToPresenceMember(current)
+            : member,
+        );
+        break;
       }
     }
-    console.log('New presence member set', this._presenceMembers );
+  }
+
+  /**
+   * Adds a new presence member to the list if they are not already present.
+   */
+  private _addNewMember(current: Ably.PresenceMessage, chatCurrentEvent: PresenceEvent): void {
+    this._logger.debug('_addNewMember()', { current });
+    if (
+      chatCurrentEvent.action === PresenceEvents.Enter ||
+      chatCurrentEvent.action === PresenceEvents.Update ||
+      chatCurrentEvent.action === PresenceEvents.Present
+    ) {
+      this._presenceMembers.push(this._presenceMessageToPresenceMember(current));
+    } else {
+      this._logger.debug('Presence member not found in list, expected leave event', { current });
+    }
+  }
+
+  private _emitPresenceSetChange(
+    current: PresenceEvent,
+    previous: PresenceEvent | undefined,
+    syncInProgress: boolean,
+  ): void {
     this._onPresenceSetChangeEmitter.emit('presenceSetChange', {
       members: [...this._presenceMembers],
-      current: chatCurrentEvent,
-      previous: chatPreviousEvent,
+      current,
+      previous,
       syncInProgress,
-    })
+    });
   }
 
   onPresenceSetChange(listener: (presenceSetChangeEvent: PresenceSetChangeEvent) => void): { off: () => void } {

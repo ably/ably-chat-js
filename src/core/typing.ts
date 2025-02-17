@@ -1,5 +1,4 @@
 import * as Ably from 'ably';
-import { dequal } from 'dequal';
 
 import { ChannelManager } from './channel-manager.js';
 import {
@@ -8,7 +7,7 @@ import {
   EmitsDiscontinuities,
   HandlesDiscontinuity,
   newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
+  OnDiscontinuitySubscriptionResponse
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
 import { TypingEvents } from './events.js';
@@ -17,10 +16,7 @@ import { ChatPresenceData, PresenceDataContribution } from './presence-data-mana
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { TypingOptions } from './room-options.js';
 import EventEmitter from './utils/event-emitter.js';
-
-const PRESENCE_GET_RETRY_INTERVAL_MS = 1500; // base retry interval, we double it each time
-const PRESENCE_GET_RETRY_MAX_INTERVAL_MS = 30000; // max retry interval
-const PRESENCE_GET_MAX_RETRIES = 5; // max num of retries
+import { messagesChannelName } from './channel.js';
 
 /**
  * This interface is used to interact with typing in a chat room including subscribing to typing events and
@@ -82,6 +78,26 @@ export interface TypingEvent {
    * Get a set of clientIds that are currently typing.
    */
   get currentlyTyping(): Set<string>;
+
+  /**
+   * Indicates which clientId changed their typing state.
+   */
+  change: {
+    /**
+     * The clientId of the user that changed their typing state.
+     */
+    clientId: string;
+
+    /**
+     * Whether the user started typing or stopped.
+     */
+    isTyping: boolean;
+  };
+
+  /**
+   * Indicates whether the presence data is still syncing.
+   */
+  syncInProgress: boolean;
 }
 
 /**
@@ -123,11 +139,7 @@ export class DefaultTyping
   private readonly _typingTimeoutMs: number;
   private _timerId: ReturnType<typeof setTimeout> | undefined;
 
-  private _receivedEventNumber = 0;
-  private _triggeredEventNumber = 0;
   private _currentlyTyping: Set<string> = new Set<string>();
-  private _retryTimeout: ReturnType<typeof setTimeout> | undefined;
-  private _numRetries = 0;
   private readonly _presenceDataContribution: PresenceDataContribution;
 
   /**
@@ -154,33 +166,152 @@ export class DefaultTyping
     this._typingTimeoutMs = options.timeoutMs;
     this._logger = logger;
     this._presenceDataContribution = presenceDataContribution;
+    this._setupListeners();
+  }
+
+  /**
+   * Listen for presence set changes and process typing-presence data.
+   */
+  private _setupListeners(): void {
+    this._logger.debug('Setting up listeners for typing events.');
+    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
+    void this._channel.presence.onPresenceSetChange((event) => {
+      const { current, members, syncInProgress } = event;
+
+      const typingEvent = this._typingEventFromPresenceMessage(current);
+
+      // If not a typing event, ignore
+      if (!typingEvent) {
+        console.debug('DefaultTyping._setupListeners(); not a typing event, ignoring', { current });
+        return;
+      }
+
+      if (syncInProgress) {
+        // Handling while syncing
+        this._processSyncingTypingState(members, typingEvent);
+      } else {
+        // Handling when already synced
+        this._processSyncedTypingState(typingEvent);
+      }
+    });
+
+    this._logger.debug('Typing listeners setup complete.');
+  }
+
+  /**
+   * Handles processing when the presence set is fully in sync.
+   */
+  private _processSyncedTypingState(typingEvent: { clientId: string; isTyping: boolean }): void {
+    this._logger.debug('Processing synchronized typing state.');
+
+    // Does the client ID already exist in the currently typing set?
+    const isAlreadyTyping = this._currentlyTyping.has(typingEvent.clientId);
+
+    if (isAlreadyTyping) {
+      // If the user is already in the set and is still typing, do nothing
+      if (typingEvent.isTyping) {
+        return;
+      }
+
+      // If the user is already in the set and is now not typing, remove them and make sure we emit an event
+      this._currentlyTyping.delete(typingEvent.clientId);
+    }
+
+    // If the user is not in the set and is typing, add them
+    if (!isAlreadyTyping && typingEvent.isTyping) {
+      this._currentlyTyping.add(typingEvent.clientId);
+    }
+
+    // If the user is not in the set and is not typing, do nothing
+    if (!isAlreadyTyping && !typingEvent.isTyping) {
+      return;
+    }
+    this._emitTypingSetChange(false, typingEvent);
+
+    this._logger.debug('Updated currently typing set:', this._currentlyTyping);
+  }
+
+  /**
+   * Handles processing while presence is still syncing.
+   * Reprocesses the whole typing state on each event during sync.
+   */
+  private _processSyncingTypingState(
+    memebers: Ably.PresenceMessage[],
+    newTypingMember: { clientId: string; isTyping: boolean },
+  ): void {
+    this._logger.debug('_processSyncingTypingState');
+    // Clear the currentlyTyping set first
+    this._currentlyTyping.clear();
+
+    // Build a new set based on the presence messages
+    memebers.map((member) => {
+      const typingEvent = this._typingEventFromPresenceMessage(member);
+      if (typingEvent) {
+        if (typingEvent.isTyping) {
+          this._currentlyTyping.add(typingEvent.clientId);
+        } else {
+          this._currentlyTyping.delete(typingEvent.clientId);
+        }
+        this._logger.debug(`Typing sync updated for ${typingEvent.clientId}`, { isTyping: typingEvent.isTyping });
+      }
+    });
+    this._emitTypingSetChange(true, newTypingMember);
+  }
+
+  /**
+   * Constructs a typing event from a presence message.
+   */
+  private _typingEventFromPresenceMessage(
+    message: Ably.PresenceMessage,
+  ): { clientId: string; isTyping: boolean } | undefined {
+    const chatPresenceData = message.data as ChatPresenceData;
+
+    if (message.action === 'leave') {
+      return {
+        clientId: message.clientId,
+        isTyping: false, // A "leave" event indicates the user is no longer typing
+      };
+    }
+
+    if (chatPresenceData.type === 'chat.typing' && chatPresenceData.typing) {
+      return {
+        clientId: message.clientId,
+        isTyping: chatPresenceData.typing.isTyping, // Return whether the user is typing based on the presence data
+      };
+    }
+
+    // If the presence message does not contain valid typing data, return undefined
+    return undefined;
+  }
+
+  /**
+   * Emits a typingSetChange with the current state.
+   */
+  private _emitTypingSetChange(syncInProgress: boolean, change: { clientId: string; isTyping: boolean }): void {
+    this.emit(TypingEvents.Changed, {
+      currentlyTyping: new Set(this._currentlyTyping),
+      syncInProgress: syncInProgress,
+      change: change,
+    });
   }
 
   /**
    * Creates the realtime channel for typing indicators.
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(`${roomId}::$chat::$chatMessages`);
-
-    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void channel.presence.subscribe(this._internalSubscribeToEvents.bind(this));
-
-    return channel;
+    // We now assume that presence and typing share a channel for this POC
+    return channelManager.get(DefaultTyping.channelName(roomId));
   }
 
   /**
    * @inheritDoc
    */
-  get(): Promise<Set<string>> {
+  async get(): Promise<Set<string>> {
     this._logger.trace(`DefaultTyping.get();`);
-    return this._channel.presence
-      .get()
-      .then(
-        (members) =>
-          new Set<string>(
-            members.filter((m) => (m.data ? (m.data as ChatPresenceData).typing : false)).map((m) => m.clientId),
-          ),
-      );
+    const members = await this._channel.presence.get();
+    return new Set<string>(
+      members.filter((m) => (m.data ? (m.data as ChatPresenceData).typing?.isTyping : false)).map((m_1) => m_1.clientId),
+    );
   }
 
   /**
@@ -216,10 +347,13 @@ export class DefaultTyping
 
     // Start typing and emit typingStarted event
     this._startTypingTimer();
-    // await this._presenceDataContribution.set((currentPresenceData: ChatPresenceData) => ({
-    //   ...currentPresenceData,
-    //   typing: true,
-    // }));
+    await this._presenceDataContribution.set((currentPresenceData: ChatPresenceData) => ({
+      ...currentPresenceData,
+      type: 'chat.typing',
+      typing: {
+        isTyping: true,
+      },
+    }));
   }
 
   /**
@@ -236,8 +370,13 @@ export class DefaultTyping
     // When we stop typing, remove the typing flag from the presence data by deleting the typing key
     await this._presenceDataContribution.remove((currentPresenceData: ChatPresenceData) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { typing, ...rest } = currentPresenceData;
-      return rest;
+      return {
+        ...currentPresenceData,
+        type: 'chat.typing',
+        typing: {
+          isTyping: false,
+        },
+      };
     });
   }
 
@@ -262,84 +401,6 @@ export class DefaultTyping
   unsubscribeAll(): void {
     this._logger.trace(`DefaultTyping.unsubscribeAll();`);
     this.off();
-  }
-
-  /**
-   * Subscribe to internal events. This will listen to presence events and convert them into associated typing events,
-   * while also updating the currentlyTypingClientIds set.
-   */
-  private readonly _internalSubscribeToEvents = (member: Ably.PresenceMessage) => {
-    if (!member.clientId) {
-      this._logger.error(`unable to handle typing event; no clientId`, { member });
-      return;
-    }
-
-    this._receivedEventNumber += 1;
-
-    // received a real event, cancelling retry timeout
-    if (this._retryTimeout) {
-      clearTimeout(this._retryTimeout);
-      this._retryTimeout = undefined;
-      this._numRetries = 0;
-    }
-
-    this._getAndEmit(this._receivedEventNumber);
-  };
-
-  private _getAndEmit(eventNum: number) {
-    this.get()
-      .then((currentlyTyping) => {
-        // successful fetch, remove retry timeout if one exists
-        if (this._retryTimeout) {
-          clearTimeout(this._retryTimeout);
-          this._retryTimeout = undefined;
-          this._numRetries = 0;
-        }
-
-        // if we've seen the result of a newer promise, do nothing
-        if (this._triggeredEventNumber >= eventNum) {
-          return;
-        }
-        this._triggeredEventNumber = eventNum;
-
-        // if current typers haven't changed since we last emitted, do nothing
-        if (dequal(this._currentlyTyping, currentlyTyping)) {
-          return;
-        }
-
-        this._currentlyTyping = currentlyTyping;
-        this.emit(TypingEvents.Changed, {
-          currentlyTyping: new Set(currentlyTyping),
-        });
-      })
-      .catch((error: unknown) => {
-        const willReattempt = this._numRetries < PRESENCE_GET_MAX_RETRIES;
-        this._logger.error(`Error fetching currently typing clientIds set.`, {
-          error,
-          willReattempt: willReattempt,
-        });
-        if (!willReattempt) {
-          return;
-        }
-
-        // already another timeout, do nothing
-        if (this._retryTimeout) {
-          return;
-        }
-
-        const waitBeforeRetry = Math.min(
-          PRESENCE_GET_RETRY_MAX_INTERVAL_MS,
-          PRESENCE_GET_RETRY_INTERVAL_MS * Math.pow(2, this._numRetries),
-        );
-
-        this._numRetries += 1;
-
-        this._retryTimeout = setTimeout(() => {
-          this._retryTimeout = undefined;
-          this._receivedEventNumber++;
-          this._getAndEmit(this._receivedEventNumber);
-        }, waitBeforeRetry);
-      });
   }
 
   onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
@@ -374,5 +435,9 @@ export class DefaultTyping
    */
   get detachmentErrorCode(): ErrorCodes {
     return ErrorCodes.TypingDetachmentFailed;
+  }
+
+  static channelName(roomId: string): string {
+    return messagesChannelName(roomId);
   }
 }

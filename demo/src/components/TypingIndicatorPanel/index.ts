@@ -1,1 +1,1 @@
-// export { TypingIndicatorPanel } from './TypingIndicatorPanel.tsx';
+export { TypingIndicatorPanel } from './TypingIndicatorPanel.tsx';
