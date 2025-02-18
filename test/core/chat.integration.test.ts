@@ -1,10 +1,12 @@
+import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { ConnectionStatus } from '../../src/core/connection.ts';
 import { LogLevel } from '../../src/core/logger.ts';
 import { RealtimeWithOptions } from '../../src/core/realtime-extensions.ts';
-import { VERSION } from '../../src/core/version.ts';
+import { CHANNEL_OPTIONS_AGENT_STRING_REACT, VERSION } from '../../src/core/version.ts';
+import { DefaultRoomOptions } from '../../src/index.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { testClientOptions } from '../helper/options.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -40,6 +42,20 @@ describe('Chat', () => {
       'chat-js': VERSION,
       'chat-react': VERSION,
     });
+  });
+
+  it('should set react channel agents', async () => {
+    const chat = newChatClient(testClientOptions());
+    chat.addReactAgent();
+
+    const room = await chat.rooms.get('room', DefaultRoomOptions);
+
+    const channelOptions = (room.messages.channel as unknown as { channelOptions: Ably.ChannelOptions }).channelOptions;
+    expect(channelOptions.params).toEqual(
+      expect.objectContaining({
+        agent: CHANNEL_OPTIONS_AGENT_STRING_REACT,
+      }),
+    );
   });
 
   it('should mix in the client options', () => {

@@ -10,7 +10,7 @@ const methodReturningVoidPromise = () => mockPromisify<void>((() => {})());
 const methodReturningVoid = () => {};
 
 function createMockPresence() {
-  return {
+  const mock = {
     get: () => mockPromisify<Ably.PresenceMessage[]>([]),
     update: () => mockPromisify<void>(undefined),
     enterClient: methodReturningVoidPromise,
@@ -19,9 +19,12 @@ function createMockPresence() {
     enter: methodReturningVoidPromise,
     leave: methodReturningVoidPromise,
     subscriptions: createMockEmitter(),
-    subscribe: methodReturningVoidPromise,
+    subscribe: async (...args: any[]) => {
+      mock.subscriptions.on(...args);
+    },
     unsubscribe: methodReturningVoidPromise,
   };
+  return mock;
 }
 
 type anyType = ((arg: unknown) => void)[];
@@ -37,7 +40,9 @@ function createMockChannel(name: string) {
     attach: methodReturningVoidPromise,
     detach: methodReturningVoidPromise,
     presence: createMockPresence(),
-    subscribe: methodReturningVoidPromise,
+    subscribe: async (...args: any[]) => {
+      mock.subscriptions.on(...args);
+    },
     unsubscribe: methodReturningVoidPromise,
     on: (...args: any[]) => {
       mock.attachmentStateEmitter.on(...args);

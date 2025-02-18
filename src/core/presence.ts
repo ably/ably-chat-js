@@ -13,7 +13,6 @@ import {
 import { ErrorCodes } from './errors.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
-import { addListenerToChannelPresenceWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { RoomOptions } from './room-options.js';
 import EventEmitter from './utils/event-emitter.js';
@@ -218,10 +217,8 @@ export class DefaultPresence
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
     const channel = channelManager.get(DefaultPresence.channelName(roomId));
 
-    addListenerToChannelPresenceWithoutAttach({
-      listener: this.subscribeToEvents.bind(this),
-      channel: channel,
-    });
+    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
+    void channel.presence.subscribe(this.subscribeToEvents.bind(this));
 
     return channel;
   }

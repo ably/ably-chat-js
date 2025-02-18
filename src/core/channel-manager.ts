@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
-import { DEFAULT_CHANNEL_OPTIONS } from './version.js';
+import { DEFAULT_CHANNEL_OPTIONS, DEFAULT_CHANNEL_OPTIONS_REACT } from './version.js';
 
 export type ChannelOptionsMerger = (options: Ably.ChannelOptions) => Ably.ChannelOptions;
 
@@ -10,11 +10,13 @@ export class ChannelManager {
   private readonly _logger: Logger;
   private readonly _registeredOptions = new Map<string, Ably.ChannelOptions>();
   private readonly _requestedChannels = new Set<string>();
+  private _isReact = false;
 
-  constructor(realtime: Ably.Realtime, logger: Logger) {
-    logger.trace('ChannelManager();');
+  constructor(realtime: Ably.Realtime, logger: Logger, isReact: boolean) {
+    logger.trace('ChannelManager();', { isReact });
     this._realtime = realtime;
     this._logger = logger;
+    this._isReact = isReact;
   }
 
   mergeOptions(channelName: string, merger: ChannelOptionsMerger): void {
@@ -24,7 +26,7 @@ export class ChannelManager {
       throw new Ably.ErrorInfo('channel options cannot be modified after the channel has been requested', 40000, 400);
     }
 
-    const currentOpts = this._registeredOptions.get(channelName) ?? DEFAULT_CHANNEL_OPTIONS;
+    const currentOpts = this._registeredOptions.get(channelName) ?? this._defaultChannelOptions();
     this._registeredOptions.set(channelName, merger(currentOpts));
   }
 
@@ -33,7 +35,7 @@ export class ChannelManager {
     this._requestedChannels.add(channelName);
     return this._realtime.channels.get(
       channelName,
-      this._registeredOptions.get(channelName) ?? DEFAULT_CHANNEL_OPTIONS,
+      this._registeredOptions.get(channelName) ?? this._defaultChannelOptions(),
     );
   }
 
@@ -42,5 +44,9 @@ export class ChannelManager {
     this._requestedChannels.delete(channelName);
     this._registeredOptions.delete(channelName);
     this._realtime.channels.release(channelName);
+  }
+
+  private _defaultChannelOptions(): Ably.ChannelOptions {
+    return this._isReact ? DEFAULT_CHANNEL_OPTIONS_REACT : DEFAULT_CHANNEL_OPTIONS;
   }
 }

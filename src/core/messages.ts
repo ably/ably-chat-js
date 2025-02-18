@@ -17,7 +17,6 @@ import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
-import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -324,11 +323,8 @@ export class DefaultMessages
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
     const channel = channelManager.get(messagesChannelName(roomId));
 
-    addListenerToChannelWithoutAttach({
-      listener: this._processEvent.bind(this),
-      events: [RealtimeMessageNames.ChatMessage],
-      channel: channel,
-    });
+    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
+    void channel.subscribe([RealtimeMessageNames.ChatMessage], this._processEvent.bind(this));
 
     // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
     // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.

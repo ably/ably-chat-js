@@ -19,7 +19,7 @@ export class ChatClient {
   /**
    * @internal
    */
-  private readonly _rooms: Rooms;
+  private readonly _rooms: DefaultRooms;
 
   /**
    * @internal
@@ -112,6 +112,7 @@ export class ChatClient {
    */
   public addReactAgent(): void {
     this._addAgent('chat-react');
+    this._rooms.useReact();
   }
 
   /**

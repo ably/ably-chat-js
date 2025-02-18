@@ -13,7 +13,6 @@ import {
 import { ErrorCodes } from './errors.js';
 import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
-import { addListenerToChannelPresenceWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { TypingOptions } from './room-options.js';
 import EventEmitter from './utils/event-emitter.js';
@@ -158,10 +157,10 @@ export class DefaultTyping
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
     const channel = channelManager.get(`${roomId}::$chat::$typingIndicators`);
-    addListenerToChannelPresenceWithoutAttach({
-      listener: this._internalSubscribeToEvents.bind(this),
-      channel: channel,
-    });
+
+    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
+    void channel.presence.subscribe(this._internalSubscribeToEvents.bind(this));
+
     return channel;
   }
 

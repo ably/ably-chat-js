@@ -13,7 +13,6 @@ import {
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
-import { addListenerToChannelWithoutAttach } from './realtime-extensions.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -125,11 +124,10 @@ export class DefaultOccupancy
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
     const channel = channelManager.get(DefaultOccupancy.channelName(roomId));
-    addListenerToChannelWithoutAttach({
-      listener: this._internalOccupancyListener.bind(this),
-      events: ['[meta]occupancy'],
-      channel: channel,
-    });
+
+    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
+    void channel.subscribe(['[meta]occupancy'], this._internalOccupancyListener.bind(this));
+
     return channel;
   }
 
