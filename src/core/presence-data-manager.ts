@@ -9,11 +9,6 @@ import { Logger } from './logger.js';
  */
 export interface ChatPresenceData {
   /**
-   * If the presence data represents a change to the typing status of a user or the presence of a user in the room.
-   */
-  type?: 'chat.presence' | 'chat.typing';
-
-  /**
    * Contains the typing data of the user.
    */
   typing?: {
@@ -28,9 +23,9 @@ export interface ChatPresenceData {
    */
   presence?: {
     /**
-     * The presence action for the user.
+     * A nonce that is used to uniquely identify the presence data, and is used to determine if an update has occurred.
      */
-    action: Ably.PresenceAction
+    nonce?: string
     /**
      * Information that the user has provided as part of the presence payload.
      */

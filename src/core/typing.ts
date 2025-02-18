@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { messagesChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
 import {
   DiscontinuityEmitter,
@@ -16,7 +17,6 @@ import { ChatPresenceData, PresenceDataContribution } from './presence-data-mana
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { TypingOptions } from './room-options.js';
 import EventEmitter from './utils/event-emitter.js';
-import { messagesChannelName } from './channel.js';
 
 /**
  * This interface is used to interact with typing in a chat room including subscribing to typing events and
@@ -273,7 +273,7 @@ export class DefaultTyping
       };
     }
 
-    if (chatPresenceData.type === 'chat.typing' && chatPresenceData.typing) {
+    if (chatPresenceData.typing) {
       return {
         clientId: message.clientId,
         isTyping: chatPresenceData.typing.isTyping, // Return whether the user is typing based on the presence data
@@ -349,7 +349,6 @@ export class DefaultTyping
     this._startTypingTimer();
     await this._presenceDataContribution.set((currentPresenceData: ChatPresenceData) => ({
       ...currentPresenceData,
-      type: 'chat.typing',
       typing: {
         isTyping: true,
       },
@@ -372,7 +371,6 @@ export class DefaultTyping
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       return {
         ...currentPresenceData,
-        type: 'chat.typing',
         typing: {
           isTyping: false,
         },

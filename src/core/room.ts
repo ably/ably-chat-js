@@ -190,6 +190,7 @@ export class DefaultRoom implements Room {
         presenceDataManager.newContributor(),
         realtime.auth.clientId,
         logger,
+        this._lifecycle
       );
       features.push(this._presence);
     }
