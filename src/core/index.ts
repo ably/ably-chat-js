@@ -16,15 +16,6 @@ export { ErrorCodes, errorInfoIs } from './errors.js';
 export type { MessageEventPayload } from './events.js';
 export { ChatMessageActions, MessageEvents, PresenceEvents } from './events.js';
 export type { Headers } from './headers.js';
-export {
-  ChatEntityType,
-  chatMessageFromAblyMessage,
-  chatMessageFromEncoded,
-  getEntityTypeFromAblyMessage,
-  getEntityTypeFromEncoded,
-  reactionFromAblyMessage,
-  reactionFromEncoded,
-} from './helpers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
 export type { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata, Operation } from './message.js';
