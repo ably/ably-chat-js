@@ -177,7 +177,6 @@ export class DefaultTyping
 
   /**
    * Listens for discontinuities and clears the typing set when one is detected.
-   * @private
    */
   private _listenForDiscontinuities() {
     this.onDiscontinuity(() => {
@@ -255,13 +254,15 @@ export class DefaultTyping
     this._logger.trace('Typing._handleNonTypingMember();', { current });
     const chatPresenceData = current.data as ChatPresenceData;
 
+    // If the client has left presence, but was not typing, ignore
     if (current.action === PresenceEvents.Leave || !chatPresenceData.typing?.isTyping) {
-      this._logger.warn('Typing._handleNonTypingMember(); Client was not typing, ignoring stopped typing event', {
+      this._logger.debug('Typing._handleNonTypingMember(); Client was not typing, ignoring stopped typing event', {
         current,
       });
       return;
     }
 
+    // In all other cases, we should add the client to the typing set and emit a typingStarted event
     this._logger.debug('Typing._handleNonTypingMember(); Client has started typing', { clientId: current.clientId });
     this._currentlyTyping.add(current.clientId);
     this._emitTypingSetChange({
