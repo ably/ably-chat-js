@@ -13,7 +13,7 @@ export type {
 export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
-export { ChatMessageActions, MessageEvents, PresenceEvents } from './events.js';
+export { ChatMessageActions, MessageEvents, PresenceEvents, PresenceSetEvents } from './events.js';
 export type { Headers } from './headers.js';
 export {
   ChatEntityType,
