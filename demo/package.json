@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@ably/chat": "file:..",
-    "ably": "https://github.com/ably/ably-js.git#support-annotations-deletes",
+    "ably": "github:ably/ably-js#a8f973857763975df146865b3f72e6f05ccf28bf",
     "clsx": "^2.1.1",
     "nanoid": "^5.0.9",
     "react": "^18.3.1",
