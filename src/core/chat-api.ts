@@ -85,6 +85,12 @@ interface DeleteMessageParams {
   metadata?: MessageOperationMetadata;
 }
 
+interface MessageReactionData {
+  refType : string;
+  reaction : string;
+  count? : number;
+}
+
 /**
  * Chat SDK Backend
  */
@@ -141,6 +147,7 @@ export class ChatApi {
         (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
         new Date(message.timestamp),
         message.operation,
+        message.reactions,
       );
     };
 
@@ -161,7 +168,7 @@ export class ChatApi {
     return { ...data, ...paginatedResult };
   }
 
-  async deleteMessage(roomId: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
+  deleteMessage(roomId: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
     const body: { description?: string; metadata?: MessageOperationMetadata } = {
       description: params?.description,
       metadata: params?.metadata,
@@ -176,7 +183,7 @@ export class ChatApi {
     );
   }
 
-  async sendMessage(roomId: string, params: SendMessageParams): Promise<CreateMessageResponse> {
+  sendMessage(roomId: string, params: SendMessageParams): Promise<CreateMessageResponse> {
     const body: {
       text: string;
       metadata?: MessageMetadata;
@@ -192,7 +199,7 @@ export class ChatApi {
     return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v2/rooms/${roomId}/messages`, 'POST', body);
   }
 
-  async updateMessage(roomId: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
+  updateMessage(roomId: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
     const encodedSerial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<UpdateMessageResponse>(
@@ -202,7 +209,29 @@ export class ChatApi {
     );
   }
 
-  async getOccupancy(roomId: string): Promise<OccupancyEvent> {
+  addMessageReaction(roomId: string, serial: string, data: MessageReactionData): Promise<void> {
+    const encodedSerial = encodeURIComponent(serial);
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest<void>(
+      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`,
+      'POST',
+      data,
+    );
+  }
+
+  deleteMessageReaction(roomId: string, serial: string, data: Omit<MessageReactionData, 'count'>): Promise<void> {
+    const encodedSerial = encodeURIComponent(serial);
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest<void>(
+      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`,
+      'DELETE',
+      undefined,
+      data,
+    );
+  }
+
+
+  getOccupancy(roomId: string): Promise<OccupancyEvent> {
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
   }
