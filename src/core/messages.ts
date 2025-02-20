@@ -301,9 +301,11 @@ export class DefaultMessageReactions implements Reactions {
   constructor(
     private readonly _logger: Logger,
     private readonly _api: ChatApi,
+    private readonly _roomID: string,
     private readonly _channel: Ably.RealtimeChannel,
   ) {
-    this._channel.annotations.subscribe(this._processAnnotationEvent.bind(this));
+    void _channel.subscribe(this._processMessageEvent.bind(this));
+    void _channel.annotations.subscribe(this._processAnnotationEvent.bind(this));
   }
 
   private _processAnnotationEvent(event: Ably.Annotation) {
@@ -342,25 +344,24 @@ export class DefaultMessageReactions implements Reactions {
     });
   }
 
-  add(message: { serial: string }, refType: ReactionRefType, reaction: string, score?: number): Promise<void> {
-    if (score !== undefined && refType != ReactionRefType.Many) {
-      throw new Ably.ErrorInfo('message reaction score is only supported for reaction:many.v1', 40000, 400);
-    }
+  add(message: { serial: string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void> {
+    return this._api.addMessageReaction(this._roomID, message.serial, {refType: refType, reaction: reaction, count: count});
 
-    if (refType === ReactionRefType.Many) {
-      score = score && score >= 1 ? score : 1;
-      return this._channel.annotations.publish(
-        message.serial,
-        refType,
-        JSON.stringify({ emoji: reaction, count: score }),
-      );
-    }
+    // will remove this comment once the endpoint above works - code below still useful for debug right now
+    // if (count !== undefined && refType != ReactionRefType.Many) {
+    //   throw new Ably.ErrorInfo('message reaction score is only supported for reaction:many.v1', 40000, 400);
+    // }
+    // let payload = reaction;
+    // if (refType === ReactionRefType.Many) {
+    //   count = count && count >= 1 ? count : 1;
+    //   payload = JSON.stringify({ emoji: reaction, count: count });
+    // }
 
-    return this._channel.annotations.publish(message.serial, refType, reaction);
+    // return this._channel.annotations.publish(message.serial, refType, payload);
   }
 
   remove(message: Message, refType: ReactionRefType, reaction: string): Promise<void> {
-    return (this._channel.annotations as any).delete(message.serial, refType, reaction) as Promise<void>;
+    return this._api.deleteMessageReaction(this._roomID, message.serial, {refType: refType, reaction: reaction});
   }
 
   /**
@@ -441,7 +442,7 @@ export class DefaultMessages
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
 
-    this.reactions = new DefaultMessageReactions(this._logger, this._chatApi, this._channel);
+    this.reactions = new DefaultMessageReactions(this._logger, this._chatApi, this._roomId, this._channel);
   }
 
   /**
