@@ -118,7 +118,8 @@ describe('UserPresence', { timeout: 30000 }, () => {
           context.defaultTestClientId,
         );
         expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
-          presence: { userCustomData: { customKeyOne: 1 } },
+          userCustomData: { customKeyOne: 1 },
+          presence: {},
         });
       },
     );
@@ -135,10 +136,11 @@ describe('UserPresence', { timeout: 30000 }, () => {
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(context.realtime, 'update', messageChannelName, (member) => {
       expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(context.defaultTestClientId);
-      const data = member.data as { presence?: { userCustomData?: { customKeyOne: number } } };
-      expect(data.presence?.userCustomData, 'data should be equal to supplied userCustomData').toEqual({
+      const data = member.data as { presence?: { nonce?: string }, userCustomData?: { customKeyOne?: number } };
+      expect(data.userCustomData, 'data should be equal to supplied userCustomData').toEqual({
         customKeyOne: 1,
       });
+      expect(data.presence?.nonce, 'presence nonce should be defined').toBeDefined();
     });
 
     // Enter with custom user data
@@ -161,16 +163,15 @@ describe('UserPresence', { timeout: 30000 }, () => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
         );
-        // TODO Either remove the ability to provide custom data on leave or update this test
-        // expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
-        //   userCustomData: { customKeyOne: 1 },
-        // });
+        expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
+          userCustomData: { customKeyOne: 3 },
+        });
       },
     );
     // Enter with custom user data
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
     // Leave with custom user data
-    await context.chatRoom.presence.leave({ customKeyOne: 1 });
+    await context.chatRoom.presence.leave({ customKeyOne: 3 });
     // Wait for the leave event to be received
     await enterEventPromise;
   });
@@ -184,14 +185,9 @@ describe('UserPresence', { timeout: 30000 }, () => {
     const client2 = ablyRealtimeClient({ clientId: 'clientId2' }).channels.get(channelName);
     const client3 = ablyRealtimeClient({ clientId: 'clientId3' }).channels.get(channelName);
 
-    // Data payload to check if the custom data is fetched correctly
-    const testData: PresenceData = {
-      userCustomData: { customKeyOne: 1 },
-    };
-
     // Enter presence for each client
     await client1.presence.enterClient('clientId1', { presence: {} });
-    await client2.presence.enterClient('clientId2', { presence: testData });
+    await client2.presence.enterClient('clientId2', { presence: {}, userCustomData: { customKeyOne: 1 }});
     await client3.presence.enterClient('clientId3', { presence: {} });
 
     // Check if all clients are present
@@ -350,12 +346,8 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
     // Enter presence to trigger the enter event and then update our data
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
-    await context.chatRoom.presence.leave();
-    // Wait for the update event to be received
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Leave, context.chat.clientId, { customKeyOne: 1 });
-    // TODO Either remove the ability to provide custom data on leave or update this test
-    // await context.chatRoom.presence.leave({ customKeyOne: 3 });
-    // await waitForPresenceEvent(presenceEvents, PresenceEvents.Leave, context.chat.clientId, { customKeyOne: 3 });
+    await context.chatRoom.presence.leave({ customKeyOne: 3 });
+    await waitForPresenceEvent(presenceEvents, PresenceEvents.Leave, context.chat.clientId, { customKeyOne: 3 });
   });
   it<TestContext>('should successfully handle multiple data types', async (context) => {
     // Subscribe to leave events
