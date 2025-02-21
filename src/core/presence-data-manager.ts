@@ -26,26 +26,22 @@ export interface ChatPresenceData {
      * A nonce that is used to uniquely identify the presence data, and is used to determine if an update has occurred.
      */
     nonce?: string
-    /**
-     * Information that the user has provided as part of the presence payload.
-     */
-    userCustomData?: unknown;
   }
+  
+  /**
+   * Information that the user has provided as part of the presence payload.
+   */
+  userCustomData?: unknown;
 }
 
+/**
+ * Represents a presence message that includes the opinionated ChatPresenceData structure.
+ */
 export interface ChatPresenceMessage extends Ably.PresenceMessage {
+  /**
+   * The presence data of the user
+   */
   data: ChatPresenceData;
-}
-
-export interface PresenceSetChange {
-  /**
-   * The previous presence set, before the latest presence event.
-   */
-  previous: ChatPresenceMessage[];
-  /**
-   * The latest presence set, after the latest presence event.
-   */
-  latest: ChatPresenceMessage[];
 }
 
 /**
@@ -69,7 +65,7 @@ export interface PresenceManager {
    *
    * @returns A promise that resolves with an array of presence messages.
    */
-  getPresenceSet(params?: Ably.RealtimePresenceParams): Promise<PresenceSetChange>;
+  getPresenceSet(params?: Ably.RealtimePresenceParams): Promise<Ably.PresenceMessage[]>;
 }
 
 /**
@@ -116,7 +112,7 @@ export class DefaultPresenceManager implements PresenceManager {
    */
   public getPresenceSet(
     params?: Ably.RealtimePresenceParams,
-  ): Promise<{ previous: ChatPresenceMessage[]; latest: ChatPresenceMessage[] }> {
+  ): Promise<Ably.PresenceMessage[]> {
     return this._setManager.get(params);
   }
 }
@@ -290,6 +286,12 @@ export class DefaultPresenceDataManager implements PresenceDataManager {
     this._logger.trace('DefaultPresenceDataManager._doPresenceLeave()');
     await this._opMtx.acquire();
     const presenceData = this._presenceData;
+    const newPresenceData = applicator(presenceData);
+    if (newPresenceData === presenceData) {
+      // No changes have occurred
+      this._logger.trace('DefaultPresenceDataManager._doPresenceLeave() - releasing mutex');
+      this._opMtx.release()
+    }
     this._presenceData = applicator(presenceData);
 
     // Update our presence data, rollback if the update fails
@@ -330,18 +332,18 @@ const PRESENCE_GET_MAX_RETRIES = 5;
 const PRESENCE_GET_RETRY_INTERVAL_MS = 1000;
 const PRESENCE_GET_RETRY_MAX_INTERVAL_MS = 10000;
 
-// Interface for queueing Promises that resolve/reject when `presence.get()` completes
+
 /**
  * Represents a queued element that stores the resolve and reject functions for promises
  * waiting for the presence state retrieval to complete.
  */
 interface QueueElement {
   /**
-   * Resolves the promise with the retrieved presence messages.
+   * Resolves the promise with the retrieved ChatPresenceMessage messages.
    *
-   * @param value The presence messages from the channel.
+   * @param value The ChatPresenceMessage messages from the channel.
    */
-  resolve: (value: { previous: PresenceMessage[]; latest: PresenceMessage[] }) => void;
+  resolve: (value: ChatPresenceMessage[]) => void;
 
   /**
    * Rejects the promise with the given error or failure reason.
@@ -353,8 +355,9 @@ interface QueueElement {
 
 /**
  * DefaultPresenceSetManager is responsible for managing `get()` operations on the presence state of a channel.
- * It ensures that multiple callers for presence state retrieval do not result in repeated API calls by batching
- * requests and reusing the result for all current callers.
+ * It ensures
+ * that multiple callers for presence state retrieval all resolve to the same state if made concurrently while
+ * the state is being fetched.
  */
 export class DefaultPresenceSetManager {
   private _queue: QueueElement[] = [];
@@ -362,7 +365,6 @@ export class DefaultPresenceSetManager {
   private _retryCount = 0;
   private _channel: Ably.RealtimeChannel;
   private _logger: Logger;
-  private _currentPresenceData: ChatPresenceMessage[] = [];
 
   /**
    * Creates a new DefaultPresenceSetManager tied to an Ably real-time channel.
@@ -379,26 +381,42 @@ export class DefaultPresenceSetManager {
    * Fetches the presence data for the current channel.
    * This method supports concurrent callers by queueing their requests and ensuring only one fetch operation is in-flight.
    * It also retries with exponential backoff in case of failure, up to a maximum number of retries.
+   * If a user requests to wait for sync, the call will be added to the queue and resolved when the sync is complete.
+   * If a user does not request to wait for sync, the call will be resolved immediately.
    *
-   * @returns A promise that resolves with an array of PresenceMessage objects for the channel.
+   * @returns A promise that resolves with an array of ChatPresenceMessage objects for the channel.
    * @throws An error if the maximum number of retries is exceeded or if another unexpected error occurs.
    */
   public get(
     params?: Ably.RealtimePresenceParams,
-  ): Promise<{ previous: ChatPresenceMessage[]; latest: ChatPresenceMessage[] }> {
+  ): Promise<ChatPresenceMessage[]> {
     return new Promise((resolve, reject) => {
-      this._logger.debug('DefaultPresenceSetManager.get()', {
+      // User needs to wait for sync, so add request to the queue
+      this._logger.debug('DefaultPresenceSetManager.get(); fetching present set', {
         isFetching: this._isFetching,
         pendingQueueSize: this._queue.length,
+        params,
       });
-
-      // Add the caller to the queue
-      this._queue.push({ resolve, reject });
-
-      // Start fetching if not already doing so
-      if (!this._isFetching) {
-        this._fetchPresence(params);
+      if (params?.waitForSync) {
+        // Add the caller to the queue
+        this._queue.push({ resolve, reject });
+        // Start fetching if not already doing so
+        if (!this._isFetching) {
+          this._fetchPresence(params);
+        }
       }
+
+      // User does not need to wait for sync, so fetch immediately
+      this._channel.presence
+        .get(params)
+        .then((members: PresenceMessage[]) => {
+          const validatedMembers = this._validatePresenceMessages(members);
+          resolve(validatedMembers);
+        })
+        .catch((error: unknown) => {
+          this._logger.error('DefaultPresenceSetManager.get(); Error occurred while fetching presence data', { error });
+          reject(error as Error);
+        });
     });
   }
 
@@ -454,18 +472,24 @@ export class DefaultPresenceSetManager {
     if (data === undefined) {
       return false;
     }
-    const dataObject = data as Record<string, unknown>;
-
-    // Ensure typing and isOnline are both present and booleans
-    if (dataObject.typing !== undefined && typeof dataObject.typing !== 'boolean') {
-      return false;
+    const dataObject = data as {
+      typing?: { isTyping: unknown },
+      presence?: { nonce?: unknown },
+      userCustomData?: unknown
     }
 
-    if (dataObject.isOnline !== undefined && typeof dataObject.isOnline !== 'boolean') {
+    // Ensure typing contains a boolean value if present
+    if (dataObject.typing !== undefined && typeof dataObject.typing.isTyping !== 'boolean') {
       return false;
     }
-
+    // Ensure presence contains a string nonce if present
+    if (dataObject.presence !== undefined && dataObject.presence.nonce !== undefined && typeof dataObject.presence.nonce !== 'string') {
+        return false;
+      }
+    
+    // data is valid
     return true;
+    
   }
 
   /**
@@ -487,9 +511,7 @@ export class DefaultPresenceSetManager {
         while (this._queue.length > 0) {
           const queueElement = this._queue.shift();
           if (queueElement) {
-            const previous = this._currentPresenceData;
-            this._currentPresenceData = validatedMembers;
-            queueElement.resolve({ previous, latest: validatedMembers });
+            queueElement.resolve(validatedMembers);
           }
         }
 

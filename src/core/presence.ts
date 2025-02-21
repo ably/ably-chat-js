@@ -14,7 +14,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { PresenceEvents, PresenceSetEvents } from './events.js';
 import { Logger } from './logger.js';
-import { ChatPresenceData, PresenceDataContribution } from './presence-data-manager.js';
+import { ChatPresenceData, PresenceDataContribution, PresenceManager } from './presence-data-manager.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { RoomOptions } from './room-options.js';
 import EventEmitter from './utils/event-emitter.js';
@@ -252,12 +252,13 @@ export class DefaultPresence
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
   private readonly _onPresenceSetChangeEmitter = new EventEmitter<PresenceSetChangeEventMap>();
   private readonly _presenceDataContribution: PresenceDataContribution;
+  private readonly _presenceManager: PresenceManager;
 
   /**
    * Constructs a new `DefaultPresence` instance.
    * @param roomId The unique identifier of the room.
    * @param channelManager The channel manager to use for creating the presence channel.
-   * @param presenceDataContribution
+   * @param presenceManager
    * @param clientId The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    * @param logger An instance of the Logger.
@@ -265,7 +266,7 @@ export class DefaultPresence
   constructor(
     roomId: string,
     channelManager: ChannelManager,
-    presenceDataContribution: PresenceDataContribution,
+    presenceManager: PresenceManager,
     clientId: string,
     logger: Logger,
   ) {
@@ -274,7 +275,8 @@ export class DefaultPresence
     this._channel = this._makeChannel(roomId, channelManager);
     this._clientId = clientId;
     this._logger = logger;
-    this._presenceDataContribution = presenceDataContribution;
+    this._presenceManager = presenceManager;
+    this._presenceDataContribution = presenceManager.newContributor();
     this._listenToPresenceEvents();
     this._listenForDiscontinuities();
   }
@@ -340,7 +342,7 @@ export class DefaultPresence
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     this._logger.trace('Presence.get()', { params });
     // Fetch the list of presence messages from the channel
-    const presenceMessages = await this._channel.presence.get(params);
+    const presenceMessages = await this._presenceManager.getPresenceSet(params)
     // Filter for members with presence data
     return presenceMessages
       .filter((message) => {
@@ -366,9 +368,8 @@ export class DefaultPresence
     this._logger.trace(`Presence.enter()`, { data });
     await this._presenceDataContribution.set((current: ChatPresenceData) => ({
       ...current,
-      presence: {
-        userCustomData: data,
-      },
+      presence: {},
+      userCustomData: data,
     }));
   }
 
@@ -384,8 +385,8 @@ export class DefaultPresence
       presence: {
         // Set a nonce to ensure uniqueness of the update when compared to the previous presence data
         nonce: `${String(Date.now())}-${Math.random().toString(36).slice(2)}`,
-        userCustomData: data,
       },
+      userCustomData: data,
     }));
   }
 
@@ -403,6 +404,10 @@ export class DefaultPresence
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { presence, ...rest } = current;
+      // Add the userCustomData back to the presence data if it exists
+      if (data) {
+        rest.userCustomData = data;
+      }
       return rest;
     });
   }
@@ -473,7 +478,7 @@ export class DefaultPresence
       connectionId,
       clientId,
       action: 'present' as PresenceEvents,
-      data: chatPresenceData.presence?.userCustomData,
+      data: chatPresenceData.userCustomData,
       updatedAt: timestamp,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       extras: extras,
@@ -566,6 +571,7 @@ export class DefaultPresence
   private _handlePresentMember(current: Ably.PresenceMessage, presentMember: InternalPresenceMember): void {
     this._logger.trace('Presence._handlePresentMember();', { current, presentMember });
     let eventToEmit: PresenceEvent;
+    const chatPresenceData = current.data as ChatPresenceData;
     switch (current.action) {
       case PresenceEvents.Leave: {
         this._logger.debug('Presence._handlePresentMember() Member has left presence', { presentMember });
@@ -576,12 +582,11 @@ export class DefaultPresence
           connectionId: current.connectionId,
           timestamp: current.timestamp,
           // TODO We need to remove the leaveWithData
-          data: presentMember.data,
+          data: chatPresenceData.userCustomData,
         };
         break;
       }
       case PresenceEvents.Update: {
-        const chatPresenceData = current.data as ChatPresenceData;
         this._logger.debug('Presence._handlePresentMember(); Member presence data has changed', { chatPresenceData });
         if (!chatPresenceData.presence) {
           // Member is still in realtime presence, but no longer in chat presence
@@ -592,7 +597,7 @@ export class DefaultPresence
             connectionId: current.connectionId,
             timestamp: current.timestamp,
             // TODO Still need to remove the leaveWithData
-            data: presentMember.data,
+            data: chatPresenceData.userCustomData,
           };
           break;
         }
@@ -610,7 +615,7 @@ export class DefaultPresence
           clientId: current.clientId,
           connectionId: current.connectionId,
           timestamp: current.timestamp,
-          data: chatPresenceData.presence.userCustomData,
+          data: chatPresenceData.userCustomData,
         };
         break;
       }
@@ -659,7 +664,7 @@ export class DefaultPresence
         clientId: current.clientId,
         connectionId: current.connectionId,
         timestamp: current.timestamp,
-        data: chatPresenceData.presence.userCustomData,
+        data: chatPresenceData.userCustomData,
       };
     } else {
       // Otherwise, this is a new member joining chat presence for the first time, so emit an Enter event
@@ -675,7 +680,7 @@ export class DefaultPresence
         clientId: current.clientId,
         connectionId: current.connectionId,
         timestamp: current.timestamp,
-        data: chatPresenceData.presence.userCustomData,
+        data: chatPresenceData.userCustomData,
       };
     }
     this._emitEvent(eventToEmit);

@@ -7,7 +7,7 @@ import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
-import { DefaultPresenceDataManager } from './presence-data-manager.js';
+import { DefaultPresenceManager } from './presence-data-manager.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
 import { NormalizedRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
@@ -171,11 +171,10 @@ export class DefaultRoom implements Room {
     this._lifecycle = new DefaultRoomLifecycle(roomId, logger);
 
     const channelManager = (this._channelManager = this._getChannelManager(options, realtime, logger));
-    const presenceDataManager = new DefaultPresenceDataManager(
+    const defaultPresenceManager = new DefaultPresenceManager(
       realtime.channels.get(DefaultPresence.channelName(roomId)),
       realtime.auth.clientId,
-      logger,
-    );
+      logger);
 
     // Setup features
     this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, logger);
@@ -187,7 +186,7 @@ export class DefaultRoom implements Room {
       this._presence = new DefaultPresence(
         roomId,
         channelManager,
-        presenceDataManager.newContributor(),
+        defaultPresenceManager,
         realtime.auth.clientId,
         logger,
       );
@@ -200,7 +199,7 @@ export class DefaultRoom implements Room {
         roomId,
         options.presence.typingOptions,
         channelManager,
-        presenceDataManager.newContributor(),
+        defaultPresenceManager,
         realtime.auth.clientId,
         logger,
       );

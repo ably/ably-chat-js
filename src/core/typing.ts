@@ -13,7 +13,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { PresenceEvents, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
-import { ChatPresenceData, PresenceDataContribution } from './presence-data-manager.js';
+import { ChatPresenceData, PresenceDataContribution, PresenceManager } from './presence-data-manager.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { TypingOptions } from './room-options.js';
 import EventEmitter from './utils/event-emitter.js';
@@ -146,13 +146,14 @@ export class DefaultTyping
 
   private _currentlyTyping: Set<string> = new Set<string>();
   private readonly _presenceDataContribution: PresenceDataContribution;
+  private readonly _presenceManager: PresenceManager;
 
   /**
    * Constructs a new `DefaultTyping` instance.
    * @param roomId The unique identifier of the room.
    * @param options The options for typing in the room.
    * @param channelManager The channel manager for the room.
-   * @param presenceDataContribution
+   * @param presenceManager
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
@@ -160,7 +161,7 @@ export class DefaultTyping
     roomId: string,
     options: TypingOptions,
     channelManager: ChannelManager,
-    presenceDataContribution: PresenceDataContribution,
+    presenceManager: PresenceManager,
     clientId: string,
     logger: Logger,
   ) {
@@ -171,7 +172,8 @@ export class DefaultTyping
 
     // Timeout for typing
     this._typingTimeoutMs = options.timeoutMs;
-    this._presenceDataContribution = presenceDataContribution;
+    this._presenceManager = presenceManager
+    this._presenceDataContribution = presenceManager.newContributor();
     this._listenForDiscontinuities();
   }
 
@@ -310,7 +312,7 @@ export class DefaultTyping
    */
   async get(): Promise<Set<string>> {
     this._logger.trace(`DefaultTyping.get();`);
-    const members = await this._channel.presence.get();
+    const members = await this._presenceManager.getPresenceSet()
     return new Set<string>(
       members
         .filter((m) => (m.data ? (m.data as ChatPresenceData).typing?.isTyping : false))
