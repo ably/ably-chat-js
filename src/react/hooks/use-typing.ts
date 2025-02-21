@@ -44,6 +44,8 @@ export interface UseTypingResponse extends ChatStatusResponse {
    */
   readonly currentlyTyping: TypingEvent['currentlyTyping'];
 
+  readonly isSyncing: boolean;
+
   /**
    * Provides access to the underlying {@link Typing} instance of the room.
    */
@@ -74,6 +76,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   const logger = useLogger();
   logger.trace('useTyping();', { roomId: context.roomId });
 
+  const [isSyncing, setIsSyncing] = useState<boolean>(false)
   const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
   const [error, setError] = useState<Ably.ErrorInfo | undefined>();
 
@@ -109,6 +112,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
             .get()
             .then((currentlyTyping) => {
               if (!mounted) return;
+              setIsSyncing(false)
               setCurrentlyTyping(currentlyTyping);
             })
             .catch((error: unknown) => {
@@ -130,6 +134,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
         logger.debug('useTyping(); subscribing to typing events', { roomId: context.roomId });
         const { unsubscribe } = room.typing.subscribe((event) => {
           setErrorState(undefined);
+          setIsSyncing(event.syncInProgress)
           setCurrentlyTyping(event.currentlyTyping);
         });
 
@@ -194,5 +199,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     start,
     stop,
     currentlyTyping,
+    isSyncing,
   };
 };

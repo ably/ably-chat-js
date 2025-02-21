@@ -72,6 +72,13 @@ export enum PresenceEvents {
   Present = 'present',
 }
 
+export enum PresenceSetEvents {
+  /**
+   * Event triggered when a change in the presence set occurs.
+   */
+  PresenceSetChange = 'presence.set.change',
+}
+
 export enum TypingEvents {
   /** The set of currently typing users has changed. */
   Changed = 'typing.changed',

@@ -7,6 +7,7 @@ import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
+import { DefaultPresenceManager } from './presence-data-manager.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
 import { NormalizedRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
@@ -170,6 +171,10 @@ export class DefaultRoom implements Room {
     this._lifecycle = new DefaultRoomLifecycle(roomId, logger);
 
     const channelManager = (this._channelManager = this._getChannelManager(options, realtime, logger));
+    const defaultPresenceManager = new DefaultPresenceManager(
+      realtime.channels.get(DefaultPresence.channelName(roomId)),
+      realtime.auth.clientId,
+      logger);
 
     // Setup features
     this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, logger);
@@ -178,13 +183,26 @@ export class DefaultRoom implements Room {
 
     if (options.presence) {
       this._logger.debug('enabling presence on room', { roomId });
-      this._presence = new DefaultPresence(roomId, channelManager, realtime.auth.clientId, logger);
+      this._presence = new DefaultPresence(
+        roomId,
+        channelManager,
+        defaultPresenceManager,
+        realtime.auth.clientId,
+        logger,
+      );
       features.push(this._presence);
     }
 
-    if (options.typing) {
+    if (options.presence?.typingOptions) {
       this._logger.debug('enabling typing on room', { roomId });
-      this._typing = new DefaultTyping(roomId, options.typing, channelManager, realtime.auth.clientId, logger);
+      this._typing = new DefaultTyping(
+        roomId,
+        options.presence.typingOptions,
+        channelManager,
+        defaultPresenceManager,
+        realtime.auth.clientId,
+        logger,
+      );
       features.push(this._typing);
     }
 
@@ -275,6 +293,14 @@ export class DefaultRoom implements Room {
     return this._presence;
   }
 
+  get typing(): Typing {
+    if (!this._typing){
+      this._logger.error('Typing is not enabled for this room')
+      throw new Ably.ErrorInfo('Typing is not enabled for this room', 40000, 400);
+    }
+    return this._typing;
+  }
+
   /**
    * @inheritdoc Room
    */
@@ -285,18 +311,6 @@ export class DefaultRoom implements Room {
     }
 
     return this._reactions;
-  }
-
-  /**
-   * @inheritdoc Room
-   */
-  get typing(): Typing {
-    if (!this._typing) {
-      this._logger.error('Typing is not enabled for this room');
-      throw new Ably.ErrorInfo('Typing is not enabled for this room', 40000, 400);
-    }
-
-    return this._typing;
   }
 
   /**
