@@ -2,12 +2,12 @@ import { ErrorInfo } from 'ably';
 
 import {
   ChatMessageActions,
-  ManyReactionSummary,
+  CounterReactionSummary,
   MessageEvent,
   MessageEvents,
   MessageReactionSummaryEvent,
+  DistinctReactionSummary,
   SingleReactionSummary,
-  UniqueReactionSummary,
 } from './events.js';
 import { Headers } from './headers.js';
 import { Metadata } from './metadata.js';
@@ -271,9 +271,9 @@ export interface MessageCopyParams {
 }
 interface MessageReactions {
   version: string;
-  unique: Record<string, UniqueReactionSummary>;
   single: Record<string, SingleReactionSummary>;
-  many: Record<string, ManyReactionSummary>;
+  distinct: Record<string, DistinctReactionSummary>;
+  counter: Record<string, CounterReactionSummary>;
 }
 
 /**
@@ -301,16 +301,16 @@ export class DefaultMessage implements Message {
     // Make sure reactions are always set as empty even if none provided
     this.reactions = reactions ?? {
       version: '',
-      unique: {},
       single: {},
-      many: {},
+      distinct: {},
+      counter: {},
     };
 
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this.reactions);
-    Object.freeze(this.reactions.many);
+    Object.freeze(this.reactions.counter);
+    Object.freeze(this.reactions.distinct);
     Object.freeze(this.reactions.single);
-    Object.freeze(this.reactions.unique);
     Object.freeze(this);
   }
 
@@ -395,9 +395,9 @@ export class DefaultMessage implements Message {
 
       const newReactions: MessageReactions = {
         version: event.version,
-        unique: structuredClone(event.unique),
         single: structuredClone(event.single),
-        many: structuredClone(event.many),
+        distinct: structuredClone(event.distinct),
+        counter: structuredClone(event.counter),
       };
 
       return DefaultMessage._clone(this, { reactions: newReactions });
