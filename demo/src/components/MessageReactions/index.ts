@@ -1,16 +1,16 @@
-export { MessageReactionsUnique } from './MessageReactionsUnique';
-export { MessageReactionsSingle } from './MessageReactionsSingle';
-export { MessageReactionsMany } from './MessageReactionsMany';
+export { MessageReactionsSingle as MessageReactionsUnique } from './MessageReactionsSingle';
+export { MessageReactionsDistinct as MessageReactionsSingle } from './MessageReactionsDistinct';
+export { MessageReactionsCounter as MessageReactionsMany } from './MessageReactionsCounter';
 
 import { ReactionRefType } from '@ably/chat';
 import { useState } from 'react';
 
-const allowedReactionTypes = [ReactionRefType.Many as string, ReactionRefType.Single as string, ReactionRefType.Unique as string];
+const allowedReactionTypes = [ReactionRefType.Single as string, ReactionRefType.Distinct as string, ReactionRefType.Counter as string];
 
 // A quick way to configure between reaction types via the developer console
 // In components, do const rt = useReactionType(); to get the current reaction type
 // Any any point after any component using this has mounted, simply call setReactionType() with the preferred reaction type
-// In dev console function shortcuts accepted as arguments are s, single, u, unique, m, many.
+// In dev console function shortcuts accepted as arguments are single (s), distinct (d), counter (c).
 // `currentReactionType` is also globally available in the dev console for convenience
 export function useReactionType() : ReactionRefType {
     const stored = localStorage.getItem('activeReactionType');
@@ -25,10 +25,10 @@ export function useReactionType() : ReactionRefType {
         const shortcuts : Record<string, ReactionRefType> = {
             "single": ReactionRefType.Single,
             "s": ReactionRefType.Single,
-            "unique": ReactionRefType.Unique,
-            "u": ReactionRefType.Unique,
-            "many": ReactionRefType.Many,
-            "m": ReactionRefType.Many,
+            "distinct": ReactionRefType.Distinct,
+            "d": ReactionRefType.Distinct,
+            "counter": ReactionRefType.Counter,
+            "c": ReactionRefType.Counter,
         };
         if (shortcuts[rt]) {
             rt = shortcuts[rt];

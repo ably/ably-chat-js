@@ -27,11 +27,9 @@ export const MessageReactionsSingle: React.FC<MessageReactionsSingleProps> = ({
   };
 
   const currentEmojis = emojis.slice();
-  if (message.reactions.single) {
-    for (const emoji in message.reactions.single) {
-      if (!currentEmojis.includes(emoji)) {
-        currentEmojis.push(emoji);
-      }
+  for (const emoji in single) {
+    if (!currentEmojis.includes(emoji)) {
+      currentEmojis.push(emoji);
     }
   }
 

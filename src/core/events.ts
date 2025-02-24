@@ -101,14 +101,9 @@ export interface MessageEventPayload {
 }
 
 export enum ReactionRefType {
-  Unique = 'reaction:emoji-single.v1',
-  Single = 'reaction:emoji.v1',
-  Many = 'reaction:emoji-counter.v1',
-}
-
-export interface UniqueReactionSummary {
-  total: number;
-  clientIds: string[];
+  Single = 'reaction:single.v1',
+  Distinct = 'reaction:distinct.v1',
+  Counter = 'reaction:counter.v1',
 }
 
 export interface SingleReactionSummary {
@@ -116,7 +111,12 @@ export interface SingleReactionSummary {
   clientIds: string[];
 }
 
-export interface ManyReactionSummary {
+export interface DistinctReactionSummary {
+  total: number;
+  clientIds: string[];
+}
+
+export interface CounterReactionSummary {
   total: number;
   clientIds: Record<string, number>;
 }
@@ -128,7 +128,7 @@ export interface MessageReactionSummaryEvent {
 
   version: string;
 
-  unique: Record<string, UniqueReactionSummary>;
   single: Record<string, SingleReactionSummary>;
-  many: Record<string, ManyReactionSummary>;
+  distinct: Record<string, DistinctReactionSummary>;
+  counter: Record<string, CounterReactionSummary>;
 }

@@ -14,14 +14,14 @@ import {
 import { ErrorCodes } from './errors.js';
 import {
   ChatMessageActions,
-  ManyReactionSummary,
+  CounterReactionSummary,
   MessageEventPayload,
   MessageEvents,
   MessageReactionSummaryEvent,
   ReactionRefType,
   RealtimeMessageNames,
+  DistinctReactionSummary,
   SingleReactionSummary,
-  UniqueReactionSummary,
 } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
@@ -294,8 +294,11 @@ export interface Messages extends EmitsDiscontinuities {
 
 interface MessageReactionEvent {
   type: 'message-reaction-create' | 'message-reaction-remove';
-  timestamp: Date;
   refSerial: string;
+  refType: string;
+  reaction: string;
+  clientId: string;
+  timestamp: Date;
 }
 
 export type MessageReactionListener = (event: MessageReactionSummaryEvent) => void;
@@ -306,8 +309,8 @@ export interface Unsubscribable {
 }
 
 interface Reactions {
-  add(message: Message, refType: ReactionRefType, reaction: string, score?: number): Promise<void>;
-  remove(message: Message, refType: ReactionRefType, reaction: string): Promise<void>;
+  add(message: { serial : string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void>;
+  remove(message: { serial : string }, refType: ReactionRefType, reaction: string): Promise<void>;
   subscribe(listener: MessageReactionListener): Unsubscribable;
   subscribeRaw(listener: MessageRawReactionListener): Unsubscribable;
 }
@@ -344,20 +347,20 @@ export class DefaultMessageReactions implements Reactions {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
-    const unique: Record<string, UniqueReactionSummary> = (event.summary || {})[ReactionRefType.Unique] || {};
+    const unique: Record<string, SingleReactionSummary> = (event.summary || {})[ReactionRefType.Single] || {};
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
-    const single: Record<string, SingleReactionSummary> = (event.summary || {})[ReactionRefType.Single] || {};
+    const single: Record<string, DistinctReactionSummary> = (event.summary || {})[ReactionRefType.Distinct] || {};
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
-    const many: Record<string, ManyReactionSummary> = (event.summary || {})[ReactionRefType.Many] || {};
+    const many: Record<string, CounterReactionSummary> = (event.summary || {})[ReactionRefType.Counter] || {};
 
     this._emitter.emit('summary', {
       type: 'message-reaction-summary',
       timestamp: new Date(event.timestamp),
       refSerial: event.refSerial,
       version: event.version,
-      unique: unique,
-      single: single,
-      many: many,
+      single: unique,
+      distinct: single,
+      counter: many,
     });
   }
 
