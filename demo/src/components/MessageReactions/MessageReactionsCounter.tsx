@@ -31,7 +31,6 @@ export const MessageReactionsCounter: React.FC<MessageReactionsCounterProps> = (
     }
   }
 
-
   return (
     <>
       {currentEmojis.map((emoji) => (

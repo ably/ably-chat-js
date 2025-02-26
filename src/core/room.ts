@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import cloneDeep from 'lodash.clonedeep';
 
+import { messagesChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import { Logger } from './logger.js';
@@ -18,7 +19,6 @@ import {
   RoomStatusListener,
 } from './room-status.js';
 import { DefaultTyping, Typing } from './typing.js';
-import { messagesChannelName } from './channel.js';
 
 /**
  * Represents a chat room.
@@ -173,7 +173,14 @@ export class DefaultRoom implements Room {
     const channelManager = (this._channelManager = this._getChannelManager(options, realtime, logger));
 
     // Setup features
-    this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, logger);
+    this._messages = new DefaultMessages(
+      roomId,
+      options.messages,
+      channelManager,
+      this._chatApi,
+      realtime.auth.clientId,
+      logger,
+    );
 
     const features: ContributesToRoomLifecycle[] = [this._messages];
 
@@ -242,10 +249,9 @@ export class DefaultRoom implements Room {
 
     manager.mergeOptions(messagesChannelName(this._roomId), (opts) => {
       if (opts.modes) {
-        opts.modes.push("annotation_publish");
-        opts.modes.push("annotation_subscribe");
+        opts.modes.push('ANNOTATION_PUBLISH');
       } else {
-        opts.modes = ["publish", "subscribe", "presence_subscribe", "presence", "annotation_publish", "annotation_subscribe"];
+        opts.modes = ['publish', 'subscribe', 'presence_subscribe', 'presence', 'ANNOTATION_PUBLISH'];
       }
       return opts;
     });

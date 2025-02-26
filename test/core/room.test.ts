@@ -102,7 +102,7 @@ describe('Room', () => {
         // Check that the shared channel for messages, occupancy and presence was called with the correct options
         const expectedMessagesChannelOptions = {
           params: { occupancy: 'metrics', agent: agentString },
-          modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE'],
+          modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE', 'ANNOTATION_PUBLISH'],
           attachOnSubscribe: false,
         };
 

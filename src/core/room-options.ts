@@ -39,7 +39,31 @@ export const AllFeaturesEnabled = {
    * The default occupancy options for a chat room.
    */
   occupancy: {} as OccupancyOptions,
+
+  /**
+   * The default options for messages.
+   */
+  messages: {
+    RawMessageReactions: false,
+  } as MessageOptions,
 };
+
+/**
+ * Represents the message options for a chat room.
+ */
+export interface MessageOptions {
+  /**
+   * Whether to enable receiving raw individual message reactions from the
+   * realtime channel. The default is false, meaning that individual message
+   * reactions are not received. Set to true if subscribing to raw message
+   * reactions.
+   *
+   * Note reaction summaries (aggregates) are always available regardless of
+   * this setting.
+   * @defaultValue false
+   */
+  RawMessageReactions?: boolean;
+}
 
 /**
  * Represents the presence options for a chat room.
@@ -112,6 +136,12 @@ export interface RoomOptions {
    * {@link AllFeaturesEnabled.occupancy} to enable occupancy with default options.
    */
   occupancy?: OccupancyOptions;
+
+  /**
+   * The message options for the room. Messages are always enabled, this object is for additional
+   * configuration. You may use {@link DefaultRoomOptions.messages} or leave empty to use the defaults.
+   */
+  messages?: MessageOptions;
 }
 
 /**
