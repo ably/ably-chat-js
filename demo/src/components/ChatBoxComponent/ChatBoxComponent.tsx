@@ -209,7 +209,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
                 key={msg.serial}
                 self={msg.clientId === clientId}
                 message={msg}
-                reactionRefType={reactionType}
+                reactionRefType={reactionType.refType}
                 onReactionAdd={addReaction}
                 onReactionRemove={removeReaction}
                 onMessageDelete={onDeleteMessage}
