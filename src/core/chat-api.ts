@@ -86,9 +86,9 @@ interface DeleteMessageParams {
 }
 
 interface MessageReactionData {
-  refType : string;
-  reaction : string;
-  count? : number;
+  refType: string;
+  reaction: string;
+  count?: number;
 }
 
 /**
@@ -212,24 +212,19 @@ export class ChatApi {
   addMessageReaction(roomId: string, serial: string, data: MessageReactionData): Promise<void> {
     const encodedSerial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedRequest<void>(
-      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`,
-      'POST',
-      data,
-    );
+    return this._makeAuthorizedRequest(`/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`, 'POST', data);
   }
 
   deleteMessageReaction(roomId: string, serial: string, data: Omit<MessageReactionData, 'count'>): Promise<void> {
     const encodedSerial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedRequest<void>(
+    return this._makeAuthorizedRequest(
       `/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`,
       'DELETE',
       undefined,
       data,
     );
   }
-
 
   getOccupancy(roomId: string): Promise<OccupancyEvent> {
     roomId = encodeURIComponent(roomId);

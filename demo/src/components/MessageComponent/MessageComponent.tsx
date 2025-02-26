@@ -47,7 +47,6 @@ export const MessageComponent: React.FC<MessageProps> = ({
   onReactionAdd,
   onReactionRemove,
 }) => {
-
   const client = useChatClient();
   const clientId = client.clientId;
 
@@ -94,14 +93,16 @@ export const MessageComponent: React.FC<MessageProps> = ({
         break;
       }
       case ReactionRefType.Counter: {
-        reactionsUI = (<MessageReactionsCounter
-          message={message}
-          onReactionAdd={onReactionAdd}
-          onReactionRemove={onReactionRemove}
-        />);
+        reactionsUI = (
+          <MessageReactionsCounter
+            message={message}
+            onReactionAdd={onReactionAdd}
+            onReactionRemove={onReactionRemove}
+          />
+        );
         break;
       }
-    }      
+    }
   }
 
   return (

@@ -3,10 +3,10 @@ import { ErrorInfo } from 'ably';
 import {
   ChatMessageActions,
   CounterReactionSummary,
+  DistinctReactionSummary,
   MessageEvent,
   MessageEvents,
   MessageReactionSummaryEvent,
-  DistinctReactionSummary,
   SingleReactionSummary,
 } from './events.js';
 import { Headers } from './headers.js';

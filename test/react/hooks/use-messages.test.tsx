@@ -131,9 +131,17 @@ describe('useMessages', () => {
         headers: {},
         metadata: {},
         copy: vi.fn(),
+        reactions: {
+          version: '',
+          single: {},
+          distinct: {},
+          counter: {},
+        },
       },
     };
-    for (const listener of messageListeners) listener(messageEvent);
+    for (const listener of messageListeners) {
+      listener(messageEvent);
+    }
     expect(mockListener).toHaveBeenCalledWith(messageEvent);
 
     // wait for the getPreviousMessages function to be defined

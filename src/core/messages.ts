@@ -15,12 +15,12 @@ import { ErrorCodes } from './errors.js';
 import {
   ChatMessageActions,
   CounterReactionSummary,
+  DistinctReactionSummary,
   MessageEvent,
   MessageEvents,
   MessageReactionSummaryEvent,
   ReactionRefType,
   RealtimeMessageNames,
-  DistinctReactionSummary,
   SingleReactionSummary,
 } from './events.js';
 import { Logger } from './logger.js';
@@ -29,6 +29,7 @@ import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { Subscription } from './subscription.js';
+import { MessageOptions } from './room-options.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -292,8 +293,8 @@ export interface Unsubscribable {
 }
 
 interface Reactions {
-  add(message: { serial : string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void>;
-  remove(message: { serial : string }, refType: ReactionRefType, reaction: string): Promise<void>;
+  add(message: { serial: string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void>;
+  remove(message: { serial: string }, refType: ReactionRefType, reaction: string): Promise<void>;
   subscribe(listener: MessageReactionListener): Unsubscribable;
   subscribeRaw(listener: MessageRawReactionListener): Unsubscribable;
 }
@@ -303,12 +304,15 @@ export class DefaultMessageReactions implements Reactions {
 
   constructor(
     private readonly _logger: Logger,
+    private readonly _options: MessageOptions | undefined,
     private readonly _api: ChatApi,
     private readonly _roomID: string,
     private readonly _channel: Ably.RealtimeChannel,
   ) {
     void _channel.subscribe(this._processMessageEvent.bind(this));
-    void _channel.annotations.subscribe(this._processAnnotationEvent.bind(this));
+    if (this._options?.RawMessageReactions) {
+      void _channel.annotations.subscribe(this._processAnnotationEvent.bind(this));
+    }
   }
 
   private _processAnnotationEvent(event: Ably.Annotation) {
@@ -348,11 +352,15 @@ export class DefaultMessageReactions implements Reactions {
   }
 
   add(message: { serial: string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void> {
-    return this._api.addMessageReaction(this._roomID, message.serial, {refType: refType, reaction: reaction, count: count});
+    return this._api.addMessageReaction(this._roomID, message.serial, {
+      refType: refType,
+      reaction: reaction,
+      count: count,
+    });
   }
 
   remove(message: Message, refType: ReactionRefType, reaction: string): Promise<void> {
-    return this._api.deleteMessageReaction(this._roomID, message.serial, {refType: refType, reaction: reaction});
+    return this._api.deleteMessageReaction(this._roomID, message.serial, { refType: refType, reaction: reaction });
   }
 
   /**
@@ -400,6 +408,7 @@ export class DefaultMessages
   implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _roomId: string;
+  private readonly _options?: MessageOptions;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
@@ -422,9 +431,17 @@ export class DefaultMessages
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, clientId: string, logger: Logger) {
+  constructor(
+    roomId: string,
+    options: MessageOptions | undefined,
+    channelManager: ChannelManager,
+    chatApi: ChatApi,
+    clientId: string,
+    logger: Logger,
+  ) {
     super();
     this._roomId = roomId;
+    this._options = options;
 
     this._channel = this._makeChannel(roomId, channelManager);
 
@@ -433,14 +450,25 @@ export class DefaultMessages
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
 
-    this.reactions = new DefaultMessageReactions(this._logger, this._chatApi, this._roomId, this._channel);
+    this.reactions = new DefaultMessageReactions(this._logger, options, this._chatApi, this._roomId, this._channel);
   }
 
   /**
    * Creates the realtime channel for messages.
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(messagesChannelName(roomId));
+    const channelName = messagesChannelName(roomId);
+
+    if (this._options?.RawMessageReactions) {
+      channelManager.mergeOptions(channelName, (options) => {
+        const opts = { ...options };
+        opts.modes = opts.modes ?? [];
+        opts.modes.push('ANNOTATION_SUBSCRIBE');
+        return opts;
+      });
+    }
+
+    const channel = channelManager.get(channelName);
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([RealtimeMessageNames.ChatMessage], this._processEvent.bind(this));

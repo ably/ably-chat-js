@@ -7,6 +7,6 @@ import { useContext } from 'react';
 import { ReactionTypeContext } from '../../containers/ReactionTypeProvider/reactionTypeProvider';
 
 export function useReactionType() {
-    const context = useContext(ReactionTypeContext);
-    return context;
+  const context = useContext(ReactionTypeContext);
+  return context;
 }
