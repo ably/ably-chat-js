@@ -330,37 +330,25 @@ export class DefaultMessageReactions implements Reactions {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
-    const unique: Record<string, SingleReactionSummary> = (event.summary || {})[ReactionRefType.Single] || {};
+    const single: Record<string, SingleReactionSummary> = (event.summary || {})[ReactionRefType.Single] || {};
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
-    const single: Record<string, DistinctReactionSummary> = (event.summary || {})[ReactionRefType.Distinct] || {};
+    const distinct: Record<string, DistinctReactionSummary> = (event.summary || {})[ReactionRefType.Distinct] || {};
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
-    const many: Record<string, CounterReactionSummary> = (event.summary || {})[ReactionRefType.Counter] || {};
+    const counter: Record<string, CounterReactionSummary> = (event.summary || {})[ReactionRefType.Counter] || {};
 
     this._emitter.emit('summary', {
       type: 'message-reaction-summary',
       timestamp: new Date(event.timestamp),
       refSerial: event.refSerial,
       version: event.version,
-      single: unique,
-      distinct: single,
-      counter: many,
+      single: single,
+      distinct: distinct,
+      counter: counter,
     });
   }
 
   add(message: { serial: string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void> {
     return this._api.addMessageReaction(this._roomID, message.serial, {refType: refType, reaction: reaction, count: count});
-
-    // will remove this comment once the endpoint above works - code below still useful for debug right now
-    // if (count !== undefined && refType != ReactionRefType.Many) {
-    //   throw new Ably.ErrorInfo('message reaction score is only supported for reaction:many.v1', 40000, 400);
-    // }
-    // let payload = reaction;
-    // if (refType === ReactionRefType.Many) {
-    //   count = count && count >= 1 ? count : 1;
-    //   payload = JSON.stringify({ emoji: reaction, count: count });
-    // }
-
-    // return this._channel.annotations.publish(message.serial, refType, payload);
   }
 
   remove(message: Message, refType: ReactionRefType, reaction: string): Promise<void> {
@@ -738,7 +726,6 @@ export class DefaultMessages
     this._logger.trace('Messages._processEvent();', {
       channelEventMessage,
     });
-    console.log("got message: ", channelEventMessage);
     const { action } = channelEventMessage;
     const event = MessageActionsToEventsMap.get(action as ChatMessageActions);
     if (!event) {

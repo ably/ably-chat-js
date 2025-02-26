@@ -2,7 +2,7 @@ import { Message, ReactionRefType, useChatClient } from '@ably/chat';
 import React, { useCallback } from 'react';
 import clsx from 'clsx';
 import { FaPencil, FaTrash } from 'react-icons/fa6';
-import { MessageReactionsSingle, MessageReactionsUnique, MessageReactionsMany } from '../MessageReactions';
+import { MessageReactionsSingle, MessageReactionsDistinct, MessageReactionsCounter } from '../MessageReactions';
 
 interface MessageProps {
   self?: boolean;
@@ -71,17 +71,6 @@ export const MessageComponent: React.FC<MessageProps> = ({
 
   if (onReactionAdd && onReactionRemove) {
     switch (reactionRefType) {
-      case ReactionRefType.Unique: {
-        reactionsUI = (
-          <MessageReactionsUnique
-            message={message}
-            clientId={clientId}
-            onReactionAdd={onReactionAdd}
-            onReactionRemove={onReactionRemove}
-          />
-        );
-        break;
-      }
       case ReactionRefType.Single: {
         reactionsUI = (
           <MessageReactionsSingle
@@ -93,8 +82,19 @@ export const MessageComponent: React.FC<MessageProps> = ({
         );
         break;
       }
-      case ReactionRefType.Many: {
-        reactionsUI = (<MessageReactionsMany
+      case ReactionRefType.Distinct: {
+        reactionsUI = (
+          <MessageReactionsDistinct
+            message={message}
+            clientId={clientId}
+            onReactionAdd={onReactionAdd}
+            onReactionRemove={onReactionRemove}
+          />
+        );
+        break;
+      }
+      case ReactionRefType.Counter: {
+        reactionsUI = (<MessageReactionsCounter
           message={message}
           onReactionAdd={onReactionAdd}
           onReactionRemove={onReactionRemove}
