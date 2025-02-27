@@ -170,7 +170,7 @@ export class DefaultRoom implements Room {
     // Setup features
     this._messages = new DefaultMessages(
       roomId,
-      options.messages,
+      options.messages ?? {},
       channelManager,
       this._chatApi,
       realtime.auth.clientId,

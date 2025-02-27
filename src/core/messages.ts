@@ -452,7 +452,7 @@ export class DefaultMessages
   implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _roomId: string;
-  private readonly _options?: MessageOptions;
+  private readonly _options: MessageOptions;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
@@ -477,7 +477,7 @@ export class DefaultMessages
    */
   constructor(
     roomId: string,
-    options: MessageOptions | undefined,
+    options: MessageOptions,
     channelManager: ChannelManager,
     chatApi: ChatApi,
     clientId: string,
@@ -503,7 +503,7 @@ export class DefaultMessages
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
     const channelName = messagesChannelName(roomId);
 
-    if (this._options?.rawMessageReactions) {
+    if (this._options.rawMessageReactions) {
       channelManager.mergeOptions(channelName, (options) => {
         const opts = { ...options };
         opts.modes = opts.modes ?? [];
