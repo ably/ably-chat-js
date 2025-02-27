@@ -391,12 +391,15 @@ export class DefaultMessageReactions implements Reactions {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
-    const single: Record<string, SingleReactionSummary> = (event.summary || {})[ReactionRefType.Single] || {};
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
-    const distinct: Record<string, DistinctReactionSummary> = (event.summary || {})[ReactionRefType.Distinct] || {};
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
-    const counter: Record<string, CounterReactionSummary> = (event.summary || {})[ReactionRefType.Counter] || {};
+    const summary = (event.summary ?? {}) as {
+      [ReactionRefType.Single]?: Record<string, SingleReactionSummary>;
+      [ReactionRefType.Distinct]?: Record<string, DistinctReactionSummary>;
+      [ReactionRefType.Counter]?: Record<string, CounterReactionSummary>;
+    };
+
+    const single: Record<string, SingleReactionSummary> = summary[ReactionRefType.Single] ?? {};
+    const distinct: Record<string, DistinctReactionSummary> = summary[ReactionRefType.Distinct] ?? {};
+    const counter: Record<string, CounterReactionSummary> = summary[ReactionRefType.Counter] ?? {};
 
     this._emitter.emit(MessageReactionEvents.Summary, {
       type: MessageReactionEvents.Summary,
