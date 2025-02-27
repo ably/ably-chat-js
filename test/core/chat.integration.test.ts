@@ -6,7 +6,7 @@ import { ConnectionStatus } from '../../src/core/connection.ts';
 import { LogLevel } from '../../src/core/logger.ts';
 import { RealtimeWithOptions } from '../../src/core/realtime-extensions.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING_REACT, VERSION } from '../../src/core/version.ts';
-import { DefaultRoomOptions } from '../../src/index.ts';
+import { AllFeaturesEnabled } from '../../src/index.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { testClientOptions } from '../helper/options.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -48,7 +48,7 @@ describe('Chat', () => {
     const chat = newChatClient(testClientOptions());
     chat.addReactAgent();
 
-    const room = await chat.rooms.get('room', DefaultRoomOptions);
+    const room = await chat.rooms.get('room', AllFeaturesEnabled);
 
     const channelOptions = (room.messages.channel as unknown as { channelOptions: Ably.ChannelOptions }).channelOptions;
     expect(channelOptions.params).toEqual(

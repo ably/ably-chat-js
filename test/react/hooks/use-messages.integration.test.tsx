@@ -6,7 +6,7 @@ import { ChatClient } from '../../../src/core/chat.ts';
 import { ChatMessageActions, MessageEvents } from '../../../src/core/events.ts';
 import { Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
-import { DefaultRoomOptions } from '../../../src/core/room-options.ts';
+import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
 import { useMessages } from '../../../src/react/hooks/use-messages.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -41,7 +41,7 @@ describe('useMessages', () => {
 
     // create a second room and attach it, so we can listen for messages
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, DefaultRoomOptions);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
     await roomTwo.attach();
 
     // start listening for messages
@@ -64,7 +64,7 @@ describe('useMessages', () => {
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
           id={roomId}
-          options={DefaultRoomOptions}
+          options={AllFeaturesEnabled}
         >
           <TestComponent />
         </ChatRoomProvider>
@@ -85,7 +85,7 @@ describe('useMessages', () => {
 
     // create a second room and attach it, so we can listen for deletions
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, DefaultRoomOptions);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
     await roomTwo.attach();
 
     // start listening for deletions
@@ -117,7 +117,7 @@ describe('useMessages', () => {
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
           id={roomId}
-          options={DefaultRoomOptions}
+          options={AllFeaturesEnabled}
         >
           <TestComponent />
         </ChatRoomProvider>
@@ -139,7 +139,7 @@ describe('useMessages', () => {
 
     // create a second room and attach it, so we can listen for updates
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, DefaultRoomOptions);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
     await roomTwo.attach();
 
     // start listening for updates
@@ -179,7 +179,7 @@ describe('useMessages', () => {
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
           id={roomId}
-          options={DefaultRoomOptions}
+          options={AllFeaturesEnabled}
         >
           <TestComponent />
         </ChatRoomProvider>
@@ -208,7 +208,7 @@ describe('useMessages', () => {
 
     // create a second room so we can send messages from it
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, DefaultRoomOptions);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
 
     // start listening for messages
     const messagesRoomOne: Message[] = [];
@@ -231,7 +231,7 @@ describe('useMessages', () => {
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
           id={roomId}
-          options={DefaultRoomOptions}
+          options={AllFeaturesEnabled}
         >
           <TestComponent />
         </ChatRoomProvider>
@@ -263,7 +263,7 @@ describe('useMessages', () => {
 
     // create a second room instance so we can send messages from it
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, DefaultRoomOptions);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
     await roomTwo.attach();
 
     // send a few messages before the first room has subscribed
@@ -289,7 +289,7 @@ describe('useMessages', () => {
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
           id={roomId}
-          options={DefaultRoomOptions}
+          options={AllFeaturesEnabled}
         >
           <TestComponent />
         </ChatRoomProvider>
@@ -327,7 +327,7 @@ describe('useMessages', () => {
 
     // create a second room instance so we can send messages from it
     const roomId = randomRoomId();
-    const room = await chatClient.rooms.get(roomId, DefaultRoomOptions);
+    const room = await chatClient.rooms.get(roomId, AllFeaturesEnabled);
     await room.attach();
 
     let lastSeenMessageText: string | undefined;
@@ -364,7 +364,7 @@ describe('useMessages', () => {
       <ChatClientProvider client={chatClient}>
         <ChatRoomProvider
           id={roomId}
-          options={DefaultRoomOptions}
+          options={AllFeaturesEnabled}
         >
           <TestComponent defineListener={defineListener} />
         </ChatRoomProvider>
@@ -464,7 +464,7 @@ describe('useMessages', () => {
 
     // create a second room instance so we can send messages from it
     const roomId = randomRoomId();
-    const room = await chatClient.rooms.get(roomId, DefaultRoomOptions);
+    const room = await chatClient.rooms.get(roomId, AllFeaturesEnabled);
     await room.attach();
 
     let lastSeenMessageText: string | undefined;
@@ -501,7 +501,7 @@ describe('useMessages', () => {
       <ChatClientProvider client={chatClient}>
         <ChatRoomProvider
           id={roomId}
-          options={DefaultRoomOptions}
+          options={AllFeaturesEnabled}
         >
           <TestComponent listener={listener} />
         </ChatRoomProvider>

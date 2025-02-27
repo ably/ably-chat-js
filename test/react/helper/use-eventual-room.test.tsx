@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Logger } from '../../../src/core/logger.ts';
 import { Room } from '../../../src/core/room.ts';
-import { DefaultRoomOptions } from '../../../src/core/room-options.ts';
+import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { useEventualRoom, useEventualRoomProperty } from '../../../src/react/helper/use-eventual-room.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
@@ -30,7 +30,7 @@ const updateMockRoom = (newRoom: Room) => {
 describe('eventual rooms', () => {
   beforeEach(() => {
     mockLogger = makeTestLogger();
-    updateMockRoom(makeRandomRoom({ options: DefaultRoomOptions }));
+    updateMockRoom(makeRandomRoom({ options: AllFeaturesEnabled }));
   });
 
   afterEach(() => {
@@ -62,7 +62,7 @@ describe('eventual rooms', () => {
       });
 
       // Now update the room and re-render
-      const newRoom = makeRandomRoom({ options: DefaultRoomOptions });
+      const newRoom = makeRandomRoom({ options: AllFeaturesEnabled });
       updateMockRoom(newRoom);
 
       rerender();
@@ -99,7 +99,7 @@ describe('eventual rooms', () => {
       });
 
       // Now update the room and re-render
-      const newRoom = makeRandomRoom({ options: DefaultRoomOptions });
+      const newRoom = makeRandomRoom({ options: AllFeaturesEnabled });
       updateMockRoom(newRoom);
 
       rerender();

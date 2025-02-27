@@ -8,7 +8,7 @@ import { ChatClient } from '../../src/core/chat.ts';
 import { PresenceEvents } from '../../src/core/events.ts';
 import { PresenceData, PresenceEvent } from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
-import { DefaultRoomOptions } from '../../src/core/room-options.ts';
+import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { randomRoomId } from '../helper/identifier.ts';
@@ -102,7 +102,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
     const roomId = randomRoomId();
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
-    context.chatRoom = await context.chat.rooms.get(roomId, { presence: DefaultRoomOptions.presence });
+    context.chatRoom = await context.chat.rooms.get(roomId, { presence: AllFeaturesEnabled.presence });
   });
 
   // Test for successful entering with clientId and custom user data

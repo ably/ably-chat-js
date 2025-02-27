@@ -51,7 +51,7 @@ export type {
   RoomReactionsOptions,
   TypingOptions,
 } from './room-options.js';
-export { DefaultRoomOptions } from './room-options.js';
+export { AllFeaturesEnabled } from './room-options.js';
 export type {
   RoomReactionListener,
   RoomReactions,
