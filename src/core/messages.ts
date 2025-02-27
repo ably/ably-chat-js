@@ -307,7 +307,7 @@ export class DefaultMessageReactions implements Reactions {
     private readonly _channel: Ably.RealtimeChannel,
   ) {
     void _channel.subscribe(this._processMessageEvent.bind(this));
-    if (this._options?.RawMessageReactions) {
+    if (this._options?.rawMessageReactions) {
       void _channel.annotations.subscribe(this._processAnnotationEvent.bind(this));
     }
   }
@@ -503,7 +503,7 @@ export class DefaultMessages
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
     const channelName = messagesChannelName(roomId);
 
-    if (this._options?.RawMessageReactions) {
+    if (this._options?.rawMessageReactions) {
       channelManager.mergeOptions(channelName, (options) => {
         const opts = { ...options };
         opts.modes = opts.modes ?? [];

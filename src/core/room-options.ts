@@ -44,7 +44,7 @@ export const AllFeaturesEnabled = {
    * The default options for messages.
    */
   messages: {
-    RawMessageReactions: false,
+    rawMessageReactions: false,
   } as MessageOptions,
 };
 
@@ -62,7 +62,7 @@ export interface MessageOptions {
    * this setting.
    * @defaultValue false
    */
-  RawMessageReactions?: boolean;
+  rawMessageReactions?: boolean;
 }
 
 /**
