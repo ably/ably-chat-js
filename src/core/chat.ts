@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { ClientOptions, normalizeClientOptions, NormalizedClientOptions } from './config.js';
+import { ChatClientOptions, normalizeClientOptions, NormalizedChatClientOptions } from './config.js';
 import { Connection, DefaultConnection } from './connection.js';
 import { Logger, makeLogger } from './logger.js';
 import { RealtimeWithOptions } from './realtime-extensions.js';
@@ -24,7 +24,7 @@ export class ChatClient {
   /**
    * @internal
    */
-  private readonly _clientOptions: NormalizedClientOptions;
+  private readonly _clientOptions: NormalizedChatClientOptions;
 
   /**
    * @internal
@@ -41,7 +41,7 @@ export class ChatClient {
    * @param realtime - The Ably Realtime client.
    * @param clientOptions - The client options.
    */
-  constructor(realtime: Ably.Realtime, clientOptions?: ClientOptions) {
+  constructor(realtime: Ably.Realtime, clientOptions?: ChatClientOptions) {
     this._realtime = realtime;
     this._clientOptions = normalizeClientOptions(clientOptions);
     this._logger = makeLogger(this._clientOptions);
@@ -91,7 +91,7 @@ export class ChatClient {
    * Returns the resolved client options for the client, including any defaults that have been set.
    * @returns The client options.
    */
-  get clientOptions(): ClientOptions {
+  get clientOptions(): ChatClientOptions {
     return this._clientOptions;
   }
 

@@ -3,7 +3,7 @@
  */
 
 export { ChatClient } from './chat.js';
-export type { ClientOptions } from './config.js';
+export type { ChatClientOptions } from './config.js';
 export type {
   Connection,
   ConnectionStatusChange,

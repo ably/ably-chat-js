@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { NormalizedClientOptions } from './config.js';
+import { NormalizedChatClientOptions } from './config.js';
 
 /**
  * Interface for loggers.
@@ -131,7 +131,7 @@ const consoleLogger = (message: string, level: LogLevel, context?: LogContext) =
   }
 };
 
-export const makeLogger = (options: NormalizedClientOptions): Logger => {
+export const makeLogger = (options: NormalizedChatClientOptions): Logger => {
   const logHandler = options.logHandler ?? consoleLogger;
 
   return new DefaultLogger(logHandler, options.logLevel);
