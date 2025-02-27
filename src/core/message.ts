@@ -6,6 +6,7 @@ import {
   DistinctReactionSummary,
   MessageEventPayload,
   MessageEvents,
+  MessageReactionEvents,
   MessageReactionSummaryEvent,
   SingleReactionSummary,
 } from './events.js';
@@ -357,7 +358,7 @@ export class DefaultMessage implements Message {
     }
 
     // reaction summary
-    if (event.type === 'message-reaction-summary') {
+    if (event.type === MessageReactionEvents.Summary) {
       if (event.refSerial !== this.serial) {
         throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
       }

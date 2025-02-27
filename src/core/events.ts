@@ -121,8 +121,24 @@ export interface CounterReactionSummary {
   clientIds: Record<string, number>;
 }
 
+export enum MessageReactionEvents {
+  Create = 'reaction.create',
+  Delete = 'reaction.delete',
+  Summary = 'reaction.summary',
+}
+
+export interface MessageReactionRawEvent {
+  type: MessageReactionEvents.Create | MessageReactionEvents.Delete;
+  refSerial: string;
+  refType: string;
+  reaction: string;
+  count?: number;
+  clientId: string;
+  timestamp: Date;
+}
+
 export interface MessageReactionSummaryEvent {
-  type: 'message-reaction-summary';
+  type: MessageReactionEvents.Summary;
   timestamp: Date;
   refSerial: string; // serial of the message this summary is for
 
