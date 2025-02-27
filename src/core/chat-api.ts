@@ -1,7 +1,14 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
+import {
+  DefaultMessage,
+  emptyMessageReactions,
+  Message,
+  MessageHeaders,
+  MessageMetadata,
+  MessageOperationMetadata,
+} from './message.js';
 import { OrderBy } from './messages.js';
 import { OccupancyEvent } from './occupancy.js';
 import { PaginatedResult } from './query.js';
@@ -135,6 +142,8 @@ export class ChatApi {
     const mapToDefaultMessage = (message: Message): DefaultMessage => {
       const metadata = message.metadata as MessageMetadata | undefined;
       const headers = message.headers as MessageHeaders | undefined;
+      const reactions = message.reactions as typeof message.reactions | undefined;
+
       return new DefaultMessage(
         message.serial,
         message.clientId,
@@ -146,8 +155,8 @@ export class ChatApi {
         message.version,
         (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
         new Date(message.timestamp),
+        reactions ?? emptyMessageReactions(),
         message.operation,
-        message.reactions,
       );
     };
 
