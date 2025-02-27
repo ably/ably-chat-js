@@ -18,6 +18,8 @@ import {
   DistinctReactionSummary,
   MessageEvent,
   MessageEvents,
+  MessageReactionEvents,
+  MessageReactionRawEvent,
   MessageReactionSummaryEvent,
   ReactionRefType,
   RealtimeMessageNames,
@@ -276,17 +278,8 @@ export interface Messages extends EmitsDiscontinuities {
   get channel(): Ably.RealtimeChannel;
 }
 
-interface MessageReactionEvent {
-  type: 'message-reaction-create' | 'message-reaction-remove';
-  refSerial: string;
-  refType: string;
-  reaction: string;
-  clientId: string;
-  timestamp: Date;
-}
-
 export type MessageReactionListener = (event: MessageReactionSummaryEvent) => void;
-export type MessageRawReactionListener = (event: MessageReactionEvent) => void;
+export type MessageRawReactionListener = (event: MessageReactionRawEvent) => void;
 
 export interface Unsubscribable {
   unsubscribe: () => void;
@@ -300,7 +293,11 @@ interface Reactions {
 }
 
 export class DefaultMessageReactions implements Reactions {
-  private _emitter = new EventEmitter<{ reaction: MessageReactionEvent; summary: MessageReactionSummaryEvent }>();
+  private _emitter = new EventEmitter<{
+    [MessageReactionEvents.Create]: MessageReactionRawEvent;
+    [MessageReactionEvents.Delete]: MessageReactionRawEvent;
+    [MessageReactionEvents.Summary]: MessageReactionSummaryEvent;
+  }>();
 
   constructor(
     private readonly _logger: Logger,
@@ -316,7 +313,51 @@ export class DefaultMessageReactions implements Reactions {
   }
 
   private _processAnnotationEvent(event: Ably.Annotation) {
-    console.log('ably-chat-js: annotation received:', event);
+    // unknown ref type
+    if (!Object.values(ReactionRefType).includes(event.refType as ReactionRefType)) {
+      return;
+    }
+    const refType = event.refType as ReactionRefType;
+
+    const typeMap: Record<string, MessageReactionEvents.Create | MessageReactionEvents.Delete> = {
+      'annotation.create': MessageReactionEvents.Create,
+      'annotation.delete': MessageReactionEvents.Delete,
+    };
+
+    const eventType = typeMap[event.action];
+    if (!eventType) {
+      // unknown action
+      return;
+    }
+
+    if (!event.data) {
+      // no reaction data
+      return;
+    }
+
+    let reaction = event.data as string;
+    let count: number | undefined;
+    if (refType === ReactionRefType.Counter) {
+      const data = JSON.parse(reaction) as { count?: number; emoji: string };
+      reaction = data.emoji;
+      count = data.count;
+      if (count !== undefined && count <= 0) {
+        count = undefined;
+      }
+    }
+
+    const reactionEvent: MessageReactionRawEvent = {
+      type: eventType,
+      refSerial: event.refSerial,
+      refType: event.refType,
+      reaction: reaction,
+      clientId: event.clientId ?? '',
+      timestamp: new Date(event.timestamp),
+    };
+    if (count) {
+      reactionEvent.count = count;
+    }
+    this._emitter.emit(eventType, reactionEvent);
   }
 
   private _processMessageEvent(event: Ably.InboundMessage) {
@@ -340,8 +381,8 @@ export class DefaultMessageReactions implements Reactions {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/prefer-optional-chain, @typescript-eslint/no-unsafe-assignment
     const counter: Record<string, CounterReactionSummary> = (event.summary || {})[ReactionRefType.Counter] || {};
 
-    this._emitter.emit('summary', {
-      type: 'message-reaction-summary',
+    this._emitter.emit(MessageReactionEvents.Summary, {
+      type: MessageReactionEvents.Summary,
       timestamp: new Date(event.timestamp),
       refSerial: event.refSerial,
       version: event.version,
@@ -373,7 +414,7 @@ export class DefaultMessageReactions implements Reactions {
     const unique = (event: MessageReactionSummaryEvent) => {
       listener(event);
     };
-    this._emitter.on('summary', unique);
+    this._emitter.on(MessageReactionEvents.Summary, unique);
     return {
       unsubscribe: () => {
         this._emitter.off(unique);
@@ -388,10 +429,10 @@ export class DefaultMessageReactions implements Reactions {
    */
   subscribeRaw(listener: MessageRawReactionListener): Unsubscribable {
     // todo: maybe throw error if single reaction subscription not configured on realtime channel
-    const unique = (event: MessageReactionEvent) => {
+    const unique = (event: MessageReactionRawEvent) => {
       listener(event);
     };
-    this._emitter.on('reaction', unique);
+    this._emitter.on([MessageReactionEvents.Create, MessageReactionEvents.Delete], unique);
     return {
       unsubscribe: () => {
         this._emitter.off(unique);
