@@ -126,6 +126,9 @@ export interface Message {
    */
   readonly operation?: Operation;
 
+  /**
+   * The reactions summary for this message.
+   */
   readonly reactions: MessageReactions;
 
   /**
@@ -256,8 +259,6 @@ interface MessageReactions {
  * Allows for comparison of messages based on their serials.
  */
 export class DefaultMessage implements Message {
-  public readonly reactions: MessageReactions;
-
   constructor(
     public readonly serial: string,
     public readonly clientId: string,
@@ -269,17 +270,9 @@ export class DefaultMessage implements Message {
     public readonly version: string,
     public readonly createdAt: Date,
     public readonly timestamp: Date,
+    public readonly reactions: MessageReactions,
     public readonly operation?: Operation,
-    reactions?: MessageReactions,
   ) {
-    // Make sure reactions are always set as empty even if none provided
-    this.reactions = reactions ?? {
-      version: '',
-      single: {},
-      distinct: {},
-      counter: {},
-    };
-
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this.reactions);
     Object.freeze(this.reactions.counter);
@@ -404,8 +397,17 @@ export class DefaultMessage implements Message {
       replace?.version ?? source.version,
       replace?.createdAt ?? source.createdAt,
       replace?.timestamp ?? source.timestamp,
-      replace?.operation ?? structuredClone(source.operation),
       replace?.reactions ?? structuredClone(source.reactions),
+      replace?.operation ?? structuredClone(source.operation),
     );
   }
+}
+
+export function emptyMessageReactions(): MessageReactions {
+  return {
+    version: '',
+    single: {},
+    distinct: {},
+    counter: {},
+  };
 }

@@ -26,7 +26,14 @@ import {
   SingleReactionSummary,
 } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
+import {
+  DefaultMessage,
+  emptyMessageReactions,
+  Message,
+  MessageHeaders,
+  MessageMetadata,
+  MessageOperationMetadata,
+} from './message.js';
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
@@ -704,6 +711,7 @@ export class DefaultMessages
       response.serial,
       new Date(response.createdAt),
       new Date(response.createdAt), // timestamp is the same as createdAt for new messages
+      emptyMessageReactions(),
     );
   }
 
@@ -726,6 +734,7 @@ export class DefaultMessages
       response.version,
       new Date(message.createdAt),
       new Date(response.timestamp),
+      emptyMessageReactions(),
       {
         clientId: this._clientId,
         description: details?.description,
@@ -756,6 +765,7 @@ export class DefaultMessages
       response.version,
       new Date(message.createdAt),
       new Date(response.timestamp),
+      emptyMessageReactions(),
       {
         clientId: this._clientId,
         description: params?.description,

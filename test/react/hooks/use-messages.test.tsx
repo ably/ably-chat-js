@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
 import { ChatMessageActions, MessageEvents } from '../../../src/core/events.ts';
-import { DefaultMessage, Message } from '../../../src/core/message.ts';
+import { DefaultMessage, emptyMessageReactions, Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
 import { PaginatedResult } from '../../../src/core/query.ts';
 import { Room } from '../../../src/core/room.ts';
@@ -191,6 +191,7 @@ describe('useMessages', () => {
       '01719948956834-000@108TeGZDQBderu97202638',
       new Date(1719948956834),
       new Date(1719948956834),
+      emptyMessageReactions(),
     );
     // call both methods and ensure they call the underlying messages methods
     await act(async () => {
