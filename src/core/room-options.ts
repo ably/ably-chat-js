@@ -29,7 +29,7 @@ export const AllFeaturesEnabled = {
      * event.
      * Restarts the interval with repeated calls to typing.start(), resets the interval with typing.stop().
      */
-    timeoutMs: 5000,
+    timeoutMs: 2000,
 
     /**
      * The default time that a client will wait between sending one typing heartbeat and the next.
