@@ -19,6 +19,7 @@ export interface Subscription {
    */
   unsubscribe: () => void;
 }
+
 /**
  * Represents a subscription to status change events that can be unsubscribed from. This
  * interface provides a way to clean up and remove subscriptions when they are no longer needed.

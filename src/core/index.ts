@@ -51,18 +51,22 @@ export type { PaginatedResult } from './query.js';
 export type { Reaction } from './reaction.js';
 export type { Room } from './room.js';
 export type {
+  MessageOptions,
   OccupancyOptions,
   PresenceOptions,
   RoomOptions,
   RoomReactionsOptions,
   TypingOptions,
-  MessageOptions,
 } from './room-options.js';
 export { AllFeaturesEnabled } from './room-options.js';
-export type { RoomReactionListener, RoomReactions, SendReactionParams } from './room-reactions.js';
+export type {
+  RoomReactionListener,
+  RoomReactions,
+  SendReactionParams,
+} from './room-reactions.js';
 export type { RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
-export type { StatusSubscription, Subscription } from './subscription.js';
+export type { Subscription } from './subscription.js';
 export type { Typing, TypingEvent, TypingListener } from './typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';

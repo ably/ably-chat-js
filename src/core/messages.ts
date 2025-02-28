@@ -39,6 +39,7 @@ import { PaginatedResult } from './query.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { Subscription } from './subscription.js';
 import { MessageOptions } from './room-options.js';
+import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -288,10 +289,6 @@ export interface Messages extends EmitsDiscontinuities {
 export type MessageReactionListener = (event: MessageReactionSummaryEvent) => void;
 export type MessageRawReactionListener = (event: MessageReactionRawEvent) => void;
 
-export interface Unsubscribable {
-  unsubscribe: () => void;
-}
-
 /**
  * Add, delete, and subscribe to message reactions.
  */
@@ -321,14 +318,14 @@ export interface MessagesReactions {
    * @param listener
    * @returns
    */
-  subscribe(listener: MessageReactionListener): Unsubscribable;
+  subscribe(listener: MessageReactionListener): Subscription;
 
   /**
    * Subscribe to individual reaction events.
    * @param listener
    * @returns
    */
-  subscribeRaw(listener: MessageRawReactionListener): Unsubscribable;
+  subscribeRaw(listener: MessageRawReactionListener): Subscription;
 }
 
 /**
@@ -458,7 +455,7 @@ export class DefaultMessageReactions implements MessagesReactions {
   /**
    * @inheritDoc
    */
-  subscribe(listener: MessageReactionListener): Unsubscribable {
+  subscribe(listener: MessageReactionListener): Subscription {
     const unique = (event: MessageReactionSummaryEvent) => {
       listener(event);
     };
@@ -473,7 +470,7 @@ export class DefaultMessageReactions implements MessagesReactions {
   /**
    * @inheritDoc
    */
-  subscribeRaw(listener: MessageRawReactionListener): Unsubscribable {
+  subscribeRaw(listener: MessageRawReactionListener): Subscription {
     if (!this._options?.rawMessageReactions) {
       throw new Ably.ErrorInfo('Raw message reactions are not enabled', 40001, 400);
     }
