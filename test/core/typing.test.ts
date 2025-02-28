@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
-import { TypingEvents } from '../../src/core/events.ts';
+import { TypingEventPayload, TypingEvents } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
-import { DefaultTyping, TypingEvent } from '../../src/core/typing.ts';
+import { DefaultTyping } from '../../src/core/typing.ts';
 import { channelEventEmitter, ChannelEventEmitterReturnType } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';
@@ -27,7 +27,7 @@ const TEST_HEARTBEAT_INTERVAL_MS = 100;
 vi.mock('ably');
 
 // Wait for the messages to be received
-const waitForMessages = (messages: TypingEvent[], expectedCount: number, timeout?: number) => {
+const waitForMessages = (messages: TypingEventPayload[], expectedCount: number, timeout?: number) => {
   if (timeout === undefined) {
     timeout = 3000;
   }
@@ -110,14 +110,14 @@ describe('Typing', () => {
     const { room } = context;
 
     // Add a listener
-    const receivedEvents: TypingEvent[] = [];
-    const { unsubscribe } = room.typing.subscribe((event: TypingEvent) => {
+    const receivedEvents: TypingEventPayload[] = [];
+    const { unsubscribe } = room.typing.subscribe((event: TypingEventPayload) => {
       receivedEvents.push(event);
     });
 
     // Another listener used to receive all events, to make sure events were emitted
-    const allEvents: TypingEvent[] = [];
-    const allSubscription = room.typing.subscribe((event: TypingEvent) => {
+    const allEvents: TypingEventPayload[] = [];
+    const allSubscription = room.typing.subscribe((event: TypingEventPayload) => {
       allEvents.push(event);
     });
 
@@ -164,14 +164,14 @@ describe('Typing', () => {
     const { room } = context;
 
     // Add a listener
-    const receivedEvents: TypingEvent[] = [];
-    const { unsubscribe } = room.typing.subscribe((event: TypingEvent) => {
+    const receivedEvents: TypingEventPayload[] = [];
+    const { unsubscribe } = room.typing.subscribe((event: TypingEventPayload) => {
       receivedEvents.push(event);
     });
 
     // Add another
-    const receivedEvents2: TypingEvent[] = [];
-    const { unsubscribe: unsubscribe2 } = room.typing.subscribe((event: TypingEvent) => {
+    const receivedEvents2: TypingEventPayload[] = [];
+    const { unsubscribe: unsubscribe2 } = room.typing.subscribe((event: TypingEventPayload) => {
       receivedEvents2.push(event);
     });
 
@@ -204,7 +204,7 @@ describe('Typing', () => {
     room.typing.unsubscribeAll();
 
     // subscribe a check subscriber
-    const checkEvents: TypingEvent[] = [];
+    const checkEvents: TypingEventPayload[] = [];
     room.typing.subscribe((event) => {
       checkEvents.push(event);
     });
@@ -271,8 +271,8 @@ describe('Typing', () => {
       const { room } = context;
 
       // Subscribe to typing events
-      const receivedEvents: TypingEvent[] = [];
-      room.typing.subscribe((event: TypingEvent) => {
+      const receivedEvents: TypingEventPayload[] = [];
+      room.typing.subscribe((event: TypingEventPayload) => {
         receivedEvents.push(event);
       });
 
