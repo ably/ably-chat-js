@@ -18,6 +18,7 @@ import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperat
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
+import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -174,12 +175,7 @@ export type MessageListener = (event: MessageEventPayload) => void;
 /**
  * A response object that allows you to control a message subscription.
  */
-export interface MessageSubscriptionResponse {
-  /**
-   * Unsubscribe the listener registered with {@link Messages.subscribe} from message events.
-   */
-  unsubscribe: () => void;
-
+export interface MessageSubscriptionResponse extends Subscription {
   /**
    * Get the previous messages that were sent to the room before the listener was subscribed.
    * @param params Options for the history query.

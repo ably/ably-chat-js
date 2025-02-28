@@ -14,6 +14,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
+import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -29,7 +30,7 @@ export interface Occupancy extends EmitsDiscontinuities {
    * @param listener A listener to be called when the occupancy of the room changes.
    * @returns A promise resolves to the channel attachment state change event from the implicit channel attach operation.
    */
-  subscribe(listener: OccupancyListener): OccupancySubscriptionResponse;
+  subscribe(listener: OccupancyListener): Subscription;
 
   /**
    * Unsubscribe all listeners from the occupancy updates of the chat room.
@@ -64,16 +65,6 @@ export interface OccupancyEvent {
    * The number of presence members in the chat room - members who have entered presence.
    */
   presenceMembers: number;
-}
-
-/**
- * A response object that allows you to control an occupancy update subscription.
- */
-export interface OccupancySubscriptionResponse {
-  /**
-   * Unsubscribe the listener registered with {@link Occupancy.subscribe} from occupancy updates.
-   */
-  unsubscribe: () => void;
 }
 
 /**
@@ -134,7 +125,7 @@ export class DefaultOccupancy
   /**
    * @inheritdoc Occupancy
    */
-  subscribe(listener: OccupancyListener): OccupancySubscriptionResponse {
+  subscribe(listener: OccupancyListener): Subscription {
     this._logger.trace('Occupancy.subscribe();');
     this.on(listener);
 
