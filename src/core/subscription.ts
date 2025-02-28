@@ -17,7 +17,7 @@ export interface Subscription {
    * it will make sure no further events will be sent to the subscriber and
    * that references to the subscriber are cleaned up.
    */
-  unsubscribe: () => void;
+  readonly unsubscribe: () => void;
 }
 
 /**
@@ -40,5 +40,5 @@ export interface StatusSubscription {
    * further status change events will be sent to the subscriber and
    * that references to the subscriber are cleaned up.
    */
-  off: () => void;
+  readonly off: () => void;
 }
