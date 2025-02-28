@@ -17,5 +17,5 @@ export interface Subscription {
    * it will make sure no further events will be sent to the subscriber and
    * that references to the subscriber are cleaned up.
    */
-  unsubscribe(): void;
+  readonly unsubscribe: () => void;
 }

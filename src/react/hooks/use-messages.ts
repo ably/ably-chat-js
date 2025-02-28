@@ -250,8 +250,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
       context.room,
       (room) => {
         if (!params.rawReactionsListener) {
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          return () => {};
+          return () => void 0;
         }
         logger.debug('useMessages(); applying raw reactions listener', { roomId: context.roomId });
         const { unsubscribe } = room.messages.reactions.subscribeRaw(params.rawReactionsListener);
