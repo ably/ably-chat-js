@@ -5,7 +5,7 @@ interface MessageReactionsSingleProps {
   message: Message;
   clientId: string;
   onReactionAdd: (message: Message, refType: ReactionRefType, emoji: string, score?: number) => void;
-  onReactionRemove: (message: Message, refType: ReactionRefType, emoji: string) => void;
+  onReactionDelete: (message: Message, refType: ReactionRefType, emoji: string) => void;
 }
 
 const emojis = ['👍', '❤️', '🔥', '🚀'];
@@ -14,7 +14,7 @@ export const MessageReactionsSingle: React.FC<MessageReactionsSingleProps> = ({
   message,
   clientId,
   onReactionAdd,
-  onReactionRemove,
+  onReactionDelete: onReactionRemove,
 }) => {
   const single = message.reactions.single ?? {};
 

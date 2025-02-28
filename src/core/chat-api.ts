@@ -224,17 +224,6 @@ export class ChatApi {
     return this._makeAuthorizedRequest(`/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`, 'POST', data);
   }
 
-  deleteMessageReaction(roomId: string, serial: string, data: Omit<MessageReactionData, 'count'>): Promise<void> {
-    const encodedSerial = encodeURIComponent(serial);
-    roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedRequest(
-      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`,
-      'DELETE',
-      undefined,
-      data,
-    );
-  }
-
   getOccupancy(roomId: string): Promise<OccupancyEvent> {
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
