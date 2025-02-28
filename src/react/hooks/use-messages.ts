@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { ReactionRefType } from '../../core/events.js';
 import { Message } from '../../core/message.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { MessagesReactions } from '../../core/messages.js'; // imported for typedoc links
 import {
   DeleteMessageParams,
   MessageListener,
@@ -51,12 +53,12 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly deleteMessage: Messages['delete'];
 
   /**
-   * A shortcut to the {@link Messages.reactions.add} method.
+   * A shortcut to the {@link MessagesReactions.add} method.
    */
   readonly addReaction: Messages['reactions']['add'];
 
   /**
-   * A shortcut to the {@link Messages.reactions.remove} method.
+   * A shortcut to the {@link MessagesReactions.delete} method.
    */
   readonly deleteReaction: Messages['reactions']['delete'];
 

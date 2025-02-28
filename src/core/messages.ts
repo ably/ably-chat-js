@@ -298,7 +298,17 @@ export interface Messages extends EmitsDiscontinuities {
   get channel(): Ably.RealtimeChannel;
 }
 
+/**
+ * A listener for summary message reaction events.
+ * @param event The message reaction summary event that was received. Use it
+ *   with {@link Message.with} to keep an up-to-date reaction count.
+ */
 export type MessageReactionListener = (event: MessageReactionSummaryEvent) => void;
+
+/**
+ * A listener for individual message reaction events.
+ * @param event The message reaction event that was received.
+ */
 export type MessageRawReactionListener = (event: MessageReactionRawEvent) => void;
 
 /**
@@ -327,15 +337,17 @@ export interface MessagesReactions {
   /**
    * Subscribe to message reaction summaries. Use this to keep message reaction
    * counts up to date efficiently in the UI.
-   * @param listener
-   * @returns
+   * @param listener The listener to call when a message reaction summary is received.
+   * @returns A subscription object that should be used to unsubscribe.
    */
   subscribe(listener: MessageReactionListener): Subscription;
 
   /**
    * Subscribe to individual reaction events.
-   * @param listener
-   * @returns
+   * @remarks If you only need to keep track of reaction counts and clients, use
+   *  {@link subscribe} instead.
+   * @param listener The listener to call when a message reaction event is received.
+   * @returns A subscription object that should be used to unsubscribe.
    */
   subscribeRaw(listener: MessageRawReactionListener): Subscription;
 }
