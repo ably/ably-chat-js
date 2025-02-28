@@ -68,6 +68,70 @@ describe('ChatMessage', () => {
     expect(firstMessage.equal(secondMessage)).toBe(false);
   });
 
+  it('is the same as another message using isSameAs', () => {
+    const firstSerial = '01672531200000-123@abcdefghij';
+    const secondSerial = '01672531200000-123@abcdefghij';
+
+    const firstMessage = new DefaultMessage(
+      firstSerial,
+      'clientId',
+      'roomId',
+      'hello there',
+      {},
+      {},
+      ChatMessageActions.MessageCreate,
+      firstSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
+    );
+    const secondMessage = new DefaultMessage(
+      secondSerial,
+      'clientId',
+      'roomId',
+      'hello there',
+      {},
+      {},
+      ChatMessageActions.MessageCreate,
+      secondSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
+    );
+
+    expect(firstMessage.isSameAs(secondMessage)).toBe(true);
+  });
+
+  it('is not the same as another message using isSameAs', () => {
+    const firstSerial = '01672531200000-123@abcdefghij';
+    const secondSerial = '01672531200000-124@abcdefghij';
+
+    const firstMessage = new DefaultMessage(
+      firstSerial,
+      'clientId',
+      'roomId',
+      'hello there',
+      {},
+      {},
+      ChatMessageActions.MessageCreate,
+      firstSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
+    );
+    const secondMessage = new DefaultMessage(
+      secondSerial,
+      'clientId',
+      'roomId',
+      'hello there',
+      {},
+      {},
+      ChatMessageActions.MessageCreate,
+      secondSerial,
+      new Date(1672531200000),
+      new Date(1672531200000),
+    );
+
+    expect(firstMessage.isSameAs(secondMessage)).toBe(false);
+  });
+
   it('is before another message', () => {
     const firstSerial = '01672531200000-123@abcdefghij';
     const secondSerial = '01672531200000-124@abcdefghij';
@@ -173,7 +237,7 @@ describe('ChatMessage', () => {
       expect(firstMessage.updatedBy).toBe('clientId2');
     });
 
-    it(`should throw an error when trying to compare versions belonging to different origin messages`, () => {
+    it(`should return false when trying to compare versions belonging to different origin messages`, () => {
       const firstSerial = '01672531200000-124@abcdefghij';
       const secondSerial = '01672531200000-123@abcdefghij';
 
@@ -205,20 +269,9 @@ describe('ChatMessage', () => {
         new Date(1672531200000),
       );
 
-      expect(() => firstMessage.versionEqual(secondMessage)).toThrowErrorInfo({
-        code: 50000,
-        message: 'versionEqual(): Cannot compare versions, message serials must be equal',
-      });
-
-      expect(() => firstMessage.versionBefore(secondMessage)).toThrowErrorInfo({
-        code: 50000,
-        message: 'versionBefore(): Cannot compare versions, message serials must be equal',
-      });
-
-      expect(() => firstMessage.versionAfter(secondMessage)).toThrowErrorInfo({
-        code: 50000,
-        message: 'versionAfter(): Cannot compare versions, message serials must be equal',
-      });
+      expect(firstMessage.isSameVersionAs(secondMessage)).toBe(false);
+      expect(firstMessage.isOlderVersionOf(secondMessage)).toBe(false);
+      expect(firstMessage.isNewerVersionOf(secondMessage)).toBe(false);
     });
 
     describe.each([
@@ -227,9 +280,9 @@ describe('ChatMessage', () => {
         {
           firstVersion: '01672531200000-123@abcdefghij:0',
           secondVersion: '01672531200000-123@abcdefghij:0',
-          action: 'versionEqual',
+          action: 'isSameVersionAs',
           expected: (firstMessage: Message, secondMessage: Message) => {
-            expect(firstMessage.versionEqual(secondMessage)).toBe(true);
+            expect(firstMessage.isSameVersionAs(secondMessage)).toBe(true);
           },
         },
       ],
@@ -238,31 +291,31 @@ describe('ChatMessage', () => {
         {
           firstVersion: '01672531200000-123@abcdefghij:0',
           secondVersion: '01672531200000-124@abcdefghij:0',
-          action: 'versionEqual',
+          action: 'isSameVersionAs',
           expected: (firstMessage: Message, secondMessage: Message) => {
-            expect(firstMessage.versionEqual(secondMessage)).toBe(false);
+            expect(firstMessage.isSameVersionAs(secondMessage)).toBe(false);
           },
         },
       ],
       [
-        'returns true when this message version is before another message version',
+        'returns true when this message version is older than another message version',
         {
           firstVersion: '01672531200000-123@abcdefghij:0',
           secondVersion: '01672531200000-124@abcdefghij:0',
-          action: 'versionBefore',
+          action: 'isOlderVersionOf',
           expected: (firstMessage: Message, secondMessage: Message) => {
-            expect(firstMessage.versionBefore(secondMessage)).toBe(true);
+            expect(firstMessage.isOlderVersionOf(secondMessage)).toBe(true);
           },
         },
       ],
       [
-        'returns true when this message version is after another message version',
+        'returns true when this message version is newer than another message version',
         {
           firstVersion: '01672531200000-124@abcdefghij:0',
           secondVersion: '01672531200000-123@abcdefghij:0',
-          action: 'versionAfter',
+          action: 'isNewerVersionOf',
           expected: (firstMessage: Message, secondMessage: Message) => {
-            expect(firstMessage.versionAfter(secondMessage)).toBe(true);
+            expect(firstMessage.isNewerVersionOf(secondMessage)).toBe(true);
           },
         },
       ],
