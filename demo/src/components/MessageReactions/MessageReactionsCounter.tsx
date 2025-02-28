@@ -4,7 +4,7 @@ import { Message, ReactionRefType } from '@ably/chat';
 interface MessageReactionsCounterProps {
   message: Message;
   onReactionAdd: (message: Message, refType: ReactionRefType, emoji: string, score?: number) => void;
-  onReactionRemove: (message: Message, refType: ReactionRefType, emoji: string) => void;
+  onReactionDelete: (message: Message, refType: ReactionRefType, emoji: string) => void;
 }
 
 const emojis = ['👍', '❤️', '🔥', '🚀'];
@@ -12,7 +12,7 @@ const emojis = ['👍', '❤️', '🔥', '🚀'];
 export const MessageReactionsCounter: React.FC<MessageReactionsCounterProps> = ({
   message,
   onReactionAdd,
-  onReactionRemove,
+  onReactionDelete: onReactionRemove,
 }) => {
   const handleReactionClick = (emoji: string) => {
     onReactionAdd(message, ReactionRefType.Counter, emoji);

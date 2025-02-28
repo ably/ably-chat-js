@@ -314,15 +314,6 @@ export interface MessagesReactions {
   add(message: { serial: string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void>;
 
   /**
-   * Removes a reaction from a message.
-   * @param message The message to remove the reaction from.
-   * @param refType The type of reaction reference.
-   * @param reaction The reaction to remove.
-   * @returns A promise that resolves when the reaction is deleted.
-   */
-  delete(message: { serial: string }, refType: ReactionRefType, reaction: string): Promise<void>;
-
-  /**
    * Subscribe to message reaction summaries. Use this to keep message reaction
    * counts up to date efficiently in the UI.
    * @param listener The listener to call when a message reaction summary is received.
@@ -455,13 +446,6 @@ export class DefaultMessageReactions implements MessagesReactions {
       reaction: reaction,
       count: count,
     });
-  }
-
-  /**
-   * @inheritDoc
-   */
-  delete(message: Message, refType: ReactionRefType, reaction: string): Promise<void> {
-    return this._api.deleteMessageReaction(this._roomID, message.serial, { refType: refType, reaction: reaction });
   }
 
   /**

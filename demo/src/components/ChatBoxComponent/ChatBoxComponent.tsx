@@ -13,7 +13,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
 
-  const { getPreviousMessages, deleteMessage, update, addReaction, removeReaction } = useMessages({
+  const { getPreviousMessages, deleteMessage, update, addReaction } = useMessages({
     listener: (event: MessageEvent) => {
       const message = event.message;
       switch (event.type) {
@@ -213,7 +213,6 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
                 message={msg}
                 reactionRefType={reactionType.refType}
                 onReactionAdd={addReaction}
-                onReactionRemove={removeReaction}
                 onMessageDelete={onDeleteMessage}
                 onMessageUpdate={onUpdateMessage}
               ></MessageComponent>

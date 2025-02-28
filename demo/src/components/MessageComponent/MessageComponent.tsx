@@ -15,7 +15,6 @@ interface MessageProps {
   onMessageDelete?(msg: Message): void;
 
   onReactionAdd?(msg: Message, refType: string, reaction: string, score?: number): void;
-  onReactionRemove?(msg: Message, refType: string, reaction: string): void;
 }
 
 const shortDateTimeFormatter = new Intl.DateTimeFormat('default', {
@@ -45,7 +44,6 @@ export const MessageComponent: React.FC<MessageProps> = ({
   onMessageUpdate,
   onMessageDelete,
   onReactionAdd,
-  onReactionRemove,
 }) => {
   const client = useChatClient();
   const clientId = client.clientId;
@@ -66,9 +64,13 @@ export const MessageComponent: React.FC<MessageProps> = ({
     [message, onMessageDelete],
   );
 
+  const onReactionDelete = useCallback(() => {
+    console.log('Message reaction deletes are coming soon.');
+  }, []);
+
   let reactionsUI = <></>;
 
-  if (onReactionAdd && onReactionRemove) {
+  if (onReactionAdd && onReactionDelete) {
     switch (reactionRefType) {
       case ReactionRefType.Single: {
         reactionsUI = (
@@ -76,7 +78,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
             message={message}
             clientId={clientId}
             onReactionAdd={onReactionAdd}
-            onReactionRemove={onReactionRemove}
+            onReactionDelete={onReactionDelete}
           />
         );
         break;
@@ -87,7 +89,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
             message={message}
             clientId={clientId}
             onReactionAdd={onReactionAdd}
-            onReactionRemove={onReactionRemove}
+            onReactionDelete={onReactionDelete}
           />
         );
         break;
@@ -97,7 +99,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
           <MessageReactionsCounter
             message={message}
             onReactionAdd={onReactionAdd}
-            onReactionRemove={onReactionRemove}
+            onReactionDelete={onReactionDelete}
           />
         );
         break;
