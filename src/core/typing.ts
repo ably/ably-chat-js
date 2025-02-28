@@ -12,7 +12,7 @@ import {
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
-import { TypingEvents } from './events.js';
+import { TypingEventPayload, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { TypingOptions } from './room-options.js';
@@ -47,13 +47,13 @@ export interface Typing extends EmitsDiscontinuities {
 
   /**
    * Start indicates that the current user is typing.
-   * This will emit a {@link TypingEvents.Start} event to inform listening clients and begin a heartbeat timer,
+   * This will emit a `typing.start` event to inform listening clients and begin a heartbeat timer,
    * which can be configured through the `heartbeatIntervalMs` parameter.
    * If the current user is already typing, this will no-op until the heartbeat timer has elapsed,
-   * at which point calling `start()` will restart the timer and emit a new {@link TypingEvents.Start} heartbeat.
+   * at which point calling `start()` will restart the timer and emit a new `typing.start` heartbeat.
    * If the `timeoutMs` parameter is defined in the supplied {@link TypingOptions},
    * then calls to `start()` will also begin a separate timer.
-   * Once this timer expires, a {@link TypingEvents.Stop} event will be emitted.
+   * Once this timer expires, a `typing.stop` event will be emitted.
    * Further calls to `start()` will restart this timer.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
@@ -63,7 +63,7 @@ export interface Typing extends EmitsDiscontinuities {
 
   /**
    * Stop indicates that the current user has stopped typing.
-   * This will emit a {@link TypingEvents.Stop} event to inform listening clients,
+   * This will emit a `typing.stop` event to inform listening clients,
    * and immediately clear any active timers.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
@@ -79,37 +79,17 @@ export interface Typing extends EmitsDiscontinuities {
 }
 
 /**
- * Represents a typing event.
- */
-export interface TypingEvent {
-  /**
-   * Get a set of clientIds that are currently typing.
-   */
-  get currentlyTyping(): Set<string>;
-
-  /**
-   * Get the client ID of the user who stopped/started typing.
-   */
-  clientId: string;
-
-  /**
-   * Type of the event.
-   */
-  event: TypingEvents;
-}
-
-/**
  * A listener which listens for typing events.
  * @param event The typing event.
  */
-export type TypingListener = (event: TypingEvent) => void;
+export type TypingListener = (event: TypingEventPayload) => void;
 
 /**
  * Represents the typing events mapped to their respective event payloads.
  */
 interface TypingEventsMap {
-  [TypingEvents.Start]: TypingEvent;
-  [TypingEvents.Stop]: TypingEvent;
+  [TypingEvents.Start]: TypingEventPayload;
+  [TypingEvents.Stop]: TypingEventPayload;
 }
 
 /**
@@ -333,7 +313,7 @@ export class DefaultTyping
           this.emit(TypingEvents.Stop, {
             clientId,
             currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
-            event: TypingEvents.Stop,
+            type: TypingEvents.Stop,
           });
         })
         .catch((error: unknown) => {
@@ -372,7 +352,7 @@ export class DefaultTyping
       this.emit(TypingEvents.Start, {
         clientId,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
-        event: TypingEvents.Start,
+        type: TypingEvents.Start,
       });
     }
 
@@ -399,7 +379,7 @@ export class DefaultTyping
     this.emit(TypingEvents.Stop, {
       clientId,
       currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
-      event: TypingEvents.Stop,
+      type: TypingEvents.Stop,
     });
   }
 
