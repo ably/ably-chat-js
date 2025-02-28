@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
+import { TypingEvents } from '../../../src/core/events.ts';
 import { Logger } from '../../../src/core/logger.ts';
 import { Room } from '../../../src/core/room.ts';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus } from '../../../src/core/room-status.ts';
@@ -46,7 +47,9 @@ describe('useTyping', () => {
   beforeEach(() => {
     // create a new mock room before each test, enabling typing
     vi.resetAllMocks();
-    updateMockRoom(makeRandomRoom({ options: { typing: { timeoutMs: 500 } } }));
+    updateMockRoom(
+      makeRandomRoom({ options: { typing: { timeoutMs: 500, inactivityTimeoutMs: 1000, heartbeatIntervalMs: 500 } } }),
+    );
     mockLogger = makeTestLogger();
   });
 
@@ -90,7 +93,7 @@ describe('useTyping', () => {
     await waitForEventualHookValueToBeDefined(result, (value) => value.typingIndicators);
 
     // verify that subscribe was called with the mock listener on mount by triggering an event
-    const typingEvent = { currentlyTyping: new Set<string>() };
+    const typingEvent = { clientId: 'someClientId', currentlyTyping: new Set<string>(), type: TypingEvents.Stop };
     for (const listener of mockTyping.listeners) {
       listener(typingEvent);
     }
@@ -105,7 +108,7 @@ describe('useTyping', () => {
     const { result } = renderHook(() => useTyping());
 
     // spy on the start method of the typing instance
-    const startSpy = vi.spyOn(mockRoom.typing, 'start');
+    const startSpy = vi.spyOn(mockRoom.typing, 'start').mockImplementation(() => Promise.resolve());
 
     // call the start method
     await act(async () => {
@@ -120,7 +123,7 @@ describe('useTyping', () => {
     const { result } = renderHook(() => useTyping());
 
     // spy on the stop method of the typing instance
-    const stopSpy = vi.spyOn(mockRoom.typing, 'stop');
+    const stopSpy = vi.spyOn(mockRoom.typing, 'stop').mockImplementation(() => Promise.resolve());
 
     // call the stop method
     await act(async () => {
@@ -163,7 +166,7 @@ describe('useTyping', () => {
     // emit a typing event which should update the DOM
     act(() => {
       if (subscribedListener) {
-        subscribedListener({ currentlyTyping: testSet });
+        subscribedListener({ clientId: 'user2', currentlyTyping: testSet, type: TypingEvents.Start });
       }
     });
 
@@ -258,7 +261,7 @@ describe('useTyping', () => {
     // now emit a typing event which should clear the error state
     act(() => {
       if (subscribedListener) {
-        subscribedListener({ currentlyTyping: new Set() });
+        subscribedListener({ clientId: 'someClient', currentlyTyping: new Set(), type: TypingEvents.Stop });
       }
     });
 
@@ -283,6 +286,8 @@ describe('useTyping', () => {
         options: {
           typing: {
             timeoutMs: 500,
+            inactivityTimeoutMs: 1000,
+            heartbeatIntervalMs: 500,
           },
         },
       }),
