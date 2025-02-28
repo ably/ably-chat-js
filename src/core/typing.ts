@@ -240,6 +240,7 @@ export class DefaultTyping
       return;
     }
     return this._channel.publish(TypingEvents.Start, {}).then(() => {
+      this._logger.trace(`DefaultTyping.start(); starting timers`);
       // Start the heartbeat timer
       this._startHeartbeatTimer();
       // Start the timeout timer
@@ -252,15 +253,22 @@ export class DefaultTyping
    */
   async stop(): Promise<void> {
     this._logger.trace(`DefaultTyping.stop();`);
-    // Clear the timer and emit typingStopped event
+    // If the user is not typing, do nothing.
+    if (!this._heartbeatTimerId) {
+      this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`);
+      return;
+    }
     return this._channel.publish(TypingEvents.Stop, {}).then(() => {
-      if (this._timeoutTimerId) {
-        clearTimeout(this._timeoutTimerId);
-        this._timeoutTimerId = undefined;
-      }
+      this._logger.trace(`DefaultTyping.stop(); clearing timers`);
+      // Clear the heartbeat timer
       if (this._heartbeatTimerId) {
         clearInterval(this._heartbeatTimerId);
         this._heartbeatTimerId = undefined;
+      }
+      // Clear the timeout timer, if it exists
+      if (this._timeoutTimerId) {
+        clearTimeout(this._timeoutTimerId);
+        this._timeoutTimerId = undefined;
       }
     });
   }
