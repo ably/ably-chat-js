@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import { Mutex } from 'async-mutex';
 
+import { messagesChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
 import {
   DiscontinuityEmitter,
@@ -170,7 +171,7 @@ export class DefaultTyping
    * Creates the realtime channel for typing indicators.
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(`${roomId}::$chat::$typingIndicators`);
+    const channel = channelManager.get(messagesChannelName(roomId));
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([TypingEvents.Start, TypingEvents.Stop], this._internalSubscribeToEvents.bind(this));
     return channel;
