@@ -27,9 +27,21 @@ export const AllFeaturesEnabled = {
    */
   typing: {
     /**
-     * The default timeout for typing events in milliseconds.
+     * The default time that a client will wait after calling typing.start() before emitting a `typing.stopped`
+     * event.
+     * Restarts the interval with repeated calls to typing.start(), resets the interval with typing.stop().
      */
-    timeoutMs: 5000,
+    timeoutMs: 2000,
+
+    /**
+     * The default time that a client will wait between sending one typing heartbeat and the next.
+     */
+    heartbeatIntervalMs: 17000,
+
+    /**
+     * The default timeout for typing inactivity in milliseconds.
+     */
+    inactivityTimeoutMs: 2000,
   } as TypingOptions,
 
   /**
@@ -103,11 +115,28 @@ export interface PresenceOptions {
  */
 export interface TypingOptions {
   /**
-   * The timeout for typing events in milliseconds. If typing.start() is not called for this amount of time, a stop
-   * typing event will be fired, resulting in the user being removed from the currently typing set.
-   * @defaultValue 5000
+   * The time, in milliseconds, that a client will wait before emitting a `typing.started` event.
+   * If typing.start() is called, the first call will emit an event immediately.
+   * Later calls will no-op until the interval has elapsed.
+   * Calling typing.stop() will immediately send a `typing.stopped` event and reset the interval,
+   * allowing the client to send another `typing.started` event immediately.
+   * @defaultValue 17000
    */
-  timeoutMs: number;
+  heartbeatIntervalMs: number;
+
+  /**
+   * The optional timeout, in milliseconds, after which a client that pauses typing and does not resume, will emit a `typing.stopped` event.
+   * If not set, the client will not emit a `typing.stopped` event until they call `typing.stop()`.
+   * @defaultValue 2000
+   */
+  timeoutMs?: number;
+
+  /**
+   * The time, in milliseconds, a client waits after failing to receive a typing heartbeat from another client before assuming the other client has stopped typing.
+   * In practice, this means the client waits the length of the heartbeat interval plus this value before emitting a `typing.stopped` event.
+   * @defaultValue 2000
+   */
+  inactivityTimeoutMs: number;
 }
 
 /**
@@ -176,8 +205,20 @@ const invalidRoomConfiguration = (reason: string): Error =>
   new Ably.ErrorInfo(`invalid room configuration: ${reason}`, 40001, 400);
 
 export const validateRoomOptions = (options: RoomOptions): void => {
-  if (options.typing && options.typing.timeoutMs <= 0) {
+  if (options.typing) {
+    validateTypingOptions(options.typing);
+  }
+};
+
+const validateTypingOptions = (options: TypingOptions): void => {
+  if (options.timeoutMs !== undefined && options.timeoutMs <= 0) {
     throw invalidRoomConfiguration('typing timeout must be greater than 0');
+  }
+  if (options.heartbeatIntervalMs <= 0) {
+    throw invalidRoomConfiguration('typing heartbeat interval must be greater than 0');
+  }
+  if (options.inactivityTimeoutMs <= 0) {
+    throw invalidRoomConfiguration('typing inactivity timeout must be greater than 0');
   }
 };
 

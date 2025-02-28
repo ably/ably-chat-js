@@ -13,6 +13,7 @@ export type {
   MessageReactionEvents,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
+  TypingEventPayload,
 } from './events.js';
 export {
   ChatMessageActions,
@@ -70,5 +71,5 @@ export type { RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
 export type { StatusSubscription, Subscription } from './subscription.js';
-export type { Typing, TypingEvent, TypingListener } from './typing.js';
+export type { Typing, TypingListener } from './typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';
