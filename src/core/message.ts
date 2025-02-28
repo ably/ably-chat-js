@@ -246,10 +246,28 @@ export interface Message {
   with(event: MessageEventPayload | MessageReactionSummaryEvent): Message;
 }
 
-interface MessageReactions {
+/**
+ * Represents a summary of all reactions on a message.
+ */
+export interface MessageReactions {
+  /**
+   * The version of the summary.
+   */
   version: string;
+
+  /**
+   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Single}.
+   */
   single: Record<string, SingleReactionSummary>;
+
+  /**
+   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Distinct}.
+   */
   distinct: Record<string, DistinctReactionSummary>;
+
+  /**
+   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Counter}.
+   */
   counter: Record<string, CounterReactionSummary>;
 }
 

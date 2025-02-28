@@ -290,9 +290,9 @@ export interface Messages extends EmitsDiscontinuities {
   update(message: Message, update: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
-   * Add, remove and subscribe to message reactions.
+   * Add, delete, and subscribe to message reactions.
    */
-  reactions: Reactions;
+  reactions: MessagesReactions;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -309,14 +309,49 @@ export interface Unsubscribable {
   unsubscribe: () => void;
 }
 
-interface Reactions {
+/**
+ * Add, delete, and subscribe to message reactions.
+ */
+export interface MessagesReactions {
+  /**
+   * Add a message reactions
+   * @param message The message to react to.
+   * @param refType The type of reaction reference.
+   * @param reaction The reaction to add.
+   * @param count The count of the reaction for types that support it, default 1.
+   * @returns A promise that resolves when the reaction is added.
+   */
   add(message: { serial: string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void>;
-  remove(message: { serial: string }, refType: ReactionRefType, reaction: string): Promise<void>;
+
+  /**
+   * Removes a reaction from a message.
+   * @param message The message to remove the reaction from.
+   * @param refType The type of reaction reference.
+   * @param reaction The reaction to remove.
+   * @returns A promise that resolves when the reaction is deleted.
+   */
+  delete(message: { serial: string }, refType: ReactionRefType, reaction: string): Promise<void>;
+
+  /**
+   * Subscribe to message reaction summaries. Use this to keep message reaction
+   * counts up to date efficiently in the UI.
+   * @param listener
+   * @returns
+   */
   subscribe(listener: MessageReactionListener): Unsubscribable;
+
+  /**
+   * Subscribe to individual reaction events.
+   * @param listener
+   * @returns
+   */
   subscribeRaw(listener: MessageRawReactionListener): Unsubscribable;
 }
 
-export class DefaultMessageReactions implements Reactions {
+/**
+ * @inheritDoc
+ */
+export class DefaultMessageReactions implements MessagesReactions {
   private _emitter = new EventEmitter<{
     [MessageReactionEvents.Create]: MessageReactionRawEvent;
     [MessageReactionEvents.Delete]: MessageReactionRawEvent;
@@ -373,7 +408,7 @@ export class DefaultMessageReactions implements Reactions {
     const reactionEvent: MessageReactionRawEvent = {
       type: eventType,
       refSerial: event.refSerial,
-      refType: event.refType,
+      refType: refType,
       reaction: reaction,
       clientId: event.clientId ?? '',
       timestamp: new Date(event.timestamp),
@@ -419,6 +454,9 @@ export class DefaultMessageReactions implements Reactions {
     });
   }
 
+  /**
+   * @inheritDoc
+   */
   add(message: { serial: string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void> {
     return this._api.addMessageReaction(this._roomID, message.serial, {
       refType: refType,
@@ -427,15 +465,15 @@ export class DefaultMessageReactions implements Reactions {
     });
   }
 
-  remove(message: Message, refType: ReactionRefType, reaction: string): Promise<void> {
+  /**
+   * @inheritDoc
+   */
+  delete(message: Message, refType: ReactionRefType, reaction: string): Promise<void> {
     return this._api.deleteMessageReaction(this._roomID, message.serial, { refType: refType, reaction: reaction });
   }
 
   /**
-   * Subscribe to message reaction summaries. Use this to keep message reaction
-   * counts up to date efficiently in the UI.
-   * @param listener
-   * @returns
+   * @inheritDoc
    */
   subscribe(listener: MessageReactionListener): Unsubscribable {
     const unique = (event: MessageReactionSummaryEvent) => {
@@ -450,12 +488,12 @@ export class DefaultMessageReactions implements Reactions {
   }
 
   /**
-   * Subscribe to individual reaction events.
-   * @param listener
-   * @returns
+   * @inheritDoc
    */
   subscribeRaw(listener: MessageRawReactionListener): Unsubscribable {
-    // todo: maybe throw error if single reaction subscription not configured on realtime channel
+    if (!this._options?.rawMessageReactions) {
+      throw new Ably.ErrorInfo('Raw message reactions are not enabled', 40001, 400);
+    }
     const unique = (event: MessageReactionRawEvent) => {
       listener(event);
     };
@@ -489,7 +527,7 @@ export class DefaultMessages
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
-  public readonly reactions: Reactions;
+  public readonly reactions: MessagesReactions;
 
   /**
    * Constructs a new `DefaultMessages` instance.

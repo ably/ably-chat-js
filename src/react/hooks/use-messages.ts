@@ -58,7 +58,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Messages.reactions.remove} method.
    */
-  readonly removeReaction: Messages['reactions']['remove'];
+  readonly deleteReaction: Messages['reactions']['delete'];
 
   /**
    * Provides access to the underlying {@link Messages} instance of the room.
@@ -154,9 +154,9 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
 
-  const removeReaction = useCallback(
+  const deleteReaction = useCallback(
     (message: Message, refType: ReactionRefType, reaction: string) =>
-      context.room.then((room) => room.messages.reactions.remove(message, refType, reaction)),
+      context.room.then((room) => room.messages.reactions.delete(message, refType, reaction)),
     [context],
   );
 
@@ -273,7 +273,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     deleteMessage,
     getPreviousMessages,
     addReaction,
-    removeReaction,
+    deleteReaction,
     connectionStatus,
     connectionError,
     roomStatus,
