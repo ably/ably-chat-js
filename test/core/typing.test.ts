@@ -132,7 +132,7 @@ describe('Typing', () => {
     // Ensure that the listener received the event
     expect(receivedEvents).toHaveLength(1);
     expect(receivedEvents[0]).toEqual({
-      event: TypingEvents.Start,
+      type: TypingEvents.Start,
       clientId: 'otherClient',
       currentlyTyping: new Set(['otherClient']),
     });
@@ -186,7 +186,7 @@ describe('Typing', () => {
     // Ensure that the listener received the event
     expect(receivedEvents).toHaveLength(1);
     expect(receivedEvents[0]).toEqual({
-      event: TypingEvents.Start,
+      type: TypingEvents.Start,
       clientId: 'otherClient',
       currentlyTyping: new Set(['otherClient']),
     });
@@ -195,7 +195,7 @@ describe('Typing', () => {
     // Ensure that the second listener received the event
     expect(receivedEvents2).toHaveLength(1);
     expect(receivedEvents2[0]).toEqual({
-      event: TypingEvents.Start,
+      type: TypingEvents.Start,
       clientId: 'otherClient',
       currentlyTyping: new Set(['otherClient']),
     });

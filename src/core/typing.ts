@@ -146,7 +146,7 @@ export class DefaultTyping
     this._opMtx = new Mutex();
     // Timeout for pause in typing
     this._timeoutMs = options.timeoutMs;
-    // Timout for inactivity, i.e. when we have not received a heartbeat for a configured time
+    // Timeout for inactivity, i.e. when we have not received a heartbeat for a configured time
     this._inactivityTimeoutMs = options.inactivityTimeoutMs;
     // Interval for the heartbeat, how often we should emit a typing event with repeated calls to start()
     this._heartbeatIntervalMs = options.heartbeatIntervalMs;
@@ -186,7 +186,7 @@ export class DefaultTyping
   /**
    * Start the typing timeout timer. This will expire after the configured timeout.
    */
-  private _startTimeoutTimer(): void {
+  private _setTimeoutTimer(): void {
     if (this._timeoutMs) {
       clearTimeout(this._timeoutTimerId);
       this._logger.trace(`DefaultTyping.startTypingTimer();`);
@@ -201,9 +201,9 @@ export class DefaultTyping
    * Start the heartbeat timer. This will expire after the configured interval.
    */
   private _startHeartbeatTimer(): void {
-    if (!this._heartbeatIntervalMs) {
+    if (!this._heartbeatTimerId) {
       this._logger.trace(`DefaultTyping.startHeartbeatTimer();`);
-      this._heartbeatTimerId = setInterval(() => {
+      this._heartbeatTimerId = setTimeout(() => {
         this._logger.debug(`DefaultTyping.startHeartbeatTimer(); heartbeat timer expired`);
       }, this._heartbeatIntervalMs);
     }
@@ -214,9 +214,12 @@ export class DefaultTyping
    */
   async start(): Promise<void> {
     this._logger.trace(`DefaultTyping.start();`);
-    // If the user is already typing, and the timer has not expired, do nothing.
+
+    // If the user is already typing, and the timer has not expired, do not send another heartbeat
     if (this._heartbeatTimerId) {
       this._logger.debug(`DefaultTyping.start(); no-op, already typing and heartbeat timer has not expired`);
+      // Reset the timeout timer if the user is still typing
+      this._setTimeoutTimer()
       return;
     }
     return this._channel.publish(TypingEvents.Start, {}).then(() => {
@@ -224,7 +227,7 @@ export class DefaultTyping
       // Start the heartbeat timer
       this._startHeartbeatTimer();
       // Start the timeout timer
-      this._startTimeoutTimer();
+      this._setTimeoutTimer();
     });
   }
 
@@ -242,7 +245,7 @@ export class DefaultTyping
       this._logger.trace(`DefaultTyping.stop(); clearing timers`);
       // Clear the heartbeat timer
       if (this._heartbeatTimerId) {
-        clearInterval(this._heartbeatTimerId);
+        clearTimeout(this._heartbeatTimerId);
         this._heartbeatTimerId = undefined;
       }
       // Clear the timeout timer, if it exists
@@ -353,7 +356,7 @@ export class DefaultTyping
 
     if (existingTimeout) {
       // Heartbeat - User is already typing, we just need to clear the existing timeout
-      this._logger.debug(`DefaultTyping._handleTypingStart(); received heartbeat for existing typer`, { clientId });
+      this._logger.debug(`DefaultTyping._handleTypingStart(); received heartbeat for currently typing client`, { clientId });
       clearTimeout(existingTimeout);
     } else {
       // Otherwise, we need to emit a new typing event
