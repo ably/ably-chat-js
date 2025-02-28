@@ -74,6 +74,7 @@ describe('useTyping', () => {
 
     render(<TestProvider />);
 
+
     // expect the hook to send a start, followed by a stop typing event
     await waitForTypingEvents(typingEventsRoomTwo, 2);
     expect(typingEventsRoomTwo[0]?.currentlyTyping).toStrictEqual(new Set([chatClientOne.clientId]));
