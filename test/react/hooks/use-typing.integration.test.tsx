@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -93,12 +93,13 @@ describe('useTyping', () => {
 
     // store the currently typing state from the hook
     let currentlyTypingSet = new Set<string>();
-
+    let currentRoomStatus: RoomStatus | undefined;
     const TestComponent = ({ listener }: { listener: TypingListener }) => {
       // subscribe to typing events received by the test component
-      const { currentlyTyping } = useTyping({ listener: listener });
+      const { currentlyTyping, roomStatus } = useTyping({ listener: listener });
 
       currentlyTypingSet = currentlyTyping;
+      currentRoomStatus = roomStatus;
 
       return null;
     };
@@ -109,12 +110,24 @@ describe('useTyping', () => {
           id={roomId}
           options={AllFeaturesEnabled}
         >
-          <TestComponent listener={(typingEvent) => typingEventsRoomOne.push(typingEvent)} />
+          <TestComponent
+            listener={(typingEvent) => {
+              typingEventsRoomOne.push(typingEvent);
+            }}
+          />
         </ChatRoomProvider>
       </ChatClientProvider>
     );
 
     render(<TestProvider />);
+
+    // ensure we are attached first
+    await waitFor(
+      () => {
+        expect(currentRoomStatus).toBe(RoomStatus.Attached);
+      },
+      { timeout: 5000 },
+    );
 
     // send a typing started event from the second room
     await roomTwo.typing.start();

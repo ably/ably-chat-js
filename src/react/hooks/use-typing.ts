@@ -114,7 +114,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
             .catch((error: unknown) => {
               const errorInfo = error as Ably.ErrorInfo;
               if (!mounted || errorInfoIs(errorInfo, ErrorCodes.RoomIsReleased)) return;
-
               setErrorState(errorInfo);
             });
         } else {
