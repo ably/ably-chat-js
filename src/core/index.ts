@@ -13,7 +13,7 @@ export type {
 export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
-export type { MessageEventPayload } from './events.js';
+export type { MessageEventPayload, TypingEventPayload } from './events.js';
 export { ChatMessageActions, MessageEvents, PresenceEvents } from './events.js';
 export type { Headers } from './headers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
@@ -61,5 +61,5 @@ export type {
 export type { OnRoomStatusChangeResponse, RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
-export type { Typing, TypingEvent, TypingListener, TypingSubscriptionResponse } from './typing.js';
+export type { Typing, TypingListener, TypingSubscriptionResponse } from './typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';

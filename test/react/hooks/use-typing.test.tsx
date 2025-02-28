@@ -93,7 +93,7 @@ describe('useTyping', () => {
     await waitForEventualHookValueToBeDefined(result, (value) => value.typingIndicators);
 
     // verify that subscribe was called with the mock listener on mount by triggering an event
-    const typingEvent = { clientId: 'someClientId', currentlyTyping: new Set<string>(), event: TypingEvents.Stop };
+    const typingEvent = { clientId: 'someClientId', currentlyTyping: new Set<string>(), type: TypingEvents.Stop };
     for (const listener of mockTyping.listeners) {
       listener(typingEvent);
     }
@@ -166,7 +166,7 @@ describe('useTyping', () => {
     // emit a typing event which should update the DOM
     act(() => {
       if (subscribedListener) {
-        subscribedListener({ clientId: 'user2', currentlyTyping: testSet, event: TypingEvents.Start });
+        subscribedListener({ clientId: 'user2', currentlyTyping: testSet, type: TypingEvents.Start });
       }
     });
 
@@ -261,7 +261,7 @@ describe('useTyping', () => {
     // now emit a typing event which should clear the error state
     act(() => {
       if (subscribedListener) {
-        subscribedListener({ clientId: 'someClient', currentlyTyping: new Set(), event: TypingEvents.Stop });
+        subscribedListener({ clientId: 'someClient', currentlyTyping: new Set(), type: TypingEvents.Stop });
       }
     });
 

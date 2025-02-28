@@ -2,16 +2,17 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { TypingEventPayload } from '../../../src/core/events.ts';
 import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
-import { TypingEvent, TypingListener } from '../../../src/core/typing.ts';
+import { TypingListener } from '../../../src/core/typing.ts';
 import { useTyping } from '../../../src/react/hooks/use-typing.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 import { randomRoomId } from '../../helper/identifier.ts';
 
-function waitForTypingEvents(typingEvents: TypingEvent[], expectedCount: number) {
+function waitForTypingEvents(typingEvents: TypingEventPayload[], expectedCount: number) {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       if (typingEvents.length === expectedCount) {
@@ -42,7 +43,7 @@ describe('useTyping', () => {
     await roomTwo.attach();
 
     // start listening for typing events on room two
-    const typingEventsRoomTwo: TypingEvent[] = [];
+    const typingEventsRoomTwo: TypingEventPayload[] = [];
     roomTwo.typing.subscribe((typingEvent) => typingEventsRoomTwo.push(typingEvent));
 
     const TestComponent = () => {
@@ -89,7 +90,7 @@ describe('useTyping', () => {
     await roomTwo.attach();
 
     // store the received typing events for room one
-    const typingEventsRoomOne: TypingEvent[] = [];
+    const typingEventsRoomOne: TypingEventPayload[] = [];
 
     // store the currently typing state from the hook
     let currentlyTypingSet = new Set<string>();

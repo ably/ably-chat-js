@@ -72,6 +72,9 @@ export enum PresenceEvents {
   Present = 'present',
 }
 
+/**
+ * All typing events.
+ */
 export enum TypingEvents {
   /**
    * Event triggered when a user is typing.
@@ -82,6 +85,26 @@ export enum TypingEvents {
    * Event triggered when a user stops typing.
    */
   Stop = 'typing.stop',
+}
+
+/**
+ * Represents a typing event payload.
+ */
+export interface TypingEventPayload {
+  /**
+   * Get a set of clientIds that are currently typing.
+   */
+  get currentlyTyping(): Set<string>;
+
+  /**
+   * Get the client ID of the user who stopped/started typing.
+   */
+  clientId: string;
+
+  /**
+   * Type of the event.
+   */
+  type: TypingEvents;
 }
 
 /**
