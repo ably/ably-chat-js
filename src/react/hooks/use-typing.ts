@@ -2,8 +2,9 @@ import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
 import { ErrorCodes, errorInfoIs } from '../../core/errors.js';
+import { TypingEventPayload } from '../../core/events.js';
 import { RoomStatus } from '../../core/room-status.js';
-import { Typing, TypingEvent, TypingListener } from '../../core/typing.js';
+import { Typing, TypingListener } from '../../core/typing.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
@@ -42,7 +43,7 @@ export interface UseTypingResponse extends ChatStatusResponse {
    * A state value representing the set of client IDs that are currently typing in the room.
    * It automatically updates based on typing events received from the room.
    */
-  readonly currentlyTyping: TypingEvent['currentlyTyping'];
+  readonly currentlyTyping: TypingEventPayload['currentlyTyping'];
 
   /**
    * Provides access to the underlying {@link Typing} instance of the room.
@@ -114,7 +115,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
             .catch((error: unknown) => {
               const errorInfo = error as Ably.ErrorInfo;
               if (!mounted || errorInfoIs(errorInfo, ErrorCodes.RoomIsReleased)) return;
-
               setErrorState(errorInfo);
             });
         } else {
