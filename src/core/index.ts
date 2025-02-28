@@ -8,7 +8,15 @@ export type { Connection, ConnectionStatusChange, ConnectionStatusListener } fro
 export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
-export type { MessageEvent } from './events.js';
+export type {
+  CounterReactionSummary,
+  DistinctReactionSummary,
+  MessageEvent,
+  MessageReactionEvents,
+  MessageReactionRawEvent,
+  MessageReactionSummaryEvent,
+  SingleReactionSummary,
+} from './events.js';
 export { ChatMessageActions, MessageEvents, PresenceEvents, ReactionRefType } from './events.js';
 export type { Headers } from './headers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
@@ -19,6 +27,7 @@ export type {
   MessageHeaders,
   MessageMetadata,
   MessageOperationMetadata,
+  MessageReactions,
   Operation,
 } from './message.js';
 export type {
@@ -27,6 +36,7 @@ export type {
   MessageRawReactionListener,
   MessageReactionListener,
   Messages,
+  MessagesReactions,
   MessageSubscriptionResponse,
   OperationDetails,
   OrderBy,
@@ -46,6 +56,7 @@ export type {
   RoomOptions,
   RoomReactionsOptions,
   TypingOptions,
+  MessageOptions,
 } from './room-options.js';
 export { AllFeaturesEnabled } from './room-options.js';
 export type { RoomReactionListener, RoomReactions, SendReactionParams } from './room-reactions.js';
