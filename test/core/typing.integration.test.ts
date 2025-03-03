@@ -4,7 +4,7 @@ import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
-import { TypingEventPayload, TypingEvents } from '../../src/core/events.ts';
+import { TypingEvent, TypingEvents } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
@@ -26,7 +26,7 @@ interface TestContext {
 }
 
 // Wait for a typing event matching the expected event to be received
-const waitForTypingEvent = async (events: TypingEventPayload[], expected: TypingEventPayload) => {
+const waitForTypingEvent = async (events: TypingEvent[], expected: TypingEvent) => {
   await vi.waitFor(
     () => {
       expect(events.some((event) => dequal(event, expected))).toBe(true);
@@ -42,7 +42,7 @@ describe('Typing', () => {
     context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = await context.chat.get(randomRoomId(), {
-      typing: { timeoutMs: 500, inactivityTimeoutMs: 15000, heartbeatIntervalMs: 400 },
+      typing: { timeoutMs: 500, inactivityTimeoutMs: 15000, heartbeatIntervalMs: 600 },
     });
   });
 
@@ -50,7 +50,7 @@ describe('Typing', () => {
   it<TestContext>(
     'successfully starts typing and then stops after the default timeout',
     async (context) => {
-      const events: TypingEventPayload[] = [];
+      const events: TypingEvent[] = [];
       // Subscribe to typing events
       context.chatRoom.typing.subscribe((event) => {
         events.push(event);
@@ -72,7 +72,7 @@ describe('Typing', () => {
   it<TestContext>(
     'subscribes to all typing events, sent by start and stop',
     async (context) => {
-      const events: TypingEventPayload[] = [];
+      const events: TypingEvent[] = [];
       context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
@@ -95,7 +95,7 @@ describe('Typing', () => {
   it<TestContext>(
     'gets the set of currently typing client ids',
     async (context) => {
-      let events: TypingEventPayload[] = [];
+      let events: TypingEvent[] = [];
       // Subscribe to typing events
       context.chatRoom.typing.subscribe((event) => {
         events.push(event);
@@ -139,7 +139,7 @@ describe('Typing', () => {
         type: TypingEvents.Start,
       });
       // Get the currently typing client ids
-      const currentlyTypingClientIds = await context.chatRoom.typing.get();
+      const currentlyTypingClientIds = context.chatRoom.typing.get();
       // Ensure that the client ids are correct
       expect(currentlyTypingClientIds.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIds.has(clientId1), 'client1 should be typing').toEqual(true);
@@ -154,7 +154,7 @@ describe('Typing', () => {
         type: TypingEvents.Stop,
       });
       // Get the currently typing client ids
-      const currentlyTypingClientIdsAfterStop = await context.chatRoom.typing.get();
+      const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.get();
       // Ensure that the client ids are correct and client1 is no longer typing
       expect(currentlyTypingClientIdsAfterStop.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIdsAfterStop.has(clientId1), 'client1 should not be typing').toEqual(false);
