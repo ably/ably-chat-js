@@ -1,0 +1,113 @@
+---
+description: Conventions for the React package
+globs: src/react/**/*.tsx,src/react/**/*.ts
+---
+# React Conventions
+
+## Custom Hooks
+
+### Naming Conventions
+- Use camelCase for hook names
+- Prefix all hooks with `use` (e.g., `useMessages`, `useLogger`)
+- Use descriptive names that reflect the hook's purpose
+
+### Hook Documentation
+- Use JSDoc style comments for hooks
+- Include clear description of the hook's purpose
+- Document all parameters and return values
+```typescript
+/**
+ * A hook that provides access to the Messages instance in the room.
+ * @param params - Allows registering optional callbacks
+ * @returns UseMessagesResponse - Object containing Messages instance
+ */
+```
+
+### Hook Parameters
+- Group related parameters into a single params object
+- Use TypeScript interfaces to define parameter shapes
+- Make parameters optional when possible using the `?` operator
+```typescript
+export interface UseMessagesParams extends StatusParams, Listenable<MessageListener> {
+  listener?: MessageListener;
+}
+```
+
+### Hook Return Values
+- Return objects with named properties for clarity
+- Define return type interfaces explicitly
+- Document each returned property
+```typescript
+export interface UseMessagesResponse extends ChatStatusResponse {
+  readonly send: Messages['send'];
+  readonly update: Messages['update'];
+  // ... other properties
+}
+```
+
+### State Management
+- Use `useState` for simple state management
+- Use `useCallback` for memoized functions
+- Use `useEffect` for side effects and cleanup
+```typescript
+const [state, setState] = useState<Type>();
+const callback = useCallback((params) => {
+  // Implementation
+}, [dependencies]);
+```
+
+### Effect Hooks
+- Always clean up side effects in the return function
+- Include all dependencies in the dependency array
+- Use empty dependency array `[]` for one-time setup
+```typescript
+useEffect(() => {
+  // Setup
+  return () => {
+    // Cleanup
+  };
+}, [dependencies]);
+```
+
+### Context Usage
+- Use context hooks for accessing shared state
+- Provide meaningful error messages for missing context
+- Keep context usage close to where it's needed
+
+### Error Handling
+- Handle both connection and operation errors
+- Return error states as part of the response
+- Use typed error objects
+```typescript
+{
+  connectionError,
+  roomError,
+  // ... other properties
+}
+```
+
+### Type Safety
+- Use TypeScript interfaces for all hook parameters and returns
+- Leverage generics for reusable hooks
+- Avoid using `any` type
+
+### Performance Optimization
+- Memoize callbacks with `useCallback`
+- Memoize expensive computations with `useMemo`
+- Use refs for values that shouldn't trigger re-renders
+```typescript
+const listenerRef = useEventListenerRef(params?.listener);
+```
+
+### Cleanup and Resource Management
+- Always clean up subscriptions and listeners
+- Handle component unmounting gracefully
+- Clear timers and intervals in cleanup functions
+
+### Logging
+- Use consistent logging patterns
+- Include relevant context in log messages
+- Use appropriate log levels (trace, debug, error)
+```typescript
+logger.debug('useMessages(); applying listener', { roomId: context.roomId });
+```

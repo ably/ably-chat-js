@@ -1,0 +1,215 @@
+---
+description: Typescript coding conventions
+globs: *.ts,*.tsx
+---
+# TypeScript Coding Conventions
+
+## Interface and Type Declarations
+
+### Interface Naming
+- Use PascalCase for interface names
+- Use descriptive names that reflect the purpose
+- Prefix interfaces with 'I' is not required
+```typescript
+interface MessageEventPayload {
+  type: MessageEvents;
+  message: Message;
+}
+```
+
+### Interface Documentation
+- Use JSDoc style comments for interfaces
+- Include a clear description of the interface's purpose
+- Document all properties using `@property` or inline comments
+- Document all errors using `@throws`.
+- Link using {@link} to types mentioned.
+```typescript
+/**
+ * Options for querying messages in a chat room.
+ */
+interface QueryOptions {
+  /**
+   * The start of the time window to query from.
+   * @defaultValue The beginning of time
+   */
+  start?: number;
+}
+```
+
+### Type Parameters
+- Use descriptive names for type parameters
+- Keep type parameters concise but meaningful
+- Document type constraints when used
+
+## Enums
+
+### Enum Declarations
+- Use PascalCase for enum names
+- Use PascalCase for enum members
+- Include JSDoc documentation for both enum and members
+```typescript
+export enum OrderBy {
+  /**
+   * Return results in ascending order (oldest first).
+   */
+  OldestFirst = 'oldestFirst',
+
+  /**
+   * Return results in descending order (newest first).
+   */
+  NewestFirst = 'newestFirst',
+}
+```
+
+## Classes
+
+### Class Structure
+- Use PascalCase for class names
+- Implement interfaces explicitly
+- Document class purpose and implementation details
+```typescript
+/**
+ * @inheritDoc
+ */
+export class DefaultMessages
+  extends EventEmitter<MessageEventsMap>
+  implements Messages, HandlesDiscontinuity {
+  // Class implementation
+}
+```
+
+### Class Members
+- Use underscore prefix for private members
+- Group members by visibility (private, protected, public)
+- Document all public methods and properties
+```typescript
+private readonly _roomId: string;
+private readonly _channel: Ably.RealtimeChannel;
+```
+
+## Methods
+
+### Method Documentation
+- Use JSDoc for all public methods
+- Include parameter descriptions
+- Document return types and possible exceptions
+```typescript
+/**
+ * Subscribe to new messages in this chat room.
+ * @param listener callback that will be called
+ * @returns A response object that allows you to control the subscription.
+ */
+subscribe(listener: MessageListener): MessageSubscriptionResponse;
+```
+
+### Method Parameters
+- Use descriptive parameter names
+- Group related parameters into parameter objects
+- Use optional parameters with default values when appropriate
+```typescript
+async update(
+  message: Message,
+  update: UpdateMessageParams,
+  details?: OperationDetails
+): Promise<Message>
+```
+
+## Error Handling
+
+### Error Types
+- The error type used is ErrorInfo from the package 'ably'
+  - The first argument is the message
+  - The second argument is the error code.
+  - The third argument is the status code. When the error code is in the 10000-59999 range, the status code will be the HTTP status code that matches the first 3 numbers.
+- Maintain consistent error handling patterns
+- Specific error codes can be found in the ErrorCodes enum in the [errors.ts](mdc:src/core/errors.ts) file.
+
+```typescript
+throw new Ably.ErrorInfo(
+  'cannot query history; listener has not been subscribed yet',
+  40000,
+  400,
+) as unknown as Error;
+```
+
+## Exports
+
+### Export Declarations
+- Export interfaces and types that are part of the public API, make sure you add them to index.ts.
+- Use named exports over default exports
+- Group related exports together
+```typescript
+export interface Messages extends EmitsDiscontinuities {
+  // Interface members
+}
+```
+
+## Logging
+
+### Logging Conventions
+- Use consistent logging levels (trace, debug, error)
+- Most method calls (for key classes like messages, presence, room status) will have a trace level log at the top. Don't worry about this for data classes etc.
+- Include relevant context in log messages, the second argument is a free-formed object for any relevant context.
+- Never log instances of Ably channels, this doesn't work.
+- Structure log messages for easy parsing
+
+```typescript
+this._logger.trace('Messages.subscribe();');
+this._logger.debug('Messages.update(); message update successfully', { updatedMessage });
+```
+
+## Type Safety
+
+### Type Assertions
+- Minimize use of type assertions
+- Use type guards when possible
+- Document when and why type assertions are necessary
+- Never use `any`. If we really can't avoid it, use `unknown`, but strong typing always preferred.
+```typescript
+const channelWithProperties = this._channel as Ably.RealtimeChannel & {
+  properties: {
+    attachSerial: string | undefined;
+    channelSerial: string | undefined;
+  };
+};
+```
+
+## Comments and Documentation
+
+### Code Comments
+- Use JSDoc for public API documentation
+- Include inline comments for complex logic
+- Keep comments up to date with code changes
+
+### Documentation Style
+- Use clear and concise language
+- Include examples where helpful
+- Document default values and optional parameters
+
+## Promises and Async
+
+### Async/Await
+- Use async/await over raw promises
+- Handle promise rejections appropriately
+- Document asynchronous behavior
+```typescript
+async send(params: SendMessageParams): Promise<Message> {
+  this._logger.trace('Messages.send();', { params });
+  const response = await this._chatApi.sendMessage(this._roomId, params);
+  return new DefaultMessage(/* ... */);
+}
+```
+
+## Event Handling
+
+### Event Naming
+- Use consistent event naming patterns
+- Document event payloads
+- Type event handlers appropriately
+```typescript
+interface MessageEventsMap {
+  [MessageEvents.Created]: MessageEventPayload;
+  [MessageEvents.Updated]: MessageEventPayload;
+  [MessageEvents.Deleted]: MessageEventPayload;
+}
+```

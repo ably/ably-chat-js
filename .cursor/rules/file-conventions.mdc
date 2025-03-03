@@ -1,0 +1,19 @@
+---
+description: Creating new files and project structure
+globs: src/**/*.ts,src/**/*.tsx,test/**/*.ts,test/**/*.tsx
+---
+
+# File Creation
+
+- Create all Typescript and TSX files using kebab-case.
+
+# Project Structure
+
+- The src/core folder contains the "core" TypeScript SDK.
+- The src/react folder contains the react hooks and other helpers.
+- The demo/ folder is a React probject that is a demo app for the main library.
+
+# Imports
+
+- When importing in this project, use relative imports.
+- When importing the package ably, do `import * as Ably from 'ably'`

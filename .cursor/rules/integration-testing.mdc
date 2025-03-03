@@ -1,0 +1,208 @@
+---
+description: Writing integration tests
+globs: *.integration.test.ts,*.integration.test.tsx
+---
+# Integration Testing Guide
+
+
+## Test Structure
+
+### Basic Test Structure
+We use the vitest framework. Each integration test file should follow this basic structure:
+
+```typescript
+import { beforeEach, describe, expect, it } from 'vitest';
+// Import the modules being tested
+import { YourModule } from './your-module';
+
+interface TestContext {
+  // Define your test context interface
+}
+
+describe('module integration', { timeout: 10000 }, () => {
+  beforeEach<TestContext>((context) => {
+    // Set up your test context
+  });
+
+  it<TestContext>('should do something specific', async (context) => {
+    // Test implementation
+  });
+});
+```
+
+### Test Context
+Test context is used to share common setup between tests. Define an interface for your test context and use it consistently:
+
+```typescript
+interface TestContext {
+  chat: ChatClient;
+  // Add other context properties as needed
+}
+
+describe('integration tests', () => {
+  beforeEach<TestContext>((context) => {
+    context.chat = newChatClient();
+    // Initialise other context properties
+  });
+});
+```
+
+## Async Testing
+
+### Handling Async Operations
+For async operations, always use async/await and proper timeout handling:
+
+```typescript
+it<TestContext>('should handle async operations', async (context) => {
+  const { chat } = context;
+  
+  // Use await for async operations
+  const result = await chat.someAsyncOperation();
+  
+  expect(result).toBeDefined();
+});
+```
+
+### Custom Wait Functions
+Create helper functions for waiting on specific conditions:
+
+```typescript
+const waitForMessages = (messages: Message[], expectedCount: number) => {
+  return new Promise<void>((resolve, reject) => {
+    const interval = setInterval(() => {
+      if (messages.length === expectedCount) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 100);
+    
+    // Always include a timeout
+    setTimeout(() => {
+      clearInterval(interval);
+      reject(new Error('Timed out waiting for messages'));
+    }, 3000);
+  });
+};
+```
+
+## Test Helpers
+
+### Setup Helpers
+Create helper functions for common setup operations:
+
+```typescript
+const getRandomRoom = async (chat: ChatClient) => {
+  // Implementation for getting a test room
+};
+
+const waitForRoomStatus = async (room: Room, status: RoomStatus) => {
+  // Implementation for waiting for room status
+};
+```
+
+### Cleanup
+Ensure proper cleanup after tests:
+
+```typescript
+afterEach<TestContext>(async (context) => {
+  // Clean up resources
+  await context.chat.disconnect();
+});
+```
+
+## Best Practices
+
+### 1. Test Organisation
+- Group related tests using nested `describe` blocks
+- Use clear, descriptive test names
+- Keep tests focused and independent
+
+### 2. Assertions
+- Use clear, specific assertions
+- Test both positive and negative cases
+- Include error cases where appropriate
+
+Example:
+```typescript
+it<TestContext>('should handle error cases', async (context) => {
+  const { chat } = context;
+  
+  await expect(async () => {
+    await chat.invalidOperation();
+  }).rejects.toThrow('Expected error message');
+});
+```
+
+### 3. Timeouts and Persistence
+- Set appropriate timeouts for async operations
+- Handle persistence delays when necessary:
+```typescript
+// Wait for persistence when needed
+await new Promise((resolve) => setTimeout(resolve, 3000));
+```
+
+### 4. State Management
+- Reset state between tests using `beforeEach`
+- Avoid test interdependence
+- Clean up resources after tests
+
+### 5. Mock External Dependencies
+When necessary, mock external dependencies:
+```typescript
+const mockClient = {
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+};
+```
+
+### 6. Testing Events
+For event-based testing:
+```typescript
+it<TestContext>('should handle events', async (context) => {
+  const events: Event[] = [];
+  const { off } = subject.onEvent((event) => {
+    events.push(event);
+  });
+  
+  // Trigger events
+  
+  // Clean up
+  off();
+});
+```
+
+### 7. Error Handling
+Test error scenarios and recovery:
+```typescript
+it<TestContext>('should handle errors and recover', async (context) => {
+  // Test error conditions
+  // Verify recovery behaviour
+  // Check error states
+});
+```
+
+## Common Patterns
+
+### Subscribe and Wait Pattern
+```typescript
+const messages: Message[] = [];
+subject.subscribe((message) => {
+  messages.push(message);
+});
+
+await waitForMessages(messages, expectedCount);
+```
+
+### State Transition Testing
+```typescript
+// Initial state check
+expect(initialState).toBe(expected);
+
+// Trigger state change
+await triggerStateChange();
+
+// Wait for and verify new state
+await waitForState(expectedNewState);
+```
+
+Remember to follow these guidelines to ensure your integration tests are reliable, maintainable, and provide good coverage of your application's functionality. 
