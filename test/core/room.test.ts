@@ -148,7 +148,11 @@ describe('Room', () => {
         );
 
         // Check that the reactions and typing channels were called with the default options
-        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(3, room.typing.channel.name, defaultOptions);
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+          3,
+          room.typing.channel.name,
+          expectedMessagesChannelOptions,
+        );
         expect(context.realtime.channels.get).toHaveBeenNthCalledWith(4, room.reactions.channel.name, defaultOptions);
       });
     },
