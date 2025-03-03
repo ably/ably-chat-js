@@ -30,18 +30,26 @@ export const AllFeaturesEnabled = {
      * The default time that a client will wait after calling typing.start() before emitting a `typing.stopped`
      * event.
      * Restarts the interval with repeated calls to typing.start(), resets the interval with typing.stop().
+     *
+     * Spec: CHA-T3
+     * @defaultValue
      */
     timeoutMs: 2000,
 
     /**
      * The default time that a client will wait between sending one typing heartbeat and the next.
+     *
+     * Spec: CHA-T10.
      */
-    heartbeatIntervalMs: 17000,
+    heartbeatIntervalMs: 15000,
 
     /**
      * The default timeout for typing inactivity in milliseconds.
+     *
+     * TODO: Rename this?
+     * Spec: CHA-T11
      */
-    inactivityTimeoutMs: 2000,
+    inactivityTimeoutMs: 500,
   } as TypingOptions,
 
   /**
@@ -129,12 +137,12 @@ export interface TypingOptions {
    * If not set, the client will not emit a `typing.stopped` event until they call `typing.stop()`.
    * @defaultValue 2000
    */
-  timeoutMs?: number;
+  timeoutMs?: number | undefined;
 
   /**
    * The time, in milliseconds, a client waits after failing to receive a typing heartbeat from another client before assuming the other client has stopped typing.
    * In practice, this means the client waits the length of the heartbeat interval plus this value before emitting a `typing.stopped` event.
-   * @defaultValue 2000
+   * @defaultValue 500
    */
   inactivityTimeoutMs: number;
 }
