@@ -1,0 +1,135 @@
+---
+description: Test helpers
+globs: *.test.ts,*.test.tsx
+---
+# Test Helpers Guide
+
+This guide provides an overview of the testing utilities and helpers available in the Ably Chat JS SDK.
+
+## Core Test Setup
+
+### Test Environment Setup (`test-setup.ts`)
+- Automatically creates a new app in the sandbox environment before tests run
+- Handles API key setup for testing
+- Skips setup when using local realtime cluster
+- Sets `process.env.sandboxApiKey` for test authentication
+
+
+## Error Testing Utilities (`expectations.ts`)
+
+Many error testing utilities that extend `expect` in vitest exist in [expectations.ts](mdc:test/helper/expectations.ts).
+
+### Custom Matchers
+
+The following custom matchers are available for testing Ably error scenarios. Whenever testing that an error is thrown, or a promise is rejected, use these.
+
+#### `toBeErrorInfo(received, expected)`
+
+Validates that an error matches expected ErrorInfo properties:
+- `code`: Error code
+- `statusCode`: HTTP status code
+- `message`: Error message
+- `cause`: Nested error cause
+
+```typescript
+expect(error).toBeErrorInfo({
+  code: 40142,
+  message: "Expected error message"
+});
+```
+
+#### `toThrowErrorInfo(received, expected)`
+
+Checks if a function throws an error matching expected ErrorInfo properties:
+
+```typescript
+expect(() => someFunction()).toThrowErrorInfo({
+  code: 40142
+});
+```
+
+#### `toBeErrorInfoWithCode(received, expected)`
+
+Validates that an error has a specific error code:
+
+```typescript
+expect(error).toBeErrorInfoWithCode(40142);
+```
+
+#### `toThrowErrorInfoWithCode(received, expected)`
+
+Checks if a function throws an error with a specific code:
+
+```typescript
+expect(() => someFunction()).toThrowErrorInfoWithCode(40142);
+```
+
+#### `toBeErrorInfoWithCauseCode(received, expected)`
+
+Validates that an error has a cause with a specific error code:
+
+```typescript
+expect(error).toBeErrorInfoWithCauseCode(40142);
+```
+
+## React Hook Testing Utilities (`wait-for-eventual-hook.ts`)
+
+### Async Hook Testing
+Utilities for testing asynchronous React hooks:
+
+#### `waitForEventualHookValueToBeDefined<T>`
+
+Waits for a hook value to become defined:
+
+```typescript
+await waitForEventualHookValueToBeDefined(result, (value) => value.someProperty);
+```
+
+#### `waitForEventualHookValue<HookReturn, Value>`
+Waits for a hook to return an expected value:
+
+```typescript
+await waitForEventualHookValue(
+  result,
+  expectedValue,
+  (current) => current.someProperty
+);
+```
+
+Default timeout for hook utilities: 3000ms
+
+## Common Test Patterns
+
+### Testing Error Scenarios
+```typescript
+test('handles specific error', () => {
+  expect(() => functionThatThrows()).toThrowErrorInfo({
+    code: 40142,
+    message: 'Expected error message'
+  });
+});
+```
+
+### Testing Async Hooks
+```typescript
+test('hook eventually returns value', async () => {
+  const { result } = renderHook(() => useMyHook());
+  await waitForEventualHookValue(
+    result,
+    'expected value',
+    (current) => current.value
+  );
+});
+```
+
+### Test Waiting For Events
+
+Use vi.waitFor to wait for asynchronous events to happen.
+
+```typescript
+  await vi.waitFor(...);
+```
+
+## Feature Specificaiton
+
+Refer to [feature-specification.mdc](mdc:.cursor/rules/feature-specification.mdc) for information on how to handle feature specification points in tests.

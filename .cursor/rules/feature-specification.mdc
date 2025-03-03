@@ -1,0 +1,25 @@
+---
+description: 
+globs: 
+---
+# Feature Specification
+
+This library is backed by a feature specification, stored in another repository. Specification points are in the following format:
+
+```text
+  ** @(CHA-M10e)@ @[Testable]@ To sort @Message@ @versions@ of the same @Message@ (instances with the same @serial@) in global order, sort @Message@ instances lexicographically by their @version@ property.
+  *** @(CHA-M10e1)@ @[Testable]@ Two @Message@ instances of the same @serial@ are considered the same version if they have the same @version@ property.
+  *** @(CHA-M10e2)@ @[Testable]@ Among @Message@ instances of the same @serial@, the one with a lexicographically higher @version@ is newer.
+  *** @(CHA-M10e3)@ @[Testable]@ Among @Message@ instances of the same @serial@, the one with a lexicographically lower @version@ is older.
+  ** @(CHA-M10f) @[Testable]@ A message version may be deemed older than another via the @isOlderVersionOf@ convenience method. This method returns true IFF the two messages have the same serial, and the given message is "older" by @(CHA-M10e3)@.
+```
+
+- The points are nested
+  - A point like CHA-M10 is the top-level
+  - A point like CHA-M10a is a sub-point of the top-level
+  - A point like CHA-M10a1 is a sub-point of the second-level point
+- The `@[Testable]@` annotation means that there MUST be a unit test that accompanies it.
+- Specification points without a `@[Testable]@` annotation are intended to be informative or relevant blurb.
+- Whenever you are given a specification point for a particular piece of instruction (either directly, or in reference to some other instruction) you must:
+  - Include an annotation of the specification point at the relevant section of the code, e.g. `// @CHA-M10a`
+  - Include an annotation of the specification point in the relevant test methods, e.g `// CHA-M10a`.

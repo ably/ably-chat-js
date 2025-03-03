@@ -1,0 +1,178 @@
+---
+description: Unit testing guide
+globs: *.test.ts,*.test.tsx
+---
+# Unit Testing Guide
+
+## Table of Contents
+1. [Test Structure](mdc:#test-structure)
+2. [Naming Conventions](mdc:#naming-conventions)
+3. [Test Organization](mdc:#test-organization)
+4. [Test Cases](mdc:#test-cases)
+5. [Assertions](mdc:#assertions)
+6. [Test Data](mdc:#test-data)
+7. [Best Practices](mdc:#best-practices)
+
+## Test Structure
+
+### Mocking Ably
+
+The `ably` library is mocked in mocks, and should be mocked as a module, for example:
+
+```ts
+  import * as Ably from 'ably';
+  import { describe, expect, it, vi } from 'vitest';
+
+  vi.mock('ably');
+
+  // The rest of the test file
+```
+
+### Basic Test Structure
+
+We use Vitest as our testing framework. Each test file should follow this basic structure:
+
+```typescript
+import { describe, expect, it } from 'vitest';
+// Import the modules being tested
+import { YourModule } from './your-module';
+
+describe('ModuleName', () => {
+  it('should do something specific', () => {
+    // Test implementation
+  });
+});
+```
+
+## Naming Conventions
+
+### Test File Names
+- Test files should end with `.test.ts`
+- Name should reflect the module being tested
+- Example: `message.test.ts` for testing `message.ts`
+
+### Test Descriptions
+- Use clear, descriptive names that explain the test's purpose
+- Format: `it('should [expected behavior]')`
+- Examples:
+  ```typescript
+  it('is the same as another message')
+  it('is not the same as another message')
+  it('should return false when trying to compare versions belonging to different origin messages')
+  ```
+
+## Test Organization
+
+### Grouping Tests
+- Group related tests using `describe` blocks
+- Use nested describes for sub-features
+- Example:
+  ```typescript
+  describe('ChatMessage', () => {
+    describe('message versions', () => {
+      it('is deleted', () => {
+        // Test implementation
+      });
+      
+      it('is updated', () => {
+        // Test implementation
+      });
+    });
+  });
+  ```
+
+## Test Cases
+
+### Test Case Structure
+1. Arrange: Set up test data and conditions
+2. Act: Execute the code being tested
+3. Assert: Verify the results
+
+Example:
+```typescript
+it('is deleted', () => {
+  // Arrange
+  const firstSerial = '01672531200000-124@abcdefghij:0';
+  const firstMessage = new DefaultMessage(
+    firstSerial,
+    'clientId',
+    'roomId',
+    'hello there',
+    {},
+    {},
+    ChatMessageActions.MessageDelete,
+    '01672531300000-123@abcdefghij:0',
+    new Date(1672531200000),
+    new Date(1672531300000),
+    {
+      clientId: 'clientId2',
+    }
+  );
+
+  // Act & Assert
+  expect(firstMessage.isDeleted).toBe(true);
+  expect(firstMessage.deletedBy).toBe('clientId2');
+});
+```
+
+### Testing Multiple Scenarios
+- Test both positive and negative cases
+- Test edge cases and boundary conditions
+- Example:
+  ```typescript
+  it('is the same as another message')
+  it('is not the same as another message')
+  ```
+
+## Assertions
+
+### Using Expect
+- Use clear, specific assertions
+- Chain assertions when testing multiple aspects
+- Example:
+  ```typescript
+  expect(firstMessage.equal(secondMessage)).toBe(true);
+  expect(firstMessage.isDeleted).toBe(true);
+  expect(firstMessage.deletedBy).toBe('clientId2');
+  ```
+
+### Common Assertions
+- `toBe()`: Strict equality
+- `toEqual()`: Deep equality
+- `toBeTruthy()/toBeFalsy()`: Boolean conditions
+- `toThrowErrorInfo()`: Error cases
+
+## Test Data
+
+### Test Data Setup
+- Create meaningful test data that clearly demonstrates the test case
+- Use constants for repeated values
+- Example:
+  ```typescript
+  const firstSerial = '01672531200000-123@abcdefghij';
+  const secondSerial = '01672531200000-124@abcdefghij';
+
+### Error Testing
+Test error cases explicitly:
+```typescript
+it('should throw an error if different messages', () => {
+  // Arrange
+  const message = // ... setup message
+  const event = // ... setup event
+
+  // Act & Assert
+  expect(() => message.with(event)).toThrowErrorInfo({
+    code: 40000,
+    statusCode: 400,
+    message: 'cannot apply event for a different message',
+  });
+});
+```
+
+## Rooms
+
+Use random room IDs to avoid conflicts.
+
+## Data Driven Tests
+
+Use .each to write table/data driven tests.
