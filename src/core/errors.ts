@@ -5,6 +5,11 @@ import * as Ably from 'ably';
  */
 export enum ErrorCodes {
   /**
+   * The request was invalid.
+   */
+  BadRequest = 40000,
+
+  /**
    * The message was rejected before publishing by a rule on the chat room.
    */
   MessageRejectedByBeforePublishRule = 42211,
