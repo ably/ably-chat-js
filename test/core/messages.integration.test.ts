@@ -6,7 +6,7 @@ import { ChatMessageActions, MessageEvents } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
-import { DefaultRoomOptions } from '../../src/core/room-options.ts';
+import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.ts';
 import { newChatClient } from '../helper/chat.ts';
@@ -781,7 +781,7 @@ describe('messages integration', { timeout: 10000 }, () => {
   it<TestContext>('handles the room being released before getPreviousMessages is called', async (context) => {
     const chat = context.chat;
     const roomId = randomRoomId();
-    const room = await chat.rooms.get(roomId, DefaultRoomOptions);
+    const room = await chat.rooms.get(roomId, AllFeaturesEnabled);
 
     // Create a subscription to messages
     room.messages.subscribe(() => {});

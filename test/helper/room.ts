@@ -6,7 +6,7 @@ import { ChatApi } from '../../src/core/chat-api.ts';
 import { ErrorCodes } from '../../src/core/errors.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
-import { DefaultRoomOptions, normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
+import { AllFeaturesEnabled, normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
 import { randomRoomId } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
@@ -28,12 +28,7 @@ export const waitForRoomError = async (status: RoomLifecycle, expected: ErrorCod
 
 // Gets a random room with default options from the chat client
 export const getRandomRoom = async (chat: ChatClient): Promise<Room> =>
-  chat.rooms.get(randomRoomId(), defaultRoomOptions);
-
-// Return a default set of room options
-export const defaultRoomOptions: RoomOptions = {
-  ...DefaultRoomOptions,
-};
+  chat.rooms.get(randomRoomId(), AllFeaturesEnabled);
 
 // Makes a room with the given (or default) options, as a standalone room aside from the chat client
 // Should be used in unit tests where the dependencies are mocked.
@@ -49,7 +44,7 @@ export const makeRandomRoom = (params: {
   return new DefaultRoom(
     randomRoomId(),
     randomId(),
-    normalizeRoomOptions(params.options ?? defaultRoomOptions, false),
+    normalizeRoomOptions(params.options ?? AllFeaturesEnabled, false),
     realtime,
     chatApi,
     logger,

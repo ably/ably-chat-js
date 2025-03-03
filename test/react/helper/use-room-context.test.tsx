@@ -1,7 +1,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { DefaultRoomOptions } from '../../../src/core/room-options.ts';
+import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { useRoomContext } from '../../../src/react/helper/use-room-context.ts';
 import { ChatRoomProvider } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -39,7 +39,7 @@ describe('useRoom', () => {
       const context = useRoomContext('foo');
       expect(context).toBeDefined();
       expect(context.roomId).toBe('foo');
-      expect(context.options).toBe(DefaultRoomOptions);
+      expect(context.options).toBe(AllFeaturesEnabled);
       return null;
     };
 
@@ -47,7 +47,7 @@ describe('useRoom', () => {
       <ChatClientProvider client={chatClient}>
         <ChatRoomProvider
           id="foo"
-          options={DefaultRoomOptions}
+          options={AllFeaturesEnabled}
         >
           <TestUseRoom />
         </ChatRoomProvider>

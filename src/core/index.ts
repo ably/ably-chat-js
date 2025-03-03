@@ -3,7 +3,7 @@
  */
 
 export { ChatClient } from './chat.js';
-export type { ClientOptions } from './config.js';
+export type { ChatClientOptions } from './config.js';
 export type {
   Connection,
   ConnectionStatusChange,
@@ -51,7 +51,7 @@ export type {
   RoomReactionsOptions,
   TypingOptions,
 } from './room-options.js';
-export { DefaultRoomOptions } from './room-options.js';
+export { AllFeaturesEnabled } from './room-options.js';
 export type {
   RoomReactionListener,
   RoomReactions,

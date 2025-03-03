@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { PresenceEvents } from '../../../src/core/events.ts';
 import { PresenceData, PresenceEvent } from '../../../src/core/presence.ts';
-import { DefaultRoomOptions } from '../../../src/core/room-options.ts';
+import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { usePresence } from '../../../src/react/hooks/use-presence.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
@@ -50,7 +50,7 @@ describe('usePresence', () => {
 
     // create a second room and attach it, so we can listen for presence events
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, DefaultRoomOptions);
+    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
     await roomTwo.attach();
 
     // start listening for presence events on room two
@@ -84,7 +84,7 @@ describe('usePresence', () => {
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
           id={roomId}
-          options={DefaultRoomOptions}
+          options={AllFeaturesEnabled}
         >
           {children}
         </ChatRoomProvider>

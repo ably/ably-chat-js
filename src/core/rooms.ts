@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { dequal } from 'dequal';
 
 import { ChatApi } from './chat-api.js';
-import { ClientOptions, NormalizedClientOptions } from './config.js';
+import { ChatClientOptions, NormalizedChatClientOptions } from './config.js';
 import { ErrorCodes } from './errors.js';
 import { randomId } from './id.js';
 import { Logger } from './logger.js';
@@ -49,9 +49,9 @@ export interface Rooms {
 
   /**
    * Get the client options used to create the Chat instance.
-   * @returns ClientOptions
+   * @returns ChatClientOptions
    */
-  get clientOptions(): ClientOptions;
+  get clientOptions(): ChatClientOptions;
 }
 
 /**
@@ -85,7 +85,7 @@ interface RoomMapEntry {
 export class DefaultRooms implements Rooms {
   private readonly _realtime: Ably.Realtime;
   private readonly _chatApi: ChatApi;
-  private readonly _clientOptions: NormalizedClientOptions;
+  private readonly _clientOptions: NormalizedChatClientOptions;
   private readonly _rooms: Map<string, RoomMapEntry> = new Map<string, RoomMapEntry>();
   private readonly _releasing = new Map<string, Promise<void>>();
   private readonly _logger: Logger;
@@ -98,7 +98,7 @@ export class DefaultRooms implements Rooms {
    * @param clientOptions The client options from the chat instance.
    * @param logger An instance of the Logger.
    */
-  constructor(realtime: Ably.Realtime, clientOptions: NormalizedClientOptions, logger: Logger) {
+  constructor(realtime: Ably.Realtime, clientOptions: NormalizedChatClientOptions, logger: Logger) {
     this._realtime = realtime;
     this._chatApi = new ChatApi(realtime, logger);
     this._clientOptions = clientOptions;
@@ -187,7 +187,7 @@ export class DefaultRooms implements Rooms {
   /**
    * @inheritDoc
    */
-  get clientOptions(): ClientOptions {
+  get clientOptions(): ChatClientOptions {
     return this._clientOptions;
   }
 

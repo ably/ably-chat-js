@@ -5,7 +5,7 @@ import { ChatApi } from '../../src/core/chat-api.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
-import { DefaultRoomOptions, normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
+import { AllFeaturesEnabled, normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
 import {
@@ -17,7 +17,7 @@ import {
 import { randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
-import { defaultRoomOptions, waitForRoomStatus } from '../helper/room.ts';
+import { waitForRoomStatus } from '../helper/room.ts';
 
 vi.mock('ably');
 
@@ -56,10 +56,10 @@ describe('Room', () => {
 
   describe.each([
     ['messages', {}, (room: Room) => room.messages],
-    ['presence', { presence: DefaultRoomOptions.presence }, (room: Room) => room.presence],
-    ['occupancy', { occupancy: DefaultRoomOptions.occupancy }, (room: Room) => room.occupancy],
-    ['typing', { typing: DefaultRoomOptions.typing }, (room: Room) => room.typing],
-    ['reactions', { reactions: DefaultRoomOptions.reactions }, (room: Room) => room.reactions],
+    ['presence', { presence: AllFeaturesEnabled.presence }, (room: Room) => room.presence],
+    ['occupancy', { occupancy: AllFeaturesEnabled.occupancy }, (room: Room) => room.occupancy],
+    ['typing', { typing: AllFeaturesEnabled.typing }, (room: Room) => room.typing],
+    ['reactions', { reactions: AllFeaturesEnabled.reactions }, (room: Room) => room.reactions],
   ])('feature configured', (description: string, options: RoomOptions, featureLoader: (room: Room) => unknown) => {
     it<TestContext>(`should not throw an error when trying to access ${description} whilst enabled`, (context) => {
       const room = context.getRoom(options);
@@ -97,7 +97,7 @@ describe('Room', () => {
     (description: string, setReact: boolean, agentString: string, defaultOptions: unknown) => {
       it<TestContext>('applies the correct options', (context) => {
         vi.spyOn(context.realtime.channels, 'get');
-        const room = context.getRoom(defaultRoomOptions, setReact) as DefaultRoom;
+        const room = context.getRoom(AllFeaturesEnabled, setReact) as DefaultRoom;
 
         // Check that the shared channel for messages, occupancy and presence was called with the correct options
         const expectedMessagesChannelOptions = {
@@ -132,7 +132,7 @@ describe('Room', () => {
 
   describe('room status', () => {
     it<TestContext>('should have a room status and error', async (context) => {
-      const room = context.getRoom(defaultRoomOptions);
+      const room = context.getRoom(AllFeaturesEnabled);
       expect(room.status).toBe(RoomStatus.Initialized);
 
       // Wait for the room to be initialized
@@ -153,7 +153,7 @@ describe('Room', () => {
     });
 
     it<TestContext>('should allow subscriptions to status changes', async (context) => {
-      const room = context.getRoom(defaultRoomOptions);
+      const room = context.getRoom(AllFeaturesEnabled);
 
       const statuses: RoomStatus[] = [];
       const errors: Ably.ErrorInfo[] = [];
@@ -188,7 +188,7 @@ describe('Room', () => {
     });
 
     it<TestContext>('should allow all subscriptions to be removed', async (context) => {
-      const room = context.getRoom(defaultRoomOptions);
+      const room = context.getRoom(AllFeaturesEnabled);
 
       const statuses: RoomStatus[] = [];
       const errors: Ably.ErrorInfo[] = [];
@@ -235,7 +235,7 @@ describe('Room', () => {
 
   describe('room release', () => {
     it<TestContext>('should release the room', async (context) => {
-      const room = context.getRoom(defaultRoomOptions) as DefaultRoom;
+      const room = context.getRoom(AllFeaturesEnabled) as DefaultRoom;
       const lifecycleManager = (room as unknown as { _lifecycleManager: RoomLifecycleManager })._lifecycleManager;
 
       // Setup spies on the realtime client and the room lifecycle manager
@@ -268,7 +268,7 @@ describe('Room', () => {
     });
 
     it<TestContext>('should only release with enabled features', async (context) => {
-      const room = context.getRoom({ typing: DefaultRoomOptions.typing }) as DefaultRoom;
+      const room = context.getRoom({ typing: AllFeaturesEnabled.typing }) as DefaultRoom;
       const lifecycleManager = (room as unknown as { _lifecycleManager: RoomLifecycleManager })._lifecycleManager;
 
       // Setup spies on the realtime client and the room lifecycle manager
@@ -292,7 +292,7 @@ describe('Room', () => {
     });
 
     it<TestContext>('releasing multiple times is idempotent', async (context) => {
-      const room = context.getRoom(defaultRoomOptions) as DefaultRoom;
+      const room = context.getRoom(AllFeaturesEnabled) as DefaultRoom;
       const lifecycleManager = (room as unknown as { _lifecycleManager: RoomLifecycleManager })._lifecycleManager;
 
       // Setup spies on the realtime client and the room lifecycle manager
@@ -315,7 +315,7 @@ describe('Room', () => {
   });
 
   it<TestContext>('can be released immediately without unhandled rejections', async (context) => {
-    const room = context.getRoom(defaultRoomOptions);
+    const room = context.getRoom(AllFeaturesEnabled);
 
     // Release the room
     // Note that an unhandled rejection will not cause the test to fail, but it will cause the process to exit

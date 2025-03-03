@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
 import { Room } from '../../src/core/room.ts';
-import { DefaultRoomOptions } from '../../src/core/room-options.ts';
+import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { TypingEvent } from '../../src/core/typing.ts';
@@ -174,7 +174,7 @@ describe('Typing', () => {
   it<TestContext>('handles discontinuities', async (context) => {
     const { chat } = context;
 
-    const room = await chat.get(randomRoomId(), { typing: DefaultRoomOptions.typing });
+    const room = await chat.get(randomRoomId(), { typing: AllFeaturesEnabled.typing });
 
     // Attach the room
     await room.attach();
