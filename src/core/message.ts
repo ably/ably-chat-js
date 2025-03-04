@@ -1,6 +1,15 @@
 import { ErrorInfo } from 'ably';
 
-import { ChatMessageActions, MessageEventPayload, MessageEvents } from './events.js';
+import {
+  ChatMessageActions,
+  DistinctReactionSummary,
+  MessageEventPayload,
+  MessageEvents,
+  MessageReactionEvents,
+  MessageReactionSummaryEvent,
+  MultipleReactionSummary,
+  UniqueReactionSummary,
+} from './events.js';
 import { Headers } from './headers.js';
 import { Metadata } from './metadata.js';
 import { OperationMetadata } from './operation-metadata.js';
@@ -118,6 +127,11 @@ export interface Message {
   readonly operation?: Operation;
 
   /**
+   * The reactions summary for this message.
+   */
+  readonly reactions: MessageReactions;
+
+  /**
    * Indicates if the message has been updated.
    */
   get isUpdated(): boolean;
@@ -229,7 +243,32 @@ export interface Message {
    * @returns A new message instance with the event applied. If the event is a no-op, such
    *    as an event for an old version, the same message is returned (not a copy).
    */
-  with(event: MessageEventPayload): Message;
+  with(event: MessageEventPayload | MessageReactionSummaryEvent): Message;
+}
+
+/**
+ * Represents a summary of all reactions on a message.
+ */
+export interface MessageReactions {
+  /**
+   * The version of the summary.
+   */
+  version: string;
+
+  /**
+   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Unique}.
+   */
+  unique: Record<string, UniqueReactionSummary>;
+
+  /**
+   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Distinct}.
+   */
+  distinct: Record<string, DistinctReactionSummary>;
+
+  /**
+   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Counter}.
+   */
+  multiple: Record<string, MultipleReactionSummary>;
 }
 
 /**
@@ -249,9 +288,14 @@ export class DefaultMessage implements Message {
     public readonly version: string,
     public readonly createdAt: Date,
     public readonly timestamp: Date,
+    public readonly reactions: MessageReactions,
     public readonly operation?: Operation,
   ) {
     // The object is frozen after constructing to enforce readonly at runtime too
+    Object.freeze(this.reactions);
+    Object.freeze(this.reactions.multiple);
+    Object.freeze(this.reactions.distinct);
+    Object.freeze(this.reactions.unique);
     Object.freeze(this);
   }
 
@@ -319,15 +363,69 @@ export class DefaultMessage implements Message {
     return this.equal(message);
   }
 
-  with(event: MessageEventPayload): Message {
+  with(event: MessageEventPayload | MessageReactionSummaryEvent): Message {
     if (event.type === MessageEvents.Created) {
       throw new ErrorInfo('cannot apply a created event to a message', 40000, 400);
     }
 
+    // reaction summary
+    if (event.type === MessageReactionEvents.Summary) {
+      if (event.refSerial !== this.serial) {
+        throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
+      }
+
+      if (this.reactions.version >= event.version) {
+        return this;
+      }
+
+      const newReactions: MessageReactions = {
+        version: event.version,
+        unique: structuredClone(event.unique),
+        distinct: structuredClone(event.distinct),
+        multiple: structuredClone(event.multiple),
+      };
+
+      return DefaultMessage._clone(this, { reactions: newReactions });
+    }
+
+    // message event (update or delete)
     if (event.message.serial !== this.serial) {
       throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
     }
 
-    return this.version >= event.message.version ? this : event.message;
+    // event is older, keep this instead
+    if (this.version >= event.message.version) {
+      return this;
+    }
+
+    // event is newer, copy reactions from this and make new message from event
+    return DefaultMessage._clone(event.message, { reactions: this.reactions });
   }
+
+  // Clone a message, optionally replace the given fields
+  private static _clone(source: Message, replace?: Partial<Message>): DefaultMessage {
+    return new DefaultMessage(
+      replace?.serial ?? source.serial,
+      replace?.clientId ?? source.clientId,
+      replace?.roomId ?? source.roomId,
+      replace?.text ?? source.text,
+      replace?.metadata ?? structuredClone(source.metadata),
+      replace?.headers ?? structuredClone(source.headers),
+      replace?.action ?? source.action,
+      replace?.version ?? source.version,
+      replace?.createdAt ?? source.createdAt,
+      replace?.timestamp ?? source.timestamp,
+      replace?.reactions ?? structuredClone(source.reactions),
+      replace?.operation ?? structuredClone(source.operation),
+    );
+  }
+}
+
+export function emptyMessageReactions(): MessageReactions {
+  return {
+    version: '',
+    unique: {},
+    distinct: {},
+    multiple: {},
+  };
 }

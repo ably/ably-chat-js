@@ -3,6 +3,7 @@ import { useChatClient, useMessages } from '@ably/chat';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { Message, MessageEventPayload, MessageEvents, PaginatedResult } from '@ably/chat';
 import { ErrorInfo } from 'ably';
+import { useReactionType } from '../MessageReactions';
 
 interface ChatBoxComponentProps {}
 
@@ -12,7 +13,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
 
-  const { getPreviousMessages, deleteMessage, update } = useMessages({
+  const { getPreviousMessages, deleteMessage, update, addReaction } = useMessages({
     listener: (event: MessageEventPayload) => {
       const message = event.message;
       switch (event.type) {
@@ -60,6 +61,27 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
           console.error('Unknown message', message);
         }
       }
+    },
+    reactionsListener: (reaction) => {
+      const messageSerial = reaction.refSerial;
+      setMessages((prevMessages) => {
+        const index = prevMessages.findIndex((m) => m.serial === messageSerial);
+        if (index === -1) {
+          return prevMessages;
+        }
+
+        const newMessage = prevMessages[index].with(reaction);
+
+        // if no change, do nothing
+        if (newMessage === prevMessages[index]) {
+          return prevMessages;
+        }
+
+        // copy array and replace the message
+        const updatedArray = prevMessages.slice();
+        updatedArray[index] = newMessage;
+        return updatedArray;
+      });
     },
     onDiscontinuity: (discontinuity) => {
       console.log('Discontinuity', discontinuity);
@@ -151,6 +173,8 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
     }
   }, [messages, loading]);
 
+  const reactionType = useReactionType();
+
   return (
     <div className="chat-box">
       {loading && <div className="text-center m-auto">loading...</div>}
@@ -185,6 +209,8 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
                 key={msg.serial}
                 self={msg.clientId === clientId}
                 message={msg}
+                reactionRefType={reactionType.refType}
+                onReactionAdd={addReaction}
                 onMessageDelete={onDeleteMessage}
                 onMessageUpdate={onUpdateMessage}
               ></MessageComponent>
