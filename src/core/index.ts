@@ -59,11 +59,7 @@ export type {
   TypingOptions,
 } from './room-options.js';
 export { AllFeaturesEnabled } from './room-options.js';
-export type {
-  RoomReactionListener,
-  RoomReactions,
-  SendReactionParams,
-} from './room-reactions.js';
+export type { RoomReactionListener, RoomReactions, SendReactionParams } from './room-reactions.js';
 export type { RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
