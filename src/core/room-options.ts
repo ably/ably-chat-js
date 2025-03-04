@@ -44,7 +44,7 @@ export const AllFeaturesEnabled = {
    * The default options for messages.
    */
   messages: {
-    rawMessageReactions: false,
+    rawMessageReactions: true,
   } as MessageOptions,
 };
 
@@ -54,13 +54,10 @@ export const AllFeaturesEnabled = {
 export interface MessageOptions {
   /**
    * Whether to enable receiving raw individual message reactions from the
-   * realtime channel. The default is false, meaning that individual message
-   * reactions are not received. Set to true if subscribing to raw message
-   * reactions.
+   * realtime channel. Set to true if subscribing to raw message reactions.
    *
    * Note reaction summaries (aggregates) are always available regardless of
    * this setting.
-   * @defaultValue false
    */
   rawMessageReactions?: boolean;
 }
