@@ -31,16 +31,9 @@ export type {
   UpdateMessageParams,
 } from './messages.js';
 export type { Metadata } from './metadata.js';
-export type { Occupancy, OccupancyEvent, OccupancyListener, OccupancySubscriptionResponse } from './occupancy.js';
+export type { Occupancy, OccupancyEvent, OccupancyListener } from './occupancy.js';
 export type { OperationMetadata } from './operation-metadata.js';
-export type {
-  Presence,
-  PresenceData,
-  PresenceEvent,
-  PresenceListener,
-  PresenceMember,
-  PresenceSubscriptionResponse,
-} from './presence.js';
+export type { Presence, PresenceData, PresenceEvent, PresenceListener, PresenceMember } from './presence.js';
 export type { PaginatedResult } from './query.js';
 export type { Reaction } from './reaction.js';
 export type { Room } from './room.js';
@@ -52,14 +45,10 @@ export type {
   TypingOptions,
 } from './room-options.js';
 export { AllFeaturesEnabled } from './room-options.js';
-export type {
-  RoomReactionListener,
-  RoomReactions,
-  RoomReactionsSubscriptionResponse,
-  SendReactionParams,
-} from './room-reactions.js';
+export type { RoomReactionListener, RoomReactions, SendReactionParams } from './room-reactions.js';
 export type { OnRoomStatusChangeResponse, RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
-export type { Typing, TypingEvent, TypingListener, TypingSubscriptionResponse } from './typing.js';
+export type { Subscription } from './subscription.js';
+export type { Typing, TypingEvent, TypingListener } from './typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';

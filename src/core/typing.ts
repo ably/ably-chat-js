@@ -15,6 +15,7 @@ import { TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { TypingOptions } from './room-options.js';
+import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 const PRESENCE_GET_RETRY_INTERVAL_MS = 1500; // base retry interval, we double it each time
@@ -34,7 +35,7 @@ export interface Typing extends EmitsDiscontinuities {
    * @param listener A listener to be called when the typing state of a user in the room changes.
    * @returns A response object that allows you to control the subscription to typing events.
    */
-  subscribe(listener: TypingListener): TypingSubscriptionResponse;
+  subscribe(listener: TypingListener): Subscription;
 
   /**
    * Unsubscribe all listeners from receiving typing events.
@@ -88,16 +89,6 @@ export interface TypingEvent {
  * @param event The typing event.
  */
 export type TypingListener = (event: TypingEvent) => void;
-
-/**
- * A response object that allows you to control the subscription to typing events.
- */
-export interface TypingSubscriptionResponse {
-  /**
-   * Unsubscribe the listener registered with {@link Typing.subscribe} from typing events.
-   */
-  unsubscribe: () => void;
-}
 
 /**
  * Represents the typing events mapped to their respective event payloads.
@@ -226,7 +217,7 @@ export class DefaultTyping
   /**
    * @inheritDoc
    */
-  subscribe(listener: TypingListener): TypingSubscriptionResponse {
+  subscribe(listener: TypingListener): Subscription {
     this._logger.trace(`DefaultTyping.subscribe();`);
     this.on(listener);
 
