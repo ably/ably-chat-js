@@ -2,13 +2,13 @@ import { ErrorInfo } from 'ably';
 
 import {
   ChatMessageActions,
-  CounterReactionSummary,
+  MultipleReactionSummary,
   DistinctReactionSummary,
   MessageEvent,
   MessageEvents,
   MessageReactionEvents,
   MessageReactionSummaryEvent,
-  SingleReactionSummary,
+  UniqueReactionSummary,
 } from './events.js';
 import { Headers } from './headers.js';
 import { Metadata } from './metadata.js';
@@ -284,9 +284,9 @@ export interface MessageReactions {
   version: string;
 
   /**
-   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Single}.
+   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Unique}.
    */
-  single: Record<string, SingleReactionSummary>;
+  unique: Record<string, UniqueReactionSummary>;
 
   /**
    * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Distinct}.
@@ -296,7 +296,7 @@ export interface MessageReactions {
   /**
    * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Counter}.
    */
-  counter: Record<string, CounterReactionSummary>;
+  multiple: Record<string, MultipleReactionSummary>;
 }
 
 /**
@@ -321,9 +321,9 @@ export class DefaultMessage implements Message {
   ) {
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this.reactions);
-    Object.freeze(this.reactions.counter);
+    Object.freeze(this.reactions.multiple);
     Object.freeze(this.reactions.distinct);
-    Object.freeze(this.reactions.single);
+    Object.freeze(this.reactions.unique);
     Object.freeze(this);
   }
 
@@ -408,9 +408,9 @@ export class DefaultMessage implements Message {
 
       const newReactions: MessageReactions = {
         version: event.version,
-        single: structuredClone(event.single),
+        unique: structuredClone(event.unique),
         distinct: structuredClone(event.distinct),
-        counter: structuredClone(event.counter),
+        multiple: structuredClone(event.multiple),
       };
 
       return DefaultMessage._clone(this, { reactions: newReactions });
@@ -456,8 +456,8 @@ export class DefaultMessage implements Message {
 export function emptyMessageReactions(): MessageReactions {
   return {
     version: '',
-    single: {},
+    unique: {},
     distinct: {},
-    counter: {},
+    multiple: {},
   };
 }

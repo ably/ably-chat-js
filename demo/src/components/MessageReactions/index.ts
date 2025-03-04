@@ -1,6 +1,6 @@
-export { MessageReactionsSingle } from './MessageReactionsSingle';
+export { MessageReactionsUnique } from './MessageReactionsUnique';
 export { MessageReactionsDistinct } from './MessageReactionsDistinct';
-export { MessageReactionsCounter } from './MessageReactionsCounter';
+export { MessageReactionsMultiple } from './MessageReactionsMultiple';
 
 import { useContext } from 'react';
 import { ReactionTypeContext } from '../../containers/ReactionTypeProvider/reactionTypeProvider';

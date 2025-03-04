@@ -2,7 +2,7 @@ import { Message, ReactionRefType, useChatClient } from '@ably/chat';
 import React, { useCallback } from 'react';
 import clsx from 'clsx';
 import { FaPencil, FaTrash } from 'react-icons/fa6';
-import { MessageReactionsSingle, MessageReactionsDistinct, MessageReactionsCounter } from '../MessageReactions';
+import { MessageReactionsUnique, MessageReactionsDistinct, MessageReactionsMultiple } from '../MessageReactions';
 
 interface MessageProps {
   self?: boolean;
@@ -40,7 +40,7 @@ function shortDate(date: Date): string {
 export const MessageComponent: React.FC<MessageProps> = ({
   self = false,
   message,
-  reactionRefType = ReactionRefType.Single,
+  reactionRefType = ReactionRefType.Distinct,
   onMessageUpdate,
   onMessageDelete,
   onReactionAdd,
@@ -72,9 +72,9 @@ export const MessageComponent: React.FC<MessageProps> = ({
 
   if (onReactionAdd && onReactionDelete) {
     switch (reactionRefType) {
-      case ReactionRefType.Single: {
+      case ReactionRefType.Unique: {
         reactionsUI = (
-          <MessageReactionsSingle
+          <MessageReactionsUnique
             message={message}
             clientId={clientId}
             onReactionAdd={onReactionAdd}
@@ -94,9 +94,9 @@ export const MessageComponent: React.FC<MessageProps> = ({
         );
         break;
       }
-      case ReactionRefType.Counter: {
+      case ReactionRefType.Multiple: {
         reactionsUI = (
-          <MessageReactionsCounter
+          <MessageReactionsMultiple
             message={message}
             onReactionAdd={onReactionAdd}
             onReactionDelete={onReactionDelete}
