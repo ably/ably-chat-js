@@ -148,28 +148,40 @@ export interface Message {
   get updatedAt(): Date | undefined;
 
   /**
-   * Determines if the version of this message is older than the version of the given message.
+   * Determines if this message is an older version of the given message.
+   *
+   * **Note** that negating this function does not mean that the message is a newer
+   * version of the same message, as the two may be different messages entirely.
+   *
+   * ```ts
+   *  !message.isOlderVersionOf(other) !== message.isNewerVersionOf(other)
+   * ```
    * @param message The message to compare against.
-   * @returns true if the version of this message is before the given message.
-   * @throws {@link ErrorInfo} if both message serials do not match.
+   * @returns true if the two messages are the same message (isSameAs returns true) and this message is an older version.
    */
-  versionBefore(message: Message): boolean;
+  isOlderVersionOf(message: Message): boolean;
 
   /**
-   * Determines if the version of this message is newer than the version of the given message.
+   * Determines if this message is a newer version of the given message.
+   *
+   * **Note** that negating this function does not mean that the message is an older
+   * version of the same message, as the two may be different messages entirely.
+   *
+   * ```ts
+   *  !message.isNewerVersionOf(other) !== message.isOlderVersionOf(other)
+   * ```
+   *
    * @param message The message to compare against.
-   * @returns true if the version of this message is after the given message.
-   * @throws {@link ErrorInfo} if both message serials do not match.
+   * @returns true if the two messages are the same message (isSameAs returns true) and this message is a newer version.
    */
-  versionAfter(message: Message): boolean;
+  isNewerVersionOf(message: Message): boolean;
 
   /**
-   * Determines if the version of this message is the same as to the version of the given message.
+   * Determines if this message is the same version as the given message.
    * @param message The message to compare against.
-   * @returns true if the version of this message is equal to the given message.
-   * @throws {@link ErrorInfo} if both message serials do not match.
+   * @returns true if the two messages are the same message and have the same version.
    */
-  versionEqual(message: Message): boolean;
+  isSameVersionAs(message: Message): boolean;
 
   /**
    * Determines if this message was created before the given message. This comparison is based on
@@ -197,10 +209,16 @@ export interface Message {
    * Note that this method compares messages based on {@link Message.serial} alone. It returns true if the
    * two messages represent different versions of the same message.
    * @param message The message to compare against.
-   * @returns true if this message is equal to the given message.
-   * @throws {@link ErrorInfo} if serials of either message is invalid.
+   * @returns true if the two messages are the same message.
    */
   equal(message: Message): boolean;
+
+  /**
+   * Alias for {@link equal}.
+   * @param message The message to compare against.
+   * @returns true if the two messages are the same message.
+   */
+  isSameAs(message: Message): boolean;
 
   /**
    * Creates a new message instance with the event applied.
@@ -261,28 +279,25 @@ export class DefaultMessage implements Message {
     return this.isDeleted ? this.timestamp : undefined;
   }
 
-  versionBefore(message: Message): boolean {
-    // Check to ensure the messages are the same before comparing operation order
+  isOlderVersionOf(message: Message): boolean {
     if (!this.equal(message)) {
-      throw new ErrorInfo('versionBefore(): Cannot compare versions, message serials must be equal', 50000, 500);
+      return false;
     }
 
     return this.version < message.version;
   }
 
-  versionAfter(message: Message): boolean {
-    // Check to ensure the messages are the same before comparing operation order
+  isNewerVersionOf(message: Message): boolean {
     if (!this.equal(message)) {
-      throw new ErrorInfo('versionAfter(): Cannot compare versions, message serials must be equal', 50000, 500);
+      return false;
     }
 
     return this.version > message.version;
   }
 
-  versionEqual(message: Message): boolean {
-    // Check to ensure the messages are the same before comparing operation order
+  isSameVersionAs(message: Message): boolean {
     if (!this.equal(message)) {
-      throw new ErrorInfo('versionEqual(): Cannot compare versions, message serials must be equal', 50000, 500);
+      return false;
     }
 
     return this.version === message.version;
@@ -298,6 +313,10 @@ export class DefaultMessage implements Message {
 
   equal(message: Message): boolean {
     return this.serial === message.serial;
+  }
+
+  isSameAs(message: Message): boolean {
+    return this.equal(message);
   }
 
   with(event: MessageEventPayload): Message {

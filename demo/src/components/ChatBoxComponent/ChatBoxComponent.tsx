@@ -13,18 +13,19 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const clientId = chatClient.clientId;
 
   const { getPreviousMessages, deleteMessage, update } = useMessages({
-    listener: (message: MessageEventPayload) => {
-      switch (message.type) {
+    listener: (event: MessageEventPayload) => {
+      const message = event.message;
+      switch (event.type) {
         case MessageEvents.Created: {
           setMessages((prevMessages) => {
             // if already exists do nothing
-            const index = prevMessages.findIndex((m) => m.serial === message.message.serial);
+            const index = prevMessages.findIndex((other) => message.isSameAs(other));
             if (index !== -1) {
               return prevMessages;
             }
 
             // if the message is not in the list, make a new list that contains it
-            const newArray = [...prevMessages, message.message];
+            const newArray = [...prevMessages, message];
 
             // and put it at the right place
             newArray.sort((a, b) => (a.before(b) ? -1 : 1));
@@ -36,12 +37,12 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
         case MessageEvents.Updated:
         case MessageEvents.Deleted: {
           setMessages((prevMessages) => {
-            const index = prevMessages.findIndex((m) => m.serial === message.message.serial);
+            const index = prevMessages.findIndex((other) => message.isSameAs(other));
             if (index === -1) {
               return prevMessages;
             }
 
-            const newMessage = prevMessages[index].with(message);
+            const newMessage = prevMessages[index].with(event);
 
             // if no change, do nothing
             if (newMessage === prevMessages[index]) {
