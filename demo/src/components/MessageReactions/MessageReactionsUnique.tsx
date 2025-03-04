@@ -1,7 +1,7 @@
 import React from 'react';
 import { Message, ReactionRefType } from '@ably/chat';
 
-interface MessageReactionsSingleProps {
+interface MessageReactionsUniqueProps {
   message: Message;
   clientId: string;
   onReactionAdd: (message: Message, refType: ReactionRefType, emoji: string, score?: number) => void;
@@ -10,24 +10,24 @@ interface MessageReactionsSingleProps {
 
 const emojis = ['👍', '❤️', '🔥', '🚀'];
 
-export const MessageReactionsSingle: React.FC<MessageReactionsSingleProps> = ({
+export const MessageReactionsUnique: React.FC<MessageReactionsUniqueProps> = ({
   message,
   clientId,
   onReactionAdd,
   onReactionDelete: onReactionRemove,
 }) => {
-  const single = message.reactions.single ?? {};
+  const unique = message.reactions.unique ?? {};
 
   const handleReactionClick = (emoji: string) => {
-    if (single[emoji]?.clientIds.includes(clientId)) {
-      onReactionRemove(message, ReactionRefType.Single, emoji);
+    if (unique[emoji]?.clientIds.includes(clientId)) {
+      onReactionRemove(message, ReactionRefType.Unique, emoji);
     } else {
-      onReactionAdd(message, ReactionRefType.Single, emoji);
+      onReactionAdd(message, ReactionRefType.Unique, emoji);
     }
   };
 
   const currentEmojis = emojis.slice();
-  for (const emoji in single) {
+  for (const emoji in unique) {
     if (!currentEmojis.includes(emoji)) {
       currentEmojis.push(emoji);
     }
@@ -43,7 +43,7 @@ export const MessageReactionsSingle: React.FC<MessageReactionsSingleProps> = ({
             handleReactionClick(emoji);
           }}
         >
-          {emoji} ({single[emoji]?.total || 0})
+          {emoji} ({unique[emoji]?.total || 0})
         </button>
       ))}
     </>

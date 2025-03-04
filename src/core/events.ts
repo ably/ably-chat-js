@@ -111,7 +111,7 @@ export enum ReactionRefType {
    *
    * This is similar to reactions on iMessage, Facebook Messenger or WhatsApp.
    */
-  Single = 'reaction:single.v1',
+  Unique = 'reaction:unique.v1',
 
   /**
    * Allows for at most one reaction of each type per client per message. It is
@@ -130,13 +130,13 @@ export enum ReactionRefType {
    *
    * This is similar to the clap feature on Medium or how room reactions work.
    */
-  Counter = 'reaction:counter.v1',
+  Multiple = 'reaction:multiple.v1',
 }
 
 /**
- * Represents the summary of reactions of type @link{ReactonRefType.Single}.
+ * Represents the summary of reactions of type @link{ReactionRefType.Unique}.
  */
-export interface SingleReactionSummary {
+export interface UniqueReactionSummary {
   /**
    * Total number of reactions.
    */
@@ -149,7 +149,7 @@ export interface SingleReactionSummary {
 }
 
 /**
- * Represents the summary of reactions of type @link{ReactonRefType.Distinct}.
+ * Represents the summary of reactions of type @link{ReactionRefType.Distinct}.
  */
 export interface DistinctReactionSummary {
   /**
@@ -164,9 +164,9 @@ export interface DistinctReactionSummary {
 }
 
 /**
- * Represents the summary of reactions of type @link{ReactonRefType.Counter}.
+ * Represents the summary of reactions of type @link{ReactionRefType.Multiple}.
  */
-export interface CounterReactionSummary {
+export interface MultipleReactionSummary {
   /**
    * Total number of reactions, where each reaction can count more than once,
    * controlled by its `count` property.
@@ -242,12 +242,12 @@ export interface MessageReactionSummaryEvent {
   /** Version of the summary event */
   version: string;
 
-  /** Map of single-type reactions summaries */
-  single: Record<string, SingleReactionSummary>;
+  /** Map of unique-type reactions summaries */
+  unique: Record<string, UniqueReactionSummary>;
 
   /** Map of distinct-type reactions summaries */
   distinct: Record<string, DistinctReactionSummary>;
 
-  /** Map of counter-type reactions summaries */
-  counter: Record<string, CounterReactionSummary>;
+  /** Map of multiple-type reactions summaries */
+  multiple: Record<string, MultipleReactionSummary>;
 }

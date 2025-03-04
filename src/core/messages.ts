@@ -14,7 +14,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import {
   ChatMessageActions,
-  CounterReactionSummary,
+  MultipleReactionSummary,
   DistinctReactionSummary,
   MessageEventPayload,
   MessageEvents,
@@ -23,7 +23,7 @@ import {
   MessageReactionSummaryEvent,
   ReactionRefType,
   RealtimeMessageNames,
-  SingleReactionSummary,
+  UniqueReactionSummary,
 } from './events.js';
 import { Logger } from './logger.js';
 import {
@@ -391,7 +391,7 @@ export class DefaultMessageReactions implements MessagesReactions {
 
     let reaction = event.data as string;
     let count: number | undefined;
-    if (refType === ReactionRefType.Counter) {
+    if (refType === ReactionRefType.Multiple) {
       const data = JSON.parse(reaction) as { count?: number; emoji: string };
       reaction = data.emoji;
       count = data.count;
@@ -429,23 +429,23 @@ export class DefaultMessageReactions implements MessagesReactions {
     }
 
     const summary = (event.summary ?? {}) as {
-      [ReactionRefType.Single]?: Record<string, SingleReactionSummary>;
+      [ReactionRefType.Unique]?: Record<string, UniqueReactionSummary>;
       [ReactionRefType.Distinct]?: Record<string, DistinctReactionSummary>;
-      [ReactionRefType.Counter]?: Record<string, CounterReactionSummary>;
+      [ReactionRefType.Multiple]?: Record<string, MultipleReactionSummary>;
     };
 
-    const single: Record<string, SingleReactionSummary> = summary[ReactionRefType.Single] ?? {};
+    const single: Record<string, UniqueReactionSummary> = summary[ReactionRefType.Unique] ?? {};
     const distinct: Record<string, DistinctReactionSummary> = summary[ReactionRefType.Distinct] ?? {};
-    const counter: Record<string, CounterReactionSummary> = summary[ReactionRefType.Counter] ?? {};
+    const counter: Record<string, MultipleReactionSummary> = summary[ReactionRefType.Multiple] ?? {};
 
     this._emitter.emit(MessageReactionEvents.Summary, {
       type: MessageReactionEvents.Summary,
       timestamp: new Date(event.timestamp),
       refSerial: event.refSerial,
       version: event.version,
-      single: single,
+      unique: single,
       distinct: distinct,
-      counter: counter,
+      multiple: counter,
     });
   }
 

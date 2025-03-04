@@ -1,7 +1,7 @@
 import React from 'react';
 import { Message, ReactionRefType } from '@ably/chat';
 
-interface MessageReactionsCounterProps {
+interface MessageReactionsMultipleProps {
   message: Message;
   onReactionAdd: (message: Message, refType: ReactionRefType, emoji: string, score?: number) => void;
   onReactionDelete: (message: Message, refType: ReactionRefType, emoji: string) => void;
@@ -9,23 +9,23 @@ interface MessageReactionsCounterProps {
 
 const emojis = ['👍', '❤️', '🔥', '🚀'];
 
-export const MessageReactionsCounter: React.FC<MessageReactionsCounterProps> = ({
+export const MessageReactionsMultiple: React.FC<MessageReactionsMultipleProps> = ({
   message,
   onReactionAdd,
   onReactionDelete: onReactionRemove,
 }) => {
   const handleReactionClick = (emoji: string) => {
-    onReactionAdd(message, ReactionRefType.Counter, emoji);
+    onReactionAdd(message, ReactionRefType.Multiple, emoji);
   };
 
   const handleReactionRemoveClick = (emoji: string) => {
-    onReactionRemove(message, ReactionRefType.Counter, emoji);
+    onReactionRemove(message, ReactionRefType.Multiple, emoji);
   };
 
-  const counter = message.reactions.counter ?? {};
+  const multiple = message.reactions.multiple ?? {};
 
   const currentEmojis = emojis.slice();
-  for (const emoji in counter) {
+  for (const emoji in multiple) {
     if (!currentEmojis.includes(emoji)) {
       currentEmojis.push(emoji);
     }
@@ -49,7 +49,7 @@ export const MessageReactionsCounter: React.FC<MessageReactionsCounterProps> = (
             handleReactionRemoveClick(emoji);
           }}
         >
-          {emoji} ({counter[emoji]?.total || 0})
+          {emoji} ({multiple[emoji]?.total || 0})
         </button>
       ))}
     </>

@@ -14,13 +14,13 @@ export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
 export type {
-  CounterReactionSummary,
+  MultipleReactionSummary as CounterReactionSummary,
   DistinctReactionSummary,
   MessageEventPayload,
   MessageReactionEvents,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
-  SingleReactionSummary,
+  UniqueReactionSummary as SingleReactionSummary,
 } from './events.js';
 export { ChatMessageActions, MessageEvents, PresenceEvents, ReactionRefType } from './events.js';
 export type { Headers } from './headers.js';

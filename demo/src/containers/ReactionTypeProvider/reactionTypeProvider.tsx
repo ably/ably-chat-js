@@ -20,9 +20,9 @@ export interface ReactionTypeProviderProps {
 }
 
 export const allowedReactionRefTypes = [
-  ReactionRefType.Single as string,
+  ReactionRefType.Unique as string,
   ReactionRefType.Distinct as string,
-  ReactionRefType.Counter as string,
+  ReactionRefType.Multiple as string,
 ];
 
 /**
@@ -35,7 +35,7 @@ export const allowedReactionRefTypes = [
  */
 export const ReactionTypeProvider = ({ children }: ReactionTypeProviderProps) => {
   const stored = localStorage.getItem('messageReactionRefType');
-  let current = ReactionRefType.Single;
+  let current = ReactionRefType.Unique;
   if (stored && allowedReactionRefTypes.indexOf(stored) !== -1) {
     current = stored as ReactionRefType;
   }
@@ -45,9 +45,9 @@ export const ReactionTypeProvider = ({ children }: ReactionTypeProviderProps) =>
   const setFunc = useCallback(
     (rt: ReactionRefType) => {
       const shortcuts: Record<string, ReactionRefType> = {
-        single: ReactionRefType.Single,
+        unique: ReactionRefType.Unique,
         distinct: ReactionRefType.Distinct,
-        counter: ReactionRefType.Counter,
+        multiple: ReactionRefType.Multiple,
       };
       if (shortcuts[rt]) {
         rt = shortcuts[rt];
