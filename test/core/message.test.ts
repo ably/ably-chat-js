@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ChatMessageActions, MessageEventPayload, MessageEvents } from '../../src/core/events.ts';
+import { ChatMessageActions, MessageEvent, MessageEvents } from '../../src/core/events.ts';
 import { DefaultMessage, Message } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
@@ -382,7 +382,7 @@ describe('ChatMessage', () => {
         { clientId: 'luke' },
       );
 
-      const event: MessageEventPayload = {
+      const event: MessageEvent = {
         type: MessageEvents.Updated,
         message: eventMessage,
       };
@@ -409,7 +409,7 @@ describe('ChatMessage', () => {
         { clientId: 'luke' },
       );
 
-      const event: MessageEventPayload = {
+      const event: MessageEvent = {
         type: MessageEvents.Created,
         message: eventMessage,
       };
@@ -436,7 +436,7 @@ describe('ChatMessage', () => {
         { clientId: 'luke' },
       );
 
-      const event: MessageEventPayload = {
+      const event: MessageEvent = {
         type: MessageEvents.Updated,
         message: eventMessage,
       };
@@ -461,7 +461,7 @@ describe('ChatMessage', () => {
         { clientId: 'luke' },
       );
 
-      const event: MessageEventPayload = {
+      const event: MessageEvent = {
         type: MessageEvents.Updated,
         message: eventMessage,
       };
@@ -486,7 +486,7 @@ describe('ChatMessage', () => {
         { clientId: 'luke' },
       );
 
-      const event: MessageEventPayload = {
+      const event: MessageEvent = {
         type: MessageEvents.Updated,
         message: eventMessage,
       };
@@ -510,7 +510,7 @@ describe('ChatMessage', () => {
         { clientId: 'luke' },
       );
 
-      const event: MessageEventPayload = {
+      const event: MessageEvent = {
         type: MessageEvents.Updated,
         message: eventMessage,
       };

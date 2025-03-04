@@ -113,7 +113,7 @@ interface RoomReactionEventsMap {
   [RoomReactionEvents.Reaction]: Reaction;
 }
 
-interface ReactionPayload {
+interface ReactionEvent {
   type: string;
   metadata?: ReactionMetadata;
 }
@@ -169,7 +169,7 @@ export class DefaultRoomReactions
       return Promise.reject(new Ably.ErrorInfo('unable to send reaction; type not set and it is required', 40001, 400));
     }
 
-    const payload: ReactionPayload = {
+    const payload: ReactionEvent = {
       type: type,
       metadata: metadata ?? {},
     };

@@ -92,7 +92,7 @@ import * as Ably from "ably";
 import {
   ChatClient,
   ConnectionStatusChange,
-  MessageEventPayload,
+  MessageEvent,
   RoomOptionsDefaults,
   RoomStatusChange,
 } from "@ably/chat";
@@ -125,7 +125,7 @@ async function getStartedWithChat() {
   );
 
   const { unsubscribe: messageUnsubscribe } = room.messages.subscribe(
-    (message: MessageEventPayload) => {
+    (message: MessageEvent) => {
       console.log("Received message:", message.message.text);
     }
   );
@@ -182,7 +182,7 @@ Create a new file, `Messages.tsx`, with the following content. This component is
 
 ```tsx
 import React, { useState } from 'react';
-import { Message, MessageEventPayload, useMessages } from '@ably/chat';
+import { Message, MessageEvent, useMessages } from '@ably/chat';
 
 // This is a simple chat component that uses the useMessages hook in Ably Chat to send and receive messages.
 export function Messages() {
@@ -192,7 +192,7 @@ export function Messages() {
   const [messages, setMessages] = useState<Message[]>([]);
   const { send } = useMessages(
     {
-      listener: (event: MessageEventPayload) => {
+      listener: (event: MessageEvent) => {
         console.log('message', message);
         setMessages(prev => [...prev, event.message]);
       }
