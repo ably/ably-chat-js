@@ -2,12 +2,12 @@ import { ErrorInfo } from 'ably';
 
 import {
   ChatMessageActions,
-  MultipleReactionSummary,
   DistinctReactionSummary,
   MessageEventPayload,
   MessageEvents,
   MessageReactionEvents,
   MessageReactionSummaryEvent,
+  MultipleReactionSummary,
   UniqueReactionSummary,
 } from './events.js';
 import { Headers } from './headers.js';
