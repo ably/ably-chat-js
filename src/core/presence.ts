@@ -15,6 +15,7 @@ import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { RoomOptions } from './room-options.js';
+import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -104,16 +105,6 @@ export interface PresenceMember {
 export type PresenceListener = (event: PresenceEvent) => void;
 
 /**
- * A response object that allows you to control a presence subscription.
- */
-export interface PresenceSubscriptionResponse {
-  /**
-   * Unsubscribe the listener registered with {@link Presence.subscribe} from all presence events.
-   */
-  unsubscribe: () => void;
-}
-
-/**
  * This interface is used to interact with presence in a chat room: subscribing to presence events,
  * fetching presence members, or sending presence events (join,update,leave).
  *
@@ -160,16 +151,13 @@ export interface Presence extends EmitsDiscontinuities {
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
    */
-  subscribe(
-    eventOrEvents: PresenceEvents | PresenceEvents[],
-    listener?: PresenceListener,
-  ): PresenceSubscriptionResponse;
+  subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Subscription;
 
   /**
    * Subscribe the given listener to all presence events.
    * @param listener listener to subscribe
    */
-  subscribe(listener?: PresenceListener): PresenceSubscriptionResponse;
+  subscribe(listener?: PresenceListener): Subscription;
 
   /**
    * Unsubscribe all listeners from all presence events.
@@ -302,19 +290,16 @@ export class DefaultPresence
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
    */
-  subscribe(
-    eventOrEvents: PresenceEvents | PresenceEvents[],
-    listener?: PresenceListener,
-  ): PresenceSubscriptionResponse;
+  subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Subscription;
   /**
    * Subscribe the given listener to all presence events.
    * @param listener listener to subscribe
    */
-  subscribe(listener?: PresenceListener): PresenceSubscriptionResponse;
+  subscribe(listener?: PresenceListener): Subscription;
   subscribe(
     listenerOrEvents?: PresenceEvents | PresenceEvents[] | PresenceListener,
     listener?: PresenceListener,
-  ): PresenceSubscriptionResponse {
+  ): Subscription {
     this._logger.trace('Presence.subscribe(); listenerOrEvents', { listenerOrEvents });
     if (!listenerOrEvents && !listener) {
       this._logger.error('could not subscribe to presence; invalid arguments');

@@ -15,6 +15,7 @@ import { Logger } from './logger.js';
 import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
 import { parseReaction } from './reaction-parser.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
+import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -92,7 +93,7 @@ export interface RoomReactions extends EmitsDiscontinuities {
    * @param listener The listener function to be called when a reaction is received.
    * @returns A response object that allows you to control the subscription.
    */
-  subscribe(listener: RoomReactionListener): RoomReactionsSubscriptionResponse;
+  subscribe(listener: RoomReactionListener): Subscription;
 
   /**
    * Unsubscribe all listeners from receiving room-level reaction events.
@@ -115,16 +116,6 @@ interface RoomReactionEventsMap {
 interface ReactionPayload {
   type: string;
   metadata?: ReactionMetadata;
-}
-
-/**
- * A response object that allows you to control the subscription to room-level reactions.
- */
-export interface RoomReactionsSubscriptionResponse {
-  /**
-   * Unsubscribe the listener registered with {@link RoomReactions.subscribe} from reaction events.
-   */
-  unsubscribe: () => void;
 }
 
 /**
@@ -197,7 +188,7 @@ export class DefaultRoomReactions
   /**
    * @inheritDoc Reactions
    */
-  subscribe(listener: RoomReactionListener): RoomReactionsSubscriptionResponse {
+  subscribe(listener: RoomReactionListener): Subscription {
     this._logger.trace(`RoomReactions.subscribe();`);
     this.on(listener);
 
