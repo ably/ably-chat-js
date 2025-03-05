@@ -3,7 +3,7 @@ import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
-import { ChatMessageActions, MessageEventPayload, MessageEvents } from '../../src/core/events.ts';
+import { ChatMessageActions, MessageEvent, MessageEvents } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { DefaultMessages, OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
@@ -221,7 +221,7 @@ describe('Messages', () => {
     const receivedMessages: Message[] = [];
     const receivedDeletions: Message[] = [];
     const receivedUpdates: Message[] = [];
-    const listener = (message: MessageEventPayload) => {
+    const listener = (message: MessageEvent) => {
       switch (message.type) {
         case MessageEvents.Created: {
           receivedMessages.push(message.message);
@@ -366,7 +366,7 @@ describe('Messages', () => {
     const receivedDeletions: Message[] = [];
     const receivedUpdates: Message[] = [];
 
-    const listener = (message: MessageEventPayload) => {
+    const listener = (message: MessageEvent) => {
       switch (message.type) {
         case MessageEvents.Created: {
           receivedMessages.push(message.message);
@@ -387,7 +387,7 @@ describe('Messages', () => {
     const receivedDeletions2: Message[] = [];
     const receivedUpdates2: Message[] = [];
 
-    const listener2 = (message: MessageEventPayload) => {
+    const listener2 = (message: MessageEvent) => {
       switch (message.type) {
         case MessageEvents.Created: {
           receivedMessages2.push(message.message);

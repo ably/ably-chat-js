@@ -12,7 +12,7 @@ import {
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
-import { ChatMessageActions, MessageEventPayload, MessageEvents, RealtimeMessageNames } from './events.js';
+import { ChatMessageActions, MessageEvent, MessageEvents, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
@@ -25,9 +25,9 @@ import EventEmitter from './utils/event-emitter.js';
  * Event names and their respective payloads emitted by the messages feature.
  */
 interface MessageEventsMap {
-  [MessageEvents.Created]: MessageEventPayload;
-  [MessageEvents.Updated]: MessageEventPayload;
-  [MessageEvents.Deleted]: MessageEventPayload;
+  [MessageEvents.Created]: MessageEvent;
+  [MessageEvents.Updated]: MessageEvent;
+  [MessageEvents.Deleted]: MessageEvent;
 }
 
 /**
@@ -170,7 +170,7 @@ export interface UpdateMessageParams extends SendMessageParams {}
  * A listener for message events in a chat room.
  * @param event The message event that was received.
  */
-export type MessageListener = (event: MessageEventPayload) => void;
+export type MessageListener = (event: MessageEvent) => void;
 
 /**
  * A response object that allows you to control a message subscription.

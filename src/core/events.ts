@@ -91,7 +91,7 @@ export enum RoomReactionEvents {
 /**
  * Payload for a message event.
  */
-export interface MessageEventPayload {
+export interface MessageEvent {
   /**
    * The type of the message event.
    */

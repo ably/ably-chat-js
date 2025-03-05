@@ -1,7 +1,7 @@
 import { MessageComponent } from '../MessageComponent';
 import { useChatClient, useMessages } from '@ably/chat';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { Message, MessageEventPayload, MessageEvents, PaginatedResult } from '@ably/chat';
+import { Message, MessageEvent, MessageEvents, PaginatedResult } from '@ably/chat';
 import { ErrorInfo } from 'ably';
 
 interface ChatBoxComponentProps {}
@@ -13,7 +13,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const clientId = chatClient.clientId;
 
   const { getPreviousMessages, deleteMessage, update } = useMessages({
-    listener: (event: MessageEventPayload) => {
+    listener: (event: MessageEvent) => {
       const message = event.message;
       switch (event.type) {
         case MessageEvents.Created: {

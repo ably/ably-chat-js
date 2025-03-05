@@ -1,6 +1,6 @@
 import { ErrorInfo } from 'ably';
 
-import { ChatMessageActions, MessageEventPayload, MessageEvents } from './events.js';
+import { ChatMessageActions, MessageEvent, MessageEvents } from './events.js';
 import { Headers } from './headers.js';
 import { Metadata } from './metadata.js';
 import { OperationMetadata } from './operation-metadata.js';
@@ -229,7 +229,7 @@ export interface Message {
    * @returns A new message instance with the event applied. If the event is a no-op, such
    *    as an event for an old version, the same message is returned (not a copy).
    */
-  with(event: MessageEventPayload): Message;
+  with(event: MessageEvent): Message;
 }
 
 /**
@@ -319,7 +319,7 @@ export class DefaultMessage implements Message {
     return this.equal(message);
   }
 
-  with(event: MessageEventPayload): Message {
+  with(event: MessageEvent): Message {
     if (event.type === MessageEvents.Created) {
       throw new ErrorInfo('cannot apply a created event to a message', 40000, 400);
     }
