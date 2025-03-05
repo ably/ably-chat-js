@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { Mutex } from 'async-mutex';
 
-import { messagesChannelName } from './channel.js';
+import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
 import {
   DiscontinuityEmitter,
@@ -14,6 +14,7 @@ import {
 import { ErrorCodes } from './errors.js';
 import { TypingEventPayload, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
+import { ephemeralMessage } from './realtime.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { TypingOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
@@ -151,13 +152,17 @@ export class DefaultTyping
    * Creates the realtime channel for typing indicators.
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(messagesChannelName(roomId));
+    // CHA-T8
+    const channel = channelManager.get(roomChannelName(roomId));
+
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([TypingEvents.Start, TypingEvents.Stop], this._internalSubscribeToEvents.bind(this));
     return channel;
   }
 
   /**
+   * CHA-T9
+   *
    * @inheritDoc
    */
   async get(): Promise<Set<string>> {
@@ -178,13 +183,31 @@ export class DefaultTyping
    * Start the typing timeout timer. This will expire after the configured timeout.
    */
   private _setTimeoutTimer(): void {
+    // Don't set the timeout timer if the timeout is not configured
+    if (this._timeoutMs === undefined) {
+      return;
+    }
+
+    this._logger.trace(`DefaultTyping._setTimeoutTimer();`);
+    const timer = (this._timeoutTimerId = setTimeout(() => {
+      // CHA-T12b
+      this._logger.debug(`DefaultTyping._setTimeoutTimer(); timeout expired`);
+      void this.stop()
+        .catch((error: unknown) => {
+          this._logger.error(`DefaultTyping._setTimeoutTimer(); failed to stop typing`, { error });
+        })
+        .finally(() => {
+          if (timer === this._timeoutTimerId) {
+            this._timeoutTimerId = undefined;
+          }
+        });
+    }, this._timeoutMs));
+  }
+
+  private _resetTimeoutTimer(): void {
     if (this._timeoutMs) {
       clearTimeout(this._timeoutTimerId);
-      this._logger.trace(`DefaultTyping.startTypingTimer();`);
-      this._timeoutTimerId = setTimeout(() => {
-        this._logger.debug(`DefaultTyping.startTypingTimer(); timeout expired`);
-        void this.stop();
-      }, this._timeoutMs);
+      this._setTimeoutTimer();
     }
   }
 
@@ -194,9 +217,13 @@ export class DefaultTyping
   private _startHeartbeatTimer(): void {
     if (!this._heartbeatTimerId) {
       this._logger.trace(`DefaultTyping.startHeartbeatTimer();`);
-      this._heartbeatTimerId = setTimeout(() => {
+      const timer = (this._heartbeatTimerId = setTimeout(() => {
         this._logger.debug(`DefaultTyping.startHeartbeatTimer(); heartbeat timer expired`);
-      }, this._heartbeatIntervalMs);
+        // CHA-T2a
+        if (timer === this._heartbeatTimerId) {
+          this._heartbeatTimerId = undefined;
+        }
+      }, this._heartbeatIntervalMs));
     }
   }
 
@@ -206,18 +233,28 @@ export class DefaultTyping
   async start(): Promise<void> {
     this._logger.trace(`DefaultTyping.start();`);
 
+    // CHA-T4d
+    if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
+      this._logger.error(`DefaultTyping.start(); channel is not attached`, { state: this.channel.state });
+      throw new Ably.ErrorInfo('cannot start typing, channel is not attached', ErrorCodes.BadRequest, 400);
+    }
+
     // If the user is already typing, and the timer has not expired, do not send another heartbeat
+    // CHA-T4c1, CHA-T4c2
     if (this._heartbeatTimerId) {
       this._logger.debug(`DefaultTyping.start(); no-op, already typing and heartbeat timer has not expired`);
-      // Reset the timeout timer if the user is still typing
-      this._setTimeoutTimer()
+      this._resetTimeoutTimer();
       return;
     }
-    return this._channel.publish(TypingEvents.Start, {}).then(() => {
+
+    // CHA-T4a3
+    return this._channel.publish(ephemeralMessage(TypingEvents.Start)).then(() => {
       this._logger.trace(`DefaultTyping.start(); starting timers`);
-      // Start the heartbeat timer
+
+      // CHA-T4a5
       this._startHeartbeatTimer();
-      // Start the timeout timer
+
+      // CHA-T4a4
       this._setTimeoutTimer();
     });
   }
@@ -228,12 +265,23 @@ export class DefaultTyping
   async stop(): Promise<void> {
     this._logger.trace(`DefaultTyping.stop();`);
     // If the user is not typing, do nothing.
+    // CHA-T5a
     if (!this._heartbeatTimerId) {
       this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`);
       return;
     }
-    return this._channel.publish(TypingEvents.Stop, {}).then(() => {
+
+    // CHA-T5c
+    if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
+      this._logger.error(`DefaultTyping.stop(); channel is not attached`, { state: this.channel.state });
+      throw new Ably.ErrorInfo('cannot stop typing, channel is not attached', ErrorCodes.BadRequest, 400);
+    }
+
+    // CHA-T5d
+    return this._channel.publish(ephemeralMessage(TypingEvents.Stop)).then(() => {
       this._logger.trace(`DefaultTyping.stop(); clearing timers`);
+
+      // CHA-T5e
       // Clear the heartbeat timer
       if (this._heartbeatTimerId) {
         clearTimeout(this._heartbeatTimerId);
@@ -347,7 +395,9 @@ export class DefaultTyping
 
     if (existingTimeout) {
       // Heartbeat - User is already typing, we just need to clear the existing timeout
-      this._logger.debug(`DefaultTyping._handleTypingStart(); received heartbeat for currently typing client`, { clientId });
+      this._logger.debug(`DefaultTyping._handleTypingStart(); received heartbeat for currently typing client`, {
+        clientId,
+      });
       clearTimeout(existingTimeout);
     } else {
       // Otherwise, we need to emit a new typing event
@@ -464,5 +514,18 @@ export class DefaultTyping
    */
   get detachmentErrorCode(): ErrorCodes {
     return ErrorCodes.TypingDetachmentFailed;
+  }
+
+  // Convenience getters for testing
+  get timeoutTimerId(): ReturnType<typeof setTimeout> | undefined {
+    return this._timeoutTimerId;
+  }
+
+  get heartbeatTimerId(): ReturnType<typeof setTimeout> | undefined {
+    return this._heartbeatTimerId;
+  }
+
+  get currentlyTyping(): Map<string, ReturnType<typeof setTimeout> | undefined> {
+    return this._currentlyTyping;
   }
 }
