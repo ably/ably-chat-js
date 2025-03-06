@@ -89,7 +89,7 @@ describe('Typing', () => {
     });
 
     // Ensure that the typing status is correct
-    await expect(room.typing.get()).resolves.toEqual(new Set(['some']));
+    expect(room.typing.get()).toEqual(new Set(['some']));
   });
 
   // CHA-T4
