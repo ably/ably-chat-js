@@ -1,5 +1,4 @@
 import * as Ably from 'ably';
-import { Mutex } from 'async-mutex';
 
 import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
@@ -44,7 +43,7 @@ export interface Typing extends EmitsDiscontinuities {
    * Get the current typers, a set of clientIds.
    * @returns A Promise of a set of clientIds that are currently typing.
    */
-  get(): Promise<Set<string>>;
+  get(): Set<string>;
 
   /**
    * Start indicates that the current user is typing.
@@ -111,9 +110,6 @@ export class DefaultTyping
   private readonly _heartbeatIntervalMs: number;
   private _heartbeatTimerId: ReturnType<typeof setTimeout> | undefined;
   private readonly _inactivityTimeoutMs: number;
-
-  private _opMtx: Mutex;
-
   private _currentlyTyping: Map<string, ReturnType<typeof setTimeout> | undefined>;
 
   /**
@@ -134,8 +130,6 @@ export class DefaultTyping
     super();
     this._clientId = clientId;
     this._channel = this._makeChannel(roomId, channelManager);
-    // Mutex to control access to the typing state
-    this._opMtx = new Mutex();
     // Timeout for pause in typing
     this._timeoutMs = options.timeoutMs;
     // Timeout for inactivity, i.e. when we have not received a heartbeat for a configured time
@@ -165,11 +159,9 @@ export class DefaultTyping
    *
    * @inheritDoc
    */
-  async get(): Promise<Set<string>> {
+  get(): Set<string> {
     this._logger.trace(`DefaultTyping.get();`);
-    return this._opMtx.runExclusive(() => {
-      return new Set<string>(this._currentlyTyping.keys());
-    });
+    return new Set<string>(this._currentlyTyping.keys());
   }
 
   /**
@@ -324,19 +316,16 @@ export class DefaultTyping
    * @param clientId The client ID of the user.
    * @param event The typing event.
    */
-  private async _updateCurrentlyTyping(clientId: string, event: TypingEvents): Promise<void> {
-    // Wrap the entire logic in the mutex so we can access currentlyTyping safely
-    await this._opMtx.runExclusive(() => {
-      this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { clientId, event });
+  private _updateCurrentlyTyping(clientId: string, event: TypingEvents): void {
+    this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { clientId, event });
 
-      const existingTimeout = this._currentlyTyping.get(clientId);
+    const existingTimeout = this._currentlyTyping.get(clientId);
 
-      if (event === TypingEvents.Start) {
-        this._handleTypingStart(clientId, existingTimeout);
-      } else {
-        this._handleTypingStop(clientId, existingTimeout);
-      }
-    });
+    if (event === TypingEvents.Start) {
+      this._handleTypingStart(clientId, existingTimeout);
+    } else {
+      this._handleTypingStop(clientId, existingTimeout);
+    }
   }
 
   /**
@@ -357,25 +346,14 @@ export class DefaultTyping
         });
         return;
       }
-      // Remove client as their timeout has expired
-      this._opMtx
-        .runExclusive(() => {
-          this._currentlyTyping.delete(clientId);
-          this.emit(TypingEvents.Stop, {
-            clientId,
-            currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
-            type: TypingEvents.Stop,
-          });
-        })
-        .catch((error: unknown) => {
-          this._logger.error(
-            `DefaultTyping._startNewClientInactivityTimer(); failed to update typing state in timeout`,
-            {
-              clientId,
-              error,
-            },
-          );
-        });
+
+      // Remove client whose timeout has expired
+      this._currentlyTyping.delete(clientId);
+      this.emit(TypingEvents.Stop, {
+        clientId,
+        currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
+        type: TypingEvents.Stop,
+      });
     }, this._heartbeatIntervalMs + this._inactivityTimeoutMs);
     return timeoutId;
   }
@@ -455,20 +433,7 @@ export class DefaultTyping
 
     // Safety check to ensure we are handling only typing events
     if (name === TypingEvents.Start || name === TypingEvents.Stop) {
-      this._updateCurrentlyTyping(clientId, name)
-        .then(() => {
-          this._logger.debug(`DefaultTyping._internalSubscribeToEvents(); successfully updated typing state`, {
-            name,
-            clientId,
-          });
-        })
-        .catch((error: unknown) => {
-          this._logger.error(`DefaultTyping._internalSubscribeToEvents(); failed to update typing state`, {
-            name,
-            clientId,
-            error,
-          });
-        });
+      this._updateCurrentlyTyping(clientId, name);
     } else {
       this._logger.warn(`DefaultTyping._internalSubscribeToEvents(); unrecognized event`, { name });
     }
