@@ -2,7 +2,7 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { TypingEventPayload } from '../../../src/core/events.ts';
+import { TypingEvent } from '../../../src/core/events.ts';
 import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
 import { TypingListener } from '../../../src/core/typing.ts';
@@ -12,7 +12,7 @@ import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provide
 import { newChatClient } from '../../helper/chat.ts';
 import { randomRoomId } from '../../helper/identifier.ts';
 
-function waitForTypingEvents(typingEvents: TypingEventPayload[], expectedCount: number) {
+function waitForTypingEvents(typingEvents: TypingEvent[], expectedCount: number) {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       if (typingEvents.length === expectedCount) {
@@ -43,7 +43,7 @@ describe('useTyping', () => {
     await roomTwo.attach();
 
     // start listening for typing events on room two
-    const typingEventsRoomTwo: TypingEventPayload[] = [];
+    const typingEventsRoomTwo: TypingEvent[] = [];
     roomTwo.typing.subscribe((typingEvent) => typingEventsRoomTwo.push(typingEvent));
 
     const TestComponent = () => {
@@ -74,7 +74,6 @@ describe('useTyping', () => {
 
     render(<TestProvider />);
 
-
     // expect the hook to send a start, followed by a stop typing event
     await waitForTypingEvents(typingEventsRoomTwo, 2);
     expect(typingEventsRoomTwo[0]?.currentlyTyping).toStrictEqual(new Set([chatClientOne.clientId]));
@@ -91,7 +90,7 @@ describe('useTyping', () => {
     await roomTwo.attach();
 
     // store the received typing events for room one
-    const typingEventsRoomOne: TypingEventPayload[] = [];
+    const typingEventsRoomOne: TypingEvent[] = [];
 
     // store the currently typing state from the hook
     let currentlyTypingSet = new Set<string>();

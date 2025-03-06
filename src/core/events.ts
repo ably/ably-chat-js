@@ -90,7 +90,7 @@ export enum TypingEvents {
 /**
  * Represents a typing event payload.
  */
-export interface TypingEventPayload {
+export interface TypingEvent {
   /**
    * Get a set of clientIds that are currently typing.
    */

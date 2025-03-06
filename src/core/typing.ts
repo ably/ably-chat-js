@@ -12,7 +12,7 @@ import {
   OnDiscontinuitySubscriptionResponse,
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
-import { TypingEventPayload, TypingEvents } from './events.js';
+import { TypingEvent, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
@@ -83,14 +83,14 @@ export interface Typing extends EmitsDiscontinuities {
  * A listener which listens for typing events.
  * @param event The typing event.
  */
-export type TypingListener = (event: TypingEventPayload) => void;
+export type TypingListener = (event: TypingEvent) => void;
 
 /**
  * Represents the typing events mapped to their respective event payloads.
  */
 interface TypingEventsMap {
-  [TypingEvents.Start]: TypingEventPayload;
-  [TypingEvents.Stop]: TypingEventPayload;
+  [TypingEvents.Start]: TypingEvent;
+  [TypingEvents.Stop]: TypingEvent;
 }
 
 /**
