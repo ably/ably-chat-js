@@ -30,7 +30,7 @@ export const AllFeaturesEnabled = {
      * Restarts the interval with repeated calls to typing.start(), resets the interval with typing.stop().
      *
      * Spec: CHA-T3
-     * @defaultValue 
+     * @defaultValue
      */
     timeoutMs: 2000,
 

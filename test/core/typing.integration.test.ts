@@ -4,7 +4,7 @@ import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
-import { TypingEventPayload, TypingEvents } from '../../src/core/events.ts';
+import { TypingEvent, TypingEvents } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
@@ -25,7 +25,7 @@ interface TestContext {
 }
 
 // Wait for the messages to be received
-const waitForMessages = (messages: TypingEventPayload[], expectedCount: number) => {
+const waitForMessages = (messages: TypingEvent[], expectedCount: number) => {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       if (messages.length === expectedCount) {
@@ -41,7 +41,7 @@ const waitForMessages = (messages: TypingEventPayload[], expectedCount: number) 
 };
 
 // Wait for a typing event matching the expected event to be received
-const waitForTypingEvent = (events: TypingEventPayload[], expected: TypingEventPayload) => {
+const waitForTypingEvent = (events: TypingEvent[], expected: TypingEvent) => {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       if (events.some((event) => dequal(event, expected))) {
@@ -71,7 +71,7 @@ describe('Typing', () => {
   it<TestContext>(
     'successfully starts typing and then stops after the default timeout',
     async (context) => {
-      const events: TypingEventPayload[] = [];
+      const events: TypingEvent[] = [];
       // Subscribe to typing events
       context.chatRoom.typing.subscribe((event) => {
         events.push(event);
@@ -93,7 +93,7 @@ describe('Typing', () => {
   it<TestContext>(
     'subscribes to all typing events, sent by start and stop',
     async (context) => {
-      const events: TypingEventPayload[] = [];
+      const events: TypingEvent[] = [];
       context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
@@ -116,7 +116,7 @@ describe('Typing', () => {
   it<TestContext>(
     'gets the set of currently typing client ids',
     async (context) => {
-      let events: TypingEventPayload[] = [];
+      let events: TypingEvent[] = [];
       // Subscribe to typing events
       context.chatRoom.typing.subscribe((event) => {
         events.push(event);
