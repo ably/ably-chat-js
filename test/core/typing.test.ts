@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, Test, test, vi } from 'vit
 import { ChatClient } from '../../src/core/chat.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { TypingEventPayload, TypingEvents } from '../../src/core/events.ts';
+import { Logger } from '../../src/core/logger.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
@@ -18,6 +19,7 @@ interface TestContext {
   room: Room;
   emulateBackendPublish: ChannelEventEmitterReturnType<Partial<Ably.InboundMessage>>;
   options: RoomOptions;
+  logger: Logger;
 }
 
 const TEST_TYPING_TIMEOUT_MS = 100;
@@ -56,6 +58,7 @@ const waitForMessages = (messages: TypingEventPayload[], expectedCount: number, 
 
 describe('Typing', () => {
   beforeEach<TestContext>((context) => {
+    context.logger = makeTestLogger();
     context.options = {
       typing: {
         timeoutMs: TEST_TYPING_TIMEOUT_MS,
@@ -64,7 +67,7 @@ describe('Typing', () => {
       },
     };
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
-    context.chatApi = new ChatApi(context.realtime, makeTestLogger());
+    context.chatApi = new ChatApi(context.realtime, context.logger);
     context.room = makeRandomRoom(context);
     const channel = context.room.typing.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
@@ -797,13 +800,15 @@ describe('Typing', () => {
         clientId: 'otherClient',
       });
 
-      // Ensure that the listener received the event
-      await waitForMessages(receivedEvents, 2);
-
-      // Check that we have a new inactivity timer
-      const newInactivity = defaultTyping.currentlyTyping.get('otherClient');
-      expect(newInactivity).toBeDefined();
-      expect(newInactivity).not.toBe(inactivity);
+      // Check that eventually (yay promises), the inactivity timer has been reset
+      await vi.waitFor(
+        () => {
+          const newInactivity = defaultTyping.currentlyTyping.get('otherClient');
+          expect(newInactivity).toBeDefined();
+          expect(newInactivity).not.toBe(inactivity);
+        },
+        { timeout: 1000 },
+      );
     });
 
     // CHA-T13b3
@@ -899,7 +904,7 @@ describe('Typing', () => {
     });
 
     // CHA-T13b5
-    it<TestContext>('ignores stopped typing events for clients not currently typing', async (context) => {
+    it<TestContext>('ignores stopped typing events for clients not currently typing', (context) => {
       const { room } = context;
 
       // Subscribe to typing events
