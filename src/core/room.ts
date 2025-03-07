@@ -7,7 +7,7 @@ import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
-import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
+import { RoomLifeCycleManager } from './room-lifecycle-manager.js';
 import { InternalRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
 import {
@@ -132,7 +132,7 @@ export class DefaultRoom implements Room {
   private readonly _occupancy: DefaultOccupancy;
   private readonly _logger: Logger;
   private readonly _lifecycle: DefaultRoomLifecycle;
-  private readonly _lifecycleManager: RoomLifecycleManager;
+  private readonly _lifecycleManager: RoomLifeCycleManager;
   private readonly _finalizer: () => Promise<void>;
   private readonly _channelManager: ChannelManager;
 
@@ -170,25 +170,15 @@ export class DefaultRoom implements Room {
     this._lifecycle = new DefaultRoomLifecycle(roomId, logger);
 
     const channelManager = (this._channelManager = this._getChannelManager(options, realtime, logger));
+    this._lifecycleManager = new RoomLifeCycleManager(roomId, channelManager, this._lifecycle, logger);
 
     // Setup features
     this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, logger);
 
-    const features: ContributesToRoomLifecycle[] = [this._messages];
-
     this._presence = new DefaultPresence(roomId, channelManager, realtime.auth.clientId, logger);
-    features.push(this._presence);
-
     this._typing = new DefaultTyping(roomId, options.typing, channelManager, realtime.auth.clientId, logger);
-    features.push(this._typing);
-
     this._reactions = new DefaultRoomReactions(roomId, channelManager, realtime.auth.clientId, logger);
-    features.push(this._reactions);
-
     this._occupancy = new DefaultOccupancy(roomId, channelManager, this._chatApi, logger);
-    features.push(this._occupancy);
-
-    this._lifecycleManager = new RoomLifecycleManager(this._lifecycle, [...features].reverse(), this._logger, 5000);
 
     // Setup a finalization function to clean up resources
     let finalized = false;
@@ -199,11 +189,8 @@ export class DefaultRoom implements Room {
         return;
       }
 
+      // Release via the lifecycle manager
       await this._lifecycleManager.release();
-
-      for (const feature of features) {
-        channelManager.release(feature.channel.name);
-      }
 
       finalized = true;
     };
@@ -217,10 +204,10 @@ export class DefaultRoom implements Room {
    * @param logger An instance of the Logger.
    */
   private _getChannelManager(options: InternalRoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
-    const manager = new ChannelManager(realtime, logger, options.isReactClient);
+    const manager = new ChannelManager(this.roomId, realtime, logger, options.isReactClient);
 
     if (options.occupancy.enableInboundOccupancy) {
-      manager.mergeOptions(DefaultOccupancy.channelName(this._roomId), DefaultOccupancy.channelOptionMerger());
+      manager.mergeOptions(DefaultOccupancy.channelOptionMerger());
     }
 
     return manager;
@@ -346,7 +333,17 @@ export class DefaultRoom implements Room {
     return this._lifecycle;
   }
 
+  /**
+   * @internal
+   */
   get channelManager(): ChannelManager {
     return this._channelManager;
+  }
+
+  /**
+   * @interal
+   */
+  get lifecycleManager(): RoomLifeCycleManager {
+    return this._lifecycleManager;
   }
 }

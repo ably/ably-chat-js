@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
-import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
 import { normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
@@ -241,7 +240,7 @@ describe('Room', () => {
   describe('room release', () => {
     it<TestContext>('should release the room', async (context) => {
       const room = context.getRoom() as DefaultRoom;
-      const lifecycleManager = (room as unknown as { _lifecycleManager: RoomLifecycleManager })._lifecycleManager;
+      const lifecycleManager = room.lifecycleManager;
 
       // Setup spies on the realtime client and the room lifecycle manager
       vi.spyOn(context.realtime.channels, 'release');
@@ -274,7 +273,7 @@ describe('Room', () => {
 
     it<TestContext>('should only release with enabled features', async (context) => {
       const room = context.getRoom() as DefaultRoom;
-      const lifecycleManager = (room as unknown as { _lifecycleManager: RoomLifecycleManager })._lifecycleManager;
+      const lifecycleManager = room.lifecycleManager;
 
       // Setup spies on the realtime client and the room lifecycle manager
       vi.spyOn(context.realtime.channels, 'release');
@@ -298,7 +297,7 @@ describe('Room', () => {
 
     it<TestContext>('releasing multiple times is idempotent', async (context) => {
       const room = context.getRoom() as DefaultRoom;
-      const lifecycleManager = (room as unknown as { _lifecycleManager: RoomLifecycleManager })._lifecycleManager;
+      const lifecycleManager = room.lifecycleManager;
 
       // Setup spies on the realtime client and the room lifecycle manager
       vi.spyOn(context.realtime.channels, 'release');
