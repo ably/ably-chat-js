@@ -18,7 +18,6 @@ export interface ChatRoomProviderProps {
 
   /**
    * Overriding options to use when creating the room.
-   * ```
    *
    * NOTE: This value is not memoized by the provider. It must be memoized in your component to prevent
    * re-renders of a parent component from causing the room to be recreated.
@@ -199,7 +198,7 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
     // Cleanup function
     return () => {
       unmounted = true;
-      logger.debug(`ChatRoomProvider(); cleaning up lifecycle useEffect`, { roomId: roomId });
+      logger.debug(`ChatRoomProvider(); cleaning up lifecycle useEffect`, { roomId: roomId, release, attach });
 
       // If we're releasing, release the room. We'll do this in an abortable way so that we don't kill off the value
       // when using StrictMode

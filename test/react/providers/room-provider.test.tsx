@@ -45,7 +45,7 @@ describe('ChatRoomProvider', () => {
     await vi.waitFor(() => {
       expect(roomResolved).toBeTruthy();
     });
-    await expect(() => chatClient.rooms.get(roomId)).rejects.toBeErrorInfoWithCode(40000);
+    await expect(() => chatClient.rooms.get(roomId, {occupancy: {enableInboundOccupancy: true}})).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
     await chatClient.rooms.get(roomId);
@@ -74,7 +74,7 @@ describe('ChatRoomProvider', () => {
     const r = render(<TestProvider />);
 
     // Try to get the client to get a room with different options, should fail
-    await expect(() => chatClient.rooms.get(roomId)).rejects.toBeErrorInfoWithCode(40000);
+    await expect(() => chatClient.rooms.get(roomId, {occupancy: {enableInboundOccupancy: true}})).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
     expect(() => chatClient.rooms.get(roomId));
@@ -127,7 +127,7 @@ describe('ChatRoomProvider', () => {
     });
 
     // Try to get the client to get a room with different options, should fail
-    await expect(() => chatClient.rooms.get(roomId)).rejects.toBeErrorInfoWithCode(40000);
+    await expect(() => chatClient.rooms.get(roomId, {occupancy: {enableInboundOccupancy: true}})).rejects.toBeErrorInfoWithCode(40000);
   });
 
   it('should not attach, detach, or release when not configured to do so', async () => {
@@ -166,7 +166,7 @@ describe('ChatRoomProvider', () => {
     expect(room.detach).toHaveBeenCalledTimes(0);
 
     // Try to get the client to get a room with different options, should fail (since it should not be released)
-    await expect(() => chatClient.rooms.get(roomId)).rejects.toBeErrorInfoWithCode(40000);
+    await expect(() => chatClient.rooms.get(roomId, {occupancy: {enableInboundOccupancy: true}})).rejects.toBeErrorInfoWithCode(40000);
 
     await chatClient.rooms.release(roomId);
   });
