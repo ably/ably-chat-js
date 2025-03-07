@@ -75,15 +75,13 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   logger.trace('useTyping();', { roomId: context.roomId });
 
   const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
-  const [error, setError] = useState<Ably.ErrorInfo | undefined>();
 
   // Create a stable reference for the listeners
   const listenerRef = useEventListenerRef(params?.listener);
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
   useEffect(() => {
-    // Start with a clean slate - no errors and empty set
-    setError(undefined);
+    // Start with a clean slate - empty set
     setCurrentlyTyping((prev) => {
       // keep reference constant if it's already empty
       if (prev.size === 0) return prev;
@@ -92,22 +90,15 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
 
     let mounted = true;
 
-    const setErrorState = (error?: Ably.ErrorInfo) => {
-      if (error === undefined) {
-        logger.debug('useTyping(); clearing error state', { roomId: context.roomId });
-      } else {
-        logger.error('useTyping(); setting error state', { error, roomId: context.roomId });
-      }
-      setError(error);
-    };
-
     void context.room
       .then((room) => {
         if (!mounted) return;
 
         // If we're not attached, we can't call typing.get() right now
         if (room.status === RoomStatus.Attached) {
-          return room.typing.get();
+          const typing = room.typing.get();
+          logger.debug('useTyping(); room attached, getting initial typers', { typing });
+          setCurrentlyTyping(typing);
         } else {
           logger.debug('useTyping(); room not attached, setting currentlyTyping to empty', { roomId: context.roomId });
           setCurrentlyTyping(new Set());
@@ -120,7 +111,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       (room) => {
         logger.debug('useTyping(); subscribing to typing events', { roomId: context.roomId });
         const { unsubscribe } = room.typing.subscribe((event) => {
-          setErrorState(undefined);
           setCurrentlyTyping(event.currentlyTyping);
         });
 
@@ -181,7 +171,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     connectionError,
     roomStatus,
     roomError,
-    error,
     start,
     stop,
     currentlyTyping,
