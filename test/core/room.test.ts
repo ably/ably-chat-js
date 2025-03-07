@@ -8,12 +8,7 @@ import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
 import { normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
-import {
-  CHANNEL_OPTIONS_AGENT_STRING,
-  CHANNEL_OPTIONS_AGENT_STRING_REACT,
-  DEFAULT_CHANNEL_OPTIONS,
-  DEFAULT_CHANNEL_OPTIONS_REACT,
-} from '../../src/core/version.ts';
+import { CHANNEL_OPTIONS_AGENT_STRING, CHANNEL_OPTIONS_AGENT_STRING_REACT } from '../../src/core/version.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -89,59 +84,56 @@ describe('Room', () => {
   });
 
   describe.each([
-    ['vanilla JS', false, CHANNEL_OPTIONS_AGENT_STRING, DEFAULT_CHANNEL_OPTIONS],
-    ['react', true, CHANNEL_OPTIONS_AGENT_STRING_REACT, DEFAULT_CHANNEL_OPTIONS_REACT],
-  ])(
-    'should apply channel options %s',
-    (description: string, setReact: boolean, agentString: string, defaultOptions: unknown) => {
-      it<TestContext>('applies the correct options', (context) => {
-        vi.spyOn(context.realtime.channels, 'get');
-        const room = context.getRoom(
-          {
-            occupancy: {
-              enableInboundOccupancy: true,
-            },
+    ['vanilla JS', false, CHANNEL_OPTIONS_AGENT_STRING],
+    ['react', true, CHANNEL_OPTIONS_AGENT_STRING_REACT],
+  ])('should apply channel options %s', (description: string, setReact: boolean, agentString: string) => {
+    it<TestContext>('applies the correct options', (context) => {
+      vi.spyOn(context.realtime.channels, 'get');
+      const room = context.getRoom(
+        {
+          occupancy: {
+            enableInboundOccupancy: true,
           },
-          setReact,
-        ) as DefaultRoom;
+        },
+        setReact,
+      ) as DefaultRoom;
 
-        // Check that the shared channel for messages, occupancy and presence was called with the correct options
-        const expectedChannelOptions = {
-          params: { occupancy: 'metrics', agent: agentString },
-          attachOnSubscribe: false,
-        };
+      // Check that the shared channel for messages, occupancy and presence was called with the correct options
+      const expectedChannelOptions = {
+        params: { occupancy: 'metrics', agent: agentString },
+        attachOnSubscribe: false,
+      };
 
-        expect(context.realtime.channels.get).toHaveBeenCalledTimes(5);
-        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-          1,
-          room.messages.channel.name,
-          expectedChannelOptions,
-        );
-        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-          2,
-          room.messages.channel.name,
-          expectedChannelOptions,
-        );
-        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-          5,
-          room.messages.channel.name,
-          expectedChannelOptions,
-        );
+      expect(context.realtime.channels.get).toHaveBeenCalledTimes(5);
+      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+        1,
+        room.messages.channel.name,
+        expectedChannelOptions,
+      );
+      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+        2,
+        room.messages.channel.name,
+        expectedChannelOptions,
+      );
+      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+        5,
+        room.messages.channel.name,
+        expectedChannelOptions,
+      );
 
-        // Check that the reactions and typing channels were called with the default options
-        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-          3,
-          room.typing.channel.name,
-          expectedChannelOptions,
-        );
-        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-          4,
-          room.reactions.channel.name,
-          expectedChannelOptions,
-        );
-      });
-    },
-  );
+      // Check that the reactions and typing channels were called with the default options
+      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+        3,
+        room.typing.channel.name,
+        expectedChannelOptions,
+      );
+      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+        4,
+        room.reactions.channel.name,
+        expectedChannelOptions,
+      );
+    });
+  });
 
   describe('room status', () => {
     it<TestContext>('should have a room status and error', async (context) => {
