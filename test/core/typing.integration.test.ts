@@ -160,7 +160,7 @@ describe('Typing', () => {
         type: TypingEvents.Start,
       });
       // Get the currently typing client ids
-      const currentlyTypingClientIds = await context.chatRoom.typing.get();
+      const currentlyTypingClientIds = context.chatRoom.typing.get();
       // Ensure that the client ids are correct
       expect(currentlyTypingClientIds.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIds.has(clientId1), 'client1 should be typing').toEqual(true);
@@ -175,7 +175,7 @@ describe('Typing', () => {
         type: TypingEvents.Stop,
       });
       // Get the currently typing client ids
-      const currentlyTypingClientIdsAfterStop = await context.chatRoom.typing.get();
+      const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.get();
       // Ensure that the client ids are correct and client1 is no longer typing
       expect(currentlyTypingClientIdsAfterStop.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIdsAfterStop.has(clientId1), 'client1 should not be typing').toEqual(false);
