@@ -25,6 +25,7 @@
     "test:chat": "vitest run --project chat",
     "test:react": "vitest run --project react-hooks",
     "test:watch": "vitest watch",
+    "test:unit": "vitest run --exclude \"test/**/*.integration.test.ts?(x)\"",
     "build": "npm run build:chat && npm run build:core",
     "build:chat": "vite build --config ./src/vite.config.ts --emptyOutDir",
     "build:core": "vite build --config ./src/core/vite.config.ts --emptyOutDir",
