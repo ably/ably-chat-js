@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { messagesChannelName, roomChannelName } from './channel.js';
+import { roomChannelName } from './channel.js';
 import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import {

@@ -126,10 +126,10 @@ export class DefaultRoom implements Room {
   private readonly _options: RoomOptions;
   private readonly _chatApi: ChatApi;
   private readonly _messages: DefaultMessages;
-  private readonly _typing?: DefaultTyping;
-  private readonly _presence?: DefaultPresence;
-  private readonly _reactions?: DefaultRoomReactions;
-  private readonly _occupancy?: DefaultOccupancy;
+  private readonly _typing: DefaultTyping;
+  private readonly _presence: DefaultPresence;
+  private readonly _reactions: DefaultRoomReactions;
+  private readonly _occupancy: DefaultOccupancy;
   private readonly _logger: Logger;
   private readonly _lifecycle: DefaultRoomLifecycle;
   private readonly _lifecycleManager: RoomLifecycleManager;
@@ -251,11 +251,6 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get presence(): Presence {
-    if (!this._presence) {
-      this._logger.error('Presence is not enabled for this room');
-      throw new Ably.ErrorInfo('Presence is not enabled for this room', 40000, 400);
-    }
-
     return this._presence;
   }
 
@@ -263,11 +258,6 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get reactions(): RoomReactions {
-    if (!this._reactions) {
-      this._logger.error('Reactions are not enabled for this room');
-      throw new Ably.ErrorInfo('Reactions are not enabled for this room', 40000, 400);
-    }
-
     return this._reactions;
   }
 
@@ -275,11 +265,6 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get typing(): Typing {
-    if (!this._typing) {
-      this._logger.error('Typing is not enabled for this room');
-      throw new Ably.ErrorInfo('Typing is not enabled for this room', 40000, 400);
-    }
-
     return this._typing;
   }
 
@@ -287,11 +272,6 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get occupancy(): Occupancy {
-    if (!this._occupancy) {
-      this._logger.error('Occupancy is not enabled for this room');
-      throw new Ably.ErrorInfo('Occupancy is not enabled for this room', 40000, 400);
-    }
-
     return this._occupancy;
   }
 
