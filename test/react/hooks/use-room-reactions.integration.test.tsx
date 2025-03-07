@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { Reaction } from '../../../src/core/reaction.ts';
-import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { RoomReactionListener } from '../../../src/core/room-reactions.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
 import { useRoomReactions } from '../../../src/react/hooks/use-room-reactions.ts';
@@ -39,7 +38,7 @@ describe('useRoomReactions', () => {
 
     // create a second room and attach it, so we can receive reactions
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
+    const roomTwo = await chatClientTwo.rooms.get(roomId);
     await roomTwo.attach();
 
     // store the received reactions
@@ -68,7 +67,6 @@ describe('useRoomReactions', () => {
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
           id={roomId}
-          options={AllFeaturesEnabled}
         >
           <TestComponent />
         </ChatRoomProvider>
@@ -90,7 +88,7 @@ describe('useRoomReactions', () => {
 
     // create a second room and attach it, so we can send a reaction
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
+    const roomTwo = await chatClientTwo.rooms.get(roomId);
     await roomTwo.attach();
 
     // store the received reactions
@@ -112,7 +110,6 @@ describe('useRoomReactions', () => {
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider
           id={roomId}
-          options={AllFeaturesEnabled}
         >
           <TestComponent listener={(reaction) => reactions.push(reaction)} />
         </ChatRoomProvider>

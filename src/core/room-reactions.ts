@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
 import {
   DiscontinuityEmitter,
@@ -15,7 +16,6 @@ import { Logger } from './logger.js';
 import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
 import { parseReaction } from './reaction-parser.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -93,7 +93,7 @@ export interface RoomReactions extends EmitsDiscontinuities {
    * @param listener The listener function to be called when a reaction is received.
    * @returns A response object that allows you to control the subscription.
    */
-  subscribe(listener: RoomReactionListener): Subscription;
+  subscribe(listener: RoomReactionListener): RoomReactionsSubscriptionResponse;
 
   /**
    * Unsubscribe all listeners from receiving room-level reaction events.
@@ -113,9 +113,19 @@ interface RoomReactionEventsMap {
   [RoomReactionEvents.Reaction]: Reaction;
 }
 
-interface ReactionEvent {
+interface ReactionPayload {
   type: string;
   metadata?: ReactionMetadata;
+}
+
+/**
+ * A response object that allows you to control the subscription to room-level reactions.
+ */
+export interface RoomReactionsSubscriptionResponse {
+  /**
+   * Unsubscribe the listener registered with {@link RoomReactions.subscribe} from reaction events.
+   */
+  unsubscribe: () => void;
 }
 
 /**
@@ -149,7 +159,7 @@ export class DefaultRoomReactions
    * Creates the realtime channel for room reactions.
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(`${roomId}::$chat::$reactions`);
+    const channel = channelManager.get(roomChannelName(roomId));
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([RoomReactionEvents.Reaction], this._forwarder.bind(this));
@@ -169,7 +179,7 @@ export class DefaultRoomReactions
       return Promise.reject(new Ably.ErrorInfo('unable to send reaction; type not set and it is required', 40001, 400));
     }
 
-    const payload: ReactionEvent = {
+    const payload: ReactionPayload = {
       type: type,
       metadata: metadata ?? {},
     };
@@ -188,7 +198,7 @@ export class DefaultRoomReactions
   /**
    * @inheritDoc Reactions
    */
-  subscribe(listener: RoomReactionListener): Subscription {
+  subscribe(listener: RoomReactionListener): RoomReactionsSubscriptionResponse {
     this._logger.trace(`RoomReactions.subscribe();`);
     this.on(listener);
 

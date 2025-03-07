@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 
 import { LogLevel } from '../../src/core/logger.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
-import { AllFeaturesEnabled } from '../../src/index.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForRoomStatus } from '../helper/room.ts';
 
@@ -48,21 +47,18 @@ describe('Rooms', () => {
     const chat = newChatClient();
     const room1 = await chat.rooms.get('test', {
       typing: { timeoutMs: 1000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
-      presence: AllFeaturesEnabled.presence,
     });
     await room1.attach();
     await chat.rooms.release('test');
 
     const room2 = await chat.rooms.get('test', {
       typing: { timeoutMs: 2000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
-      presence: AllFeaturesEnabled.presence,
     });
     await room2.attach();
     await chat.rooms.release('test');
 
     await chat.rooms.get('test', {
       typing: { timeoutMs: 3000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
-      presence: AllFeaturesEnabled.presence,
     });
     await chat.rooms.release('test');
   });

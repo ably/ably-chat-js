@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { messagesChannelName } from './channel.js';
+import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import {
@@ -317,7 +317,7 @@ export class DefaultMessages
    * Creates the realtime channel for messages.
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(messagesChannelName(roomId));
+    const channel = channelManager.get(roomChannelName(roomId));
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([RealtimeMessageNames.ChatMessage], this._processEvent.bind(this));

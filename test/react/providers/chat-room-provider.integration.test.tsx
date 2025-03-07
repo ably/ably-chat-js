@@ -1,7 +1,6 @@
 import { cleanup, configure, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
@@ -31,7 +30,6 @@ describe('ChatRoomProvider', () => {
         <ChatClientProvider client={chatClient}>
           <ChatRoomProvider
             id={roomId}
-            options={{ reactions: AllFeaturesEnabled.reactions }}
             attach={true}
             release={false}
           >
@@ -42,7 +40,7 @@ describe('ChatRoomProvider', () => {
     };
     render(<TestProvider />);
 
-    const room = await chatClient.rooms.get(roomId, { reactions: AllFeaturesEnabled.reactions });
+    const room = await chatClient.rooms.get(roomId);
     await vi.waitFor(
       () => {
         expect(room.status).toBe(RoomStatus.Attached);

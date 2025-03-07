@@ -1,25 +1,9 @@
 import * as Ably from 'ably';
 
 /**
- * A set of example options for a Chat room that enables all features, this is
- * useful for testing and demonstration purposes.
+ * The default values for RoomOptions.
  */
-export const AllFeaturesEnabled = {
-  /**
-   * The default presence options for a chat room.
-   */
-  presence: {
-    /**
-     * The client should be able to enter presence.
-     */
-    enter: true,
-
-    /**
-     * The client should be able to subscribe to presence.
-     */
-    subscribe: true,
-  } as PresenceOptions,
-
+const DefaultRoomOptions = {
   /**
    * The default typing options for a chat room.
    */
@@ -30,9 +14,8 @@ export const AllFeaturesEnabled = {
      * Restarts the interval with repeated calls to typing.start(), resets the interval with typing.stop().
      *
      * Spec: CHA-T3
-     * @defaultValue
      */
-    timeoutMs: 2000,
+    timeoutMs: undefined,
 
     /**
      * The default time that a client will wait between sending one typing heartbeat and the next.
@@ -48,39 +31,18 @@ export const AllFeaturesEnabled = {
      * Spec: CHA-T11
      */
     inactivityTimeoutMs: 500,
-  } as TypingOptions,
-
-  /**
-   * The default reactions options for a chat room.
-   */
-  reactions: {} as RoomReactionsOptions,
+  },
 
   /**
    * The default occupancy options for a chat room.
    */
-  occupancy: {} as OccupancyOptions,
+  occupancy: {
+    /**
+     * Whether to enable inbound occupancy events.
+     */
+    enableInboundOccupancy: false,
+  },
 };
-
-/**
- * Represents the presence options for a chat room.
- */
-export interface PresenceOptions {
-  /**
-   * Whether the underlying Realtime channel should use the presence enter mode, allowing entry into presence.
-   * This property does not affect the presence lifecycle, and users must still call {@link Presence.enter}
-   * in order to enter presence.
-   * @defaultValue true
-   */
-  enter?: boolean;
-
-  /**
-   * Whether the underlying Realtime channel should use the presence subscribe mode, allowing subscription to presence.
-   * This property does not affect the presence lifecycle, and users must still call {@link Presence.subscribe}
-   * in order to subscribe to presence.
-   * @defaultValue true
-   */
-  subscribe?: boolean;
-}
 
 /**
  * Represents the typing options for a chat room.
@@ -94,12 +56,12 @@ export interface TypingOptions {
    * allowing the client to send another `typing.started` event immediately.
    * @defaultValue 17000
    */
-  heartbeatIntervalMs: number;
+  heartbeatIntervalMs?: number;
 
   /**
    * The optional timeout, in milliseconds, after which a client that pauses typing and does not resume, will emit a `typing.stopped` event.
    * If not set, the client will not emit a `typing.stopped` event until they call `typing.stop()`.
-   * @defaultValue 2000
+   * @defaultValue undefined
    */
   timeoutMs?: number | undefined;
 
@@ -108,57 +70,60 @@ export interface TypingOptions {
    * In practice, this means the client waits the length of the heartbeat interval plus this value before emitting a `typing.stopped` event.
    * @defaultValue 500
    */
-  inactivityTimeoutMs: number;
+  inactivityTimeoutMs?: number;
 }
-
-/**
- * Represents the reactions options for a chat room.
- */
-export type RoomReactionsOptions = object;
 
 /**
  * Represents the occupancy options for a chat room.
  */
-export type OccupancyOptions = object;
+export interface OccupancyOptions {
+  /**
+   * Whether to enable inbound occupancy events.
+   *
+   * Note that enabling this feature will increase the number of messages received by the client.
+   *
+   * @defaultValue false
+   */
+  enableInboundOccupancy?: boolean;
+}
 
 /**
  * Represents the options for a given chat room.
  */
 export interface RoomOptions {
   /**
-   * The presence options for the room. To enable presence in the room, set this property. You may
-   * use {@link AllFeaturesEnabled.presence} to enable presence with default options.
-   * @defaultValue undefined
-   */
-  presence?: PresenceOptions;
-
-  /**
-   * The typing options for the room. To enable typing in the room, set this property. You may use
-   * {@link AllFeaturesEnabled.typing} to enable typing with default options.
+   * The typing options for the room.
    */
   typing?: TypingOptions;
 
   /**
-   * The reactions options for the room. To enable reactions in the room, set this property. You may use
-   * {@link AllFeaturesEnabled.reactions} to enable reactions with default options.
-   */
-  reactions?: RoomReactionsOptions;
-
-  /**
-   * The occupancy options for the room. To enable occupancy in the room, set this property. You may use
-   * {@link AllFeaturesEnabled.occupancy} to enable occupancy with default options.
+   * The occupancy options for the room.
    */
   occupancy?: OccupancyOptions;
 }
 
 /**
+ * Represents the normalized typing options for a chat room, which makes every property required
+ * except for `timeoutMs`, which is optional.
+ */
+export type InternalTypingOptions = Omit<Required<TypingOptions>, 'timeoutMs'> & { timeoutMs?: number };
+
+/**
+ * Represents the normalized occupancy options for a chat room. Everything becomes required.
+ */
+export type InternalOccupancyOptions = Required<OccupancyOptions>;
+
+/**
  * Represents the normalized options for a chat room.
  */
-export interface NormalizedRoomOptions extends RoomOptions {
+export interface InternalRoomOptions {
   /**
    * Are we running the client in a React environment?
    */
   isReactClient: boolean;
+
+  typing: InternalTypingOptions;
+  occupancy: InternalOccupancyOptions;
 }
 
 /**
@@ -180,17 +145,32 @@ const validateTypingOptions = (options: TypingOptions): void => {
   if (options.timeoutMs !== undefined && options.timeoutMs <= 0) {
     throw invalidRoomConfiguration('typing timeout must be greater than 0');
   }
-  if (options.heartbeatIntervalMs <= 0) {
+  if (options.heartbeatIntervalMs !== undefined && options.heartbeatIntervalMs <= 0) {
     throw invalidRoomConfiguration('typing heartbeat interval must be greater than 0');
   }
-  if (options.inactivityTimeoutMs <= 0) {
+  if (options.inactivityTimeoutMs !== undefined && options.inactivityTimeoutMs <= 0) {
     throw invalidRoomConfiguration('typing inactivity timeout must be greater than 0');
   }
 };
 
-export const normalizeRoomOptions = (options: RoomOptions, react: boolean): NormalizedRoomOptions => {
+export const normalizeTypingOptions = (options: RoomOptions | undefined): InternalTypingOptions => {
   return {
-    ...options,
+    ...DefaultRoomOptions.typing,
+    ...options?.typing,
+  };
+};
+
+export const normalizeOccupancyOptions = (options: RoomOptions | undefined): InternalOccupancyOptions => {
+  return {
+    ...DefaultRoomOptions.occupancy,
+    ...options?.occupancy,
+  };
+};
+
+export const normalizeRoomOptions = (options: RoomOptions | undefined, react: boolean): InternalRoomOptions => {
+  return {
+    typing: normalizeTypingOptions(options),
+    occupancy: normalizeOccupancyOptions(options),
     isReactClient: react,
   };
 };

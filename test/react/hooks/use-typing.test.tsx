@@ -144,7 +144,7 @@ describe('useTyping', () => {
     });
 
     // spy on the get method of the typing instance, for now return an empty set
-    vi.spyOn(mockRoom.typing, 'get').mockReturnValue(Promise.resolve(new Set()));
+    vi.spyOn(mockRoom.typing, 'get').mockReturnValue(new Set());
 
     // render the hook and check the initial state
     const { result } = renderHook(() => useTyping());
