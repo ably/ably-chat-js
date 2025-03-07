@@ -79,7 +79,7 @@ describe('Typing', () => {
   });
 
   // CHA-T9
-  it<TestContext>('gets current typers', async (context) => {
+  it<TestContext>('gets current typers', (context) => {
     const { room } = context;
 
     // Emulate a typing event
@@ -756,7 +756,7 @@ describe('Typing', () => {
       });
 
       // Check our current typers
-      expect(await room.typing.get()).toEqual(new Set(['otherClient']));
+      expect(room.typing.get()).toEqual(new Set(['otherClient']));
 
       // Check we have an active timer
       const defaultTyping = room.typing as DefaultTyping;

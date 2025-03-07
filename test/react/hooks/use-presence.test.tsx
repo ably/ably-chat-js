@@ -55,14 +55,7 @@ describe('usePresence', () => {
     mockCurrentConnectionStatus = ConnectionStatus.Connected;
     mockCurrentRoomStatus = RoomStatus.Attached;
     updateMockRoom(
-      makeRandomRoom({
-        options: {
-          presence: {
-            enter: true,
-            subscribe: true,
-          },
-        },
-      }),
+      makeRandomRoom(),
     );
   });
 
@@ -107,14 +100,7 @@ describe('usePresence', () => {
 
     // change the mock room instance
     updateMockRoom(
-      makeRandomRoom({
-        options: {
-          presence: {
-            enter: true,
-            subscribe: true,
-          },
-        },
-      }),
+      makeRandomRoom(),
     );
 
     vi.spyOn(mockRoom.presence, 'enter');

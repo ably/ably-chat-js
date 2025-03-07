@@ -1,7 +1,6 @@
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
-import { ErrorCodes, errorInfoIs } from '../../core/errors.js';
 import { TypingEvent } from '../../core/events.js';
 import { RoomStatus } from '../../core/room-status.js';
 import { Typing, TypingListener } from '../../core/typing.js';
@@ -104,19 +103,11 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
 
     void context.room
       .then((room) => {
+        if (!mounted) return;
+
         // If we're not attached, we can't call typing.get() right now
         if (room.status === RoomStatus.Attached) {
-          return room.typing
-            .get()
-            .then((currentlyTyping) => {
-              if (!mounted) return;
-              setCurrentlyTyping(currentlyTyping);
-            })
-            .catch((error: unknown) => {
-              const errorInfo = error as Ably.ErrorInfo;
-              if (!mounted || errorInfoIs(errorInfo, ErrorCodes.RoomIsReleased)) return;
-              setErrorState(errorInfo);
-            });
+          setCurrentlyTyping(room.typing.get());
         } else {
           logger.debug('useTyping(); room not attached, setting currentlyTyping to empty', { roomId: context.roomId });
           setCurrentlyTyping(new Set());

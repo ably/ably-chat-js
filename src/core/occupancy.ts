@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { messagesChannelName } from './channel.js';
+import { messagesChannelName, roomChannelName } from './channel.js';
 import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import {
@@ -252,6 +252,6 @@ export class DefaultOccupancy
    * @returns The channel name for the presence channel.
    */
   static channelName(roomId: string): string {
-    return messagesChannelName(roomId);
+    return roomChannelName(roomId);
   }
 }

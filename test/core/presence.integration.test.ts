@@ -8,7 +8,6 @@ import { ChatClient } from '../../src/core/chat.ts';
 import { PresenceEvents } from '../../src/core/events.ts';
 import { PresenceData, PresenceEvent } from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
-import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { randomRoomId } from '../helper/identifier.ts';
@@ -102,7 +101,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
     const roomId = randomRoomId();
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
-    context.chatRoom = await context.chat.rooms.get(roomId, { presence: AllFeaturesEnabled.presence });
+    context.chatRoom = await context.chat.rooms.get(roomId);
   });
 
   // Test for successful entering with clientId and custom user data
@@ -421,41 +420,5 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
     // Calling off again should be a no-op
     off();
-  });
-
-  it<TestContext>('prevents presence entry if room option prevents it', async (context) => {
-    const { chat } = context;
-
-    const room = await chat.rooms.get(randomRoomId(), { presence: { enter: false } });
-
-    await room.attach();
-
-    // Entering presence should reject
-    await expect(room.presence.enter()).rejects.toBeErrorInfoWithCode(40160);
-  });
-
-  it<TestContext>('does not receive presence events if room option prevents it', async (context) => {
-    const { chat } = context;
-
-    const room = await chat.rooms.get(randomRoomId(), { presence: { subscribe: false } });
-
-    await room.attach();
-
-    // Subscribe to presence
-    const presenceEvents: PresenceEvent[] = [];
-    room.presence.subscribe((event) => {
-      presenceEvents.push(event);
-    });
-
-    // We need to create another chat client and enter presence on the same room
-    const chat2 = newChatClient();
-    const room2 = await chat2.rooms.get(room.roomId, { presence: { enter: true } });
-
-    // Entering presence
-    await room2.attach();
-    await room2.presence.enter();
-
-    // Assert we didn't receive any presence events
-    await assertNoPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId);
   });
 });

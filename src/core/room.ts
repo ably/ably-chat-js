@@ -8,7 +8,7 @@ import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
-import { NormalizedRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
+import { InternalRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
 import {
   DefaultRoomLifecycle,
@@ -154,7 +154,7 @@ export class DefaultRoom implements Room {
   constructor(
     roomId: string,
     nonce: string,
-    options: NormalizedRoomOptions,
+    options: InternalRoomOptions,
     realtime: Ably.Realtime,
     chatApi: ChatApi,
     logger: Logger,
@@ -176,29 +176,17 @@ export class DefaultRoom implements Room {
 
     const features: ContributesToRoomLifecycle[] = [this._messages];
 
-    if (options.presence) {
-      this._logger.debug('enabling presence on room', { roomId });
-      this._presence = new DefaultPresence(roomId, channelManager, realtime.auth.clientId, logger);
-      features.push(this._presence);
-    }
+    this._presence = new DefaultPresence(roomId, channelManager, realtime.auth.clientId, logger);
+    features.push(this._presence);
 
-    if (options.typing) {
-      this._logger.debug('enabling typing on room', { roomId });
-      this._typing = new DefaultTyping(roomId, options.typing, channelManager, realtime.auth.clientId, logger);
-      features.push(this._typing);
-    }
+    this._typing = new DefaultTyping(roomId, options.typing, channelManager, realtime.auth.clientId, logger);
+    features.push(this._typing);
 
-    if (options.reactions) {
-      this._logger.debug('enabling reactions on room', { roomId });
-      this._reactions = new DefaultRoomReactions(roomId, channelManager, realtime.auth.clientId, logger);
-      features.push(this._reactions);
-    }
+    this._reactions = new DefaultRoomReactions(roomId, channelManager, realtime.auth.clientId, logger);
+    features.push(this._reactions);
 
-    if (options.occupancy) {
-      this._logger.debug('enabling occupancy on room', { roomId });
-      this._occupancy = new DefaultOccupancy(roomId, channelManager, this._chatApi, logger);
-      features.push(this._occupancy);
-    }
+    this._occupancy = new DefaultOccupancy(roomId, channelManager, this._chatApi, logger);
+    features.push(this._occupancy);
 
     this._lifecycleManager = new RoomLifecycleManager(this._lifecycle, [...features].reverse(), this._logger, 5000);
 
@@ -228,15 +216,11 @@ export class DefaultRoom implements Room {
    * @param realtime  An instance of the Ably Realtime client.
    * @param logger An instance of the Logger.
    */
-  private _getChannelManager(options: NormalizedRoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
+  private _getChannelManager(options: InternalRoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
     const manager = new ChannelManager(realtime, logger, options.isReactClient);
 
-    if (options.occupancy) {
+    if (options.occupancy.enableInboundOccupancy) {
       manager.mergeOptions(DefaultOccupancy.channelName(this._roomId), DefaultOccupancy.channelOptionMerger());
-    }
-
-    if (options.presence) {
-      manager.mergeOptions(DefaultPresence.channelName(this._roomId), DefaultPresence.channelOptionMerger(options));
     }
 
     return manager;

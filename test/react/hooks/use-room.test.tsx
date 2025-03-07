@@ -3,7 +3,6 @@ import * as Ably from 'ably';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { RoomStatus, RoomStatusListener } from '../../../src/core/room-status.ts';
 import { ChatRoomProvider, useRoom, UseRoomResponse } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -53,7 +52,6 @@ describe('useRoom', () => {
           id={roomId}
           attach={false}
           release={false}
-          options={AllFeaturesEnabled}
         >
           <TestComponent
             callback={(response) => {
@@ -82,7 +80,6 @@ describe('useRoom', () => {
           id={roomId}
           attach={false}
           release={false}
-          options={AllFeaturesEnabled}
         >
           <TestComponent
             callback={(response) => {
@@ -111,7 +108,7 @@ describe('useRoom', () => {
     let called1 = 0;
     let called2 = 0;
     const roomId = randomRoomId();
-    const room = await chatClient.rooms.get(roomId, AllFeaturesEnabled);
+    const room = await chatClient.rooms.get(roomId);
 
     vi.spyOn(room, 'attach').mockImplementation(() => Promise.resolve());
     vi.spyOn(room, 'detach').mockImplementation(() => Promise.resolve());
@@ -123,7 +120,6 @@ describe('useRoom', () => {
           id={roomId}
           attach={false}
           release={false}
-          options={AllFeaturesEnabled}
         >
           <TestComponent
             callback={() => {
@@ -138,7 +134,6 @@ describe('useRoom', () => {
           id={roomId}
           attach={true}
           release={true}
-          options={AllFeaturesEnabled}
         >
           <TestComponent
             callback={() => {
@@ -210,20 +205,6 @@ describe('useRoom', () => {
     await vi.waitFor(() => {
       expect(room.attach).toHaveBeenCalledTimes(1);
     });
-    expect(room.detach).toHaveBeenCalledTimes(0);
-    expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
-
-    r.rerender(
-      <TestProvider
-        room1={false}
-        room2={false}
-      />,
-    );
-    expect(called1).toBe(3);
-    expect(called2).toBe(5);
-    await vi.waitFor(() => {
-      expect(room.attach).toHaveBeenCalledTimes(1);
-    });
     // room.detach is not called when releasing, detach happens via lifecycleManager but skipping the public API
     expect(room.detach).toHaveBeenCalledTimes(0);
     await vi.waitFor(() => {
@@ -234,7 +215,7 @@ describe('useRoom', () => {
   it('should correctly set room status callback', async () => {
     const chatClient = newChatClient();
     const roomId = randomRoomId();
-    const room = await chatClient.rooms.get(roomId, AllFeaturesEnabled);
+    const room = await chatClient.rooms.get(roomId);
 
     let listeners: RoomStatusListener[] = [];
 
@@ -257,12 +238,7 @@ describe('useRoom', () => {
     const WithClient = ({ children }: { children: React.ReactNode }) => {
       return (
         <ChatClientProvider client={chatClient}>
-          <ChatRoomProvider
-            id={roomId}
-            options={AllFeaturesEnabled}
-          >
-            {children}
-          </ChatRoomProvider>
+          <ChatRoomProvider id={roomId}>{children}</ChatRoomProvider>
         </ChatClientProvider>
       );
     };
@@ -291,7 +267,7 @@ describe('useRoom', () => {
   it('should correctly set room status and error state variables', async () => {
     const chatClient = newChatClient();
     const roomId = randomRoomId();
-    const room = await chatClient.rooms.get(roomId, AllFeaturesEnabled);
+    const room = await chatClient.rooms.get(roomId);
 
     let listeners: RoomStatusListener[] = [];
 
@@ -307,12 +283,7 @@ describe('useRoom', () => {
     const WithClient = ({ children }: { children: React.ReactNode }) => {
       return (
         <ChatClientProvider client={chatClient}>
-          <ChatRoomProvider
-            id={roomId}
-            options={AllFeaturesEnabled}
-          >
-            {children}
-          </ChatRoomProvider>
+          <ChatRoomProvider id={roomId}>{children}</ChatRoomProvider>
         </ChatClientProvider>
       );
     };

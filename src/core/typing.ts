@@ -1,6 +1,5 @@
 import * as Ably from 'ably';
 
-import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
 import {
   DiscontinuityEmitter,
@@ -15,7 +14,7 @@ import { TypingEvent, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import { TypingOptions } from './room-options.js';
+import { InternalTypingOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -122,7 +121,7 @@ export class DefaultTyping
    */
   constructor(
     roomId: string,
-    options: TypingOptions,
+    options: InternalTypingOptions,
     channelManager: ChannelManager,
     clientId: string,
     logger: Logger,
@@ -147,7 +146,7 @@ export class DefaultTyping
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
     // CHA-T8
-    const channel = channelManager.get(roomChannelName(roomId));
+    const channel = channelManager.get(`${roomId}::$chat`);
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([TypingEvents.Start, TypingEvents.Stop], this._internalSubscribeToEvents.bind(this));

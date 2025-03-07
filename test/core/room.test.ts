@@ -5,7 +5,7 @@ import { ChatApi } from '../../src/core/chat-api.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.ts';
-import { AllFeaturesEnabled, normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
+import { normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
 import {
@@ -23,7 +23,7 @@ vi.mock('ably');
 
 interface TestContext {
   realtime: Ably.Realtime;
-  getRoom: (options: RoomOptions, useReact?: boolean) => Room;
+  getRoom: (options?: RoomOptions, useReact?: boolean) => Room;
 }
 
 describe('Room', () => {
@@ -31,7 +31,7 @@ describe('Room', () => {
     context.realtime = ablyRealtimeClient();
     const logger = makeTestLogger();
     const chatApi = new ChatApi(context.realtime, logger);
-    context.getRoom = (options: RoomOptions, useReact?: boolean) =>
+    context.getRoom = (options?: RoomOptions, useReact?: boolean) =>
       new DefaultRoom(
         randomRoomId(),
         randomId(),
@@ -40,31 +40,6 @@ describe('Room', () => {
         chatApi,
         logger,
       );
-  });
-
-  describe.each([
-    ['presence', (room: Room) => room.presence],
-    ['occupancy', (room: Room) => room.occupancy],
-    ['typing', (room: Room) => room.typing],
-    ['reactions', (room: Room) => room.reactions],
-  ])('feature not configured', (description: string, featureLoader: (room: Room) => unknown) => {
-    it<TestContext>(`should throw error if trying to access ${description} without being enabled`, (context) => {
-      const room = context.getRoom({});
-      expect(() => featureLoader(room)).toThrowErrorInfoWithCode(40000);
-    });
-  });
-
-  describe.each([
-    ['messages', {}, (room: Room) => room.messages],
-    ['presence', { presence: AllFeaturesEnabled.presence }, (room: Room) => room.presence],
-    ['occupancy', { occupancy: AllFeaturesEnabled.occupancy }, (room: Room) => room.occupancy],
-    ['typing', { typing: AllFeaturesEnabled.typing }, (room: Room) => room.typing],
-    ['reactions', { reactions: AllFeaturesEnabled.reactions }, (room: Room) => room.reactions],
-  ])('feature configured', (description: string, options: RoomOptions, featureLoader: (room: Room) => unknown) => {
-    it<TestContext>(`should not throw an error when trying to access ${description} whilst enabled`, (context) => {
-      const room = context.getRoom(options);
-      featureLoader(room);
-    });
   });
 
   describe.each([
@@ -121,12 +96,18 @@ describe('Room', () => {
     (description: string, setReact: boolean, agentString: string, defaultOptions: unknown) => {
       it<TestContext>('applies the correct options', (context) => {
         vi.spyOn(context.realtime.channels, 'get');
-        const room = context.getRoom(AllFeaturesEnabled, setReact) as DefaultRoom;
+        const room = context.getRoom(
+          {
+            occupancy: {
+              enableInboundOccupancy: true,
+            },
+          },
+          setReact,
+        ) as DefaultRoom;
 
         // Check that the shared channel for messages, occupancy and presence was called with the correct options
-        const expectedMessagesChannelOptions = {
+        const expectedChannelOptions = {
           params: { occupancy: 'metrics', agent: agentString },
-          modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE'],
           attachOnSubscribe: false,
         };
 
@@ -134,33 +115,37 @@ describe('Room', () => {
         expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
           1,
           room.messages.channel.name,
-          expectedMessagesChannelOptions,
+          expectedChannelOptions,
         );
         expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
           2,
           room.messages.channel.name,
-          expectedMessagesChannelOptions,
+          expectedChannelOptions,
         );
         expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
           5,
           room.messages.channel.name,
-          expectedMessagesChannelOptions,
+          expectedChannelOptions,
         );
 
         // Check that the reactions and typing channels were called with the default options
         expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
           3,
           room.typing.channel.name,
-          expectedMessagesChannelOptions,
+          expectedChannelOptions,
         );
-        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(4, room.reactions.channel.name, defaultOptions);
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
+          4,
+          room.reactions.channel.name,
+          expectedChannelOptions,
+        );
       });
     },
   );
 
   describe('room status', () => {
     it<TestContext>('should have a room status and error', async (context) => {
-      const room = context.getRoom(AllFeaturesEnabled);
+      const room = context.getRoom();
       expect(room.status).toBe(RoomStatus.Initialized);
 
       // Wait for the room to be initialized
@@ -181,7 +166,7 @@ describe('Room', () => {
     });
 
     it<TestContext>('should allow subscriptions to status changes', async (context) => {
-      const room = context.getRoom(AllFeaturesEnabled);
+      const room = context.getRoom();
 
       const statuses: RoomStatus[] = [];
       const errors: Ably.ErrorInfo[] = [];
@@ -216,7 +201,7 @@ describe('Room', () => {
     });
 
     it<TestContext>('should allow all subscriptions to be removed', async (context) => {
-      const room = context.getRoom(AllFeaturesEnabled);
+      const room = context.getRoom();
 
       const statuses: RoomStatus[] = [];
       const errors: Ably.ErrorInfo[] = [];
@@ -263,7 +248,7 @@ describe('Room', () => {
 
   describe('room release', () => {
     it<TestContext>('should release the room', async (context) => {
-      const room = context.getRoom(AllFeaturesEnabled) as DefaultRoom;
+      const room = context.getRoom() as DefaultRoom;
       const lifecycleManager = (room as unknown as { _lifecycleManager: RoomLifecycleManager })._lifecycleManager;
 
       // Setup spies on the realtime client and the room lifecycle manager
@@ -296,7 +281,7 @@ describe('Room', () => {
     });
 
     it<TestContext>('should only release with enabled features', async (context) => {
-      const room = context.getRoom({ typing: AllFeaturesEnabled.typing }) as DefaultRoom;
+      const room = context.getRoom() as DefaultRoom;
       const lifecycleManager = (room as unknown as { _lifecycleManager: RoomLifecycleManager })._lifecycleManager;
 
       // Setup spies on the realtime client and the room lifecycle manager
@@ -310,7 +295,7 @@ describe('Room', () => {
       expect(lifecycleManager.release).toHaveBeenCalledTimes(1);
 
       // Every underlying feature channel should have been released
-      expect(context.realtime.channels.release).toHaveBeenCalledTimes(2);
+      expect(context.realtime.channels.release).toHaveBeenCalledTimes(5);
 
       const messagesChannel = room.messages.channel;
       expect(context.realtime.channels.release).toHaveBeenCalledWith(messagesChannel.name);
@@ -320,7 +305,7 @@ describe('Room', () => {
     });
 
     it<TestContext>('releasing multiple times is idempotent', async (context) => {
-      const room = context.getRoom(AllFeaturesEnabled) as DefaultRoom;
+      const room = context.getRoom() as DefaultRoom;
       const lifecycleManager = (room as unknown as { _lifecycleManager: RoomLifecycleManager })._lifecycleManager;
 
       // Setup spies on the realtime client and the room lifecycle manager
@@ -343,7 +328,7 @@ describe('Room', () => {
   });
 
   it<TestContext>('can be released immediately without unhandled rejections', async (context) => {
-    const room = context.getRoom(AllFeaturesEnabled);
+    const room = context.getRoom();
 
     // Release the room
     // Note that an unhandled rejection will not cause the test to fail, but it will cause the process to exit

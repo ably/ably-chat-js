@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
-import { messagesChannelName } from './channel.js';
-import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
+import { roomChannelName } from './channel.js';
+import { ChannelManager } from './channel-manager.js';
 import {
   DiscontinuityEmitter,
   DiscontinuityListener,
@@ -14,7 +14,6 @@ import { ErrorCodes } from './errors.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import { RoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -392,33 +391,12 @@ export class DefaultPresence
   }
 
   /**
-   * Merges the channel options for the room with the ones required for presence.
-   *
-   * @param roomOptions The room options to merge for.
-   * @returns A function that merges the channel options for the room with the ones required for presence.
-   */
-  static channelOptionMerger(roomOptions: RoomOptions): ChannelOptionsMerger {
-    return (options) => {
-      const channelModes = ['PUBLISH', 'SUBSCRIBE'] as Ably.ChannelMode[];
-      if (roomOptions.presence?.enter === undefined || roomOptions.presence.enter) {
-        channelModes.push('PRESENCE');
-      }
-
-      if (roomOptions.presence?.subscribe === undefined || roomOptions.presence.subscribe) {
-        channelModes.push('PRESENCE_SUBSCRIBE');
-      }
-
-      return { ...options, modes: channelModes };
-    };
-  }
-
-  /**
    * Returns the channel name for the presence channel.
    *
    * @param roomId The unique identifier of the room.
    * @returns The channel name for the presence channel.
    */
   static channelName(roomId: string): string {
-    return messagesChannelName(roomId);
+    return roomChannelName(roomId);
   }
 }

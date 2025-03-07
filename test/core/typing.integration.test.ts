@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { normalizeClientOptions } from '../../src/core/config.ts';
 import { TypingEvent, TypingEvents } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
-import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { randomClientId, randomRoomId } from '../helper/identifier.ts';
@@ -63,7 +62,7 @@ describe('Typing', () => {
     context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = await context.chat.get(randomRoomId(), {
-      typing: { timeoutMs: 500, inactivityTimeoutMs: 15000, heartbeatIntervalMs: 400 },
+      typing: { timeoutMs: 500, inactivityTimeoutMs: 15000, heartbeatIntervalMs: 1000 },
     });
   });
 
@@ -160,7 +159,7 @@ describe('Typing', () => {
         type: TypingEvents.Start,
       });
       // Get the currently typing client ids
-      const currentlyTypingClientIds = await context.chatRoom.typing.get();
+      const currentlyTypingClientIds = context.chatRoom.typing.get();
       // Ensure that the client ids are correct
       expect(currentlyTypingClientIds.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIds.has(clientId1), 'client1 should be typing').toEqual(true);
@@ -175,7 +174,7 @@ describe('Typing', () => {
         type: TypingEvents.Stop,
       });
       // Get the currently typing client ids
-      const currentlyTypingClientIdsAfterStop = await context.chatRoom.typing.get();
+      const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.get();
       // Ensure that the client ids are correct and client1 is no longer typing
       expect(currentlyTypingClientIdsAfterStop.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIdsAfterStop.has(clientId1), 'client1 should not be typing').toEqual(false);
@@ -189,7 +188,7 @@ describe('Typing', () => {
   it<TestContext>('handles discontinuities', async (context) => {
     const { chat } = context;
 
-    const room = await chat.get(randomRoomId(), { typing: AllFeaturesEnabled.typing });
+    const room = await chat.get(randomRoomId());
 
     // Attach the room
     await room.attach();
