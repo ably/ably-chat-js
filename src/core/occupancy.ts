@@ -165,6 +165,7 @@ export class DefaultOccupancy
    * occupancy events for the public API.
    */
   private _internalOccupancyListener(message: Ably.InboundMessage): void {
+    this._logger.debug('received occupancy event');
     if (typeof message.data !== 'object') {
       this._logger.error('invalid occupancy event received; data is not an object', message);
       return;
@@ -199,6 +200,7 @@ export class DefaultOccupancy
       return;
     }
 
+    this._logger.debug('emitting occupancy update');
     this.emit(OccupancyEvents.Occupancy, {
       connections: connections,
       presenceMembers: presenceMembers,

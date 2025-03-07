@@ -205,6 +205,20 @@ describe('useRoom', () => {
     await vi.waitFor(() => {
       expect(room.attach).toHaveBeenCalledTimes(1);
     });
+    expect(room.detach).toHaveBeenCalledTimes(0);
+    expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
+
+    r.rerender(
+      <TestProvider
+        room1={false}
+        room2={false}
+      />,
+    );
+    expect(called1).toBe(3);
+    expect(called2).toBe(5);
+    await vi.waitFor(() => {
+      expect(room.attach).toHaveBeenCalledTimes(1);
+    });
     // room.detach is not called when releasing, detach happens via lifecycleManager but skipping the public API
     expect(room.detach).toHaveBeenCalledTimes(0);
     await vi.waitFor(() => {

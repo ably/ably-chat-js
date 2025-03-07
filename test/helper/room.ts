@@ -27,7 +27,8 @@ export const waitForRoomError = async (status: RoomLifecycle, expected: ErrorCod
 };
 
 // Gets a random room with default options from the chat client
-export const getRandomRoom = async (chat: ChatClient): Promise<Room> => chat.rooms.get(randomRoomId());
+export const getRandomRoom = async (chat: ChatClient, options?: RoomOptions): Promise<Room> =>
+  chat.rooms.get(randomRoomId(), options);
 
 // Makes a room with the given (or default) options, as a standalone room aside from the chat client
 // Should be used in unit tests where the dependencies are mocked.
