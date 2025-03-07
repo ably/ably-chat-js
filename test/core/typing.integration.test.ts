@@ -63,7 +63,7 @@ describe('Typing', () => {
     context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = await context.chat.get(randomRoomId(), {
-      typing: { timeoutMs: 500, inactivityTimeoutMs: 15000, heartbeatIntervalMs: 400 },
+      typing: { timeoutMs: 500, inactivityTimeoutMs: 15000, heartbeatIntervalMs: 600 },
     });
   });
 
