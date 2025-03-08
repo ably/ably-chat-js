@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 
 import { messagesChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
-import { ChatApi } from './chat-api.js';
+import { AddMessageReactionParams, ChatApi } from './chat-api.js';
 import {
   DiscontinuityEmitter,
   DiscontinuityListener,
@@ -355,6 +355,10 @@ export class DefaultMessageReactions implements MessagesReactions {
   }
 
   private _processAnnotationEvent(event: Ably.Annotation) {
+    if (!event.refSerial) {
+      return;
+    }
+
     // unknown ref type
     if (!Object.values(ReactionRefType).includes(event.refType as ReactionRefType)) {
       return;
@@ -373,18 +377,24 @@ export class DefaultMessageReactions implements MessagesReactions {
     }
 
     if (!event.data) {
-      // no reaction data
-      return;
+      if (eventType === MessageReactionEvents.Delete && refType === ReactionRefType.Unique) {
+        // deletes of refType unique are allowed to have no data
+        event.data = "";
+      } else {
+        return;
+      }
     }
 
     let reaction = event.data as string;
     let count: number | undefined;
     if (refType === ReactionRefType.Multiple) {
-      const data = JSON.parse(reaction) as { count?: number; emoji: string };
-      reaction = data.emoji;
-      count = data.count;
-      if (count !== undefined && count <= 0) {
-        count = undefined;
+      const data = JSON.parse(reaction) as { count?: number; reaction: string };
+      reaction = data.reaction;
+      if (eventType === MessageReactionEvents.Create) {
+        count = data.count;
+        if (!count || count < 1) {
+          count = 1;
+        }
       }
     }
 
@@ -441,11 +451,14 @@ export class DefaultMessageReactions implements MessagesReactions {
    * @inheritDoc
    */
   add(message: { serial: string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void> {
-    return this._api.addMessageReaction(this._roomID, message.serial, {
-      refType: refType,
-      reaction: reaction,
-      count: count,
-    });
+    if (refType === ReactionRefType.Multiple && !count) {
+      count = 1;
+    }
+    const params : AddMessageReactionParams = { refType, reaction };
+    if (count) {
+      params.count = count;
+    }
+    return this._api.addMessageReaction(this._roomID, message.serial, params);
   }
 
   /**

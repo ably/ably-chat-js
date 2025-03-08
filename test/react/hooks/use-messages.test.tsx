@@ -133,9 +133,9 @@ describe('useMessages', () => {
         copy: vi.fn(),
         reactions: {
           version: '',
-          single: {},
+          unique: {},
           distinct: {},
-          counter: {},
+          multiple: {},
         },
       },
     };

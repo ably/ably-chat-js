@@ -92,7 +92,7 @@ interface DeleteMessageParams {
   metadata?: MessageOperationMetadata;
 }
 
-interface MessageReactionData {
+export interface AddMessageReactionParams {
   refType: string;
   reaction: string;
   count?: number;
@@ -218,7 +218,7 @@ export class ChatApi {
     );
   }
 
-  addMessageReaction(roomId: string, serial: string, data: MessageReactionData): Promise<void> {
+  addMessageReaction(roomId: string, serial: string, data: AddMessageReactionParams): Promise<void> {
     const encodedSerial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest(`/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`, 'POST', data);
