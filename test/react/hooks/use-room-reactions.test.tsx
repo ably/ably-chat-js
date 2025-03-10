@@ -154,7 +154,7 @@ describe('useRoomReactions', () => {
 
     // spy on the onDiscontinuity method of the room reactions instance
     let discontinuityListener: DiscontinuityListener | undefined;
-    vi.spyOn(mockRoom.reactions, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
       discontinuityListener = listener;
       return { off: mockOff };
     });

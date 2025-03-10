@@ -1,16 +1,7 @@
 import * as Ably from 'ably';
 
-import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
-import {
-  DiscontinuityEmitter,
-  DiscontinuityListener,
-  EmitsDiscontinuities,
-  HandlesDiscontinuity,
-  newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
-} from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
 import { ChatMessageActions, MessageEvent, MessageEvents, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
@@ -189,7 +180,7 @@ export interface MessageSubscriptionResponse extends Subscription {
  *
  * Get an instance via {@link Room.messages}.
  */
-export interface Messages extends EmitsDiscontinuities {
+export interface Messages {
   /**
    * Subscribe to new messages in this chat room.
    * @param listener callback that will be called
@@ -275,7 +266,7 @@ export interface Messages extends EmitsDiscontinuities {
 /**
  * @inheritDoc
  */
-export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages, HandlesDiscontinuity {
+export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages {
   private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
@@ -287,7 +278,6 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     }>
   >;
   private readonly _logger: Logger;
-  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   /**
    * Constructs a new `DefaultMessages` instance.
@@ -619,28 +609,6 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     } catch (error: unknown) {
       this._logger.error(`failed to parse incoming message;`, { channelEventMessage, error: error as Ably.ErrorInfo });
     }
-  }
-
-  /**
-   * @inheritdoc HandlesDiscontinuity
-   */
-  discontinuityDetected(reason?: Ably.ErrorInfo): void {
-    this._logger.warn('Messages.discontinuityDetected();', { reason });
-    this._discontinuityEmitter.emit('discontinuity', reason);
-  }
-
-  /**
-   * @inheritdoc EmitsDiscontinuities
-   */
-  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
-    this._logger.trace('Messages.onDiscontinuity();');
-    this._discontinuityEmitter.on(listener);
-
-    return {
-      off: () => {
-        this._discontinuityEmitter.off(listener);
-      },
-    };
   }
 
   /**

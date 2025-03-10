@@ -135,7 +135,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       context.room,
       (room) => {
         logger.debug('useTyping(); applying onDiscontinuity listener', { roomId: context.roomId });
-        const { off } = room.typing.onDiscontinuity(onDiscontinuityRef);
+        const { off } = room.onDiscontinuity(onDiscontinuityRef);
         return () => {
           logger.debug('useTyping(); removing onDiscontinuity listener', { roomId: context.roomId });
           off();

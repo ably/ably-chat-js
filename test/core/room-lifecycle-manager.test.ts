@@ -6,7 +6,7 @@ import { ErrorCodes } from '../../src/core/errors.js';
 import { Logger } from '../../src/core/logger.js';
 import { RoomLifeCycleManager } from '../../src/core/room-lifecycle-manager.js';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus } from '../../src/core/room-status.js';
-import { ErrorInfoCompareType, toBeErrorInfo } from '../helper/expectations.js';
+import { ErrorInfoCompareType } from '../helper/expectations.js';
 import { makeTestLogger } from '../helper/logger.js';
 
 interface TestContext {

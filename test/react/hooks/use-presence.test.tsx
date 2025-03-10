@@ -225,7 +225,7 @@ describe('usePresence', () => {
 
     // spy on the onDiscontinuity method of the presence instance
     let discontinuityListener: DiscontinuityListener | undefined;
-    vi.spyOn(mockRoom.presence, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
       discontinuityListener = listener;
       return { off: mockOff };
     });

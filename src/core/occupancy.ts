@@ -3,14 +3,6 @@ import * as Ably from 'ably';
 import { roomChannelName } from './channel.js';
 import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
-import {
-  DiscontinuityEmitter,
-  DiscontinuityListener,
-  EmitsDiscontinuities,
-  HandlesDiscontinuity,
-  newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
-} from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
 import { Subscription } from './subscription.js';
@@ -22,7 +14,7 @@ import EventEmitter from './utils/event-emitter.js';
  *
  * Get an instance via {@link Room.occupancy}.
  */
-export interface Occupancy extends EmitsDiscontinuities {
+export interface Occupancy {
   /**
    * Subscribe a given listener to occupancy updates of the chat room.
    *
@@ -83,12 +75,11 @@ interface OccupancyEventsMap {
 /**
  * @inheritDoc
  */
-export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implements Occupancy, HandlesDiscontinuity {
+export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implements Occupancy {
   private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private _logger: Logger;
-  private _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   /**
    * Constructs a new `DefaultOccupancy` instance.
@@ -201,22 +192,6 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
       connections: connections,
       presenceMembers: presenceMembers,
     });
-  }
-
-  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
-    this._logger.trace('Occupancy.onDiscontinuity();');
-    this._discontinuityEmitter.on(listener);
-
-    return {
-      off: () => {
-        this._discontinuityEmitter.off(listener);
-      },
-    };
-  }
-
-  discontinuityDetected(reason?: Ably.ErrorInfo): void {
-    this._logger.warn('Occupancy.discontinuityDetected();', { reason });
-    this._discontinuityEmitter.emit('discontinuity', reason);
   }
 
   /**

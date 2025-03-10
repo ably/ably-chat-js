@@ -3,11 +3,12 @@ import cloneDeep from 'lodash.clonedeep';
 
 import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
+import { DiscontinuityListener } from './discontinuity.js';
 import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
-import { DiscontinuityHandler, OnDiscontinuityResponse, RoomLifeCycleManager } from './room-lifecycle-manager.js';
+import { OnDiscontinuityResponse, RoomLifeCycleManager } from './room-lifecycle-manager.js';
 import { InternalRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
 import {
@@ -127,7 +128,7 @@ export interface Room {
    * @param handler The function to call when a discontinuity is detected.
    * @returns An object that can be used to unregister the handler.
    */
-  onDiscontinuity(handler: DiscontinuityHandler): OnDiscontinuityResponse;
+  onDiscontinuity(handler: DiscontinuityListener): OnDiscontinuityResponse;
 }
 
 export class DefaultRoom implements Room {
@@ -350,7 +351,7 @@ export class DefaultRoom implements Room {
   }
 
   /**
-   * @interal
+   * @internal
    */
   get lifecycleManager(): RoomLifeCycleManager {
     return this._lifecycleManager;
@@ -359,7 +360,7 @@ export class DefaultRoom implements Room {
   /**
    * @inheritdoc Room
    */
-  onDiscontinuity(handler: DiscontinuityHandler): OnDiscontinuityResponse {
+  onDiscontinuity(handler: DiscontinuityListener): OnDiscontinuityResponse {
     this._logger.trace('Room.onDiscontinuity();', { nonce: this._nonce, roomId: this._roomId });
     return this._lifecycleManager.onDiscontinuity(handler);
   }
