@@ -79,19 +79,21 @@ const waitForEvent = (
 ) => {
   return new Promise<void>((resolve, reject) => {
     const presence = realtimeClient.channels.get(realtimeChannelName).presence;
+    const timeout = setTimeout(() => {
+      const eventString = Array.isArray(event) ? event.join(',') : event;
+      reject(new Error('Timed out waiting for presence event of type ' + eventString));
+    }, 3000);
+
     presence
       .subscribe(event, (member) => {
+        clearTimeout(timeout);
         expectationFn(member);
         resolve();
       })
       .catch((error: unknown) => {
+        clearTimeout(timeout);
         reject(error as Error);
       });
-
-    setTimeout(() => {
-      const eventString = Array.isArray(event) ? event.join(',') : event;
-      reject(new Error('Timed out waiting for presence event of type ' + eventString));
-    }, 3000);
   });
 };
 
