@@ -7,7 +7,7 @@ import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
-import { RoomLifeCycleManager } from './room-lifecycle-manager.js';
+import { DiscontinuityHandler, OnDiscontinuityResponse, RoomLifeCycleManager } from './room-lifecycle-manager.js';
 import { InternalRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
 import {
@@ -119,6 +119,15 @@ export interface Room {
    * @returns A copy of the options used to create the room.
    */
   options(): RoomOptions;
+
+  /**
+   * Registers a handler that will be called whenever a discontinuity is detected in the room's connection.
+   * A discontinuity occurs when the room's connection is interrupted and cannot be resumed from its previous state.
+   *
+   * @param handler The function to call when a discontinuity is detected.
+   * @returns An object that can be used to unregister the handler.
+   */
+  onDiscontinuity(handler: DiscontinuityHandler): OnDiscontinuityResponse;
 }
 
 export class DefaultRoom implements Room {
@@ -345,5 +354,13 @@ export class DefaultRoom implements Room {
    */
   get lifecycleManager(): RoomLifeCycleManager {
     return this._lifecycleManager;
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  onDiscontinuity(handler: DiscontinuityHandler): OnDiscontinuityResponse {
+    this._logger.trace('Room.onDiscontinuity();', { nonce: this._nonce, roomId: this._roomId });
+    return this._lifecycleManager.onDiscontinuity(handler);
   }
 }

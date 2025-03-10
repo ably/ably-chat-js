@@ -17,7 +17,6 @@ import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -276,10 +275,7 @@ export interface Messages extends EmitsDiscontinuities {
 /**
  * @inheritDoc
  */
-export class DefaultMessages
-  extends EventEmitter<MessageEventsMap>
-  implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultMessages extends EventEmitter<MessageEventsMap> implements Messages, HandlesDiscontinuity {
   private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
@@ -305,7 +301,7 @@ export class DefaultMessages
     super();
     this._roomId = roomId;
 
-    this._channel = this._makeChannel(roomId, channelManager);
+    this._channel = this._makeChannel(channelManager);
 
     this._chatApi = chatApi;
     this._clientId = clientId;
@@ -316,8 +312,8 @@ export class DefaultMessages
   /**
    * Creates the realtime channel for messages.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(roomChannelName(roomId));
+  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
+    const channel = channelManager.get();
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([RealtimeMessageNames.ChatMessage], this._processEvent.bind(this));

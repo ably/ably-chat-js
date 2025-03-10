@@ -2,8 +2,29 @@ import * as Ably from 'ably';
 
 import { ChannelManager } from './channel-manager.js';
 import { ErrorCodes } from './errors.js';
+import { RoomEvents } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomLifecycle, RoomStatus } from './room-status.js';
+import EventEmitter from './utils/event-emitter.js';
+
+/**
+ * Handler for discontinuity events
+ */
+export type DiscontinuityHandler = (error: Ably.ErrorInfo) => void;
+
+/**
+ * Response from registering a discontinuity handler
+ */
+export interface OnDiscontinuityResponse {
+  off(): void;
+}
+
+/**
+ * Events that can be emitted by the RoomLifeCycleManager
+ */
+export interface RoomLifeCycleEvents {
+  [RoomEvents.Discontinuity]: Ably.ErrorInfo;
+}
 
 /**
  * Manages the lifecycle of a room's underlying channel, handling attach, detach and release operations
@@ -14,12 +35,106 @@ export class RoomLifeCycleManager {
   private readonly _roomLifecyle: InternalRoomLifecycle;
   private readonly _logger: Logger;
   private readonly _roomId: string;
+  private readonly _eventEmitter: EventEmitter<RoomLifeCycleEvents>;
+  private _isFirstAttach: boolean;
+  private _isPostExplicitDetach: boolean;
 
   constructor(roomId: string, channelManager: ChannelManager, roomLifecyle: InternalRoomLifecycle, logger: Logger) {
     this._roomId = roomId;
     this._channelManager = channelManager;
     this._roomLifecyle = roomLifecyle;
     this._logger = logger;
+    this._eventEmitter = new EventEmitter();
+    this._isFirstAttach = true;
+    this._isPostExplicitDetach = false;
+
+    // Start monitoring channel state changes
+    this._startMonitoringChannelState();
+    this._startMonitoringDiscontinuity();
+  }
+
+  /**
+   * Sets up monitoring of channel state changes to keep room status in sync.
+   * If an operation is in progress (attach/detach/release), state changes are ignored.
+   * @private
+   */
+  private _startMonitoringChannelState(): void {
+    const channel = this._channelManager.get();
+
+    channel.on((stateChange: Ably.ChannelStateChange) => {
+      this._logger.debug('channel state changed', {
+        roomId: this._roomId,
+        oldState: stateChange.previous,
+        newState: stateChange.current,
+        reason: stateChange.reason,
+        resumed: stateChange.resumed,
+      });
+
+      // If we're in the middle of an operation, ignore state changes
+      if (this._isOperationInProgress()) {
+        this._logger.debug('ignoring channel state change - operation in progress', {
+          roomId: this._roomId,
+          roomStatus: this._roomLifecyle.status,
+        });
+        return;
+      }
+
+      // Map channel state to room state and update
+      const newStatus = this._mapChannelStateToRoomStatus(stateChange.current);
+      this._setStatus(newStatus, stateChange.reason);
+    });
+  }
+
+  /**
+   * Sets up monitoring for channel discontinuities.
+   * A discontinuity exists when an attached or update event comes from the channel with resume=false.
+   * The first time we attach, or if we attach after an explicit detach call are not considered discontinuities.
+   * @private
+   */
+  private _startMonitoringDiscontinuity(): void {
+    const channel = this._channelManager.get();
+
+    channel.on(['attached', 'update'], (stateChange: Ably.ChannelStateChange) => {
+      if (!stateChange.resumed && !this._isFirstAttach && !this._isPostExplicitDetach) {
+        const error = new Ably.ErrorInfo(
+          'discontinuity detected',
+          ErrorCodes.ChannelDiscontinuity,
+          stateChange.reason?.statusCode ?? 0,
+          stateChange.reason,
+        );
+
+        this._logger.warn('discontinuity detected', {
+          roomId: this._roomId,
+          error,
+        });
+        this._eventEmitter.emit(RoomEvents.Discontinuity, error);
+      }
+    });
+  }
+
+  /**
+   * Registers a handler for discontinuity events.
+   * @param handler The function to be called when a discontinuity is detected
+   * @returns An object with an off() method to deregister the handler
+   */
+  onDiscontinuity(handler: DiscontinuityHandler): OnDiscontinuityResponse {
+    this._logger.trace('RoomLifecycleManager.onDiscontinuity()');
+    this._eventEmitter.on(RoomEvents.Discontinuity, handler);
+    return {
+      off: () => {
+        this._eventEmitter.off(RoomEvents.Discontinuity, handler);
+      },
+    };
+  }
+
+  /**
+   * Checks if a room operation is currently in progress
+   * @private
+   * @returns true if attach/detach/release is in progress
+   */
+  private _isOperationInProgress(): boolean {
+    const status = this._roomLifecyle.status;
+    return status === RoomStatus.Attaching || status === RoomStatus.Detaching || status === RoomStatus.Releasing;
   }
 
   /**
@@ -46,6 +161,8 @@ export class RoomLifeCycleManager {
       this._setStatus(RoomStatus.Attaching);
       await channel.attach();
       this._setStatus(RoomStatus.Attached);
+      this._isPostExplicitDetach = false;
+      this._isFirstAttach = false;
       this._logger.debug('room attached successfully', { roomId: this._roomId });
     } catch (error) {
       const errInfo = error as Ably.ErrorInfo;
@@ -86,6 +203,7 @@ export class RoomLifeCycleManager {
     try {
       this._setStatus(RoomStatus.Detaching);
       await channel.detach();
+      this._isPostExplicitDetach = true;
       this._setStatus(RoomStatus.Detached);
       this._logger.debug('room detached successfully', { roomId: this._roomId });
     } catch (error) {
@@ -225,13 +343,17 @@ export class RoomLifeCycleManager {
     this._roomLifecyle.setStatus({ status, error });
   }
 
-  private _unknownLifecycleError(): Ably.ErrorInfo {
-    return new Ably.ErrorInfo('unknown lifecycle error', ErrorCodes.RoomLifecycleError, 500);
-  }
-
   private _releaseChannel() {
     this._channelManager.release();
     this._setStatus(RoomStatus.Released);
     this._logger.debug('room released successfully', { roomId: this._roomId });
+  }
+
+  testForceFirstAttach(firstAttach: boolean) {
+    this._isFirstAttach = firstAttach;
+  }
+
+  testForceExplicitDetach(explicitDetach: boolean) {
+    this._isPostExplicitDetach = explicitDetach;
   }
 }

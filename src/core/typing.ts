@@ -13,7 +13,6 @@ import { ErrorCodes } from './errors.js';
 import { TypingEvent, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { InternalTypingOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
@@ -94,10 +93,7 @@ interface TypingEventsMap {
 /**
  * @inheritDoc
  */
-export class DefaultTyping
-  extends EventEmitter<TypingEventsMap>
-  implements Typing, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing, HandlesDiscontinuity {
   private readonly _clientId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
@@ -128,7 +124,7 @@ export class DefaultTyping
   ) {
     super();
     this._clientId = clientId;
-    this._channel = this._makeChannel(roomId, channelManager);
+    this._channel = this._makeChannel(channelManager);
     // Timeout for pause in typing
     this._timeoutMs = options.timeoutMs;
     // Timeout for inactivity, i.e. when we have not received a heartbeat for a configured time
@@ -144,9 +140,9 @@ export class DefaultTyping
   /**
    * Creates the realtime channel for typing indicators.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
+  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
     // CHA-T8
-    const channel = channelManager.get(`${roomId}::$chat`);
+    const channel = channelManager.get();
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([TypingEvents.Start, TypingEvents.Stop], this._internalSubscribeToEvents.bind(this));

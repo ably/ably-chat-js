@@ -6,7 +6,7 @@ import { ErrorCodes } from '../../src/core/errors.js';
 import { Logger } from '../../src/core/logger.js';
 import { RoomLifeCycleManager } from '../../src/core/room-lifecycle-manager.js';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus } from '../../src/core/room-status.js';
-import { ErrorInfoCompareType } from '../helper/expectations.js';
+import { ErrorInfoCompareType, toBeErrorInfo } from '../helper/expectations.js';
 import { makeTestLogger } from '../helper/logger.js';
 
 interface TestContext {
@@ -17,6 +17,9 @@ interface TestContext {
   mockChannel: Partial<Ably.RealtimeChannel> & {
     attach: () => Promise<Ably.ChannelStateChange | null>;
     detach?: () => Promise<Ably.ChannelStateChange | null>;
+    on?: (event: string | string[], handler: (stateChange: Ably.ChannelStateChange) => void) => void;
+    _stateChangeHandlers: ((stateChange: Ably.ChannelStateChange) => void)[];
+    invokeStateChange: (stateChange: Ably.ChannelStateChange) => void;
   };
 }
 
@@ -30,6 +33,19 @@ describe('RoomLifeCycleManager', () => {
       attach: vi.fn().mockImplementation(() => Promise.resolve(null)),
       detach: vi.fn().mockImplementation(() => Promise.resolve(null)),
       state: 'initialized',
+      invokeStateChange: (stateChange: Ably.ChannelStateChange) => {
+        for (const handler of context.mockChannel._stateChangeHandlers) {
+          handler(stateChange);
+        }
+      },
+      _stateChangeHandlers: [],
+      on: vi
+        .fn()
+        .mockImplementation((event: string | string[], handler: (stateChange: Ably.ChannelStateChange) => void) => {
+          context.mockChannel._stateChangeHandlers.push(
+            Array.isArray(event) ? handler : (event as unknown as (stateChange: Ably.ChannelStateChange) => void),
+          );
+        }),
     };
 
     context.channelManager = {
@@ -337,9 +353,10 @@ describe('RoomLifeCycleManager', () => {
       // Arrange
       roomStatus.setStatus({ status: RoomStatus.Attached });
       const ablyError = new Ably.ErrorInfo('detach failed', 12345, 400);
-      
+
       // Mock detach to fail twice then succeed
-      mockChannel.detach = vi.fn()
+      mockChannel.detach = vi
+        .fn()
         .mockRejectedValueOnce(ablyError)
         .mockRejectedValueOnce(ablyError)
         .mockResolvedValueOnce(null);
@@ -351,6 +368,259 @@ describe('RoomLifeCycleManager', () => {
       expect(mockChannel.detach).toHaveBeenCalledTimes(3);
       expect(channelManager.release).toHaveBeenCalledTimes(1);
       expect(roomStatus.status).toBe(RoomStatus.Released);
+    });
+  });
+
+  describe('channel state monitoring', () => {
+    it<TestContext>('should update room status when channel state changes and no operation is in progress', ({
+      mockChannel,
+      roomStatus,
+    }) => {
+      // Arrange
+      roomStatus.setStatus({ status: RoomStatus.Attached });
+
+      // Act - simulate channel state change to suspended
+      mockChannel.invokeStateChange({
+        current: 'suspended',
+        previous: 'attached',
+        reason: new Ably.ErrorInfo('Connection lost', 80003, 500),
+        resumed: false,
+      });
+
+      // Assert
+      expect(roomStatus.status).toBe(RoomStatus.Suspended);
+      expect(roomStatus.error).toBeDefined();
+      expect(roomStatus.error?.code).toBe(80003);
+    });
+
+    it<TestContext>('should ignore channel state changes when attach operation is in progress', ({
+      mockChannel,
+      roomStatus,
+    }) => {
+      // Arrange
+      roomStatus.setStatus({ status: RoomStatus.Attaching });
+
+      // Act - simulate channel state change to suspended
+      mockChannel.invokeStateChange({
+        current: 'suspended',
+        previous: 'attaching',
+        reason: new Ably.ErrorInfo('Connection lost', 80003, 500),
+        resumed: false,
+      });
+
+      // Assert
+      expect(roomStatus.status).toBe(RoomStatus.Attaching);
+      expect(roomStatus.error).toBeUndefined();
+    });
+
+    it<TestContext>('should ignore channel state changes when detach operation is in progress', ({
+      mockChannel,
+      roomStatus,
+    }) => {
+      // Arrange
+      roomStatus.setStatus({ status: RoomStatus.Detaching });
+
+      // Act - simulate channel state change to suspended
+      mockChannel.invokeStateChange({
+        current: 'suspended',
+        previous: 'detaching',
+        reason: new Ably.ErrorInfo('Connection lost', 80003, 500),
+        resumed: false,
+      });
+
+      // Assert
+      expect(roomStatus.status).toBe(RoomStatus.Detaching);
+      expect(roomStatus.error).toBeUndefined();
+    });
+
+    it<TestContext>('should ignore channel state changes when release operation is in progress', ({
+      mockChannel,
+      roomStatus,
+    }) => {
+      // Arrange
+      roomStatus.setStatus({ status: RoomStatus.Releasing });
+
+      // Act - simulate channel state change to suspended
+      mockChannel.invokeStateChange({
+        current: 'suspended',
+        previous: 'attached',
+        reason: new Ably.ErrorInfo('Connection lost', 80003, 500),
+        resumed: false,
+      });
+
+      // Assert
+      expect(roomStatus.status).toBe(RoomStatus.Releasing);
+      expect(roomStatus.error).toBeUndefined();
+    });
+
+    describe.each([
+      ['initialized', RoomStatus.Initialized],
+      ['attaching', RoomStatus.Attaching],
+      ['attached', RoomStatus.Attached],
+      ['detaching', RoomStatus.Detaching],
+      ['detached', RoomStatus.Detached],
+      ['suspended', RoomStatus.Suspended],
+      ['failed', RoomStatus.Failed],
+    ])('should handle channel state %s', (state: string, expectedStatus: RoomStatus) => {
+      it<TestContext>('performs channel update', (context) => {
+        // Arrange
+        context.roomStatus.setStatus({ status: RoomStatus.Attached });
+
+        // Act
+        context.mockChannel.invokeStateChange({
+          current: state as Ably.ChannelState,
+          previous: 'attached',
+          reason: undefined,
+          resumed: false,
+        });
+
+        // Assert
+        expect(context.roomStatus.status).toBe(expectedStatus);
+      });
+    });
+  });
+
+  describe('discontinuity monitoring', () => {
+    it<TestContext>('should not emit discontinuity on first attach', ({ mockChannel, roomLifeCycleManager }) => {
+      const handler = vi.fn();
+      roomLifeCycleManager.onDiscontinuity(handler);
+
+      // First attach
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it<TestContext>('should not emit discontinuity when resumed is true', ({ mockChannel, roomLifeCycleManager }) => {
+      const handler = vi.fn();
+      roomLifeCycleManager.onDiscontinuity(handler);
+
+      // First attach
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      // Second attach with resumed=true
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: true,
+      });
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it<TestContext>('should emit discontinuity when not first attach and resumed is false', ({
+      mockChannel,
+      roomLifeCycleManager,
+    }) => {
+      const handler = vi.fn();
+      roomLifeCycleManager.onDiscontinuity(handler);
+
+      // First attach
+      roomLifeCycleManager.testForceFirstAttach(false);
+
+      // Second attach with resumed=false
+      const reason = new Ably.ErrorInfo('test error', 12345, 503);
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+        reason,
+      });
+
+      expect(handler).toHaveBeenCalledWith(
+        expect.toBeErrorInfo({
+          message: 'discontinuity detected',
+          code: ErrorCodes.ChannelDiscontinuity,
+          statusCode: 503,
+          cause: reason as ErrorInfoCompareType,
+        }),
+      );
+    });
+
+    it<TestContext>('should not emit discontinuity after explicit detach', async ({
+      mockChannel,
+      roomLifeCycleManager,
+    }) => {
+      const handler = vi.fn();
+      roomLifeCycleManager.onDiscontinuity(handler);
+
+      // First attach
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      // Explicit detach
+      (mockChannel.detach as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+      await roomLifeCycleManager.detach();
+
+      // Re-attach
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it<TestContext>('should allow handler to be removed', ({ mockChannel, roomLifeCycleManager }) => {
+      const handler = vi.fn();
+      const subscription = roomLifeCycleManager.onDiscontinuity(handler);
+
+      // First attach
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      // Remove handler
+      subscription.off();
+
+      // Second attach with resumed=false
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it<TestContext>('should emit discontinuity on channel update', ({ mockChannel, roomLifeCycleManager }) => {
+      const handler = vi.fn();
+      roomLifeCycleManager.onDiscontinuity(handler);
+
+      // First attach
+      roomLifeCycleManager.testForceFirstAttach(false);
+
+      // Update with resumed=false
+      const reason = new Ably.ErrorInfo('test error', 12345, 503);
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attached',
+        resumed: false,
+        reason,
+      });
+
+      expect(handler).toHaveBeenCalledWith(
+        expect.toBeErrorInfo({
+          message: 'discontinuity detected',
+          code: ErrorCodes.ChannelDiscontinuity,
+          statusCode: 503,
+          cause: reason as ErrorInfoCompareType,
+        }),
+      );
     });
   });
 });

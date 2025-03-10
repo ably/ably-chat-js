@@ -117,6 +117,11 @@ export enum ErrorCodes {
    * Room detachment failed.
    */
   RoomDetachmentFailed = 102108,
+
+  /**
+   * Error code for when a channel discontinuity is detected
+   */
+  ChannelDiscontinuity = 90001,
 }
 
 /**
