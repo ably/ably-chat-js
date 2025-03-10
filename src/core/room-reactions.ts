@@ -15,7 +15,6 @@ import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
 import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
 import { parseReaction } from './reaction-parser.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -133,7 +132,7 @@ export interface RoomReactionsSubscriptionResponse {
  */
 export class DefaultRoomReactions
   extends EventEmitter<RoomReactionEventsMap>
-  implements RoomReactions, HandlesDiscontinuity, ContributesToRoomLifecycle
+  implements RoomReactions, HandlesDiscontinuity
 {
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _clientId: string;
@@ -150,7 +149,7 @@ export class DefaultRoomReactions
   constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
     super();
 
-    this._channel = this._makeChannel(roomId, channelManager);
+    this._channel = this._makeChannel(channelManager);
     this._clientId = clientId;
     this._logger = logger;
   }
@@ -158,8 +157,8 @@ export class DefaultRoomReactions
   /**
    * Creates the realtime channel for room reactions.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(roomChannelName(roomId));
+  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
+    const channel = channelManager.get();
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([RoomReactionEvents.Reaction], this._forwarder.bind(this));

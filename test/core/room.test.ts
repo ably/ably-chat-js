@@ -2,11 +2,14 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { RoomEvents } from '../../src/core/events.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
+import { RoomLifeCycleEvents } from '../../src/core/room-lifecycle-manager.ts';
 import { normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
+import EventEmitter from '../../src/core/utils/event-emitter.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING, CHANNEL_OPTIONS_AGENT_STRING_REACT } from '../../src/core/version.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -315,6 +318,34 @@ describe('Room', () => {
 
       // The room lifecycle manager should have been released only once
       expect(lifecycleManager.release).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('discontinuity handling', () => {
+    it<TestContext>('should allow subscriptions to discontinuity events', (context) => {
+      const room = context.getRoom() as DefaultRoom;
+
+      const discontinuityErrors: Ably.ErrorInfo[] = [];
+      const { off } = room.onDiscontinuity((error) => {
+        discontinuityErrors.push(error);
+      });
+
+      // Simulate a discontinuity event
+      const error = new Ably.ErrorInfo('test discontinuity', 50000, 500);
+      const eventEmitter = (room.lifecycleManager as unknown as { _eventEmitter: EventEmitter<RoomLifeCycleEvents> })
+        ._eventEmitter;
+      eventEmitter.emit(RoomEvents.Discontinuity, new Ably.ErrorInfo('discontinuity detected', 80003, 500, error));
+
+      expect(discontinuityErrors).toEqual([new Ably.ErrorInfo('discontinuity detected', 80003, 500, error)]);
+
+      // Remove the listener
+      off();
+
+      // Simulate another discontinuity event
+      eventEmitter.emit(RoomEvents.Discontinuity, new Ably.ErrorInfo('discontinuity detected', 80003, 500, error));
+
+      // Change should not be recorded since we removed the listener
+      expect(discontinuityErrors).toEqual([new Ably.ErrorInfo('discontinuity detected', 80003, 500, error)]);
     });
   });
 

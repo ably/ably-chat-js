@@ -13,7 +13,6 @@ import {
 } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -84,10 +83,7 @@ interface OccupancyEventsMap {
 /**
  * @inheritDoc
  */
-export class DefaultOccupancy
-  extends EventEmitter<OccupancyEventsMap>
-  implements Occupancy, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implements Occupancy, HandlesDiscontinuity {
   private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
@@ -105,7 +101,7 @@ export class DefaultOccupancy
     super();
 
     this._roomId = roomId;
-    this._channel = this._makeChannel(roomId, channelManager);
+    this._channel = this._makeChannel(channelManager);
     this._chatApi = chatApi;
     this._logger = logger;
   }
@@ -113,8 +109,8 @@ export class DefaultOccupancy
   /**
    * Creates the realtime channel for occupancy.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(DefaultOccupancy.channelName(roomId));
+  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
+    const channel = channelManager.get();
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe(['[meta]occupancy'], this._internalOccupancyListener.bind(this));

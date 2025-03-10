@@ -13,7 +13,6 @@ import {
 import { ErrorCodes } from './errors.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -173,10 +172,7 @@ export interface Presence extends EmitsDiscontinuities {
 /**
  * @inheritDoc
  */
-export class DefaultPresence
-  extends EventEmitter<PresenceEventsMap>
-  implements Presence, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements Presence, HandlesDiscontinuity {
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _clientId: string;
   private readonly _logger: Logger;
@@ -193,7 +189,7 @@ export class DefaultPresence
   constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
     super();
 
-    this._channel = this._makeChannel(roomId, channelManager);
+    this._channel = this._makeChannel(channelManager);
     this._clientId = clientId;
     this._logger = logger;
   }
@@ -201,8 +197,8 @@ export class DefaultPresence
   /**
    * Creates the realtime channel for presence.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(DefaultPresence.channelName(roomId));
+  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
+    const channel = channelManager.get();
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.presence.subscribe(this.subscribeToEvents.bind(this));
