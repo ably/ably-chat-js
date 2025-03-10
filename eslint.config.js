@@ -24,6 +24,7 @@ const compat = new FlatCompat({
 });
 
 export default [
+  unicorn.configs.recommended,
   {
     ignores: [
       'demo/**',
@@ -50,7 +51,6 @@ export default [
       'plugin:security/recommended-legacy',
       'plugin:import/recommended',
       'plugin:compat/recommended',
-      'plugin:unicorn/recommended',
       'plugin:node/recommended',
     ),
   ),
@@ -62,7 +62,6 @@ export default [
       import: fixupPluginRules(_import),
       'simple-import-sort': simpleImportSort,
       pluginCompat: fixupPluginRules(pluginCompat),
-      unicorn: fixupPluginRules(unicorn),
     },
 
     languageOptions: {
