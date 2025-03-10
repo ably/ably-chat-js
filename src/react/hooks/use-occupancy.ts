@@ -76,7 +76,7 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
       context.room,
       (room) => {
         logger.debug('useOccupancy(); applying onDiscontinuity listener', { roomId: context.roomId });
-        const { off } = room.occupancy.onDiscontinuity(onDiscontinuityRef);
+        const { off } = room.onDiscontinuity(onDiscontinuityRef);
         return () => {
           logger.debug('useOccupancy(); removing onDiscontinuity listener', { roomId: context.roomId });
           off();

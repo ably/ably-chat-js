@@ -1,14 +1,6 @@
 import * as Ably from 'ably';
 
 import { ChannelManager } from './channel-manager.js';
-import {
-  DiscontinuityEmitter,
-  DiscontinuityListener,
-  EmitsDiscontinuities,
-  HandlesDiscontinuity,
-  newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
-} from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
 import { TypingEvent, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
@@ -23,7 +15,7 @@ import EventEmitter from './utils/event-emitter.js';
  *
  * Get an instance via {@link Room.typing}.
  */
-export interface Typing extends EmitsDiscontinuities {
+export interface Typing {
   /**
    * Subscribe a given listener to all typing events from users in the chat room.
    *
@@ -56,7 +48,6 @@ export interface Typing extends EmitsDiscontinuities {
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
-
   start(): Promise<void>;
 
   /**
@@ -66,7 +57,6 @@ export interface Typing extends EmitsDiscontinuities {
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
-
   stop(): Promise<void>;
 
   /**
@@ -93,11 +83,10 @@ interface TypingEventsMap {
 /**
  * @inheritDoc
  */
-export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing, HandlesDiscontinuity {
+export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
   private readonly _clientId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
-  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   // Timeout for typing
   private readonly _timeoutMs: number | undefined;
@@ -433,22 +422,6 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       this._logger.warn(`DefaultTyping._internalSubscribeToEvents(); unrecognized event`, { name });
     }
   };
-
-  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
-    this._logger.trace(`DefaultTyping.onDiscontinuity();`);
-    this._discontinuityEmitter.on(listener);
-
-    return {
-      off: () => {
-        this._discontinuityEmitter.off(listener);
-      },
-    };
-  }
-
-  discontinuityDetected(reason?: Ably.ErrorInfo): void {
-    this._logger.warn(`DefaultTyping.discontinuityDetected();`, { reason });
-    this._discontinuityEmitter.emit('discontinuity', reason);
-  }
 
   get timeoutMs(): number | undefined {
     return this._timeoutMs;

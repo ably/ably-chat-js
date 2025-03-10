@@ -2,14 +2,6 @@ import * as Ably from 'ably';
 
 import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
-import {
-  DiscontinuityEmitter,
-  DiscontinuityListener,
-  EmitsDiscontinuities,
-  HandlesDiscontinuity,
-  newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
-} from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
@@ -108,7 +100,7 @@ export type PresenceListener = (event: PresenceEvent) => void;
  *
  * Get an instance via {@link Room.presence}.
  */
-export interface Presence extends EmitsDiscontinuities {
+export interface Presence {
   /**
    * Method to get list of the current online users and returns the latest presence messages associated to it.
    * @param {Ably.RealtimePresenceParams} params - Parameters that control how the presence set is retrieved.
@@ -172,11 +164,10 @@ export interface Presence extends EmitsDiscontinuities {
 /**
  * @inheritDoc
  */
-export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements Presence, HandlesDiscontinuity {
+export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements Presence {
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _clientId: string;
   private readonly _logger: Logger;
-  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   /**
    * Constructs a new `DefaultPresence` instance.
@@ -355,22 +346,6 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
       );
     }
   };
-
-  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
-    this._logger.trace('Presence.onDiscontinuity();');
-    this._discontinuityEmitter.on(listener);
-
-    return {
-      off: () => {
-        this._discontinuityEmitter.off(listener);
-      },
-    };
-  }
-
-  discontinuityDetected(reason?: Ably.ErrorInfo): void {
-    this._logger.warn('Presence.discontinuityDetected();', { reason });
-    this._discontinuityEmitter.emit('discontinuity', reason);
-  }
 
   /**
    * @inheritDoc ContributesToRoomLifecycle

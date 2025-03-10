@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChannelManager } from './channel-manager.js';
+import { DiscontinuityListener } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
 import { RoomEvents } from './events.js';
 import { Logger } from './logger.js';
@@ -8,15 +9,10 @@ import { InternalRoomLifecycle, RoomStatus } from './room-status.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
- * Handler for discontinuity events
- */
-export type DiscontinuityHandler = (error: Ably.ErrorInfo) => void;
-
-/**
  * Response from registering a discontinuity handler
  */
 export interface OnDiscontinuityResponse {
-  off(): void;
+  off: () => void;
 }
 
 /**
@@ -32,17 +28,17 @@ export interface RoomLifeCycleEvents {
  */
 export class RoomLifeCycleManager {
   private readonly _channelManager: ChannelManager;
-  private readonly _roomLifecyle: InternalRoomLifecycle;
+  private readonly _roomLifecycle: InternalRoomLifecycle;
   private readonly _logger: Logger;
   private readonly _roomId: string;
   private readonly _eventEmitter: EventEmitter<RoomLifeCycleEvents>;
   private _isFirstAttach: boolean;
   private _isPostExplicitDetach: boolean;
 
-  constructor(roomId: string, channelManager: ChannelManager, roomLifecyle: InternalRoomLifecycle, logger: Logger) {
+  constructor(roomId: string, channelManager: ChannelManager, roomLifecycle: InternalRoomLifecycle, logger: Logger) {
     this._roomId = roomId;
     this._channelManager = channelManager;
-    this._roomLifecyle = roomLifecyle;
+    this._roomLifecycle = roomLifecycle;
     this._logger = logger;
     this._eventEmitter = new EventEmitter();
     this._isFirstAttach = true;
@@ -74,7 +70,7 @@ export class RoomLifeCycleManager {
       if (this._isOperationInProgress()) {
         this._logger.debug('ignoring channel state change - operation in progress', {
           roomId: this._roomId,
-          roomStatus: this._roomLifecyle.status,
+          roomStatus: this._roomLifecycle.status,
         });
         return;
       }
@@ -117,7 +113,7 @@ export class RoomLifeCycleManager {
    * @param handler The function to be called when a discontinuity is detected
    * @returns An object with an off() method to deregister the handler
    */
-  onDiscontinuity(handler: DiscontinuityHandler): OnDiscontinuityResponse {
+  onDiscontinuity(handler: DiscontinuityListener): OnDiscontinuityResponse {
     this._logger.trace('RoomLifecycleManager.onDiscontinuity()');
     this._eventEmitter.on(RoomEvents.Discontinuity, handler);
     return {
@@ -133,7 +129,7 @@ export class RoomLifeCycleManager {
    * @returns true if attach/detach/release is in progress
    */
   private _isOperationInProgress(): boolean {
-    const status = this._roomLifecyle.status;
+    const status = this._roomLifecycle.status;
     return status === RoomStatus.Attaching || status === RoomStatus.Detaching || status === RoomStatus.Releasing;
   }
 
@@ -240,7 +236,7 @@ export class RoomLifeCycleManager {
     if (this._roomStatusIs(RoomStatus.Initialized) || this._roomStatusIs(RoomStatus.Detached)) {
       this._logger.debug('room is initialized or detached, releasing immediately', {
         roomId: this._roomId,
-        status: this._roomLifecyle.status,
+        status: this._roomLifecycle.status,
       });
       this._releaseChannel();
       return;
@@ -300,7 +296,7 @@ export class RoomLifeCycleManager {
   }
 
   private _checkRoomNotReleasing(op: string) {
-    switch (this._roomLifecyle.status) {
+    switch (this._roomLifecycle.status) {
       case RoomStatus.Released: {
         throw new Ably.ErrorInfo(`cannot ${op} room, room is released`, ErrorCodes.RoomIsReleased, 400);
       }
@@ -311,7 +307,7 @@ export class RoomLifeCycleManager {
   }
 
   private _roomStatusIs(status: RoomStatus) {
-    return this._roomLifecyle.status === status;
+    return this._roomLifecycle.status === status;
   }
 
   private async _channelDetachLoop(channel: Ably.RealtimeChannel) {
@@ -336,11 +332,11 @@ export class RoomLifeCycleManager {
   private _setStatus(status: RoomStatus, error?: Ably.ErrorInfo) {
     this._logger.debug('updating room status', {
       roomId: this._roomId,
-      oldStatus: this._roomLifecyle.status,
+      oldStatus: this._roomLifecycle.status,
       newStatus: status,
       hasError: !!error,
     });
-    this._roomLifecyle.setStatus({ status, error });
+    this._roomLifecycle.setStatus({ status, error });
   }
 
   private _releaseChannel() {

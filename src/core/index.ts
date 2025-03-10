@@ -11,7 +11,7 @@ export type {
   OnConnectionStatusChangeResponse,
 } from './connection.js';
 export { ConnectionStatus } from './connection.js';
-export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
+export type { DiscontinuityListener } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
 export type { MessageEvent, TypingEvent } from './events.js';
 export { ChatMessageActions, MessageEvents, PresenceEvents } from './events.js';
