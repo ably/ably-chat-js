@@ -106,32 +106,10 @@ describe('Room', () => {
         attachOnSubscribe: false,
       };
 
-      expect(context.realtime.channels.get).toHaveBeenCalledTimes(5);
+      expect(context.realtime.channels.get).toHaveBeenCalledOnce()
       expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
         1,
         room.messages.channel.name,
-        expectedChannelOptions,
-      );
-      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-        2,
-        room.messages.channel.name,
-        expectedChannelOptions,
-      );
-      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-        5,
-        room.messages.channel.name,
-        expectedChannelOptions,
-      );
-
-      // Check that the reactions and typing channels were called with the default options
-      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-        3,
-        room.typing.channel.name,
-        expectedChannelOptions,
-      );
-      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-        4,
-        room.reactions.channel.name,
         expectedChannelOptions,
       );
     });
@@ -255,23 +233,11 @@ describe('Room', () => {
       // The room lifecycle manager should have been released
       expect(lifecycleManager.release).toHaveBeenCalledTimes(1);
 
-      // Every underlying feature channel should have been released
-      expect(context.realtime.channels.release).toHaveBeenCalledTimes(5);
+      // The underlying channel should have been released
+      expect(context.realtime.channels.release).toHaveBeenCalledTimes(1);
 
       const messagesChannel = room.messages.channel;
       expect(context.realtime.channels.release).toHaveBeenCalledWith(messagesChannel.name);
-
-      const presenceChannel = room.presence.channel;
-      expect(context.realtime.channels.release).toHaveBeenCalledWith(presenceChannel.name);
-
-      const typingChannel = room.typing.channel;
-      expect(context.realtime.channels.release).toHaveBeenCalledWith(typingChannel.name);
-
-      const reactionsChannel = room.reactions.channel;
-      expect(context.realtime.channels.release).toHaveBeenCalledWith(reactionsChannel.name);
-
-      const occupancyChannel = room.occupancy.channel;
-      expect(context.realtime.channels.release).toHaveBeenCalledWith(occupancyChannel.name);
     });
 
     it<TestContext>('should only release with enabled features', async (context) => {
@@ -288,14 +254,12 @@ describe('Room', () => {
       // The room lifecycle manager should have been released
       expect(lifecycleManager.release).toHaveBeenCalledTimes(1);
 
-      // Every underlying feature channel should have been released
-      expect(context.realtime.channels.release).toHaveBeenCalledTimes(5);
+
+      // The underlying channel should have been released
+      expect(context.realtime.channels.release).toHaveBeenCalledOnce();
 
       const messagesChannel = room.messages.channel;
       expect(context.realtime.channels.release).toHaveBeenCalledWith(messagesChannel.name);
-
-      const typingChannel = room.typing.channel;
-      expect(context.realtime.channels.release).toHaveBeenCalledWith(typingChannel.name);
     });
 
     it<TestContext>('releasing multiple times is idempotent', async (context) => {
@@ -313,8 +277,8 @@ describe('Room', () => {
       await room.release();
       await room.release();
 
-      // Every underlying feature channel should have been released
-      expect(context.realtime.channels.release).toHaveBeenCalledTimes(5);
+      // Channel should have been released only once
+      expect(context.realtime.channels.release).toHaveBeenCalledTimes(1);
 
       // The room lifecycle manager should have been released only once
       expect(lifecycleManager.release).toHaveBeenCalledTimes(1);
