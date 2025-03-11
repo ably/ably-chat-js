@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
+import { StatusSubscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -87,16 +88,6 @@ export interface RoomStatusChange {
 export type RoomStatusListener = (change: RoomStatusChange) => void;
 
 /**
- * The response from the `onChange` method.
- */
-export interface OnRoomStatusChangeResponse {
-  /**
-   * Unregisters the listener that was added by the `onChange` method.
-   */
-  off: () => void;
-}
-
-/**
  * Represents the status of a Room.
  */
 export interface RoomLifecycle {
@@ -115,7 +106,7 @@ export interface RoomLifecycle {
    * @param listener The function to call when the status changes.
    * @returns An object that can be used to unregister the listener.
    */
-  onChange(listener: RoomStatusListener): OnRoomStatusChangeResponse;
+  onChange(listener: RoomStatusListener): StatusSubscription;
 
   /**
    * Removes all listeners that were added by the `onChange` method.
@@ -201,7 +192,7 @@ export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> impl
   /**
    * @inheritdoc
    */
-  onChange(listener: RoomStatusListener): OnRoomStatusChangeResponse {
+  onChange(listener: RoomStatusListener): StatusSubscription {
     this.on(listener);
 
     return {

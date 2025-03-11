@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
+import { StatusSubscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -104,7 +105,7 @@ export interface Connection {
    * @param listener The function to call when the status changes.
    * @returns An object that can be used to unregister the listener.
    */
-  onStatusChange(listener: ConnectionStatusListener): OnConnectionStatusChangeResponse;
+  onStatusChange(listener: ConnectionStatusListener): StatusSubscription;
 
   /**
    * Removes all listeners that were added by the `onStatusChange` method.
@@ -194,7 +195,7 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
   /**
    * @inheritdoc
    */
-  onStatusChange(listener: ConnectionStatusListener): OnConnectionStatusChangeResponse {
+  onStatusChange(listener: ConnectionStatusListener): StatusSubscription {
     this.on(listener);
 
     return {

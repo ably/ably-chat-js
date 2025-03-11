@@ -8,16 +8,11 @@ import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
-import { OnDiscontinuityResponse, RoomLifeCycleManager } from './room-lifecycle-manager.js';
+import { RoomLifeCycleManager } from './room-lifecycle-manager.js';
 import { InternalRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
-import {
-  DefaultRoomLifecycle,
-  InternalRoomLifecycle,
-  OnRoomStatusChangeResponse,
-  RoomStatus,
-  RoomStatusListener,
-} from './room-status.js';
+import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus, RoomStatusListener } from './room-status.js';
+import { StatusSubscription } from './subscription.js';
 import { DefaultTyping, Typing } from './typing.js';
 
 /**
@@ -86,7 +81,7 @@ export interface Room {
    * @param listener The function to call when the status changes.
    * @returns An object that can be used to unregister the listener.
    */
-  onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse;
+  onStatusChange(listener: RoomStatusListener): StatusSubscription;
 
   /**
    * Removes all listeners that were added by the `onStatusChange` method.
@@ -128,7 +123,7 @@ export interface Room {
    * @param handler The function to call when a discontinuity is detected.
    * @returns An object that can be used to unregister the handler.
    */
-  onDiscontinuity(handler: DiscontinuityListener): OnDiscontinuityResponse;
+  onDiscontinuity(handler: DiscontinuityListener): StatusSubscription;
 
   /**
    * Get the underlying Ably realtime channel used for the room.
@@ -295,7 +290,7 @@ export class DefaultRoom implements Room {
   /**
    * @inheritdoc Room
    */
-  onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse {
+  onStatusChange(listener: RoomStatusListener): StatusSubscription {
     return this._lifecycle.onChange(listener);
   }
 
@@ -366,7 +361,7 @@ export class DefaultRoom implements Room {
   /**
    * @inheritdoc Room
    */
-  onDiscontinuity(handler: DiscontinuityListener): OnDiscontinuityResponse {
+  onDiscontinuity(handler: DiscontinuityListener): StatusSubscription {
     this._logger.trace('Room.onDiscontinuity();', { nonce: this._nonce, roomId: this._roomId });
     return this._lifecycleManager.onDiscontinuity(handler);
   }

@@ -7,6 +7,7 @@ import { ErrorCodes } from './errors.js';
 import { RoomEvents } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomLifecycle, RoomStatus } from './room-status.js';
+import { StatusSubscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
@@ -124,7 +125,7 @@ export class RoomLifeCycleManager {
    * @param handler The function to be called when a discontinuity is detected
    * @returns An object with an off() method to deregister the handler
    */
-  onDiscontinuity(handler: DiscontinuityListener): OnDiscontinuityResponse {
+  onDiscontinuity(handler: DiscontinuityListener): StatusSubscription {
     this._logger.trace('RoomLifecycleManager.onDiscontinuity()');
     this._eventEmitter.on(RoomEvents.Discontinuity, handler);
     return {
