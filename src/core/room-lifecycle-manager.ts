@@ -11,13 +11,6 @@ import { StatusSubscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
 /**
- * Response from registering a discontinuity handler
- */
-export interface OnDiscontinuityResponse {
-  off: () => void;
-}
-
-/**
  * Events that can be emitted by the RoomLifeCycleManager
  */
 export interface RoomLifeCycleEvents {

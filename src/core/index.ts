@@ -4,12 +4,7 @@
 
 export { ChatClient } from './chat.js';
 export type { ChatClientOptions } from './config.js';
-export type {
-  Connection,
-  ConnectionStatusChange,
-  ConnectionStatusListener,
-  OnConnectionStatusChangeResponse,
-} from './connection.js';
+export type { Connection, ConnectionStatusChange, ConnectionStatusListener } from './connection.js';
 export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';

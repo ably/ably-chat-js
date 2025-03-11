@@ -77,16 +77,6 @@ export interface ConnectionStatusChange {
 export type ConnectionStatusListener = (change: ConnectionStatusChange) => void;
 
 /**
- * The response from the `onStatusChange` method.
- */
-export interface OnConnectionStatusChangeResponse {
-  /**
-   * Unregisters the listener that was added by the `onStatusChange` method.
-   */
-  off: () => void;
-}
-
-/**
  * Represents a connection to Ably.
  */
 export interface Connection {
