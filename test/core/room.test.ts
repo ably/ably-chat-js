@@ -68,27 +68,15 @@ describe('Room', () => {
   });
 
   describe.each([
-    ['typing timeout <0', 'typing timeout must be greater than 0', { typing: { timeoutMs: -1 } } as RoomOptions],
-    ['typing timeout =0', 'typing timeout must be greater than 0', { typing: { timeoutMs: 0 } } as RoomOptions],
     [
-      'typing timeout <0',
+      'heartbeat interval < 0',
       'typing heartbeat interval must be greater than 0',
-      { typing: { heartbeatIntervalMs: -1 } } as RoomOptions,
+      { typing: { heartbeatThrottleMs: -1 } } as RoomOptions,
     ],
     [
-      'typing timeout =0',
+      'heartbeat interval = 0',
       'typing heartbeat interval must be greater than 0',
-      { typing: { heartbeatIntervalMs: 0 } } as RoomOptions,
-    ],
-    [
-      'typing timeout <0',
-      'typing inactivity timeout must be greater than 0',
-      { typing: { inactivityTimeoutMs: -1 } } as RoomOptions,
-    ],
-    [
-      'typing timeout =0',
-      'typing inactivity timeout must be greater than 0',
-      { typing: { inactivityTimeoutMs: 0 } } as RoomOptions,
+      { typing: { heartbeatThrottleMs: 0 } } as RoomOptions,
     ],
   ])('feature configured', (description: string, reason: string, options: RoomOptions) => {
     it<TestContext>(`should throw an error when passed invalid options: ${description}`, (context) => {
@@ -103,9 +91,9 @@ describe('Room', () => {
 
   describe.each([
     [
-      'typing timeout',
-      { typing: { timeoutMs: 5, heartbeatIntervalMs: 10, inactivityTimeoutMs: 5 } },
-      (room: Room) => (room.typing as DefaultTyping).timeoutMs === 5,
+      'heartbeat interval timeout',
+      { typing: { heartbeatThrottleMs: 10 } },
+      (room: Room) => (room.typing as DefaultTyping).heartbeatThrottleMs === 10,
     ],
   ])('feature configured', (description: string, options: RoomOptions, checkFunc: (room: Room) => boolean) => {
     it<TestContext>(`should apply room options: ${description}`, (context) => {
@@ -148,11 +136,7 @@ describe('Room', () => {
         );
 
         // Check that the reactions and typing channels were called with the default options
-        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-          3,
-          room.typing.channel.name,
-          expectedMessagesChannelOptions,
-        );
+        expect(context.realtime.channels.get).toHaveBeenNthCalledWith(3, room.typing.channel.name, defaultOptions);
         expect(context.realtime.channels.get).toHaveBeenNthCalledWith(4, room.reactions.channel.name, defaultOptions);
       });
     },
