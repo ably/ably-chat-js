@@ -10,19 +10,19 @@ import { waitForRoomStatus } from '../helper/room.ts';
 describe('Rooms', () => {
   it('throws an error if you create the same room with different options', async () => {
     const chat = newChatClient({ logLevel: LogLevel.Silent });
-    await chat.rooms.get('test', { typing: { timeoutMs: 1000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 } });
-    await expect(
-      chat.rooms.get('test', { typing: { timeoutMs: 2000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 } }),
-    ).rejects.toBeErrorInfoWithCode(40000);
+    await chat.rooms.get('test', { typing: { heartbeatThrottleMs: 5000 } });
+    await expect(chat.rooms.get('test', { typing: { heartbeatThrottleMs: 6000 } })).rejects.toBeErrorInfoWithCode(
+      40000,
+    );
   });
 
   it('gets the same room if you create it with the same options', async () => {
     const chat = newChatClient();
     const room1 = await chat.rooms.get('test', {
-      typing: { timeoutMs: 1000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
+      typing: { heartbeatThrottleMs: 5000 },
     });
     const room2 = await chat.rooms.get('test', {
-      typing: { timeoutMs: 1000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
+      typing: { heartbeatThrottleMs: 5000 },
     });
     expect(room1).toBe(room2);
   });
@@ -31,13 +31,13 @@ describe('Rooms', () => {
     // Create a room, then release, then create another room with different options
     const chat = newChatClient();
     const room1 = await chat.rooms.get('test', {
-      typing: { timeoutMs: 1000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
+      typing: { heartbeatThrottleMs: 5000 },
     });
     await chat.rooms.release('test');
     const room = await chat.rooms.get('test', {
-      typing: { timeoutMs: 2000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
+      typing: { heartbeatThrottleMs: 5000 },
     });
-    expect(room.options().typing?.timeoutMs).toBe(2000);
+    expect(room.options().typing?.heartbeatThrottleMs).toBe(5000);
     expect(room).not.toBe(room1);
   });
 
@@ -47,21 +47,21 @@ describe('Rooms', () => {
     // an error if we were doing releases in the wrong order etc
     const chat = newChatClient();
     const room1 = await chat.rooms.get('test', {
-      typing: { timeoutMs: 1000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
+      typing: { heartbeatThrottleMs: 5000 },
       presence: AllFeaturesEnabled.presence,
     });
     await room1.attach();
     await chat.rooms.release('test');
 
     const room2 = await chat.rooms.get('test', {
-      typing: { timeoutMs: 2000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
+      typing: { heartbeatThrottleMs: 5000 },
       presence: AllFeaturesEnabled.presence,
     });
     await room2.attach();
     await chat.rooms.release('test');
 
     await chat.rooms.get('test', {
-      typing: { timeoutMs: 3000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
+      typing: { heartbeatThrottleMs: 5000 },
       presence: AllFeaturesEnabled.presence,
     });
     await chat.rooms.release('test');
@@ -71,7 +71,7 @@ describe('Rooms', () => {
     // Create a room, fail it, then release.
     const chat = newChatClient();
     const room = await chat.rooms.get('test', {
-      typing: { timeoutMs: 1000, inactivityTimeoutMs: 2000, heartbeatIntervalMs: 5000 },
+      typing: { heartbeatThrottleMs: 5000 },
     });
 
     // Make sure our room is attached

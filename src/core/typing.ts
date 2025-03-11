@@ -48,13 +48,9 @@ export interface Typing extends EmitsDiscontinuities {
   /**
    * Start indicates that the current user is typing.
    * This will emit a `typing.start` event to inform listening clients and begin a heartbeat timer,
-   * which can be configured through the `heartbeatIntervalMs` parameter.
+   * which can be configured through the `heartbeatThrottleMs` parameter.
    * If the current user is already typing, this will no-op until the heartbeat timer has elapsed,
    * at which point calling `start()` will restart the timer and emit a new `typing.start` heartbeat.
-   * If the `timeoutMs` parameter is defined in the supplied {@link TypingOptions},
-   * then calls to `start()` will also begin a separate timer.
-   * Once this timer expires, a `typing.stop` event will be emitted.
-   * Further calls to `start()` will restart this timer.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
@@ -104,13 +100,15 @@ export class DefaultTyping
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
-  // Timeout for typing
-  private readonly _timeoutMs: number | undefined;
-  private _timeoutTimerId: ReturnType<typeof setTimeout> | undefined;
-  private readonly _heartbeatIntervalMs: number;
+  // Throttle for the heartbeat, how often we should emit a typing event with repeated calls to start()
+  // CHA-T10
+  private readonly _heartbeatThrottleMs: number;
+
+  // Grace period for inactivity before another user is considered to have stopped typing
+  // CHA-T10a
+  private readonly _timeoutMs = 2000;
   private _heartbeatTimerId: ReturnType<typeof setTimeout> | undefined;
-  private readonly _inactivityTimeoutMs: number;
-  private _currentlyTyping: Map<string, ReturnType<typeof setTimeout> | undefined>;
+  private readonly _currentlyTyping: Map<string, ReturnType<typeof setTimeout> | undefined>;
 
   /**
    * Constructs a new `DefaultTyping` instance.
@@ -130,12 +128,9 @@ export class DefaultTyping
     super();
     this._clientId = clientId;
     this._channel = this._makeChannel(roomId, channelManager);
-    // Timeout for pause in typing
-    this._timeoutMs = options.timeoutMs;
-    // Timeout for inactivity, i.e. when we have not received a heartbeat for a configured time
-    this._inactivityTimeoutMs = options.inactivityTimeoutMs;
+
     // Interval for the heartbeat, how often we should emit a typing event with repeated calls to start()
-    this._heartbeatIntervalMs = options.heartbeatIntervalMs;
+    this._heartbeatThrottleMs = options.heartbeatThrottleMs;
 
     // Map of clientIds to their typing timers, used to track typing state
     this._currentlyTyping = new Map<string, ReturnType<typeof setTimeout> | undefined>();
@@ -172,38 +167,6 @@ export class DefaultTyping
   }
 
   /**
-   * Start the typing timeout timer. This will expire after the configured timeout.
-   */
-  private _setTimeoutTimer(): void {
-    // Don't set the timeout timer if the timeout is not configured
-    if (this._timeoutMs === undefined) {
-      return;
-    }
-
-    this._logger.trace(`DefaultTyping._setTimeoutTimer();`);
-    const timer = (this._timeoutTimerId = setTimeout(() => {
-      // CHA-T12b
-      this._logger.debug(`DefaultTyping._setTimeoutTimer(); timeout expired`);
-      void this.stop()
-        .catch((error: unknown) => {
-          this._logger.error(`DefaultTyping._setTimeoutTimer(); failed to stop typing`, { error });
-        })
-        .finally(() => {
-          if (timer === this._timeoutTimerId) {
-            this._timeoutTimerId = undefined;
-          }
-        });
-    }, this._timeoutMs));
-  }
-
-  private _resetTimeoutTimer(): void {
-    if (this._timeoutMs) {
-      clearTimeout(this._timeoutTimerId);
-      this._setTimeoutTimer();
-    }
-  }
-
-  /**
    * Start the heartbeat timer. This will expire after the configured interval.
    */
   private _startHeartbeatTimer(): void {
@@ -215,7 +178,7 @@ export class DefaultTyping
         if (timer === this._heartbeatTimerId) {
           this._heartbeatTimerId = undefined;
         }
-      }, this._heartbeatIntervalMs));
+      }, this._heartbeatThrottleMs));
     }
   }
 
@@ -235,19 +198,14 @@ export class DefaultTyping
     // CHA-T4c1, CHA-T4c2
     if (this._heartbeatTimerId) {
       this._logger.debug(`DefaultTyping.start(); no-op, already typing and heartbeat timer has not expired`);
-      this._resetTimeoutTimer();
       return;
     }
 
     // CHA-T4a3
     return this._channel.publish(ephemeralMessage(TypingEvents.Start)).then(() => {
       this._logger.trace(`DefaultTyping.start(); starting timers`);
-
       // CHA-T4a5
       this._startHeartbeatTimer();
-
-      // CHA-T4a4
-      this._setTimeoutTimer();
     });
   }
 
@@ -278,11 +236,6 @@ export class DefaultTyping
       if (this._heartbeatTimerId) {
         clearTimeout(this._heartbeatTimerId);
         this._heartbeatTimerId = undefined;
-      }
-      // Clear the timeout timer, if it exists
-      if (this._timeoutTimerId) {
-        clearTimeout(this._timeoutTimerId);
-        this._timeoutTimerId = undefined;
       }
     });
   }
@@ -350,11 +303,13 @@ export class DefaultTyping
       // Remove client whose timeout has expired
       this._currentlyTyping.delete(clientId);
       this.emit(TypingEvents.Stop, {
-        clientId,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
-        type: TypingEvents.Stop,
+        change: {
+          clientId,
+          type: TypingEvents.Stop,
+        },
       });
-    }, this._heartbeatIntervalMs + this._inactivityTimeoutMs);
+    }, this._heartbeatThrottleMs + this._timeoutMs);
     return timeoutId;
   }
 
@@ -381,9 +336,11 @@ export class DefaultTyping
       // Otherwise, we need to emit a new typing event
       this._logger.debug(`DefaultTyping._handleTypingStart(); new client started typing`, { clientId });
       this.emit(TypingEvents.Start, {
-        clientId,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
-        type: TypingEvents.Start,
+        change: {
+          clientId,
+          type: TypingEvents.Start,
+        },
       });
     }
 
@@ -408,9 +365,11 @@ export class DefaultTyping
     this._currentlyTyping.delete(clientId);
     // Emit stop event only when the client is removed
     this.emit(TypingEvents.Stop, {
-      clientId,
       currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
-      type: TypingEvents.Stop,
+      change: {
+        clientId,
+        type: TypingEvents.Stop,
+      },
     });
   }
 
@@ -455,16 +414,8 @@ export class DefaultTyping
     this._discontinuityEmitter.emit('discontinuity', reason);
   }
 
-  get timeoutMs(): number | undefined {
-    return this._timeoutMs;
-  }
-
-  get inactivityTimeoutMs(): number {
-    return this._inactivityTimeoutMs;
-  }
-
-  get heartbeatIntervalMs(): number {
-    return this._heartbeatIntervalMs;
+  get heartbeatThrottleMs(): number {
+    return this._heartbeatThrottleMs;
   }
 
   /**
@@ -482,10 +433,6 @@ export class DefaultTyping
   }
 
   // Convenience getters for testing
-  get timeoutTimerId(): ReturnType<typeof setTimeout> | undefined {
-    return this._timeoutTimerId;
-  }
-
   get heartbeatTimerId(): ReturnType<typeof setTimeout> | undefined {
     return this._heartbeatTimerId;
   }
