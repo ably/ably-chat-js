@@ -109,11 +109,13 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
       if (!newText) {
         return;
       }
-      update(message, {
-        text: newText,
-        metadata: message.metadata,
-        headers: message.headers,
-      })
+      update(
+        message.copy({
+          text: newText,
+          metadata: message.metadata,
+          headers: message.headers,
+        }),
+      )
         .then((updatedMessage: Message) => {
           handleRESTMessageUpdate(updatedMessage);
         })

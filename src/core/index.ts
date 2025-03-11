@@ -18,7 +18,14 @@ export { ChatMessageActions, MessageEvents, PresenceEvents } from './events.js';
 export type { Headers } from './headers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
-export type { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata, Operation } from './message.js';
+export type {
+  Message,
+  MessageCopyParams,
+  MessageHeaders,
+  MessageMetadata,
+  MessageOperationMetadata,
+  Operation,
+} from './message.js';
 export type {
   DeleteMessageParams,
   MessageListener,
@@ -28,7 +35,6 @@ export type {
   OrderBy,
   QueryOptions,
   SendMessageParams,
-  UpdateMessageParams,
 } from './messages.js';
 export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener } from './occupancy.js';

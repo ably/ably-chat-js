@@ -519,4 +519,128 @@ describe('ChatMessage', () => {
       expect(newMessage === message).toBe(true);
     });
   });
+
+  describe('message copy', () => {
+    it('copies a message with updated fields', () => {
+      const originalMessage = new DefaultMessage(
+        '01672531200000-123@abcdefghij',
+        'clientId',
+        'roomId',
+        'original text',
+        { key: 'value' },
+        { headerKey: 'headerValue' },
+        ChatMessageActions.MessageCreate,
+        'version1',
+        new Date(1672531200000),
+        new Date(1672531200000),
+      );
+
+      const copiedMessage = originalMessage.copy({
+        text: 'updated text',
+        metadata: { newKey: 'newValue' },
+      });
+
+      expect(copiedMessage.text).toBe('updated text');
+      expect(copiedMessage.metadata).toEqual({ newKey: 'newValue' });
+      expect(copiedMessage.headers).toEqual({ headerKey: 'headerValue' });
+      expect(copiedMessage.serial).toBe(originalMessage.serial);
+      expect(copiedMessage.clientId).toBe(originalMessage.clientId);
+      expect(copiedMessage.roomId).toBe(originalMessage.roomId);
+      expect(copiedMessage.action).toBe(originalMessage.action);
+      expect(copiedMessage.version).toBe(originalMessage.version);
+      expect(copiedMessage.createdAt).toEqual(originalMessage.createdAt);
+      expect(copiedMessage.timestamp).toEqual(originalMessage.timestamp);
+    });
+
+    it('copies a message without changes when no parameters are provided', () => {
+      const originalMessage = new DefaultMessage(
+        '01672531200000-123@abcdefghij',
+        'clientId',
+        'roomId',
+        'original text',
+        { key: 'value' },
+        { headerKey: 'headerValue' },
+        ChatMessageActions.MessageCreate,
+        'version1',
+        new Date(1672531200000),
+        new Date(1672531200000),
+      );
+
+      const copiedMessage = originalMessage.copy();
+
+      expect(copiedMessage.text).toBe(originalMessage.text);
+      expect(copiedMessage.metadata).toEqual(originalMessage.metadata);
+      expect(copiedMessage.headers).toEqual(originalMessage.headers);
+      expect(copiedMessage.serial).toBe(originalMessage.serial);
+      expect(copiedMessage.clientId).toBe(originalMessage.clientId);
+      expect(copiedMessage.roomId).toBe(originalMessage.roomId);
+      expect(copiedMessage.action).toBe(originalMessage.action);
+      expect(copiedMessage.version).toBe(originalMessage.version);
+      expect(copiedMessage.createdAt).toEqual(originalMessage.createdAt);
+      expect(copiedMessage.timestamp).toEqual(originalMessage.timestamp);
+    });
+
+    it('ensures deep copy of metadata and headers', () => {
+      const originalMessage = new DefaultMessage(
+        '01672531200000-123@abcdefghij',
+        'clientId',
+        'roomId',
+        'original text',
+        { key: 'value', nested: { key: 'nestedValue' } },
+        { headerKey: 'headerValue' },
+        ChatMessageActions.MessageCreate,
+        'version1',
+        new Date(1672531200000),
+        new Date(1672531200000),
+      );
+
+      const copiedMessage = originalMessage.copy();
+
+      // Modify the original message's metadata and headers
+      originalMessage.metadata.key = 'newValue';
+      originalMessage.headers.headerKey = 'newHeaderValue';
+
+      // Ensure the copied message's metadata and headers remain unchanged
+      expect(copiedMessage.metadata.key).toBe('value');
+      expect(copiedMessage.headers.headerKey).toBe('headerValue');
+
+      // Check the nested data is deep copied
+      const metadata = copiedMessage.metadata as { nested: { key: string } };
+      expect(metadata.nested.key).toBe('nestedValue');
+      expect(metadata.nested).not.toBe(originalMessage.metadata.nested);
+    });
+
+    it('ensures deep replacement of metadata and headers', () => {
+      const originalMessage = new DefaultMessage(
+        '01672531200000-123@abcdefghij',
+        'clientId',
+        'roomId',
+        'original text',
+        { key: 'value', nested: { key: 'nestedValue' } },
+        { headerKey: 'headerValue' },
+        ChatMessageActions.MessageCreate,
+        'version1',
+        new Date(1672531200000),
+        new Date(1672531200000),
+      );
+
+      const copiedMessage = originalMessage.copy({
+        metadata: { key: 'newValue', nested: { key: 'newNestedValue' } },
+      });
+
+      // Modify the original message's metadata and headers
+      originalMessage.metadata.key = 'abc';
+      originalMessage.headers.headerKey = 'def';
+
+      // Ensure the copied message's metadata and headers remain unchanged
+      expect(copiedMessage.headers).not.toBe(originalMessage.headers);
+
+      // Check the nested data is deep copied
+      expect(copiedMessage.metadata).not.toBe(originalMessage.metadata);
+      expect(copiedMessage.metadata.key).toEqual('newValue');
+      const metadata = copiedMessage.metadata as { nested: { key: string } };
+      expect(metadata.nested.key).toBe('newNestedValue');
+      expect(metadata.nested).not.toBe(originalMessage.metadata.nested);
+    });
+  });
 });

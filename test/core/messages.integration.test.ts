@@ -183,7 +183,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // send a message, and then update it
     const message1 = await room.messages.send({ text: 'Hello there!' });
-    const updated1 = await room.messages.update(message1, { text: 'bananas' });
+    const updated1 = await room.messages.update(message1.copy({ text: 'bananas' }));
 
     expect(updated1.text).toBe('bananas');
     expect(updated1.serial).toBe(message1.serial);
@@ -301,11 +301,9 @@ describe('messages integration', { timeout: 10000 }, () => {
     const message1 = await room.messages.send({ text: 'Hello there!' });
 
     // Update the message
-    const updatedMessage1 = await room.messages.update(
-      message1,
-      { text: 'Hello test!' },
-      { description: 'updated message' },
-    );
+    const updatedMessage1 = await room.messages.update(message1.copy({ text: 'Hello test!' }), {
+      description: 'updated message',
+    });
 
     // Do a history request to get the update message
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future

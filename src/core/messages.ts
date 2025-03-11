@@ -156,17 +156,6 @@ export interface SendMessageParams {
 }
 
 /**
- * Params for updating a message. It accepts all parameters that sending a
- * message accepts.
- *
- * Note that updating a message replaces the whole previous message, so all
- * metadata and headers that should be kept must be set in the update request,
- * or they will be lost.
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface UpdateMessageParams extends SendMessageParams {}
-
-/**
  * A listener for message events in a chat room.
  * @param event The message event that was received.
  */
@@ -258,12 +247,10 @@ export interface Messages extends EmitsDiscontinuities {
    * resolves.
    *
    * @param message The message to update.
-   * @param update The new message content including headers and metadata. This
-   * fully replaces the old content. Everything that's not set will be removed.
    * @param details Optional details to record about the update action.
    * @returns A promise of the updated message.
    */
-  update(message: Message, update: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
+  update(message: Message, details?: OperationDetails): Promise<Message>;
 
   /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
@@ -495,21 +482,25 @@ export class DefaultMessages
     );
   }
 
-  async update(message: Message, update: UpdateMessageParams, details?: OperationDetails): Promise<Message> {
-    this._logger.trace('Messages.update();', { message, update, details });
+  async update(message: Message, details?: OperationDetails): Promise<Message> {
+    this._logger.trace('Messages.update();', { message, details });
 
     const response = await this._chatApi.updateMessage(this._roomId, message.serial, {
+      message: {
+        text: message.text,
+        metadata: message.metadata,
+        headers: message.headers,
+      },
       ...details,
-      message: update,
     });
 
-    const updatedMessage = new DefaultMessage(
+    const updatedMessage: Message = new DefaultMessage(
       message.serial,
       message.clientId,
       this._roomId,
-      update.text,
-      update.metadata ?? {},
-      update.headers ?? {},
+      message.text,
+      message.metadata,
+      message.headers,
       ChatMessageActions.MessageUpdate,
       response.version,
       new Date(message.createdAt),
@@ -521,7 +512,7 @@ export class DefaultMessages
       },
     );
 
-    this._logger.debug('Messages.update(); message update successfully', { updatedMessage });
+    this._logger.debug('Messages.update(); message update successfully', { message });
     return updatedMessage;
   }
 
