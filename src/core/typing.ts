@@ -6,6 +6,8 @@ import { TypingEvent, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
 import { InternalTypingOptions } from './room-options.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { type TypingOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
