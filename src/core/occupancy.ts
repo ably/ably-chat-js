@@ -34,13 +34,6 @@ export interface Occupancy {
    * @returns A promise that resolves to the current occupancy of the chat room.
    */
   get(): Promise<OccupancyEvent>;
-
-  /**
-   * Get underlying Ably channel for occupancy events.
-   *
-   * @returns The underlying Ably channel for occupancy events.
-   */
-  get channel(): Ably.RealtimeChannel;
 }
 
 /**
@@ -138,13 +131,6 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
   async get(): Promise<OccupancyEvent> {
     this._logger.trace('Occupancy.get();');
     return this._chatApi.getOccupancy(this._roomId);
-  }
-
-  /**
-   * @inheritdoc Occupancy
-   */
-  get channel(): Ably.RealtimeChannel {
-    return this._channel;
   }
 
   /**

@@ -69,13 +69,15 @@ describe('Typing', () => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, context.logger);
     context.room = makeRandomRoom(context);
-    const channel = context.room.typing.channel;
+    const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
   });
 
   // CHA-T8
   it<TestContext>('uses the correct realtime channel', (context) => {
-    expect(context.room.typing.channel.name).toBe(`${context.room.roomId}::$chat`);
+    const typing = context.room.typing as DefaultTyping;
+
+    expect(typing.channel.name).toBe(`${context.room.roomId}::$chat`);
   });
 
   // CHA-T9
@@ -97,7 +99,7 @@ describe('Typing', () => {
     // CHA-T4d
     it<TestContext>('does not allow typing start if channel is not attached or attaching', async (context) => {
       const { room } = context;
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('detached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
       await expect(room.typing.start()).rejects.toBeErrorInfoWithCode(40000);
     });
@@ -105,12 +107,12 @@ describe('Typing', () => {
     // CHA-T4a
     it<TestContext>('starts typing', async (context) => {
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
       await room.typing.start();
@@ -140,12 +142,12 @@ describe('Typing', () => {
       context.room = makeRandomRoom(context);
 
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
       await room.typing.start();
@@ -167,12 +169,12 @@ describe('Typing', () => {
     // CHA-T4c1
     it<TestContext>('does not start typing if already typing', async (context) => {
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
       await room.typing.start();
@@ -200,12 +202,12 @@ describe('Typing', () => {
     // CHA-T4c2
     it<TestContext>('resets CHA-T3 timeout on second start typing call', async (context) => {
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
       await room.typing.start();
@@ -242,12 +244,12 @@ describe('Typing', () => {
       };
       context.room = makeRandomRoom(context);
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Mock the timers
 
@@ -278,12 +280,12 @@ describe('Typing', () => {
     // CHA-T12b1
     it<TestContext>('performs an explicit stop after CHA-T3 expiry', async (context) => {
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Mock the timers
 
@@ -332,12 +334,12 @@ describe('Typing', () => {
       };
       context.room = makeRandomRoom(context);
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Mock the timers
 
@@ -400,12 +402,12 @@ describe('Typing', () => {
       };
       context.room = makeRandomRoom(context);
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Mock the timers
 
@@ -426,7 +428,7 @@ describe('Typing', () => {
       expect(defaultTyping.heartbeatTimerId).toBeDefined();
 
       // The channel should be detached
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('detached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
       // Advance to the timeout
       await vi.advanceTimersToNextTimerAsync();
@@ -452,13 +454,13 @@ describe('Typing', () => {
     // CHA-T5a
     it<TestContext>('is no-op if stop called whilst not typing', async (context) => {
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If stop is called, the test should fail as the timer should not have expired
       vi.spyOn(room.typing, 'stop').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'publish').mockImplementation(async (): Promise<void> => {});
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Stop typing
       await room.typing.stop();
@@ -470,12 +472,12 @@ describe('Typing', () => {
     // CHA-T5c
     it<TestContext>('throws an error if typing.stop is called when the channel is not attached', async (context) => {
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
       await room.typing.start();
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('detached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
       await expect(room.typing.stop()).rejects.toBeErrorInfoWithCode(40000);
 
@@ -487,8 +489,8 @@ describe('Typing', () => {
       const { room } = context;
       // If stop is called, the test should fail as the timer should not have expired
       vi.spyOn(room.typing, 'stop').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'publish').mockImplementation(async (): Promise<void> => {});
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing - we will wait/type a few times to ensure the timer is resetting
       await room.typing.start();
@@ -510,12 +512,12 @@ describe('Typing', () => {
 
     it<TestContext>('when stop is called, immediately stops typing', async (context) => {
       const { realtime, room } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If stop is called, it should publish a leave message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing and then immediately stop typing
       await room.typing.start();

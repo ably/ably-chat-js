@@ -58,12 +58,6 @@ export interface Typing {
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
   stop(): Promise<void>;
-
-  /**
-   * Get the Ably realtime channel underpinning typing events.
-   * @returns The Ably realtime channel.
-   */
-  channel: Ably.RealtimeChannel;
 }
 
 /**

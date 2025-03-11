@@ -59,7 +59,7 @@ describe('occupancy', () => {
       presenceMembers: 0,
     });
 
-    const { name: channelName } = room.messages.channel;
+    const { name: channelName } = room.channel;
 
     // In a separate realtime client, attach to the same room
     const realtimeClient = ablyRealtimeClientWithToken();
@@ -129,7 +129,7 @@ describe('occupancy', () => {
 
     // In a separate realtime client, attach to the same room
     const realtimeClient = ablyRealtimeClientWithToken();
-    const { name: channelName } = room.messages.channel;
+    const { name: channelName } = room.channel;
     const realtimeChannel = realtimeClient.channels.get(channelName);
     await realtimeChannel.attach();
     await realtimeChannel.presence.enter();

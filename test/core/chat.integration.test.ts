@@ -49,7 +49,7 @@ describe('Chat', () => {
 
     const room = await chat.rooms.get('room');
 
-    const channelOptions = (room.messages.channel as unknown as { channelOptions: Ably.ChannelOptions }).channelOptions;
+    const channelOptions = (room.channel as unknown as { channelOptions: Ably.ChannelOptions }).channelOptions;
     expect(channelOptions.params).toEqual(
       expect.objectContaining({
         agent: CHANNEL_OPTIONS_AGENT_STRING_REACT,

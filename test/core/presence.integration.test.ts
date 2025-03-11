@@ -106,7 +106,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
   // Test for successful entering with clientId and custom user data
   it<TestContext>('successfully enter presence with clientId and custom user data', async (context) => {
-    const messageChannel = context.chatRoom.messages.channel;
+    const messageChannel = context.chatRoom.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
       context.realtime,
@@ -130,7 +130,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
   // Test for successful sending of presence update with clientId and custom user data
   it<TestContext>('should successfully send presence update with clientId and custom user data', async (context) => {
-    const messageChannel = context.chatRoom.messages.channel;
+    const messageChannel = context.chatRoom.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(context.realtime, 'update', messageChannelName, (member) => {
       expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(context.defaultTestClientId);
@@ -149,7 +149,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
   // Test for successful leaving of presence
   it<TestContext>('should successfully leave presence', async (context) => {
-    const messageChannel = context.chatRoom.messages.channel;
+    const messageChannel = context.chatRoom.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
       context.realtime,
@@ -174,7 +174,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
   // Test for successful fetching of presence users
   it<TestContext>('should successfully fetch presence users ', async (context) => {
-    const { name: channelName } = context.chatRoom.messages.channel;
+    const { name: channelName } = context.chatRoom.channel;
 
     // Connect 3 clients to the same channel
     const client1 = ablyRealtimeClient({ clientId: 'clientId1' }).channels.get(channelName);

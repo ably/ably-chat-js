@@ -23,7 +23,7 @@ describe('Occupancy', () => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
-    const channel = context.room.occupancy.channel;
+    const channel = context.room.channel;
     context.emulateOccupancyUpdate = channelEventEmitter(channel);
   });
 

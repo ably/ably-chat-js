@@ -153,12 +153,6 @@ export interface Presence {
    * Unsubscribe all listeners from all presence events.
    */
   unsubscribeAll(): void;
-
-  /**
-   * Get the underlying Ably realtime channel used for presence in this chat room.
-   * @returns The realtime channel.
-   */
-  get channel(): Ably.RealtimeChannel;
 }
 
 /**
@@ -195,14 +189,6 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
     void channel.presence.subscribe(this.subscribeToEvents.bind(this));
 
     return channel;
-  }
-
-  /**
-   * Get the underlying Ably realtime channel used for presence in this chat room.
-   * @returns The realtime channel.
-   */
-  get channel(): Ably.RealtimeChannel {
-    return this._channel;
   }
 
   /**

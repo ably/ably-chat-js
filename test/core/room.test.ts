@@ -106,12 +106,8 @@ describe('Room', () => {
         attachOnSubscribe: false,
       };
 
-      expect(context.realtime.channels.get).toHaveBeenCalledOnce()
-      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(
-        1,
-        room.messages.channel.name,
-        expectedChannelOptions,
-      );
+      expect(context.realtime.channels.get).toHaveBeenCalledOnce();
+      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(1, room.channel.name, expectedChannelOptions);
     });
   });
 
@@ -236,7 +232,7 @@ describe('Room', () => {
       // The underlying channel should have been released
       expect(context.realtime.channels.release).toHaveBeenCalledTimes(1);
 
-      const messagesChannel = room.messages.channel;
+      const messagesChannel = room.channel;
       expect(context.realtime.channels.release).toHaveBeenCalledWith(messagesChannel.name);
     });
 
@@ -254,11 +250,10 @@ describe('Room', () => {
       // The room lifecycle manager should have been released
       expect(lifecycleManager.release).toHaveBeenCalledTimes(1);
 
-
       // The underlying channel should have been released
       expect(context.realtime.channels.release).toHaveBeenCalledOnce();
 
-      const messagesChannel = room.messages.channel;
+      const messagesChannel = room.channel;
       expect(context.realtime.channels.release).toHaveBeenCalledWith(messagesChannel.name);
     });
 

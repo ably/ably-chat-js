@@ -129,6 +129,12 @@ export interface Room {
    * @returns An object that can be used to unregister the handler.
    */
   onDiscontinuity(handler: DiscontinuityListener): OnDiscontinuityResponse;
+
+  /**
+   * Get the underlying Ably realtime channel used for the room.
+   * @returns The realtime channel.
+   */
+  get channel(): Ably.RealtimeChannel;
 }
 
 export class DefaultRoom implements Room {
@@ -363,5 +369,12 @@ export class DefaultRoom implements Room {
   onDiscontinuity(handler: DiscontinuityListener): OnDiscontinuityResponse {
     this._logger.trace('Room.onDiscontinuity();', { nonce: this._nonce, roomId: this._roomId });
     return this._lifecycleManager.onDiscontinuity(handler);
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  get channel(): Ably.RealtimeChannel {
+    return this._channelManager.get();
   }
 }

@@ -47,7 +47,7 @@ describe('room-level reactions integration test', () => {
     const { chat } = context;
 
     const room = await getRandomRoom(chat);
-    const channel = room.messages.channel as RealtimeChannelWithOptions;
+    const channel = room.channel as RealtimeChannelWithOptions;
 
     expect(channel.channelOptions.params).toEqual(expect.objectContaining({ agent: CHANNEL_OPTIONS_AGENT_STRING }));
   });

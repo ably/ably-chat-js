@@ -254,13 +254,6 @@ export interface Messages {
    * @returns A promise of the updated message.
    */
   update(message: Message, update: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
-
-  /**
-   * Get the underlying Ably realtime channel used for the messages in this chat room.
-   *
-   * @returns The realtime channel.
-   */
-  get channel(): Ably.RealtimeChannel;
 }
 
 /**
@@ -441,13 +434,6 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
         }
       });
     });
-  }
-
-  /**
-   * @inheritdoc Messages
-   */
-  get channel(): Ably.RealtimeChannel {
-    return this._channel;
   }
 
   /**

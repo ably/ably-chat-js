@@ -89,14 +89,6 @@ export interface RoomReactions {
    * Unsubscribe all listeners from receiving room-level reaction events.
    */
   unsubscribeAll(): void;
-
-  /**
-   * Returns an instance of the Ably realtime channel used for room-level reactions.
-   * Avoid using this directly unless special features that cannot otherwise be implemented are needed.
-   *
-   * @returns The Ably realtime channel.
-   */
-  get channel(): Ably.RealtimeChannel;
 }
 
 interface RoomReactionEventsMap {
@@ -213,10 +205,6 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
     }
     this.emit(RoomReactionEvents.Reaction, reaction);
   };
-
-  get channel(): Ably.RealtimeChannel {
-    return this._channel;
-  }
 
   private _parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {
     try {
