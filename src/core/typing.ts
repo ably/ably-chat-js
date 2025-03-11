@@ -1,4 +1,5 @@
 import * as Ably from 'ably';
+import { E_CANCELED, Mutex } from 'async-mutex';
 
 import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
@@ -41,32 +42,47 @@ export interface Typing extends EmitsDiscontinuities {
 
   /**
    * Get the current typers, a set of clientIds.
-   * @returns A Promise of a set of clientIds that are currently typing.
+   * @returns The set of clientIds that are currently typing.
    */
   get(): Set<string>;
 
   /**
-   * Start indicates that the current user is typing.
-   * This will emit a `typing.start` event to inform listening clients and begin a heartbeat timer,
-   * which can be configured through the `heartbeatIntervalMs` parameter.
-   * If the current user is already typing, this will no-op until the heartbeat timer has elapsed,
-   * at which point calling `start()` will restart the timer and emit a new `typing.start` heartbeat.
-   * If the `timeoutMs` parameter is defined in the supplied {@link TypingOptions},
-   * then calls to `start()` will also begin a separate timer.
-   * Once this timer expires, a `typing.stop` event will be emitted.
-   * Further calls to `start()` will restart this timer.
+   * This will send a `typing.started` event to the server.
+   * Events are throttled according to the `heartbeatThrottleMs` room option.
+   * If an event has been sent within the interval, this operation is no-op.
    *
-   * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
+   *
+   * Calls to `keystroke()` and `stop()` are serialized and will always resolve in the correct order.
+   * - For example, if multiple `keystroke()` calls are made in quick succession before the first `keystroke()` call has
+   *   sent a `typing.started` event to the server, followed by one `stop()` call, the `stop()` call will execute
+   *   as soon as the first `keystroke()` call completes.
+   *   All intermediate `keystroke()` calls will be treated as no-ops.
+   * - The most recent operation (`keystroke()` or `stop()`) will always determine the final state, ensuring operations
+   *   resolve to a consistent and correct state.
+   *
+   * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
+   * @throws If the `RoomStatus` is not either `Attached` or `Attaching`.
+   * @throws If the operation fails to send the event to the server.
+   * @throws If there is a problem acquiring the mutex that controls serialization.
    */
-
-  start(): Promise<void>;
+  keystroke(): Promise<void>;
 
   /**
-   * Stop indicates that the current user has stopped typing.
-   * This will emit a `typing.stop` event to inform listening clients,
-   * and immediately clear any active timers.
+   * This will send a `typing.stopped` event to the server.
+   * If the user was not currently typing, this operation is no-op.
    *
-   * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
+   * Calls to `keystroke()` and `stop()` are serialized and will always resolve in the correct order.
+   * - For example, if multiple `keystroke()` calls are made in quick succession before the first `keystroke()` call has
+   *   sent a `typing.started` event to the server, followed by one `stop()` call, the `stop()` call will execute
+   *   as soon as the first `keystroke()` call completes.
+   *   All intermediate `keystroke()` calls will be treated as no-ops.
+   * - The most recent operation (`keystroke()` or `stop()`) will always determine the final state, ensuring operations
+   *   resolve to a consistent and correct state.
+   *
+   * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
+   * @throws If the `RoomStatus` is not either `Attached` or `Attaching`.
+   * @throws If the operation fails to send the event to the server.
+   * @throws If there is a problem acquiring the mutex that controls serialization.
    */
 
   stop(): Promise<void>;
@@ -93,6 +109,11 @@ interface TypingEventsMap {
 }
 
 /**
+ * Represents a timer handle that can be undefined.
+ */
+type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
+
+/**
  * @inheritDoc
  */
 export class DefaultTyping
@@ -104,13 +125,18 @@ export class DefaultTyping
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
-  // Timeout for typing
-  private readonly _timeoutMs: number | undefined;
-  private _timeoutTimerId: ReturnType<typeof setTimeout> | undefined;
-  private readonly _heartbeatIntervalMs: number;
-  private _heartbeatTimerId: ReturnType<typeof setTimeout> | undefined;
-  private readonly _inactivityTimeoutMs: number;
-  private _currentlyTyping: Map<string, ReturnType<typeof setTimeout> | undefined>;
+  // Throttle for the heartbeat, how often we should emit a typing event with repeated calls to keystroke()
+  // CHA-T10
+  private readonly _heartbeatThrottleMs: number;
+
+  // Grace period for inactivity before another user is considered to have stopped typing
+  // CHA-T10a
+  private readonly _timeoutMs = 2000;
+  private _heartbeatTimerId: TypingTimerHandle;
+  private readonly _currentlyTyping: Map<string, TypingTimerHandle>;
+
+  // Mutex for controlling `start` and `keystroke` operations
+  private readonly _mutex = new Mutex();
 
   /**
    * Constructs a new `DefaultTyping` instance.
@@ -130,15 +156,12 @@ export class DefaultTyping
     super();
     this._clientId = clientId;
     this._channel = this._makeChannel(roomId, channelManager);
-    // Timeout for pause in typing
-    this._timeoutMs = options.timeoutMs;
-    // Timeout for inactivity, i.e. when we have not received a heartbeat for a configured time
-    this._inactivityTimeoutMs = options.inactivityTimeoutMs;
+
     // Interval for the heartbeat, how often we should emit a typing event with repeated calls to start()
-    this._heartbeatIntervalMs = options.heartbeatIntervalMs;
+    this._heartbeatThrottleMs = options.heartbeatThrottleMs;
 
     // Map of clientIds to their typing timers, used to track typing state
-    this._currentlyTyping = new Map<string, ReturnType<typeof setTimeout> | undefined>();
+    this._currentlyTyping = new Map<string, TypingTimerHandle>();
     this._logger = logger;
   }
 
@@ -172,38 +195,6 @@ export class DefaultTyping
   }
 
   /**
-   * Start the typing timeout timer. This will expire after the configured timeout.
-   */
-  private _setTimeoutTimer(): void {
-    // Don't set the timeout timer if the timeout is not configured
-    if (this._timeoutMs === undefined) {
-      return;
-    }
-
-    this._logger.trace(`DefaultTyping._setTimeoutTimer();`);
-    const timer = (this._timeoutTimerId = setTimeout(() => {
-      // CHA-T12b
-      this._logger.debug(`DefaultTyping._setTimeoutTimer(); timeout expired`);
-      void this.stop()
-        .catch((error: unknown) => {
-          this._logger.error(`DefaultTyping._setTimeoutTimer(); failed to stop typing`, { error });
-        })
-        .finally(() => {
-          if (timer === this._timeoutTimerId) {
-            this._timeoutTimerId = undefined;
-          }
-        });
-    }, this._timeoutMs));
-  }
-
-  private _resetTimeoutTimer(): void {
-    if (this._timeoutMs) {
-      clearTimeout(this._timeoutTimerId);
-      this._setTimeoutTimer();
-    }
-  }
-
-  /**
    * Start the heartbeat timer. This will expire after the configured interval.
    */
   private _startHeartbeatTimer(): void {
@@ -215,40 +206,54 @@ export class DefaultTyping
         if (timer === this._heartbeatTimerId) {
           this._heartbeatTimerId = undefined;
         }
-      }, this._heartbeatIntervalMs));
+      }, this._heartbeatThrottleMs));
     }
   }
 
   /**
    * @inheritDoc
    */
-  async start(): Promise<void> {
-    this._logger.trace(`DefaultTyping.start();`);
+  async keystroke(): Promise<void> {
+    this._logger.trace(`DefaultTyping.keystroke();`);
+    this._mutex.cancel();
 
-    // CHA-T4d
-    if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-      this._logger.error(`DefaultTyping.start(); channel is not attached`, { state: this.channel.state });
-      throw new Ably.ErrorInfo('cannot start typing, channel is not attached', ErrorCodes.BadRequest, 400);
-    }
+    // Acquire a mutex
+    await this._mutex.acquire().catch((error: unknown) => {
+      if (error === E_CANCELED) {
+        this._logger.debug(`DefaultTyping.keystroke(); mutex was canceled by a later operation`);
+        return;
+      }
+      throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
+    });
+    try {
+      // CHA-T4d
+      // Ensure room is attached
+      if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
+        this._logger.error(`DefaultTyping.keystroke(); room is not in the correct state `, {
+          State: this.channel.state,
+        });
+        throw new Ably.ErrorInfo('cannot type, room is not in the correct state', 50000, 500);
+      }
 
-    // If the user is already typing, and the timer has not expired, do not send another heartbeat
-    // CHA-T4c1, CHA-T4c2
-    if (this._heartbeatTimerId) {
-      this._logger.debug(`DefaultTyping.start(); no-op, already typing and heartbeat timer has not expired`);
-      this._resetTimeoutTimer();
-      return;
-    }
+      // Check whether user is already typing before publishing again
+      // CHA-T4c1, CHA-T4c2
+      if (this._heartbeatTimerId) {
+        this._logger.debug(`DefaultTyping.keystroke(); no-op, already typing and heartbeat timer has not expired`);
+        return;
+      }
 
-    // CHA-T4a3
-    return this._channel.publish(ephemeralMessage(TypingEvents.Start)).then(() => {
-      this._logger.trace(`DefaultTyping.start(); starting timers`);
+      // Perform the publish
+      // CHA-T4a3
+      await this._channel.publish(ephemeralMessage(TypingEvents.Start));
 
+      // Start the timer after publishing
       // CHA-T4a5
       this._startHeartbeatTimer();
-
-      // CHA-T4a4
-      this._setTimeoutTimer();
-    });
+      this._logger.trace(`DefaultTyping.keystroke(); starting timers`);
+    } finally {
+      this._logger.trace(`DefaultTyping.keystroke(); releasing mutex`);
+      this._mutex.release();
+    }
   }
 
   /**
@@ -256,35 +261,42 @@ export class DefaultTyping
    */
   async stop(): Promise<void> {
     this._logger.trace(`DefaultTyping.stop();`);
-    // If the user is not typing, do nothing.
-    // CHA-T5a
-    if (!this._heartbeatTimerId) {
-      this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`);
-      return;
-    }
 
-    // CHA-T5c
-    if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-      this._logger.error(`DefaultTyping.stop(); channel is not attached`, { state: this.channel.state });
-      throw new Ably.ErrorInfo('cannot stop typing, channel is not attached', ErrorCodes.BadRequest, 400);
-    }
+    this._mutex.cancel();
+    // Acquire a mutex
+    await this._mutex.acquire().catch((error: unknown) => {
+      if (error === E_CANCELED) {
+        this._logger.debug(`DefaultTyping.stop(); mutex was canceled by a later operation`);
+        return;
+      }
+      throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
+    });
+    try {
+      // CHA-T5c
+      if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
+        this._logger.error(`DefaultTyping.stop(); room is not in the correct state `, { State: this.channel.state });
+        throw new Ably.ErrorInfo('cannot stop typing, room is not in the correct state', 50000, 500);
+      }
 
-    // CHA-T5d
-    return this._channel.publish(ephemeralMessage(TypingEvents.Stop)).then(() => {
+      // If the user is not typing, do nothing.
+      // CHA-T5a
+      if (!this._heartbeatTimerId) {
+        this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`);
+        return;
+      }
+
+      // CHA-T5d
+      await this._channel.publish(ephemeralMessage(TypingEvents.Stop));
       this._logger.trace(`DefaultTyping.stop(); clearing timers`);
 
       // CHA-T5e
       // Clear the heartbeat timer
-      if (this._heartbeatTimerId) {
-        clearTimeout(this._heartbeatTimerId);
-        this._heartbeatTimerId = undefined;
-      }
-      // Clear the timeout timer, if it exists
-      if (this._timeoutTimerId) {
-        clearTimeout(this._timeoutTimerId);
-        this._timeoutTimerId = undefined;
-      }
-    });
+      clearTimeout(this._heartbeatTimerId);
+      this._heartbeatTimerId = undefined;
+    } finally {
+      this._logger.trace(`DefaultTyping.stop(); releasing mutex`);
+      this._mutex.release();
+    }
   }
 
   /**
@@ -320,12 +332,10 @@ export class DefaultTyping
   private _updateCurrentlyTyping(clientId: string, event: TypingEvents): void {
     this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { clientId, event });
 
-    const existingTimeout = this._currentlyTyping.get(clientId);
-
     if (event === TypingEvents.Start) {
-      this._handleTypingStart(clientId, existingTimeout);
+      this._handleTypingStart(clientId);
     } else {
-      this._handleTypingStop(clientId, existingTimeout);
+      this._handleTypingStop(clientId);
     }
   }
 
@@ -351,23 +361,26 @@ export class DefaultTyping
       // Remove client whose timeout has expired
       this._currentlyTyping.delete(clientId);
       this.emit(TypingEvents.Stop, {
-        clientId,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
-        type: TypingEvents.Stop,
+        change: {
+          clientId,
+          type: TypingEvents.Stop,
+        },
       });
-    }, this._heartbeatIntervalMs + this._inactivityTimeoutMs);
+    }, this._heartbeatThrottleMs + this._timeoutMs);
     return timeoutId;
   }
 
   /**
    * Handles logic for TypingEvents.Start, including starting a new timeout or resetting an existing one.
    * @param clientId
-   * @param existingTimeout
    */
-  private _handleTypingStart(clientId: string, existingTimeout: NodeJS.Timeout | undefined): void {
+  private _handleTypingStart(clientId: string): void {
     this._logger.debug(`DefaultTyping._handleTypingStart();`, { clientId });
     // Start a new timeout for the client
     const timeoutId = this._startNewClientInactivityTimer(clientId);
+
+    const existingTimeout = this._currentlyTyping.get(clientId);
 
     // Set the new timeout for the client
     this._currentlyTyping.set(clientId, timeoutId);
@@ -382,21 +395,25 @@ export class DefaultTyping
       // Otherwise, we need to emit a new typing event
       this._logger.debug(`DefaultTyping._handleTypingStart(); new client started typing`, { clientId });
       this.emit(TypingEvents.Start, {
-        clientId,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
-        type: TypingEvents.Start,
+        change: {
+          clientId,
+          type: TypingEvents.Start,
+        },
       });
     }
-
-    // Track the new timeout
-    this._currentlyTyping.set(clientId, timeoutId);
   }
 
-  // Handles logic for TypingEvents.Stop
-  private _handleTypingStop(clientId: string, existingTimeout: NodeJS.Timeout | undefined): void {
+  /**
+   * Handles logic for TypingEvents.Stop, including clearing the timeout for the client.
+   * @param clientId
+   * @private
+   */
+  private _handleTypingStop(clientId: string): void {
+    const existingTimeout = this._currentlyTyping.get(clientId);
     if (!existingTimeout) {
       // Stop requested for a client that isn't currently typing
-      this._logger.warn(
+      this._logger.trace(
         `DefaultTyping._handleTypingStop(); received "Stop" event for client not in currentlyTyping list`,
         { clientId },
       );
@@ -409,9 +426,11 @@ export class DefaultTyping
     this._currentlyTyping.delete(clientId);
     // Emit stop event only when the client is removed
     this.emit(TypingEvents.Stop, {
-      clientId,
       currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
-      type: TypingEvents.Stop,
+      change: {
+        clientId,
+        type: TypingEvents.Stop,
+      },
     });
   }
 
@@ -422,13 +441,8 @@ export class DefaultTyping
     const { name, clientId } = inbound;
     this._logger.trace(`DefaultTyping._internalSubscribeToEvents(); received event`, { name, clientId });
 
-    if (clientId === undefined) {
-      this._logger.error(`DefaultTyping._internalSubscribeToEvents(); missing clientId in event payload`, { inbound });
-      return;
-    }
-
-    if (clientId === '') {
-      this._logger.error(`DefaultTyping._internalSubscribeToEvents(); empty clientId in event payload`, { inbound });
+    if (!clientId) {
+      this._logger.error(`DefaultTyping._internalSubscribeToEvents(); invalid clientId in received event`, { inbound });
       return;
     }
 
@@ -457,16 +471,8 @@ export class DefaultTyping
     this._discontinuityEmitter.emit('discontinuity', reason);
   }
 
-  get timeoutMs(): number | undefined {
-    return this._timeoutMs;
-  }
-
-  get inactivityTimeoutMs(): number {
-    return this._inactivityTimeoutMs;
-  }
-
-  get heartbeatIntervalMs(): number {
-    return this._heartbeatIntervalMs;
+  get heartbeatThrottleMs(): number {
+    return this._heartbeatThrottleMs;
   }
 
   /**
@@ -481,18 +487,5 @@ export class DefaultTyping
    */
   get detachmentErrorCode(): ErrorCodes {
     return ErrorCodes.TypingDetachmentFailed;
-  }
-
-  // Convenience getters for testing
-  get timeoutTimerId(): ReturnType<typeof setTimeout> | undefined {
-    return this._timeoutTimerId;
-  }
-
-  get heartbeatTimerId(): ReturnType<typeof setTimeout> | undefined {
-    return this._heartbeatTimerId;
-  }
-
-  get currentlyTyping(): Map<string, ReturnType<typeof setTimeout> | undefined> {
-    return this._currentlyTyping;
   }
 }

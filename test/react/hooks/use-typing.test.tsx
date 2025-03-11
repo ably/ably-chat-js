@@ -47,9 +47,7 @@ describe('useTyping', () => {
   beforeEach(() => {
     // create a new mock room before each test, enabling typing
     vi.resetAllMocks();
-    updateMockRoom(
-      makeRandomRoom({ options: { typing: { timeoutMs: 500, inactivityTimeoutMs: 1000, heartbeatIntervalMs: 500 } } }),
-    );
+    updateMockRoom(makeRandomRoom({ options: { typing: { heartbeatThrottleMs: 500 } } }));
     mockLogger = makeTestLogger();
   });
 
@@ -93,7 +91,10 @@ describe('useTyping', () => {
     await waitForEventualHookValueToBeDefined(result, (value) => value.typingIndicators);
 
     // verify that subscribe was called with the mock listener on mount by triggering an event
-    const typingEvent = { clientId: 'someClientId', currentlyTyping: new Set<string>(), type: TypingEvents.Stop };
+    const typingEvent = {
+      change: { clientId: 'someClientId', type: TypingEvents.Stop },
+      currentlyTyping: new Set<string>(),
+    };
     for (const listener of mockTyping.listeners) {
       listener(typingEvent);
     }
@@ -104,19 +105,19 @@ describe('useTyping', () => {
     expect(mockUnsubscribe).toHaveBeenCalled();
   });
 
-  it('should correctly call the typing start method', async () => {
+  it('should correctly call the typing keystroke method', async () => {
     const { result } = renderHook(() => useTyping());
 
-    // spy on the start method of the typing instance
-    const startSpy = vi.spyOn(mockRoom.typing, 'start').mockImplementation(() => Promise.resolve());
+    // spy on the keystroke method of the typing instance
+    const keystrokeSpy = vi.spyOn(mockRoom.typing, 'keystroke').mockImplementation(() => Promise.resolve());
 
-    // call the start method
+    // call the keystroke method
     await act(async () => {
-      await result.current.start();
+      await result.current.keystroke();
     });
 
-    // verify that the start method was called
-    expect(startSpy).toHaveBeenCalled();
+    // verify that the keystroke method was called
+    expect(keystrokeSpy).toHaveBeenCalled();
   });
 
   it('should correctly call the typing stop method', async () => {
@@ -166,7 +167,7 @@ describe('useTyping', () => {
     // emit a typing event which should update the DOM
     act(() => {
       if (subscribedListener) {
-        subscribedListener({ clientId: 'user2', currentlyTyping: testSet, type: TypingEvents.Start });
+        subscribedListener({ change: { clientId: 'user2', type: TypingEvents.Start }, currentlyTyping: testSet });
       }
     });
 
@@ -213,9 +214,7 @@ describe('useTyping', () => {
       makeRandomRoom({
         options: {
           typing: {
-            timeoutMs: 500,
-            inactivityTimeoutMs: 1000,
-            heartbeatIntervalMs: 500,
+            heartbeatThrottleMs: 500,
           },
         },
       }),
