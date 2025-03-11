@@ -130,6 +130,7 @@ describe('useMessages', () => {
         with: vi.fn(),
         headers: {},
         metadata: {},
+        copy: vi.fn(),
       },
     };
     for (const listener of messageListeners) listener(messageEvent);

@@ -157,12 +157,11 @@ describe('useMessages', () => {
         if (roomStatus === RoomStatus.Attached) {
           void send({ text: 'hello world' }).then((message) => {
             void update(
-              message,
-              {
+              message.copy({
                 text: 'hello universe',
                 metadata: { icon: 'universe' },
                 headers: { awesome: 'yes' },
-              },
+              }),
               {
                 description: 'make it better',
                 metadata: { something: 'else' },

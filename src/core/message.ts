@@ -230,6 +230,34 @@ export interface Message {
    *    as an event for an old version, the same message is returned (not a copy).
    */
   with(event: MessageEvent): Message;
+
+  /**
+   * Creates a copy of the message with fields replaced per the parameters.
+   *
+   * @param params The parameters to replace in the message.
+   * @return The message copy.
+   */
+  copy(params?: MessageCopyParams): Message;
+}
+
+/**
+ * Parameters for copying a message.
+ */
+export interface MessageCopyParams {
+  /**
+   * The text of the copied message.
+   */
+  text?: string;
+
+  /**
+   * The metadata of the copied message.
+   */
+  metadata?: MessageMetadata;
+
+  /**
+   * The headers of the copied message.
+   */
+  headers?: MessageHeaders;
 }
 
 /**
@@ -329,5 +357,26 @@ export class DefaultMessage implements Message {
     }
 
     return this.version >= event.message.version ? this : event.message;
+  }
+
+  copy(params: MessageCopyParams = {}): Message {
+    return DefaultMessage._clone(this, params);
+  }
+
+  // Clone a message, optionally replace the given fields
+  private static _clone(source: Message, replace?: Partial<Message>): DefaultMessage {
+    return new DefaultMessage(
+      replace?.serial ?? source.serial,
+      replace?.clientId ?? source.clientId,
+      replace?.roomId ?? source.roomId,
+      replace?.text ?? source.text,
+      replace?.metadata ?? structuredClone(source.metadata),
+      replace?.headers ?? structuredClone(source.headers),
+      replace?.action ?? source.action,
+      replace?.version ?? source.version,
+      replace?.createdAt ?? source.createdAt,
+      replace?.timestamp ?? source.timestamp,
+      replace?.operation ?? structuredClone(source.operation),
+    );
   }
 }

@@ -10,7 +10,6 @@ import {
   OperationDetails,
   QueryOptions,
   SendMessageParams,
-  UpdateMessageParams,
 } from '../../core/messages.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
@@ -117,8 +116,8 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
   const update = useCallback(
-    (message: Message, update: UpdateMessageParams, details?: OperationDetails) =>
-      context.room.then((room) => room.messages.update(message, update, details)),
+    (message: Message, details?: OperationDetails) =>
+      context.room.then((room) => room.messages.update(message, details)),
     [context],
   );
 
