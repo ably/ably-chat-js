@@ -10,6 +10,7 @@ import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.ts';
 import { newChatClient } from '../helper/chat.ts';
+import { waitForArrayLength } from '../helper/common.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { getRandomRoom, waitForRoomStatus } from '../helper/room.ts';
@@ -17,21 +18,6 @@ import { getRandomRoom, waitForRoomStatus } from '../helper/room.ts';
 interface TestContext {
   chat: ChatClient;
 }
-
-const waitForMessages = (messages: Message[], expectedCount: number) => {
-  return new Promise<void>((resolve, reject) => {
-    const interval = setInterval(() => {
-      if (messages.length === expectedCount) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-    setTimeout(() => {
-      clearInterval(interval);
-      reject(new Error('Timed out waiting for messages'));
-    }, 3000);
-  });
-};
 
 describe('messages integration', { timeout: 10000 }, () => {
   beforeEach<TestContext>((context) => {
@@ -65,7 +51,7 @@ describe('messages integration', { timeout: 10000 }, () => {
     const message2 = await room.messages.send({ text: 'I have the high ground!' });
 
     // Wait up to 5 seconds for the messagesPromise to resolve
-    await waitForMessages(messages, 2);
+    await waitForArrayLength(messages, 2);
 
     // Check that the messages were received
     expect(messages).toEqual([
@@ -127,8 +113,8 @@ describe('messages integration', { timeout: 10000 }, () => {
     expect(deletedMessage1.deletedBy).toEqual(deletedMessage1.operation?.clientId);
 
     // Wait up to 5 seconds for the promises to resolve
-    await waitForMessages(messages, 1);
-    await waitForMessages(deletions, 1);
+    await waitForArrayLength(messages, 1);
+    await waitForArrayLength(deletions, 1);
 
     // Check that the message was received
     expect(messages).toEqual([
@@ -192,8 +178,8 @@ describe('messages integration', { timeout: 10000 }, () => {
     expect(updated1.updatedBy).toBe(chat.clientId);
 
     // Wait up to 5 seconds for the promises to resolve
-    await waitForMessages(messages, 1);
-    await waitForMessages(updates, 1);
+    await waitForArrayLength(messages, 1);
+    await waitForArrayLength(updates, 1);
 
     // Check that the message was received
     expect(messages).toEqual([
@@ -564,7 +550,7 @@ describe('messages integration', { timeout: 10000 }, () => {
     });
 
     // Wait up to 5 seconds for the messagesPromise to resolve
-    await waitForMessages(messages, 2);
+    await waitForArrayLength(messages, 2);
 
     const expectedMessages = [
       {

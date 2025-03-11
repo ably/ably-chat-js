@@ -9,22 +9,8 @@ import { usePresenceListener } from '../../../src/react/hooks/use-presence-liste
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
+import { waitForArrayLength } from '../../helper/common.ts';
 import { randomRoomId } from '../../helper/identifier.ts';
-
-function waitForPresenceEvents(presenceEvents: PresenceEvent[], expectedCount: number) {
-  return new Promise<void>((resolve, reject) => {
-    const interval = setInterval(() => {
-      if (presenceEvents.length === expectedCount) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-    setTimeout(() => {
-      clearInterval(interval);
-      reject(new Error('Timed out waiting for presence events'));
-    }, 10000);
-  });
-}
 
 describe('usePresenceListener', () => {
   afterEach(() => {
@@ -90,7 +76,7 @@ describe('usePresenceListener', () => {
     await roomTwo.presence.update('test update');
 
     // expect a presence enter and update event from the test component to be received
-    await waitForPresenceEvents(presenceEventsReceived, 2);
+    await waitForArrayLength(presenceEventsReceived, 2);
     expect(presenceEventsReceived[0]?.clientId).toBe(chatClientTwo.clientId);
     expect(presenceEventsReceived[0]?.data).toBe('test enter');
     expect(presenceEventsReceived[1]?.clientId).toBe(chatClientTwo.clientId);

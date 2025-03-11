@@ -6,6 +6,7 @@ import { ChatApi } from '../../src/core/chat-api.ts';
 import { Room } from '../../src/core/room.ts';
 import { DefaultTyping, TypingEvent } from '../../src/core/typing.ts';
 import { ChannelEventEmitterReturnType, channelPresenceEventEmitter } from '../helper/channel.ts';
+import { waitForArrayLength } from '../helper/common.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
@@ -37,25 +38,6 @@ function presenceGetResponse(clientIds: Iterable<string>): Ably.PresenceMessage[
   }
   return res;
 }
-
-// Wait for the messages to be received
-const waitForMessages = (messages: TypingEvent[], expectedCount: number, timeout?: number) => {
-  if (timeout === undefined) {
-    timeout = 3000;
-  }
-  return new Promise<void>((resolve, reject) => {
-    const interval = setInterval(() => {
-      if (messages.length === expectedCount) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-    setTimeout(() => {
-      clearInterval(interval);
-      reject(new Error('Timed out waiting for messages'));
-    }, timeout);
-  });
-};
 
 describe('Typing', () => {
   beforeEach<TestContext>((context) => {
@@ -136,7 +118,7 @@ describe('Typing', () => {
       action: 'enter',
     });
 
-    await waitForMessages(receivedEvents, 1);
+    await waitForArrayLength(receivedEvents, 1);
     expect(channel.presence.get).toBeCalledTimes(1);
 
     // Ensure that the listener received the event
@@ -158,7 +140,7 @@ describe('Typing', () => {
     });
 
     // wait for check events to be length 2 to make sure second event was triggered
-    await waitForMessages(allEvents, 2);
+    await waitForArrayLength(allEvents, 2);
     expect(channel.presence.get).toBeCalledTimes(2);
     expect(allEvents.length).toEqual(2);
     expect(allEvents[1]?.currentlyTyping).toEqual(new Set(['otherClient', 'anotherClient']));
@@ -199,7 +181,7 @@ describe('Typing', () => {
       action: 'enter',
     });
 
-    await waitForMessages(receivedEvents, 1);
+    await waitForArrayLength(receivedEvents, 1);
     expect(channel.presence.get).toBeCalledTimes(1);
 
     // Ensure that the listener received the event
@@ -208,7 +190,7 @@ describe('Typing', () => {
       currentlyTyping: new Set(['otherClient']),
     });
 
-    await waitForMessages(receivedEvents2, 1);
+    await waitForArrayLength(receivedEvents2, 1);
     // Ensure that the second listener received the event
     expect(receivedEvents2).toHaveLength(1);
     expect(receivedEvents2[0]).toEqual({
@@ -230,7 +212,7 @@ describe('Typing', () => {
       clientId: 'anotherClient2',
       action: 'enter',
     });
-    await waitForMessages(checkEvents, 1);
+    await waitForArrayLength(checkEvents, 1);
     expect(channel.presence.get).toBeCalledTimes(2);
     expect(checkEvents[0]?.currentlyTyping).toEqual(new Set(['otherClient', 'anotherClient2']));
 
@@ -314,7 +296,7 @@ describe('Typing', () => {
 
     returnSet.add('client1');
     simulateEnter('client1');
-    await waitForMessages(events, 1); // must be one event here
+    await waitForArrayLength(events, 1); // must be one event here
 
     // these aren't faked in the presence.get() so should not trigger an event but only a call to presence.get
     simulateEnter('client2');
@@ -326,7 +308,7 @@ describe('Typing', () => {
     returnSet.add('client4');
 
     simulateEnter('client4');
-    await waitForMessages(events, 2); // expecting only two events
+    await waitForArrayLength(events, 2); // expecting only two events
     expect(channel.presence.get).toBeCalledTimes(calledTimes);
     expect(events).toHaveLength(2);
     expect(events[0]?.currentlyTyping).toEqual(new Set(['client1'])); // first event unchanged
@@ -363,7 +345,7 @@ describe('Typing', () => {
       action: 'enter',
     });
 
-    await waitForMessages(events, 1, 4000); // must be one event here but extra wait time for the retry
+    await waitForArrayLength(events, 1, 4000); // must be one event here but extra wait time for the retry
     expect(channel.presence.get).toBeCalledTimes(2); // second call for the retry
     expect(events).toHaveLength(1);
     expect(events[0]?.currentlyTyping).toEqual(new Set(['client1']));

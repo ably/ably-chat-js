@@ -2,7 +2,7 @@
 import * as Ably from 'ably';
 import { PresenceAction, Realtime } from 'ably';
 import { dequal } from 'dequal';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { PresenceEvents } from '../../src/core/events.ts';
@@ -30,22 +30,14 @@ const waitForPresenceEvent = async (
   clientId: string,
   data?: unknown,
 ) => {
-  return new Promise<void>((resolve, reject) => {
-    const interval = setInterval(() => {
-      for (const event of events) {
-        if (event.action === action && dequal(event.data, data) && event.clientId === clientId) {
-          clearInterval(interval);
-          resolve();
-        }
-      }
-    }, 100);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      const eventType = Array.isArray(action) ? action.join(',') : action;
-      reject(new Error('Timed out waiting for presence event of type ' + eventType));
-    }, 20000);
-  });
+  await vi.waitFor(
+    () => {
+      expect(
+        events.some((event) => event.action === action && dequal(event.data, data) && event.clientId === clientId),
+      ).toBe(true);
+    },
+    { timeout: 20000, interval: 100 },
+  );
 };
 
 // Wait a maximum of 10 seconds to assert that a presence event has not been received
@@ -71,30 +63,27 @@ const assertNoPresenceEvent = async (events: PresenceEvent[], action: PresenceEv
 
 // Helper function to wait for an event and run an expectation function on the received message
 // Wait a maximum of 3 seconds for the event to be received
-const waitForEvent = (
+const waitForEvent = async (
   realtimeClient: Realtime,
   event: PresenceAction | PresenceAction[],
   realtimeChannelName: string,
   expectationFn: (member: Ably.PresenceMessage) => void,
 ) => {
-  return new Promise<void>((resolve, reject) => {
-    const presence = realtimeClient.channels.get(realtimeChannelName).presence;
-    const timeout = setTimeout(() => {
-      const eventString = Array.isArray(event) ? event.join(',') : event;
-      reject(new Error('Timed out waiting for presence event of type ' + eventString));
-    }, 3000);
+  const presence = realtimeClient.channels.get(realtimeChannelName).presence;
+  let lastMember: Ably.PresenceMessage;
+  const waitFor = vi.waitFor(
+    () => {
+      expect(lastMember).toBeDefined();
+      expectationFn(lastMember as unknown as Ably.PresenceMessage);
+    },
+    { timeout: 3000 },
+  );
 
-    presence
-      .subscribe(event, (member) => {
-        clearTimeout(timeout);
-        expectationFn(member);
-        resolve();
-      })
-      .catch((error: unknown) => {
-        clearTimeout(timeout);
-        reject(error as Error);
-      });
+  await presence.subscribe(event, (member) => {
+    lastMember = member;
   });
+
+  return waitFor;
 };
 
 describe('UserPresence', { timeout: 30000 }, () => {

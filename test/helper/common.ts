@@ -1,3 +1,5 @@
+import { expect, vi } from 'vitest';
+
 import { OccupancyEvent } from '../../src/core/occupancy.ts';
 
 export function waitForExpectedInbandOccupancy(
@@ -5,23 +7,25 @@ export function waitForExpectedInbandOccupancy(
   expectedOccupancy: OccupancyEvent,
   timeoutMs: number,
 ): Promise<void> {
-  return new Promise<void>((resolve) => {
-    const interval = setInterval(() => {
+  return vi.waitFor(
+    () => {
       const occupancy = occupancyEvents.find(
         (occupancy) =>
           occupancy.connections === expectedOccupancy.connections &&
           occupancy.presenceMembers === expectedOccupancy.presenceMembers,
       );
 
-      if (occupancy) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 1000);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      resolve();
-    }, timeoutMs);
-  });
+      expect(occupancy).toBeDefined();
+    },
+    { timeout: timeoutMs, interval: 1000 },
+  );
 }
+
+export const waitForArrayLength = async (array: unknown[], expectedCount: number, timeoutMs = 3000): Promise<void> => {
+  await vi.waitFor(
+    () => {
+      expect(array.length).toBe(expectedCount);
+    },
+    { timeout: timeoutMs, interval: 100 },
+  );
+};

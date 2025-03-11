@@ -12,22 +12,8 @@ import { useMessages } from '../../../src/react/hooks/use-messages.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
+import { waitForArrayLength } from '../../helper/common.ts';
 import { randomRoomId } from '../../helper/identifier.ts';
-
-function waitForMessages(messages: Message[], expectedCount: number) {
-  return new Promise<void>((resolve, reject) => {
-    const interval = setInterval(() => {
-      if (messages.length === expectedCount) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-    setTimeout(() => {
-      clearInterval(interval);
-      reject(new Error('Timed out waiting for messages'));
-    }, 5000);
-  });
-}
 
 describe('useMessages', () => {
   afterEach(() => {
@@ -74,7 +60,7 @@ describe('useMessages', () => {
     render(<TestProvider />);
 
     // expect a message to be received by the second room
-    await waitForMessages(messagesRoomTwo, 1);
+    await waitForArrayLength(messagesRoomTwo, 1);
     expect(messagesRoomTwo[0]?.text).toBe('hello world');
   }, 10000);
 
@@ -127,7 +113,7 @@ describe('useMessages', () => {
     render(<TestProvider />);
 
     // expect a message to be received by the second room
-    await waitForMessages(deletionsRoomTwo, 1);
+    await waitForArrayLength(deletionsRoomTwo, 1);
     expect(deletionsRoomTwo[0]?.isDeleted).toBe(true);
     expect(deletionsRoomTwo[0]?.deletedBy).toBe(chatClientOne.clientId);
   }, 10000);
@@ -188,7 +174,7 @@ describe('useMessages', () => {
     render(<TestProvider />);
 
     // expect a message to be received by the second room
-    await waitForMessages(updatesRoomTwo, 1);
+    await waitForArrayLength(updatesRoomTwo, 1);
     expect(updatesRoomTwo.length).toBe(1);
     const update = updatesRoomTwo[0];
     expect(update?.isUpdated).toBe(true);
@@ -251,7 +237,7 @@ describe('useMessages', () => {
     await roomTwo.messages.send({ text: 'hello world' });
 
     // expect a message to be received by the first room
-    await waitForMessages(messagesRoomOne, 1);
+    await waitForArrayLength(messagesRoomOne, 1);
     expect(messagesRoomOne[0]?.text).toBe('hello world');
   }, 10000);
 
