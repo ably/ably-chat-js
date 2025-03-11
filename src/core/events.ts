@@ -94,14 +94,19 @@ export interface TypingEvent {
   get currentlyTyping(): Set<string>;
 
   /**
-   * Get the client ID of the user who stopped/started typing.
+   * Represents the change that resulted in the typing event.
    */
-  clientId: string;
+  change: {
+    /**
+     * Get the client ID of the user who stopped/started typing.
+     */
+    clientId: string;
 
-  /**
-   * Type of the event.
-   */
-  type: TypingEvents;
+    /**
+     * Type of the event.
+     */
+    type: TypingEvents;
+  };
 }
 
 /**
