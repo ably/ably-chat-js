@@ -2,7 +2,6 @@ import * as Ably from 'ably';
 
 import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
-import { ErrorCodes } from './errors.js';
 import { ChatMessageActions, MessageEvent, MessageEvents, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
 import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
@@ -595,19 +594,5 @@ export class DefaultMessages extends EventEmitter<MessageEventsMap> implements M
     } catch (error: unknown) {
       this._logger.error(`failed to parse incoming message;`, { channelEventMessage, error: error as Ably.ErrorInfo });
     }
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.MessagesAttachmentFailed;
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.MessagesDetachmentFailed;
   }
 }

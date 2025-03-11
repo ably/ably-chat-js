@@ -1,7 +1,6 @@
 import * as Ably from 'ably';
 
 import { ChannelManager } from './channel-manager.js';
-import { ErrorCodes } from './errors.js';
 import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
 import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
@@ -203,19 +202,5 @@ export class DefaultRoomReactions extends EventEmitter<RoomReactionEventsMap> im
     } catch (error: unknown) {
       this._logger.error(`failed to parse incoming reaction;`, { inbound, error: error as Ably.ErrorInfo });
     }
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.ReactionsAttachmentFailed;
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.ReactionsDetachmentFailed;
   }
 }

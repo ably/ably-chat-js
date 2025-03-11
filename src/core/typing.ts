@@ -431,20 +431,6 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     return this._heartbeatIntervalMs;
   }
 
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.TypingAttachmentFailed;
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.TypingDetachmentFailed;
-  }
-
   // Convenience getters for testing
   get timeoutTimerId(): ReturnType<typeof setTimeout> | undefined {
     return this._timeoutTimerId;

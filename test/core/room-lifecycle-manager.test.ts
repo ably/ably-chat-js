@@ -538,7 +538,7 @@ describe('RoomLifeCycleManager', () => {
       expect(handler).toHaveBeenCalledWith(
         expect.toBeErrorInfo({
           message: 'discontinuity detected',
-          code: ErrorCodes.ChannelDiscontinuity,
+          code: ErrorCodes.RoomDiscontinuity,
           statusCode: 503,
           cause: reason as ErrorInfoCompareType,
         }),
@@ -616,7 +616,7 @@ describe('RoomLifeCycleManager', () => {
       expect(handler).toHaveBeenCalledWith(
         expect.toBeErrorInfo({
           message: 'discontinuity detected',
-          code: ErrorCodes.ChannelDiscontinuity,
+          code: ErrorCodes.RoomDiscontinuity,
           statusCode: 503,
           cause: reason as ErrorInfoCompareType,
         }),

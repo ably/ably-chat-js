@@ -44,4 +44,4 @@ export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
 export type { StatusSubscription, Subscription } from './subscription.js';
 export type { Typing, TypingListener } from './typing.js';
-export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';
+export type { ErrorInfo, RealtimePresenceParams } from 'ably';

@@ -2,7 +2,6 @@ import * as Ably from 'ably';
 
 import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
-import { ErrorCodes } from './errors.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
 import { Subscription } from './subscription.js';
@@ -332,20 +331,6 @@ export class DefaultPresence extends EventEmitter<PresenceEventsMap> implements 
       );
     }
   };
-
-  /**
-   * @inheritDoc ContributesToRoomLifecycle
-   */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.PresenceAttachmentFailed;
-  }
-
-  /**
-   * @inheritDoc
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.PresenceDetachmentFailed;
-  }
 
   /**
    * Returns the channel name for the presence channel.

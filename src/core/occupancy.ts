@@ -3,7 +3,6 @@ import * as Ably from 'ably';
 import { roomChannelName } from './channel.js';
 import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
-import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
@@ -178,20 +177,6 @@ export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implement
       connections: connections,
       presenceMembers: presenceMembers,
     });
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.OccupancyAttachmentFailed;
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.OccupancyDetachmentFailed;
   }
 
   /**

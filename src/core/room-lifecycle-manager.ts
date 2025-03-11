@@ -106,7 +106,7 @@ export class RoomLifeCycleManager {
       if (!stateChange.resumed && !this._isFirstAttach && !this._isPostExplicitDetach) {
         const error = new Ably.ErrorInfo(
           'discontinuity detected',
-          ErrorCodes.ChannelDiscontinuity,
+          ErrorCodes.RoomDiscontinuity,
           stateChange.reason?.statusCode ?? 0,
           stateChange.reason,
         );

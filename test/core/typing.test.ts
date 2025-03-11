@@ -925,12 +925,4 @@ describe('Typing', () => {
       expect(receivedEvents).toHaveLength(0);
     });
   });
-
-  it<TestContext>('has an attachment error code', (context) => {
-    expect((context.room.typing as DefaultTyping).attachmentErrorCode).toBe(102005);
-  });
-
-  it<TestContext>('has a detachment error code', (context) => {
-    expect((context.room.typing as DefaultTyping).detachmentErrorCode).toBe(102054);
-  });
 });
