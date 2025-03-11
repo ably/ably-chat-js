@@ -25,29 +25,11 @@ export const AllFeaturesEnabled = {
    */
   typing: {
     /**
-     * The default time that a client will wait after calling typing.start() before emitting a `typing.stopped`
-     * event.
-     * Restarts the interval with repeated calls to typing.start(), resets the interval with typing.stop().
-     *
-     * Spec: CHA-T3
-     * @defaultValue
-     */
-    timeoutMs: 2000,
-
-    /**
      * The default time that a client will wait between sending one typing heartbeat and the next.
      *
      * Spec: CHA-T10.
      */
-    heartbeatIntervalMs: 15000,
-
-    /**
-     * The default timeout for typing inactivity in milliseconds.
-     *
-     * TODO: Rename this?
-     * Spec: CHA-T11
-     */
-    inactivityTimeoutMs: 500,
+    heartbeatThrottleMs: 15000,
   } as TypingOptions,
 
   /**
@@ -92,23 +74,9 @@ export interface TypingOptions {
    * Later calls will no-op until the interval has elapsed.
    * Calling typing.stop() will immediately send a `typing.stopped` event and reset the interval,
    * allowing the client to send another `typing.started` event immediately.
-   * @defaultValue 17000
+   * @defaultValue 15000
    */
-  heartbeatIntervalMs: number;
-
-  /**
-   * The optional timeout, in milliseconds, after which a client that pauses typing and does not resume, will emit a `typing.stopped` event.
-   * If not set, the client will not emit a `typing.stopped` event until they call `typing.stop()`.
-   * @defaultValue 2000
-   */
-  timeoutMs?: number | undefined;
-
-  /**
-   * The time, in milliseconds, a client waits after failing to receive a typing heartbeat from another client before assuming the other client has stopped typing.
-   * In practice, this means the client waits the length of the heartbeat interval plus this value before emitting a `typing.stopped` event.
-   * @defaultValue 500
-   */
-  inactivityTimeoutMs: number;
+  heartbeatThrottleMs: number;
 }
 
 /**
@@ -177,14 +145,8 @@ export const validateRoomOptions = (options: RoomOptions): void => {
 };
 
 const validateTypingOptions = (options: TypingOptions): void => {
-  if (options.timeoutMs !== undefined && options.timeoutMs <= 0) {
-    throw invalidRoomConfiguration('typing timeout must be greater than 0');
-  }
-  if (options.heartbeatIntervalMs <= 0) {
+  if (options.heartbeatThrottleMs <= 0) {
     throw invalidRoomConfiguration('typing heartbeat interval must be greater than 0');
-  }
-  if (options.inactivityTimeoutMs <= 0) {
-    throw invalidRoomConfiguration('typing inactivity timeout must be greater than 0');
   }
 };
 

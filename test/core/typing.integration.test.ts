@@ -42,7 +42,7 @@ describe('Typing', () => {
     context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = await context.chat.get(randomRoomId(), {
-      typing: { timeoutMs: 500, inactivityTimeoutMs: 15000, heartbeatIntervalMs: 600 },
+      typing: { heartbeatThrottleMs: 600 },
     });
   });
 
@@ -114,7 +114,7 @@ describe('Typing', () => {
         makeTestLogger(),
       );
 
-      const roomOptions = { typing: { timeoutMs: 15000, heartbeatIntervalMs: 10000, inactivityTimeoutMs: 2000 } };
+      const roomOptions = { typing: { heartbeatThrottleMs: 10000 } };
 
       const client1Room = await client1.get(context.chatRoom.roomId, roomOptions);
       const client2Room = await client2.get(context.chatRoom.roomId, roomOptions);
@@ -129,14 +129,12 @@ describe('Typing', () => {
       await client2Room.typing.start();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
-        clientId: clientId1,
         currentlyTyping: new Set([clientId1]),
-        type: TypingEvents.Start,
+        change: { clientId: clientId1, type: TypingEvents.Start },
       });
       await waitForTypingEvent(events, {
-        clientId: clientId2,
         currentlyTyping: new Set([clientId1, clientId2]),
-        type: TypingEvents.Start,
+        change: { clientId: clientId2, type: TypingEvents.Start },
       });
       // Get the currently typing client ids
       const currentlyTypingClientIds = context.chatRoom.typing.get();
@@ -149,9 +147,8 @@ describe('Typing', () => {
       await client1Room.typing.stop();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
-        clientId: clientId1,
         currentlyTyping: new Set([clientId2]),
-        type: TypingEvents.Stop,
+        change: { clientId: clientId1, type: TypingEvents.Stop },
       });
       // Get the currently typing client ids
       const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.get();
