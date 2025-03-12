@@ -10,13 +10,8 @@ import { DefaultPresence, Presence } from './presence.js';
 import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
 import { NormalizedRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
-import {
-  DefaultRoomLifecycle,
-  InternalRoomLifecycle,
-  OnRoomStatusChangeResponse,
-  RoomStatus,
-  RoomStatusListener,
-} from './room-status.js';
+import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus, RoomStatusListener } from './room-status.js';
+import { StatusSubscription } from './subscription.js';
 import { DefaultTyping, Typing } from './typing.js';
 
 /**
@@ -85,7 +80,7 @@ export interface Room {
    * @param listener The function to call when the status changes.
    * @returns An object that can be used to unregister the listener.
    */
-  onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse;
+  onStatusChange(listener: RoomStatusListener): StatusSubscription;
 
   /**
    * Removes all listeners that were added by the `onStatusChange` method.
@@ -328,7 +323,7 @@ export class DefaultRoom implements Room {
   /**
    * @inheritdoc Room
    */
-  onStatusChange(listener: RoomStatusListener): OnRoomStatusChangeResponse {
+  onStatusChange(listener: RoomStatusListener): StatusSubscription {
     return this._lifecycle.onChange(listener);
   }
 
