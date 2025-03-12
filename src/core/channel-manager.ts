@@ -10,7 +10,7 @@ export class ChannelManager {
   private readonly _logger: Logger;
   private readonly _registeredOptions = new Map<string, Ably.ChannelOptions>();
   private readonly _requestedChannels = new Set<string>();
-  private _isReact = false;
+  private readonly _isReact;
 
   constructor(realtime: Ably.Realtime, logger: Logger, isReact: boolean) {
     logger.trace('ChannelManager();', { isReact });
