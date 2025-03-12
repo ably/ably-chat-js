@@ -26,9 +26,6 @@ export enum RealtimeMessageNames {
  * Chat Message Actions.
  */
 export enum ChatMessageActions {
-  /** Represents a message with no action set. */
-  MessageUnset = 'message.unset',
-
   /** Action applied to a new message. */
   MessageCreate = 'message.create',
 
