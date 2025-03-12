@@ -184,7 +184,7 @@ export class DefaultOccupancy
       return;
     }
 
-    if (typeof connections !== 'number' || !Number.isInteger(connections)) {
+    if (!Number.isInteger(connections)) {
       this._logger.error('invalid occupancy event received; connections is not a number', message);
       return;
     }
@@ -194,7 +194,7 @@ export class DefaultOccupancy
       return;
     }
 
-    if (typeof presenceMembers !== 'number' || !Number.isInteger(presenceMembers)) {
+    if (!Number.isInteger(presenceMembers)) {
       this._logger.error('invalid occupancy event received; presenceMembers is not a number', message);
       return;
     }
