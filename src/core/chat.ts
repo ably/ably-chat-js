@@ -61,7 +61,7 @@ export class ChatClient {
   }
 
   /**
-   * Returns the underlying connection to Ably, which can be used to monitor the clients
+   * Returns the underlying connection to Ably, which can be used to monitor the client's
    * connection to Ably servers.
    *
    * @returns The connection object.
