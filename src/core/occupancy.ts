@@ -238,7 +238,6 @@ export class DefaultOccupancy
   /**
    * Merges the channel options for the room with the ones required for presence.
    *
-   * @param roomOptions The room options to merge for.
    * @returns A function that merges the channel options for the room with the ones required for presence.
    */
   static channelOptionMerger(): ChannelOptionsMerger {

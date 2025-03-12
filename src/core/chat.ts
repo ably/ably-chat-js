@@ -107,7 +107,6 @@ export class ChatClient {
   /**
    * Adds additional agent information to the client.
    * Used internally to add React-specific agent information.
-   * @param agent - The agent to add.
    * @internal
    */
   public addReactAgent(): void {
