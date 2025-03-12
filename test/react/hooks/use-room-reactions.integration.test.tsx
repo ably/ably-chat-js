@@ -10,22 +10,8 @@ import { useRoomReactions } from '../../../src/react/hooks/use-room-reactions.ts
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
+import { waitForArrayLength } from '../../helper/common.ts';
 import { randomRoomId } from '../../helper/identifier.ts';
-
-function waitForReactions(reactions: Reaction[], expectedCount: number) {
-  return new Promise<void>((resolve, reject) => {
-    const interval = setInterval(() => {
-      if (reactions.length === expectedCount) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-    setTimeout(() => {
-      clearInterval(interval);
-      reject(new Error('Timed out waiting for reactions'));
-    }, 3000);
-  });
-}
 
 describe('useRoomReactions', () => {
   afterEach(() => {
@@ -77,7 +63,7 @@ describe('useRoomReactions', () => {
 
     render(<TestProvider />);
 
-    await waitForReactions(reactions, 1);
+    await waitForArrayLength(reactions, 1);
 
     // check the reaction was received
     expect(reactions.find((reaction) => reaction.type === 'like')).toBeTruthy();
@@ -133,7 +119,7 @@ describe('useRoomReactions', () => {
     // send a reaction from the second room
     await roomTwo.reactions.send({ type: 'love' });
 
-    await waitForReactions(reactions, 1);
+    await waitForArrayLength(reactions, 1);
 
     // check the reaction was received
     expect(reactions.find((reaction) => reaction.type === 'love')).toBeTruthy();

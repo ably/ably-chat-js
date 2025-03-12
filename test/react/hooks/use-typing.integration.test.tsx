@@ -9,22 +9,8 @@ import { useTyping } from '../../../src/react/hooks/use-typing.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
+import { waitForArrayLength } from '../../helper/common.ts';
 import { randomRoomId } from '../../helper/identifier.ts';
-
-function waitForTypingEvents(typingEvents: TypingEvent[], expectedCount: number) {
-  return new Promise<void>((resolve, reject) => {
-    const interval = setInterval(() => {
-      if (typingEvents.length === expectedCount) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-    setTimeout(() => {
-      clearInterval(interval);
-      reject(new Error('Timed out waiting for typing events'));
-    }, 5000);
-  });
-}
 
 describe('useTyping', () => {
   afterEach(() => {
@@ -74,7 +60,7 @@ describe('useTyping', () => {
     render(<TestProvider />);
 
     // expect the hook to send a start, followed by a stop typing event
-    await waitForTypingEvents(typingEventsRoomTwo, 2);
+    await waitForArrayLength(typingEventsRoomTwo, 2);
     expect(typingEventsRoomTwo[0]?.currentlyTyping).toStrictEqual(new Set([chatClientOne.clientId]));
     expect(typingEventsRoomTwo[1]?.currentlyTyping).toStrictEqual(new Set());
   }, 10000);
@@ -120,7 +106,7 @@ describe('useTyping', () => {
     await roomTwo.typing.start();
 
     // expect a typing started event from the second room to be received by the test component
-    await waitForTypingEvents(typingEventsRoomOne, 1);
+    await waitForArrayLength(typingEventsRoomOne, 1);
     expect(typingEventsRoomOne[0]?.currentlyTyping).toStrictEqual(new Set([chatClientTwo.clientId]));
 
     // ensure the currently typing set is updated
@@ -128,7 +114,7 @@ describe('useTyping', () => {
 
     // expect a typing stopped event from the second room to be received by the test component
     await roomTwo.typing.stop();
-    await waitForTypingEvents(typingEventsRoomOne, 2);
+    await waitForArrayLength(typingEventsRoomOne, 2);
     expect(typingEventsRoomOne[1]?.currentlyTyping).toStrictEqual(new Set());
 
     // ensure the currently typing set is updated

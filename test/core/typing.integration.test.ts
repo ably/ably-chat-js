@@ -1,7 +1,7 @@
 // Import necessary modules and dependencies
 import * as Ably from 'ably';
 import { dequal } from 'dequal';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
 import { Room } from '../../src/core/room.ts';
@@ -9,6 +9,7 @@ import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { TypingEvent } from '../../src/core/typing.ts';
+import { waitForArrayLength } from '../helper/common.ts';
 import { randomClientId, randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -24,36 +25,14 @@ interface TestContext {
   chat: Rooms;
 }
 
-// Wait for the messages to be received
-const waitForMessages = (messages: TypingEvent[], expectedCount: number) => {
-  return new Promise<void>((resolve, reject) => {
-    const interval = setInterval(() => {
-      if (messages.length === expectedCount) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-    setTimeout(() => {
-      clearInterval(interval);
-      reject(new Error('Timed out waiting for messages'));
-    }, 3000);
-  });
-};
-
 // Wait for a typing event matching the expected event to be received
-const waitForTypingEvent = (events: TypingEvent[], expected: TypingEvent) => {
-  return new Promise<void>((resolve, reject) => {
-    const interval = setInterval(() => {
-      if (events.some((event) => dequal(event, expected))) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
-    setTimeout(() => {
-      clearInterval(interval);
-      reject(new Error('Timed out waiting for typing event'));
-    }, 3000);
-  });
+const waitForTypingEvent = async (events: TypingEvent[], expected: TypingEvent) => {
+  await vi.waitFor(
+    () => {
+      expect(events.some((event) => dequal(event, expected))).toBe(true);
+    },
+    { timeout: 3000, interval: 100 },
+  );
 };
 
 describe('Typing', () => {
@@ -79,7 +58,7 @@ describe('Typing', () => {
       // Start typing and emit typingStarted event
       await context.chatRoom.typing.start();
       // Once the timeout timer expires, the typingStopped event should be emitted
-      await waitForMessages(events, 2);
+      await waitForArrayLength(events, 2);
       // Should have received a typingStarted and then typingStopped event
       expect(events[0]?.currentlyTyping, 'clientId should be typing').toEqual(new Set([context.clientId]));
       // Wait for the typing timeout to expire and the stop typing event to be received
@@ -100,12 +79,12 @@ describe('Typing', () => {
 
       // Send typing events
       await context.chatRoom.typing.start();
-      await waitForMessages(events, 1);
+      await waitForArrayLength(events, 1);
       expect(events.length).toEqual(1);
       expect(events[0]?.currentlyTyping).toEqual(new Set([context.clientId]));
 
       await context.chatRoom.typing.stop();
-      await waitForMessages(events, 2);
+      await waitForArrayLength(events, 2);
       expect(events.length).toEqual(2);
       expect(events[1]?.currentlyTyping).toEqual(new Set());
     },

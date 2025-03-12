@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { OccupancyEvent } from '../../src/core/occupancy.ts';
@@ -18,31 +18,15 @@ const TEST_TIMEOUT = 30000;
 
 // Wait for the occupancy of a room to reach the expected occupancy.
 // Do this with a 10s timeout.
-const waitForExpectedInstantaneousOccupancy = (room: Room, expectedOccupancy: OccupancyEvent) => {
-  return new Promise<void>((resolve, reject) => {
-    const interval = setInterval(() => {
-      room.occupancy
-        .get()
-        .then((occupancy) => {
-          if (
-            occupancy.connections === expectedOccupancy.connections &&
-            occupancy.presenceMembers === expectedOccupancy.presenceMembers
-          ) {
-            clearInterval(interval);
-            resolve();
-          }
-        })
-        .catch((error: unknown) => {
-          clearInterval(interval);
-          reject(error as Error);
-        });
-    }, 1000);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      reject(new Error('Timed out waiting for occupancy'));
-    }, TEST_TIMEOUT);
-  });
+const waitForExpectedInstantaneousOccupancy = async (room: Room, expectedOccupancy: OccupancyEvent) => {
+  await vi.waitFor(
+    async () => {
+      const occupancy = await room.occupancy.get();
+      expect(occupancy.connections).toBe(expectedOccupancy.connections);
+      expect(occupancy.presenceMembers).toBe(expectedOccupancy.presenceMembers);
+    },
+    { timeout: TEST_TIMEOUT, interval: 1000 },
+  );
 };
 
 describe('occupancy', () => {
