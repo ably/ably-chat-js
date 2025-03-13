@@ -3,7 +3,13 @@ import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
-import { ChatMessageActions, MessageEvents, MessageReactionEvents, MessageReactionRawEvent, ReactionRefType } from '../../src/core/events.ts';
+import {
+  ChatMessageActions,
+  MessageEvents,
+  MessageReactionEvents,
+  MessageReactionRawEvent,
+  ReactionRefType,
+} from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { DefaultMessages, MessageRawReactionListener, OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
@@ -84,13 +90,13 @@ describe('MessagesReactions', () => {
         }, 300);
 
         context.room.messages.subscribe((event) => {
-          reject(new Error("should not receive message events but received: " + JSON.stringify(event)));
+          reject(new Error('should not receive message events but received: ' + JSON.stringify(event)));
         });
 
         const expected = [
-          { refSerial: "01672531200000-123@xyzdefghij", "unique": { "🥦": { "total": 1, "clientIds": ["user1"] } } },
-          { refSerial: "01672531200001-123@xyzdefghij", "distinct": { "🥦": { "total": 1, "clientIds": ["user2"] } } },
-          { refSerial: "01672531200002-123@xyzdefghij", "multiple": { "🍌": { "clienIds": { "user1": 10 }, "total": 10 } } },
+          { refSerial: '01672531200000-123@xyzdefghij', unique: { '🥦': { total: 1, clientIds: ['user1'] } } },
+          { refSerial: '01672531200001-123@xyzdefghij', distinct: { '🥦': { total: 1, clientIds: ['user2'] } } },
+          { refSerial: '01672531200002-123@xyzdefghij', multiple: { '🍌': { clienIds: { user1: 10 }, total: 10 } } },
         ];
 
         let nextExpected = 0;
@@ -98,10 +104,12 @@ describe('MessagesReactions', () => {
           try {
             if (nextExpected >= expected.length) {
               reject(new Error('received more events than expected'));
-            };
+            }
             const exp = expected[nextExpected];
-            if (!exp) { return; } // pleasing typescript
-            console.log("received event", found);
+            if (!exp) {
+              return;
+            } // pleasing typescript
+            console.log('received event', found);
             expect(found).toMatchObject(exp);
 
             nextExpected++;
@@ -109,175 +117,225 @@ describe('MessagesReactions', () => {
               clearTimeout(timeout);
               done();
             }
-          } catch (e) {
+          } catch (error) {
             // the listener is wrapped in a try-catch so the test will fail with a useless error
             // instead of the real one if we don't try-catch here as well
-            reject(e);
+            reject(error);
           }
         });
 
         context.emulateBackendPublish({
-          name: "chat.message",
+          name: 'chat.message',
           serial: '01672531200000-123@abcdefghij',
           version: '01672531200000-123@abcdefghij',
           refSerial: '01672531200000-123@xyzdefghij',
           action: ChatMessageActions.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
-            [ReactionRefType.Unique]: {"🥦": { "total": 1, "clientIds": ["user1"]}},
+            [ReactionRefType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
           },
         });
 
         context.emulateBackendPublish({
-          name: "chat.message",
+          name: 'chat.message',
           serial: '01672531200001-123@abcdefghij',
           version: '01672531200001-123@abcdefghij',
           refSerial: '01672531200001-123@xyzdefghij',
           action: ChatMessageActions.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
-            [ReactionRefType.Distinct]: {"🥦": { "total": 1, "clientIds": ["user2"]}},
+            [ReactionRefType.Distinct]: { '🥦': { total: 1, clientIds: ['user2'] } },
           },
         });
 
         context.emulateBackendPublish({
-          name: "chat.message",
+          name: 'chat.message',
           serial: '01672531200002-123@abcdefghij',
           version: '01672531200002-123@abcdefghij',
           refSerial: '01672531200002-123@xyzdefghij',
           action: ChatMessageActions.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
-            [ReactionRefType.Multiple]: {"🍌": {"clienIds": {"user1": 10}, "total": 10}},
+            [ReactionRefType.Multiple]: { '🍌': { clienIds: { user1: 10 }, total: 10 } },
           },
         });
       }));
 
-      it<TestContext>('should receive raw reaction events', (context) =>
-        new Promise<void>((done, reject) => {
-          const publishTimestamp = Date.now();
-  
-          const timeout = setTimeout(() => {
-            reject(new Error('did not receive all message events'));
-          }, 300);
-  
-          const expected : MessageReactionRawEvent[] = [
-            { refSerial: "01672531200000-123@xyzdefghij", type: MessageReactionEvents.Create, reaction: "🥦", clientId: "u1", "refType": ReactionRefType.Unique, timestamp: new Date(publishTimestamp)},
-            { refSerial: "01672531200000-123@xyzdefghij", type: MessageReactionEvents.Delete, reaction: "", clientId: "u1", "refType": ReactionRefType.Unique, timestamp: new Date(publishTimestamp)},
-            { refSerial: "01672531200000-123@xyzdefghij", type: MessageReactionEvents.Create, reaction: "🚀", clientId: "u1", "refType": ReactionRefType.Distinct, timestamp: new Date(publishTimestamp)},
-            { refSerial: "01672531200000-123@xyzdefghij", type: MessageReactionEvents.Create, reaction: "🔥", clientId: "u1", "refType": ReactionRefType.Multiple, count: 10, timestamp: new Date(publishTimestamp)},
-            { refSerial: "01672531200000-123@xyzdefghij", type: MessageReactionEvents.Create, reaction: "👍", clientId: "u1", "refType": ReactionRefType.Multiple, count: 1, timestamp: new Date(publishTimestamp)},
-            { refSerial: "01672531200000-123@xyzdefghij", type: MessageReactionEvents.Delete, reaction: "🍌", clientId: "u1", "refType": ReactionRefType.Multiple, timestamp: new Date(publishTimestamp)},
-          ];
-  
-          let nextExpected = 0;
-          context.room.messages.reactions.subscribeRaw((found) => {
-            try {
-              if (nextExpected >= expected.length) {
-                reject(new Error('received more events than expected'));
-              };
-              const exp = expected[nextExpected];
-              if (!exp) { return; } // pleasing typescript
-              expect(found).toEqual(exp);
-    
-              nextExpected++;
-              if (nextExpected >= expected.length) {
-                clearTimeout(timeout);
-                done();
-              }
-            } catch(e) {
-              // the listener is wrapped in a try-catch so the test will fail with a useless error
-              // instead of the real one if we don't try-catch here as well
-              reject(e);
-            }
-          });
+    it<TestContext>('should receive raw reaction events', (context) =>
+      new Promise<void>((done, reject) => {
+        const publishTimestamp = Date.now();
 
-          context.emulateBackendAnnotation({
-            serial: '01672531200000-123@abcdefghij',
+        const timeout = setTimeout(() => {
+          reject(new Error('did not receive all message events'));
+        }, 300);
+
+        const expected: MessageReactionRawEvent[] = [
+          {
             refSerial: '01672531200000-123@xyzdefghij',
+            type: MessageReactionEvents.Create,
+            reaction: '🥦',
+            clientId: 'u1',
             refType: ReactionRefType.Unique,
-            clientId: "u1",
-            data: "🥦",
-            action: "annotation.create",
-            timestamp: publishTimestamp,
-          });
-
-          context.emulateBackendAnnotation({
-            serial: '01672531200002-123@abcdefghij',
+            timestamp: new Date(publishTimestamp),
+          },
+          {
             refSerial: '01672531200000-123@xyzdefghij',
+            type: MessageReactionEvents.Delete,
+            reaction: '',
+            clientId: 'u1',
             refType: ReactionRefType.Unique,
-            clientId: "u1",
-            action: "annotation.delete",
-            timestamp: publishTimestamp,
-          });
-
-          context.emulateBackendAnnotation({
-            serial: '01672531200003-123@abcdefghij',
+            timestamp: new Date(publishTimestamp),
+          },
+          {
             refSerial: '01672531200000-123@xyzdefghij',
+            type: MessageReactionEvents.Create,
+            reaction: '🚀',
+            clientId: 'u1',
             refType: ReactionRefType.Distinct,
-            data: "🚀",
-            clientId: "u1",
-            action: "annotation.create",
-            timestamp: publishTimestamp,
-          });
-
-          context.emulateBackendAnnotation({
-            serial: '01672531200004-123@abcdefghij',
+            timestamp: new Date(publishTimestamp),
+          },
+          {
             refSerial: '01672531200000-123@xyzdefghij',
+            type: MessageReactionEvents.Create,
+            reaction: '🔥',
+            clientId: 'u1',
             refType: ReactionRefType.Multiple,
-            data: JSON.stringify({"reaction": "🔥", "count": 10}),
-            clientId: "u1",
-            action: "annotation.create",
-            timestamp: publishTimestamp,
-          });
-
-          context.emulateBackendAnnotation({
-            serial: '01672531200005-123@abcdefghij',
+            count: 10,
+            timestamp: new Date(publishTimestamp),
+          },
+          {
             refSerial: '01672531200000-123@xyzdefghij',
+            type: MessageReactionEvents.Create,
+            reaction: '👍',
+            clientId: 'u1',
             refType: ReactionRefType.Multiple,
-            data: JSON.stringify({"reaction": "👍"}),
-            clientId: "u1",
-            action: "annotation.create",
-            timestamp: publishTimestamp,
-          });
-
-          context.emulateBackendAnnotation({
-            serial: '01672531200006-123@abcdefghij',
+            count: 1,
+            timestamp: new Date(publishTimestamp),
+          },
+          {
             refSerial: '01672531200000-123@xyzdefghij',
+            type: MessageReactionEvents.Delete,
+            reaction: '🍌',
+            clientId: 'u1',
             refType: ReactionRefType.Multiple,
-            data: JSON.stringify({"reaction": "🍌"}),
-            clientId: "u1",
-            action: "annotation.delete",
-            timestamp: publishTimestamp,
-          });
+            timestamp: new Date(publishTimestamp),
+          },
+        ];
 
-        }));
+        let nextExpected = 0;
+        context.room.messages.reactions.subscribeRaw((found) => {
+          try {
+            if (nextExpected >= expected.length) {
+              reject(new Error('received more events than expected'));
+            }
+            const exp = expected[nextExpected];
+            if (!exp) {
+              return;
+            } // pleasing typescript
+            expect(found).toEqual(exp);
 
-    });
+            nextExpected++;
+            if (nextExpected >= expected.length) {
+              clearTimeout(timeout);
+              done();
+            }
+          } catch (error) {
+            // the listener is wrapped in a try-catch so the test will fail with a useless error
+            // instead of the real one if we don't try-catch here as well
+            reject(error);
+          }
+        });
 
-  it<TestContext>('should unsubscribe from summary events', async (context) =>{
+        context.emulateBackendAnnotation({
+          serial: '01672531200000-123@abcdefghij',
+          refSerial: '01672531200000-123@xyzdefghij',
+          refType: ReactionRefType.Unique,
+          clientId: 'u1',
+          data: '🥦',
+          action: 'annotation.create',
+          timestamp: publishTimestamp,
+        });
+
+        context.emulateBackendAnnotation({
+          serial: '01672531200002-123@abcdefghij',
+          refSerial: '01672531200000-123@xyzdefghij',
+          refType: ReactionRefType.Unique,
+          clientId: 'u1',
+          action: 'annotation.delete',
+          timestamp: publishTimestamp,
+        });
+
+        context.emulateBackendAnnotation({
+          serial: '01672531200003-123@abcdefghij',
+          refSerial: '01672531200000-123@xyzdefghij',
+          refType: ReactionRefType.Distinct,
+          data: '🚀',
+          clientId: 'u1',
+          action: 'annotation.create',
+          timestamp: publishTimestamp,
+        });
+
+        context.emulateBackendAnnotation({
+          serial: '01672531200004-123@abcdefghij',
+          refSerial: '01672531200000-123@xyzdefghij',
+          refType: ReactionRefType.Multiple,
+          data: JSON.stringify({ reaction: '🔥', count: 10 }),
+          clientId: 'u1',
+          action: 'annotation.create',
+          timestamp: publishTimestamp,
+        });
+
+        context.emulateBackendAnnotation({
+          serial: '01672531200005-123@abcdefghij',
+          refSerial: '01672531200000-123@xyzdefghij',
+          refType: ReactionRefType.Multiple,
+          data: JSON.stringify({ reaction: '👍' }),
+          clientId: 'u1',
+          action: 'annotation.create',
+          timestamp: publishTimestamp,
+        });
+
+        context.emulateBackendAnnotation({
+          serial: '01672531200006-123@abcdefghij',
+          refSerial: '01672531200000-123@xyzdefghij',
+          refType: ReactionRefType.Multiple,
+          data: JSON.stringify({ reaction: '🍌' }),
+          clientId: 'u1',
+          action: 'annotation.delete',
+          timestamp: publishTimestamp,
+        });
+      }));
+  });
+
+  it<TestContext>('should unsubscribe from summary events', async (context) => {
     const { room } = context;
     let c1 = 0;
     let c2 = 0;
     let cu = 0;
 
-    const s1 = room.messages.reactions.subscribe((_event) => { c1++; });
-    const s2 = room.messages.reactions.subscribe((_event) => { c2++; });
-    const uniqueListener = () => { cu++; };
+    const s1 = room.messages.reactions.subscribe((_event) => {
+      c1++;
+    });
+    const s2 = room.messages.reactions.subscribe((_event) => {
+      c2++;
+    });
+    const uniqueListener = () => {
+      cu++;
+    };
     const s3 = room.messages.reactions.subscribe(uniqueListener);
     const s4 = room.messages.reactions.subscribe(uniqueListener);
 
     const publishTimestamp = Date.now();
 
     context.emulateBackendPublish({
-      name: "chat.message",
+      name: 'chat.message',
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij',
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
       summary: {
-        [ReactionRefType.Unique]: {"🥦": { "total": 1, "clientIds": ["user1"]}},
+        [ReactionRefType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
       },
     });
 
@@ -286,14 +344,14 @@ describe('MessagesReactions', () => {
     expect(cu).toEqual(2);
 
     context.emulateBackendPublish({
-      name: "chat.message",
+      name: 'chat.message',
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij',
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
       summary: {
-        [ReactionRefType.Unique]: {"🥦": { "total": 1, "clientIds": ["user1"]}},
+        [ReactionRefType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
       },
     });
 
@@ -305,14 +363,14 @@ describe('MessagesReactions', () => {
     s3.unsubscribe();
 
     context.emulateBackendPublish({
-      name: "chat.message",
+      name: 'chat.message',
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij',
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
       summary: {
-        [ReactionRefType.Unique]: {"🥦": { "total": 1, "clientIds": ["user1"]}},
+        [ReactionRefType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
       },
     });
 
@@ -324,14 +382,14 @@ describe('MessagesReactions', () => {
     s4.unsubscribe();
 
     context.emulateBackendPublish({
-      name: "chat.message",
+      name: 'chat.message',
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij',
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
       summary: {
-        [ReactionRefType.Unique]: {"🥦": { "total": 1, "clientIds": ["user1"]}},
+        [ReactionRefType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
       },
     });
 
@@ -340,15 +398,21 @@ describe('MessagesReactions', () => {
     expect(cu).toEqual(5);
   });
 
-  it<TestContext>('should unsubscribe from raw events', async (context) =>{
+  it<TestContext>('should unsubscribe from raw events', async (context) => {
     const { room } = context;
     let c1 = 0;
     let c2 = 0;
     let cu = 0;
 
-    const s1 = room.messages.reactions.subscribeRaw((_event) => { c1++; });
-    const s2 = room.messages.reactions.subscribeRaw((_event) => { c2++; });
-    const uniqueListener = () => { cu++; };
+    const s1 = room.messages.reactions.subscribeRaw((_event) => {
+      c1++;
+    });
+    const s2 = room.messages.reactions.subscribeRaw((_event) => {
+      c2++;
+    });
+    const uniqueListener = () => {
+      cu++;
+    };
     const s3 = room.messages.reactions.subscribeRaw(uniqueListener);
     const s4 = room.messages.reactions.subscribeRaw(uniqueListener);
 
@@ -358,9 +422,9 @@ describe('MessagesReactions', () => {
       serial: '01672531200003-123@abcdefghij',
       refSerial: '01672531200000-123@xyzdefghij',
       refType: ReactionRefType.Distinct,
-      data: "🚀",
-      clientId: "u1",
-      action: "annotation.create",
+      data: '🚀',
+      clientId: 'u1',
+      action: 'annotation.create',
       timestamp: publishTimestamp,
     });
 
@@ -372,9 +436,9 @@ describe('MessagesReactions', () => {
       serial: '01672531200003-123@abcdefghij',
       refSerial: '01672531200000-123@xyzdefghij',
       refType: ReactionRefType.Distinct,
-      data: "🚀",
-      clientId: "u1",
-      action: "annotation.create",
+      data: '🚀',
+      clientId: 'u1',
+      action: 'annotation.create',
       timestamp: publishTimestamp,
     });
 
@@ -389,9 +453,9 @@ describe('MessagesReactions', () => {
       serial: '01672531200003-123@abcdefghij',
       refSerial: '01672531200000-123@xyzdefghij',
       refType: ReactionRefType.Distinct,
-      data: "🚀",
-      clientId: "u1",
-      action: "annotation.create",
+      data: '🚀',
+      clientId: 'u1',
+      action: 'annotation.create',
       timestamp: publishTimestamp,
     });
 
@@ -406,9 +470,9 @@ describe('MessagesReactions', () => {
       serial: '01672531200003-123@abcdefghij',
       refSerial: '01672531200000-123@xyzdefghij',
       refType: ReactionRefType.Distinct,
-      data: "🚀",
-      clientId: "u1",
-      action: "annotation.create",
+      data: '🚀',
+      clientId: 'u1',
+      action: 'annotation.create',
       timestamp: publishTimestamp,
     });
 
@@ -417,17 +481,16 @@ describe('MessagesReactions', () => {
     expect(cu).toEqual(5);
   });
 
-
   describe.each([
     [
       'unknown refType',
       {
         serial: '01672531200003-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
-        refType: "reaction:unknown.v1",
-        data: "🚀",
-        clientId: "u1",
-        action: "annotation.create",
+        refType: 'reaction:unknown.v1',
+        data: '🚀',
+        clientId: 'u1',
+        action: 'annotation.create',
         timestamp: Date.now(),
       },
     ],
@@ -437,9 +500,9 @@ describe('MessagesReactions', () => {
         serial: '01672531200003-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
         refType: ReactionRefType.Distinct,
-        data: "🚀",
-        clientId: "u1",
-        action: "annotation.bla",
+        data: '🚀',
+        clientId: 'u1',
+        action: 'annotation.bla',
         timestamp: Date.now(),
       },
     ],
@@ -449,8 +512,8 @@ describe('MessagesReactions', () => {
         serial: '01672531200003-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
         refType: ReactionRefType.Distinct,
-        clientId: "u1",
-        action: "annotation.create",
+        clientId: 'u1',
+        action: 'annotation.create',
         timestamp: Date.now(),
       },
     ],
@@ -459,9 +522,9 @@ describe('MessagesReactions', () => {
       {
         serial: '01672531200003-123@abcdefghij',
         refType: ReactionRefType.Distinct,
-        data: "🚀",
-        clientId: "u1",
-        action: "annotation.create",
+        data: '🚀',
+        clientId: 'u1',
+        action: 'annotation.create',
         timestamp: Date.now(),
       },
     ],
@@ -478,16 +541,15 @@ describe('MessagesReactions', () => {
     });
   });
 
-
   it<TestContext>('should throw error when subscribing to raw reactions if not enabled', (context) => {
     const room = makeRandomRoom({
       options: { messages: { rawMessageReactions: false } },
-      chatApi: context.chatApi, 
-      realtime: context.realtime
+      chatApi: context.chatApi,
+      realtime: context.realtime,
     });
 
     expect(() => {
       room.messages.reactions.subscribeRaw(() => {});
-    }).toThrowErrorInfo({code: 40001, message: 'Raw message reactions are not enabled', statusCode: 400});
+    }).toThrowErrorInfo({ code: 40001, message: 'Raw message reactions are not enabled', statusCode: 400 });
   });
 });

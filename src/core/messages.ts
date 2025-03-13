@@ -37,7 +37,6 @@ import {
 import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import { Subscription } from './subscription.js';
 import { MessageOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
@@ -379,7 +378,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (!event.data) {
       if (eventType === MessageReactionEvents.Delete && refType === ReactionRefType.Unique) {
         // deletes of refType unique are allowed to have no data
-        event.data = "";
+        event.data = '';
       } else {
         return;
       }
@@ -454,7 +453,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (refType === ReactionRefType.Multiple && !count) {
       count = 1;
     }
-    const params : AddMessageReactionParams = { refType, reaction };
+    const params: AddMessageReactionParams = { refType, reaction };
     if (count) {
       params.count = count;
     }

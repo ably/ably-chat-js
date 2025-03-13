@@ -274,7 +274,7 @@ export interface MessageCopyParams {
   headers?: MessageHeaders;
 }
 
- /**
+/**
  * Represents a summary of all reactions on a message.
  */
 export interface MessageReactions {

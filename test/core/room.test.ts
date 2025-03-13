@@ -102,7 +102,14 @@ describe('Room', () => {
         // Check that the shared channel for messages, occupancy and presence was called with the correct options
         const expectedMessagesChannelOptions = {
           params: { occupancy: 'metrics', agent: agentString },
-          modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE', 'ANNOTATION_PUBLISH', 'ANNOTATION_SUBSCRIBE'],
+          modes: [
+            'PUBLISH',
+            'SUBSCRIBE',
+            'PRESENCE',
+            'PRESENCE_SUBSCRIBE',
+            'ANNOTATION_PUBLISH',
+            'ANNOTATION_SUBSCRIBE',
+          ],
           attachOnSubscribe: false,
         };
 
@@ -138,7 +145,10 @@ describe('Room', () => {
     (description: string, setReact: boolean, agentString: string, defaultOptions: unknown) => {
       it<TestContext>('applies the correct options', (context) => {
         vi.spyOn(context.realtime.channels, 'get');
-        const room = context.getRoom({...AllFeaturesEnabled, messages: { rawMessageReactions: false }}, setReact) as DefaultRoom;
+        const room = context.getRoom(
+          { ...AllFeaturesEnabled, messages: { rawMessageReactions: false } },
+          setReact,
+        ) as DefaultRoom;
 
         // Check that the shared channel for messages, occupancy and presence was called with the correct options
         const expectedMessagesChannelOptions = {
@@ -170,7 +180,6 @@ describe('Room', () => {
       });
     },
   );
-
 
   describe('room status', () => {
     it<TestContext>('should have a room status and error', async (context) => {
