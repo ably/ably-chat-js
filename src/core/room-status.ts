@@ -165,6 +165,7 @@ export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> impl
 
   /**
    * Constructs a new `DefaultStatus` instance.
+   * @param roomId - The unique identifier for the room.
    * @param logger The logger to use.
    */
   constructor(roomId: string, logger: Logger) {

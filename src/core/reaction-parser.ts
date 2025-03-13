@@ -4,7 +4,7 @@ import { DefaultReaction, Reaction, ReactionHeaders, ReactionMetadata } from './
 
 interface ReactionPayload {
   data?: {
-    type: string;
+    type: unknown;
     metadata?: ReactionMetadata;
   };
   clientId?: string;

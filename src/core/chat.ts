@@ -61,7 +61,7 @@ export class ChatClient {
   }
 
   /**
-   * Returns the underlying connection to Ably, which can be used to monitor the clients
+   * Returns the underlying connection to Ably, which can be used to monitor the client's
    * connection to Ably servers.
    *
    * @returns The connection object.
@@ -107,7 +107,6 @@ export class ChatClient {
   /**
    * Adds additional agent information to the client.
    * Used internally to add React-specific agent information.
-   * @param agent - The agent to add.
    * @internal
    */
   public addReactAgent(): void {

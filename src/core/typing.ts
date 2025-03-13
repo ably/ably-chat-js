@@ -51,7 +51,7 @@ export interface Typing extends EmitsDiscontinuities {
   /**
    * Start indicates that the current user is typing. This will emit a typingStarted event to inform listening clients and begin a timer,
    * once the timer expires, a typingStopped event will be emitted. The timeout is configurable through the typingTimeoutMs parameter.
-   * If the current user is already typing, it will reset the timer and being counting down again without emitting a new event.
+   * If the current user is already typing, it will reset the timer and begin counting down again without emitting a new event.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
