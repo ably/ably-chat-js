@@ -63,7 +63,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
       }
     },
     reactionsListener: (reaction) => {
-      const messageSerial = reaction.refSerial;
+      const messageSerial = reaction.messageSerial;
       setMessages((prevMessages) => {
         const index = prevMessages.findIndex((m) => m.serial === messageSerial);
         if (index === -1) {
@@ -211,7 +211,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
                 key={msg.serial}
                 self={msg.clientId === clientId}
                 message={msg}
-                reactionRefType={reactionType.refType}
+                reactionType={reactionType.type}
                 onReactionAdd={addReaction}
                 onMessageDelete={onDeleteMessage}
                 onMessageUpdate={onUpdateMessage}

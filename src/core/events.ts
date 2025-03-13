@@ -98,9 +98,9 @@ export interface MessageEvent {
 }
 
 /**
- * All annotation refTypes supported by Chat Message Reactions.
+ * All annotation types supported by Chat Message Reactions.
  */
-export enum ReactionRefType {
+export enum MessageReactionType {
   /**
    * Allows for at most one reaction per client per message. If a client reacts
    * to a message a second time, only the second reaction is counted in the
@@ -131,7 +131,7 @@ export enum ReactionRefType {
 }
 
 /**
- * Represents the summary of reactions of type @link{ReactionRefType.Unique}.
+ * Represents the summary of reactions of type @link{MessageReactionType.Unique}.
  */
 export interface UniqueReactionSummary {
   /**
@@ -146,7 +146,7 @@ export interface UniqueReactionSummary {
 }
 
 /**
- * Represents the summary of reactions of type @link{ReactionRefType.Distinct}.
+ * Represents the summary of reactions of type @link{MessageReactionType.Distinct}.
  */
 export interface DistinctReactionSummary {
   /**
@@ -161,7 +161,7 @@ export interface DistinctReactionSummary {
 }
 
 /**
- * Represents the summary of reactions of type @link{ReactionRefType.Multiple}.
+ * Represents the summary of reactions of type @link{MessageReactionType.Multiple}.
  */
 export interface MultipleReactionSummary {
   /**
@@ -204,15 +204,15 @@ export interface MessageReactionRawEvent {
   type: MessageReactionEvents.Create | MessageReactionEvents.Delete;
 
   /** Serial of the message this reaction is for */
-  refSerial: string;
+  messageSerial: string;
 
   /** Type of reaction */
-  refType: ReactionRefType;
+  reactionType: MessageReactionType;
 
   /** The reaction (typically an emoji) */
   reaction: string;
 
-  /** Count of the reaction (only for Counter refType, if set) */
+  /** Count of the reaction (only for type Multiple, if set) */
   count?: number;
 
   /** The client ID of the user who added/removed the reaction */
@@ -234,7 +234,7 @@ export interface MessageReactionSummaryEvent {
   timestamp: Date;
 
   /** Reference to the original message's serial number */
-  refSerial: string;
+  messageSerial: string;
 
   /** Version of the summary event */
   version: string;

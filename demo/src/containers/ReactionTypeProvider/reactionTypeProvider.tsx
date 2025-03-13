@@ -1,9 +1,9 @@
-import { ReactionRefType } from '@ably/chat';
+import { MessageReactionType } from '@ably/chat';
 import { ReactNode, useState, createContext, useCallback } from 'react';
 
 function getReactionTypeContext() {
-  const doNothing: (refType: ReactionRefType) => void = (_: ReactionRefType) => void 0;
-  const context = createContext({ refType: ReactionRefType.Distinct, setRefType: doNothing });
+  const doNothing: (type: MessageReactionType) => void = (_: MessageReactionType) => void 0;
+  const context = createContext({ type: MessageReactionType.Distinct, setType: doNothing });
   return context;
 }
 
@@ -19,10 +19,10 @@ export interface ReactionTypeProviderProps {
   children?: ReactNode | ReactNode[] | null;
 }
 
-export const allowedReactionRefTypes = [
-  ReactionRefType.Unique as string,
-  ReactionRefType.Distinct as string,
-  ReactionRefType.Multiple as string,
+export const allowedMessageReactionTypes = [
+  MessageReactionType.Unique as string,
+  MessageReactionType.Distinct as string,
+  MessageReactionType.Multiple as string,
 ];
 
 /**
@@ -34,26 +34,26 @@ export const allowedReactionRefTypes = [
  * @returns {ChatClientProvider} component.
  */
 export const ReactionTypeProvider = ({ children }: ReactionTypeProviderProps) => {
-  const stored = localStorage.getItem('messageReactionRefType');
-  let current = ReactionRefType.Unique;
-  if (stored && allowedReactionRefTypes.indexOf(stored) !== -1) {
-    current = stored as ReactionRefType;
+  const stored = localStorage.getItem('activeReactionType');
+  let current = MessageReactionType.Unique;
+  if (stored && allowedMessageReactionTypes.indexOf(stored) !== -1) {
+    current = stored as MessageReactionType;
   }
 
-  const [reactionType, setReactionType] = useState<ReactionRefType>(current);
+  const [reactionType, setReactionType] = useState<MessageReactionType>(current);
 
   const setFunc = useCallback(
-    (rt: ReactionRefType) => {
-      const shortcuts: Record<string, ReactionRefType> = {
-        unique: ReactionRefType.Unique,
-        distinct: ReactionRefType.Distinct,
-        multiple: ReactionRefType.Multiple,
+    (rt: MessageReactionType) => {
+      const shortcuts: Record<string, MessageReactionType> = {
+        unique: MessageReactionType.Unique,
+        distinct: MessageReactionType.Distinct,
+        multiple: MessageReactionType.Multiple,
       };
       if (shortcuts[rt]) {
         rt = shortcuts[rt];
       }
-      if (allowedReactionRefTypes.indexOf(rt) === -1) {
-        throw new Error('Invalid reaction type. Must be one of ' + allowedReactionRefTypes.join(', '));
+      if (allowedMessageReactionTypes.indexOf(rt) === -1) {
+        throw new Error('Invalid reaction type. Must be one of ' + allowedMessageReactionTypes.join(', '));
       }
       localStorage.setItem('activeReactionType', rt);
       setReactionType(rt);
@@ -62,8 +62,8 @@ export const ReactionTypeProvider = ({ children }: ReactionTypeProviderProps) =>
   );
 
   const value = {
-    refType: reactionType,
-    setRefType: setFunc,
+    type: reactionType,
+    setType: setFunc,
   };
 
   return <ReactionTypeContext.Provider value={value}>{children}</ReactionTypeContext.Provider>;

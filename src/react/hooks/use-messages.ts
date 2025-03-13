@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
-import { ReactionRefType } from '../../core/events.js';
+import { MessageReactionType } from '../../core/events.js';
 import { Message } from '../../core/message.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { MessagesReactions } from '../../core/messages.js'; // imported for typedoc links
@@ -145,8 +145,8 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   );
 
   const addReaction = useCallback(
-    (message: Message, refType: ReactionRefType, reaction: string, score?: number) =>
-      context.room.then((room) => room.messages.reactions.add(message, refType, reaction, score)),
+    (message: Message, type: MessageReactionType, reaction: string, score?: number) =>
+      context.room.then((room) => room.messages.reactions.add(message, type, reaction, score)),
     [context],
   );
 

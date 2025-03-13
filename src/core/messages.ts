@@ -21,7 +21,7 @@ import {
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
   MultipleReactionSummary,
-  ReactionRefType,
+  MessageReactionType,
   RealtimeMessageNames,
   UniqueReactionSummary,
 } from './events.js';
@@ -305,12 +305,12 @@ export interface MessagesReactions {
   /**
    * Add a message reactions
    * @param message The message to react to.
-   * @param refType The type of reaction reference.
+   * @param type The type of reaction reference.
    * @param reaction The reaction to add.
    * @param count The count of the reaction for types that support it, default 1.
    * @returns A promise that resolves when the reaction is added.
    */
-  add(message: { serial: string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void>;
+  add(message: { serial: string }, type: MessageReactionType, reaction: string, count?: number): Promise<void>;
 
   /**
    * Subscribe to message reaction summaries. Use this to keep message reaction
@@ -359,10 +359,10 @@ export class DefaultMessageReactions implements MessagesReactions {
     }
 
     // unknown ref type
-    if (!Object.values(ReactionRefType).includes(event.refType as ReactionRefType)) {
+    if (!Object.values(MessageReactionType).includes(event.refType as MessageReactionType)) {
       return;
     }
-    const refType = event.refType as ReactionRefType;
+    const reactionType = event.refType as MessageReactionType;
 
     const typeMap: Record<string, MessageReactionEvents.Create | MessageReactionEvents.Delete> = {
       'annotation.create': MessageReactionEvents.Create,
@@ -376,8 +376,8 @@ export class DefaultMessageReactions implements MessagesReactions {
     }
 
     if (!event.data) {
-      if (eventType === MessageReactionEvents.Delete && refType === ReactionRefType.Unique) {
-        // deletes of refType unique are allowed to have no data
+      if (eventType === MessageReactionEvents.Delete && reactionType === MessageReactionType.Unique) {
+        // deletes of type unique are allowed to have no data
         event.data = '';
       } else {
         return;
@@ -386,8 +386,8 @@ export class DefaultMessageReactions implements MessagesReactions {
 
     let reaction = event.data as string;
     let count: number | undefined;
-    if (refType === ReactionRefType.Multiple) {
-      const data = JSON.parse(reaction) as { count?: number; reaction: string };
+    if (reactionType === MessageReactionType.Multiple) {
+      const data = reaction as unknown as { count?: number; reaction: string };
       reaction = data.reaction;
       if (eventType === MessageReactionEvents.Create) {
         count = data.count;
@@ -399,8 +399,8 @@ export class DefaultMessageReactions implements MessagesReactions {
 
     const reactionEvent: MessageReactionRawEvent = {
       type: eventType,
-      refSerial: event.refSerial,
-      refType: refType,
+      messageSerial: event.refSerial,
+      reactionType: reactionType,
       reaction: reaction,
       clientId: event.clientId ?? '',
       timestamp: new Date(event.timestamp),
@@ -426,19 +426,19 @@ export class DefaultMessageReactions implements MessagesReactions {
     }
 
     const summary = (event.summary ?? {}) as {
-      [ReactionRefType.Unique]?: Record<string, UniqueReactionSummary>;
-      [ReactionRefType.Distinct]?: Record<string, DistinctReactionSummary>;
-      [ReactionRefType.Multiple]?: Record<string, MultipleReactionSummary>;
+      [MessageReactionType.Unique]?: Record<string, UniqueReactionSummary>;
+      [MessageReactionType.Distinct]?: Record<string, DistinctReactionSummary>;
+      [MessageReactionType.Multiple]?: Record<string, MultipleReactionSummary>;
     };
 
-    const single: Record<string, UniqueReactionSummary> = summary[ReactionRefType.Unique] ?? {};
-    const distinct: Record<string, DistinctReactionSummary> = summary[ReactionRefType.Distinct] ?? {};
-    const counter: Record<string, MultipleReactionSummary> = summary[ReactionRefType.Multiple] ?? {};
+    const single: Record<string, UniqueReactionSummary> = summary[MessageReactionType.Unique] ?? {};
+    const distinct: Record<string, DistinctReactionSummary> = summary[MessageReactionType.Distinct] ?? {};
+    const counter: Record<string, MultipleReactionSummary> = summary[MessageReactionType.Multiple] ?? {};
 
     this._emitter.emit(MessageReactionEvents.Summary, {
       type: MessageReactionEvents.Summary,
       timestamp: new Date(event.timestamp),
-      refSerial: event.refSerial,
+      messageSerial: event.refSerial,
       version: event.version,
       unique: single,
       distinct: distinct,
@@ -449,11 +449,11 @@ export class DefaultMessageReactions implements MessagesReactions {
   /**
    * @inheritDoc
    */
-  add(message: { serial: string }, refType: ReactionRefType, reaction: string, count?: number): Promise<void> {
-    if (refType === ReactionRefType.Multiple && !count) {
+  add(message: { serial: string }, type: MessageReactionType, reaction: string, count?: number): Promise<void> {
+    if (type === MessageReactionType.Multiple && !count) {
       count = 1;
     }
-    const params: AddMessageReactionParams = { refType, reaction };
+    const params: AddMessageReactionParams = { type, reaction };
     if (count) {
       params.count = count;
     }

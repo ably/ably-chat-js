@@ -29,9 +29,9 @@ function createMockPresence() {
 
 function createMockAnnotations() {
   const mock = {
-    publish: (refSerial: string, refType: string, data: string | ArrayBuffer | Uint8Array) =>
+    publish: (messageSerial: string, type: string, data: string | ArrayBuffer | Uint8Array) =>
       mockPromisify<void>(undefined),
-    delete: (refSerial: string, refType: string, data: string | ArrayBuffer | Uint8Array) =>
+    delete: (messageSerial: string, type: string, data: string | ArrayBuffer | Uint8Array) =>
       mockPromisify<void>(undefined),
     subscriptions: createMockEmitter(),
     subscribe: async (...args: any[]) => {

@@ -284,17 +284,17 @@ export interface MessageReactions {
   version: string;
 
   /**
-   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Unique}.
+   * Map of reaction to the summary (total and clients) for reactions of type {@link MessageReactionType.Unique}.
    */
   unique: Record<string, UniqueReactionSummary>;
 
   /**
-   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Distinct}.
+   * Map of reaction to the summary (total and clients) for reactions of type {@link MessageReactionType.Distinct}.
    */
   distinct: Record<string, DistinctReactionSummary>;
 
   /**
-   * Map of reaction to the summary (total and clients) for reactions of type {@link ReactionRefType.Counter}.
+   * Map of reaction to the summary (total and clients) for reactions of type {@link MessageReactionType.Counter}.
    */
   multiple: Record<string, MultipleReactionSummary>;
 }
@@ -398,7 +398,7 @@ export class DefaultMessage implements Message {
 
     // reaction summary
     if (event.type === MessageReactionEvents.Summary) {
-      if (event.refSerial !== this.serial) {
+      if (event.messageSerial !== this.serial) {
         throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
       }
 

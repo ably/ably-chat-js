@@ -1,11 +1,11 @@
 import React from 'react';
-import { Message, ReactionRefType } from '@ably/chat';
+import { Message, MessageReactionType } from '@ably/chat';
 
 interface MessageReactionsUniqueProps {
   message: Message;
   clientId: string;
-  onReactionAdd: (message: Message, refType: ReactionRefType, emoji: string, score?: number) => void;
-  onReactionDelete: (message: Message, refType: ReactionRefType, emoji: string) => void;
+  onReactionAdd: (message: Message, type: MessageReactionType, emoji: string, score?: number) => void;
+  onReactionDelete: (message: Message, type: MessageReactionType, emoji: string) => void;
 }
 
 const emojis = ['👍', '❤️', '🔥', '🚀'];
@@ -20,9 +20,9 @@ export const MessageReactionsUnique: React.FC<MessageReactionsUniqueProps> = ({
 
   const handleReactionClick = (emoji: string) => {
     if (unique[emoji]?.clientIds.includes(clientId)) {
-      onReactionRemove(message, ReactionRefType.Unique, emoji);
+      onReactionRemove(message, MessageReactionType.Unique, emoji);
     } else {
-      onReactionAdd(message, ReactionRefType.Unique, emoji);
+      onReactionAdd(message, MessageReactionType.Unique, emoji);
     }
   };
 

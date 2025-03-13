@@ -1,4 +1,4 @@
-import { Message, ReactionRefType, useChatClient } from '@ably/chat';
+import { Message, MessageReactionType, useChatClient } from '@ably/chat';
 import React, { useCallback } from 'react';
 import clsx from 'clsx';
 import { FaPencil, FaTrash } from 'react-icons/fa6';
@@ -8,13 +8,13 @@ interface MessageProps {
   self?: boolean;
   message: Message;
 
-  reactionRefType?: ReactionRefType;
+  reactionType?: MessageReactionType;
 
   onMessageUpdate?(message: Message): void;
 
   onMessageDelete?(msg: Message): void;
 
-  onReactionAdd?(msg: Message, refType: string, reaction: string, score?: number): void;
+  onReactionAdd?(msg: Message, type: string, reaction: string, score?: number): void;
 }
 
 const shortDateTimeFormatter = new Intl.DateTimeFormat('default', {
@@ -40,7 +40,7 @@ function shortDate(date: Date): string {
 export const MessageComponent: React.FC<MessageProps> = ({
   self = false,
   message,
-  reactionRefType = ReactionRefType.Distinct,
+  reactionType = MessageReactionType.Distinct,
   onMessageUpdate,
   onMessageDelete,
   onReactionAdd,
@@ -71,8 +71,8 @@ export const MessageComponent: React.FC<MessageProps> = ({
   let reactionsUI = <></>;
 
   if (onReactionAdd && onReactionDelete) {
-    switch (reactionRefType) {
-      case ReactionRefType.Unique: {
+    switch (reactionType) {
+      case MessageReactionType.Unique: {
         reactionsUI = (
           <MessageReactionsUnique
             message={message}
@@ -83,7 +83,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
         );
         break;
       }
-      case ReactionRefType.Distinct: {
+      case MessageReactionType.Distinct: {
         reactionsUI = (
           <MessageReactionsDistinct
             message={message}
@@ -94,7 +94,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
         );
         break;
       }
-      case ReactionRefType.Multiple: {
+      case MessageReactionType.Multiple: {
         reactionsUI = (
           <MessageReactionsMultiple
             message={message}

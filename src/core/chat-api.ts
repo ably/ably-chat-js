@@ -93,7 +93,7 @@ interface DeleteMessageParams {
 }
 
 export interface AddMessageReactionParams {
-  refType: string;
+  type: string;
   reaction: string;
   count?: number;
 }
