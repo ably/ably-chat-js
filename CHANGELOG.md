@@ -2,6 +2,27 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.5.0](https://github.com/ably/ably-chat-js/tree/0.5.0) (2025-03-13)
+
+### Breaking Changes
+
+This release contains minor breaking API changes. Please see `UPGRADING.md` for full guidance on upgrading from version 0.4.0.
+
+### New Features
+
+- Added a new method, `Message.with`, a helper for returning updated messages after edit and delete events. [#457](https://github.com/ably/ably-chat-js/pull/457)
+- Renamed `RoomOptionsDefault` to `AllFeaturesEnabled` [#478](https://github.com/ably/ably-chat-js/pull/478)
+- Renamed `ClientOptions` type to `ChatClientOptions` [#478](https://github.com/ably/ably-chat-js/pull/478)
+- Added a getting started guide in the README [#477](https://github.com/ably/ably-chat-js/pull/477)
+- Renamed the message version comparison methods. [#479](https://github.com/ably/ably-chat-js/pull/479)
+- Renamed `MessageEventPayload` type to `MessageEvent` [#488](https://github.com/ably/ably-chat-js/pull/488)
+- Added a `copy` method to `Message` and updated the signature of `messages.update` [#497](https://github.com/ably/ably-chat-js/pull/497)
+
+### Removals
+
+- Removed public realtime message parsing functions [#475](https://github.com/ably/ably-chat-js/pull/475).
+
+
 ## [0.4.0](https://github.com/ably/ably-chat-js/tree/0.4.0) (2025-01-20)
 
 ### Breaking Changes

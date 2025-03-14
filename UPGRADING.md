@@ -2,6 +2,34 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 0.4.0 to 0.5.0
+
+## Message Version Comparison Methods
+
+**Expected Impact: Medium**
+
+The message version comparison methods `versionBefore`, `versionAfter` and `versionEqual` have been renamed to `isOlderVersionOf`, `isNewerVersionOf` and `isSameVersionAs` respectively.
+
+These methods no longer throw an error if two distinct messages are compared, instead returning false.
+
+## Room Options Renaming
+
+**Expected Impact: Low**
+
+The field `RoomOptionsDefault` has been renamed to `AllFeaturesEnabled`. Please update any references to this in your code.
+
+## Client Options Renaming
+
+**Expected Impact: Low**
+
+The type `ClientOptions` has been renamed to `ChatClientOptions`. Please update any references to this in your code.
+
+## Message Event Type Renaming
+
+**Expected Impact: Low**
+
+The type `MessageEventPayload` has been renamed to `MessageEvent`. Please update any references to this in your code.
+
 ## <= 0.3.1 to 0.4.0
 
 ### React Package Removed
