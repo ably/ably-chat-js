@@ -592,14 +592,14 @@ describe('ChatMessage', () => {
         new Date(1672531200000),
         {
           version: '',
-          single: {
+          unique: {
             '👍': { total: 2, clientIds: ['a', 'b'] },
           },
           distinct: {
             '👍': { total: 2, clientIds: ['a', 'b'] },
             '🚀': { total: 1, clientIds: ['a'] },
           },
-          counter: {
+          multiple: {
             '👍': { total: 10, clientIds: { a: 6, b: 4 } },
             '🚀': { total: 1, clientIds: { a: 1 } },
           },
