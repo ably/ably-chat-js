@@ -69,12 +69,13 @@ export interface PresenceOptions {
  */
 export interface TypingOptions {
   /**
-   * The time, in milliseconds, that a client will wait before emitting a `typing.started` event.
+   * A throttle, in milliseconds, that enforces the minimum time interval between consecutive `typing.started`
+   * events sent by the client to the server.
    * If typing.start() is called, the first call will emit an event immediately.
-   * Later calls will no-op until the interval has elapsed.
-   * Calling typing.stop() will immediately send a `typing.stopped` event and reset the interval,
+   * Later calls will no-op until the time has elapsed.
+   * Calling typing.stop() will immediately send a `typing.stopped` event to the server and reset the interval,
    * allowing the client to send another `typing.started` event immediately.
-   * @defaultValue 15000
+   * @defaultValue 10000
    */
   heartbeatThrottleMs: number;
 }
