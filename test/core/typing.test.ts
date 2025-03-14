@@ -75,6 +75,64 @@ describe('Typing', () => {
     expect(room.typing.get()).toEqual(new Set(['some']));
   });
 
+  it<TestContext>('ensures multiple start/stop calls are resolved in order', async (context) => {
+    const { room, realtime } = context;
+    const channel = room.typing.channel;
+    const realtimeChannel = realtime.channels.get(channel.name);
+
+    // Mock implementation for `publish` to simulate delay in the call on the first invocation
+    const publishSpy = vi
+      .spyOn(realtimeChannel, 'publish')
+      .mockImplementationOnce(() => {
+        return new Promise((resolve) => setTimeout(resolve, 300)); // Simulate 300ms delay in publish
+      })
+      .mockImplementationOnce(() => Promise.resolve());
+
+    // Needed to allow typing calls to proceed
+    vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+
+    // To track resolution order
+    const resolveOrder: string[] = [];
+
+    // Start the first typing operation
+    const startPromise1 = new Promise<void>((resolve, reject) => {
+      room.typing
+        .start()
+        .then(() => {
+          resolveOrder.push('startPromise');
+          resolve();
+        })
+        .catch(reject);
+    });
+
+    // Start the second operation with a short delay of 100ms,
+    // this is smaller than the delay in the mock publish of 300ms.
+    // The `stop` call should await before the `start` call has resolved, but only resolve itself after.
+    const startPromise2 = new Promise<void>((resolve, reject) => {
+      setTimeout(() => {
+        room.typing
+          .stop()
+          .then(() => {
+            resolveOrder.push('stopPromise');
+            resolve();
+          })
+          .catch(reject);
+      }, 100); // 100ms delay
+    });
+
+    // Wait for both to complete
+    await Promise.all([startPromise1, startPromise2]);
+
+    // Validate that `publish` was called twice
+    expect(publishSpy).toHaveBeenCalledTimes(2);
+
+    // Ensure that the promises resolved in the correct order
+    expect(resolveOrder).toEqual(['startPromise', 'stopPromise']);
+
+    // Cleanup mocks
+    publishSpy.mockRestore();
+  });
+
   // CHA-T4
   describe('start typing', () => {
     // CHA-T4d

@@ -89,16 +89,16 @@ export enum TypingEvents {
  */
 export interface TypingEvent {
   /**
-   * Get a set of clientIds that are currently typing.
+   * The set of clientIds that are currently typing.
    */
-  get currentlyTyping(): Set<string>;
+  currentlyTyping: Set<string>;
 
   /**
    * Represents the change that resulted in the typing event.
    */
   change: {
     /**
-     * Get the client ID of the user who stopped/started typing.
+     * The client ID of the user who stopped/started typing.
      */
     clientId: string;
 
