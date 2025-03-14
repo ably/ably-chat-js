@@ -261,17 +261,11 @@ export class RoomLifeCycleManager {
       const channel = this._channelManager.get();
 
       // If channel is not in failed state, try to detach
-      if (channel.state === 'failed') {
-        this._logger.debug('skipping channel detach, channel is failed', {
-          roomId: this._roomId,
-        });
-      } else {
-        this._logger.debug('attempting channel detach before release', {
-          roomId: this._roomId,
-          channelState: channel.state,
-        });
-        await this._channelDetachLoop(channel);
-      }
+      this._logger.debug('attempting channel detach before release', {
+        roomId: this._roomId,
+        channelState: channel.state,
+      });
+      await this._channelDetachLoop(channel);
 
       // Release the channel
       this._releaseChannel();
@@ -328,17 +322,18 @@ export class RoomLifeCycleManager {
 
   private async _channelDetachLoop(channel: Ably.RealtimeChannel) {
     for (;;) {
+      // If channel is now failed, we can stop trying to detach
+      const currentState: Ably.ChannelState = channel.state;
+      if (currentState === 'failed') {
+        this._logger.debug('channel is failed, skipping detach', { roomId: this._roomId });
+        break;
+      }
+
       try {
         await channel.detach();
         break;
       } catch (error) {
-        // If channel is now failed, we can stop trying to detach
-        const currentState: Ably.ChannelState = channel.state;
-        if (currentState === 'failed') {
-          break;
-        }
-
-        // Otherwise keep trying
+        // keep trying
         this._logger.error('failed to detach channel during release', { roomId: this._roomId, error });
         await new Promise((resolve) => setTimeout(resolve, 250)); // Wait 250ms before retry
       }
