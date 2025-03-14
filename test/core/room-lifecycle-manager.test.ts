@@ -173,6 +173,23 @@ describe('RoomLifeCycleManager', () => {
       expect(mockChannel.detach).not.toHaveBeenCalled();
     });
 
+    it<TestContext>('should throw error if room is in failed state', async ({
+      roomLifeCycleManager,
+      mockChannel,
+      roomStatus,
+    }) => {
+      // Arrange
+      roomStatus.setStatus({ status: RoomStatus.Failed });
+
+      // Act & Assert
+      await expect(roomLifeCycleManager.detach()).rejects.toBeErrorInfo({
+        message: 'cannot detach room, room is in failed state',
+        code: ErrorCodes.RoomInFailedState,
+        statusCode: 400,
+      });
+      expect(mockChannel.detach).not.toHaveBeenCalled();
+    });
+
     it<TestContext>('should throw error if room is released', async ({
       roomLifeCycleManager,
       mockChannel,

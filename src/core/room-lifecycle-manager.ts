@@ -192,6 +192,11 @@ export class RoomLifeCycleManager {
     await this._mutex.runExclusive(async () => {
       this._logger.trace('RoomLifeCycleManager.detach();', { roomId: this._roomId });
 
+      // Check if room is in failed state
+      if (this._roomStatusIs(RoomStatus.Failed)) {
+        throw new Ably.ErrorInfo('cannot detach room, room is in failed state', ErrorCodes.RoomInFailedState, 400);
+      }
+
       // Check if we're in a terminal state
       this._checkRoomNotReleasing('detach');
 
