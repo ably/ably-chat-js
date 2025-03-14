@@ -29,7 +29,7 @@ export const AllFeaturesEnabled = {
      *
      * Spec: CHA-T10.
      */
-    heartbeatThrottleMs: 15000,
+    heartbeatThrottleMs: 10000,
   } as TypingOptions,
 
   /**

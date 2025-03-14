@@ -123,8 +123,12 @@ describe('useTyping', () => {
     await waitForArrayLength(typingEventsRoomOne, 1);
     expect(typingEventsRoomOne[0]?.currentlyTyping).toStrictEqual(new Set([chatClientTwo.clientId]));
 
-    // ensure the currently typing set is updated
-    expect(currentlyTypingSet).toStrictEqual(new Set([chatClientTwo.clientId]));
+    await waitFor(
+      () => {
+        expect(currentlyTypingSet).toStrictEqual(new Set([chatClientTwo.clientId]));
+      },
+      { timeout: 5000 },
+    );
 
     // expect a typing stopped event from the second room to be received by the test component
     await roomTwo.typing.stop();
