@@ -14,9 +14,9 @@ export const MessageReactionTypeSelector: React.FC = () => {
         }}
         value={type}
       >
-          <option value={MessageReactionType.Unique}>MessageReactionType.Unique</option>
-          <option value={MessageReactionType.Distinct}>MessageReactionType.Distinct</option>
-          <option value={MessageReactionType.Multiple}>MessageReactionType.Multiple</option>
+        <option value={MessageReactionType.Unique}>MessageReactionType.Unique</option>
+        <option value={MessageReactionType.Distinct}>MessageReactionType.Distinct</option>
+        <option value={MessageReactionType.Multiple}>MessageReactionType.Multiple</option>
       </select>
     </div>
   );

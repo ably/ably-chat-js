@@ -1,17 +1,13 @@
 import * as Ably from 'ably';
-import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
+import { ChatApi } from '../../src/core/chat-api.ts';
 import {
   ChatMessageActions,
-  MessageEvents,
   MessageReactionEvents,
   MessageReactionRawEvent,
   MessageReactionType,
 } from '../../src/core/events.ts';
-import { Message } from '../../src/core/message.ts';
-import { DefaultMessages, MessageRawReactionListener, OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
 import {
   channelAnnotationEventEmitter,
@@ -52,26 +48,26 @@ describe('MessagesReactions', () => {
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'addMessageReaction').mockResolvedValue();
 
-      context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Unique, '🥕');
+      await context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Unique, '🥕');
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Unique,
         reaction: '🥕',
       });
 
-      context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Distinct, '🥕');
+      await context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Distinct, '🥕');
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Distinct,
         reaction: '🥕',
       });
 
-      context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Multiple, '🥕');
+      await context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Multiple, '🥕');
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Multiple,
         reaction: '🥕',
         count: 1,
       });
 
-      context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Multiple, '🥕', 10);
+      await context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Multiple, '🥕', 10);
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Multiple,
         reaction: '🥕',
@@ -96,7 +92,10 @@ describe('MessagesReactions', () => {
         const expected = [
           { messageSerial: '01672531200000-123@xyzdefghij', unique: { '🥦': { total: 1, clientIds: ['user1'] } } },
           { messageSerial: '01672531200001-123@xyzdefghij', distinct: { '🥦': { total: 1, clientIds: ['user2'] } } },
-          { messageSerial: '01672531200002-123@xyzdefghij', multiple: { '🍌': { clienIds: { user1: 10 }, total: 10 } } },
+          {
+            messageSerial: '01672531200002-123@xyzdefghij',
+            multiple: { '🍌': { clienIds: { user1: 10 }, total: 10 } },
+          },
         ];
 
         let nextExpected = 0;
@@ -116,10 +115,10 @@ describe('MessagesReactions', () => {
               clearTimeout(timeout);
               done();
             }
-          } catch (error) {
+          } catch (error: unknown) {
             // the listener is wrapped in a try-catch so the test will fail with a useless error
             // instead of the real one if we don't try-catch here as well
-            reject(error);
+            reject(error as Error);
           }
         });
 
@@ -238,10 +237,10 @@ describe('MessagesReactions', () => {
               clearTimeout(timeout);
               done();
             }
-          } catch (error) {
+          } catch (error: unknown) {
             // the listener is wrapped in a try-catch so the test will fail with a useless error
             // instead of the real one if we don't try-catch here as well
-            reject(error);
+            reject(error as Error);
           }
         });
 
@@ -309,16 +308,16 @@ describe('MessagesReactions', () => {
       }));
   });
 
-  it<TestContext>('should unsubscribe from summary events', async (context) => {
+  it<TestContext>('should unsubscribe from summary events', (context) => {
     const { room } = context;
     let c1 = 0;
     let c2 = 0;
     let cu = 0;
 
-    const s1 = room.messages.reactions.subscribe((_event) => {
+    const s1 = room.messages.reactions.subscribe(() => {
       c1++;
     });
-    const s2 = room.messages.reactions.subscribe((_event) => {
+    const s2 = room.messages.reactions.subscribe(() => {
       c2++;
     });
     const uniqueListener = () => {
@@ -400,16 +399,16 @@ describe('MessagesReactions', () => {
     expect(cu).toEqual(5);
   });
 
-  it<TestContext>('should unsubscribe from raw events', async (context) => {
+  it<TestContext>('should unsubscribe from raw events', (context) => {
     const { room } = context;
     let c1 = 0;
     let c2 = 0;
     let cu = 0;
 
-    const s1 = room.messages.reactions.subscribeRaw((_event) => {
+    const s1 = room.messages.reactions.subscribeRaw(() => {
       c1++;
     });
-    const s2 = room.messages.reactions.subscribeRaw((_event) => {
+    const s2 = room.messages.reactions.subscribeRaw(() => {
       c2++;
     });
     const uniqueListener = () => {

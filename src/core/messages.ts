@@ -20,8 +20,8 @@ import {
   MessageReactionEvents,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
-  MultipleReactionSummary,
   MessageReactionType,
+  MultipleReactionSummary,
   RealtimeMessageNames,
   UniqueReactionSummary,
 } from './events.js';

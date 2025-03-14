@@ -17,7 +17,12 @@ export type {
   MessageReactionSummaryEvent,
   UniqueReactionSummary as SingleReactionSummary,
 } from './events.js';
-export { ChatMessageActions, MessageEvents, PresenceEvents, MessageReactionType as MessageReactionType } from './events.js';
+export {
+  ChatMessageActions,
+  MessageEvents,
+  MessageReactionType as MessageReactionType,
+  PresenceEvents,
+} from './events.js';
 export type { Headers } from './headers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
