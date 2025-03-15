@@ -8,8 +8,21 @@ export type { Connection, ConnectionStatusChange, ConnectionStatusListener } fro
 export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener, OnDiscontinuitySubscriptionResponse } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
-export type { MessageEvent } from './events.js';
-export { ChatMessageActions, MessageEvents, PresenceEvents } from './events.js';
+export type {
+  MultipleReactionSummary as CounterReactionSummary,
+  DistinctReactionSummary,
+  MessageEvent,
+  MessageReactionEvents,
+  MessageReactionRawEvent,
+  MessageReactionSummaryEvent,
+  UniqueReactionSummary as SingleReactionSummary,
+} from './events.js';
+export {
+  ChatMessageActions,
+  MessageEvents,
+  MessageReactionType as MessageReactionType,
+  PresenceEvents,
+} from './events.js';
 export type { Headers } from './headers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
@@ -19,12 +32,16 @@ export type {
   MessageHeaders,
   MessageMetadata,
   MessageOperationMetadata,
+  MessageReactions,
   Operation,
 } from './message.js';
 export type {
   DeleteMessageParams,
   MessageListener,
+  MessageRawReactionListener,
+  MessageReactionListener,
   Messages,
+  MessagesReactions,
   MessageSubscriptionResponse,
   OperationDetails,
   OrderBy,
@@ -39,6 +56,7 @@ export type { PaginatedResult } from './query.js';
 export type { Reaction } from './reaction.js';
 export type { Room } from './room.js';
 export type {
+  MessageOptions,
   OccupancyOptions,
   PresenceOptions,
   RoomOptions,
@@ -50,6 +68,6 @@ export type { RoomReactionListener, RoomReactions, SendReactionParams } from './
 export type { RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
-export type { StatusSubscription, Subscription } from './subscription.js';
+export type { Subscription } from './subscription.js';
 export type { Typing, TypingEvent, TypingListener } from './typing.js';
 export type { ChannelStateChange, ErrorInfo, RealtimePresenceParams } from 'ably';
