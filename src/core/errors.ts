@@ -55,16 +55,6 @@ export enum ErrorCodes {
    * Room was released before the operation could complete.
    */
   RoomReleasedBeforeOperationCompleted = 102106,
-
-  /**
-   * Room attachment failed.
-   */
-  RoomAttachmentFailed = 102107,
-
-  /**
-   * Room detachment failed.
-   */
-  RoomDetachmentFailed = 102108,
 }
 
 /**

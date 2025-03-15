@@ -95,8 +95,31 @@ export class RoomLifeCycleManager {
   private _startMonitoringDiscontinuity(): void {
     const channel = this._channelManager.get();
 
-    channel.on(['attached', 'update'], (stateChange: Ably.ChannelStateChange) => {
+    channel.on('attached', (stateChange: Ably.ChannelStateChange) => {
       if (!stateChange.resumed && !this._isFirstAttach && !this._isPostExplicitDetach) {
+        const error = new Ably.ErrorInfo(
+          'discontinuity detected',
+          ErrorCodes.RoomDiscontinuity,
+          stateChange.reason?.statusCode ?? 0,
+          stateChange.reason,
+        );
+
+        this._logger.warn('discontinuity detected', {
+          roomId: this._roomId,
+          error,
+        });
+        this._eventEmitter.emit(RoomEvents.Discontinuity, error);
+      }
+    });
+
+    channel.on('update', (stateChange: Ably.ChannelStateChange) => {
+      if (
+        !stateChange.resumed &&
+        !this._isFirstAttach &&
+        !this._isPostExplicitDetach &&
+        stateChange.current === 'attached' &&
+        stateChange.previous === 'attached'
+      ) {
         const error = new Ably.ErrorInfo(
           'discontinuity detected',
           ErrorCodes.RoomDiscontinuity,

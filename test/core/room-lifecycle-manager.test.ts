@@ -18,8 +18,9 @@ interface TestContext {
     attach: () => Promise<Ably.ChannelStateChange | null>;
     detach?: () => Promise<Ably.ChannelStateChange | null>;
     on?: (event: string | string[], handler: (stateChange: Ably.ChannelStateChange) => void) => void;
-    _stateChangeHandlers: ((stateChange: Ably.ChannelStateChange) => void)[];
-    invokeStateChange: (stateChange: Ably.ChannelStateChange) => void;
+    _stateChangeHandlers: Map<Ably.ChannelEvent, ((stateChange: Ably.ChannelStateChange) => void)[]>;
+    _stateChangeHandlersForAll: ((stateChange: Ably.ChannelStateChange) => void)[];
+    invokeStateChange: (stateChange: Ably.ChannelStateChange, isUpdate?: boolean) => void;
   };
 }
 
@@ -33,19 +34,50 @@ describe('RoomLifeCycleManager', () => {
       attach: vi.fn().mockImplementation(() => Promise.resolve(null)),
       detach: vi.fn().mockImplementation(() => Promise.resolve(null)),
       state: 'initialized',
-      invokeStateChange: (stateChange: Ably.ChannelStateChange) => {
-        for (const handler of context.mockChannel._stateChangeHandlers) {
+      invokeStateChange: (stateChange: Ably.ChannelStateChange, isUpdate = false) => {
+        for (const handler of context.mockChannel._stateChangeHandlersForAll) {
+          handler(stateChange);
+        }
+
+        const handlers = isUpdate
+          ? context.mockChannel._stateChangeHandlers.get('update')
+          : context.mockChannel._stateChangeHandlers.get(stateChange.current);
+        if (!handlers) {
+          return;
+        }
+
+        for (const handler of handlers) {
           handler(stateChange);
         }
       },
-      _stateChangeHandlers: [],
+      _stateChangeHandlers: new Map<Ably.ChannelEvent, ((stateChange: Ably.ChannelStateChange) => void)[]>(),
+      _stateChangeHandlersForAll: [],
       on: vi
         .fn()
-        .mockImplementation((event: string | string[], handler: (stateChange: Ably.ChannelStateChange) => void) => {
-          context.mockChannel._stateChangeHandlers.push(
-            Array.isArray(event) ? handler : (event as unknown as (stateChange: Ably.ChannelStateChange) => void),
-          );
-        }),
+        .mockImplementation(
+          (event: Ably.ChannelEvent | Ably.ChannelEvent[], handler: (stateChange: Ably.ChannelStateChange) => void) => {
+            if (typeof event === 'string') {
+              event = [event];
+            } else if (typeof event === 'function') {
+              context.mockChannel._stateChangeHandlersForAll.push(
+                event as unknown as (stateChange: Ably.ChannelStateChange) => void,
+              );
+              return;
+            }
+
+            for (const e of event as Ably.ChannelEvent[]) {
+              if (!context.mockChannel._stateChangeHandlers.has(e)) {
+                context.mockChannel._stateChangeHandlers.set(e, []);
+              }
+
+              context.mockChannel._stateChangeHandlers
+                .get(e)
+                ?.push(
+                  Array.isArray(event) ? handler : (event as unknown as (stateChange: Ably.ChannelStateChange) => void),
+                );
+            }
+          },
+        ),
     };
 
     context.channelManager = {
@@ -498,7 +530,10 @@ describe('RoomLifeCycleManager', () => {
   });
 
   describe('discontinuity monitoring', () => {
-    it<TestContext>('should not emit discontinuity on first attach', ({ mockChannel, roomLifeCycleManager }) => {
+    it<TestContext>('should not emit discontinuity on first attach attached', ({
+      mockChannel,
+      roomLifeCycleManager,
+    }) => {
       const handler = vi.fn();
       roomLifeCycleManager.onDiscontinuity(handler);
 
@@ -512,7 +547,10 @@ describe('RoomLifeCycleManager', () => {
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it<TestContext>('should not emit discontinuity when resumed is true', ({ mockChannel, roomLifeCycleManager }) => {
+    it<TestContext>('should not emit discontinuity when resumed is true attached', ({
+      mockChannel,
+      roomLifeCycleManager,
+    }) => {
       const handler = vi.fn();
       roomLifeCycleManager.onDiscontinuity(handler);
 
@@ -533,7 +571,7 @@ describe('RoomLifeCycleManager', () => {
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it<TestContext>('should emit discontinuity when not first attach and resumed is false', ({
+    it<TestContext>('should emit discontinuity when not first attach and resumed is false attached', ({
       mockChannel,
       roomLifeCycleManager,
     }) => {
@@ -562,7 +600,7 @@ describe('RoomLifeCycleManager', () => {
       );
     });
 
-    it<TestContext>('should not emit discontinuity after explicit detach', async ({
+    it<TestContext>('should not emit discontinuity after explicit detach attached event', async ({
       mockChannel,
       roomLifeCycleManager,
     }) => {
@@ -614,21 +652,105 @@ describe('RoomLifeCycleManager', () => {
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it<TestContext>('should emit discontinuity on channel update', ({ mockChannel, roomLifeCycleManager }) => {
+    it<TestContext>('should not emit discontinuity on first attach update', ({ mockChannel, roomLifeCycleManager }) => {
+      const handler = vi.fn();
+      roomLifeCycleManager.onDiscontinuity(handler);
+
+      // First attach
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      // Update event
+      mockChannel.invokeStateChange(
+        {
+          current: 'attached',
+          previous: 'attached',
+          resumed: false,
+        },
+        true,
+      );
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it<TestContext>('should not emit discontinuity when resumed is true update', ({
+      mockChannel,
+      roomLifeCycleManager,
+    }) => {
+      const handler = vi.fn();
+      roomLifeCycleManager.onDiscontinuity(handler);
+
+      // First attach
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      // Update event with resumed=true
+      mockChannel.invokeStateChange(
+        {
+          current: 'attached',
+          previous: 'attached',
+          resumed: true,
+        },
+        true,
+      );
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it<TestContext>('should not emit discontinuity when not double attached', ({
+      mockChannel,
+      roomLifeCycleManager,
+    }) => {
+      const handler = vi.fn();
+      roomLifeCycleManager.onDiscontinuity(handler);
+
+      // First attach
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      // Update event with resumed=true
+      mockChannel.invokeStateChange(
+        {
+          current: 'attached',
+          previous: 'attaching',
+          resumed: false,
+        },
+        true,
+      );
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it<TestContext>('should emit discontinuity when not first attach and resumed is false update', ({
+      mockChannel,
+      roomLifeCycleManager,
+    }) => {
       const handler = vi.fn();
       roomLifeCycleManager.onDiscontinuity(handler);
 
       // First attach
       roomLifeCycleManager.testForceFirstAttach(false);
 
-      // Update with resumed=false
+      // Update event with resumed=false
       const reason = new Ably.ErrorInfo('test error', 12345, 503);
-      mockChannel.invokeStateChange({
-        current: 'attached',
-        previous: 'attached',
-        resumed: false,
-        reason,
-      });
+      mockChannel.invokeStateChange(
+        {
+          current: 'attached',
+          previous: 'attached',
+          resumed: false,
+          reason,
+        },
+        true,
+      );
 
       expect(handler).toHaveBeenCalledWith(
         expect.toBeErrorInfo({
@@ -638,6 +760,44 @@ describe('RoomLifeCycleManager', () => {
           cause: reason as ErrorInfoCompareType,
         }),
       );
+    });
+
+    it<TestContext>('should not emit discontinuity after explicit detach update event', async ({
+      mockChannel,
+      roomLifeCycleManager,
+    }) => {
+      const handler = vi.fn();
+      roomLifeCycleManager.onDiscontinuity(handler);
+
+      // First attach
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      // Explicit detach
+      (mockChannel.detach as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+      await roomLifeCycleManager.detach();
+
+      // Re-attach
+      mockChannel.invokeStateChange({
+        current: 'attached',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      // Update event
+      mockChannel.invokeStateChange(
+        {
+          current: 'attached',
+          previous: 'attached',
+          resumed: false,
+        },
+        true,
+      );
+
+      expect(handler).not.toHaveBeenCalled();
     });
   });
 });
