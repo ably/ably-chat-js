@@ -27,10 +27,10 @@ export type {
   Messages,
   MessageSubscriptionResponse,
   OperationDetails,
-  OrderBy,
   QueryOptions,
   SendMessageParams,
 } from './messages.js';
+export { OrderBy } from './messages.js';
 export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener } from './occupancy.js';
 export type { OperationMetadata } from './operation-metadata.js';
