@@ -2,6 +2,12 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.5.1](https://github.com/ably/ably-chat-js/tree/0.5.0) (2025-03-17)
+
+### Fixes
+
+- The `OrderBy` enum is now exported in full, instead of just a type definition. [#503](https://github.com/ably/ably-chat-js/pull/503)
+
 ## [0.5.0](https://github.com/ably/ably-chat-js/tree/0.5.0) (2025-03-13)
 
 ### Breaking Changes

@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 // Update this when you release a new version
-export const VERSION = '0.5.0';
+export const VERSION = '0.5.1';
 export const CHANNEL_OPTIONS_AGENT_STRING = `chat-js/${VERSION}`;
 export const CHANNEL_OPTIONS_AGENT_STRING_REACT = `chat-react/${VERSION}`;
 export const DEFAULT_CHANNEL_OPTIONS: Ably.ChannelOptions = {
