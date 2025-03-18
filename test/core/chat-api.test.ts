@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { Message } from '../../src/core/message.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 
 vi.mock('ably');
@@ -69,6 +70,31 @@ describe('config', () => {
       code: 40000,
       statusCode: 400,
     });
+  });
+
+  it('should encode the fromSerial parameter if provided', async () => {
+    // Mock dependencies
+    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const chatApi = new ChatApi(realtime, makeTestLogger());
+
+    vi.spyOn(realtime, 'request').mockReturnValue(
+      Promise.resolve({ success: true, items: [] as Message[] }) as Promise<Ably.HttpPaginatedResponse<Message>>,
+    );
+    const roomId = 'test-room';
+    const queryParams = {
+      fromSerial: 'serial/with/special:chars',
+    };
+
+    await chatApi.getMessages(roomId, queryParams);
+    expect(realtime.request).toHaveBeenCalledWith(
+      'GET',
+      '/chat/v2/rooms/test-room/messages',
+      3,
+      expect.objectContaining({
+        fromSerial: encodeURIComponent('serial/with/special:chars'),
+      }),
+      undefined,
+    );
   });
 
   it('throws errors if invalid OrderBy used on history request', async () => {

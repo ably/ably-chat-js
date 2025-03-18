@@ -103,6 +103,10 @@ export class ChatApi {
 
     // convert the params into internal format
     const apiParams: ApiGetMessagesQueryParams = { ...params };
+    // encode the serial if it is provided
+    if (params.fromSerial) {
+      apiParams.fromSerial = encodeURIComponent(params.fromSerial);
+    }
     if (params.orderBy) {
       switch (params.orderBy) {
         case OrderBy.NewestFirst: {
