@@ -42,7 +42,7 @@ export interface Typing extends EmitsDiscontinuities {
 
   /**
    * Get the current typers, a set of clientIds.
-   * @returns A Promise of a set of clientIds that are currently typing.
+   * @returns The set of clientIds that are currently typing.
    */
   get(): Set<string>;
 
@@ -93,6 +93,11 @@ interface TypingEventsMap {
 }
 
 /**
+ * Represents a timer handle that can be undefined.
+ */
+type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
+
+/**
  * @inheritDoc
  */
 export class DefaultTyping
@@ -111,8 +116,8 @@ export class DefaultTyping
   // Grace period for inactivity before another user is considered to have stopped typing
   // CHA-T10a
   private readonly _timeoutMs = 2000;
-  private _heartbeatTimerId: ReturnType<typeof setTimeout> | undefined;
-  private readonly _currentlyTyping: Map<string, ReturnType<typeof setTimeout> | undefined>;
+  private _heartbeatTimerId: TypingTimerHandle;
+  private readonly _currentlyTyping: Map<string, TypingTimerHandle>;
 
   // Mutex for controlling `start` and `stop` operations
   private readonly _mutex = new Mutex();
@@ -140,7 +145,7 @@ export class DefaultTyping
     this._heartbeatThrottleMs = options.heartbeatThrottleMs;
 
     // Map of clientIds to their typing timers, used to track typing state
-    this._currentlyTyping = new Map<string, ReturnType<typeof setTimeout> | undefined>();
+    this._currentlyTyping = new Map<string, TypingTimerHandle>();
     this._logger = logger;
   }
 
@@ -194,35 +199,36 @@ export class DefaultTyping
    */
   async start(): Promise<void> {
     this._logger.trace(`DefaultTyping.start();`);
+
     // Acquire a mutex
     await this._mutex.acquire();
-    // CHA-T4d
-    if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-      this._logger.error(`DefaultTyping.start(); channel is not attached`, { state: this.channel.state });
-      throw new Ably.ErrorInfo('cannot start typing, channel is not attached', ErrorCodes.BadRequest, 400);
-    }
+    try {
+      // CHA-T4d
+      // Ensure channel is attached
+      if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
+        this._logger.error(`DefaultTyping.start(); channel is not attached`, { state: this.channel.state });
+        throw new Ably.ErrorInfo('cannot start typing, channel is not attached', 50000, 500);
+      }
 
-    // If the user is already typing, and the timer has not expired, do not send another heartbeat
-    // CHA-T4c1, CHA-T4c2
-    if (this._heartbeatTimerId) {
-      this._logger.debug(`DefaultTyping.start(); no-op, already typing and heartbeat timer has not expired`);
+      // Check whether user is already typing before publishing again
+      // CHA-T4c1, CHA-T4c2
+      if (this._heartbeatTimerId) {
+        this._logger.debug(`DefaultTyping.start(); no-op, already typing and heartbeat timer has not expired`);
+        return;
+      }
+
+      // Perform the publish
+      // CHA-T4a3
+      await this._channel.publish(ephemeralMessage(TypingEvents.Start));
+
+      // Start the timer after publishing
+      // CHA-T4a5
+      this._startHeartbeatTimer();
+      this._logger.trace(`DefaultTyping.start(); starting timers`);
+    } finally {
+      this._logger.trace(`DefaultTyping.start(); releasing mutex`);
       this._mutex.release();
-      return;
     }
-
-    // CHA-T4a3
-    return this._channel
-      .publish(ephemeralMessage(TypingEvents.Start))
-      .then(() => {
-        // start the timer and publish the typing event
-        // CHA-T4a5
-        this._startHeartbeatTimer();
-        this._logger.trace(`DefaultTyping.start(); starting timers`);
-      })
-      .finally(() => {
-        this._logger.trace(`DefaultTyping.start(); releasing mutex`);
-        this._mutex.release();
-      });
   }
 
   /**
@@ -230,38 +236,35 @@ export class DefaultTyping
    */
   async stop(): Promise<void> {
     this._logger.trace(`DefaultTyping.stop();`);
+
     // Acquire a mutex
     await this._mutex.acquire();
-    // CHA-T5c
-    if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-      this._logger.error(`DefaultTyping.stop(); channel is not attached`, { state: this.channel.state });
-      throw new Ably.ErrorInfo('cannot stop typing, channel is not attached', ErrorCodes.BadRequest, 400);
-    }
+    try {
+      // CHA-T5c
+      if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
+        this._logger.error(`DefaultTyping.stop(); channel is not attached`, { state: this.channel.state });
+        throw new Ably.ErrorInfo('cannot stop typing, channel is not attached', 50000, 500);
+      }
 
-    // If the user is not typing, do nothing.
-    // CHA-T5a
-    if (!this._heartbeatTimerId) {
-      this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`);
+      // If the user is not typing, do nothing.
+      // CHA-T5a
+      if (!this._heartbeatTimerId) {
+        this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`);
+        return;
+      }
+
+      // CHA-T5d
+      await this._channel.publish(ephemeralMessage(TypingEvents.Stop));
+      this._logger.trace(`DefaultTyping.stop(); clearing timers`);
+
+      // CHA-T5e
+      // Clear the heartbeat timer
+      clearTimeout(this._heartbeatTimerId);
+      this._heartbeatTimerId = undefined;
+    } finally {
+      this._logger.trace(`DefaultTyping.stop(); releasing mutex`);
       this._mutex.release();
-      return;
     }
-
-    // CHA-T5d
-    return this._channel
-      .publish(ephemeralMessage(TypingEvents.Stop))
-      .then(() => {
-        this._logger.trace(`DefaultTyping.stop(); clearing timers`);
-        // CHA-T5e
-        // Clear the heartbeat timer
-        if (this._heartbeatTimerId) {
-          clearTimeout(this._heartbeatTimerId);
-          this._heartbeatTimerId = undefined;
-        }
-      })
-      .finally(() => {
-        this._logger.trace(`DefaultTyping.stop(); releasing mutex`);
-        this._mutex.release();
-      });
   }
 
   /**
@@ -459,11 +462,11 @@ export class DefaultTyping
   }
 
   // Convenience getters for testing
-  get heartbeatTimerId(): ReturnType<typeof setTimeout> | undefined {
+  get heartbeatTimerId(): TypingTimerHandle {
     return this._heartbeatTimerId;
   }
 
-  get currentlyTyping(): Map<string, ReturnType<typeof setTimeout> | undefined> {
+  get currentlyTyping(): Map<string, TypingTimerHandle> {
     return this._currentlyTyping;
   }
 }
