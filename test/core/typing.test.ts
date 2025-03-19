@@ -140,7 +140,7 @@ describe('Typing', () => {
       const { room } = context;
       vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('detached');
 
-      await expect(room.typing.start()).rejects.toBeErrorInfoWithCode(40000);
+      await expect(room.typing.start()).rejects.toBeErrorInfoWithCode(50000);
     });
 
     // CHA-T4a
@@ -226,7 +226,7 @@ describe('Typing', () => {
         await room.typing.start();
         vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('detached');
 
-        await expect(room.typing.stop()).rejects.toBeErrorInfoWithCode(40000);
+        await expect(room.typing.stop()).rejects.toBeErrorInfoWithCode(50000);
 
         // Check that no messages were sent
         expect(realtimeChannel.publish).toHaveBeenCalledTimes(1);
