@@ -299,12 +299,10 @@ export class DefaultTyping
   private _updateCurrentlyTyping(clientId: string, event: TypingEvents): void {
     this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { clientId, event });
 
-    const existingTimeout = this._currentlyTyping.get(clientId);
-
     if (event === TypingEvents.Start) {
-      this._handleTypingStart(clientId, existingTimeout);
+      this._handleTypingStart(clientId,);
     } else {
-      this._handleTypingStop(clientId, existingTimeout);
+      this._handleTypingStop(clientId);
     }
   }
 
@@ -343,12 +341,13 @@ export class DefaultTyping
   /**
    * Handles logic for TypingEvents.Start, including starting a new timeout or resetting an existing one.
    * @param clientId
-   * @param existingTimeout
    */
-  private _handleTypingStart(clientId: string, existingTimeout: NodeJS.Timeout | undefined): void {
+  private _handleTypingStart(clientId: string): void {
     this._logger.debug(`DefaultTyping._handleTypingStart();`, { clientId });
     // Start a new timeout for the client
     const timeoutId = this._startNewClientInactivityTimer(clientId);
+
+    const existingTimeout = this._currentlyTyping.get(clientId);
 
     // Set the new timeout for the client
     this._currentlyTyping.set(clientId, timeoutId);
@@ -370,13 +369,15 @@ export class DefaultTyping
         },
       });
     }
-
-    // Track the new timeout
-    this._currentlyTyping.set(clientId, timeoutId);
   }
 
-  // Handles logic for TypingEvents.Stop
-  private _handleTypingStop(clientId: string, existingTimeout: NodeJS.Timeout | undefined): void {
+  /**
+   * Handles logic for TypingEvents.Stop, including clearing the timeout for the client.
+   * @param clientId
+   * @private
+   */
+  private _handleTypingStop(clientId: string): void {
+    const existingTimeout = this._currentlyTyping.get(clientId);
     if (!existingTimeout) {
       // Stop requested for a client that isn't currently typing
       this._logger.trace(
@@ -407,13 +408,8 @@ export class DefaultTyping
     const { name, clientId } = inbound;
     this._logger.trace(`DefaultTyping._internalSubscribeToEvents(); received event`, { name, clientId });
 
-    if (clientId === undefined) {
-      this._logger.error(`DefaultTyping._internalSubscribeToEvents(); missing clientId in event payload`, { inbound });
-      return;
-    }
-
-    if (clientId === '') {
-      this._logger.error(`DefaultTyping._internalSubscribeToEvents(); empty clientId in event payload`, { inbound });
+    if (!clientId) {
+      this._logger.error(`DefaultTyping._internalSubscribeToEvents(); invalid clientId in received event`, { inbound });
       return;
     }
 
