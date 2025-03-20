@@ -29,9 +29,9 @@ export interface TypingParams extends StatusParams, Listenable<TypingListener> {
 
 export interface UseTypingResponse extends ChatStatusResponse {
   /**
-   * A shortcut to the {@link Typing.start} method.
+   * A shortcut to the {@link Typing.keystroke} method.
    */
-  readonly start: Typing['start'];
+  readonly keystroke: Typing['keystroke'];
 
   /**
    * A shortcut to the {@link Typing.stop} method.
@@ -162,7 +162,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   }, [context, listenerRef, logger]);
 
   // memoize the methods to avoid re-renders, and ensure the same instance is used
-  const start = useCallback(() => context.room.then((room) => room.typing.start()), [context]);
+  const keystroke = useCallback(() => context.room.then((room) => room.typing.keystroke()), [context]);
   const stop = useCallback(() => context.room.then((room) => room.typing.stop()), [context]);
 
   return {
@@ -171,7 +171,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     connectionError,
     roomStatus,
     roomError,
-    start,
+    keystroke,
     stop,
     currentlyTyping,
   };

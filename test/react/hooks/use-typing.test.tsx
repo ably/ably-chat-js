@@ -105,19 +105,19 @@ describe('useTyping', () => {
     expect(mockUnsubscribe).toHaveBeenCalled();
   });
 
-  it('should correctly call the typing start method', async () => {
+  it('should correctly call the typing keystroke method', async () => {
     const { result } = renderHook(() => useTyping());
 
-    // spy on the start method of the typing instance
-    const startSpy = vi.spyOn(mockRoom.typing, 'start').mockImplementation(() => Promise.resolve());
+    // spy on the keystroke method of the typing instance
+    const keystrokeSpy = vi.spyOn(mockRoom.typing, 'keystroke').mockImplementation(() => Promise.resolve());
 
-    // call the start method
+    // call the keystroke method
     await act(async () => {
-      await result.current.start();
+      await result.current.keystroke();
     });
 
-    // verify that the start method was called
-    expect(startSpy).toHaveBeenCalled();
+    // verify that the keystroke method was called
+    expect(keystrokeSpy).toHaveBeenCalled();
   });
 
   it('should correctly call the typing stop method', async () => {

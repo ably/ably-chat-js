@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { Mutex } from 'async-mutex';
+import { E_CANCELED, Mutex } from 'async-mutex';
 
 import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
@@ -47,24 +47,35 @@ export interface Typing extends EmitsDiscontinuities {
   get(): Set<string>;
 
   /**
-   * "This will send a `typing.started` event to the server.
+   * This will send a `typing.started` event to the server.
    * Events are throttled according to the `heartbeatThrottleMs` room option.
-   * If an event has been sent within the interval, this operation is no-op."
+   * If an event has been sent within the interval, this operation is no-op.
    *
-   * Calls to `start()` and `stop()` will execute serially in the order they are called,
-   * resolving only when the previous call has completed.
+   *
+   * Calls to `keystroke()` and `stop()` are serialized and will always resolve in the correct order.
+   * - For example, if multiple `keystroke()` calls are made in quick succession before the first `keystroke()` call has
+   *   sent a `typing.started` event to the server, followed by one `stop()` call, the `stop()` call will execute
+   *   as soon as the first `keystroke()` call completes.
+   *   All intermediate `keystroke()` calls will be treated as no-ops.
+   * - The most recent operation (`keystroke()` or `stop()`) will always determine the final state, ensuring operations
+   *   resolve to a consistent and correct state.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
 
-  start(): Promise<void>;
+  keystroke(): Promise<void>;
 
   /**
    * This will send a `typing.stopped` event to the server.
    * If the user was not currently typing, this operation is no-op.
    *
-   * Calls to `start()` and `stop()` will execute serially in the order they are called,
-   * resolving only when the previous call has completed.
+   * Calls to `keystroke()` and `stop()` are serialized and will always resolve in the correct order.
+   * - For example, if multiple `keystroke()` calls are made in quick succession before the first `keystroke()` call has
+   *   sent a `typing.started` event to the server, followed by one `stop()` call, the `stop()` call will execute
+   *   as soon as the first `keystroke()` call completes.
+   *   All intermediate `keystroke()` calls will be treated as no-ops.
+   * - The most recent operation (`keystroke()` or `stop()`) will always determine the final state, ensuring operations
+   *   resolve to a consistent and correct state.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
@@ -197,23 +208,30 @@ export class DefaultTyping
   /**
    * @inheritDoc
    */
-  async start(): Promise<void> {
-    this._logger.trace(`DefaultTyping.start();`);
+  async keystroke(): Promise<void> {
+    this._logger.trace(`DefaultTyping.keystroke();`);
+    this._mutex.cancel();
 
     // Acquire a mutex
-    await this._mutex.acquire();
+    await this._mutex.acquire().catch((error: unknown) => {
+      if (error === E_CANCELED) {
+        this._logger.debug(`DefaultTyping.keystroke(); mutex was canceled by a later operation`);
+        return;
+      }
+      throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
+    });
     try {
       // CHA-T4d
       // Ensure channel is attached
       if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-        this._logger.error(`DefaultTyping.start(); channel is not attached`, { state: this.channel.state });
-        throw new Ably.ErrorInfo('cannot start typing, channel is not attached', 50000, 500);
+        this._logger.error(`DefaultTyping.keystroke(); channel is not attached`, { state: this.channel.state });
+        throw new Ably.ErrorInfo('cannot type, channel is not attached', 50000, 500);
       }
 
       // Check whether user is already typing before publishing again
       // CHA-T4c1, CHA-T4c2
       if (this._heartbeatTimerId) {
-        this._logger.debug(`DefaultTyping.start(); no-op, already typing and heartbeat timer has not expired`);
+        this._logger.debug(`DefaultTyping.keystroke(); no-op, already typing and heartbeat timer has not expired`);
         return;
       }
 
@@ -224,9 +242,9 @@ export class DefaultTyping
       // Start the timer after publishing
       // CHA-T4a5
       this._startHeartbeatTimer();
-      this._logger.trace(`DefaultTyping.start(); starting timers`);
+      this._logger.trace(`DefaultTyping.keystroke(); starting timers`);
     } finally {
-      this._logger.trace(`DefaultTyping.start(); releasing mutex`);
+      this._logger.trace(`DefaultTyping.keystroke(); releasing mutex`);
       this._mutex.release();
     }
   }
@@ -237,8 +255,15 @@ export class DefaultTyping
   async stop(): Promise<void> {
     this._logger.trace(`DefaultTyping.stop();`);
 
+    this._mutex.cancel();
     // Acquire a mutex
-    await this._mutex.acquire();
+    await this._mutex.acquire().catch((error: unknown) => {
+      if (error === E_CANCELED) {
+        this._logger.debug(`DefaultTyping.stop(); mutex was canceled by a later operation`);
+        return;
+      }
+      throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
+    });
     try {
       // CHA-T5c
       if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
@@ -301,7 +326,7 @@ export class DefaultTyping
     this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { clientId, event });
 
     if (event === TypingEvents.Start) {
-      this._handleTypingStart(clientId,);
+      this._handleTypingStart(clientId);
     } else {
       this._handleTypingStop(clientId);
     }

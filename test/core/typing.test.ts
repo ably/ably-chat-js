@@ -97,7 +97,7 @@ describe('Typing', () => {
     // Start the first typing operation
     const startPromise1 = new Promise<void>((resolve, reject) => {
       room.typing
-        .start()
+        .keystroke()
         .then(() => {
           resolveOrder.push('startPromise');
           resolve();
@@ -140,7 +140,7 @@ describe('Typing', () => {
       const { room } = context;
       vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('detached');
 
-      await expect(room.typing.start()).rejects.toBeErrorInfoWithCode(50000);
+      await expect(room.typing.keystroke()).rejects.toBeErrorInfoWithCode(50000);
     });
 
     // CHA-T4a
@@ -154,7 +154,7 @@ describe('Typing', () => {
       vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
-      await room.typing.start();
+      await room.typing.keystroke();
 
       // Ensure that publish was called with typing.started
       expect(realtimeChannel.publish).toHaveBeenCalledTimes(1);
@@ -178,7 +178,7 @@ describe('Typing', () => {
       vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
-      await room.typing.start();
+      await room.typing.keystroke();
 
       // Ensure that publish was called with typing.started
       expect(realtimeChannel.publish).toHaveBeenCalledTimes(1);
@@ -191,7 +191,7 @@ describe('Typing', () => {
       expect(defaultTyping.heartbeatTimerId).toBeDefined();
 
       // Start typing again
-      await room.typing.start();
+      await room.typing.keystroke();
 
       // Ensure that publish was not called again
       expect(realtimeChannel.publish).toHaveBeenCalledTimes(1);
@@ -223,7 +223,7 @@ describe('Typing', () => {
         const realtimeChannel = realtime.channels.get(channel.name);
         vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
         vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
-        await room.typing.start();
+        await room.typing.keystroke();
         vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('detached');
 
         await expect(room.typing.stop()).rejects.toBeErrorInfoWithCode(50000);
@@ -242,7 +242,7 @@ describe('Typing', () => {
         vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
 
         // Start typing and then immediately stop typing
-        await room.typing.start();
+        await room.typing.keystroke();
         await room.typing.stop();
 
         expect(realtimeChannel.publish).toHaveBeenCalledTimes(2);
