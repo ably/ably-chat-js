@@ -120,7 +120,7 @@ export class DefaultTyping
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
-  // Throttle for the heartbeat, how often we should emit a typing event with repeated calls to start()
+  // Throttle for the heartbeat, how often we should emit a typing event with repeated calls to keystroke()
   // CHA-T10
   private readonly _heartbeatThrottleMs: number;
 
@@ -130,7 +130,7 @@ export class DefaultTyping
   private _heartbeatTimerId: TypingTimerHandle;
   private readonly _currentlyTyping: Map<string, TypingTimerHandle>;
 
-  // Mutex for controlling `start` and `stop` operations
+  // Mutex for controlling `start` and `keystroke` operations
   private readonly _mutex = new Mutex();
 
   /**
@@ -478,14 +478,5 @@ export class DefaultTyping
    */
   get detachmentErrorCode(): ErrorCodes {
     return ErrorCodes.TypingDetachmentFailed;
-  }
-
-  // Convenience getters for testing
-  get heartbeatTimerId(): TypingTimerHandle {
-    return this._heartbeatTimerId;
-  }
-
-  get currentlyTyping(): Map<string, TypingTimerHandle> {
-    return this._currentlyTyping;
   }
 }
