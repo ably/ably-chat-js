@@ -33,16 +33,16 @@ describe('useTyping', () => {
     roomTwo.typing.subscribe((typingEvent) => typingEventsRoomTwo.push(typingEvent));
 
     const TestComponent = () => {
-      const { start, stop, roomStatus } = useTyping();
+      const { keystroke, stop, roomStatus } = useTyping();
 
       useEffect(() => {
         if (roomStatus !== RoomStatus.Attached) return;
-        void start().then(() => {
+        void keystroke().then(() => {
           setTimeout(() => {
             void stop();
           }, 500);
         });
-      }, [start, stop, roomStatus]);
+      }, [keystroke, stop, roomStatus]);
 
       return null;
     };
@@ -117,7 +117,7 @@ describe('useTyping', () => {
     );
 
     // send a typing started event from the second room
-    await roomTwo.typing.start();
+    await roomTwo.typing.keystroke();
 
     // expect a typing started event from the second room to be received by the test component
     await waitForArrayLength(typingEventsRoomOne, 1);

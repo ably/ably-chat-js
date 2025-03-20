@@ -58,7 +58,7 @@ describe('Typing', () => {
       // Attach the room
       await context.chatRoom.attach();
       // Start typing and emit typingStarted event
-      await context.chatRoom.typing.start();
+      await context.chatRoom.typing.keystroke();
       // Once the timeout timer expires, the typingStopped event should be emitted
       await waitForArrayLength(events, 2);
       // Should have received a typingStarted and then typingStopped event
@@ -70,7 +70,7 @@ describe('Typing', () => {
   );
 
   it<TestContext>(
-    'subscribes to all typing events, sent by start and stop',
+    'subscribes to all typing events, sent by keystroke and stop',
     async (context) => {
       const events: TypingEvent[] = [];
       context.chatRoom.typing.subscribe((event) => {
@@ -80,7 +80,7 @@ describe('Typing', () => {
       await context.chatRoom.attach();
 
       // Send typing events
-      await context.chatRoom.typing.start();
+      await context.chatRoom.typing.keystroke();
       await waitForArrayLength(events, 1);
       expect(events.length).toEqual(1);
       expect(events[0]?.currentlyTyping).toEqual(new Set([context.clientId]));
@@ -125,8 +125,8 @@ describe('Typing', () => {
       await client2Room.attach();
 
       // send typing event for client1 and client2
-      await client1Room.typing.start();
-      await client2Room.typing.start();
+      await client1Room.typing.keystroke();
+      await client2Room.typing.keystroke();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
         currentlyTyping: new Set([clientId1]),
