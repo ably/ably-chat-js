@@ -40,6 +40,7 @@ export default [
       'test/helper/test-setup.ts',
       '**/__mocks__',
       '**/coverage/',
+      '.github',
     ],
   },
   ...fixupConfigRules(

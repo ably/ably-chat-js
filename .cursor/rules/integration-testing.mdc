@@ -1,0 +1,102 @@
+---
+description: Writing integration tests
+globs: *.integration.test.ts,*.integration.test.tsx
+---
+# Integration Testing Guide
+
+## How Integration Tests Work
+
+Integration tests are intended to test behaviour whilst interacting with a real Ably service.
+
+## Test Structure
+
+### Basic Test Structure
+We use the vitest framework. Each integration test file should follow this basic structure:
+
+```typescript
+import { beforeEach, describe, expect, it } from 'vitest';
+// Import the modules being tested
+import { YourModule } from './your-module';
+
+interface TestContext {
+  // Define your test context interface
+}
+
+describe('module integration', { timeout: 10000 }, () => {
+  beforeEach<TestContext>((context) => {
+    // Set up your test context
+  });
+
+  it<TestContext>('should do something specific', async (context) => {
+    // Test implementation
+  });
+});
+```
+
+### Test Context
+Test context is used to share common setup between tests. Define an interface for your test context and use it consistently:
+
+```typescript
+interface TestContext {
+  chat: ChatClient;
+  // Add other context properties as needed
+}
+
+describe('integration tests', () => {
+  beforeEach<TestContext>((context) => {
+    context.chat = newChatClient();
+    // Initialise other context properties
+  });
+});
+```
+
+## Test Organization
+
+### Grouping Tests
+- Group related tests using `describe` blocks
+- Use nested describes for sub-features
+- Example:
+  ```typescript
+  describe('ChatMessage', () => {
+    describe('message versions', () => {
+      it('is deleted', () => {
+        // Test implementation
+      });
+      
+      it('is updated', () => {
+        // Test implementation
+      });
+    });
+  });
+  ```
+
+## Test Setup Helpers
+
+### `newChatClient()`
+
+This creates a Chat Client that is fully connected and ready to talk to a sandbox Ably service.
+
+## Async Testing
+
+### Handling Async Operations
+For async operations, always use async/await and proper timeout handling:
+
+```typescript
+it<TestContext>('should handle async operations', async (context) => {
+  const { chat } = context;
+  
+  // Use await for async operations
+  const result = await chat.someAsyncOperation();
+  
+  expect(result).toBeDefined();
+});
+```
+### Async Events
+
+Use `vi.waitFor` to wait for async events to happen.
+
+## Mocking
+
+As these are integreation tests, do **not** mock modules.
+
+Use full `Ably.Realtime` clients to talk to a real Ably service.

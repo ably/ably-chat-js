@@ -17,6 +17,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
+    "copilot:from-cursor": "(cd .github && npx tsx ./copilot-from-cursor.ts)",
     "lint": "eslint . && npm run cspell",
     "lint:fix": "eslint --fix .; (npm run format > /dev/null)",
     "format": "prettier --write src test __mocks__ demo/src",
