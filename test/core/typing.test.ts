@@ -7,7 +7,7 @@ import { TypingEvent, TypingEvents } from '../../src/core/events.ts';
 import { Logger } from '../../src/core/logger.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
-import { DefaultTyping } from '../../src/core/typing.ts';
+import { DefaultTyping, Typing } from '../../src/core/typing.ts';
 import { channelEventEmitter, ChannelEventEmitterReturnType } from '../helper/channel.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -38,6 +38,12 @@ const stopMessage: Ably.Message = {
     ephemeral: true,
   },
 };
+
+// This interface simply extends the DefaultTyping interface and exposes some private properties for testing
+interface TestTypingInterface extends Typing {
+  _heartbeatTimerId: ReturnType<typeof setTimeout> | undefined;
+  _currentlyTyping: Map<string, ReturnType<typeof setTimeout>>;
+}
 
 vi.mock('ably');
 
@@ -161,10 +167,10 @@ describe('Typing', () => {
       expect(realtimeChannel.publish).toHaveBeenCalledWith(startMessage);
 
       // Check that our timers have been set
-      const defaultTyping = room.typing as DefaultTyping;
+      const defaultTyping = room.typing as TestTypingInterface;
 
       // CHA-T4a4
-      expect(defaultTyping.heartbeatTimerId).toBeDefined();
+      expect(defaultTyping._heartbeatTimerId).toBeDefined();
     });
 
     // CHA-T4c1
@@ -185,10 +191,10 @@ describe('Typing', () => {
       expect(realtimeChannel.publish).toHaveBeenCalledWith(startMessage);
 
       // Check that our timers have been set
-      const defaultTyping = room.typing as DefaultTyping;
+      const defaultTyping = room.typing as TestTypingInterface;
 
       // CHA-T4a4
-      expect(defaultTyping.heartbeatTimerId).toBeDefined();
+      expect(defaultTyping._heartbeatTimerId).toBeDefined();
 
       // Start typing again
       await room.typing.keystroke();
@@ -252,8 +258,8 @@ describe('Typing', () => {
         expect(realtimeChannel.publish).toHaveBeenCalledWith(stopMessage);
 
         // Check that the timers have been cleared
-        const defaultTyping = room.typing as DefaultTyping;
-        expect(defaultTyping.heartbeatTimerId).toBeUndefined();
+        const defaultTyping = room.typing as TestTypingInterface;
+        expect(defaultTyping._heartbeatTimerId).toBeUndefined();
       });
     });
 
@@ -486,8 +492,8 @@ describe('Typing', () => {
         expect(room.typing.get()).toEqual(new Set(['otherClient']));
 
         // Check we have an active timer
-        const defaultTyping = room.typing as DefaultTyping;
-        const inactivity = defaultTyping.currentlyTyping.get('otherClient');
+        const defaultTyping = room.typing as TestTypingInterface;
+        const inactivity = defaultTyping._currentlyTyping.get('otherClient');
         expect(inactivity).toBeDefined();
       });
 
@@ -519,8 +525,8 @@ describe('Typing', () => {
         });
 
         // Get current inactivity timer
-        const defaultTyping = room.typing as DefaultTyping;
-        const inactivity = defaultTyping.currentlyTyping.get('otherClient');
+        const defaultTyping = room.typing as TestTypingInterface;
+        const inactivity = defaultTyping._currentlyTyping.get('otherClient');
         expect(inactivity).toBeDefined();
 
         // Now send another typing event
@@ -532,7 +538,7 @@ describe('Typing', () => {
         // Check that eventually (yay promises), the inactivity timer has been reset
         await vi.waitFor(
           () => {
-            const newInactivity = defaultTyping.currentlyTyping.get('otherClient');
+            const newInactivity = defaultTyping._currentlyTyping.get('otherClient');
             expect(newInactivity).toBeDefined();
             expect(newInactivity).not.toBe(inactivity);
           },
@@ -568,8 +574,8 @@ describe('Typing', () => {
         });
 
         // Get current inactivity timer
-        const defaultTyping = room.typing as DefaultTyping;
-        const inactivity = defaultTyping.currentlyTyping.get('otherClient');
+        const defaultTyping = room.typing as TestTypingInterface;
+        const inactivity = defaultTyping._currentlyTyping.get('otherClient');
         expect(inactivity).toBeDefined();
 
         // Expire the inactivity timer
@@ -615,8 +621,8 @@ describe('Typing', () => {
         });
 
         // Get current inactivity timer
-        const defaultTyping = room.typing as DefaultTyping;
-        const inactivity = defaultTyping.currentlyTyping.get('otherClient');
+        const defaultTyping = room.typing as TestTypingInterface;
+        const inactivity = defaultTyping._currentlyTyping.get('otherClient');
         expect(inactivity).toBeDefined();
 
         // Emulate a typing stop event
@@ -637,7 +643,7 @@ describe('Typing', () => {
         });
 
         // Check that the inactivity timer has been cleared
-        expect(defaultTyping.currentlyTyping.get('otherClient')).toBeUndefined();
+        expect(defaultTyping._currentlyTyping.get('otherClient')).toBeUndefined();
       });
 
       // CHA-T13b5
