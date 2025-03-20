@@ -1,13 +1,11 @@
-import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { Reaction } from '../../src/core/reaction.ts';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
-import { RoomStatus } from '../../src/core/room-status.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.ts';
 import { newChatClient } from '../helper/chat.ts';
-import { getRandomRoom, waitForRoomStatus } from '../helper/room.ts';
+import { getRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
   chat: ChatClient;
@@ -49,7 +47,7 @@ describe('room-level reactions integration test', () => {
     const { chat } = context;
 
     const room = await getRandomRoom(chat);
-    const channel = room.messages.channel as RealtimeChannelWithOptions;
+    const channel = room.channel as RealtimeChannelWithOptions;
 
     expect(channel.channelOptions.params).toEqual(expect.objectContaining({ agent: CHANNEL_OPTIONS_AGENT_STRING }));
   });
@@ -70,60 +68,10 @@ describe('room-level reactions integration test', () => {
     await room.attach();
 
     // Send reactions
-
     for (const type of expectedReactions) {
       await room.reactions.send({ type });
     }
 
     await waitForReactions(reactions, expectedReactions);
-  });
-
-  it<TestContext>('handles discontinuities', async (context) => {
-    const { chat } = context;
-
-    const room = await getRandomRoom(chat);
-
-    // Attach the room
-    await room.attach();
-
-    // Subscribe discontinuity events
-    const discontinuityErrors: (Ably.ErrorInfo | undefined)[] = [];
-    const { off } = room.reactions.onDiscontinuity((error: Ably.ErrorInfo | undefined) => {
-      discontinuityErrors.push(error);
-    });
-
-    const channelSuspendable = room.reactions.channel as Ably.RealtimeChannel & {
-      notifyState(state: 'suspended' | 'attached'): void;
-    };
-
-    // Simulate a discontinuity by forcing a channel into suspended state
-    channelSuspendable.notifyState('suspended');
-
-    // Wait for the room to go into suspended
-    await waitForRoomStatus(room, RoomStatus.Suspended);
-
-    // Force the channel back into attached state - to simulate recovery
-    channelSuspendable.notifyState('attached');
-
-    // Wait for the room to go into attached
-    await waitForRoomStatus(room, RoomStatus.Attached);
-
-    // Wait for a discontinuity event to be received
-    expect(discontinuityErrors.length).toBe(1);
-
-    // Unsubscribe from discontinuity events
-    off();
-
-    // Simulate a discontinuity by forcing a channel into suspended state
-    channelSuspendable.notifyState('suspended');
-
-    // Wait for the room to go into suspended
-    await waitForRoomStatus(room, RoomStatus.Suspended);
-
-    // We shouldn't get any more discontinuity events
-    expect(discontinuityErrors.length).toBe(1);
-
-    // Calling off again should be a no-op
-    off();
   });
 });

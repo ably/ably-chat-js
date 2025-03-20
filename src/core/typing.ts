@@ -1,22 +1,11 @@
 import * as Ably from 'ably';
 import { E_CANCELED, Mutex } from 'async-mutex';
 
-import { roomChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
-import {
-  DiscontinuityEmitter,
-  DiscontinuityListener,
-  EmitsDiscontinuities,
-  HandlesDiscontinuity,
-  newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
-} from './discontinuity.js';
-import { ErrorCodes } from './errors.js';
 import { TypingEvent, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import { TypingOptions } from './room-options.js';
+import { InternalTypingOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -26,7 +15,7 @@ import EventEmitter from './utils/event-emitter.js';
  *
  * Get an instance via {@link Room.typing}.
  */
-export interface Typing extends EmitsDiscontinuities {
+export interface Typing {
   /**
    * Subscribe a given listener to all typing events from users in the chat room.
    *
@@ -79,14 +68,7 @@ export interface Typing extends EmitsDiscontinuities {
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
    */
-
   stop(): Promise<void>;
-
-  /**
-   * Get the Ably realtime channel underpinning typing events.
-   * @returns The Ably realtime channel.
-   */
-  channel: Ably.RealtimeChannel;
 }
 
 /**
@@ -111,14 +93,10 @@ type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
 /**
  * @inheritDoc
  */
-export class DefaultTyping
-  extends EventEmitter<TypingEventsMap>
-  implements Typing, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
   private readonly _clientId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
-  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   // Throttle for the heartbeat, how often we should emit a typing event with repeated calls to keystroke()
   // CHA-T10
@@ -143,14 +121,14 @@ export class DefaultTyping
    */
   constructor(
     roomId: string,
-    options: TypingOptions,
+    options: InternalTypingOptions,
     channelManager: ChannelManager,
     clientId: string,
     logger: Logger,
   ) {
     super();
     this._clientId = clientId;
-    this._channel = this._makeChannel(roomId, channelManager);
+    this._channel = this._makeChannel(channelManager);
 
     // Interval for the heartbeat, how often we should emit a typing event with repeated calls to start()
     this._heartbeatThrottleMs = options.heartbeatThrottleMs;
@@ -163,9 +141,9 @@ export class DefaultTyping
   /**
    * Creates the realtime channel for typing indicators.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
+  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
     // CHA-T8
-    const channel = channelManager.get(roomChannelName(roomId));
+    const channel = channelManager.get();
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([TypingEvents.Start, TypingEvents.Stop], this._internalSubscribeToEvents.bind(this));
@@ -446,37 +424,16 @@ export class DefaultTyping
     }
   };
 
-  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
-    this._logger.trace(`DefaultTyping.onDiscontinuity();`);
-    this._discontinuityEmitter.on(listener);
-
-    return {
-      off: () => {
-        this._discontinuityEmitter.off(listener);
-      },
-    };
-  }
-
-  discontinuityDetected(reason?: Ably.ErrorInfo): void {
-    this._logger.warn(`DefaultTyping.discontinuityDetected();`, { reason });
-    this._discontinuityEmitter.emit('discontinuity', reason);
-  }
-
   get heartbeatThrottleMs(): number {
     return this._heartbeatThrottleMs;
   }
 
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.TypingAttachmentFailed;
+  // Convenience getters for testing
+  get heartbeatTimerId(): ReturnType<typeof setTimeout> | undefined {
+    return this._heartbeatTimerId;
   }
 
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.TypingDetachmentFailed;
+  get currentlyTyping(): Map<string, ReturnType<typeof setTimeout> | undefined> {
+    return this._currentlyTyping;
   }
 }

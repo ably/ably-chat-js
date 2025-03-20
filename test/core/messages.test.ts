@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
 import { ChatMessageActions, MessageEvent, MessageEvents } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
-import { DefaultMessages, OrderBy } from '../../src/core/messages.ts';
+import { OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
 import {
   channelEventEmitter,
@@ -56,7 +56,7 @@ describe('Messages', () => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
-    const channel = context.room.messages.channel;
+    const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
     context.emulateBackendStateChange = channelStateEventEmitter(channel);
   });
@@ -685,7 +685,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = room.messages.channel;
+    const msgChannel = room.channel;
 
     // Force ts to recognize the channel properties
     const channel = msgChannel as RealtimeChannel & {
@@ -745,7 +745,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = room.messages.channel;
+    const msgChannel = room.channel;
 
     // Force ts to recognize the channel properties
     const channel = msgChannel as RealtimeChannel & {
@@ -782,7 +782,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = room.messages.channel;
+    const msgChannel = room.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -879,7 +879,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = room.messages.channel;
+    const msgChannel = room.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -967,7 +967,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = room.messages.channel;
+    const msgChannel = room.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -1064,13 +1064,5 @@ describe('Messages', () => {
 
     // Run a history query for the listener and check the chat api call is made with the previous attach serial
     await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
-  });
-
-  it<TestContext>('has an attachment error code', (context) => {
-    expect((context.room.messages as DefaultMessages).attachmentErrorCode).toBe(102001);
-  });
-
-  it<TestContext>('has a detachment error code', (context) => {
-    expect((context.room.messages as DefaultMessages).detachmentErrorCode).toBe(102050);
   });
 });

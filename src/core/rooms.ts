@@ -31,7 +31,7 @@ export interface Rooms {
    * @throws {@link ErrorInfo} if a room with the same ID but different options already exists.
    * @returns Room A promise to a new or existing Room object.
    */
-  get(roomId: string, options: RoomOptions): Promise<Room>;
+  get(roomId: string, options?: RoomOptions): Promise<Room>;
 
   /**
    * Release the Room object if it exists. This method only releases the reference
@@ -71,7 +71,7 @@ interface RoomMapEntry {
   /**
    * The options for the room.
    */
-  options: RoomOptions;
+  options: RoomOptions | undefined;
 
   /**
    * An abort controller to abort the get operation if the room is released before the get operation completes.
@@ -108,7 +108,7 @@ export class DefaultRooms implements Rooms {
   /**
    * @inheritDoc
    */
-  get(roomId: string, options: RoomOptions): Promise<Room> {
+  get(roomId: string, options?: RoomOptions): Promise<Room> {
     this._logger.trace('Rooms.get();', { roomId });
 
     const existing = this._rooms.get(roomId);
@@ -254,7 +254,7 @@ export class DefaultRooms implements Rooms {
    *
    * @returns DefaultRoom A new room object.
    */
-  private _makeRoom(roomId: string, nonce: string, options: RoomOptions): DefaultRoom {
+  private _makeRoom(roomId: string, nonce: string, options: RoomOptions | undefined): DefaultRoom {
     return new DefaultRoom(
       roomId,
       nonce,

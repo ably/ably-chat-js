@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { Reaction } from '../../src/core/reaction.ts';
 import { Room } from '../../src/core/room.ts';
-import { DefaultRoomReactions } from '../../src/core/room-reactions.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';
@@ -33,7 +32,7 @@ describe('Reactions', () => {
     };
 
     context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
-    const channel = context.room.reactions.channel;
+    const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
 
     vi.spyOn(channel, 'publish').mockImplementation((message: Ably.Message) => {
@@ -299,13 +298,5 @@ describe('Reactions', () => {
           headers: { action: 'strike back', number: 1980 },
         });
       }));
-  });
-
-  it<TestContext>('has an attachment error code', (context) => {
-    expect((context.room.reactions as DefaultRoomReactions).attachmentErrorCode).toBe(102003);
-  });
-
-  it<TestContext>('has a detachment error code', (context) => {
-    expect((context.room.reactions as DefaultRoomReactions).detachmentErrorCode).toBe(102052);
   });
 });
