@@ -92,14 +92,41 @@ interface DeleteMessageParams {
   metadata?: MessageOperationMetadata;
 }
 
+/**
+ * Parameters for adding a message reaction.
+ */
 export interface AddMessageReactionParams {
+  /**
+   * The type of reaction, must be one of {@link MessageReactionType}.
+   */
   type: string;
+
+  /**
+   * The reaction to add; ie. the emoji.
+   */
   reaction: string;
+
+  /**
+   * The count of the reaction for type {@link MessageReactionType.Multiple}.
+   * Defalts to 1 if not set. Not supported for other reaction types.
+   * @default 1
+   */
   count?: number;
 }
 
+/**
+ * Parameters for deleting a message reaction.
+ */
 export interface DeleteMessageReactionParams {
+  /**
+   * The type of reaction, must be one of {@link MessageReactionType}.
+   */
   type: string;
+
+  /**
+   * The reaction to remove, ie. the emoji. Required for all reaction types
+   * except {@link MessageReactionType.Unique}.
+   */
   reaction?: string;
 }
 
