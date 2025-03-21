@@ -120,7 +120,7 @@ describe('MessagesReactions', () => {
           { messageSerial: '01672531200001-123@xyzdefghij', distinct: { '🥦': { total: 1, clientIds: ['user2'] } } },
           {
             messageSerial: '01672531200002-123@xyzdefghij',
-            multiple: { '🍌': { clienIds: { user1: 10 }, total: 10 } },
+            multiple: { '🍌': { clientIds: { user1: 10 }, total: 10 } },
           },
         ];
 
@@ -180,7 +180,7 @@ describe('MessagesReactions', () => {
           action: ChatMessageActions.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
-            [MessageReactionType.Multiple]: { '🍌': { clienIds: { user1: 10 }, total: 10 } },
+            [MessageReactionType.Multiple]: { '🍌': { clientIds: { user1: 10 }, total: 10 } },
           },
         });
       }));

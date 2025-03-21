@@ -108,7 +108,7 @@ export interface AddMessageReactionParams {
 
   /**
    * The count of the reaction for type {@link MessageReactionType.Multiple}.
-   * Defalts to 1 if not set. Not supported for other reaction types.
+   * Defaults to 1 if not set. Not supported for other reaction types.
    * @default 1
    */
   count?: number;
@@ -166,11 +166,7 @@ export class ChatApi {
       }
     }
 
-    const data = await this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, {
-      ...apiParams,
-      special: 'char=x&acte/?r',
-      'bla&foo': 'bar',
-    });
+    const data = await this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, apiParams);
     return this._recursivePaginateMessages(data);
   }
 
