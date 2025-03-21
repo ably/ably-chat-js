@@ -4,11 +4,11 @@ import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
+import { TypingEvent, TypingEvents } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
-import { TypingEvent } from '../../src/core/typing.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { randomClientId, randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -41,7 +41,9 @@ describe('Typing', () => {
     context.realtime = ablyRealtimeClient();
     context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
-    context.chatRoom = await context.chat.get(randomRoomId(), { typing: { timeoutMs: 500 } });
+    context.chatRoom = await context.chat.get(randomRoomId(), {
+      typing: { heartbeatThrottleMs: 600 },
+    });
   });
 
   // Test to check if typing starts and then stops typing after the default timeout
@@ -56,7 +58,7 @@ describe('Typing', () => {
       // Attach the room
       await context.chatRoom.attach();
       // Start typing and emit typingStarted event
-      await context.chatRoom.typing.start();
+      await context.chatRoom.typing.keystroke();
       // Once the timeout timer expires, the typingStopped event should be emitted
       await waitForArrayLength(events, 2);
       // Should have received a typingStarted and then typingStopped event
@@ -68,7 +70,7 @@ describe('Typing', () => {
   );
 
   it<TestContext>(
-    'subscribes to all typing events, sent by start and stop',
+    'subscribes to all typing events, sent by keystroke and stop',
     async (context) => {
       const events: TypingEvent[] = [];
       context.chatRoom.typing.subscribe((event) => {
@@ -78,7 +80,7 @@ describe('Typing', () => {
       await context.chatRoom.attach();
 
       // Send typing events
-      await context.chatRoom.typing.start();
+      await context.chatRoom.typing.keystroke();
       await waitForArrayLength(events, 1);
       expect(events.length).toEqual(1);
       expect(events[0]?.currentlyTyping).toEqual(new Set([context.clientId]));
@@ -112,7 +114,7 @@ describe('Typing', () => {
         makeTestLogger(),
       );
 
-      const roomOptions = { typing: { timeoutMs: 15000 } };
+      const roomOptions = { typing: { heartbeatThrottleMs: 10000 } };
 
       const client1Room = await client1.get(context.chatRoom.roomId, roomOptions);
       const client2Room = await client2.get(context.chatRoom.roomId, roomOptions);
@@ -123,12 +125,19 @@ describe('Typing', () => {
       await client2Room.attach();
 
       // send typing event for client1 and client2
-      await client1Room.typing.start();
-      await client2Room.typing.start();
+      await client1Room.typing.keystroke();
+      await client2Room.typing.keystroke();
       // Wait for the typing events to be received
-      await waitForTypingEvent(events, { currentlyTyping: new Set([clientId1, clientId2]) });
+      await waitForTypingEvent(events, {
+        currentlyTyping: new Set([clientId1]),
+        change: { clientId: clientId1, type: TypingEvents.Start },
+      });
+      await waitForTypingEvent(events, {
+        currentlyTyping: new Set([clientId1, clientId2]),
+        change: { clientId: clientId2, type: TypingEvents.Start },
+      });
       // Get the currently typing client ids
-      const currentlyTypingClientIds = await context.chatRoom.typing.get();
+      const currentlyTypingClientIds = context.chatRoom.typing.get();
       // Ensure that the client ids are correct
       expect(currentlyTypingClientIds.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIds.has(clientId1), 'client1 should be typing').toEqual(true);
@@ -137,9 +146,12 @@ describe('Typing', () => {
       // Try stopping typing for one of the clients
       await client1Room.typing.stop();
       // Wait for the typing events to be received
-      await waitForTypingEvent(events, { currentlyTyping: new Set([clientId2]) });
+      await waitForTypingEvent(events, {
+        currentlyTyping: new Set([clientId2]),
+        change: { clientId: clientId1, type: TypingEvents.Stop },
+      });
       // Get the currently typing client ids
-      const currentlyTypingClientIdsAfterStop = await context.chatRoom.typing.get();
+      const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.get();
       // Ensure that the client ids are correct and client1 is no longer typing
       expect(currentlyTypingClientIdsAfterStop.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIdsAfterStop.has(clientId1), 'client1 should not be typing').toEqual(false);

@@ -25,9 +25,11 @@ export const AllFeaturesEnabled = {
    */
   typing: {
     /**
-     * The default timeout for typing events in milliseconds.
+     * The default time that a client will wait between sending one typing heartbeat and the next.
+     *
+     * Spec: CHA-T10.
      */
-    timeoutMs: 5000,
+    heartbeatThrottleMs: 10000,
   } as TypingOptions,
 
   /**
@@ -67,11 +69,15 @@ export interface PresenceOptions {
  */
 export interface TypingOptions {
   /**
-   * The timeout for typing events in milliseconds. If typing.start() is not called for this amount of time, a stop
-   * typing event will be fired, resulting in the user being removed from the currently typing set.
-   * @defaultValue 5000
+   * A throttle, in milliseconds, that enforces the minimum time interval between consecutive `typing.started`
+   * events sent by the client to the server.
+   * If typing.start() is called, the first call will emit an event immediately.
+   * Later calls will no-op until the time has elapsed.
+   * Calling typing.stop() will immediately send a `typing.stopped` event to the server and reset the interval,
+   * allowing the client to send another `typing.started` event immediately.
+   * @defaultValue 10000
    */
-  timeoutMs: number;
+  heartbeatThrottleMs: number;
 }
 
 /**
@@ -134,8 +140,14 @@ const invalidRoomConfiguration = (reason: string): Error =>
   new Ably.ErrorInfo(`invalid room configuration: ${reason}`, 40001, 400);
 
 export const validateRoomOptions = (options: RoomOptions): void => {
-  if (options.typing && options.typing.timeoutMs <= 0) {
-    throw invalidRoomConfiguration('typing timeout must be greater than 0');
+  if (options.typing) {
+    validateTypingOptions(options.typing);
+  }
+};
+
+const validateTypingOptions = (options: TypingOptions): void => {
+  if (options.heartbeatThrottleMs <= 0) {
+    throw invalidRoomConfiguration('typing heartbeat interval must be greater than 0');
   }
 };
 
