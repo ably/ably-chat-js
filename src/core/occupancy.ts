@@ -165,37 +165,56 @@ export class DefaultOccupancy
    * occupancy events for the public API.
    */
   private _internalOccupancyListener(message: Ably.InboundMessage): void {
+    this._logger.trace('Occupancy._internalOccupancyListener();', message);
     if (typeof message.data !== 'object') {
-      this._logger.error('invalid occupancy event received; data is not an object', message);
+      this._logger.error(
+        'Occupancy._internalOccupancyListener(); invalid occupancy event received; data is not an object',
+        message,
+      );
       return;
     }
 
     const { metrics } = message.data as { metrics?: { connections?: number; presenceMembers?: number } };
 
     if (metrics === undefined) {
-      this._logger.error('invalid occupancy event received; metrics is missing', message);
+      this._logger.error(
+        'Occupancy._internalOccupancyListener(); invalid occupancy event received; metrics is missing',
+        message,
+      );
       return;
     }
 
     const { connections, presenceMembers } = metrics;
 
     if (connections === undefined) {
-      this._logger.error('invalid occupancy event received; connections is missing', message);
+      this._logger.error(
+        'Occupancy._internalOccupancyListener(); invalid occupancy event received; connections is missing',
+        message,
+      );
       return;
     }
 
     if (!Number.isInteger(connections)) {
-      this._logger.error('invalid occupancy event received; connections is not a number', message);
+      this._logger.error(
+        'Occupancy._internalOccupancyListener(); invalid occupancy event received; connections is not a number',
+        message,
+      );
       return;
     }
 
     if (presenceMembers === undefined) {
-      this._logger.error('invalid occupancy event received; presenceMembers is missing', message);
+      this._logger.error(
+        'Occupancy._internalOccupancyListener(); invalid occupancy event received; presenceMembers is missing',
+        message,
+      );
       return;
     }
 
     if (!Number.isInteger(presenceMembers)) {
-      this._logger.error('invalid occupancy event received; presenceMembers is not a number', message);
+      this._logger.error(
+        'Occupancy._internalOccupancyListener(); invalid occupancy event received; presenceMembers is not a number',
+        message,
+      );
       return;
     }
 
@@ -236,19 +255,19 @@ export class DefaultOccupancy
   }
 
   /**
-   * Merges the channel options for the room with the ones required for presence.
+   * Merges the channel options for the room with the ones required for occupancy.
    *
-   * @returns A function that merges the channel options for the room with the ones required for presence.
+   * @returns A function that merges the channel options for the room with the ones required for occupancy.
    */
   static channelOptionMerger(): ChannelOptionsMerger {
     return (options) => ({ ...options, params: { ...options.params, occupancy: 'metrics' } });
   }
 
   /**
-   * Returns the channel name for the presence channel.
+   * Returns the channel name for the occupancy channel.
    *
    * @param roomId The unique identifier of the room.
-   * @returns The channel name for the presence channel.
+   * @returns The channel name for the occupancy channel.
    */
   static channelName(roomId: string): string {
     return messagesChannelName(roomId);
