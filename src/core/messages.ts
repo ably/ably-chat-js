@@ -364,11 +364,17 @@ export class DefaultMessageReactions implements MessagesReactions {
 
   private _processAnnotationEvent(event: Ably.Annotation) {
     if (!event.refSerial) {
+      this._logger.debug('DefaultMessageReactions._processAnnotationEvent(); received event with missing refSerial', {
+        event,
+      });
       return;
     }
 
     // unknown ref type
     if (!Object.values(MessageReactionType).includes(event.refType as MessageReactionType)) {
+      this._logger.debug('DefaultMessageReactions._processAnnotationEvent(); received event with unknown refType', {
+        event,
+      });
       return;
     }
     const reactionType = event.refType as MessageReactionType;
@@ -381,6 +387,9 @@ export class DefaultMessageReactions implements MessagesReactions {
     const eventType = typeMap[event.action];
     if (!eventType) {
       // unknown action
+      this._logger.debug('DefaultMessageReactions._processAnnotationEvent(); received event with unknown action', {
+        event,
+      });
       return;
     }
 
@@ -427,10 +436,14 @@ export class DefaultMessageReactions implements MessagesReactions {
     }
     // they must have a refSerial
     if (!event.refSerial) {
+      this._logger.debug('DefaultMessageReactions._processMessageEvent(); received summary without refSerial', {
+        event,
+      });
       return;
     }
     // they must have a version
     if (!event.version) {
+      this._logger.debug('DefaultMessageReactions._processMessageEvent(); received summary without version', { event });
       return;
     }
 
