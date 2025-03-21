@@ -61,8 +61,10 @@ export interface Typing extends EmitsDiscontinuities {
    *   resolve to a consistent and correct state.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
+   * @throws {@link ErrorInfo} If the {@link RoomStatus} is not either {@link RoomStatus.Attached} or {@link RoomStatus.Attaching}.
+   * @throws {@link ErrorInfo} If the operation fails to send the event to the server.
+   * @throws {@link ErrorInfo} If there is a problem acquiring the mutex that controls serialization.
    */
-
   keystroke(): Promise<void>;
 
   /**
@@ -78,6 +80,9 @@ export interface Typing extends EmitsDiscontinuities {
    *   resolve to a consistent and correct state.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
+   * @throws {@link ErrorInfo} If the {@link RoomStatus} is not either {@link RoomStatus.Attached} or {@link RoomStatus.Attaching}.
+   * @throws {@link ErrorInfo} If the operation fails to send the event to the server.
+   * @throws {@link ErrorInfo} If there is a problem acquiring the mutex that controls serialization.
    */
 
   stop(): Promise<void>;
@@ -222,10 +227,12 @@ export class DefaultTyping
     });
     try {
       // CHA-T4d
-      // Ensure channel is attached
+      // Ensure room is attached
       if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-        this._logger.error(`DefaultTyping.keystroke(); channel is not attached`, { state: this.channel.state });
-        throw new Ably.ErrorInfo('cannot type, channel is not attached', 50000, 500);
+        this._logger.error(`DefaultTyping.keystroke(); room is not in the correct state `, {
+          State: this.channel.state,
+        });
+        throw new Ably.ErrorInfo('cannot type, room is not in the correct state', 50000, 500);
       }
 
       // Check whether user is already typing before publishing again
@@ -267,8 +274,8 @@ export class DefaultTyping
     try {
       // CHA-T5c
       if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-        this._logger.error(`DefaultTyping.stop(); channel is not attached`, { state: this.channel.state });
-        throw new Ably.ErrorInfo('cannot stop typing, channel is not attached', 50000, 500);
+        this._logger.error(`DefaultTyping.stop(); room is not in the correct state `, { State: this.channel.state });
+        throw new Ably.ErrorInfo('cannot stop typing, room is not in the correct state', 50000, 500);
       }
 
       // If the user is not typing, do nothing.
