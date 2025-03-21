@@ -17,7 +17,7 @@ This SDK supports the following platforms:
 
 **Browsers**: All major desktop and mobile browsers, including (but not limited to) Chrome, Firefox, Edge, Safari on iOS and macOS, Opera, and Android browsers. Internet Explorer is not supported.
 
-**Node.js**: Version 20.x or newer.
+**Node.js**: Version 18 or newer.
 
 **Typescript**: This library is written in TypeScript and has full TypeScript support.
 
