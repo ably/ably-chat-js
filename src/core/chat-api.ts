@@ -1,7 +1,14 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
+import {
+  DefaultMessage,
+  emptyMessageReactions,
+  Message,
+  MessageHeaders,
+  MessageMetadata,
+  MessageOperationMetadata,
+} from './message.js';
 import { OrderBy } from './messages.js';
 import { OccupancyEvent } from './occupancy.js';
 import { PaginatedResult } from './query.js';
@@ -86,6 +93,44 @@ interface DeleteMessageParams {
 }
 
 /**
+ * Parameters for adding a message reaction.
+ */
+export interface AddMessageReactionParams {
+  /**
+   * The type of reaction, must be one of {@link MessageReactionType}.
+   */
+  type: string;
+
+  /**
+   * The reaction to add; ie. the emoji.
+   */
+  reaction: string;
+
+  /**
+   * The count of the reaction for type {@link MessageReactionType.Multiple}.
+   * Defaults to 1 if not set. Not supported for other reaction types.
+   * @default 1
+   */
+  count?: number;
+}
+
+/**
+ * Parameters for deleting a message reaction.
+ */
+export interface DeleteMessageReactionParams {
+  /**
+   * The type of reaction, must be one of {@link MessageReactionType}.
+   */
+  type: string;
+
+  /**
+   * The reaction to remove, ie. the emoji. Required for all reaction types
+   * except {@link MessageReactionType.Unique}.
+   */
+  reaction?: string;
+}
+
+/**
  * Chat SDK Backend
  */
 export class ChatApi {
@@ -129,6 +174,8 @@ export class ChatApi {
     const mapToDefaultMessage = (message: Message): DefaultMessage => {
       const metadata = message.metadata as MessageMetadata | undefined;
       const headers = message.headers as MessageHeaders | undefined;
+      const reactions = message.reactions as typeof message.reactions | undefined;
+
       return new DefaultMessage(
         message.serial,
         message.clientId,
@@ -140,6 +187,7 @@ export class ChatApi {
         message.version,
         (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
         new Date(message.timestamp),
+        reactions ?? emptyMessageReactions(),
         message.operation,
       );
     };
@@ -161,7 +209,7 @@ export class ChatApi {
     return { ...data, ...paginatedResult };
   }
 
-  async deleteMessage(roomId: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
+  deleteMessage(roomId: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
     const body: { description?: string; metadata?: MessageOperationMetadata } = {
       description: params?.description,
       metadata: params?.metadata,
@@ -176,7 +224,7 @@ export class ChatApi {
     );
   }
 
-  async sendMessage(roomId: string, params: SendMessageParams): Promise<CreateMessageResponse> {
+  sendMessage(roomId: string, params: SendMessageParams): Promise<CreateMessageResponse> {
     const body: {
       text: string;
       metadata?: MessageMetadata;
@@ -192,7 +240,7 @@ export class ChatApi {
     return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v2/rooms/${roomId}/messages`, 'POST', body);
   }
 
-  async updateMessage(roomId: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
+  updateMessage(roomId: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
     const encodedSerial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<UpdateMessageResponse>(
@@ -202,7 +250,24 @@ export class ChatApi {
     );
   }
 
-  async getOccupancy(roomId: string): Promise<OccupancyEvent> {
+  addMessageReaction(roomId: string, serial: string, data: AddMessageReactionParams): Promise<void> {
+    const encodedSerial = encodeURIComponent(serial);
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest(`/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`, 'POST', data);
+  }
+
+  deleteMessageReaction(roomId: string, serial: string, data: DeleteMessageReactionParams): Promise<void> {
+    const encodedSerial = encodeURIComponent(serial);
+    roomId = encodeURIComponent(roomId);
+    return this._makeAuthorizedRequest(
+      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`,
+      'DELETE',
+      undefined,
+      data,
+    );
+  }
+
+  getOccupancy(roomId: string): Promise<OccupancyEvent> {
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
   }

@@ -27,6 +27,21 @@ function createMockPresence() {
   return mock;
 }
 
+function createMockAnnotations() {
+  const mock = {
+    publish: (messageSerial: string, type: string, data: string | ArrayBuffer | Uint8Array) =>
+      mockPromisify<void>(undefined),
+    delete: (messageSerial: string, type: string, data: string | ArrayBuffer | Uint8Array) =>
+      mockPromisify<void>(undefined),
+    subscriptions: createMockEmitter(),
+    subscribe: async (...args: any[]) => {
+      mock.subscriptions.on(...args);
+    },
+    unsubscribe: methodReturningVoidPromise,
+  };
+  return mock;
+}
+
 type anyType = ((arg: unknown) => void)[];
 type eventType = { [event: string]: ((arg: unknown) => void)[] };
 
@@ -40,6 +55,7 @@ function createMockChannel(name: string) {
     attach: methodReturningVoidPromise,
     detach: methodReturningVoidPromise,
     presence: createMockPresence(),
+    annotations: createMockAnnotations(),
     subscribe: async (...args: any[]) => {
       mock.subscriptions.on(...args);
     },
