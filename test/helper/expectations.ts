@@ -36,7 +36,7 @@ interface CheckResponseType {
   actual: unknown;
 }
 
-const toBeErrorInfo = (received: unknown, expected: ErrorInfoCompareType): CheckResponseType => {
+export const toBeErrorInfo = (received: unknown, expected: ErrorInfoCompareType): CheckResponseType => {
   if (!(received instanceof Ably.ErrorInfo)) {
     return {
       pass: false,

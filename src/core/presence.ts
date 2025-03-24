@@ -1,19 +1,10 @@
 import * as Ably from 'ably';
 
-import { messagesChannelName } from './channel.js';
+import { roomChannelName } from './channel.js';
 import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
-import {
-  DiscontinuityListener,
-  EmitsDiscontinuities,
-  HandlesDiscontinuity,
-  newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
-} from './discontinuity.js';
-import { ErrorCodes } from './errors.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import { RoomOptions } from './room-options.js';
+import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
@@ -109,7 +100,7 @@ export type PresenceListener = (event: PresenceEvent) => void;
  *
  * Get an instance via {@link Room.presence}.
  */
-export interface Presence extends EmitsDiscontinuities {
+export interface Presence {
   /**
    * Method to get list of the current online users and returns the latest presence messages associated to it.
    * @param {Ably.RealtimePresenceParams} params - Parameters that control how the presence set is retrieved.
@@ -162,22 +153,15 @@ export interface Presence extends EmitsDiscontinuities {
    * Unsubscribe all listeners from all presence events.
    */
   unsubscribeAll(): void;
-
-  /**
-   * Get the underlying Ably realtime channel used for presence in this chat room.
-   * @returns The realtime channel.
-   */
-  get channel(): Ably.RealtimeChannel;
 }
 
 /**
  * @inheritDoc
  */
-export class DefaultPresence implements Presence, HandlesDiscontinuity, ContributesToRoomLifecycle {
+export class DefaultPresence implements Presence {
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _clientId: string;
   private readonly _logger: Logger;
-  private readonly _discontinuityEmitter = newDiscontinuityEmitter();
   private readonly _emitter = new EventEmitter<PresenceEventsMap>();
 
   /**
@@ -189,7 +173,7 @@ export class DefaultPresence implements Presence, HandlesDiscontinuity, Contribu
    * @param logger An instance of the Logger.
    */
   constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
-    this._channel = this._makeChannel(roomId, channelManager);
+    this._channel = this._makeChannel(channelManager);
     this._clientId = clientId;
     this._logger = logger;
   }
@@ -197,21 +181,13 @@ export class DefaultPresence implements Presence, HandlesDiscontinuity, Contribu
   /**
    * Creates the realtime channel for presence.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(DefaultPresence.channelName(roomId));
+  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
+    const channel = channelManager.get();
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.presence.subscribe(this.subscribeToEvents.bind(this));
 
     return channel;
-  }
-
-  /**
-   * Get the underlying Ably realtime channel used for presence in this chat room.
-   * @returns The realtime channel.
-   */
-  get channel(): Ably.RealtimeChannel {
-    return this._channel;
   }
 
   /**
@@ -358,35 +334,14 @@ export class DefaultPresence implements Presence, HandlesDiscontinuity, Contribu
     }
   };
 
-  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
-    this._logger.trace('Presence.onDiscontinuity();');
-    const wrapped = wrap(listener);
-    this._discontinuityEmitter.on(wrapped);
-
-    return {
-      off: () => {
-        this._discontinuityEmitter.off(wrapped);
-      },
-    };
-  }
-
-  discontinuityDetected(reason?: Ably.ErrorInfo): void {
-    this._logger.warn('Presence.discontinuityDetected();', { reason });
-    this._discontinuityEmitter.emit('discontinuity', reason);
-  }
-
   /**
-   * @inheritDoc ContributesToRoomLifecycle
+   * Returns the channel name for the presence channel.
+   *
+   * @param roomId The unique identifier of the room.
+   * @returns The channel name for the presence channel.
    */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.PresenceAttachmentFailed;
-  }
-
-  /**
-   * @inheritDoc
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.PresenceDetachmentFailed;
+  static channelName(roomId: string): string {
+    return roomChannelName(roomId);
   }
 
   /**
@@ -395,28 +350,18 @@ export class DefaultPresence implements Presence, HandlesDiscontinuity, Contribu
    * @param roomOptions The room options to merge for.
    * @returns A function that merges the channel options for the room with the ones required for presence.
    */
-  static channelOptionMerger(roomOptions: RoomOptions): ChannelOptionsMerger {
+  static channelOptionMerger(roomOptions: InternalRoomOptions): ChannelOptionsMerger {
     return (options) => {
-      const channelModes = ['PUBLISH', 'SUBSCRIBE'] as Ably.ChannelMode[];
-      if (roomOptions.presence?.enter === undefined || roomOptions.presence.enter) {
-        channelModes.push('PRESENCE');
+      // User wants to receive presence events, so we don't need to do anything.
+      if (roomOptions.presence.receivePresenceEvents) {
+        return options;
       }
 
-      if (roomOptions.presence?.subscribe === undefined || roomOptions.presence.subscribe) {
-        channelModes.push('PRESENCE_SUBSCRIBE');
-      }
-
-      return { ...options, modes: channelModes };
+      const modes = options.modes ?? ['PUBLISH', 'SUBSCRIBE', 'PRESENCE'];
+      return {
+        ...options,
+        modes,
+      };
     };
-  }
-
-  /**
-   * Returns the channel name for the presence channel.
-   *
-   * @param roomId The unique identifier of the room.
-   * @returns The channel name for the presence channel.
-   */
-  static channelName(roomId: string): string {
-    return messagesChannelName(roomId);
   }
 }

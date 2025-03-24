@@ -92,14 +92,13 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
 
     void context.room
       .then((room) => {
-        if (!mounted) return;
-
         // If we're not attached, we can't call typing.get() right now
         if (room.status === RoomStatus.Attached) {
           const typing = room.typing.get();
           logger.debug('useTyping(); room attached, getting initial typers', { typing });
           setCurrentlyTyping(typing);
         } else {
+          if (!mounted) return;
           logger.debug('useTyping(); room not attached, setting currentlyTyping to empty');
           setCurrentlyTyping(new Set());
         }
@@ -131,8 +130,13 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     return wrapRoomPromise(
       context.room,
       (room) => {
+<<<<<<< HEAD
         logger.debug('useTyping(); applying onDiscontinuity listener');
         const { off } = room.typing.onDiscontinuity(onDiscontinuityRef);
+=======
+        logger.debug('useTyping(); applying onDiscontinuity listener', { roomId: context.roomId });
+        const { off } = room.onDiscontinuity(onDiscontinuityRef);
+>>>>>>> ccf7094 (feat: consolidate onto a single channel)
         return () => {
           logger.debug('useTyping(); removing onDiscontinuity listener');
           off();

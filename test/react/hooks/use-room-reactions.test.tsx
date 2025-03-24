@@ -48,7 +48,7 @@ describe('useRoomReactions', () => {
     // create a new mock room before each test
     vi.resetAllMocks();
     mockLogger = makeTestLogger();
-    updateMockRoom(makeRandomRoom({ options: { reactions: {} } }));
+    updateMockRoom(makeRandomRoom());
   });
 
   afterEach(() => {
@@ -138,7 +138,7 @@ describe('useRoomReactions', () => {
     await waitForEventualHookValue(result, mockRoom.reactions, (value) => value.reactions);
 
     // change the mock room instance
-    updateMockRoom(makeRandomRoom({ options: { reactions: {} } }));
+    updateMockRoom(makeRandomRoom());
     mockLogger.debug('rerendering with new room instance');
 
     // re-render to trigger the useEffect
@@ -154,7 +154,7 @@ describe('useRoomReactions', () => {
 
     // spy on the onDiscontinuity method of the room reactions instance
     let discontinuityListener: DiscontinuityListener | undefined;
-    vi.spyOn(mockRoom.reactions, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
       discontinuityListener = listener;
       return { off: mockOff };
     });

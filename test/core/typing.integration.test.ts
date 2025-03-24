@@ -6,14 +6,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { normalizeClientOptions } from '../../src/core/config.ts';
 import { TypingEvent, TypingEvents } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
-import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
-import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { randomClientId, randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
-import { waitForRoomStatus } from '../helper/room.ts';
 
 const TEST_TIMEOUT = 10000;
 
@@ -92,6 +89,7 @@ describe('Typing', () => {
     },
     TEST_TIMEOUT,
   );
+
   it<TestContext>(
     'gets the set of currently typing client ids',
     async (context) => {
@@ -161,55 +159,4 @@ describe('Typing', () => {
     },
     TEST_TIMEOUT,
   );
-
-  it<TestContext>('handles discontinuities', async (context) => {
-    const { chat } = context;
-
-    const room = await chat.get(randomRoomId(), { typing: AllFeaturesEnabled.typing });
-
-    // Attach the room
-    await room.attach();
-
-    await waitForRoomStatus(room, RoomStatus.Attached);
-
-    // Subscribe discontinuity events
-    const discontinuityErrors: (Ably.ErrorInfo | undefined)[] = [];
-    const { off } = room.typing.onDiscontinuity((error: Ably.ErrorInfo | undefined) => {
-      discontinuityErrors.push(error);
-    });
-
-    const channelSuspendable = room.typing.channel as Ably.RealtimeChannel & {
-      notifyState(state: 'suspended' | 'attached'): void;
-    };
-
-    // Simulate a discontinuity by forcing a channel into suspended state
-    channelSuspendable.notifyState('suspended');
-
-    // Wait for the room to go into suspended
-    await waitForRoomStatus(room, RoomStatus.Suspended);
-
-    // Force the channel back into attached state - to simulate recovery
-    channelSuspendable.notifyState('attached');
-
-    // Wait for the room to go into attached
-    await waitForRoomStatus(room, RoomStatus.Attached);
-
-    // Wait for a discontinuity event to be received
-    expect(discontinuityErrors.length).toBe(1);
-
-    // Unsubscribe from discontinuity events
-    off();
-
-    // Simulate a discontinuity by forcing a channel into suspended state
-    channelSuspendable.notifyState('suspended');
-
-    // Wait for the room to go into suspended
-    await waitForRoomStatus(room, RoomStatus.Suspended);
-
-    // We shouldn't get any more discontinuity events
-    expect(discontinuityErrors.length).toBe(1);
-
-    // Calling off again should be a no-op
-    off();
-  });
 });
