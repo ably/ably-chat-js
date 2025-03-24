@@ -21,7 +21,7 @@ export interface ChatRoomContextType {
   /**
    * Options used to create the room.
    */
-  options: RoomOptions;
+  options?: RoomOptions;
 
   /**
    * The chat client used to create the room.

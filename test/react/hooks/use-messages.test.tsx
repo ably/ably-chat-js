@@ -213,7 +213,7 @@ describe('useMessages', () => {
     // change the mock room instance
     updateMockRoom(makeRandomRoom({}));
 
-    // re-render to trigger the useEffect
+    // re-render to trigger the useEffectYou
     rerender();
 
     // check that the messages instance is updated
@@ -224,10 +224,10 @@ describe('useMessages', () => {
     const mockOff = vi.fn();
     const mockDiscontinuityListener = vi.fn();
 
-    // spy on the onDiscontinuity method of the messages instance
+    // spy on the onDiscontinuity method of the room instance
     let discontinuityListener: DiscontinuityListener | undefined;
-    vi.spyOn(mockRoom.messages, 'onDiscontinuity').mockImplementation((listener) => {
-      discontinuityListener = listener;
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((error) => {
+      discontinuityListener = error;
       return { off: mockOff };
     });
 

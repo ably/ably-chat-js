@@ -2,7 +2,6 @@ import { cleanup, render } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { useRoom } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
@@ -32,7 +31,6 @@ describe('ChatRoomProvider', () => {
         <ChatClientProvider client={chatClient}>
           <ChatRoomProvider
             id={roomId}
-            options={{ reactions: AllFeaturesEnabled.reactions }}
             attach={false}
             release={true}
           >
@@ -47,10 +45,13 @@ describe('ChatRoomProvider', () => {
     await vi.waitFor(() => {
       expect(roomResolved).toBeTruthy();
     });
-    await expect(() => chatClient.rooms.get(roomId, AllFeaturesEnabled)).rejects.toBeErrorInfoWithCode(40000);
+    await expect(() =>
+      chatClient.rooms.get(roomId, { occupancy: { enableInboundOccupancy: true } }),
+    ).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
-    await chatClient.rooms.get(roomId, { reactions: AllFeaturesEnabled.reactions });
+    await chatClient.rooms.get(roomId);
+    expect(() => chatClient.rooms.get(roomId)).toBeTruthy();
   });
 
   it('should correctly release rooms', async () => {
@@ -64,7 +65,6 @@ describe('ChatRoomProvider', () => {
         <ChatClientProvider client={chatClient}>
           <ChatRoomProvider
             id={roomId}
-            options={{ reactions: AllFeaturesEnabled.reactions }}
             attach={false}
             release={true}
           >
@@ -76,17 +76,19 @@ describe('ChatRoomProvider', () => {
     const r = render(<TestProvider />);
 
     // Try to get the client to get a room with different options, should fail
-    await expect(() => chatClient.rooms.get(roomId, AllFeaturesEnabled)).rejects.toBeErrorInfoWithCode(40000);
+    await expect(() =>
+      chatClient.rooms.get(roomId, { occupancy: { enableInboundOccupancy: true } }),
+    ).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
-    expect(() => chatClient.rooms.get(roomId, { reactions: AllFeaturesEnabled.reactions }));
+    expect(() => chatClient.rooms.get(roomId));
 
     // Unmount provider
     r.unmount();
 
     // Since the room is supposed to be released on unmount, we should be able
     // to get it again with different settings
-    expect(() => chatClient.rooms.get(roomId, AllFeaturesEnabled)).toBeTruthy();
+    expect(() => chatClient.rooms.get(roomId)).toBeTruthy();
   });
 
   it('should attach and detach correctly', async () => {
@@ -96,7 +98,7 @@ describe('ChatRoomProvider', () => {
     };
     const roomId = randomRoomId();
 
-    const room = await chatClient.rooms.get(roomId, { reactions: AllFeaturesEnabled.reactions });
+    const room = await chatClient.rooms.get(roomId);
     expect(room).toBeTruthy();
 
     vi.spyOn(room, 'attach');
@@ -107,7 +109,6 @@ describe('ChatRoomProvider', () => {
         <ChatClientProvider client={chatClient}>
           <ChatRoomProvider
             id={roomId}
-            options={{ reactions: AllFeaturesEnabled.reactions }}
             attach={true}
             release={false}
           >
@@ -130,7 +131,9 @@ describe('ChatRoomProvider', () => {
     });
 
     // Try to get the client to get a room with different options, should fail
-    await expect(() => chatClient.rooms.get(roomId, AllFeaturesEnabled)).rejects.toBeErrorInfoWithCode(40000);
+    await expect(() =>
+      chatClient.rooms.get(roomId, { occupancy: { enableInboundOccupancy: true } }),
+    ).rejects.toBeErrorInfoWithCode(40000);
   });
 
   it('should not attach, detach, or release when not configured to do so', async () => {
@@ -140,7 +143,7 @@ describe('ChatRoomProvider', () => {
     };
     const roomId = randomRoomId();
 
-    const room = await chatClient.rooms.get(roomId, { reactions: AllFeaturesEnabled.reactions });
+    const room = await chatClient.rooms.get(roomId);
     expect(room).toBeTruthy();
 
     vi.spyOn(room, 'attach');
@@ -151,7 +154,6 @@ describe('ChatRoomProvider', () => {
         <ChatClientProvider client={chatClient}>
           <ChatRoomProvider
             id={roomId}
-            options={{ reactions: AllFeaturesEnabled.reactions }}
             attach={false}
             release={false}
           >
@@ -170,7 +172,9 @@ describe('ChatRoomProvider', () => {
     expect(room.detach).toHaveBeenCalledTimes(0);
 
     // Try to get the client to get a room with different options, should fail (since it should not be released)
-    await expect(() => chatClient.rooms.get(roomId, AllFeaturesEnabled)).rejects.toBeErrorInfoWithCode(40000);
+    await expect(() =>
+      chatClient.rooms.get(roomId, { occupancy: { enableInboundOccupancy: true } }),
+    ).rejects.toBeErrorInfoWithCode(40000);
 
     await chatClient.rooms.release(roomId);
   });

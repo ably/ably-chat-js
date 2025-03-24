@@ -6,7 +6,7 @@ import { ChatApi } from '../../src/core/chat-api.ts';
 import { ErrorCodes } from '../../src/core/errors.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
-import { AllFeaturesEnabled, normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
+import { normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
 import { randomRoomId } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
@@ -27,24 +27,24 @@ export const waitForRoomError = async (status: RoomLifecycle, expected: ErrorCod
 };
 
 // Gets a random room with default options from the chat client
-export const getRandomRoom = async (chat: ChatClient): Promise<Room> =>
-  chat.rooms.get(randomRoomId(), AllFeaturesEnabled);
+export const getRandomRoom = async (chat: ChatClient, options?: RoomOptions): Promise<Room> =>
+  chat.rooms.get(randomRoomId(), options);
 
 // Makes a room with the given (or default) options, as a standalone room aside from the chat client
 // Should be used in unit tests where the dependencies are mocked.
-export const makeRandomRoom = (params: {
+export const makeRandomRoom = (params?: {
   realtime?: Ably.Realtime;
   chatApi?: ChatApi;
   options?: RoomOptions;
 }): Room => {
   const logger = makeTestLogger();
-  const realtime = params.realtime ?? ablyRealtimeClient();
-  const chatApi = params.chatApi ?? new ChatApi(realtime, logger);
+  const realtime = params?.realtime ?? ablyRealtimeClient();
+  const chatApi = params?.chatApi ?? new ChatApi(realtime, logger);
 
   return new DefaultRoom(
     randomRoomId(),
     randomId(),
-    normalizeRoomOptions(params.options ?? AllFeaturesEnabled, false),
+    normalizeRoomOptions(params?.options, false),
     realtime,
     chatApi,
     logger,
