@@ -241,3 +241,15 @@ export interface MessageReactionSummaryEvent {
     multiple: Ably.SummaryMultipleValues;
   };
 }
+
+/**
+ * Room events.
+ */
+export enum RoomEvents {
+  /**
+   * Event triggered when a discontinuity is detected in the room's channel connection.
+   * A discontinuity occurs when an attached or update event comes from the channel with resume=false,
+   * except for the first attach or attaches after explicit detach calls.
+   */
+  Discontinuity = 'room.discontinuity',
+}

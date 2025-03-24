@@ -311,7 +311,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     };
   }
 
-  /**
+  /**applies the correct option
    * Merges the channel options to add support for message reactions.
    *
    * @param roomOptions The room options to merge for.
@@ -319,13 +319,14 @@ export class DefaultMessageReactions implements MessagesReactions {
    */
   static channelOptionMerger(roomOptions: RoomOptions): ChannelOptionsMerger {
     return (options) => {
-      const opts = { ...options };
-      opts.modes = opts.modes ?? [];
-      opts.modes.push('ANNOTATION_PUBLISH');
       if (roomOptions.messages?.rawMessageReactions) {
-        opts.modes.push('ANNOTATION_SUBSCRIBE');
+        return options;
       }
-      return opts;
+      const modes = options.modes ?? ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'ANNOTATION_PUBLISH'];
+      return {
+        ...options,
+        modes,
+      };
     };
   }
 }

@@ -166,7 +166,7 @@ export class ChatApi {
       }
     }
 
-    const data = await this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, apiParams);
+    const data = await this._makeAuthorizedPaginatedRequest<Message>(`/chat/v3/rooms/${roomId}/messages`, apiParams);
     return this._recursivePaginateMessages(data);
   }
 
@@ -211,7 +211,7 @@ export class ChatApi {
     serial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
-      `/chat/v2/rooms/${roomId}/messages/${serial}/delete`,
+      `/chat/v3/rooms/${roomId}/messages/${serial}/delete`,
       'POST',
       body,
       {},
@@ -231,14 +231,14 @@ export class ChatApi {
       body.headers = params.headers;
     }
     roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v2/rooms/${roomId}/messages`, 'POST', body);
+    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v3/rooms/${roomId}/messages`, 'POST', body);
   }
 
   updateMessage(roomId: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
     const encodedSerial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<UpdateMessageResponse>(
-      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}`,
+      `/chat/v3/rooms/${roomId}/messages/${encodedSerial}`,
       'PUT',
       params,
     );
@@ -263,7 +263,7 @@ export class ChatApi {
 
   getOccupancy(roomId: string): Promise<OccupancyEvent> {
     roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
+    return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v3/rooms/${roomId}/occupancy`, 'GET');
   }
 
   private async _makeAuthorizedRequest<RES = undefined>(

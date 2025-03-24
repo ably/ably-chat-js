@@ -27,7 +27,7 @@ describe('config', () => {
         statusCode: 400,
       })
       .then(() => {
-        expect(realtime.request).toHaveBeenCalledWith('GET', '/chat/v1/rooms/test/occupancy', 3, undefined, undefined);
+        expect(realtime.request).toHaveBeenCalledWith('GET', '/chat/v3/rooms/test/occupancy', 3, undefined, undefined);
       });
   });
 

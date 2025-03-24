@@ -1,16 +1,6 @@
 import * as Ably from 'ably';
 
-import { messagesChannelName } from './channel.js';
-import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
-import {
-  DiscontinuityListener,
-  EmitsDiscontinuities,
-  HandlesDiscontinuity,
-  newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
-} from './discontinuity.js';
-import { ErrorCodes } from './errors.js';
 import { ChatMessageActions, MessageEvent, MessageEvents, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
 import {
@@ -24,7 +14,6 @@ import {
 import { parseMessage } from './message-parser.js';
 import { DefaultMessageReactions, MessagesReactions } from './messages-reactions.js';
 import { PaginatedResult } from './query.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { MessageOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
@@ -175,6 +164,21 @@ export type MessageListener = (event: MessageEvent) => void;
 export interface MessageSubscriptionResponse extends Subscription {
   /**
    * Get the previous messages that were sent to the room before the listener was subscribed.
+   *
+   * If the client experiences a discontinuity event (i.e. the connection was lost and could not be resumed), the starting point of
+   * getPreviousMessages will be reset.
+   *
+   * Calls to getPreviousMessages will wait for continuity to be restored before resolving.
+   *
+   * Once continuity is restored, the subscription point will be set to the beginning of this new period of continuity. To
+   * ensure that no messages are missed, you should call getPreviousMessages after any period of discontinuity to
+   * fill any gaps in the message history.
+   *
+   * ```typescript
+   * const { getPreviousMessages } = room.messages.subscribe(listener);
+   * await getPreviousMessages({ limit: 10 });
+   * ```
+   *
    * @param params Options for the history query.
    * @returns A promise that resolves with the paginated result of messages, in newest-to-oldest order.
    */
@@ -187,7 +191,7 @@ export interface MessageSubscriptionResponse extends Subscription {
  *
  * Get an instance via {@link Room.messages}.
  */
-export interface Messages extends EmitsDiscontinuities {
+export interface Messages {
   /**
    * Subscribe to new messages in this chat room.
    * @param listener callback that will be called
@@ -264,19 +268,12 @@ export interface Messages extends EmitsDiscontinuities {
    * Add, delete, and subscribe to message reactions.
    */
   reactions: MessagesReactions;
-
-  /**
-   * Get the underlying Ably realtime channel used for the messages in this chat room.
-   *
-   * @returns The realtime channel.
-   */
-  get channel(): Ably.RealtimeChannel;
 }
 
 /**
  * @inheritDoc
  */
-export class DefaultMessages implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle {
+export class DefaultMessages implements Messages {
   private readonly _roomId: string;
   private readonly _options: MessageOptions;
   private readonly _channel: Ably.RealtimeChannel;
@@ -289,7 +286,6 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
     }>
   >;
   private readonly _logger: Logger;
-  private readonly _discontinuityEmitter = newDiscontinuityEmitter();
   private readonly _emitter = new EventEmitter<MessageEventsMap>();
 
   public readonly reactions: MessagesReactions;
@@ -297,7 +293,7 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
   /**
    * Constructs a new `DefaultMessages` instance.
    * @param roomId The unique identifier of the room.
-   * @param channelManager An instance of the ChannelManager.
+   * @param channel An instance of the Realtime channel for the room.
    * @param chatApi An instance of the ChatApi.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
@@ -305,49 +301,43 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
   constructor(
     roomId: string,
     options: MessageOptions,
-    channelManager: ChannelManager,
+    channel: Ably.RealtimeChannel,
     chatApi: ChatApi,
     clientId: string,
     logger: Logger,
   ) {
     this._roomId = roomId;
     this._options = options;
-
-    this._channel = this._makeChannel(roomId, channelManager);
-
+    this._channel = channel;
     this._chatApi = chatApi;
     this._clientId = clientId;
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
 
+    this._applyChannelSubscriptions();
+
     this.reactions = new DefaultMessageReactions(this._logger, options, this._chatApi, this._roomId, this._channel);
   }
 
   /**
-   * Creates the realtime channel for messages.
+   * Sets up channel subscriptions for messages.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channelName = messagesChannelName(roomId);
-
-    const channel = channelManager.get(channelName);
-
+  private _applyChannelSubscriptions(): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void channel.subscribe([RealtimeMessageNames.ChatMessage], this._processEvent.bind(this));
+    void this._channel.subscribe([RealtimeMessageNames.ChatMessage], this._processEvent.bind(this));
 
     // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
     // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
-    channel.on('attached', (message) => {
+    this._channel.on('attached', (message) => {
       this._handleAttach(message.resumed);
     });
 
     // Handles the case where an update message is received from a channel after a detach and reattach.
-    channel.on('update', (message) => {
+    this._channel.on('update', (message) => {
       if (message.current === 'attached' && message.previous === 'attached') {
         this._handleAttach(message.resumed);
       }
     });
-
-    return channel;
   }
 
   /**
@@ -467,13 +457,6 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
         }
       });
     });
-  }
-
-  /**
-   * @inheritdoc Messages
-   */
-  get channel(): Ably.RealtimeChannel {
-    return this._channel;
   }
 
   /**
@@ -640,42 +623,5 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
     } catch (error: unknown) {
       this._logger.error(`failed to parse incoming message;`, { channelEventMessage, error: error as Ably.ErrorInfo });
     }
-  }
-
-  /**
-   * @inheritdoc HandlesDiscontinuity
-   */
-  discontinuityDetected(reason?: Ably.ErrorInfo): void {
-    this._logger.warn('Messages.discontinuityDetected();', { reason });
-    this._discontinuityEmitter.emit('discontinuity', reason);
-  }
-
-  /**
-   * @inheritdoc EmitsDiscontinuities
-   */
-  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
-    this._logger.trace('Messages.onDiscontinuity();');
-    const wrapped = wrap(listener);
-    this._discontinuityEmitter.on(wrapped);
-
-    return {
-      off: () => {
-        this._discontinuityEmitter.off(wrapped);
-      },
-    };
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.MessagesAttachmentFailed;
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.MessagesDetachmentFailed;
   }
 }

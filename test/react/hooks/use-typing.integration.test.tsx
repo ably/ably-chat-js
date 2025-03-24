@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { TypingEvent } from '../../../src/core/events.ts';
-import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
 import { TypingListener } from '../../../src/core/typing.ts';
 import { useTyping } from '../../../src/react/hooks/use-typing.ts';
@@ -25,7 +24,7 @@ describe('useTyping', () => {
 
     // create a second room and attach it, so we can listen for typing events
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
+    const roomTwo = await chatClientTwo.rooms.get(roomId);
     await roomTwo.attach();
 
     // start listening for typing events on room two
@@ -49,10 +48,7 @@ describe('useTyping', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider
-          id={roomId}
-          options={AllFeaturesEnabled}
-        >
+        <ChatRoomProvider id={roomId}>
           <TestComponent />
         </ChatRoomProvider>
       </ChatClientProvider>
@@ -72,7 +68,7 @@ describe('useTyping', () => {
 
     // create a second room and attach it, so we can send typing events
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
+    const roomTwo = await chatClientTwo.rooms.get(roomId);
     await roomTwo.attach();
 
     // store the received typing events for room one
@@ -93,10 +89,7 @@ describe('useTyping', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider
-          id={roomId}
-          options={AllFeaturesEnabled}
-        >
+        <ChatRoomProvider id={roomId}>
           <TestComponent
             listener={(typingEvent) => {
               typingEventsRoomOne.push(typingEvent);

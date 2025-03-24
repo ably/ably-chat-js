@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { PresenceEvent, PresenceListener, PresenceMember } from '../../../src/core/presence.ts';
-import { AllFeaturesEnabled } from '../../../src/core/room-options.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
 import { usePresenceListener } from '../../../src/react/hooks/use-presence-listener.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -24,7 +23,7 @@ describe('usePresenceListener', () => {
 
     // create a second room and attach it, so we can send presence events with it
     const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId, AllFeaturesEnabled);
+    const roomTwo = await chatClientTwo.rooms.get(roomId);
     await roomTwo.attach();
 
     // store the current presence member state
@@ -48,10 +47,7 @@ describe('usePresenceListener', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider
-          id={roomId}
-          options={AllFeaturesEnabled}
-        >
+        <ChatRoomProvider id={roomId}>
           <TestComponent
             listener={(event: PresenceEvent) => {
               presenceEventsReceived.push(event);

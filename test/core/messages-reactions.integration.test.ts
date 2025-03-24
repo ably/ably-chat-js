@@ -7,7 +7,6 @@ import {
   MessageReactionSummaryEvent,
   MessageReactionType,
 } from '../../src/core/events.ts';
-import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { getRandomRoom } from '../helper/room.ts';
@@ -203,11 +202,11 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     });
 
     const client2 = newChatClient();
-    const room2 = await client2.rooms.get(room.roomId, AllFeaturesEnabled);
+    const room2 = await client2.rooms.get(room.roomId);
     await room2.attach();
 
     const client3 = newChatClient();
-    const room3 = await client3.rooms.get(room.roomId, AllFeaturesEnabled);
+    const room3 = await client3.rooms.get(room.roomId);
     await room3.attach();
 
     await Promise.all([
@@ -309,7 +308,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     });
 
     const client2 = newChatClient();
-    const room2 = await client2.rooms.get(room.roomId, AllFeaturesEnabled);
+    const room2 = await client2.rooms.get(room.roomId);
     await room2.attach();
 
     // First client reactions - only the last one (❤️) should remain

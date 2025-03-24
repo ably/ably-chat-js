@@ -88,24 +88,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       return new Set<string>();
     });
 
-    let mounted = true;
-
-    void context.room
-      .then((room) => {
-        if (!mounted) return;
-
-        // If we're not attached, we can't call typing.get() right now
-        if (room.status === RoomStatus.Attached) {
-          const typing = room.typing.get();
-          logger.debug('useTyping(); room attached, getting initial typers', { typing });
-          setCurrentlyTyping(typing);
-        } else {
-          logger.debug('useTyping(); room not attached, setting currentlyTyping to empty');
-          setCurrentlyTyping(new Set());
-        }
-      })
-      .catch();
-
     return wrapRoomPromise(
       context.room,
       (room) => {
@@ -114,9 +96,15 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
           setCurrentlyTyping(event.currentlyTyping);
         });
 
+        // If we're not attached, we can't call typing.get() right now
+        if (room.status === RoomStatus.Attached) {
+          const typing = room.typing.get();
+          logger.debug('useTyping(); room attached, getting initial typers', { typing });
+          setCurrentlyTyping(typing);
+        }
+
         return () => {
           logger.debug('useTyping(); unsubscribing from typing events');
-          mounted = false;
           unsubscribe();
         };
       },
@@ -132,7 +120,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       context.room,
       (room) => {
         logger.debug('useTyping(); applying onDiscontinuity listener');
-        const { off } = room.typing.onDiscontinuity(onDiscontinuityRef);
+        const { off } = room.onDiscontinuity(onDiscontinuityRef);
         return () => {
           logger.debug('useTyping(); removing onDiscontinuity listener');
           off();
