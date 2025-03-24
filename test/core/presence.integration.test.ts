@@ -8,12 +8,9 @@ import { ChatClient } from '../../src/core/chat.ts';
 import { PresenceEvents } from '../../src/core/events.ts';
 import { PresenceData, PresenceEvent } from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
-import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
-import { RoomStatus } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
-import { waitForRoomStatus } from '../helper/room.ts';
 
 // Define the test context interface
 interface TestContext {
@@ -93,12 +90,12 @@ describe('UserPresence', { timeout: 30000 }, () => {
     const roomId = randomRoomId();
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
-    context.chatRoom = await context.chat.rooms.get(roomId, { presence: AllFeaturesEnabled.presence });
+    context.chatRoom = await context.chat.rooms.get(roomId);
   });
 
   // Test for successful entering with clientId and custom user data
   it<TestContext>('successfully enter presence with clientId and custom user data', async (context) => {
-    const messageChannel = context.chatRoom.messages.channel;
+    const messageChannel = context.chatRoom.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
       context.realtime,
@@ -122,7 +119,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
   // Test for successful sending of presence update with clientId and custom user data
   it<TestContext>('should successfully send presence update with clientId and custom user data', async (context) => {
-    const messageChannel = context.chatRoom.messages.channel;
+    const messageChannel = context.chatRoom.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(context.realtime, 'update', messageChannelName, (member) => {
       expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(context.defaultTestClientId);
@@ -141,7 +138,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
   // Test for successful leaving of presence
   it<TestContext>('should successfully leave presence', async (context) => {
-    const messageChannel = context.chatRoom.messages.channel;
+    const messageChannel = context.chatRoom.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
       context.realtime,
@@ -166,7 +163,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
   // Test for successful fetching of presence users
   it<TestContext>('should successfully fetch presence users ', async (context) => {
-    const { name: channelName } = context.chatRoom.messages.channel;
+    const { name: channelName } = context.chatRoom.channel;
 
     // Connect 3 clients to the same channel
     const client1 = ablyRealtimeClient({ clientId: 'clientId1' }).channels.get(channelName);
@@ -365,88 +362,5 @@ describe('UserPresence', { timeout: 30000 }, () => {
     // Update with object
     await context.chatRoom.presence.update({ key: 'value' });
     await waitForPresenceEvent(presenceEvents, PresenceEvents.Update, context.chat.clientId, { key: 'value' });
-  });
-
-  it<TestContext>('handles discontinuities', async (context) => {
-    const { chatRoom: room } = context;
-
-    // Attach the room
-    await room.attach();
-
-    // Subscribe discontinuity events
-    const discontinuityErrors: (Ably.ErrorInfo | undefined)[] = [];
-    const { off } = room.presence.onDiscontinuity((error: Ably.ErrorInfo | undefined) => {
-      discontinuityErrors.push(error);
-    });
-
-    const channelSuspendable = room.presence.channel as Ably.RealtimeChannel & {
-      notifyState(state: 'suspended' | 'attached'): void;
-    };
-
-    // Simulate a discontinuity by forcing a channel into suspended state
-    channelSuspendable.notifyState('suspended');
-
-    // Wait for the room to go into suspended
-    await waitForRoomStatus(room, RoomStatus.Suspended);
-
-    // Force the channel back into attached state - to simulate recovery
-    channelSuspendable.notifyState('attached');
-
-    // Wait for the room to go into attached
-    await waitForRoomStatus(room, RoomStatus.Attached);
-
-    // Wait for a discontinuity event to be received
-    expect(discontinuityErrors.length).toBe(1);
-
-    // Unsubscribe from discontinuity events
-    off();
-
-    // Simulate a discontinuity by forcing a channel into suspended state
-    channelSuspendable.notifyState('suspended');
-
-    // Wait for the room to go into suspended
-    await waitForRoomStatus(room, RoomStatus.Suspended);
-
-    // We shouldn't get any more discontinuity events
-    expect(discontinuityErrors.length).toBe(1);
-
-    // Calling off again should be a no-op
-    off();
-  });
-
-  it<TestContext>('prevents presence entry if room option prevents it', async (context) => {
-    const { chat } = context;
-
-    const room = await chat.rooms.get(randomRoomId(), { presence: { enter: false } });
-
-    await room.attach();
-
-    // Entering presence should reject
-    await expect(room.presence.enter()).rejects.toBeErrorInfoWithCode(40160);
-  });
-
-  it<TestContext>('does not receive presence events if room option prevents it', async (context) => {
-    const { chat } = context;
-
-    const room = await chat.rooms.get(randomRoomId(), { presence: { subscribe: false } });
-
-    await room.attach();
-
-    // Subscribe to presence
-    const presenceEvents: PresenceEvent[] = [];
-    room.presence.subscribe((event) => {
-      presenceEvents.push(event);
-    });
-
-    // We need to create another chat client and enter presence on the same room
-    const chat2 = newChatClient();
-    const room2 = await chat2.rooms.get(room.roomId, { presence: { enter: true } });
-
-    // Entering presence
-    await room2.attach();
-    await room2.presence.enter();
-
-    // Assert we didn't receive any presence events
-    await assertNoPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId);
   });
 });

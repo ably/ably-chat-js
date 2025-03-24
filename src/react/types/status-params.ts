@@ -1,6 +1,5 @@
-import * as Ably from 'ably';
-
 import { ConnectionStatusChange } from '../../core/connection.js';
+import { DiscontinuityListener } from '../../core/discontinuity.js';
 import { RoomStatusChange } from '../../core/room-status.js';
 
 /**
@@ -34,5 +33,5 @@ export interface StatusParams {
    * you might choose to fetch missing messages.
    * @param error The error that caused the discontinuity.
    */
-  onDiscontinuity?: (error?: Ably.ErrorInfo) => void;
+  onDiscontinuity?: DiscontinuityListener;
 }

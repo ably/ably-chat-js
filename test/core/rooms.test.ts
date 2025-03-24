@@ -2,7 +2,6 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
-import { AllFeaturesEnabled, RoomOptions } from '../../src/core/room-options.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { ErrorCodes } from '../../src/index.ts';
 import { randomRoomId } from '../helper/identifier.ts';
@@ -26,8 +25,8 @@ describe('rooms', () => {
   describe('room get', () => {
     it<TestContext>('throws error if room with same ID but different options already exists', async (context) => {
       const roomId = randomRoomId();
-      const room1 = context.rooms.get(roomId, AllFeaturesEnabled);
-      const room2 = context.rooms.get(roomId, { reactions: {} });
+      const room1 = context.rooms.get(roomId);
+      const room2 = context.rooms.get(roomId, { typing: {} });
       await expect(room1).resolves.toBeDefined();
       await expect(room2).rejects.toBeErrorInfo({
         statusCode: 400,
@@ -38,15 +37,14 @@ describe('rooms', () => {
 
     it<TestContext>('returns a fresh room instance if room does not exist', async (context) => {
       const roomId = randomRoomId();
-      const roomOptions: RoomOptions = AllFeaturesEnabled;
-      const room = context.rooms.get(roomId, roomOptions);
+      const room = context.rooms.get(roomId);
       await expect(room).resolves.toBeDefined();
     });
 
     it<TestContext>('returns the same room instance if room already exists', async (context) => {
       const roomId = randomRoomId();
-      const room1 = await context.rooms.get(roomId, AllFeaturesEnabled);
-      const room2 = await context.rooms.get(roomId, AllFeaturesEnabled);
+      const room1 = await context.rooms.get(roomId);
+      const room2 = await context.rooms.get(roomId);
       expect(room1).toBe(room2);
     });
   });
@@ -54,24 +52,24 @@ describe('rooms', () => {
   describe('room get-release lifecycle', () => {
     it<TestContext>('should return a the same room if rooms.get called twice', async (context) => {
       const roomId = randomRoomId();
-      const room1 = await context.rooms.get(roomId, AllFeaturesEnabled);
-      const room2 = await context.rooms.get(roomId, AllFeaturesEnabled);
+      const room1 = await context.rooms.get(roomId);
+      const room2 = await context.rooms.get(roomId);
       expect(room1).toBe(room2);
     });
 
     it<TestContext>('should return a fresh room in room.get if previous one is currently releasing', (context) => {
       const roomId = randomRoomId();
-      const room1 = context.rooms.get(roomId, AllFeaturesEnabled);
+      const room1 = context.rooms.get(roomId);
       void context.rooms.release(roomId);
-      const room2 = context.rooms.get(roomId, AllFeaturesEnabled);
+      const room2 = context.rooms.get(roomId);
       expect(room1).not.toBe(room2);
     });
 
     it<TestContext>('releasing a room should abort any get operations', async (context) => {
       const roomId = randomRoomId();
-      const room1 = context.rooms.get(roomId, AllFeaturesEnabled);
+      const room1 = context.rooms.get(roomId);
       const releasePromise1 = context.rooms.release(roomId);
-      const room2 = context.rooms.get(roomId, AllFeaturesEnabled);
+      const room2 = context.rooms.get(roomId);
       const releasedPromise2 = context.rooms.release(roomId);
 
       await expect(releasePromise1).resolves.toBeUndefined();
@@ -86,15 +84,15 @@ describe('rooms', () => {
 
     it<TestContext>('releasing a room should abort any get operations from previous get', async (context) => {
       const roomId = randomRoomId();
-      const room1 = context.rooms.get(roomId, AllFeaturesEnabled);
+      const room1 = context.rooms.get(roomId);
       const releasePromise1 = context.rooms.release(roomId);
-      const room2 = context.rooms.get(roomId, AllFeaturesEnabled);
+      const room2 = context.rooms.get(roomId);
       const releasedPromise2 = context.rooms.release(roomId);
-      const room3 = context.rooms.get(roomId, AllFeaturesEnabled);
-      const room4 = context.rooms.get(roomId, AllFeaturesEnabled);
+      const room3 = context.rooms.get(roomId);
+      const room4 = context.rooms.get(roomId);
       const releasePromise3 = context.rooms.release(roomId);
       const releasePromise4 = context.rooms.release(roomId);
-      const finalRoom = context.rooms.get(roomId, AllFeaturesEnabled);
+      const finalRoom = context.rooms.get(roomId);
 
       await expect(room1).resolves.toBeDefined();
       await expect(releasePromise1).resolves.toBeUndefined();
@@ -125,11 +123,11 @@ describe('rooms', () => {
 
     it<TestContext>('multiple gets on a releasing room return the same room instance', async (context) => {
       const roomId = randomRoomId();
-      const room1 = context.rooms.get(roomId, AllFeaturesEnabled);
+      const room1 = context.rooms.get(roomId);
       const releasePromise1 = context.rooms.release(roomId);
-      const room2 = context.rooms.get(roomId, AllFeaturesEnabled);
-      const room3 = context.rooms.get(roomId, AllFeaturesEnabled);
-      const room4 = context.rooms.get(roomId, AllFeaturesEnabled);
+      const room2 = context.rooms.get(roomId);
+      const room3 = context.rooms.get(roomId);
+      const room4 = context.rooms.get(roomId);
 
       await expect(room1).resolves.toBeDefined();
       await expect(releasePromise1).resolves.toBeUndefined();

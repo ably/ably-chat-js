@@ -2,7 +2,7 @@ import { FC, useEffect, useState } from 'react';
 import { Chat } from './containers/Chat';
 import { OccupancyComponent } from './components/OccupancyComponent';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
-import { AllFeaturesEnabled, ChatRoomProvider } from '@ably/chat';
+import { ChatRoomProvider } from '@ably/chat';
 
 // We read the roomID from the URL query string and default to 'abcd' if none
 // provided. We make sure the URL is updated to always include the roomId. This
@@ -52,7 +52,7 @@ const App: FC<AppProps> = () => {
       id={roomIdState}
       release={true}
       attach={true}
-      options={AllFeaturesEnabled}
+      options={{ occupancy: { enableInboundOccupancy: true } }}
     >
       <div
         style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto', height: '650px' }}

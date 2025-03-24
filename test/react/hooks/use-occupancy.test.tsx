@@ -161,37 +161,20 @@ describe('useOccupancy', () => {
     const mockOff = vi.fn();
     const mockDiscontinuityListener = vi.fn();
 
-    const mockOccupancy = {
-      ...mockRoom.occupancy,
-      callAllListeners: (arg: Ably.ErrorInfo) => {
-        for (const listener of mockOccupancy.listeners) {
-          listener(arg);
-        }
-      },
-      listeners: new Set<DiscontinuityListener>(),
-      onDiscontinuity: vi.fn().mockImplementation((listener: DiscontinuityListener) => {
-        mockOccupancy.listeners.add(listener);
-        return {
-          off: () => {
-            mockOccupancy.listeners.delete(listener);
-            mockOff();
-          },
-        };
-      }),
-      subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
-    };
-
-    // update the mock room with the new occupancy object
-    updateMockRoom({ ...mockRoom, occupancy: mockOccupancy });
+    // spy on the onDiscontinuity method of the room instance
+    let discontinuityListener: DiscontinuityListener | undefined;
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((error) => {
+      discontinuityListener = error;
+      return { off: mockOff };
+    });
 
     // render the hook with a discontinuity listener
-    const { result, unmount } = renderHook(() => useOccupancy({ onDiscontinuity: mockDiscontinuityListener }));
+    const { unmount } = renderHook(() => useOccupancy({ onDiscontinuity: mockDiscontinuityListener }));
 
-    await waitForEventualHookValueToBeDefined(result, (value) => value.occupancy);
-
-    // check that the listener was subscribed to the discontinuity events by triggering one
-    const errorInfo = new Ably.ErrorInfo('test', 50000, 500);
-    mockOccupancy.callAllListeners(errorInfo);
+    // check that the listener was subscribed to the discontinuity events by invoking it
+    const errorInfo = new Ably.ErrorInfo('test error', 40000, 400);
+    await vi.waitFor(() => discontinuityListener !== undefined);
+    discontinuityListener?.(errorInfo);
     expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
 
     // unmount the hook and verify that the listener was unsubscribed

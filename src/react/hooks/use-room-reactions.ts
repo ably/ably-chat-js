@@ -65,7 +65,7 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
       context.room,
       (room) => {
         logger.debug('useRoomReactions(); applying onDiscontinuity listener', { roomId: context.roomId });
-        const { off } = room.reactions.onDiscontinuity(onDiscontinuityRef);
+        const { off } = room.onDiscontinuity(onDiscontinuityRef);
         return () => {
           logger.debug('useRoomReactions(); removing onDiscontinuity listener', { roomId: context.roomId });
           off();
