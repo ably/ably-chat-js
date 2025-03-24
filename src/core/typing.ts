@@ -60,10 +60,10 @@ export interface Typing extends EmitsDiscontinuities {
    * - The most recent operation (`keystroke()` or `stop()`) will always determine the final state, ensuring operations
    *   resolve to a consistent and correct state.
    *
-   * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
-   * @throws {@link ErrorInfo} If the {@link RoomStatus} is not either {@link RoomStatus.Attached} or {@link RoomStatus.Attaching}.
-   * @throws {@link ErrorInfo} If the operation fails to send the event to the server.
-   * @throws {@link ErrorInfo} If there is a problem acquiring the mutex that controls serialization.
+   * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
+   * @throws If the `RoomStatus` is not either `Attached` or `Attaching`.
+   * @throws If the operation fails to send the event to the server.
+   * @throws If there is a problem acquiring the mutex that controls serialization.
    */
   keystroke(): Promise<void>;
 
@@ -79,10 +79,10 @@ export interface Typing extends EmitsDiscontinuities {
    * - The most recent operation (`keystroke()` or `stop()`) will always determine the final state, ensuring operations
    *   resolve to a consistent and correct state.
    *
-   * @returns A promise which resolves upon success of the operation and rejects with an ErrorInfo object upon its failure.
-   * @throws {@link ErrorInfo} If the {@link RoomStatus} is not either {@link RoomStatus.Attached} or {@link RoomStatus.Attaching}.
-   * @throws {@link ErrorInfo} If the operation fails to send the event to the server.
-   * @throws {@link ErrorInfo} If there is a problem acquiring the mutex that controls serialization.
+   * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
+   * @throws If the `RoomStatus` is not either `Attached` or `Attaching`.
+   * @throws If the operation fails to send the event to the server.
+   * @throws If there is a problem acquiring the mutex that controls serialization.
    */
 
   stop(): Promise<void>;
