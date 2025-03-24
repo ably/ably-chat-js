@@ -161,7 +161,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     return wrapRoomPromise(
       context.room,
       (room: Room) => {
-        const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
+        const { off } = room.onDiscontinuity(onDiscontinuityRef);
         return () => {
           logger.debug('usePresence(); removing onDiscontinuity listener');
           off();

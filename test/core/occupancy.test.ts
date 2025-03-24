@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
-import { DefaultOccupancy, OccupancyEvent } from '../../src/core/occupancy.ts';
+import { OccupancyEvent } from '../../src/core/occupancy.ts';
 import { Room } from '../../src/core/room.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -23,7 +23,7 @@ describe('Occupancy', () => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
-    const channel = context.room.occupancy.channel;
+    const channel = context.room.channel;
     context.emulateOccupancyUpdate = channelEventEmitter(channel);
   });
 
@@ -215,29 +215,6 @@ describe('Occupancy', () => {
     expect(received).toHaveLength(3);
   });
 
-  it<TestContext>('should only unsubscribe the correct subscription for discontinuities', (context) => {
-    const { room } = context;
-
-    const received: string[] = [];
-    const listener = (error?: Ably.ErrorInfo) => {
-      received.push(error?.message ?? 'no error');
-    };
-
-    const subscription1 = room.occupancy.onDiscontinuity(listener);
-    const subscription2 = room.occupancy.onDiscontinuity(listener);
-
-    (room.occupancy as DefaultOccupancy).discontinuityDetected(new Ably.ErrorInfo('error1', 0, 0));
-    expect(received).toEqual(['error1', 'error1']);
-
-    subscription1.off();
-    (room.occupancy as DefaultOccupancy).discontinuityDetected(new Ably.ErrorInfo('error2', 0, 0));
-    expect(received).toEqual(['error1', 'error1', 'error2']);
-
-    subscription2.off();
-    (room.occupancy as DefaultOccupancy).discontinuityDetected(new Ably.ErrorInfo('error3', 0, 0));
-    expect(received).toEqual(['error1', 'error1', 'error2']);
-  });
-
   describe.each([
     ['invalid event name', { name: '[meta]occupancy2', data: { metrics: { connections: 5, presenceMembers: 6 } } }],
     ['no connections', { name: '[meta]occupancy', data: { metrics: { presenceMembers: 6 } } }],
@@ -273,13 +250,5 @@ describe('Occupancy', () => {
       context.emulateOccupancyUpdate(event);
       expect(listenerCalled).toBe(false);
     });
-  });
-
-  it<TestContext>('has an attachment error code', (context) => {
-    expect((context.room.occupancy as DefaultOccupancy).attachmentErrorCode).toBe(102004);
-  });
-
-  it<TestContext>('has a detachment error code', (context) => {
-    expect((context.room.occupancy as DefaultOccupancy).detachmentErrorCode).toBe(102053);
   });
 });

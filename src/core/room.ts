@@ -3,12 +3,13 @@ import cloneDeep from 'lodash.clonedeep';
 
 import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
+import { DiscontinuityListener } from './discontinuity.js';
 import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
-import { ContributesToRoomLifecycle, RoomLifecycleManager } from './room-lifecycle-manager.js';
-import { NormalizedRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
+import { RoomLifeCycleManager } from './room-lifecycle-manager.js';
+import { InternalRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus, RoomStatusListener } from './room-status.js';
 import { StatusSubscription } from './subscription.js';
@@ -114,6 +115,21 @@ export interface Room {
    * @returns A copy of the options used to create the room.
    */
   options(): RoomOptions;
+
+  /**
+   * Registers a handler that will be called whenever a discontinuity is detected in the room's connection.
+   * A discontinuity occurs when the room's connection is interrupted and cannot be resumed from its previous state.
+   *
+   * @param handler The function to call when a discontinuity is detected.
+   * @returns An object that can be used to unregister the handler.
+   */
+  onDiscontinuity(handler: DiscontinuityListener): StatusSubscription;
+
+  /**
+   * Get the underlying Ably realtime channel used for the room.
+   * @returns The realtime channel.
+   */
+  get channel(): Ably.RealtimeChannel;
 }
 
 export class DefaultRoom implements Room {
@@ -121,13 +137,13 @@ export class DefaultRoom implements Room {
   private readonly _options: RoomOptions;
   private readonly _chatApi: ChatApi;
   private readonly _messages: DefaultMessages;
-  private readonly _typing?: DefaultTyping;
-  private readonly _presence?: DefaultPresence;
-  private readonly _reactions?: DefaultRoomReactions;
-  private readonly _occupancy?: DefaultOccupancy;
+  private readonly _typing: DefaultTyping;
+  private readonly _presence: DefaultPresence;
+  private readonly _reactions: DefaultRoomReactions;
+  private readonly _occupancy: DefaultOccupancy;
   private readonly _logger: Logger;
   private readonly _lifecycle: DefaultRoomLifecycle;
-  private readonly _lifecycleManager: RoomLifecycleManager;
+  private readonly _lifecycleManager: RoomLifeCycleManager;
   private readonly _finalizer: () => Promise<void>;
   private readonly _channelManager: ChannelManager;
 
@@ -149,7 +165,7 @@ export class DefaultRoom implements Room {
   constructor(
     roomId: string,
     nonce: string,
-    options: NormalizedRoomOptions,
+    options: InternalRoomOptions,
     realtime: Ably.Realtime,
     chatApi: ChatApi,
     logger: Logger,
@@ -171,33 +187,14 @@ export class DefaultRoom implements Room {
     // Setup features
     this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, this._logger);
 
-    const features: ContributesToRoomLifecycle[] = [this._messages];
+    this._presence = new DefaultPresence(roomId, channelManager, realtime.auth.clientId, this._logger);
+    this._typing = new DefaultTyping(roomId, options.typing, channelManager, realtime.auth.clientId, this._logger);
+    this._reactions = new DefaultRoomReactions(roomId, channelManager, realtime.auth.clientId, this._logger);
+    this._occupancy = new DefaultOccupancy(roomId, channelManager, this._chatApi, this._logger);
 
-    if (options.presence) {
-      this._logger.debug('enabling presence on room');
-      this._presence = new DefaultPresence(roomId, channelManager, realtime.auth.clientId, this._logger);
-      features.push(this._presence);
-    }
-
-    if (options.typing) {
-      this._logger.debug('enabling typing on room');
-      this._typing = new DefaultTyping(roomId, options.typing, channelManager, realtime.auth.clientId, this._logger);
-      features.push(this._typing);
-    }
-
-    if (options.reactions) {
-      this._logger.debug('enabling reactions on room');
-      this._reactions = new DefaultRoomReactions(roomId, channelManager, realtime.auth.clientId, this._logger);
-      features.push(this._reactions);
-    }
-
-    if (options.occupancy) {
-      this._logger.debug('enabling occupancy on room');
-      this._occupancy = new DefaultOccupancy(roomId, channelManager, this._chatApi, this._logger);
-      features.push(this._occupancy);
-    }
-
-    this._lifecycleManager = new RoomLifecycleManager(this._lifecycle, [...features].reverse(), this._logger, 5000);
+    // Set the lifecycle manager last, so it becomes the last thing to find out about channel state changes
+    // This is to allow Messages to reset subscription points before users get told of a discontinuity
+    this._lifecycleManager = new RoomLifeCycleManager(roomId, channelManager, this._lifecycle, this._logger);
 
     // Setup a finalization function to clean up resources
     let finalized = false;
@@ -208,11 +205,8 @@ export class DefaultRoom implements Room {
         return;
       }
 
+      // Release via the lifecycle manager
       await this._lifecycleManager.release();
-
-      for (const feature of features) {
-        channelManager.release(feature.channel.name);
-      }
 
       finalized = true;
     };
@@ -225,16 +219,11 @@ export class DefaultRoom implements Room {
    * @param realtime  An instance of the Ably Realtime client.
    * @param logger An instance of the Logger.
    */
-  private _getChannelManager(options: NormalizedRoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
-    const manager = new ChannelManager(realtime, logger, options.isReactClient);
+  private _getChannelManager(options: InternalRoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
+    const manager = new ChannelManager(this.roomId, realtime, logger, options.isReactClient);
 
-    if (options.occupancy) {
-      manager.mergeOptions(DefaultOccupancy.channelName(this._roomId), DefaultOccupancy.channelOptionMerger());
-    }
-
-    if (options.presence) {
-      manager.mergeOptions(DefaultPresence.channelName(this._roomId), DefaultPresence.channelOptionMerger(options));
-    }
+    manager.mergeOptions(DefaultOccupancy.channelOptionMerger(options));
+    manager.mergeOptions(DefaultPresence.channelOptionMerger(options));
 
     return manager;
   }
@@ -264,11 +253,6 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get presence(): Presence {
-    if (!this._presence) {
-      this._logger.error('Presence is not enabled for this room');
-      throw new Ably.ErrorInfo('Presence is not enabled for this room', 40000, 400);
-    }
-
     return this._presence;
   }
 
@@ -276,11 +260,6 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get reactions(): RoomReactions {
-    if (!this._reactions) {
-      this._logger.error('Reactions are not enabled for this room');
-      throw new Ably.ErrorInfo('Reactions are not enabled for this room', 40000, 400);
-    }
-
     return this._reactions;
   }
 
@@ -288,11 +267,6 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get typing(): Typing {
-    if (!this._typing) {
-      this._logger.error('Typing is not enabled for this room');
-      throw new Ably.ErrorInfo('Typing is not enabled for this room', 40000, 400);
-    }
-
     return this._typing;
   }
 
@@ -300,11 +274,6 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   get occupancy(): Occupancy {
-    if (!this._occupancy) {
-      this._logger.error('Occupancy is not enabled for this room');
-      throw new Ably.ErrorInfo('Occupancy is not enabled for this room', 40000, 400);
-    }
-
     return this._occupancy;
   }
 
@@ -379,7 +348,32 @@ export class DefaultRoom implements Room {
     return this._lifecycle;
   }
 
+  /**
+   * @internal
+   */
   get channelManager(): ChannelManager {
     return this._channelManager;
+  }
+
+  /**
+   * @internal
+   */
+  get lifecycleManager(): RoomLifeCycleManager {
+    return this._lifecycleManager;
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  onDiscontinuity(handler: DiscontinuityListener): StatusSubscription {
+    this._logger.trace('Room.onDiscontinuity();', { nonce: this._nonce, roomId: this._roomId });
+    return this._lifecycleManager.onDiscontinuity(handler);
+  }
+
+  /**
+   * @inheritdoc Room
+   */
+  get channel(): Ably.RealtimeChannel {
+    return this._channelManager.get();
   }
 }
