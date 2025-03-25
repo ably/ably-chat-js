@@ -35,9 +35,9 @@ export class RoomLifeCycleManager {
   private readonly _logger: Logger;
   private readonly _roomId: string;
   private readonly _eventEmitter: EventEmitter<RoomLifeCycleEvents>;
-  private _isFirstAttach: boolean;
-  private _isPostExplicitDetach: boolean;
-  private readonly _mutex: Mutex;
+  private _isFirstAttach: boolean; // CHA-RL13
+  private _isPostExplicitDetach: boolean; // CHA-RL14
+  private readonly _mutex: Mutex; // CHA-RL7
   private _operationInProgress: boolean;
 
   constructor(roomId: string, channelManager: ChannelManager, roomLifecycle: InternalRoomLifecycle, logger: Logger) {
@@ -46,9 +46,9 @@ export class RoomLifeCycleManager {
     this._roomLifecycle = roomLifecycle;
     this._logger = logger;
     this._eventEmitter = new EventEmitter();
-    this._isFirstAttach = true;
-    this._isPostExplicitDetach = false;
-    this._mutex = new Mutex();
+    this._isFirstAttach = true; // CHA-RL13
+    this._isPostExplicitDetach = false; // CHA-RL14
+    this._mutex = new Mutex(); // CHA-RL7
     this._operationInProgress = false;
 
     // Start monitoring channel state changes
@@ -64,6 +64,7 @@ export class RoomLifeCycleManager {
   private _startMonitoringChannelState(): void {
     const channel = this._channelManager.get();
 
+    // CHA-RL11a
     channel.on((stateChange: Ably.ChannelStateChange) => {
       this._logger.debug('channel state changed', {
         roomId: this._roomId,
@@ -73,7 +74,7 @@ export class RoomLifeCycleManager {
         resumed: stateChange.resumed,
       });
 
-      // If we're in the middle of an operation, ignore state changes
+      // CHA-RL11b
       if (this._operationInProgress) {
         this._logger.debug('ignoring channel state change - operation in progress', {
           roomId: this._roomId,
@@ -82,7 +83,7 @@ export class RoomLifeCycleManager {
         return;
       }
 
-      // Map channel state to room state and update
+      // CHA-RL11c
       const newStatus = this._mapChannelStateToRoomStatus(stateChange.current);
       this._setStatus(newStatus, stateChange.reason);
     });
@@ -97,6 +98,7 @@ export class RoomLifeCycleManager {
   private _startMonitoringDiscontinuity(): void {
     const channel = this._channelManager.get();
 
+    // CHA-RL12a, CHA-RL12b
     channel.on('attached', (stateChange: Ably.ChannelStateChange) => {
       if (!stateChange.resumed && !this._isFirstAttach && !this._isPostExplicitDetach) {
         const error = new Ably.ErrorInfo(
@@ -114,6 +116,7 @@ export class RoomLifeCycleManager {
       }
     });
 
+    // CHA-RL12a, CHA-RL12b
     channel.on('update', (stateChange: Ably.ChannelStateChange) => {
       if (
         !stateChange.resumed &&
@@ -160,13 +163,14 @@ export class RoomLifeCycleManager {
    * If already attached, this is a no-op.
    */
   async attach(): Promise<void> {
+    // CHA-RL1d, CHA-RL7a
     await this._mutex.runExclusive(async () => {
       this._logger.trace('RoomLifeCycleManager.attach();', { roomId: this._roomId });
 
-      // Check if we're in a terminal state
+      // CHA-RL1b, CHA-RL1c
       this._checkRoomNotReleasing('attach');
 
-      // No-op if already attached
+      // CHA-RL1a
       if (this._roomStatusIs(RoomStatus.Attached)) {
         this._logger.debug('room already attached, no-op', { roomId: this._roomId });
         return;
@@ -177,7 +181,9 @@ export class RoomLifeCycleManager {
       this._logger.debug('attaching room', { roomId: this._roomId, channelState: channel.state });
 
       try {
+        // CHA-RL1e
         this._setStatus(RoomStatus.Attaching);
+        // CHA-RL1k
         await channel.attach();
         this._setStatus(RoomStatus.Attached);
         this._isPostExplicitDetach = false;
@@ -192,7 +198,6 @@ export class RoomLifeCycleManager {
           errInfo,
         );
 
-        // Map channel state to room state
         const newStatus = this._mapChannelStateToRoomStatus(channel.state);
         this._setStatus(newStatus, attachError);
         throw attachError;
@@ -208,18 +213,19 @@ export class RoomLifeCycleManager {
    * If already detached, this is a no-op.
    */
   async detach(): Promise<void> {
+    // CHA-RL2i, CHA-RL7a
     await this._mutex.runExclusive(async () => {
       this._logger.trace('RoomLifeCycleManager.detach();', { roomId: this._roomId });
 
-      // Check if room is in failed state
+      // CHA-RL2d
       if (this._roomStatusIs(RoomStatus.Failed)) {
         throw new Ably.ErrorInfo('cannot detach room, room is in failed state', ErrorCodes.RoomInFailedState, 400);
       }
 
-      // Check if we're in a terminal state
+      // CHA-RL2b, CHA-RL2c
       this._checkRoomNotReleasing('detach');
 
-      // No-op if already detached
+      // CHA-RL2a
       if (this._roomStatusIs(RoomStatus.Detached)) {
         this._logger.debug('room already detached, no-op', { roomId: this._roomId });
         return;
@@ -230,7 +236,9 @@ export class RoomLifeCycleManager {
       this._logger.debug('detaching room', { roomId: this._roomId, channelState: channel.state });
 
       try {
+        // CHA-RL2j
         this._setStatus(RoomStatus.Detaching);
+        // CHA-RL2k
         await channel.detach();
         this._isPostExplicitDetach = true;
         this._setStatus(RoomStatus.Detached);
@@ -244,7 +252,6 @@ export class RoomLifeCycleManager {
           errInfo,
         );
 
-        // Map channel state to room state
         const newStatus = this._mapChannelStateToRoomStatus(channel.state);
         this._setStatus(newStatus, detachError);
         throw detachError;
@@ -260,16 +267,17 @@ export class RoomLifeCycleManager {
    * Will retry detach until successful unless in failed state.
    */
   async release(): Promise<void> {
+    // CHA-RL3k, CHA-RL7a
     await this._mutex.runExclusive(async () => {
       this._logger.trace('RoomLifeCycleManager.release();', { roomId: this._roomId });
 
-      // If released, this is no-op
+      // CHA-RL3a
       if (this._roomStatusIs(RoomStatus.Released)) {
         this._logger.debug('room already released, no-op', { roomId: this._roomId });
         return;
       }
 
-      // If we're already detached or initialized, we go straight to released
+      // CHA-RL3b, CHA-RL3j
       if (this._roomStatusIs(RoomStatus.Initialized) || this._roomStatusIs(RoomStatus.Detached)) {
         this._logger.debug('room is initialized or detached, releasing immediately', {
           roomId: this._roomId,
@@ -280,17 +288,18 @@ export class RoomLifeCycleManager {
       }
 
       this._operationInProgress = true;
+      // CHA-RL3m
       this._setStatus(RoomStatus.Releasing);
       const channel = this._channelManager.get();
 
-      // If channel is not in failed state, try to detach
+      // CHA-RL3n
       this._logger.debug('attempting channel detach before release', {
         roomId: this._roomId,
         channelState: channel.state,
       });
       await this._channelDetachLoop(channel);
 
-      // Release the channel
+      // CHA-RL3o, CHA-RL3h
       this._releaseChannel();
       this._operationInProgress = false;
     }, OperationPriority.Release);
