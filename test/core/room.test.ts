@@ -68,8 +68,16 @@ describe('Room', () => {
   });
 
   describe.each([
-    ['typing timeout <0', 'typing timeout must be greater than 0', { typing: { timeoutMs: -1 } }],
-    ['typing timeout =0', 'typing timeout must be greater than 0', { typing: { timeoutMs: 0 } }],
+    [
+      'heartbeat interval < 0',
+      'typing heartbeat interval must be greater than 0',
+      { typing: { heartbeatThrottleMs: -1 } } as RoomOptions,
+    ],
+    [
+      'heartbeat interval = 0',
+      'typing heartbeat interval must be greater than 0',
+      { typing: { heartbeatThrottleMs: 0 } } as RoomOptions,
+    ],
   ])('feature configured', (description: string, reason: string, options: RoomOptions) => {
     it<TestContext>(`should throw an error when passed invalid options: ${description}`, (context) => {
       expect(() => {
@@ -82,7 +90,11 @@ describe('Room', () => {
   });
 
   describe.each([
-    ['typing timeout', { typing: { timeoutMs: 5 } }, (room: Room) => (room.typing as DefaultTyping).timeoutMs === 5],
+    [
+      'heartbeat interval timeout',
+      { typing: { heartbeatThrottleMs: 10 } },
+      (room: Room) => (room.typing as DefaultTyping).heartbeatThrottleMs === 10,
+    ],
   ])('feature configured', (description: string, options: RoomOptions, checkFunc: (room: Room) => boolean) => {
     it<TestContext>(`should apply room options: ${description}`, (context) => {
       expect(checkFunc(context.getRoom(options))).toBe(true);

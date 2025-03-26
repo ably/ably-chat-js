@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
+import { TypingEvents } from '../../../src/core/events.ts';
 import { Logger } from '../../../src/core/logger.ts';
 import { Room } from '../../../src/core/room.ts';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus } from '../../../src/core/room-status.ts';
@@ -46,7 +47,7 @@ describe('useTyping', () => {
   beforeEach(() => {
     // create a new mock room before each test, enabling typing
     vi.resetAllMocks();
-    updateMockRoom(makeRandomRoom({ options: { typing: { timeoutMs: 500 } } }));
+    updateMockRoom(makeRandomRoom({ options: { typing: { heartbeatThrottleMs: 500 } } }));
     mockLogger = makeTestLogger();
   });
 
@@ -90,7 +91,10 @@ describe('useTyping', () => {
     await waitForEventualHookValueToBeDefined(result, (value) => value.typingIndicators);
 
     // verify that subscribe was called with the mock listener on mount by triggering an event
-    const typingEvent = { currentlyTyping: new Set<string>() };
+    const typingEvent = {
+      change: { clientId: 'someClientId', type: TypingEvents.Stop },
+      currentlyTyping: new Set<string>(),
+    };
     for (const listener of mockTyping.listeners) {
       listener(typingEvent);
     }
@@ -101,26 +105,26 @@ describe('useTyping', () => {
     expect(mockUnsubscribe).toHaveBeenCalled();
   });
 
-  it('should correctly call the typing start method', async () => {
+  it('should correctly call the typing keystroke method', async () => {
     const { result } = renderHook(() => useTyping());
 
-    // spy on the start method of the typing instance
-    const startSpy = vi.spyOn(mockRoom.typing, 'start');
+    // spy on the keystroke method of the typing instance
+    const keystrokeSpy = vi.spyOn(mockRoom.typing, 'keystroke').mockImplementation(() => Promise.resolve());
 
-    // call the start method
+    // call the keystroke method
     await act(async () => {
-      await result.current.start();
+      await result.current.keystroke();
     });
 
-    // verify that the start method was called
-    expect(startSpy).toHaveBeenCalled();
+    // verify that the keystroke method was called
+    expect(keystrokeSpy).toHaveBeenCalled();
   });
 
   it('should correctly call the typing stop method', async () => {
     const { result } = renderHook(() => useTyping());
 
     // spy on the stop method of the typing instance
-    const stopSpy = vi.spyOn(mockRoom.typing, 'stop');
+    const stopSpy = vi.spyOn(mockRoom.typing, 'stop').mockImplementation(() => Promise.resolve());
 
     // call the stop method
     await act(async () => {
@@ -141,7 +145,7 @@ describe('useTyping', () => {
     });
 
     // spy on the get method of the typing instance, for now return an empty set
-    vi.spyOn(mockRoom.typing, 'get').mockReturnValue(Promise.resolve(new Set()));
+    vi.spyOn(mockRoom.typing, 'get').mockReturnValue(new Set());
 
     // render the hook and check the initial state
     const { result } = renderHook(() => useTyping());
@@ -163,7 +167,7 @@ describe('useTyping', () => {
     // emit a typing event which should update the DOM
     act(() => {
       if (subscribedListener) {
-        subscribedListener({ currentlyTyping: testSet });
+        subscribedListener({ change: { clientId: 'user2', type: TypingEvents.Start }, currentlyTyping: testSet });
       }
     });
 
@@ -179,7 +183,7 @@ describe('useTyping', () => {
 
     const testSet = new Set<string>(['user1', 'user2']);
     // spy on the get method of the typing instance, return an initial set
-    vi.spyOn(mockRoom.typing, 'get').mockResolvedValue(testSet);
+    vi.spyOn(mockRoom.typing, 'get').mockReturnValue(testSet);
 
     // render the hook and check the initial state
     const { result } = renderHook(() => useTyping());
@@ -199,78 +203,6 @@ describe('useTyping', () => {
     expect(result.current.currentlyTyping).toEqual(testSet);
   });
 
-  it('should set and return the error state when the call to get the initial typers set fails', async () => {
-    // spy on the get method of the typing instance and throw an error
-    vi.spyOn(mockRoom.typing, 'get').mockRejectedValue(new Ably.ErrorInfo('test', 500, 50000));
-    vi.spyOn(mockRoom.typing, 'subscribe');
-
-    // render the hook
-    const { result } = renderHook(() => useTyping());
-
-    // wait for the hook to finish mounting and set the error state
-    await waitFor(
-      () => {
-        expect(result.current.error).toBeDefined();
-      },
-      { timeout: 3000 },
-    );
-
-    // ensure the get method was called
-    expect(mockRoom.typing.get).toHaveBeenCalledOnce();
-    expect(mockRoom.typing.subscribe).toHaveBeenCalledTimes(1);
-
-    // ensure we have the correct error state
-    expect(result.current.error).toBeErrorInfo({
-      message: 'test',
-      statusCode: 50000,
-      code: 500,
-    });
-  });
-
-  it('should reset the current error state if a new typing event is received', async () => {
-    // in the case where the initial call to `typing.get` fails, we still register the listener.
-    // if we then receive a typing event, we should clear the error state since we now have the latest set of typers
-
-    // spy on the get method of the typing instance and throw an error
-    vi.spyOn(mockRoom.typing, 'get').mockRejectedValue(new Ably.ErrorInfo('test', 500, 50000));
-
-    let subscribedListener: TypingListener | undefined;
-
-    // spy on the subscribe method of the typing instance
-    vi.spyOn(mockRoom.typing, 'subscribe').mockImplementation((listener) => {
-      subscribedListener = listener;
-      return { unsubscribe: vi.fn() };
-    });
-
-    // render the hook
-    const { result } = renderHook(() => useTyping());
-
-    // wait for the hook to finish mounting and set the error state
-    await waitFor(
-      () => {
-        expect(result.current.error).toBeDefined();
-      },
-      { timeout: 3000 },
-    );
-
-    expect(mockRoom.typing.get).toHaveBeenCalledOnce();
-
-    // now emit a typing event which should clear the error state
-    act(() => {
-      if (subscribedListener) {
-        subscribedListener({ currentlyTyping: new Set() });
-      }
-    });
-
-    // check that the error state is now cleared
-    await waitFor(
-      () => {
-        expect(result.current.error).toBeUndefined();
-      },
-      { timeout: 3000 },
-    );
-  });
-
   it('should handle rerender if the room instance changes', async () => {
     const { result, rerender } = renderHook(() => useTyping());
 
@@ -282,7 +214,7 @@ describe('useTyping', () => {
       makeRandomRoom({
         options: {
           typing: {
-            timeoutMs: 500,
+            heartbeatThrottleMs: 500,
           },
         },
       }),

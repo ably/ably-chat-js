@@ -69,9 +69,44 @@ export enum PresenceEvents {
   Present = 'present',
 }
 
+/**
+ * All typing events.
+ */
 export enum TypingEvents {
-  /** The set of currently typing users has changed. */
-  Changed = 'typing.changed',
+  /**
+   * Event triggered when a user is typing.
+   */
+  Start = 'typing.started',
+
+  /**
+   * Event triggered when a user stops typing.
+   */
+  Stop = 'typing.stopped',
+}
+
+/**
+ * Represents a change in the state of current typers.
+ */
+export interface TypingEvent {
+  /**
+   * The set of clientIds that are currently typing.
+   */
+  currentlyTyping: Set<string>;
+
+  /**
+   * Represents the change that resulted in the new set of typers.
+   */
+  change: {
+    /**
+     * The client ID of the user who stopped/started typing.
+     */
+    clientId: string;
+
+    /**
+     * Type of the change. Either `typing.started` or `typing.stopped`.
+     */
+    type: TypingEvents;
+  };
 }
 
 /**
