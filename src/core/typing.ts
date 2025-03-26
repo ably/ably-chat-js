@@ -135,7 +135,7 @@ export class DefaultTyping
   private _heartbeatTimerId: TypingTimerHandle;
   private readonly _currentlyTyping: Map<string, TypingTimerHandle>;
 
-  // Mutex for controlling `start` and `keystroke` operations
+  // Mutex for controlling `keystroke` and `stop` operations
   private readonly _mutex = new Mutex();
 
   /**
