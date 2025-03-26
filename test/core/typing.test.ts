@@ -81,7 +81,7 @@ describe('Typing', () => {
     expect(room.typing.get()).toEqual(new Set(['some']));
   });
 
-  it<TestContext>('ensures multiple start/stop calls are resolved in order', async (context) => {
+  it<TestContext>('ensures multiple keystroke/stop calls are resolved in order', async (context) => {
     const { room, realtime } = context;
     const channel = room.typing.channel;
     const realtimeChannel = realtime.channels.get(channel.name);
@@ -101,11 +101,11 @@ describe('Typing', () => {
     const resolveOrder: string[] = [];
 
     // Start the first typing operation
-    const startPromise1 = new Promise<void>((resolve, reject) => {
+    const keystrokePromise = new Promise<void>((resolve, reject) => {
       room.typing
         .keystroke()
         .then(() => {
-          resolveOrder.push('startPromise');
+          resolveOrder.push('keystrokePromise');
           resolve();
         })
         .catch(reject);
@@ -113,8 +113,8 @@ describe('Typing', () => {
 
     // Start the second operation with a short delay of 100ms,
     // this is smaller than the delay in the mock publish of 300ms.
-    // The `stop` call should await before the `start` call has resolved, but only resolve itself after.
-    const startPromise2 = new Promise<void>((resolve, reject) => {
+    // The `stop` call should await before the `keystroke` call has resolved, but only resolve itself after.
+    const stopPromise = new Promise<void>((resolve, reject) => {
       setTimeout(() => {
         room.typing
           .stop()
@@ -127,13 +127,13 @@ describe('Typing', () => {
     });
 
     // Wait for both to complete
-    await Promise.all([startPromise1, startPromise2]);
+    await Promise.all([keystrokePromise, stopPromise]);
 
     // Validate that `publish` was called twice
     expect(publishSpy).toHaveBeenCalledTimes(2);
 
     // Ensure that the promises resolved in the correct order
-    expect(resolveOrder).toEqual(['startPromise', 'stopPromise']);
+    expect(resolveOrder).toEqual(['keystrokePromise', 'stopPromise']);
 
     // Cleanup mocks
     publishSpy.mockRestore();
@@ -247,15 +247,13 @@ describe('Typing', () => {
         vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
         vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
 
-        // Start typing and then immediately stop typing
-        await room.typing.keystroke();
-        await room.typing.stop();
+        await Promise.all([room.typing.keystroke(), room.typing.stop()]);
 
         expect(realtimeChannel.publish).toHaveBeenCalledTimes(2);
         // Ensure that publish was called with typing.started only once
-        expect(realtimeChannel.publish).toHaveBeenCalledWith(startMessage);
+        expect(realtimeChannel.publish).toHaveBeenNthCalledWith(1, startMessage);
         // Ensure that publish was called with typing.stopped only once
-        expect(realtimeChannel.publish).toHaveBeenCalledWith(stopMessage);
+        expect(realtimeChannel.publish).toHaveBeenNthCalledWith(2, stopMessage);
 
         // Check that the timers have been cleared
         const defaultTyping = room.typing as TestTypingInterface;
