@@ -1,6 +1,5 @@
 import * as Ably from 'ably';
 
-import { ChannelManager } from './channel-manager.js';
 import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
 import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
@@ -113,27 +112,25 @@ export class DefaultRoomReactions implements RoomReactions {
   /**
    * Constructs a new `DefaultRoomReactions` instance.
    * @param roomId The unique identifier of the room.
-   * @param channelManager The ChannelManager instance.
+   * @param channel The Realtime channel instance.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
+  constructor(roomId: string, channel: Ably.RealtimeChannel, clientId: string, logger: Logger) {
     this._roomId = roomId;
-    this._channel = this._makeChannel(channelManager);
+    this._channel = channel;
     this._clientId = clientId;
     this._logger = logger;
+
+    this._applyChannelSubscriptions();
   }
 
   /**
-   * Creates the realtime channel for room reactions.
+   * Sets up channel subscriptions for room reactions.
    */
-  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get();
-
+  private _applyChannelSubscriptions(): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void channel.subscribe([RoomReactionEvents.Reaction], this._forwarder.bind(this));
-
-    return channel;
+    void this._channel.subscribe([RoomReactionEvents.Reaction], this._forwarder.bind(this));
   }
 
   /**

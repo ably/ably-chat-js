@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { roomChannelName } from './channel.js';
-import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
+import { ChannelOptionsMerger } from './channel-manager.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomOptions } from './room-options.js';
@@ -167,27 +167,25 @@ export class DefaultPresence implements Presence {
   /**
    * Constructs a new `DefaultPresence` instance.
    * @param roomId The unique identifier of the room.
-   * @param channelManager The channel manager to use for creating the presence channel.
+   * @param channel The Realtime channel instance.
    * @param clientId The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
-    this._channel = this._makeChannel(channelManager);
+  constructor(roomId: string, channel: Ably.RealtimeChannel, clientId: string, logger: Logger) {
+    this._channel = channel;
     this._clientId = clientId;
     this._logger = logger;
+
+    this._applyChannelSubscriptions();
   }
 
   /**
-   * Creates the realtime channel for presence.
+   * Sets up channel subscriptions for presence.
    */
-  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get();
-
+  private _applyChannelSubscriptions(): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void channel.presence.subscribe(this.subscribeToEvents.bind(this));
-
-    return channel;
+    void this._channel.presence.subscribe(this.subscribeToEvents.bind(this));
   }
 
   /**
