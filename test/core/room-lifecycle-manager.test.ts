@@ -442,12 +442,26 @@ describe('RoomLifeCycleManager', () => {
       expect(roomStatus.error?.code).toBe(80003);
     });
 
-    it<TestContext>('should ignore channel state changes when attach operation is in progress', ({
+    it<TestContext>('should ignore channel state changes when attach operation is in progress', async ({
+      roomLifeCycleManager,
       mockChannel,
       roomStatus,
     }) => {
       // Arrange
-      roomStatus.setStatus({ status: RoomStatus.Attaching });
+      let shouldAttach = false;
+      let attachCalled = false;
+      mockChannel.attach = vi.fn().mockImplementation(() => {
+        return vi.waitFor(() => {
+          attachCalled = true;
+          expect(shouldAttach).toBeTruthy();
+        });
+      });
+      void roomLifeCycleManager.attach();
+
+      // Wait for attachCalled
+      await vi.waitFor(() => {
+        expect(attachCalled).toBeTruthy();
+      });
 
       // Act - simulate channel state change to suspended
       mockChannel.invokeStateChange({
@@ -460,14 +474,37 @@ describe('RoomLifeCycleManager', () => {
       // Assert
       expect(roomStatus.status).toBe(RoomStatus.Attaching);
       expect(roomStatus.error).toBeUndefined();
+
+      // Act - let the attach go through
+      shouldAttach = true;
+
+      // Assert, we should be attached
+      await vi.waitFor(() => {
+        expect(roomStatus.status).toBe(RoomStatus.Attached);
+        expect(roomStatus.error).toBeUndefined();
+      });
     });
 
-    it<TestContext>('should ignore channel state changes when detach operation is in progress', ({
+    it<TestContext>('should ignore channel state changes when detach operation is in progress', async ({
+      roomLifeCycleManager,
       mockChannel,
       roomStatus,
     }) => {
       // Arrange
-      roomStatus.setStatus({ status: RoomStatus.Detaching });
+      let shouldDetach = false;
+      let detachCalled = false;
+      mockChannel.detach = vi.fn().mockImplementation(() => {
+        return vi.waitFor(() => {
+          detachCalled = true;
+          expect(shouldDetach).toBeTruthy();
+        });
+      });
+      void roomLifeCycleManager.detach();
+
+      // Wait for detachCalled
+      await vi.waitFor(() => {
+        expect(detachCalled).toBeTruthy();
+      });
 
       // Act - simulate channel state change to suspended
       mockChannel.invokeStateChange({
@@ -480,14 +517,38 @@ describe('RoomLifeCycleManager', () => {
       // Assert
       expect(roomStatus.status).toBe(RoomStatus.Detaching);
       expect(roomStatus.error).toBeUndefined();
+
+      // Act - let the detach go through
+      shouldDetach = true;
+
+      // Assert, we should be detached
+      await vi.waitFor(() => {
+        expect(roomStatus.status).toBe(RoomStatus.Detached);
+        expect(roomStatus.error).toBeUndefined();
+      });
     });
 
-    it<TestContext>('should ignore channel state changes when release operation is in progress', ({
+    it<TestContext>('should ignore channel state changes when release operation is in progress', async ({
+      roomLifeCycleManager,
       mockChannel,
       roomStatus,
     }) => {
       // Arrange
-      roomStatus.setStatus({ status: RoomStatus.Releasing });
+      roomStatus.setStatus({ status: RoomStatus.Attached });
+      let shouldDetach = false;
+      let detachCalled = false;
+      mockChannel.detach = vi.fn().mockImplementation(() => {
+        return vi.waitFor(() => {
+          detachCalled = true;
+          expect(shouldDetach).toBeTruthy();
+        });
+      });
+      void roomLifeCycleManager.release();
+
+      // Wait for releaseCalled
+      await vi.waitFor(() => {
+        expect(detachCalled).toBeTruthy();
+      });
 
       // Act - simulate channel state change to suspended
       mockChannel.invokeStateChange({
@@ -500,6 +561,15 @@ describe('RoomLifeCycleManager', () => {
       // Assert
       expect(roomStatus.status).toBe(RoomStatus.Releasing);
       expect(roomStatus.error).toBeUndefined();
+
+      // Act - let the release go through
+      shouldDetach = true;
+
+      // Assert, we should be released
+      await vi.waitFor(() => {
+        expect(roomStatus.status).toBe(RoomStatus.Released);
+        expect(roomStatus.error).toBeUndefined();
+      });
     });
 
     describe.each([
