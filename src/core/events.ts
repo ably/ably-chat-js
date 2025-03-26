@@ -85,7 +85,7 @@ export enum TypingEvents {
 }
 
 /**
- * Represents a typing event payload.
+ * Represents a change in the state of current typers.
  */
 export interface TypingEvent {
   /**
@@ -94,7 +94,7 @@ export interface TypingEvent {
   currentlyTyping: Set<string>;
 
   /**
-   * Represents the change that resulted in the typing event.
+   * Represents the change that resulted in the new set of typers.
    */
   change: {
     /**
@@ -103,7 +103,7 @@ export interface TypingEvent {
     clientId: string;
 
     /**
-     * Type of the event.
+     * Type of the change. Either `typing.started` or `typing.stopped`.
      */
     type: TypingEvents;
   };
