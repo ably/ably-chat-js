@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { roomChannelName } from './channel.js';
-import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
+import { ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import { Logger } from './logger.js';
 import { InternalRoomOptions } from './room-options.js';
@@ -78,27 +78,25 @@ export class DefaultOccupancy implements Occupancy {
   /**
    * Constructs a new `DefaultOccupancy` instance.
    * @param roomId The unique identifier of the room.
-   * @param channelManager An instance of the ChannelManager.
+   * @param channel An instance of the Realtime channel.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, logger: Logger) {
+  constructor(roomId: string, channel: Ably.RealtimeChannel, chatApi: ChatApi, logger: Logger) {
     this._roomId = roomId;
-    this._channel = this._makeChannel(channelManager);
+    this._channel = channel;
     this._chatApi = chatApi;
     this._logger = logger;
+
+    this._applyChannelSubscriptions();
   }
 
   /**
-   * Creates the realtime channel for occupancy.
+   * Sets up channel subscriptions for occupancy.
    */
-  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get();
-
+  private _applyChannelSubscriptions(): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void channel.subscribe(['[meta]occupancy'], this._internalOccupancyListener.bind(this));
-
-    return channel;
+    void this._channel.subscribe(['[meta]occupancy'], this._internalOccupancyListener.bind(this));
   }
 
   /**

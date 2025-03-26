@@ -1,7 +1,6 @@
 import * as Ably from 'ably';
 import { E_CANCELED, Mutex } from 'async-mutex';
 
-import { ChannelManager } from './channel-manager.js';
 import { TypingEvent, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
@@ -121,21 +120,21 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * Constructs a new `DefaultTyping` instance.
    * @param roomId The unique identifier of the room.
    * @param options The options for typing in the room.
-   * @param channelManager The channel manager for the room.
+   * @param channel The channel for the room.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
   constructor(
     roomId: string,
     options: InternalTypingOptions,
-    channelManager: ChannelManager,
+    channel: Ably.RealtimeChannel,
     clientId: string,
     logger: Logger,
   ) {
     super();
     this._roomId = roomId;
     this._clientId = clientId;
-    this._channel = this._makeChannel(channelManager);
+    this._channel = channel;
 
     // Interval for the heartbeat, how often we should emit a typing event with repeated calls to start()
     this._heartbeatThrottleMs = options.heartbeatThrottleMs;
@@ -143,18 +142,17 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     // Map of clientIds to their typing timers, used to track typing state
     this._currentlyTyping = new Map<string, TypingTimerHandle>();
     this._logger = logger;
+
+    this._applyChannelSubscriptions();
   }
 
   /**
-   * Creates the realtime channel for typing indicators.
+   * Sets up channel subscriptions for typing indicators.
    */
-  private _makeChannel(channelManager: ChannelManager): Ably.RealtimeChannel {
+  private _applyChannelSubscriptions(): void {
     // CHA-T8
-    const channel = channelManager.get();
-
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void channel.subscribe([TypingEvents.Start, TypingEvents.Stop], this._internalSubscribeToEvents.bind(this));
-    return channel;
+    void this._channel.subscribe([TypingEvents.Start, TypingEvents.Stop], this._internalSubscribeToEvents.bind(this));
   }
 
   /**
