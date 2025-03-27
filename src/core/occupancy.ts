@@ -1,19 +1,10 @@
 import * as Ably from 'ably';
 
-import { messagesChannelName } from './channel.js';
-import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
+import { roomChannelName } from './channel.js';
+import { ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
-import {
-  DiscontinuityEmitter,
-  DiscontinuityListener,
-  EmitsDiscontinuities,
-  HandlesDiscontinuity,
-  newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
-} from './discontinuity.js';
-import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
+import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -23,7 +14,7 @@ import EventEmitter from './utils/event-emitter.js';
  *
  * Get an instance via {@link Room.occupancy}.
  */
-export interface Occupancy extends EmitsDiscontinuities {
+export interface Occupancy {
   /**
    * Subscribe a given listener to occupancy updates of the chat room.
    *
@@ -43,13 +34,6 @@ export interface Occupancy extends EmitsDiscontinuities {
    * @returns A promise that resolves to the current occupancy of the chat room.
    */
   get(): Promise<OccupancyEvent>;
-
-  /**
-   * Get underlying Ably channel for occupancy events.
-   *
-   * @returns The underlying Ably channel for occupancy events.
-   */
-  get channel(): Ably.RealtimeChannel;
 }
 
 /**
@@ -84,42 +68,36 @@ interface OccupancyEventsMap {
 /**
  * @inheritDoc
  */
-export class DefaultOccupancy
-  extends EventEmitter<OccupancyEventsMap>
-  implements Occupancy, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultOccupancy extends EventEmitter<OccupancyEventsMap> implements Occupancy {
   private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private _logger: Logger;
-  private _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   /**
    * Constructs a new `DefaultOccupancy` instance.
    * @param roomId The unique identifier of the room.
-   * @param channelManager An instance of the ChannelManager.
+   * @param channel An instance of the Realtime channel.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, logger: Logger) {
+  constructor(roomId: string, channel: Ably.RealtimeChannel, chatApi: ChatApi, logger: Logger) {
     super();
 
     this._roomId = roomId;
-    this._channel = this._makeChannel(roomId, channelManager);
+    this._channel = channel;
     this._chatApi = chatApi;
     this._logger = logger;
+
+    this._applyChannelSubscriptions();
   }
 
   /**
-   * Creates the realtime channel for occupancy.
+   * Sets up channel subscriptions for occupancy.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(DefaultOccupancy.channelName(roomId));
-
+  private _applyChannelSubscriptions(): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void channel.subscribe(['[meta]occupancy'], this._internalOccupancyListener.bind(this));
-
-    return channel;
+    void this._channel.subscribe(['[meta]occupancy'], this._internalOccupancyListener.bind(this));
   }
 
   /**
@@ -154,17 +132,11 @@ export class DefaultOccupancy
   }
 
   /**
-   * @inheritdoc Occupancy
-   */
-  get channel(): Ably.RealtimeChannel {
-    return this._channel;
-  }
-
-  /**
    * An internal listener that listens for occupancy events from the underlying channel and translates them into
    * occupancy events for the public API.
    */
   private _internalOccupancyListener(message: Ably.InboundMessage): void {
+    this._logger.debug('received occupancy event');
     if (typeof message.data !== 'object') {
       this._logger.error('invalid occupancy event received; data is not an object', message);
       return;
@@ -199,40 +171,11 @@ export class DefaultOccupancy
       return;
     }
 
+    this._logger.debug('emitting occupancy update');
     this.emit(OccupancyEvents.Occupancy, {
       connections: connections,
       presenceMembers: presenceMembers,
     });
-  }
-
-  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
-    this._logger.trace('Occupancy.onDiscontinuity();');
-    this._discontinuityEmitter.on(listener);
-
-    return {
-      off: () => {
-        this._discontinuityEmitter.off(listener);
-      },
-    };
-  }
-
-  discontinuityDetected(reason?: Ably.ErrorInfo): void {
-    this._logger.warn('Occupancy.discontinuityDetected();', { reason });
-    this._discontinuityEmitter.emit('discontinuity', reason);
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.OccupancyAttachmentFailed;
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.OccupancyDetachmentFailed;
   }
 
   /**
@@ -240,8 +183,15 @@ export class DefaultOccupancy
    *
    * @returns A function that merges the channel options for the room with the ones required for presence.
    */
-  static channelOptionMerger(): ChannelOptionsMerger {
-    return (options) => ({ ...options, params: { ...options.params, occupancy: 'metrics' } });
+  static channelOptionMerger(roomOptions: InternalRoomOptions): ChannelOptionsMerger {
+    return (options) => {
+      // Occupancy not required, so we can skip this.
+      if (!roomOptions.occupancy.enableInboundOccupancy) {
+        return options;
+      }
+
+      return { ...options, params: { ...options.params, occupancy: 'metrics' } };
+    };
   }
 
   /**
@@ -251,6 +201,6 @@ export class DefaultOccupancy
    * @returns The channel name for the presence channel.
    */
   static channelName(roomId: string): string {
-    return messagesChannelName(roomId);
+    return roomChannelName(roomId);
   }
 }
