@@ -129,19 +129,19 @@ export class ChatApi {
     const mapToDefaultMessage = (message: Message): DefaultMessage => {
       const metadata = message.metadata as MessageMetadata | undefined;
       const headers = message.headers as MessageHeaders | undefined;
-      return new DefaultMessage(
-        message.serial,
-        message.clientId,
-        message.roomId,
-        message.text,
-        metadata ?? {},
-        headers ?? {},
-        message.action,
-        message.version,
-        (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
-        new Date(message.timestamp),
-        message.operation,
-      );
+      return new DefaultMessage({
+        serial: message.serial,
+        clientId: message.clientId,
+        roomId: message.roomId,
+        text: message.text,
+        metadata: metadata ?? {},
+        headers: headers ?? {},
+        action: message.action,
+        version: message.version,
+        createdAt: (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
+        timestamp: new Date(message.timestamp),
+        operation: message.operation,
+      });
     };
 
     const paginatedResult: PaginatedResult<Message> = {} as PaginatedResult<Message>;
