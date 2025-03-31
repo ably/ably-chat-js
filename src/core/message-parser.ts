@@ -72,17 +72,17 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     }
   }
 
-  return new DefaultMessage(
-    message.serial,
-    message.clientId,
-    roomId,
-    message.data.text,
-    message.data.metadata ?? {},
-    message.extras.headers ?? {},
-    message.action as ChatMessageActions,
-    message.version,
-    new Date(message.createdAt),
-    new Date(message.timestamp),
-    message.operation as Operation,
-  );
+  return new DefaultMessage({
+    serial: message.serial,
+    clientId: message.clientId,
+    roomId: roomId,
+    text: message.data.text,
+    metadata: message.data.metadata ?? {},
+    headers: message.extras.headers ?? {},
+    action: message.action as ChatMessageActions,
+    version: message.version,
+    createdAt: new Date(message.createdAt),
+    timestamp: new Date(message.timestamp),
+    operation: message.operation as Operation,
+  });
 }

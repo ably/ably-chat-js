@@ -261,24 +261,65 @@ export interface MessageCopyParams {
 }
 
 /**
+ * Parameters for creating a new DefaultMessage instance.
+ */
+export interface DefaultMessageParams {
+  serial: string;
+  clientId: string;
+  roomId: string;
+  text: string;
+  metadata: MessageMetadata;
+  headers: MessageHeaders;
+  action: ChatMessageActions;
+  version: string;
+  createdAt: Date;
+  timestamp: Date;
+  operation?: Operation;
+}
+
+/**
  * An implementation of the Message interface for chat messages.
  *
  * Allows for comparison of messages based on their serials.
  */
 export class DefaultMessage implements Message {
-  constructor(
-    public readonly serial: string,
-    public readonly clientId: string,
-    public readonly roomId: string,
-    public readonly text: string,
-    public readonly metadata: MessageMetadata,
-    public readonly headers: MessageHeaders,
-    public readonly action: ChatMessageActions,
-    public readonly version: string,
-    public readonly createdAt: Date,
-    public readonly timestamp: Date,
-    public readonly operation?: Operation,
-  ) {
+  public readonly serial: string;
+  public readonly clientId: string;
+  public readonly roomId: string;
+  public readonly text: string;
+  public readonly metadata: MessageMetadata;
+  public readonly headers: MessageHeaders;
+  public readonly action: ChatMessageActions;
+  public readonly version: string;
+  public readonly createdAt: Date;
+  public readonly timestamp: Date;
+  public readonly operation?: Operation;
+
+  constructor({
+    serial,
+    clientId,
+    roomId,
+    text,
+    metadata,
+    headers,
+    action,
+    version,
+    createdAt,
+    timestamp,
+    operation,
+  }: DefaultMessageParams) {
+    this.serial = serial;
+    this.clientId = clientId;
+    this.roomId = roomId;
+    this.text = text;
+    this.metadata = metadata;
+    this.headers = headers;
+    this.action = action;
+    this.version = version;
+    this.createdAt = createdAt;
+    this.timestamp = timestamp;
+    this.operation = operation;
+
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
   }
@@ -365,18 +406,18 @@ export class DefaultMessage implements Message {
 
   // Clone a message, optionally replace the given fields
   private static _clone(source: Message, replace?: Partial<Message>): DefaultMessage {
-    return new DefaultMessage(
-      replace?.serial ?? source.serial,
-      replace?.clientId ?? source.clientId,
-      replace?.roomId ?? source.roomId,
-      replace?.text ?? source.text,
-      replace?.metadata ?? structuredClone(source.metadata),
-      replace?.headers ?? structuredClone(source.headers),
-      replace?.action ?? source.action,
-      replace?.version ?? source.version,
-      replace?.createdAt ?? source.createdAt,
-      replace?.timestamp ?? source.timestamp,
-      replace?.operation ?? structuredClone(source.operation),
-    );
+    return new DefaultMessage({
+      serial: replace?.serial ?? source.serial,
+      clientId: replace?.clientId ?? source.clientId,
+      roomId: replace?.roomId ?? source.roomId,
+      text: replace?.text ?? source.text,
+      metadata: replace?.metadata ?? structuredClone(source.metadata),
+      headers: replace?.headers ?? structuredClone(source.headers),
+      action: replace?.action ?? source.action,
+      version: replace?.version ?? source.version,
+      createdAt: replace?.createdAt ?? source.createdAt,
+      timestamp: replace?.timestamp ?? source.timestamp,
+      operation: replace?.operation ?? structuredClone(source.operation),
+    });
   }
 }
