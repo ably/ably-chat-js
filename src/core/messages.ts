@@ -464,18 +464,18 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
     const { text, metadata, headers } = params;
 
     const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
-    return new DefaultMessage(
-      response.serial,
-      this._clientId,
-      this._roomId,
-      text,
-      metadata ?? {},
-      headers ?? {},
-      ChatMessageActions.MessageCreate,
-      response.serial,
-      new Date(response.createdAt),
-      new Date(response.createdAt), // timestamp is the same as createdAt for new messages
-    );
+    return new DefaultMessage({
+      serial: response.serial,
+      clientId: this._clientId,
+      roomId: this._roomId,
+      text: text,
+      metadata: metadata ?? {},
+      headers: headers ?? {},
+      action: ChatMessageActions.MessageCreate,
+      version: response.serial,
+      createdAt: new Date(response.createdAt),
+      timestamp: new Date(response.createdAt), // timestamp is the same as createdAt for new messages
+    });
   }
 
   async update(message: Message, details?: OperationDetails): Promise<Message> {
@@ -490,23 +490,23 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
       ...details,
     });
 
-    const updatedMessage: Message = new DefaultMessage(
-      message.serial,
-      message.clientId,
-      this._roomId,
-      message.text,
-      message.metadata,
-      message.headers,
-      ChatMessageActions.MessageUpdate,
-      response.version,
-      new Date(message.createdAt),
-      new Date(response.timestamp),
-      {
+    const updatedMessage: Message = new DefaultMessage({
+      serial: message.serial,
+      clientId: message.clientId,
+      roomId: this._roomId,
+      text: message.text,
+      metadata: message.metadata,
+      headers: message.headers,
+      action: ChatMessageActions.MessageUpdate,
+      version: response.version,
+      createdAt: new Date(message.createdAt),
+      timestamp: new Date(response.timestamp),
+      operation: {
         clientId: this._clientId,
         description: details?.description,
         metadata: details?.metadata,
       },
-    );
+    });
 
     this._logger.debug('Messages.update(); message update successfully', { message });
     return updatedMessage;
@@ -520,23 +520,23 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
 
     const response = await this._chatApi.deleteMessage(this._roomId, message.serial, params);
 
-    const deletedMessage: Message = new DefaultMessage(
-      message.serial,
-      message.clientId,
-      this._roomId,
-      message.text,
-      message.metadata,
-      message.headers,
-      ChatMessageActions.MessageDelete,
-      response.version,
-      new Date(message.createdAt),
-      new Date(response.timestamp),
-      {
+    const deletedMessage: Message = new DefaultMessage({
+      serial: message.serial,
+      clientId: message.clientId,
+      roomId: this._roomId,
+      text: message.text,
+      metadata: message.metadata,
+      headers: message.headers,
+      action: ChatMessageActions.MessageDelete,
+      version: response.version,
+      createdAt: new Date(message.createdAt),
+      timestamp: new Date(response.timestamp),
+      operation: {
         clientId: this._clientId,
         description: params?.description,
         metadata: params?.metadata,
       },
-    );
+    });
 
     this._logger.debug('Messages.delete(); message deleted successfully', { deletedMessage });
     return deletedMessage;
