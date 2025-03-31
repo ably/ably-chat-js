@@ -176,20 +176,14 @@ export class ChatApi {
       const headers = message.headers as MessageHeaders | undefined;
       const reactions = message.reactions as typeof message.reactions | undefined;
 
-      return new DefaultMessage(
-        message.serial,
-        message.clientId,
-        message.roomId,
-        message.text,
-        metadata ?? {},
-        headers ?? {},
-        message.action,
-        message.version,
-        (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
-        new Date(message.timestamp),
-        reactions ?? emptyMessageReactions(),
-        message.operation,
-      );
+      return new DefaultMessage({
+        ...message,
+        metadata: metadata ?? {},
+        headers: headers ?? {},
+        createdAt: (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
+        timestamp: new Date(message.timestamp),
+        reactions: reactions ?? emptyMessageReactions(),
+      });
     };
 
     const paginatedResult: PaginatedResult<Message> = {} as PaginatedResult<Message>;
