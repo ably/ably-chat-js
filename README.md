@@ -60,7 +60,10 @@ The Chat SDK can be installed either from NPM, or included directly from Ably's 
 
 ```sh
 npm install ably @ably/chat
+npm install react
 ```
+NOTE: React dependency is currently required even if you are not using Chat React components.
+This is a known issue and will be removed in a future release.
 
 ### CDN
 
@@ -92,8 +95,8 @@ import * as Ably from "ably";
 import {
   ChatClient,
   ConnectionStatusChange,
+  AllFeaturesEnabled,
   MessageEvent,
-  RoomOptionsDefaults,
   RoomStatusChange,
 } from "@ably/chat";
 
@@ -115,8 +118,8 @@ async function getStartedWithChat() {
 
   // Get a room to join, subscribe to messages and then attach to the room
   const room = await chatClient.rooms.get(
-    "readme-getting-started",
-    RoomOptionsDefaults
+    "readme-getting-started", 
+     AllFeaturesEnabled
   );
   const { off: unsubscribeRoomStatus } = room.onStatusChange(
     (change: RoomStatusChange) => {
@@ -302,7 +305,7 @@ own key from the Ably dashboard.
 
 ```tsx
 import * as Ably from 'ably';
-import { ChatClient, ChatClientProvider, ChatRoomProvider, RoomOptionsDefaults } from '@ably/chat';
+import { ChatClient, ChatClientProvider, ChatRoomProvider, AllFeaturesEnabled } from '@ably/chat';
 import { Messages } from './Messages';
 
 // Initialize an Ably Realtime client, which we'll use to power the chat client
@@ -323,7 +326,7 @@ const chatClient = new ChatClient(ablyClient, {});
 function App() {
   return (
     <ChatClientProvider client={chatClient}>
-      <ChatRoomProvider id="readme-getting-started" options={RoomOptionsDefaults}>
+      <ChatRoomProvider id="readme-getting-started" options={AllFeaturesEnabled}>
         <div>
           <Messages />
         </div>
