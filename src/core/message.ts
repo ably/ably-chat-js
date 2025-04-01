@@ -261,6 +261,23 @@ export interface MessageCopyParams {
 }
 
 /**
+ * Parameters for creating a new DefaultMessage instance.
+ */
+export interface DefaultMessageParams {
+  serial: string;
+  clientId: string;
+  roomId: string;
+  text: string;
+  metadata: MessageMetadata;
+  headers: MessageHeaders;
+  action: ChatMessageActions;
+  version: string;
+  createdAt: Date;
+  timestamp: Date;
+  operation?: Operation;
+}
+
+/**
  * An implementation of the Message interface for chat messages.
  *
  * Allows for comparison of messages based on their serials.
@@ -278,22 +295,19 @@ export class DefaultMessage implements Message {
   public readonly timestamp: Date;
   public readonly operation?: Operation;
 
-  constructor(fields: {
-    serial: string;
-    clientId: string;
-    roomId: string;
-    text: string;
-    metadata: MessageMetadata;
-    headers: MessageHeaders;
-    action: ChatMessageActions;
-    version: string;
-    createdAt: Date;
-    timestamp: Date;
-    operation?: Operation;
-  }) {
-    const { serial, clientId, roomId, text, metadata, headers, action, version, createdAt, timestamp, operation } =
-      fields;
-
+  constructor({
+    serial,
+    clientId,
+    roomId,
+    text,
+    metadata,
+    headers,
+    action,
+    version,
+    createdAt,
+    timestamp,
+    operation,
+  }: DefaultMessageParams) {
     this.serial = serial;
     this.clientId = clientId;
     this.roomId = roomId;
