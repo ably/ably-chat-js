@@ -14,10 +14,19 @@ import {
 import { ErrorCodes } from './errors.js';
 import { ChatMessageActions, MessageEvent, MessageEvents, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
+import {
+  DefaultMessage,
+  emptyMessageReactions,
+  Message,
+  MessageHeaders,
+  MessageMetadata,
+  MessageOperationMetadata,
+} from './message.js';
 import { parseMessage } from './message-parser.js';
+import { DefaultMessageReactions, MessagesReactions } from './messages-reactions.js';
 import { PaginatedResult } from './query.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
+import { MessageOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -253,6 +262,11 @@ export interface Messages extends EmitsDiscontinuities {
   update(message: Message, details?: OperationDetails): Promise<Message>;
 
   /**
+   * Add, delete, and subscribe to message reactions.
+   */
+  reactions: MessagesReactions;
+
+  /**
    * Get the underlying Ably realtime channel used for the messages in this chat room.
    *
    * @returns The realtime channel.
@@ -268,6 +282,7 @@ export class DefaultMessages
   implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
 {
   private readonly _roomId: string;
+  private readonly _options: MessageOptions;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private readonly _clientId: string;
@@ -280,6 +295,8 @@ export class DefaultMessages
   private readonly _logger: Logger;
   private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
+  public readonly reactions: MessagesReactions;
+
   /**
    * Constructs a new `DefaultMessages` instance.
    * @param roomId The unique identifier of the room.
@@ -288,9 +305,17 @@ export class DefaultMessages
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, clientId: string, logger: Logger) {
+  constructor(
+    roomId: string,
+    options: MessageOptions,
+    channelManager: ChannelManager,
+    chatApi: ChatApi,
+    clientId: string,
+    logger: Logger,
+  ) {
     super();
     this._roomId = roomId;
+    this._options = options;
 
     this._channel = this._makeChannel(roomId, channelManager);
 
@@ -298,13 +323,17 @@ export class DefaultMessages
     this._clientId = clientId;
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
+
+    this.reactions = new DefaultMessageReactions(this._logger, options, this._chatApi, this._roomId, this._channel);
   }
 
   /**
    * Creates the realtime channel for messages.
    */
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(messagesChannelName(roomId));
+    const channelName = messagesChannelName(roomId);
+
+    const channel = channelManager.get(channelName);
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void channel.subscribe([RealtimeMessageNames.ChatMessage], this._processEvent.bind(this));
@@ -479,6 +508,7 @@ export class DefaultMessages
       response.serial,
       new Date(response.createdAt),
       new Date(response.createdAt), // timestamp is the same as createdAt for new messages
+      emptyMessageReactions(),
     );
   }
 
@@ -505,6 +535,7 @@ export class DefaultMessages
       response.version,
       new Date(message.createdAt),
       new Date(response.timestamp),
+      emptyMessageReactions(),
       {
         clientId: this._clientId,
         description: details?.description,
@@ -535,6 +566,7 @@ export class DefaultMessages
       response.version,
       new Date(message.createdAt),
       new Date(response.timestamp),
+      emptyMessageReactions(),
       {
         clientId: this._clientId,
         description: params?.description,

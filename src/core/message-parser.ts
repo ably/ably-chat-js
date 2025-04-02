@@ -1,7 +1,14 @@
 import * as Ably from 'ably';
 
 import { ChatMessageActions } from './events.js';
-import { DefaultMessage, Message, MessageHeaders, MessageMetadata, Operation } from './message.js';
+import {
+  DefaultMessage,
+  emptyMessageReactions,
+  Message,
+  MessageHeaders,
+  MessageMetadata,
+  Operation,
+} from './message.js';
 
 interface MessagePayload {
   data?: {
@@ -83,6 +90,7 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     message.version,
     new Date(message.createdAt),
     new Date(message.timestamp),
+    emptyMessageReactions(),
     message.operation as Operation,
   );
 }
