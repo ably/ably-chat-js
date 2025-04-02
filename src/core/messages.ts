@@ -333,15 +333,6 @@ export class DefaultMessages
   private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
     const channelName = messagesChannelName(roomId);
 
-    if (this._options.rawMessageReactions) {
-      channelManager.mergeOptions(channelName, (options) => {
-        const opts = { ...options };
-        opts.modes = opts.modes ?? [];
-        opts.modes.push('ANNOTATION_SUBSCRIBE');
-        return opts;
-      });
-    }
-
     const channel = channelManager.get(channelName);
 
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail

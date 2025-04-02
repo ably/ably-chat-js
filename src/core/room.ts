@@ -244,12 +244,21 @@ export class DefaultRoom implements Room {
 
     manager.mergeOptions(messagesChannelName(this._roomId), (opts) => {
       if (opts.modes) {
-        opts.modes.push('ANNOTATION_PUBLISH');
+        opts.modes.push('annotation_publish');
       } else {
-        opts.modes = ['publish', 'subscribe', 'presence_subscribe', 'presence', 'ANNOTATION_PUBLISH'];
+        opts.modes = ['publish', 'subscribe', 'presence_subscribe', 'presence', 'annotation_publish'];
       }
       return opts;
     });
+
+    if (this._options.messages?.rawMessageReactions) {
+      manager.mergeOptions(messagesChannelName(this._roomId), (options) => {
+        const opts = { ...options };
+        opts.modes = opts.modes ?? [];
+        opts.modes.push('annotation_subscribe');
+        return opts;
+      });
+    }
 
     return manager;
   }
