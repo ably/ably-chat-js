@@ -1,10 +1,10 @@
 import React from 'react';
-import { Message, MessageReactionType } from '@ably/chat';
+import { Message, MessageReactionType, Messages } from '@ably/chat';
 
 interface MessageReactionsMultipleProps {
   message: Message;
-  onReactionAdd: (message: Message, type: MessageReactionType, emoji: string, score?: number) => void;
-  onReactionDelete: (message: Message, type: MessageReactionType, emoji: string) => void;
+  onReactionAdd : Messages['reactions']['add'];
+  onReactionDelete : Messages['reactions']['delete']
 }
 
 const emojis = ['👍', '❤️', '🔥', '🚀'];
@@ -15,11 +15,11 @@ export const MessageReactionsMultiple: React.FC<MessageReactionsMultipleProps> =
   onReactionDelete: onReactionRemove,
 }) => {
   const handleReactionClick = (emoji: string) => {
-    onReactionAdd(message, MessageReactionType.Multiple, emoji);
+    onReactionAdd(message, { type: MessageReactionType.Multiple, reaction: emoji });
   };
 
   const handleReactionRemoveClick = (emoji: string) => {
-    onReactionRemove(message, MessageReactionType.Multiple, emoji);
+    onReactionRemove(message, { type: MessageReactionType.Multiple, reaction: emoji });
   };
 
   const multiple = message.reactions.multiple ?? {};

@@ -1,4 +1,4 @@
-import { Message, MessageReactionType, useChatClient } from '@ably/chat';
+import { Message, MessageReactionType, useChatClient, Messages } from '@ably/chat';
 import React, { useCallback } from 'react';
 import clsx from 'clsx';
 import { FaPencil, FaTrash } from 'react-icons/fa6';
@@ -14,9 +14,9 @@ interface MessageProps {
 
   onMessageDelete?(msg: Message): void;
 
-  onReactionAdd?(msg: Message, type: string, reaction: string, score?: number): void;
+  onReactionAdd? : Messages['reactions']['add'];
 
-  onReactionDelete?(msg: Message, type: string, reaction?: string): void;
+  onReactionDelete? : Messages['reactions']['delete']
 }
 
 const shortDateTimeFormatter = new Intl.DateTimeFormat('default', {

@@ -1,6 +1,10 @@
 import * as Ably from 'ably';
 
-import { AddMessageReactionParams, ChatApi, DeleteMessageReactionParams } from './chat-api.js';
+import {
+  AddMessageReactionParams as APIAddMessageReactionParams,
+  ChatApi,
+  DeleteMessageReactionParams as APIDeleteMessageReactionParams,
+} from './chat-api.js';
 import {
   ChatMessageActions,
   DistinctReactionSummary,
@@ -29,6 +33,40 @@ export type MessageReactionListener = (event: MessageReactionSummaryEvent) => vo
  */
 export type MessageRawReactionListener = (event: MessageReactionRawEvent) => void;
 
+export interface AddMessageReactionParams {
+  /**
+   * The reaction to add; ie. the emoji.
+   */
+  reaction: string;
+
+  /**
+   * The type of reaction, must be one of {@link MessageReactionType}.
+   * If not set, the default type will be used which is configured in the {@link MessageOptions.defaultMessageReactionType} of the room.
+   */
+  type?: MessageReactionType;
+
+  /**
+   * The count of the reaction for type {@link MessageReactionType.Multiple}.
+   * Defaults to 1 if not set. Not supported for other reaction types.
+   * @default 1
+   */
+  count?: number;
+}
+
+export interface DeleteMessageReactionParams {
+  /**
+   * The reaction to add; ie. the emoji. Required for all reaction types
+   * except {@link MessageReactionType.Unique}.
+   */
+  reaction?: string;
+
+  /**
+   * The type of reaction, must be one of {@link MessageReactionType}.
+   * If not set, the default type will be used which is configured in the {@link MessageOptions.defaultMessageReactionType} of the room.
+   */
+  type?: MessageReactionType;
+}
+
 /**
  * Add, delete, and subscribe to message reactions.
  */
@@ -36,21 +74,18 @@ export interface MessagesReactions {
   /**
    * Add a message reactions
    * @param message The message to react to.
-   * @param type The type of reaction reference.
-   * @param reaction The reaction to add.
-   * @param count The count of the reaction for types that support it, default 1.
+   * @param params Describe the reaction to add.
    * @returns A promise that resolves when the reaction is added.
    */
-  add(message: { serial: string }, type: MessageReactionType, reaction: string, count?: number): Promise<void>;
+  add(message: { serial: string }, params: AddMessageReactionParams): Promise<void>;
 
   /**
    * Delete a message reaction
    * @param message The message to remove the reaction from.
-   * @param type The type of reaction reference.
-   * @param reaction The specific reaction to remove. Required for all types except {@link MessageReactionType.Unique}.
+   * @param params The type of reaction annotation and the specific reaction to remove. The reaction to remove is required for all types except {@link MessageReactionType.Unique}.
    * @returns A promise that resolves when the reaction is deleted.
    */
-  delete(message: { serial: string }, type: MessageReactionType, reaction?: string): Promise<void>;
+  delete(message: { serial: string }, params?: DeleteMessageReactionParams): Promise<void>;
 
   /**
    * Subscribe to message reaction summaries. Use this to keep message reaction
@@ -80,6 +115,8 @@ export class DefaultMessageReactions implements MessagesReactions {
     [MessageReactionEvents.Summary]: MessageReactionSummaryEvent;
   }>();
 
+  private _defaultType: MessageReactionType;
+
   constructor(
     private readonly _logger: Logger,
     private readonly _options: MessageOptions | undefined,
@@ -91,6 +128,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (this._options?.rawMessageReactions) {
       void _channel.annotations.subscribe(this._processAnnotationEvent.bind(this));
     }
+    this._defaultType = this._options?.defaultMessageReactionType ?? MessageReactionType.Distinct;
   }
 
   private _processAnnotationEvent(event: Ably.Annotation) {
@@ -169,15 +207,30 @@ export class DefaultMessageReactions implements MessagesReactions {
       return;
     }
 
+
+    console.log("received summary type = ", typeof event.summary, "is map = ", event.summary instanceof Map, "value = ", event.summary);
+    // todo: update when this is resolved https://github.com/ably/ably-js/pull/1953#discussion_r2024650969
+
     const summary = (event.summary ?? {}) as {
       [MessageReactionType.Unique]?: Record<string, UniqueReactionSummary>;
       [MessageReactionType.Distinct]?: Record<string, DistinctReactionSummary>;
       [MessageReactionType.Multiple]?: Record<string, MultipleReactionSummary>;
     };
 
+    // const summary = event.summary ?? new Map<string, unknown>();
+
     const single: Record<string, UniqueReactionSummary> = summary[MessageReactionType.Unique] ?? {};
     const distinct: Record<string, DistinctReactionSummary> = summary[MessageReactionType.Distinct] ?? {};
     const counter: Record<string, MultipleReactionSummary> = summary[MessageReactionType.Multiple] ?? {};
+
+
+
+    // const summary = event.summary ?? new Map<string, unknown>();
+    
+    // const single = (summary.get(MessageReactionType.Unique) as Record<string, UniqueReactionSummary>) ?? {};
+    // const distinct = (summary.get(MessageReactionType.Distinct) as Record<string, DistinctReactionSummary>) ?? {};
+    // const counter = (summary.get(MessageReactionType.Multiple) as Record<string, MultipleReactionSummary>) ?? {};
+
 
     this._emitter.emit(MessageReactionEvents.Summary, {
       type: MessageReactionEvents.Summary,
@@ -193,29 +246,37 @@ export class DefaultMessageReactions implements MessagesReactions {
   /**
    * @inheritDoc
    */
-  add(message: { serial: string }, type: MessageReactionType, reaction: string, count?: number): Promise<void> {
+  add(message: { serial: string }, params: AddMessageReactionParams): Promise<void> {
+    let { type, count } = params;
+    if (!type) {
+      type = this._defaultType;
+    }
     if (type === MessageReactionType.Multiple && !count) {
       count = 1;
     }
-    const params: AddMessageReactionParams = { type, reaction };
+    const apiParams: APIAddMessageReactionParams = { type, reaction: params.reaction };
     if (count) {
-      params.count = count;
+      apiParams.count = count;
     }
-    return this._api.addMessageReaction(this._roomID, message.serial, params);
+    return this._api.addMessageReaction(this._roomID, message.serial, apiParams);
   }
 
   /**
    * @inheritDoc
    */
-  delete(message: { serial: string }, type: MessageReactionType, reaction?: string): Promise<void> {
-    if (type !== MessageReactionType.Unique && !reaction) {
+  delete(message: { serial: string }, params: DeleteMessageReactionParams): Promise<void> {
+    let type = params.type;
+    if (!type) {
+      type = this._defaultType;
+    }
+    if (type !== MessageReactionType.Unique && !params.reaction) {
       throw new Ably.ErrorInfo(`cannot delete reaction of type ${type} without a reaction`, 40001, 400);
     }
-    const params: DeleteMessageReactionParams = { type };
+    const apiParams: APIDeleteMessageReactionParams = { type };
     if (type !== MessageReactionType.Unique) {
-      params.reaction = reaction;
+      apiParams.reaction = params.reaction;
     }
-    return this._api.deleteMessageReaction(this._roomID, message.serial, params);
+    return this._api.deleteMessageReaction(this._roomID, message.serial, apiParams);
   }
 
   /**

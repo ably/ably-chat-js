@@ -48,30 +48,39 @@ describe('MessagesReactions', () => {
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'addMessageReaction').mockResolvedValue();
 
-      await context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Unique, '🥕');
+      const msg = { serial: serial };
+
+      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Unique, reaction: '🥕' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Unique,
         reaction: '🥕',
       });
 
-      await context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Distinct, '🥕');
+      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Distinct, reaction: '🥕' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Distinct,
         reaction: '🥕',
       });
 
-      await context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Multiple, '🥕');
+      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, reaction: '🥕' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Multiple,
         reaction: '🥕',
         count: 1,
       });
 
-      await context.room.messages.reactions.add({ serial: serial }, MessageReactionType.Multiple, '🥕', 10);
+      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, reaction: '🥕', count: 10 });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Multiple,
         reaction: '🥕',
         count: 10,
+      });
+
+      // default is distinct for AllFeaturesEnabled
+      await context.room.messages.reactions.add(msg, { reaction: '👻' });
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+        type: MessageReactionType.Distinct,
+        reaction: '👻',
       });
     });
   });
@@ -83,21 +92,30 @@ describe('MessagesReactions', () => {
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'deleteMessageReaction').mockResolvedValue();
 
-      await context.room.messages.reactions.delete({ serial: serial }, MessageReactionType.Unique);
+      const msg = { serial: serial };
+
+      await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Unique });
       expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Unique,
       });
 
-      await context.room.messages.reactions.delete({ serial: serial }, MessageReactionType.Distinct, '🥕');
+      await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Distinct, reaction: '🥕' });
       expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Distinct,
         reaction: '🥕',
       });
 
-      await context.room.messages.reactions.delete({ serial: serial }, MessageReactionType.Multiple, '🥕');
+      await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Multiple, reaction: '🥕' });
       expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Multiple,
         reaction: '🥕',
+      });
+
+      // default is distinct for AllFeaturesEnabled
+      await context.room.messages.reactions.delete(msg, { reaction: '👻' });
+      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+        type: MessageReactionType.Distinct,
+        reaction: '👻',
       });
     });
   });
@@ -150,9 +168,8 @@ describe('MessagesReactions', () => {
 
         context.emulateBackendPublish({
           name: 'chat.message',
-          serial: '01672531200000-123@abcdefghij',
+          serial: '01672531200000-123@xyzdefghij',
           version: '01672531200000-123@abcdefghij',
-          refSerial: '01672531200000-123@xyzdefghij',
           action: ChatMessageActions.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: new Map<string, unknown>([
@@ -162,9 +179,8 @@ describe('MessagesReactions', () => {
 
         context.emulateBackendPublish({
           name: 'chat.message',
-          serial: '01672531200001-123@abcdefghij',
+          serial: '01672531200001-123@xyzdefghij',
           version: '01672531200001-123@abcdefghij',
-          refSerial: '01672531200001-123@xyzdefghij',
           action: ChatMessageActions.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: new Map<string, unknown>([
@@ -174,9 +190,8 @@ describe('MessagesReactions', () => {
 
         context.emulateBackendPublish({
           name: 'chat.message',
-          serial: '01672531200002-123@abcdefghij',
+          serial: '01672531200002-123@xyzdefghij',
           version: '01672531200002-123@abcdefghij',
-          refSerial: '01672531200002-123@xyzdefghij',
           action: ChatMessageActions.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: new Map<string, unknown>([

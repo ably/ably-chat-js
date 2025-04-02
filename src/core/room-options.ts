@@ -1,5 +1,7 @@
 import * as Ably from 'ably';
 
+import { MessageReactionType } from './events.js';
+
 /**
  * A set of example options for a Chat room that enables all features, this is
  * useful for testing and demonstration purposes.
@@ -45,6 +47,7 @@ export const AllFeaturesEnabled = {
    */
   messages: {
     rawMessageReactions: true,
+    defaultMessageReactionType: MessageReactionType.Distinct,
   } as MessageOptions,
 };
 
@@ -60,6 +63,16 @@ export interface MessageOptions {
    * this setting.
    */
   rawMessageReactions?: boolean;
+
+  /**
+   * The default message reaction type to use for sending message reactions.
+   *
+   * Any message reaction type can be sent regardness of this setting by specifying the `type` parameter
+   * in the {@link MessagesReactions.add} method.
+   *
+   * @defaultValue {@link MessageReactionType.Distinct}
+   */
+  defaultMessageReactionType?: MessageReactionType;
 }
 
 /**
