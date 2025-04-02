@@ -207,8 +207,14 @@ export class DefaultMessageReactions implements MessagesReactions {
       return;
     }
 
-
-    console.log("received summary type = ", typeof event.summary, "is map = ", event.summary instanceof Map, "value = ", event.summary);
+    console.log(
+      'received summary type =',
+      typeof event.summary,
+      'is map =',
+      event.summary instanceof Map,
+      'value =',
+      event.summary,
+    );
     // todo: update when this is resolved https://github.com/ably/ably-js/pull/1953#discussion_r2024650969
 
     const summary = (event.summary ?? {}) as {
@@ -223,20 +229,16 @@ export class DefaultMessageReactions implements MessagesReactions {
     const distinct: Record<string, DistinctReactionSummary> = summary[MessageReactionType.Distinct] ?? {};
     const counter: Record<string, MultipleReactionSummary> = summary[MessageReactionType.Multiple] ?? {};
 
-
-
     // const summary = event.summary ?? new Map<string, unknown>();
-    
+
     // const single = (summary.get(MessageReactionType.Unique) as Record<string, UniqueReactionSummary>) ?? {};
     // const distinct = (summary.get(MessageReactionType.Distinct) as Record<string, DistinctReactionSummary>) ?? {};
     // const counter = (summary.get(MessageReactionType.Multiple) as Record<string, MultipleReactionSummary>) ?? {};
-
 
     this._emitter.emit(MessageReactionEvents.Summary, {
       type: MessageReactionEvents.Summary,
       timestamp: new Date(event.timestamp),
       messageSerial: event.serial,
-      version: event.version,
       unique: single,
       distinct: distinct,
       multiple: counter,
@@ -264,17 +266,17 @@ export class DefaultMessageReactions implements MessagesReactions {
   /**
    * @inheritDoc
    */
-  delete(message: { serial: string }, params: DeleteMessageReactionParams): Promise<void> {
-    let type = params.type;
+  delete(message: { serial: string }, params?: DeleteMessageReactionParams): Promise<void> {
+    let type = params?.type;
     if (!type) {
       type = this._defaultType;
     }
-    if (type !== MessageReactionType.Unique && !params.reaction) {
+    if (type !== MessageReactionType.Unique && !params?.reaction) {
       throw new Ably.ErrorInfo(`cannot delete reaction of type ${type} without a reaction`, 40001, 400);
     }
     const apiParams: APIDeleteMessageReactionParams = { type };
     if (type !== MessageReactionType.Unique) {
-      apiParams.reaction = params.reaction;
+      apiParams.reaction = params?.reaction;
     }
     return this._api.deleteMessageReaction(this._roomID, message.serial, apiParams);
   }

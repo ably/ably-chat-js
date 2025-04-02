@@ -4,8 +4,8 @@ import { Message, MessageReactionType, Messages } from '@ably/chat';
 interface MessageReactionsUniqueProps {
   message: Message;
   clientId: string;
-  onReactionAdd : Messages['reactions']['add'];
-  onReactionDelete : Messages['reactions']['delete']
+  onReactionAdd: Messages['reactions']['add'];
+  onReactionDelete: Messages['reactions']['delete'];
 }
 
 const emojis = ['👍', '❤️', '🔥', '🚀'];
@@ -20,9 +20,9 @@ export const MessageReactionsUnique: React.FC<MessageReactionsUniqueProps> = ({
 
   const handleReactionClick = (emoji: string) => {
     if (unique[emoji]?.clientIds.includes(clientId)) {
-      onReactionRemove(message, {type: MessageReactionType.Unique, reaction: emoji});
+      onReactionRemove(message, { type: MessageReactionType.Unique, reaction: emoji });
     } else {
-      onReactionAdd(message, {type:  MessageReactionType.Unique, reaction: emoji});
+      onReactionAdd(message, { type: MessageReactionType.Unique, reaction: emoji });
     }
   };
 

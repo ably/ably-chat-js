@@ -177,7 +177,6 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
 
   const reactionType = useReactionType();
 
-
   return (
     <div className="chat-box">
       {loading && <div className="text-center m-auto">loading...</div>}

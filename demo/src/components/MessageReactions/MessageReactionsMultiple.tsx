@@ -3,8 +3,8 @@ import { Message, MessageReactionType, Messages } from '@ably/chat';
 
 interface MessageReactionsMultipleProps {
   message: Message;
-  onReactionAdd : Messages['reactions']['add'];
-  onReactionDelete : Messages['reactions']['delete']
+  onReactionAdd: Messages['reactions']['add'];
+  onReactionDelete: Messages['reactions']['delete'];
 }
 
 const emojis = ['👍', '❤️', '🔥', '🚀'];

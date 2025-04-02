@@ -45,7 +45,13 @@ export type {
   SendMessageParams,
 } from './messages.js';
 export { OrderBy } from './messages.js';
-export type { MessageRawReactionListener, MessageReactionListener, MessagesReactions, AddMessageReactionParams, DeleteMessageReactionParams } from './messages-reactions.js';
+export type {
+  AddMessageReactionParams,
+  DeleteMessageReactionParams,
+  MessageRawReactionListener,
+  MessageReactionListener,
+  MessagesReactions,
+} from './messages-reactions.js';
 export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyEvent, OccupancyListener } from './occupancy.js';
 export type { OperationMetadata } from './operation-metadata.js';

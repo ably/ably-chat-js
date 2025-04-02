@@ -236,9 +236,6 @@ export interface MessageReactionSummaryEvent {
   /** Reference to the original message's serial number */
   messageSerial: string;
 
-  /** Version of the summary event */
-  version: string;
-
   /** Map of unique-type reactions summaries */
   unique: Record<string, UniqueReactionSummary>;
 

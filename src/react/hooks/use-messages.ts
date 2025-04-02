@@ -1,7 +1,6 @@
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
-import { MessageReactionType } from '../../core/events.js';
 import { Message } from '../../core/message.js';
 import {
   DeleteMessageParams,
@@ -12,8 +11,12 @@ import {
   QueryOptions,
   SendMessageParams,
 } from '../../core/messages.js';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { MessagesReactions } from '../../core/messages-reactions.js'; // imported for typedoc links
+import type {
+  AddMessageReactionParams,
+  DeleteMessageReactionParams,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  MessagesReactions,
+} from '../../core/messages-reactions.js'; // imported for typedoc links
 import { MessageRawReactionListener, MessageReactionListener } from '../../core/messages-reactions.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
@@ -148,15 +151,15 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
 
-  const addReaction = useCallback(
-    (message: Message, type: MessageReactionType, reaction: string, score?: number) =>
-      context.room.then((room) => room.messages.reactions.add(message, type, reaction, score)),
+  const addReaction: Messages['reactions']['add'] = useCallback(
+    (message: Message, params: AddMessageReactionParams) =>
+      context.room.then((room) => room.messages.reactions.add(message, params)),
     [context],
   );
 
-  const deleteReaction = useCallback(
-    (message: Message, type: MessageReactionType, reaction?: string) =>
-      context.room.then((room) => room.messages.reactions.delete(message, type, reaction)),
+  const deleteReaction: Messages['reactions']['delete'] = useCallback(
+    (message: Message, params?: DeleteMessageReactionParams) =>
+      context.room.then((room) => room.messages.reactions.delete(message, params)),
     [context],
   );
 

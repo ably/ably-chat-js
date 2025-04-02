@@ -279,11 +279,6 @@ export interface MessageCopyParams {
  */
 export interface MessageReactions {
   /**
-   * The version of the summary.
-   */
-  version: string;
-
-  /**
    * Map of reaction to the summary (total and clients) for reactions of type {@link MessageReactionType.Unique}.
    */
   unique: Record<string, UniqueReactionSummary>;
@@ -402,12 +397,7 @@ export class DefaultMessage implements Message {
         throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
       }
 
-      if (this.reactions.version >= event.version) {
-        return this;
-      }
-
       const newReactions: MessageReactions = {
-        version: event.version,
         unique: structuredClone(event.unique),
         distinct: structuredClone(event.distinct),
         multiple: structuredClone(event.multiple),
@@ -455,7 +445,6 @@ export class DefaultMessage implements Message {
 
 export function emptyMessageReactions(): MessageReactions {
   return {
-    version: '',
     unique: {},
     distinct: {},
     multiple: {},

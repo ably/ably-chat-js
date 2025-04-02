@@ -14,9 +14,9 @@ interface MessageProps {
 
   onMessageDelete?(msg: Message): void;
 
-  onReactionAdd? : Messages['reactions']['add'];
+  onReactionAdd?: Messages['reactions']['add'];
 
-  onReactionDelete? : Messages['reactions']['delete']
+  onReactionDelete?: Messages['reactions']['delete'];
 }
 
 const shortDateTimeFormatter = new Intl.DateTimeFormat('default', {

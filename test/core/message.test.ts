@@ -591,7 +591,6 @@ describe('ChatMessage', () => {
         new Date(1672531200000),
         new Date(1672531200000),
         {
-          version: '',
           unique: {
             '👍': { total: 2, clientIds: ['a', 'b'] },
           },

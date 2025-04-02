@@ -38,10 +38,10 @@ describe('message reactions integration', { timeout: 10000 }, () => {
       found.push(reactionEvent);
     });
 
-    await room.messages.reactions.add(message1, MessageReactionType.Unique, '👍');
-    await room.messages.reactions.add(message1, MessageReactionType.Distinct, '🚀');
-    await room.messages.reactions.add(message1, MessageReactionType.Multiple, '🙈', 10);
-    await room.messages.reactions.delete(message1, MessageReactionType.Distinct, '🚀');
+    await room.messages.reactions.add(message1, { type: MessageReactionType.Unique, reaction: '👍' });
+    await room.messages.reactions.add(message1, { type: MessageReactionType.Distinct, reaction: '🚀' });
+    await room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, reaction: '🙈', count: 10 });
+    await room.messages.reactions.delete(message1, { type: MessageReactionType.Distinct, reaction: '🚀' });
 
     await waitForArrayLength(found, 4);
 
@@ -98,11 +98,11 @@ describe('message reactions integration', { timeout: 10000 }, () => {
     });
 
     await Promise.all([
-      room.messages.reactions.add(message1, MessageReactionType.Multiple, '👍'),
-      room.messages.reactions.add(message1, MessageReactionType.Multiple, '👍', 10),
-      room.messages.reactions.add(message1, MessageReactionType.Multiple, '🚀', 2),
-      room.messages.reactions.add(message1, MessageReactionType.Multiple, '💚'),
-      room.messages.reactions.add(message1, MessageReactionType.Multiple, '❤️', 3),
+      room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, reaction: '👍' }),
+      room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, reaction: '👍', count: 10 }),
+      room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, reaction: '🚀', count: 2 }),
+      room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, reaction: '💚' }),
+      room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, reaction: '❤️', count: 3 }),
     ]);
 
     await vi.waitFor(
@@ -143,8 +143,8 @@ describe('message reactions integration', { timeout: 10000 }, () => {
       { timeout: 10_000 },
     );
 
-    await room.messages.reactions.delete(message1, MessageReactionType.Multiple, '❤️');
-    await room.messages.reactions.delete(message1, MessageReactionType.Multiple, '💚');
+    await room.messages.reactions.delete(message1, { type: MessageReactionType.Multiple, reaction: '❤️' });
+    await room.messages.reactions.delete(message1, { type: MessageReactionType.Multiple, reaction: '💚' });
     await vi.waitFor(
       () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
@@ -199,14 +199,14 @@ describe('message reactions integration', { timeout: 10000 }, () => {
     await room3.attach();
 
     await Promise.all([
-      room.messages.reactions.add(message1, MessageReactionType.Distinct, '👍'),
-      room.messages.reactions.add(message1, MessageReactionType.Distinct, '🥦'),
-      room2.messages.reactions.add(message1, MessageReactionType.Distinct, '👍'),
-      room2.messages.reactions.add(message1, MessageReactionType.Distinct, '❤️'),
-      room2.messages.reactions.add(message1, MessageReactionType.Distinct, '❤️'),
-      room3.messages.reactions.add(message1, MessageReactionType.Distinct, '🥥'),
-      room3.messages.reactions.add(message1, MessageReactionType.Distinct, '🥥'),
-      room.messages.reactions.add(message1, MessageReactionType.Distinct, '❌'),
+      room.messages.reactions.add(message1, { type: MessageReactionType.Distinct, reaction: '👍' }),
+      room.messages.reactions.add(message1, { type: MessageReactionType.Distinct, reaction: '🥦' }),
+      room2.messages.reactions.add(message1, { type: MessageReactionType.Distinct, reaction: '👍' }),
+      room2.messages.reactions.add(message1, { type: MessageReactionType.Distinct, reaction: '❤️' }),
+      room2.messages.reactions.add(message1, { type: MessageReactionType.Distinct, reaction: '❤️' }),
+      room3.messages.reactions.add(message1, { type: MessageReactionType.Distinct, reaction: '🥥' }),
+      room3.messages.reactions.add(message1, { type: MessageReactionType.Distinct, reaction: '🥥' }),
+      room.messages.reactions.add(message1, { type: MessageReactionType.Distinct, reaction: '❌' }),
     ]);
 
     void room2.detach();
@@ -257,7 +257,7 @@ describe('message reactions integration', { timeout: 10000 }, () => {
       { timeout: 10_000 },
     );
 
-    await room.messages.reactions.delete(message1, MessageReactionType.Distinct, '❌');
+    await room.messages.reactions.delete(message1, { type: MessageReactionType.Distinct, reaction: '❌' });
     await vi.waitFor(
       () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
@@ -321,12 +321,12 @@ describe('message reactions integration', { timeout: 10000 }, () => {
     await room2.attach();
 
     // First client reactions - only the last one (❤️) should remain
-    await room.messages.reactions.add(message1, MessageReactionType.Unique, '👍');
-    await room.messages.reactions.add(message1, MessageReactionType.Unique, '🚀');
-    await room.messages.reactions.add(message1, MessageReactionType.Unique, '❤️');
+    await room.messages.reactions.add(message1, { type: MessageReactionType.Unique, reaction: '👍' });
+    await room.messages.reactions.add(message1, { type: MessageReactionType.Unique, reaction: '🚀' });
+    await room.messages.reactions.add(message1, { type: MessageReactionType.Unique, reaction: '❤️' });
     // Second client reactions - only the last one (👍) should remain
-    await room2.messages.reactions.add(message1, MessageReactionType.Unique, '🌟');
-    await room2.messages.reactions.add(message1, MessageReactionType.Unique, '👍');
+    await room2.messages.reactions.add(message1, { type: MessageReactionType.Unique, reaction: '🌟' });
+    await room2.messages.reactions.add(message1, { type: MessageReactionType.Unique, reaction: '👍' });
     await vi.waitFor(
       () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
@@ -354,7 +354,7 @@ describe('message reactions integration', { timeout: 10000 }, () => {
     );
 
     // Delete a reaction
-    await room.messages.reactions.delete(message1, MessageReactionType.Unique);
+    await room.messages.reactions.delete(message1, { type: MessageReactionType.Unique });
     await vi.waitFor(
       () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
@@ -378,8 +378,8 @@ describe('message reactions integration', { timeout: 10000 }, () => {
     // Send another message and react with same emojis, make sure emojis are unique per-message
     const message2 = await room.messages.send({ text: 'Another message' });
     await Promise.all([
-      room.messages.reactions.add(message2, MessageReactionType.Unique, '❤️'),
-      room2.messages.reactions.add(message2, MessageReactionType.Unique, '👍'),
+      room.messages.reactions.add(message2, { type: MessageReactionType.Unique, reaction: '❤️' }),
+      room2.messages.reactions.add(message2, { type: MessageReactionType.Unique, reaction: '👍' }),
     ]);
 
     await vi.waitFor(
