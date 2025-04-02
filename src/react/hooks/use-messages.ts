@@ -3,19 +3,18 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { MessageReactionType } from '../../core/events.js';
 import { Message } from '../../core/message.js';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { MessagesReactions } from '../../core/messages.js'; // imported for typedoc links
 import {
   DeleteMessageParams,
   MessageListener,
-  MessageRawReactionListener,
-  MessageReactionListener,
   Messages,
   MessageSubscriptionResponse,
   OperationDetails,
   QueryOptions,
   SendMessageParams,
 } from '../../core/messages.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { MessagesReactions } from '../../core/messages-reactions.js'; // imported for typedoc links
+import { MessageRawReactionListener, MessageReactionListener } from '../../core/messages-reactions.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';

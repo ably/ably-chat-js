@@ -159,7 +159,7 @@ describe('MessagesReactions', () => {
             [MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }],
           ]),
         });
-        
+
         context.emulateBackendPublish({
           name: 'chat.message',
           serial: '01672531200001-123@abcdefghij',
@@ -361,9 +361,7 @@ describe('MessagesReactions', () => {
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
-      summary: new Map<string, unknown>([
-        [MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }],
-      ]),
+      summary: new Map<string, unknown>([[MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }]]),
     });
 
     expect(c1).toEqual(1);
@@ -377,9 +375,7 @@ describe('MessagesReactions', () => {
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
-      summary: new Map<string, unknown>([
-        [MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }],
-      ]),
+      summary: new Map<string, unknown>([[MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }]]),
     });
 
     expect(c1).toEqual(2);
@@ -396,9 +392,7 @@ describe('MessagesReactions', () => {
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
-      summary: new Map<string, unknown>([
-        [MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }],
-      ]),
+      summary: new Map<string, unknown>([[MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }]]),
     });
 
     expect(c1).toEqual(3);
@@ -415,9 +409,7 @@ describe('MessagesReactions', () => {
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
-      summary: new Map<string, unknown>([
-        [MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }],
-      ]),
+      summary: new Map<string, unknown>([[MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }]]),
     });
 
     expect(c1).toEqual(3);
