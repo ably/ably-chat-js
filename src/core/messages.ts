@@ -363,21 +363,21 @@ export class DefaultMessageReactions implements MessagesReactions {
   }
 
   private _processAnnotationEvent(event: Ably.Annotation) {
-    if (!event.refSerial) {
-      this._logger.debug('DefaultMessageReactions._processAnnotationEvent(); received event with missing refSerial', {
+    if (!event.messageSerial) {
+      this._logger.debug('DefaultMessageReactions._processAnnotationEvent(); received event with missing messageSerial', {
         event,
       });
       return;
     }
 
     // unknown ref type
-    if (!Object.values(MessageReactionType).includes(event.refType as MessageReactionType)) {
-      this._logger.debug('DefaultMessageReactions._processAnnotationEvent(); received event with unknown refType', {
+    if (!Object.values(MessageReactionType).includes(event.messageSerial as MessageReactionType)) {
+      this._logger.debug('DefaultMessageReactions._processAnnotationEvent(); received event with unknown type', {
         event,
       });
       return;
     }
-    const reactionType = event.refType as MessageReactionType;
+    const reactionType = event.type as MessageReactionType;
 
     const typeMap: Record<string, MessageReactionEvents.Create | MessageReactionEvents.Delete> = {
       'annotation.create': MessageReactionEvents.Create,
@@ -393,38 +393,26 @@ export class DefaultMessageReactions implements MessagesReactions {
       return;
     }
 
-    if (!event.data) {
+    let name = event.name;
+    if (!name) {
       if (eventType === MessageReactionEvents.Delete && reactionType === MessageReactionType.Unique) {
         // deletes of type unique are allowed to have no data
-        event.data = '';
+        name = '';
       } else {
         return;
       }
     }
 
-    let reaction = event.data as string;
-    let count: number | undefined;
-    if (reactionType === MessageReactionType.Multiple) {
-      const data = reaction as unknown as { count?: number; reaction: string };
-      reaction = data.reaction;
-      if (eventType === MessageReactionEvents.Create) {
-        count = data.count;
-        if (!count || count < 1) {
-          count = 1;
-        }
-      }
-    }
-
     const reactionEvent: MessageReactionRawEvent = {
       type: eventType,
-      messageSerial: event.refSerial,
+      messageSerial: event.messageSerial,
       reactionType: reactionType,
-      reaction: reaction,
+      reaction: name,
       clientId: event.clientId ?? '',
       timestamp: new Date(event.timestamp),
     };
-    if (count) {
-      reactionEvent.count = count;
+    if (event.count) {
+      reactionEvent.count = event.count;
     }
     this._emitter.emit(eventType, reactionEvent);
   }
@@ -434,8 +422,8 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (event.action !== ChatMessageActions.MessageAnnotationSummary) {
       return;
     }
-    // they must have a refSerial
-    if (!event.refSerial) {
+    // they must have a serial
+    if (!event.serial) {
       this._logger.debug('DefaultMessageReactions._processMessageEvent(); received summary without refSerial', {
         event,
       });
@@ -460,7 +448,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     this._emitter.emit(MessageReactionEvents.Summary, {
       type: MessageReactionEvents.Summary,
       timestamp: new Date(event.timestamp),
-      messageSerial: event.refSerial,
+      messageSerial: event.serial,
       version: event.version,
       unique: single,
       distinct: distinct,

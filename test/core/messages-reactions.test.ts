@@ -155,11 +155,11 @@ describe('MessagesReactions', () => {
           refSerial: '01672531200000-123@xyzdefghij',
           action: ChatMessageActions.MessageAnnotationSummary,
           timestamp: publishTimestamp,
-          summary: {
-            [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
-          },
+          summary: new Map<string, unknown>([
+            [MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }],
+          ]),
         });
-
+        
         context.emulateBackendPublish({
           name: 'chat.message',
           serial: '01672531200001-123@abcdefghij',
@@ -167,9 +167,9 @@ describe('MessagesReactions', () => {
           refSerial: '01672531200001-123@xyzdefghij',
           action: ChatMessageActions.MessageAnnotationSummary,
           timestamp: publishTimestamp,
-          summary: {
-            [MessageReactionType.Distinct]: { '🥦': { total: 1, clientIds: ['user2'] } },
-          },
+          summary: new Map<string, unknown>([
+            [MessageReactionType.Distinct, { '🥦': { total: 1, clientIds: ['user2'] } }],
+          ]),
         });
 
         context.emulateBackendPublish({
@@ -179,9 +179,9 @@ describe('MessagesReactions', () => {
           refSerial: '01672531200002-123@xyzdefghij',
           action: ChatMessageActions.MessageAnnotationSummary,
           timestamp: publishTimestamp,
-          summary: {
-            [MessageReactionType.Multiple]: { '🍌': { clientIds: { user1: 10 }, total: 10 } },
-          },
+          summary: new Map<string, unknown>([
+            [MessageReactionType.Multiple, { '🍌': { clientIds: { user1: 10 }, total: 10 } }],
+          ]),
         });
       }));
 
@@ -272,8 +272,8 @@ describe('MessagesReactions', () => {
 
         context.emulateBackendAnnotation({
           serial: '01672531200000-123@abcdefghij',
-          refSerial: '01672531200000-123@xyzdefghij',
-          refType: MessageReactionType.Unique,
+          messageSerial: '01672531200000-123@xyzdefghij',
+          type: MessageReactionType.Unique,
           clientId: 'u1',
           data: '🥦',
           action: 'annotation.create',
@@ -282,8 +282,8 @@ describe('MessagesReactions', () => {
 
         context.emulateBackendAnnotation({
           serial: '01672531200002-123@abcdefghij',
-          refSerial: '01672531200000-123@xyzdefghij',
-          refType: MessageReactionType.Unique,
+          messageSerial: '01672531200000-123@xyzdefghij',
+          type: MessageReactionType.Unique,
           clientId: 'u1',
           action: 'annotation.delete',
           timestamp: publishTimestamp,
@@ -291,8 +291,8 @@ describe('MessagesReactions', () => {
 
         context.emulateBackendAnnotation({
           serial: '01672531200003-123@abcdefghij',
-          refSerial: '01672531200000-123@xyzdefghij',
-          refType: MessageReactionType.Distinct,
+          messageSerial: '01672531200000-123@xyzdefghij',
+          type: MessageReactionType.Distinct,
           data: '🚀',
           clientId: 'u1',
           action: 'annotation.create',
@@ -301,8 +301,8 @@ describe('MessagesReactions', () => {
 
         context.emulateBackendAnnotation({
           serial: '01672531200004-123@abcdefghij',
-          refSerial: '01672531200000-123@xyzdefghij',
-          refType: MessageReactionType.Multiple,
+          messageSerial: '01672531200000-123@xyzdefghij',
+          type: MessageReactionType.Multiple,
           data: { reaction: '🔥', count: 10 },
           encoding: 'json',
           clientId: 'u1',
@@ -312,8 +312,8 @@ describe('MessagesReactions', () => {
 
         context.emulateBackendAnnotation({
           serial: '01672531200005-123@abcdefghij',
-          refSerial: '01672531200000-123@xyzdefghij',
-          refType: MessageReactionType.Multiple,
+          messageSerial: '01672531200000-123@xyzdefghij',
+          type: MessageReactionType.Multiple,
           data: { reaction: '👍' },
           encoding: 'json',
           clientId: 'u1',
@@ -323,8 +323,8 @@ describe('MessagesReactions', () => {
 
         context.emulateBackendAnnotation({
           serial: '01672531200006-123@abcdefghij',
-          refSerial: '01672531200000-123@xyzdefghij',
-          refType: MessageReactionType.Multiple,
+          messageSerial: '01672531200000-123@xyzdefghij',
+          type: MessageReactionType.Multiple,
           data: { reaction: '🍌' },
           encoding: 'json',
           clientId: 'u1',
@@ -361,9 +361,9 @@ describe('MessagesReactions', () => {
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
-      summary: {
-        [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
-      },
+      summary: new Map<string, unknown>([
+        [MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }],
+      ]),
     });
 
     expect(c1).toEqual(1);
@@ -377,9 +377,9 @@ describe('MessagesReactions', () => {
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
-      summary: {
-        [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
-      },
+      summary: new Map<string, unknown>([
+        [MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }],
+      ]),
     });
 
     expect(c1).toEqual(2);
@@ -396,9 +396,9 @@ describe('MessagesReactions', () => {
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
-      summary: {
-        [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
-      },
+      summary: new Map<string, unknown>([
+        [MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }],
+      ]),
     });
 
     expect(c1).toEqual(3);
@@ -415,9 +415,9 @@ describe('MessagesReactions', () => {
       refSerial: '01672531200000-123@xyzdefghij',
       action: ChatMessageActions.MessageAnnotationSummary,
       timestamp: publishTimestamp,
-      summary: {
-        [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
-      },
+      summary: new Map<string, unknown>([
+        [MessageReactionType.Unique, { '🥦': { total: 1, clientIds: ['user1'] } }],
+      ]),
     });
 
     expect(c1).toEqual(3);
@@ -447,8 +447,8 @@ describe('MessagesReactions', () => {
 
     context.emulateBackendAnnotation({
       serial: '01672531200003-123@abcdefghij',
-      refSerial: '01672531200000-123@xyzdefghij',
-      refType: MessageReactionType.Distinct,
+      messageSerial: '01672531200000-123@xyzdefghij',
+      type: MessageReactionType.Distinct,
       data: '🚀',
       clientId: 'u1',
       action: 'annotation.create',
@@ -461,8 +461,8 @@ describe('MessagesReactions', () => {
 
     context.emulateBackendAnnotation({
       serial: '01672531200003-123@abcdefghij',
-      refSerial: '01672531200000-123@xyzdefghij',
-      refType: MessageReactionType.Distinct,
+      messageSerial: '01672531200000-123@xyzdefghij',
+      type: MessageReactionType.Distinct,
       data: '🚀',
       clientId: 'u1',
       action: 'annotation.create',
@@ -478,8 +478,8 @@ describe('MessagesReactions', () => {
 
     context.emulateBackendAnnotation({
       serial: '01672531200003-123@abcdefghij',
-      refSerial: '01672531200000-123@xyzdefghij',
-      refType: MessageReactionType.Distinct,
+      messageSerial: '01672531200000-123@xyzdefghij',
+      type: MessageReactionType.Distinct,
       data: '🚀',
       clientId: 'u1',
       action: 'annotation.create',
@@ -495,8 +495,8 @@ describe('MessagesReactions', () => {
 
     context.emulateBackendAnnotation({
       serial: '01672531200003-123@abcdefghij',
-      refSerial: '01672531200000-123@xyzdefghij',
-      refType: MessageReactionType.Distinct,
+      messageSerial: '01672531200000-123@xyzdefghij',
+      type: MessageReactionType.Distinct,
       data: '🚀',
       clientId: 'u1',
       action: 'annotation.create',
@@ -510,11 +510,11 @@ describe('MessagesReactions', () => {
 
   describe.each([
     [
-      'unknown annotation refType',
+      'unknown annotation type',
       {
         serial: '01672531200003-123@abcdefghij',
-        refSerial: '01672531200000-123@xyzdefghij',
-        refType: 'reaction:unknown.v1',
+        messageSerial: '01672531200000-123@xyzdefghij',
+        type: 'reaction:unknown.v1',
         data: '🚀',
         clientId: 'u1',
         action: 'annotation.create',
@@ -525,7 +525,7 @@ describe('MessagesReactions', () => {
       'unknown action',
       {
         serial: '01672531200003-123@abcdefghij',
-        refSerial: '01672531200000-123@xyzdefghij',
+        messageSerialrefSeria: '01672531200000-123@xyzdefghij',
         type: MessageReactionType.Distinct,
         data: '🚀',
         clientId: 'u1',
@@ -537,7 +537,7 @@ describe('MessagesReactions', () => {
       'no data',
       {
         serial: '01672531200003-123@abcdefghij',
-        refSerial: '01672531200000-123@xyzdefghij',
+        messageSerial: '01672531200000-123@xyzdefghij',
         type: MessageReactionType.Distinct,
         clientId: 'u1',
         action: 'annotation.create',
