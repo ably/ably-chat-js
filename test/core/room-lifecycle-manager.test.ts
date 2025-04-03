@@ -649,7 +649,7 @@ describe('RoomLifeCycleManager', () => {
       roomLifeCycleManager.onDiscontinuity(handler);
 
       // First attach
-      roomLifeCycleManager.testForceFirstAttach(false);
+      roomLifeCycleManager.testForceHasAttachedOnce(true);
 
       // Second attach with resumed=false
       const reason = new Ably.ErrorInfo('test error', 12345, 503);
@@ -808,7 +808,7 @@ describe('RoomLifeCycleManager', () => {
       roomLifeCycleManager.onDiscontinuity(handler);
 
       // First attach
-      roomLifeCycleManager.testForceFirstAttach(false);
+      roomLifeCycleManager.testForceHasAttachedOnce(true);
 
       // Update event with resumed=false
       const reason = new Ably.ErrorInfo('test error', 12345, 503);
