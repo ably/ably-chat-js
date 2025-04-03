@@ -291,6 +291,9 @@ describe('Reactions', () => {
       new Promise<void>((done, reject) => {
         const { room } = context;
 
+        // Add spy to check the published message
+        const publishSpy = vi.spyOn(room.channel, 'publish');
+
         room.reactions.subscribe((reaction) => {
           try {
             expect(reaction).toEqual(
@@ -301,6 +304,19 @@ describe('Reactions', () => {
                 type: 'love',
               }),
             );
+
+            // Verify the complete published message structure
+            expect(publishSpy).toHaveBeenCalledWith({
+              name: 'roomReaction',
+              data: {
+                type: 'love',
+                metadata: {},
+              },
+              extras: {
+                ephemeral: true,
+                headers: {},
+              },
+            });
           } catch (error: unknown) {
             reject(error as Error);
           }

@@ -4,6 +4,7 @@ import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
 import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
 import { parseReaction } from './reaction-parser.js';
+import { messageToEphemeral } from './realtime.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
@@ -158,7 +159,7 @@ export class DefaultRoomReactions implements RoomReactions {
       },
     };
 
-    return this._channel.publish(realtimeMessage);
+    return this._channel.publish(messageToEphemeral(realtimeMessage));
   }
 
   /**
