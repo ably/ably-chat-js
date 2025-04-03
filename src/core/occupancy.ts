@@ -4,7 +4,6 @@ import { messagesChannelName } from './channel.js';
 import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import {
-  DiscontinuityEmitter,
   DiscontinuityListener,
   EmitsDiscontinuities,
   HandlesDiscontinuity,
@@ -15,7 +14,7 @@ import { ErrorCodes } from './errors.js';
 import { Logger } from './logger.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { Subscription } from './subscription.js';
-import EventEmitter from './utils/event-emitter.js';
+import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
  * This interface is used to interact with occupancy in a chat room: subscribing to occupancy updates and
@@ -84,15 +83,13 @@ interface OccupancyEventsMap {
 /**
  * @inheritDoc
  */
-export class DefaultOccupancy
-  extends EventEmitter<OccupancyEventsMap>
-  implements Occupancy, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultOccupancy implements Occupancy, HandlesDiscontinuity, ContributesToRoomLifecycle {
   private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
-  private _logger: Logger;
-  private _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
+  private readonly _logger: Logger;
+  private readonly _discontinuityEmitter = newDiscontinuityEmitter();
+  private readonly _emitter = new EventEmitter<OccupancyEventsMap>();
 
   /**
    * Constructs a new `DefaultOccupancy` instance.
@@ -102,8 +99,6 @@ export class DefaultOccupancy
    * @param logger An instance of the Logger.
    */
   constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, logger: Logger) {
-    super();
-
     this._roomId = roomId;
     this._channel = this._makeChannel(roomId, channelManager);
     this._chatApi = chatApi;
@@ -127,12 +122,13 @@ export class DefaultOccupancy
    */
   subscribe(listener: OccupancyListener): Subscription {
     this._logger.trace('Occupancy.subscribe();');
-    this.on(listener);
+    const wrapped = wrap(listener);
+    this._emitter.on(wrapped);
 
     return {
       unsubscribe: () => {
         this._logger.trace('Occupancy.unsubscribe();');
-        this.off(listener);
+        this._emitter.off(wrapped);
       },
     };
   }
@@ -142,7 +138,7 @@ export class DefaultOccupancy
    */
   unsubscribeAll(): void {
     this._logger.trace('Occupancy.unsubscribeAll();');
-    this.off();
+    this._emitter.off();
   }
 
   /**
@@ -218,7 +214,7 @@ export class DefaultOccupancy
       return;
     }
 
-    this.emit(OccupancyEvents.Occupancy, {
+    this._emitter.emit(OccupancyEvents.Occupancy, {
       connections: connections,
       presenceMembers: presenceMembers,
     });
@@ -226,11 +222,12 @@ export class DefaultOccupancy
 
   onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
     this._logger.trace('Occupancy.onDiscontinuity();');
-    this._discontinuityEmitter.on(listener);
+    const wrapped = wrap(listener);
+    this._discontinuityEmitter.on(wrapped);
 
     return {
       off: () => {
-        this._discontinuityEmitter.off(listener);
+        this._discontinuityEmitter.off(wrapped);
       },
     };
   }

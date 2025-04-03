@@ -157,6 +157,66 @@ describe('Messages', () => {
     });
   });
 
+  it<TestContext>('should only unsubscribe the correct subscription', (context) => {
+    const { room } = context;
+
+    const sendMessage = (serial: string) => {
+      const publishTimestamp = Date.now();
+      context.emulateBackendPublish({
+        clientId: 'yoda',
+        name: 'chat.message',
+        data: {
+          text: 'may the fourth be with you',
+        },
+        serial: serial,
+        version: serial,
+        action: ChatMessageActions.MessageCreate,
+        extras: {},
+        timestamp: publishTimestamp,
+        createdAt: publishTimestamp,
+      });
+    };
+
+    const received: string[] = [];
+    const listener = (message: MessageEvent) => {
+      received.push(message.message.serial);
+    };
+    const subscription1 = room.messages.subscribe(listener);
+    const subscription2 = room.messages.subscribe(listener);
+
+    sendMessage('a');
+    expect(received).toEqual(['a', 'a']);
+    subscription1.unsubscribe();
+    sendMessage('b');
+    expect(received).toEqual(['a', 'a', 'b']);
+    subscription2.unsubscribe();
+    sendMessage('c');
+    expect(received).toEqual(['a', 'a', 'b']);
+  });
+
+  it<TestContext>('should only unsubscribe the correct subscription for discontinuities', (context) => {
+    const { room } = context;
+
+    const received: string[] = [];
+    const listener = (error?: Ably.ErrorInfo) => {
+      received.push(error?.message ?? 'no error');
+    };
+
+    const subscription1 = room.messages.onDiscontinuity(listener);
+    const subscription2 = room.messages.onDiscontinuity(listener);
+
+    (room.messages as DefaultMessages).discontinuityDetected(new Ably.ErrorInfo('error1', 0, 0));
+    expect(received).toEqual(['error1', 'error1']);
+
+    subscription1.off();
+    (room.messages as DefaultMessages).discontinuityDetected(new Ably.ErrorInfo('error2', 0, 0));
+    expect(received).toEqual(['error1', 'error1', 'error2']);
+
+    subscription2.off();
+    (room.messages as DefaultMessages).discontinuityDetected(new Ably.ErrorInfo('error3', 0, 0));
+    expect(received).toEqual(['error1', 'error1', 'error2']);
+  });
+
   describe('subscribing to updates', () => {
     it<TestContext>('should subscribe to all message events', (context) =>
       new Promise<void>((done, reject) => {

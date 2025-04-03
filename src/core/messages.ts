@@ -4,7 +4,6 @@ import { messagesChannelName } from './channel.js';
 import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import {
-  DiscontinuityEmitter,
   DiscontinuityListener,
   EmitsDiscontinuities,
   HandlesDiscontinuity,
@@ -19,7 +18,7 @@ import { parseMessage } from './message-parser.js';
 import { PaginatedResult } from './query.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { Subscription } from './subscription.js';
-import EventEmitter from './utils/event-emitter.js';
+import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
  * Event names and their respective payloads emitted by the messages feature.
@@ -263,10 +262,7 @@ export interface Messages extends EmitsDiscontinuities {
 /**
  * @inheritDoc
  */
-export class DefaultMessages
-  extends EventEmitter<MessageEventsMap>
-  implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultMessages implements Messages, HandlesDiscontinuity, ContributesToRoomLifecycle {
   private readonly _roomId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
@@ -278,7 +274,8 @@ export class DefaultMessages
     }>
   >;
   private readonly _logger: Logger;
-  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
+  private readonly _discontinuityEmitter = newDiscontinuityEmitter();
+  private readonly _emitter = new EventEmitter<MessageEventsMap>();
 
   /**
    * Constructs a new `DefaultMessages` instance.
@@ -289,7 +286,6 @@ export class DefaultMessages
    * @param logger An instance of the Logger.
    */
   constructor(roomId: string, channelManager: ChannelManager, chatApi: ChatApi, clientId: string, logger: Logger) {
-    super();
     this._roomId = roomId;
 
     this._channel = this._makeChannel(roomId, channelManager);
@@ -551,7 +547,8 @@ export class DefaultMessages
    */
   subscribe(listener: MessageListener): MessageSubscriptionResponse {
     this._logger.trace('Messages.subscribe();');
-    super.on([MessageEvents.Created, MessageEvents.Updated, MessageEvents.Deleted], listener);
+    const wrapped = wrap(listener);
+    this._emitter.on([MessageEvents.Created, MessageEvents.Updated, MessageEvents.Deleted], wrapped);
 
     // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
     const resolvedSubscriptionStart = this._resolveSubscriptionStart();
@@ -563,17 +560,16 @@ export class DefaultMessages
       });
     });
 
-    this._listenerSubscriptionPoints.set(listener, resolvedSubscriptionStart);
+    this._listenerSubscriptionPoints.set(wrapped, resolvedSubscriptionStart);
 
     return {
       unsubscribe: () => {
-        // Remove the listener from the subscription points
-        this._listenerSubscriptionPoints.delete(listener);
+        // Remove the wrapped listener from the subscription points
+        this._listenerSubscriptionPoints.delete(wrapped);
         this._logger.trace('Messages.unsubscribe();');
-        super.off(listener);
+        this._emitter.off(wrapped);
       },
-      getPreviousMessages: (params: Omit<QueryOptions, 'orderBy'>) =>
-        this._getBeforeSubscriptionStart(listener, params),
+      getPreviousMessages: (params: Omit<QueryOptions, 'orderBy'>) => this._getBeforeSubscriptionStart(wrapped, params),
     };
   }
 
@@ -582,7 +578,7 @@ export class DefaultMessages
    */
   unsubscribeAll(): void {
     this._logger.trace('Messages.unsubscribeAll();');
-    super.off();
+    this._emitter.off();
     this._listenerSubscriptionPoints.clear();
   }
 
@@ -602,7 +598,7 @@ export class DefaultMessages
       return;
     }
 
-    this.emit(event, { type: event, message: message });
+    this._emitter.emit(event, { type: event, message: message });
   }
 
   /**
@@ -629,11 +625,12 @@ export class DefaultMessages
    */
   onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
     this._logger.trace('Messages.onDiscontinuity();');
-    this._discontinuityEmitter.on(listener);
+    const wrapped = wrap(listener);
+    this._discontinuityEmitter.on(wrapped);
 
     return {
       off: () => {
-        this._discontinuityEmitter.off(listener);
+        this._discontinuityEmitter.off(wrapped);
       },
     };
   }

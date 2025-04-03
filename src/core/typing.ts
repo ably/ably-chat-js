@@ -16,7 +16,7 @@ import { Logger } from './logger.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { TypingOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
-import EventEmitter from './utils/event-emitter.js';
+import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 const PRESENCE_GET_RETRY_INTERVAL_MS = 1500; // base retry interval, we double it each time
 const PRESENCE_GET_RETRY_MAX_INTERVAL_MS = 30000; // max retry interval
@@ -219,12 +219,13 @@ export class DefaultTyping
    */
   subscribe(listener: TypingListener): Subscription {
     this._logger.trace(`DefaultTyping.subscribe();`);
-    this.on(listener);
+    const wrapped = wrap(listener);
+    this.on(wrapped);
 
     return {
       unsubscribe: () => {
         this._logger.trace('DefaultTyping.unsubscribe();');
-        this.off(listener);
+        this.off(wrapped);
       },
     };
   }
@@ -317,11 +318,12 @@ export class DefaultTyping
 
   onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
     this._logger.trace(`DefaultTyping.onDiscontinuity();`);
-    this._discontinuityEmitter.on(listener);
+    const wrapped = wrap(listener);
+    this._discontinuityEmitter.on(wrapped);
 
     return {
       off: () => {
-        this._discontinuityEmitter.off(listener);
+        this._discontinuityEmitter.off(wrapped);
       },
     };
   }

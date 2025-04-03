@@ -172,6 +172,72 @@ describe('Occupancy', () => {
     unsubscribe2();
   });
 
+  it<TestContext>('should only unsubscribe the correct subscription', (context) => {
+    const { room } = context;
+    const received: OccupancyEvent[] = [];
+
+    const emulateUpdate = (connections: number, presenceMembers: number) => {
+      context.emulateOccupancyUpdate({
+        name: '[meta]occupancy',
+        data: {
+          metrics: {
+            connections,
+            presenceMembers,
+          },
+        },
+      });
+    };
+
+    const listener = (event: OccupancyEvent) => {
+      received.push(event);
+    };
+
+    // Subscribe the same listener twice
+    const subscription1 = room.occupancy.subscribe(listener);
+    const subscription2 = room.occupancy.subscribe(listener);
+
+    // Both subscriptions should trigger the listener
+    emulateUpdate(5, 3);
+    expect(received).toHaveLength(2);
+
+    // Unsubscribe first subscription
+    subscription1.unsubscribe();
+
+    // One subscription should still trigger the listener
+    emulateUpdate(6, 4);
+    expect(received).toHaveLength(3);
+
+    // Unsubscribe second subscription
+    subscription2.unsubscribe();
+
+    // No subscriptions should trigger the listener
+    emulateUpdate(7, 5);
+    expect(received).toHaveLength(3);
+  });
+
+  it<TestContext>('should only unsubscribe the correct subscription for discontinuities', (context) => {
+    const { room } = context;
+
+    const received: string[] = [];
+    const listener = (error?: Ably.ErrorInfo) => {
+      received.push(error?.message ?? 'no error');
+    };
+
+    const subscription1 = room.occupancy.onDiscontinuity(listener);
+    const subscription2 = room.occupancy.onDiscontinuity(listener);
+
+    (room.occupancy as DefaultOccupancy).discontinuityDetected(new Ably.ErrorInfo('error1', 0, 0));
+    expect(received).toEqual(['error1', 'error1']);
+
+    subscription1.off();
+    (room.occupancy as DefaultOccupancy).discontinuityDetected(new Ably.ErrorInfo('error2', 0, 0));
+    expect(received).toEqual(['error1', 'error1', 'error2']);
+
+    subscription2.off();
+    (room.occupancy as DefaultOccupancy).discontinuityDetected(new Ably.ErrorInfo('error3', 0, 0));
+    expect(received).toEqual(['error1', 'error1', 'error2']);
+  });
+
   describe.each([
     ['invalid event name', { name: '[meta]occupancy2', data: { metrics: { connections: 5, presenceMembers: 6 } } }],
     ['no connections', { name: '[meta]occupancy', data: { metrics: { presenceMembers: 6 } } }],

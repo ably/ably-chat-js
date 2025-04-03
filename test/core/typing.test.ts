@@ -225,6 +225,71 @@ describe('Typing', () => {
     unsubscribe2();
   });
 
+  it<TestContext>('should only unsubscribe the correct subscription', async (context) => {
+    const { room } = context;
+    const received: TypingEvent[] = [];
+
+    const emulateTypingEvent = (clientId: string, action: Ably.PresenceAction) => {
+      context.emulateBackendPublish({
+        clientId,
+        action,
+      });
+    };
+
+    const channel = context.room.typing.channel;
+    let arrayToReturn = presenceGetResponse([]);
+    vi.spyOn(channel.presence, 'get').mockImplementation(() => {
+      return Promise.resolve<Ably.PresenceMessage[]>(arrayToReturn);
+    });
+
+    const listener = (event: TypingEvent) => {
+      received.push(event);
+    };
+
+    // Subscribe the same listener twice
+    const subscription1 = room.typing.subscribe(listener);
+    const subscription2 = room.typing.subscribe(listener);
+
+    // Both subscriptions should trigger the listener
+    arrayToReturn = presenceGetResponse(['user1']);
+    emulateTypingEvent('user1', 'enter');
+    await waitForArrayLength(received, 2);
+
+    // Unsubscribe first subscription
+    subscription1.unsubscribe();
+
+    // One subscription should still trigger the listener
+    arrayToReturn = presenceGetResponse(['user1', 'user2']);
+    emulateTypingEvent('user2', 'enter');
+    await waitForArrayLength(received, 3);
+
+    // Unsubscribe second subscription
+    subscription2.unsubscribe();
+  });
+
+  it<TestContext>('should only unsubscribe the correct subscription for discontinuities', (context) => {
+    const { room } = context;
+
+    const received: string[] = [];
+    const listener = (error?: Ably.ErrorInfo) => {
+      received.push(error?.message ?? 'no error');
+    };
+
+    const subscription1 = room.typing.onDiscontinuity(listener);
+    const subscription2 = room.typing.onDiscontinuity(listener);
+
+    (room.typing as DefaultTyping).discontinuityDetected(new Ably.ErrorInfo('error1', 0, 0));
+    expect(received).toEqual(['error1', 'error1']);
+
+    subscription1.off();
+    (room.typing as DefaultTyping).discontinuityDetected(new Ably.ErrorInfo('error2', 0, 0));
+    expect(received).toEqual(['error1', 'error1', 'error2']);
+
+    subscription2.off();
+    (room.typing as DefaultTyping).discontinuityDetected(new Ably.ErrorInfo('error3', 0, 0));
+    expect(received).toEqual(['error1', 'error1', 'error2']);
+  });
+
   type PresenceTestParam = Omit<Ably.PresenceMessage, 'action' | 'clientId'>;
 
   describe.each([

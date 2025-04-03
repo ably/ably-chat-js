@@ -155,6 +155,78 @@ describe('Reactions', () => {
     );
   });
 
+  it<TestContext>('should only unsubscribe the correct subscription', (context) => {
+    const publishTimestamp = Date.now();
+    const { room } = context;
+
+    const received: string[] = [];
+    const listener = (reaction: Reaction) => {
+      received.push(reaction.type);
+    };
+    const subscription1 = room.reactions.subscribe(listener);
+    const subscription2 = room.reactions.subscribe(listener);
+
+    // Publish first reaction
+    context.emulateBackendPublish({
+      clientId: 'yoda',
+      name: 'roomReaction',
+      data: {
+        type: 'like',
+      },
+      timestamp: publishTimestamp,
+    });
+    expect(received).toEqual(['like', 'like']);
+
+    subscription1.unsubscribe();
+
+    // Publish second reaction
+    context.emulateBackendPublish({
+      clientId: 'yoda',
+      name: 'roomReaction',
+      data: {
+        type: 'love',
+      },
+      timestamp: publishTimestamp,
+    });
+    expect(received).toEqual(['like', 'like', 'love']);
+
+    subscription2.unsubscribe();
+
+    // Publish third reaction
+    context.emulateBackendPublish({
+      clientId: 'yoda',
+      name: 'roomReaction',
+      data: {
+        type: 'hug',
+      },
+      timestamp: publishTimestamp,
+    });
+    expect(received).toEqual(['like', 'like', 'love']);
+  });
+
+  it<TestContext>('should only unsubscribe the correct subscription for discontinuities', (context) => {
+    const { room } = context;
+
+    const received: string[] = [];
+    const listener = (error?: Ably.ErrorInfo) => {
+      received.push(error?.message ?? 'no error');
+    };
+
+    const subscription1 = room.reactions.onDiscontinuity(listener);
+    const subscription2 = room.reactions.onDiscontinuity(listener);
+
+    (room.reactions as DefaultRoomReactions).discontinuityDetected(new Ably.ErrorInfo('error1', 0, 0));
+    expect(received).toEqual(['error1', 'error1']);
+
+    subscription1.off();
+    (room.reactions as DefaultRoomReactions).discontinuityDetected(new Ably.ErrorInfo('error2', 0, 0));
+    expect(received).toEqual(['error1', 'error1', 'error2']);
+
+    subscription2.off();
+    (room.reactions as DefaultRoomReactions).discontinuityDetected(new Ably.ErrorInfo('error3', 0, 0));
+    expect(received).toEqual(['error1', 'error1', 'error2']);
+  });
+
   it<TestContext>('should be able to unsubscribe all reactions', (context) => {
     const publishTimestamp = Date.now();
     const { room } = context;

@@ -120,6 +120,28 @@ describe('connection', () => {
       done();
     }));
 
+  it<TestContext>('subscriptions are unique even for same listener', (context) => {
+    const connection = new DefaultConnection(context.realtime, makeTestLogger());
+
+    let eventCount = 0;
+    const listener = () => {
+      eventCount++;
+    };
+
+    const s1 = connection.onStatusChange(listener);
+    const s2 = connection.onStatusChange(listener);
+    context.emulateStateChange({ current: 'connecting', previous: 'initialized' });
+    expect(eventCount).toEqual(2);
+
+    s1.off();
+    context.emulateStateChange({ current: 'connected', previous: 'connecting' });
+    expect(eventCount).toEqual(3);
+
+    s2.off();
+    context.emulateStateChange({ current: 'suspended', previous: 'connected' });
+    expect(eventCount).toEqual(3);
+  });
+
   describe.each([
     [ConnectionStatus.Connecting, AblyConnectionState.Initialized, AblyConnectionState.Connecting, undefined],
     [ConnectionStatus.Connected, AblyConnectionState.Connecting, AblyConnectionState.Connected, undefined],

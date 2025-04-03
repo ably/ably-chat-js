@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
 import { StatusSubscription } from './subscription.js';
-import EventEmitter from './utils/event-emitter.js';
+import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
  * The different states that a room can be in throughout its lifecycle.
@@ -156,20 +156,19 @@ type RoomStatusEventsMap = Record<RoomStatus, RoomStatusChange>;
  * An implementation of the `Status` interface.
  * @internal
  */
-export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> implements InternalRoomLifecycle {
+export class DefaultRoomLifecycle implements InternalRoomLifecycle {
   private _status: RoomStatus = RoomStatus.Initialized;
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
   private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
   private readonly _roomId: string;
-
+  private readonly _emitter = new EventEmitter<RoomStatusEventsMap>();
   /**
    * Constructs a new `DefaultStatus` instance.
    * @param roomId - The unique identifier for the room.
    * @param logger The logger to use.
    */
   constructor(roomId: string, logger: Logger) {
-    super();
     this._roomId = roomId;
     this._logger = logger;
     this._status = RoomStatus.Initialized;
@@ -194,11 +193,12 @@ export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> impl
    * @inheritdoc
    */
   onChange(listener: RoomStatusListener): StatusSubscription {
-    this.on(listener);
+    const wrapped = wrap(listener);
+    this._emitter.on(wrapped);
 
     return {
       off: () => {
-        this.off(listener);
+        this._emitter.off(wrapped);
       },
     };
   }
@@ -211,7 +211,7 @@ export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> impl
    * @inheritdoc
    */
   offAll(): void {
-    this.off();
+    this._emitter.off();
   }
 
   setStatus(params: NewRoomStatus): void {
@@ -225,6 +225,6 @@ export class DefaultRoomLifecycle extends EventEmitter<RoomStatusEventsMap> impl
     this._error = change.error;
     this._logger.info(`room status changed`, { ...change, roomId: this._roomId });
     this._internalEmitter.emit(change.current, change);
-    this.emit(change.current, change);
+    this._emitter.emit(change.current, change);
   }
 }

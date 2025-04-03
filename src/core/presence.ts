@@ -3,7 +3,6 @@ import * as Ably from 'ably';
 import { messagesChannelName } from './channel.js';
 import { ChannelManager, ChannelOptionsMerger } from './channel-manager.js';
 import {
-  DiscontinuityEmitter,
   DiscontinuityListener,
   EmitsDiscontinuities,
   HandlesDiscontinuity,
@@ -16,7 +15,7 @@ import { Logger } from './logger.js';
 import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
 import { RoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
-import EventEmitter from './utils/event-emitter.js';
+import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
  * Interface for PresenceEventsMap
@@ -174,14 +173,12 @@ export interface Presence extends EmitsDiscontinuities {
 /**
  * @inheritDoc
  */
-export class DefaultPresence
-  extends EventEmitter<PresenceEventsMap>
-  implements Presence, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultPresence implements Presence, HandlesDiscontinuity, ContributesToRoomLifecycle {
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _clientId: string;
   private readonly _logger: Logger;
-  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
+  private readonly _discontinuityEmitter = newDiscontinuityEmitter();
+  private readonly _emitter = new EventEmitter<PresenceEventsMap>();
 
   /**
    * Constructs a new `DefaultPresence` instance.
@@ -192,8 +189,6 @@ export class DefaultPresence
    * @param logger An instance of the Logger.
    */
   constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
-    super();
-
     this._channel = this._makeChannel(roomId, channelManager);
     this._clientId = clientId;
     this._logger = logger;
@@ -308,19 +303,21 @@ export class DefaultPresence
 
     // Add listener to all events
     if (listener) {
-      this.on(listenerOrEvents as PresenceEvents, listener);
+      const wrapped = wrap(listener);
+      this._emitter.on(listenerOrEvents as PresenceEvents, wrapped);
       return {
         unsubscribe: () => {
           this._logger.trace('Presence.unsubscribe();', { events: listenerOrEvents });
-          this.off(listener);
+          this._emitter.off(wrapped);
         },
       };
     } else {
-      this.on(listenerOrEvents as PresenceListener);
+      const wrapped = wrap(listenerOrEvents as PresenceListener);
+      this._emitter.on(wrapped);
       return {
         unsubscribe: () => {
           this._logger.trace('Presence.unsubscribe();');
-          this.off(listenerOrEvents as PresenceListener);
+          this._emitter.off(wrapped);
         },
       };
     }
@@ -331,7 +328,7 @@ export class DefaultPresence
    */
   unsubscribeAll(): void {
     this._logger.trace('Presence.unsubscribeAll()');
-    this.off();
+    this._emitter.off();
   }
 
   /**
@@ -343,7 +340,7 @@ export class DefaultPresence
   subscribeToEvents = (member: Ably.PresenceMessage) => {
     try {
       // Ably-js never emits the 'absent' event, so we can safely ignore it here.
-      this.emit(member.action as PresenceEvents, {
+      this._emitter.emit(member.action as PresenceEvents, {
         action: member.action as PresenceEvents,
         clientId: member.clientId,
         timestamp: member.timestamp,
@@ -363,11 +360,12 @@ export class DefaultPresence
 
   onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
     this._logger.trace('Presence.onDiscontinuity();');
-    this._discontinuityEmitter.on(listener);
+    const wrapped = wrap(listener);
+    this._discontinuityEmitter.on(wrapped);
 
     return {
       off: () => {
-        this._discontinuityEmitter.off(listener);
+        this._discontinuityEmitter.off(wrapped);
       },
     };
   }
