@@ -17,3 +17,22 @@ export const ephemeralMessage = (name: string, data?: unknown): Ably.Message => 
     },
   };
 };
+
+/**
+ * Takes an existing Ably message and converts it to an ephemeral message by adding
+ * the ephemeral flag in the extras field.
+ *
+ * @param message The Ably message to convert.
+ * @returns A new Ably message with the ephemeral flag set.
+ */
+export const messageToEphemeral = (message: Ably.Message): Ably.Message => {
+  const extras = message.extras ? (message.extras as object) : {};
+
+  return {
+    ...message,
+    extras: {
+      ...extras,
+      ephemeral: true,
+    },
+  };
+};
