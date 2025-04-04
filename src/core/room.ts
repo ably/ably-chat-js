@@ -35,7 +35,6 @@ export interface Room {
   /**
    * Allows you to subscribe to presence events in the room.
    *
-   * @throws {@link ErrorInfo}} if presence is not enabled for the room.
    * @returns The presence instance for the room.
    */
   get presence(): Presence;
@@ -43,7 +42,6 @@ export interface Room {
   /**
    * Allows you to interact with room-level reactions.
    *
-   * @throws {@link ErrorInfo} if reactions are not enabled for the room.
    * @returns The room reactions instance for the room.
    */
   get reactions(): RoomReactions;
@@ -51,7 +49,6 @@ export interface Room {
   /**
    * Allows you to interact with typing events in the room.
    *
-   * @throws {@link ErrorInfo} if typing is not enabled for the room.
    * @returns The typing instance for the room.
    */
   get typing(): Typing;
@@ -59,7 +56,6 @@ export interface Room {
   /**
    * Allows you to interact with occupancy metrics for the room.
    *
-   * @throws {@link ErrorInfo} if occupancy is not enabled for the room.
    * @returns The occupancy instance for the room.
    */
   get occupancy(): Occupancy;
@@ -347,13 +343,6 @@ export class DefaultRoom implements Room {
    */
   get lifecycle(): InternalRoomLifecycle {
     return this._lifecycle;
-  }
-
-  /**
-   * @internal
-   */
-  get channelManager(): ChannelManager {
-    return this._channelManager;
   }
 
   /**

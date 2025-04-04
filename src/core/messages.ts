@@ -156,9 +156,19 @@ export interface MessageSubscriptionResponse extends Subscription {
   /**
    * Get the previous messages that were sent to the room before the listener was subscribed.
    *
-   * If you are subscribed to and notified of a discontinuity event, this will reset the starting point of
-   * getPreviousMessages to the point at which a new series of continuity is started. When this happens, you should
-   * re-call getPreviousMessages to fill the gap.
+   * If the client experiences a discontinuity event (i.e. the connection was lost and could not be resumed), the starting point of
+   * getPreviousMessages will be reset.
+   *
+   * Calls to getPreviousMessages will wait for continuity to be restored before resolving.
+   *
+   * Once continuity is restored, the subscription point will be set to the beginning of this new period of continuity. To
+   * ensure that no messages are missed, you should call getPreviousMessages after any period of discontinuity to
+   * fill any gaps in the message history.
+   *
+   * ```typescript
+   * const { getPreviousMessages } = room.messages.subscribe(listener);
+   * await getPreviousMessages({ limit: 10 });
+   * ```
    *
    * @param params Options for the history query.
    * @returns A promise that resolves with the paginated result of messages, in newest-to-oldest order.
