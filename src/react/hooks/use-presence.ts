@@ -13,7 +13,7 @@ import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
-import { useLogger } from './use-logger.js';
+import { useRoomLogger } from './use-logger.js';
 
 /**
  * The options for the {@link usePresence} hook.
@@ -73,8 +73,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
   const context = useRoomContext('usePresence');
   const { status: roomStatus, error: roomError } = useRoomStatus(params);
-  const logger = useLogger();
-  logger.trace('usePresence();', { params, roomId: context.roomId });
+  const logger = useRoomLogger();
+  logger.trace('usePresence();', { params });
 
   const [isPresent, setIsPresent] = useState(false);
   const [error, setError] = useState<ErrorInfo | undefined>();
@@ -98,7 +98,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
   // enter the room when the hook is mounted
   useEffect(() => {
-    logger.debug('usePresence(); entering room', { roomId: context.roomId });
+    logger.debug('usePresence(); entering room');
     return wrapRoomPromise(
       context.room,
       (room: Room) => {
@@ -107,7 +107,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
         // wait until the room is attached before attempting to enter, and ensure the connection is active
         if (!canJoinPresence) {
-          logger.debug('usePresence(); skipping enter room', { roomStatus, connectionStatus, roomId: context.roomId });
+          logger.debug('usePresence(); skipping enter room', { roomStatus, connectionStatus });
           return () => {
             // no-op
           };
@@ -116,12 +116,12 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
         room.presence
           .enter(dataRef.current?.enterWithData)
           .then(() => {
-            logger.debug('usePresence(); entered room', { roomId: context.roomId });
+            logger.debug('usePresence(); entered room');
             setIsPresent(true);
             setError(undefined);
           })
           .catch((error: unknown) => {
-            logger.error('usePresence(); error entering room', { error, roomId: context.roomId });
+            logger.error('usePresence(); error entering room', { error });
             setError(error as ErrorInfo);
           });
 
@@ -131,7 +131,6 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
             !INACTIVE_CONNECTION_STATES.has(roomStatusAndConnectionStatusRef.current.connectionStatus);
 
           logger.debug('usePresence(); unmounting', {
-            roomId: context.roomId,
             canLeavePresence,
             roomStatus,
             connectionStatus,
@@ -140,12 +139,12 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
             room.presence
               .leave(dataRef.current?.leaveWithData)
               .then(() => {
-                logger.debug('usePresence(); left room', { roomId: context.roomId });
+                logger.debug('usePresence(); left room');
                 setIsPresent(false);
                 setError(undefined);
               })
               .catch((error: unknown) => {
-                logger.error('usePresence(); error leaving room', { error, roomId: context.roomId });
+                logger.error('usePresence(); error leaving room', { error });
                 setError(error as ErrorInfo);
               });
           }
@@ -164,7 +163,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
       (room: Room) => {
         const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
         return () => {
-          logger.debug('usePresence(); removing onDiscontinuity listener', { roomId: context.roomId });
+          logger.debug('usePresence(); removing onDiscontinuity listener');
           off();
         };
       },

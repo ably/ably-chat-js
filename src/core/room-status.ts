@@ -163,16 +163,15 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
   private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
   private readonly _roomId: string;
   private readonly _emitter = new EventEmitter<RoomStatusEventsMap>();
+
   /**
-   * Constructs a new `DefaultStatus` instance.
-   * @param roomId - The unique identifier for the room.
-   * @param logger The logger to use.
+   * Constructs a new DefaultRoomLifecycle instance.
+   * @param roomId The unique identifier of the room.
+   * @param logger An instance of the Logger.
    */
   constructor(roomId: string, logger: Logger) {
     this._roomId = roomId;
     this._logger = logger;
-    this._status = RoomStatus.Initialized;
-    this._error = undefined;
   }
 
   /**
@@ -223,7 +222,7 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
 
     this._status = change.current;
     this._error = change.error;
-    this._logger.info(`room status changed`, { ...change, roomId: this._roomId });
+    this._logger.info(`room status changed`, { ...change });
     this._internalEmitter.emit(change.current, change);
     this._emitter.emit(change.current, change);
   }

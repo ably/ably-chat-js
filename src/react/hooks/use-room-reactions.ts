@@ -10,7 +10,7 @@ import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
-import { useLogger } from './use-logger.js';
+import { useRoomLogger } from './use-logger.js';
 
 /**
  * The parameters for the {@link useRoomReactions} hook.
@@ -51,8 +51,8 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
 
   const context = useRoomContext('useRoomReactions');
   const { status: roomStatus, error: roomError } = useRoomStatus(params);
-  const logger = useLogger();
-  logger.trace('useRoomReactions();', { params, roomId: context.roomId });
+  const logger = useRoomLogger();
+  logger.trace('useRoomReactions();', { params });
 
   // create stable references for the listeners
   const listenerRef = useEventListenerRef(params?.listener);
@@ -64,10 +64,10 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
     return wrapRoomPromise(
       context.room,
       (room) => {
-        logger.debug('useRoomReactions(); applying onDiscontinuity listener', { roomId: context.roomId });
+        logger.debug('useRoomReactions(); applying onDiscontinuity listener');
         const { off } = room.reactions.onDiscontinuity(onDiscontinuityRef);
         return () => {
-          logger.debug('useRoomReactions(); removing onDiscontinuity listener', { roomId: context.roomId });
+          logger.debug('useRoomReactions(); removing onDiscontinuity listener');
           off();
         };
       },
@@ -82,10 +82,10 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
     return wrapRoomPromise(
       context.room,
       (room) => {
-        logger.debug('useRoomReactions(); applying listener', { roomId: context.roomId });
+        logger.debug('useRoomReactions(); applying listener');
         const { unsubscribe } = room.reactions.subscribe(listenerRef);
         return () => {
-          logger.debug('useRoomReactions(); removing listener', { roomId: context.roomId });
+          logger.debug('useRoomReactions(); removing listener');
           unsubscribe();
         };
       },

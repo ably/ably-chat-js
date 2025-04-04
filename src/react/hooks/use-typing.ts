@@ -13,7 +13,7 @@ import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
-import { useLogger } from './use-logger.js';
+import { useRoomLogger } from './use-logger.js';
 
 /**
  * The parameters for the {@link useTyping} hook.
@@ -71,8 +71,8 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
 
   const context = useRoomContext('useTyping');
   const { status: roomStatus, error: roomError } = useRoomStatus(params);
-  const logger = useLogger();
-  logger.trace('useTyping();', { roomId: context.roomId });
+  const logger = useRoomLogger();
+  logger.trace('useTyping();');
 
   const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
   const [error, setError] = useState<Ably.ErrorInfo | undefined>();
@@ -94,9 +94,9 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
 
     const setErrorState = (error?: Ably.ErrorInfo) => {
       if (error === undefined) {
-        logger.debug('useTyping(); clearing error state', { roomId: context.roomId });
+        logger.debug('useTyping(); clearing error state');
       } else {
-        logger.error('useTyping(); setting error state', { error, roomId: context.roomId });
+        logger.error('useTyping(); setting error state', { error });
       }
       setError(error);
     };
@@ -118,7 +118,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
               setErrorState(errorInfo);
             });
         } else {
-          logger.debug('useTyping(); room not attached, setting currentlyTyping to empty', { roomId: context.roomId });
+          logger.debug('useTyping(); room not attached, setting currentlyTyping to empty');
           setCurrentlyTyping(new Set());
         }
       })
@@ -127,14 +127,14 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     return wrapRoomPromise(
       context.room,
       (room) => {
-        logger.debug('useTyping(); subscribing to typing events', { roomId: context.roomId });
+        logger.debug('useTyping(); subscribing to typing events');
         const { unsubscribe } = room.typing.subscribe((event) => {
           setErrorState(undefined);
           setCurrentlyTyping(event.currentlyTyping);
         });
 
         return () => {
-          logger.debug('useTyping(); unsubscribing from typing events', { roomId: context.roomId });
+          logger.debug('useTyping(); unsubscribing from typing events');
           mounted = false;
           unsubscribe();
         };
@@ -150,10 +150,10 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     return wrapRoomPromise(
       context.room,
       (room) => {
-        logger.debug('useTyping(); applying onDiscontinuity listener', { roomId: context.roomId });
+        logger.debug('useTyping(); applying onDiscontinuity listener');
         const { off } = room.typing.onDiscontinuity(onDiscontinuityRef);
         return () => {
-          logger.debug('useTyping(); removing onDiscontinuity listener', { roomId: context.roomId });
+          logger.debug('useTyping(); removing onDiscontinuity listener');
           off();
         };
       },
@@ -168,10 +168,10 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     return wrapRoomPromise(
       context.room,
       (room) => {
-        logger.debug('useTyping(); applying listener', { roomId: context.roomId });
+        logger.debug('useTyping(); applying listener');
         const { unsubscribe } = room.typing.subscribe(listenerRef);
         return () => {
-          logger.debug('useTyping(); removing listener', { roomId: context.roomId });
+          logger.debug('useTyping(); removing listener');
           unsubscribe();
         };
       },

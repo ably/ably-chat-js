@@ -20,7 +20,7 @@ import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
-import { useLogger } from './use-logger.js';
+import { useRoomLogger } from './use-logger.js';
 
 /**
  * The response from the {@link useMessages} hook.
@@ -94,8 +94,8 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   const context = useRoomContext('useMessages');
   const { status: roomStatus, error: roomError } = useRoomStatus(params);
 
-  const logger = useLogger();
-  logger.trace('useMessages();', { params, roomId: context.roomId });
+  const logger = useRoomLogger();
+  logger.trace('useMessages();', { params });
 
   // we are storing the params in a ref so that we don't end up with an infinite loop should the user pass
   // in an unstable reference
@@ -130,13 +130,12 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
       context.room,
       (room) => {
         let unmounted = false;
-        logger.debug('useMessages(); applying listener', { roomId: context.roomId });
+        logger.debug('useMessages(); applying listener');
         const sub = room.messages.subscribe(listenerRef);
 
         // set the getPreviousMessages method if a listener is provided
         setGetPreviousMessages(() => {
           logger.debug('useMessages(); setting getPreviousMessages state', {
-            roomId: context.roomId,
             status: room.status,
             unmounted,
           });
@@ -147,7 +146,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
           return (params: Omit<QueryOptions, 'orderBy'>) => {
             // If we've unmounted, then the subscription is gone and we can't call getPreviousMessages
             // So return a dummy object that should be thrown away anyway
-            logger.debug('useMessages(); getPreviousMessages called', { roomId: context.roomId });
+            logger.debug('useMessages(); getPreviousMessages called');
             if (unmounted) {
               return Promise.reject(new Ably.ErrorInfo('component unmounted', 40000, 400));
             }
@@ -156,7 +155,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
         });
 
         return () => {
-          logger.debug('useMessages(); removing listener and getPreviousMessages state', { roomId: context.roomId });
+          logger.debug('useMessages(); removing listener and getPreviousMessages state');
           unmounted = true;
           sub.unsubscribe();
           setGetPreviousMessages(undefined);
@@ -172,10 +171,10 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     return wrapRoomPromise(
       context.room,
       (room) => {
-        logger.debug('useMessages(); applying onDiscontinuity listener', { roomId: context.roomId });
+        logger.debug('useMessages(); applying onDiscontinuity listener');
         const { off } = room.messages.onDiscontinuity(onDiscontinuityRef);
         return () => {
-          logger.debug('useMessages(); removing onDiscontinuity listener', { roomId: context.roomId });
+          logger.debug('useMessages(); removing onDiscontinuity listener');
           off();
         };
       },

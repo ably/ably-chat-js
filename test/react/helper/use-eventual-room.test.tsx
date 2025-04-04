@@ -17,7 +17,7 @@ vi.mock('../../../src/react/helper/use-room-context.js', () => ({
 }));
 
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
-  useLogger: () => mockLogger,
+  useRoomLogger: () => mockLogger,
 }));
 
 vi.mock('ably');

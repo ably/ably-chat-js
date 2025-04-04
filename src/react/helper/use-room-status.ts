@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { Room } from '../../core/room.js';
 import { RoomStatus, RoomStatusChange } from '../../core/room-status.js';
-import { useLogger } from '../hooks/use-logger.js';
+import { useRoomLogger } from '../hooks/use-logger.js';
 import { wrapRoomPromise } from './room-promise.js';
 import { useEventListenerRef } from './use-event-listener-ref.js';
 import { useRoomContext } from './use-room-context.js';
@@ -45,7 +45,7 @@ export const useRoomStatus = (params?: UseRoomStatusParams): UseRoomStatusRespon
 
   const [status, setStatus] = useState<RoomStatus>(RoomStatus.Initializing);
   const [error, setError] = useState<Ably.ErrorInfo | undefined>();
-  const logger = useLogger();
+  const logger = useRoomLogger();
 
   // create stable references for the listeners and register the user-provided callbacks
   const onRoomStatusChangeRef = useEventListenerRef(params?.onRoomStatusChange);

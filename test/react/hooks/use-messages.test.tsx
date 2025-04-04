@@ -40,7 +40,7 @@ vi.mock('../../../src/react/helper/use-room-status.js', () => ({
 }));
 
 vi.mock('../../../src/react/hooks/use-logger.js', () => ({
-  useLogger: () => testLogger,
+  useRoomLogger: () => testLogger,
 }));
 
 vi.mock('ably');
