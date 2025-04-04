@@ -42,16 +42,6 @@ export enum ErrorCodes {
   RoomIsReleased = 102103,
 
   /**
-   * Cannot perform operation because the previous operation failed.
-   */
-  PreviousOperationFailed = 102104,
-
-  /**
-   * An unknown error has happened in the room lifecycle.
-   */
-  RoomLifecycleError = 102105,
-
-  /**
    * Room was released before the operation could complete.
    */
   RoomReleasedBeforeOperationCompleted = 102106,
