@@ -120,7 +120,9 @@ describe('useRoomStatus', () => {
     });
 
     // At this point we should have two listeners on the room status
-    expect((mockRoom as unknown as { _lifecycle: { listeners(): unknown[] } })._lifecycle.listeners()).toHaveLength(2);
+    expect(
+      (mockRoom as unknown as { _lifecycle: { _emitter: { listeners(): unknown[] } } })._lifecycle._emitter.listeners(),
+    ).toHaveLength(2);
 
     // Check the event
     expect(receivedEvents[0]?.current).toBe(RoomStatus.Failed);
@@ -146,6 +148,8 @@ describe('useRoomStatus', () => {
 
     // After unmount we should have no listeners
     unmount();
-    expect((mockRoom as unknown as { _lifecycle: { listeners(): unknown[] } })._lifecycle.listeners()).toBeNull();
+    expect(
+      (mockRoom as unknown as { _lifecycle: { _emitter: { listeners(): unknown[] } } })._lifecycle._emitter.listeners(),
+    ).toBeNull();
   });
 });

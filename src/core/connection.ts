@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
 import { StatusSubscription } from './subscription.js';
-import EventEmitter from './utils/event-emitter.js';
+import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
  * Default timeout for transient states before we attempt to handle them as a state change.
@@ -109,12 +109,13 @@ type ConnectionEventsMap = Record<ConnectionStatus, ConnectionStatusChange>;
  * An implementation of the `Connection` interface.
  * @internal
  */
-export class DefaultConnection extends EventEmitter<ConnectionEventsMap> implements Connection {
+export class DefaultConnection implements Connection {
   private _status: ConnectionStatus = ConnectionStatus.Initialized;
   private _error?: Ably.ErrorInfo;
   private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
   private _transientTimeout?: ReturnType<typeof setTimeout>;
+  private _emitter = new EventEmitter<ConnectionEventsMap>();
 
   /**
    * Constructs a new `DefaultConnection` instance.
@@ -122,7 +123,6 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
    * @param logger The logger to use.
    */
   constructor(ably: Ably.Realtime, logger: Logger) {
-    super();
     this._logger = logger;
 
     // Set our initial status and error
@@ -186,11 +186,12 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
    * @inheritdoc
    */
   onStatusChange(listener: ConnectionStatusListener): StatusSubscription {
-    this.on(listener);
+    const wrapped = wrap(listener);
+    this._emitter.on(wrapped);
 
     return {
       off: () => {
-        this.off(listener);
+        this._emitter.off(wrapped);
       },
     };
   }
@@ -199,14 +200,14 @@ export class DefaultConnection extends EventEmitter<ConnectionEventsMap> impleme
    * @inheritdoc
    */
   offAllStatusChange(): void {
-    this.off();
+    this._emitter.off();
   }
 
   private _applyStatusChange(change: ConnectionStatusChange): void {
     this._status = change.current;
     this._error = change.error;
     this._logger.info(`Connection state changed`, change);
-    this.emit(change.current, change);
+    this._emitter.emit(change.current, change);
   }
 
   private _mapAblyStatusToChat(status: Ably.ConnectionState): ConnectionStatus {

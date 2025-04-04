@@ -53,4 +53,29 @@ describe('room status', () => {
       status.setStatus({ status: RoomStatus.Attached, error: baseError });
       done();
     }));
+
+  it('subscriptions are unique even if listeners are identical', () =>
+    new Promise<void>((done, reject) => {
+      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
+
+      let eventCount = 0;
+      const listener = () => {
+        eventCount++;
+        if (eventCount > 3) {
+          reject(new Error('too many events received (' + eventCount.toString() + ')'));
+        }
+      };
+
+      const s1 = status.onChange(listener);
+      const s2 = status.onChange(listener);
+      status.setStatus({ status: RoomStatus.Attached, error: baseError });
+      expect(eventCount).toEqual(2);
+      s1.off();
+      status.setStatus({ status: RoomStatus.Attached, error: baseError });
+      expect(eventCount).toEqual(3);
+      s2.off();
+      status.setStatus({ status: RoomStatus.Attached, error: baseError });
+      expect(eventCount).toEqual(3);
+      done();
+    }));
 });
