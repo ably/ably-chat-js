@@ -64,7 +64,7 @@ class DefaultRoomPromise implements RoomPromise {
     this._logger = logger;
 
     this.mount(room).catch(() => {
-      this._logger.trace('DefaultRoomPromise(); mount error', { roomId: this._roomId });
+      this._logger.trace('DefaultRoomPromise(); mount error');
     });
   }
 
@@ -76,17 +76,17 @@ class DefaultRoomPromise implements RoomPromise {
    * @returns A promise that we simply resolve when it's done.
    */
   async mount(promise: Promise<Room>): Promise<void> {
-    this._logger.debug('DefaultRoomPromise(); mount', { roomId: this._roomId });
+    this._logger.debug('DefaultRoomPromise(); mount');
     try {
       const room = await promise;
       if (this._unmounted) {
         return;
       }
 
-      this._logger.debug('DefaultRoomPromise(); mount resolved', { roomId: this._roomId });
+      this._logger.debug('DefaultRoomPromise(); mount resolved');
       this._onUnmount = this._onResolve(room);
     } catch (error) {
-      this._logger.error('DefaultRoomPromise(); mount error', { roomId: this._roomId, error });
+      this._logger.error('DefaultRoomPromise(); mount error', { error });
     }
   }
 
@@ -115,7 +115,7 @@ class DefaultRoomPromise implements RoomPromise {
     }
 
     return () => {
-      this._logger.debug('DefaultRoomPromise(); unmount', { roomId: this._roomId });
+      this._logger.debug('DefaultRoomPromise(); unmount');
       this._unmounted = true;
       this._onUnmount?.();
     };

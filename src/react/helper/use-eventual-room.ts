@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Room } from '../../core/room.js';
-import { useLogger } from '../hooks/use-logger.js';
+import { useRoomLogger } from '../hooks/use-logger.js';
 import { useRoomContext } from './use-room-context.js';
 import { useStableReference } from './use-stable-reference.js';
 
@@ -16,28 +16,28 @@ import { useStableReference } from './use-stable-reference.js';
 export const useEventualRoom = (): Room | undefined => {
   const [roomState, setRoomState] = useState<Room | undefined>();
   const context = useRoomContext('useEventualRoom');
-  const logger = useLogger();
-  logger.trace('useEventualRoom();', { roomId: context.roomId });
+  const logger = useRoomLogger();
+  logger.trace('useEventualRoom();');
 
   useEffect(() => {
-    logger.debug('useEventualRoom(); running useEffect', { roomId: context.roomId });
+    logger.debug('useEventualRoom(); running useEffect');
     let unmounted = false;
     void context.room
       .then((room: Room) => {
         if (unmounted) {
-          logger.debug('useEventualRoom(); already unmounted', { roomId: context.roomId });
+          logger.debug('useEventualRoom(); already unmounted');
           return;
         }
 
-        logger.debug('useEventualRoom(); resolved', { roomId: context.roomId });
+        logger.debug('useEventualRoom(); resolved');
         setRoomState(room);
       })
       .catch((error: unknown) => {
-        logger.error('Failed to get room', { roomId: context.roomId, error });
+        logger.error('Failed to get room', { error });
       });
 
     return () => {
-      logger.debug('useEventualRoom(); cleanup', { roomId: context.roomId });
+      logger.debug('useEventualRoom(); cleanup');
       unmounted = true;
     };
   }, [context, logger]);
@@ -57,29 +57,29 @@ export const useEventualRoom = (): Room | undefined => {
 export const useEventualRoomProperty = <T>(onResolve: (room: Room) => T) => {
   const [roomState, setRoomState] = useState<T | undefined>();
   const context = useRoomContext('useEventualRoomProperty');
-  const logger = useLogger();
-  logger.trace('useEventualRoomProperty();', { roomId: context.roomId });
+  const logger = useRoomLogger();
+  logger.trace('useEventualRoomProperty();');
   const onResolveRef = useStableReference(onResolve);
 
   useEffect(() => {
     let unmounted = false;
-    logger.debug('useEventualRoomProperty(); running useEffect', { roomId: context.roomId });
+    logger.debug('useEventualRoomProperty(); running useEffect');
     void context.room
       .then((room: Room) => {
         if (unmounted) {
-          logger.debug('useEventualRoomProperty(); already unmounted', { roomId: context.roomId });
+          logger.debug('useEventualRoomProperty(); already unmounted');
           return;
         }
 
-        logger.debug('useEventualRoomProperty(); resolved', { roomId: context.roomId });
+        logger.debug('useEventualRoomProperty(); resolved');
         setRoomState(onResolveRef(room));
       })
       .catch((error: unknown) => {
-        logger.error('Failed to get room', { roomId: context.roomId, error });
+        logger.error('Failed to get room', { error });
       });
 
     return () => {
-      logger.debug('useEventualRoomProperty(); cleanup', { roomId: context.roomId });
+      logger.debug('useEventualRoomProperty(); cleanup');
       unmounted = true;
     };
   }, [context, logger, onResolveRef]);

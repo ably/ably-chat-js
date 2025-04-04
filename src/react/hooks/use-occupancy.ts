@@ -10,7 +10,7 @@ import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
 import { useChatConnection } from './use-chat-connection.js';
-import { useLogger } from './use-logger.js';
+import { useRoomLogger } from './use-logger.js';
 
 /**
  * The options for the {@link useOccupancy} hook.
@@ -57,8 +57,8 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
   const context = useRoomContext('useOccupancy');
   const { status: roomStatus, error: roomError } = useRoomStatus(params);
 
-  const logger = useLogger();
-  logger.trace('useOccupancy();', { params, roomId: context.roomId });
+  const logger = useRoomLogger();
+  logger.trace('useOccupancy();', { params });
 
   const [occupancyMetrics, setOccupancyMetrics] = useState<{ connections: number; presenceMembers: number }>({
     connections: 0,
@@ -75,10 +75,10 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
     return wrapRoomPromise(
       context.room,
       (room) => {
-        logger.debug('useOccupancy(); applying onDiscontinuity listener', { roomId: context.roomId });
+        logger.debug('useOccupancy(); applying onDiscontinuity listener');
         const { off } = room.occupancy.onDiscontinuity(onDiscontinuityRef);
         return () => {
-          logger.debug('useOccupancy(); removing onDiscontinuity listener', { roomId: context.roomId });
+          logger.debug('useOccupancy(); removing onDiscontinuity listener');
           off();
         };
       },
@@ -92,7 +92,7 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
     return wrapRoomPromise(
       context.room,
       (room) => {
-        logger.debug('useOccupancy(); applying internal listener', { roomId: context.roomId });
+        logger.debug('useOccupancy(); applying internal listener');
         const { unsubscribe } = room.occupancy.subscribe((occupancyEvent) => {
           setOccupancyMetrics({
             connections: occupancyEvent.connections,
@@ -100,7 +100,7 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
           });
         });
         return () => {
-          logger.debug('useOccupancy(); cleaning up internal listener', { roomId: context.roomId });
+          logger.debug('useOccupancy(); cleaning up internal listener');
           unsubscribe();
         };
       },
@@ -115,10 +115,10 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
     return wrapRoomPromise(
       context.room,
       (room) => {
-        logger.debug('useOccupancy(); applying listener', { roomId: context.roomId });
+        logger.debug('useOccupancy(); applying listener');
         const { unsubscribe } = room.occupancy.subscribe(listenerRef);
         return () => {
-          logger.debug('useOccupancy(); cleaning up listener', { roomId: context.roomId });
+          logger.debug('useOccupancy(); cleaning up listener');
           unsubscribe();
         };
       },
