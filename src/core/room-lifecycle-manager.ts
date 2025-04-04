@@ -11,7 +11,7 @@ import { StatusSubscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
- * Events that can be emitted by the RoomLifeCycleManager
+ * Events that can be emitted by the RoomLifecycleManager
  */
 export interface RoomLifeCycleEvents {
   [RoomEvents.Discontinuity]: Ably.ErrorInfo;
@@ -29,7 +29,7 @@ enum OperationPriority {
  * Manages the lifecycle of a room's underlying channel, handling attach, detach and release operations
  * while maintaining the room's status.
  */
-export class RoomLifeCycleManager {
+export class RoomLifecycleManager {
   private readonly _channelManager: ChannelManager;
   private readonly _roomLifecycle: InternalRoomLifecycle;
   private readonly _logger: Logger;
@@ -64,7 +64,7 @@ export class RoomLifeCycleManager {
 
     // CHA-RL11a
     channel.on((stateChange: Ably.ChannelStateChange) => {
-      this._logger.debug('channel state changed', {
+      this._logger.debug('RoomLifecycleManager.channel state changed', {
         roomId: this._roomId,
         oldState: stateChange.previous,
         newState: stateChange.current,
@@ -74,10 +74,13 @@ export class RoomLifeCycleManager {
 
       // CHA-RL11b
       if (this._operationInProgress()) {
-        this._logger.debug('ignoring channel state change - operation in progress', {
-          roomId: this._roomId,
-          roomStatus: this._roomLifecycle.status,
-        });
+        this._logger.debug(
+          'RoomLifecycleManager._startMonitoringChannelState(); ignoring channel state change - operation in progress',
+          {
+            roomId: this._roomId,
+            roomStatus: this._roomLifecycle.status,
+          },
+        );
         return;
       }
 
@@ -106,7 +109,7 @@ export class RoomLifeCycleManager {
           stateChange.reason,
         );
 
-        this._logger.warn('discontinuity detected', {
+        this._logger.warn('RoomLifecycleManager._startMonitoringDiscontinuity(); discontinuity detected', {
           roomId: this._roomId,
           error,
         });
@@ -130,7 +133,7 @@ export class RoomLifeCycleManager {
           stateChange.reason,
         );
 
-        this._logger.warn('discontinuity detected', {
+        this._logger.warn('RoomLifecycleManager._startMonitoringDiscontinuity(); discontinuity detected', {
           roomId: this._roomId,
           error,
         });
@@ -163,19 +166,22 @@ export class RoomLifeCycleManager {
   async attach(): Promise<void> {
     // CHA-RL1d, CHA-RL7a
     await this._mutex.runExclusive(async () => {
-      this._logger.trace('RoomLifeCycleManager.attach();', { roomId: this._roomId });
+      this._logger.trace('RoomLifecycleManager.attach();', { roomId: this._roomId });
 
       // CHA-RL1b, CHA-RL1c
       this._checkRoomNotReleasing('attach');
 
       // CHA-RL1a
       if (this._roomStatusIs(RoomStatus.Attached)) {
-        this._logger.debug('room already attached, no-op', { roomId: this._roomId });
+        this._logger.debug('RoomLifecycleManager.attach(); room already attached, no-op', { roomId: this._roomId });
         return;
       }
 
       const channel = this._channelManager.get();
-      this._logger.debug('attaching room', { roomId: this._roomId, channelState: channel.state });
+      this._logger.debug('RoomLifecycleManager.attach(); attaching room', {
+        roomId: this._roomId,
+        channelState: channel.state,
+      });
 
       try {
         // CHA-RL1e
@@ -185,7 +191,7 @@ export class RoomLifeCycleManager {
         this._setStatus(RoomStatus.Attached);
         this._isExplicitlyDetached = false;
         this._hasAttachedOnce = true;
-        this._logger.debug('room attached successfully', { roomId: this._roomId });
+        this._logger.debug('RoomLifecycleManager.attach(); room attached successfully', { roomId: this._roomId });
       } catch (error) {
         const errInfo = error as Ably.ErrorInfo;
         const attachError = new Ably.ErrorInfo(
@@ -210,7 +216,7 @@ export class RoomLifeCycleManager {
   async detach(): Promise<void> {
     // CHA-RL2i, CHA-RL7a
     await this._mutex.runExclusive(async () => {
-      this._logger.trace('RoomLifeCycleManager.detach();', { roomId: this._roomId });
+      this._logger.trace('RoomLifecycleManager.detach();', { roomId: this._roomId });
 
       // CHA-RL2d
       if (this._roomStatusIs(RoomStatus.Failed)) {
@@ -222,12 +228,15 @@ export class RoomLifeCycleManager {
 
       // CHA-RL2a
       if (this._roomStatusIs(RoomStatus.Detached)) {
-        this._logger.debug('room already detached, no-op', { roomId: this._roomId });
+        this._logger.debug('RoomLifecycleManager.detach(); room already detached, no-op', { roomId: this._roomId });
         return;
       }
 
       const channel = this._channelManager.get();
-      this._logger.debug('detaching room', { roomId: this._roomId, channelState: channel.state });
+      this._logger.debug('RoomLifecycleManager.detach(); detaching room', {
+        roomId: this._roomId,
+        channelState: channel.state,
+      });
 
       try {
         // CHA-RL2j
@@ -236,7 +245,7 @@ export class RoomLifeCycleManager {
         await channel.detach();
         this._isExplicitlyDetached = true;
         this._setStatus(RoomStatus.Detached);
-        this._logger.debug('room detached successfully', { roomId: this._roomId });
+        this._logger.debug('RoomLifecycleManager.detach(); room detached successfully', { roomId: this._roomId });
       } catch (error) {
         const errInfo = error as Ably.ErrorInfo;
         const detachError = new Ably.ErrorInfo(
@@ -261,17 +270,17 @@ export class RoomLifeCycleManager {
   async release(): Promise<void> {
     // CHA-RL3k, CHA-RL7a
     await this._mutex.runExclusive(async () => {
-      this._logger.trace('RoomLifeCycleManager.release();', { roomId: this._roomId });
+      this._logger.trace('RoomLifecycleManager.release();', { roomId: this._roomId });
 
       // CHA-RL3a
       if (this._roomStatusIs(RoomStatus.Released)) {
-        this._logger.debug('room already released, no-op', { roomId: this._roomId });
+        this._logger.debug('RoomLifecycleManager.release(); room already released, no-op', { roomId: this._roomId });
         return;
       }
 
       // CHA-RL3b, CHA-RL3j
       if (this._roomStatusIs(RoomStatus.Initialized) || this._roomStatusIs(RoomStatus.Detached)) {
-        this._logger.debug('room is initialized or detached, releasing immediately', {
+        this._logger.debug('RoomLifecycleManager.release(); room is initialized or detached, releasing immediately', {
           roomId: this._roomId,
           status: this._roomLifecycle.status,
         });
@@ -284,7 +293,7 @@ export class RoomLifeCycleManager {
       const channel = this._channelManager.get();
 
       // CHA-RL3n
-      this._logger.debug('attempting channel detach before release', {
+      this._logger.debug('RoomLifecycleManager.release(); attempting channel detach before release', {
         roomId: this._roomId,
         channelState: channel.state,
       });
@@ -322,7 +331,10 @@ export class RoomLifeCycleManager {
         return RoomStatus.Failed;
       }
       default: {
-        this._logger.error('unknown channel state', { roomId: this._roomId, channelState });
+        this._logger.error('RoomLifecycleManager._mapChannelStateToRoomStatus(); unknown channel state', {
+          roomId: this._roomId,
+          channelState,
+        });
         return RoomStatus.Failed;
       }
     }
@@ -348,7 +360,9 @@ export class RoomLifeCycleManager {
       // If channel is now failed, we can stop trying to detach
       const currentState: Ably.ChannelState = channel.state;
       if (currentState === 'failed') {
-        this._logger.debug('channel is failed, skipping detach', { roomId: this._roomId });
+        this._logger.debug('RoomLifecycleManager._channelDetachLoop(); channel is failed, skipping detach', {
+          roomId: this._roomId,
+        });
         break;
       }
 
@@ -357,14 +371,17 @@ export class RoomLifeCycleManager {
         break;
       } catch (error) {
         // keep trying
-        this._logger.error('failed to detach channel during release', { roomId: this._roomId, error });
+        this._logger.error('RoomLifecycleManager._channelDetachLoop(); failed to detach channel during release', {
+          roomId: this._roomId,
+          error,
+        });
         await new Promise((resolve) => setTimeout(resolve, 250)); // Wait 250ms before retry
       }
     }
   }
 
   private _setStatus(status: RoomStatus, error?: Ably.ErrorInfo) {
-    this._logger.debug('updating room status', {
+    this._logger.debug('RoomLifecycleManager._setStatus(); updating room status', {
       roomId: this._roomId,
       oldStatus: this._roomLifecycle.status,
       newStatus: status,
@@ -376,7 +393,7 @@ export class RoomLifeCycleManager {
   private _releaseChannel() {
     this._channelManager.release();
     this._setStatus(RoomStatus.Released);
-    this._logger.debug('room released successfully', { roomId: this._roomId });
+    this._logger.debug('RoomLifecycleManager._releaseChannel(); room released successfully', { roomId: this._roomId });
   }
 
   /**
