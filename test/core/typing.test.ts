@@ -58,13 +58,15 @@ describe('Typing', () => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, context.logger);
     context.room = makeRandomRoom(context);
-    const channel = context.room.typing.channel;
+    const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
   });
 
   // CHA-T8
   it<TestContext>('uses the correct realtime channel', (context) => {
-    expect(context.room.typing.channel.name).toBe(`${context.room.roomId}::$chat`);
+    const typing = context.room.typing as DefaultTyping;
+
+    expect(typing.channel.name).toBe(`${context.room.roomId}::$chat`);
   });
 
   // CHA-T9
@@ -83,7 +85,7 @@ describe('Typing', () => {
 
   it<TestContext>('ensures multiple keystroke/stop calls are resolved in order', async (context) => {
     const { room, realtime } = context;
-    const channel = room.typing.channel;
+    const channel = room.channel;
     const realtimeChannel = realtime.channels.get(channel.name);
 
     // Mock implementation for `publish` to simulate delay in the call on the first invocation
@@ -95,7 +97,7 @@ describe('Typing', () => {
       .mockImplementationOnce(() => Promise.resolve());
 
     // Needed to allow typing calls to proceed
-    vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+    vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
     // To track resolution order
     const resolveOrder: string[] = [];
@@ -144,7 +146,7 @@ describe('Typing', () => {
     // CHA-T4d
     it<TestContext>('does not allow typing start if channel is not attached or attaching', async (context) => {
       const { room } = context;
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('detached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
       await expect(room.typing.keystroke()).rejects.toBeErrorInfoWithCode(50000);
     });
@@ -152,12 +154,12 @@ describe('Typing', () => {
     // CHA-T4a
     it<TestContext>('starts typing', async (context) => {
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
       await room.typing.keystroke();
@@ -176,12 +178,12 @@ describe('Typing', () => {
     // CHA-T4c1
     it<TestContext>('does not start typing if already typing', async (context) => {
       const { room, realtime } = context;
-      const channel = room.typing.channel;
+      const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
       vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-      vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
       await room.typing.keystroke();
@@ -207,13 +209,13 @@ describe('Typing', () => {
       // CHA-T5a
       it<TestContext>('is no-op if stop called whilst not typing', async (context) => {
         const { room, realtime } = context;
-        const channel = room.typing.channel;
+        const channel = room.channel;
         const realtimeChannel = realtime.channels.get(channel.name);
 
         // If stop is called, the test should fail as the timer should not have expired
         vi.spyOn(room.typing, 'stop').mockImplementation(async (): Promise<void> => {});
-        vi.spyOn(room.typing.channel, 'publish').mockImplementation(async (): Promise<void> => {});
-        vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+        vi.spyOn(room.channel, 'publish').mockImplementation(async (): Promise<void> => {});
+        vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
         // Stop typing
         await room.typing.stop();
@@ -225,12 +227,12 @@ describe('Typing', () => {
       // CHA-T5c
       it<TestContext>('throws an error if typing.stop is called when the channel is not attached', async (context) => {
         const { room, realtime } = context;
-        const channel = room.typing.channel;
+        const channel = room.channel;
         const realtimeChannel = realtime.channels.get(channel.name);
         vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-        vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+        vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
         await room.typing.keystroke();
-        vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('detached');
+        vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
         await expect(room.typing.stop()).rejects.toBeErrorInfoWithCode(50000);
 
@@ -240,12 +242,12 @@ describe('Typing', () => {
 
       it<TestContext>('when stop is called, immediately stops typing', async (context) => {
         const { realtime, room } = context;
-        const channel = room.typing.channel;
+        const channel = room.channel;
         const realtimeChannel = realtime.channels.get(channel.name);
 
         // If stop is called, it should publish a leave message
         vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-        vi.spyOn(room.typing.channel, 'state', 'get').mockReturnValue('attached');
+        vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
         await Promise.all([room.typing.keystroke(), room.typing.stop()]);
 
@@ -698,14 +700,6 @@ describe('Typing', () => {
         // Unsubscribe second subscription
         subscription2.unsubscribe();
       });
-    });
-
-    it<TestContext>('has an attachment error code', (context) => {
-      expect((context.room.typing as DefaultTyping).attachmentErrorCode).toBe(102005);
-    });
-
-    it<TestContext>('has a detachment error code', (context) => {
-      expect((context.room.typing as DefaultTyping).detachmentErrorCode).toBe(102054);
     });
   });
 });

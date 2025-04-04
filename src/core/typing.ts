@@ -1,22 +1,10 @@
 import * as Ably from 'ably';
 import { E_CANCELED, Mutex } from 'async-mutex';
 
-import { roomChannelName } from './channel.js';
-import { ChannelManager } from './channel-manager.js';
-import {
-  DiscontinuityEmitter,
-  DiscontinuityListener,
-  EmitsDiscontinuities,
-  HandlesDiscontinuity,
-  newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
-} from './discontinuity.js';
-import { ErrorCodes } from './errors.js';
 import { TypingEvent, TypingEvents } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
-import { TypingOptions } from './room-options.js';
+import { InternalTypingOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
@@ -26,7 +14,7 @@ import EventEmitter, { wrap } from './utils/event-emitter.js';
  *
  * Get an instance via {@link Room.typing}.
  */
-export interface Typing extends EmitsDiscontinuities {
+export interface Typing {
   /**
    * Subscribe a given listener to all typing events from users in the chat room.
    *
@@ -84,14 +72,7 @@ export interface Typing extends EmitsDiscontinuities {
    * @throws If the operation fails to send the event to the server.
    * @throws If there is a problem acquiring the mutex that controls serialization.
    */
-
   stop(): Promise<void>;
-
-  /**
-   * Get the Ably realtime channel underpinning typing events.
-   * @returns The Ably realtime channel.
-   */
-  channel: Ably.RealtimeChannel;
 }
 
 /**
@@ -116,14 +97,11 @@ type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
 /**
  * @inheritDoc
  */
-export class DefaultTyping
-  extends EventEmitter<TypingEventsMap>
-  implements Typing, HandlesDiscontinuity, ContributesToRoomLifecycle
-{
+export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
+  private readonly _roomId: string;
   private readonly _clientId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _logger: Logger;
-  private readonly _discontinuityEmitter: DiscontinuityEmitter = newDiscontinuityEmitter();
 
   // Throttle for the heartbeat, how often we should emit a typing event with repeated calls to keystroke()
   // CHA-T10
@@ -142,20 +120,21 @@ export class DefaultTyping
    * Constructs a new `DefaultTyping` instance.
    * @param roomId The unique identifier of the room.
    * @param options The options for typing in the room.
-   * @param channelManager The channel manager for the room.
+   * @param channel The channel for the room.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
   constructor(
     roomId: string,
-    options: TypingOptions,
-    channelManager: ChannelManager,
+    options: InternalTypingOptions,
+    channel: Ably.RealtimeChannel,
     clientId: string,
     logger: Logger,
   ) {
     super();
+    this._roomId = roomId;
     this._clientId = clientId;
-    this._channel = this._makeChannel(roomId, channelManager);
+    this._channel = channel;
 
     // Interval for the heartbeat, how often we should emit a typing event with repeated calls to start()
     this._heartbeatThrottleMs = options.heartbeatThrottleMs;
@@ -163,18 +142,17 @@ export class DefaultTyping
     // Map of clientIds to their typing timers, used to track typing state
     this._currentlyTyping = new Map<string, TypingTimerHandle>();
     this._logger = logger;
+
+    this._applyChannelSubscriptions();
   }
 
   /**
-   * Creates the realtime channel for typing indicators.
+   * Sets up channel subscriptions for typing indicators.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
+  private _applyChannelSubscriptions(): void {
     // CHA-T8
-    const channel = channelManager.get(roomChannelName(roomId));
-
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void channel.subscribe([TypingEvents.Start, TypingEvents.Stop], this._internalSubscribeToEvents.bind(this));
-    return channel;
+    void this._channel.subscribe([TypingEvents.Start, TypingEvents.Stop], this._internalSubscribeToEvents.bind(this));
   }
 
   /**
@@ -183,7 +161,7 @@ export class DefaultTyping
    * @inheritDoc
    */
   get(): Set<string> {
-    this._logger.trace(`DefaultTyping.get();`);
+    this._logger.trace(`DefaultTyping.get();`, { roomId: this._roomId });
     return new Set<string>(this._currentlyTyping.keys());
   }
 
@@ -199,9 +177,9 @@ export class DefaultTyping
    */
   private _startHeartbeatTimer(): void {
     if (!this._heartbeatTimerId) {
-      this._logger.trace(`DefaultTyping.startHeartbeatTimer();`);
+      this._logger.trace(`DefaultTyping.startHeartbeatTimer();`, { roomId: this._roomId });
       const timer = (this._heartbeatTimerId = setTimeout(() => {
-        this._logger.debug(`DefaultTyping.startHeartbeatTimer(); heartbeat timer expired`);
+        this._logger.debug(`DefaultTyping.startHeartbeatTimer(); heartbeat timer expired`, { roomId: this._roomId });
         // CHA-T2a
         if (timer === this._heartbeatTimerId) {
           this._heartbeatTimerId = undefined;
@@ -214,13 +192,15 @@ export class DefaultTyping
    * @inheritDoc
    */
   async keystroke(): Promise<void> {
-    this._logger.trace(`DefaultTyping.keystroke();`);
+    this._logger.trace(`DefaultTyping.keystroke();`, { roomId: this._roomId });
     this._mutex.cancel();
 
     // Acquire a mutex
     await this._mutex.acquire().catch((error: unknown) => {
       if (error === E_CANCELED) {
-        this._logger.debug(`DefaultTyping.keystroke(); mutex was canceled by a later operation`);
+        this._logger.debug(`DefaultTyping.keystroke(); mutex was canceled by a later operation`, {
+          roomId: this._roomId,
+        });
         return;
       }
       throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
@@ -230,7 +210,8 @@ export class DefaultTyping
       // Ensure room is attached
       if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
         this._logger.error(`DefaultTyping.keystroke(); room is not in the correct state `, {
-          State: this.channel.state,
+          roomId: this._roomId,
+          state: this.channel.state,
         });
         throw new Ably.ErrorInfo('cannot type, room is not in the correct state', 50000, 500);
       }
@@ -238,7 +219,9 @@ export class DefaultTyping
       // Check whether user is already typing before publishing again
       // CHA-T4c1, CHA-T4c2
       if (this._heartbeatTimerId) {
-        this._logger.debug(`DefaultTyping.keystroke(); no-op, already typing and heartbeat timer has not expired`);
+        this._logger.debug(`DefaultTyping.keystroke(); no-op, already typing and heartbeat timer has not expired`, {
+          roomId: this._roomId,
+        });
         return;
       }
 
@@ -249,9 +232,9 @@ export class DefaultTyping
       // Start the timer after publishing
       // CHA-T4a5
       this._startHeartbeatTimer();
-      this._logger.trace(`DefaultTyping.keystroke(); starting timers`);
+      this._logger.trace(`DefaultTyping.keystroke(); starting timers`, { roomId: this._roomId });
     } finally {
-      this._logger.trace(`DefaultTyping.keystroke(); releasing mutex`);
+      this._logger.trace(`DefaultTyping.keystroke(); releasing mutex`, { roomId: this._roomId });
       this._mutex.release();
     }
   }
@@ -260,13 +243,13 @@ export class DefaultTyping
    * @inheritDoc
    */
   async stop(): Promise<void> {
-    this._logger.trace(`DefaultTyping.stop();`);
+    this._logger.trace(`DefaultTyping.stop();`, { roomId: this._roomId });
 
     this._mutex.cancel();
     // Acquire a mutex
     await this._mutex.acquire().catch((error: unknown) => {
       if (error === E_CANCELED) {
-        this._logger.debug(`DefaultTyping.stop(); mutex was canceled by a later operation`);
+        this._logger.debug(`DefaultTyping.stop(); mutex was canceled by a later operation`, { roomId: this._roomId });
         return;
       }
       throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
@@ -274,27 +257,30 @@ export class DefaultTyping
     try {
       // CHA-T5c
       if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-        this._logger.error(`DefaultTyping.stop(); room is not in the correct state `, { State: this.channel.state });
+        this._logger.error(`DefaultTyping.stop(); room is not in the correct state `, {
+          roomId: this._roomId,
+          state: this.channel.state,
+        });
         throw new Ably.ErrorInfo('cannot stop typing, room is not in the correct state', 50000, 500);
       }
 
       // If the user is not typing, do nothing.
       // CHA-T5a
       if (!this._heartbeatTimerId) {
-        this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`);
+        this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`, { roomId: this._roomId });
         return;
       }
 
       // CHA-T5d
       await this._channel.publish(ephemeralMessage(TypingEvents.Stop));
-      this._logger.trace(`DefaultTyping.stop(); clearing timers`);
+      this._logger.trace(`DefaultTyping.stop(); clearing timers`, { roomId: this._roomId });
 
       // CHA-T5e
       // Clear the heartbeat timer
       clearTimeout(this._heartbeatTimerId);
       this._heartbeatTimerId = undefined;
     } finally {
-      this._logger.trace(`DefaultTyping.stop(); releasing mutex`);
+      this._logger.trace(`DefaultTyping.stop(); releasing mutex`, { roomId: this._roomId });
       this._mutex.release();
     }
   }
@@ -303,13 +289,13 @@ export class DefaultTyping
    * @inheritDoc
    */
   subscribe(listener: TypingListener): Subscription {
-    this._logger.trace(`DefaultTyping.subscribe();`);
+    this._logger.trace(`DefaultTyping.subscribe();`, { roomId: this._roomId });
     const wrapped = wrap(listener);
     this.on(wrapped);
 
     return {
       unsubscribe: () => {
-        this._logger.trace('DefaultTyping.unsubscribe();');
+        this._logger.trace('DefaultTyping.unsubscribe();', { roomId: this._roomId });
         this.off(wrapped);
       },
     };
@@ -319,7 +305,7 @@ export class DefaultTyping
    * @inheritDoc
    */
   unsubscribeAll(): void {
-    this._logger.trace(`DefaultTyping.unsubscribeAll();`);
+    this._logger.trace(`DefaultTyping.unsubscribeAll();`, { roomId: this._roomId });
     this.off();
   }
 
@@ -330,7 +316,7 @@ export class DefaultTyping
    * @param event The typing event.
    */
   private _updateCurrentlyTyping(clientId: string, event: TypingEvents): void {
-    this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { clientId, event });
+    this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { roomId: this._roomId, clientId, event });
 
     if (event === TypingEvents.Start) {
       this._handleTypingStart(clientId);
@@ -346,13 +332,20 @@ export class DefaultTyping
    * @param clientId
    */
   private _startNewClientInactivityTimer(clientId: string): ReturnType<typeof setTimeout> {
-    this._logger.trace(`DefaultTyping._startNewClientInactivityTimer(); starting new inactivity timer`, { clientId });
+    this._logger.trace(`DefaultTyping._startNewClientInactivityTimer(); starting new inactivity timer`, {
+      roomId: this._roomId,
+      clientId,
+    });
     // Set or reset the typing timeout for this client
     const timeoutId = setTimeout(() => {
-      this._logger.trace(`DefaultTyping._startNewClientInactivityTimer(); client typing timeout expired`, { clientId });
+      this._logger.trace(`DefaultTyping._startNewClientInactivityTimer(); client typing timeout expired`, {
+        roomId: this._roomId,
+        clientId,
+      });
       // Verify the timer is still valid (it might have been reset)
       if (this._currentlyTyping.get(clientId) !== timeoutId) {
         this._logger.debug(`DefaultTyping._startNewClientInactivityTimer(); timeout already cleared; ignoring`, {
+          roomId: this._roomId,
           clientId,
         });
         return;
@@ -376,7 +369,7 @@ export class DefaultTyping
    * @param clientId
    */
   private _handleTypingStart(clientId: string): void {
-    this._logger.debug(`DefaultTyping._handleTypingStart();`, { clientId });
+    this._logger.debug(`DefaultTyping._handleTypingStart();`, { roomId: this._roomId, clientId });
     // Start a new timeout for the client
     const timeoutId = this._startNewClientInactivityTimer(clientId);
 
@@ -388,12 +381,16 @@ export class DefaultTyping
     if (existingTimeout) {
       // Heartbeat - User is already typing, we just need to clear the existing timeout
       this._logger.debug(`DefaultTyping._handleTypingStart(); received heartbeat for currently typing client`, {
+        roomId: this._roomId,
         clientId,
       });
       clearTimeout(existingTimeout);
     } else {
       // Otherwise, we need to emit a new typing event
-      this._logger.debug(`DefaultTyping._handleTypingStart(); new client started typing`, { clientId });
+      this._logger.debug(`DefaultTyping._handleTypingStart(); new client started typing`, {
+        roomId: this._roomId,
+        clientId,
+      });
       this.emit(TypingEvents.Start, {
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
         change: {
@@ -415,13 +412,13 @@ export class DefaultTyping
       // Stop requested for a client that isn't currently typing
       this._logger.trace(
         `DefaultTyping._handleTypingStop(); received "Stop" event for client not in currentlyTyping list`,
-        { clientId },
+        { roomId: this._roomId, clientId },
       );
       return;
     }
 
     // Stop typing: clear their timeout and remove from the currently typing set
-    this._logger.debug(`DefaultTyping._handleTypingStop(); client stopped typing`, { clientId });
+    this._logger.debug(`DefaultTyping._handleTypingStop(); client stopped typing`, { roomId: this._roomId, clientId });
     clearTimeout(existingTimeout);
     this._currentlyTyping.delete(clientId);
     // Emit stop event only when the client is removed
@@ -439,10 +436,17 @@ export class DefaultTyping
    */
   private _internalSubscribeToEvents = (inbound: Ably.InboundMessage): void => {
     const { name, clientId } = inbound;
-    this._logger.trace(`DefaultTyping._internalSubscribeToEvents(); received event`, { name, clientId });
+    this._logger.trace(`DefaultTyping._internalSubscribeToEvents(); received event`, {
+      roomId: this._roomId,
+      name,
+      clientId,
+    });
 
     if (!clientId) {
-      this._logger.error(`DefaultTyping._internalSubscribeToEvents(); invalid clientId in received event`, { inbound });
+      this._logger.error(`DefaultTyping._internalSubscribeToEvents(); invalid clientId in received event`, {
+        roomId: this._roomId,
+        inbound,
+      });
       return;
     }
 
@@ -450,42 +454,14 @@ export class DefaultTyping
     if (name === TypingEvents.Start || name === TypingEvents.Stop) {
       this._updateCurrentlyTyping(clientId, name);
     } else {
-      this._logger.warn(`DefaultTyping._internalSubscribeToEvents(); unrecognized event`, { name });
+      this._logger.warn(`DefaultTyping._internalSubscribeToEvents(); unrecognized event`, {
+        roomId: this._roomId,
+        name,
+      });
     }
   };
 
-  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
-    this._logger.trace(`DefaultTyping.onDiscontinuity();`);
-    const wrapped = wrap(listener);
-    this._discontinuityEmitter.on(wrapped);
-
-    return {
-      off: () => {
-        this._discontinuityEmitter.off(wrapped);
-      },
-    };
-  }
-
-  discontinuityDetected(reason?: Ably.ErrorInfo): void {
-    this._logger.warn(`DefaultTyping.discontinuityDetected();`, { reason });
-    this._discontinuityEmitter.emit('discontinuity', reason);
-  }
-
   get heartbeatThrottleMs(): number {
     return this._heartbeatThrottleMs;
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.TypingAttachmentFailed;
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.TypingDetachmentFailed;
   }
 }

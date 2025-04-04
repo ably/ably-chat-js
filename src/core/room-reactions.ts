@@ -1,19 +1,10 @@
 import * as Ably from 'ably';
 
-import { ChannelManager } from './channel-manager.js';
-import {
-  DiscontinuityListener,
-  EmitsDiscontinuities,
-  HandlesDiscontinuity,
-  newDiscontinuityEmitter,
-  OnDiscontinuitySubscriptionResponse,
-} from './discontinuity.js';
-import { ErrorCodes } from './errors.js';
 import { RoomReactionEvents } from './events.js';
 import { Logger } from './logger.js';
 import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
 import { parseReaction } from './reaction-parser.js';
-import { ContributesToRoomLifecycle } from './room-lifecycle-manager.js';
+import { messageToEphemeral } from './realtime.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
@@ -71,7 +62,7 @@ export type RoomReactionListener = (reaction: Reaction) => void;
  *
  * Get an instance via {@link Room.reactions}.
  */
-export interface RoomReactions extends EmitsDiscontinuities {
+export interface RoomReactions {
   /**
    * Send a reaction to the room including some metadata.
    *
@@ -98,21 +89,13 @@ export interface RoomReactions extends EmitsDiscontinuities {
    * Unsubscribe all listeners from receiving room-level reaction events.
    */
   unsubscribeAll(): void;
-
-  /**
-   * Returns an instance of the Ably realtime channel used for room-level reactions.
-   * Avoid using this directly unless special features that cannot otherwise be implemented are needed.
-   *
-   * @returns The Ably realtime channel.
-   */
-  get channel(): Ably.RealtimeChannel;
 }
 
 interface RoomReactionEventsMap {
   [RoomReactionEvents.Reaction]: Reaction;
 }
 
-interface ReactionEvent {
+interface ReactionPayload {
   type: string;
   metadata?: ReactionMetadata;
 }
@@ -120,36 +103,35 @@ interface ReactionEvent {
 /**
  * @inheritDoc
  */
-export class DefaultRoomReactions implements RoomReactions, HandlesDiscontinuity, ContributesToRoomLifecycle {
+export class DefaultRoomReactions implements RoomReactions {
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _clientId: string;
   private readonly _logger: Logger;
-  private readonly _discontinuityEmitter = newDiscontinuityEmitter();
   private readonly _emitter = new EventEmitter<RoomReactionEventsMap>();
+  private readonly _roomId: string;
 
   /**
    * Constructs a new `DefaultRoomReactions` instance.
    * @param roomId The unique identifier of the room.
-   * @param channelManager The ChannelManager instance.
+   * @param channel The Realtime channel instance.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channelManager: ChannelManager, clientId: string, logger: Logger) {
-    this._channel = this._makeChannel(roomId, channelManager);
+  constructor(roomId: string, channel: Ably.RealtimeChannel, clientId: string, logger: Logger) {
+    this._roomId = roomId;
+    this._channel = channel;
     this._clientId = clientId;
     this._logger = logger;
+
+    this._applyChannelSubscriptions();
   }
 
   /**
-   * Creates the realtime channel for room reactions.
+   * Sets up channel subscriptions for room reactions.
    */
-  private _makeChannel(roomId: string, channelManager: ChannelManager): Ably.RealtimeChannel {
-    const channel = channelManager.get(`${roomId}::$chat::$reactions`);
-
+  private _applyChannelSubscriptions(): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void channel.subscribe([RoomReactionEvents.Reaction], this._forwarder.bind(this));
-
-    return channel;
+    void this._channel.subscribe([RoomReactionEvents.Reaction], this._forwarder.bind(this));
   }
 
   /**
@@ -164,7 +146,7 @@ export class DefaultRoomReactions implements RoomReactions, HandlesDiscontinuity
       return Promise.reject(new Ably.ErrorInfo('unable to send reaction; type not set and it is required', 40001, 400));
     }
 
-    const payload: ReactionEvent = {
+    const payload: ReactionPayload = {
       type: type,
       metadata: metadata ?? {},
     };
@@ -177,20 +159,20 @@ export class DefaultRoomReactions implements RoomReactions, HandlesDiscontinuity
       },
     };
 
-    return this._channel.publish(realtimeMessage);
+    return this._channel.publish(messageToEphemeral(realtimeMessage));
   }
 
   /**
    * @inheritDoc Reactions
    */
   subscribe(listener: RoomReactionListener): Subscription {
-    this._logger.trace(`RoomReactions.subscribe();`);
+    this._logger.trace(`RoomReactions.subscribe();`, { roomId: this._roomId });
     const wrapped = wrap(listener);
     this._emitter.on(wrapped);
 
     return {
       unsubscribe: () => {
-        this._logger.trace('RoomReactions.unsubscribe();');
+        this._logger.trace('RoomReactions.unsubscribe();', { roomId: this._roomId });
         this._emitter.off(wrapped);
       },
     };
@@ -200,7 +182,7 @@ export class DefaultRoomReactions implements RoomReactions, HandlesDiscontinuity
    * @inheritDoc Reactions
    */
   unsubscribeAll() {
-    this._logger.trace(`RoomReactions.unsubscribeAll();`);
+    this._logger.trace(`RoomReactions.unsubscribeAll();`, { roomId: this._roomId });
     this._emitter.off();
   }
 
@@ -214,46 +196,15 @@ export class DefaultRoomReactions implements RoomReactions, HandlesDiscontinuity
     this._emitter.emit(RoomReactionEvents.Reaction, reaction);
   };
 
-  get channel(): Ably.RealtimeChannel {
-    return this._channel;
-  }
-
   private _parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {
     try {
       return parseReaction(inbound, clientId);
     } catch (error: unknown) {
-      this._logger.error(`failed to parse incoming reaction;`, { inbound, error: error as Ably.ErrorInfo });
+      this._logger.error(`failed to parse incoming reaction;`, {
+        inbound,
+        error: error as Ably.ErrorInfo,
+        roomId: this._roomId,
+      });
     }
-  }
-
-  discontinuityDetected(reason?: Ably.ErrorInfo): void {
-    this._logger.warn('RoomReactions.discontinuityDetected();', { reason });
-    this._discontinuityEmitter.emit('discontinuity', reason);
-  }
-
-  onDiscontinuity(listener: DiscontinuityListener): OnDiscontinuitySubscriptionResponse {
-    this._logger.trace('RoomReactions.onDiscontinuity();');
-    const wrapped = wrap(listener);
-    this._discontinuityEmitter.on(wrapped);
-
-    return {
-      off: () => {
-        this._discontinuityEmitter.off(wrapped);
-      },
-    };
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get attachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.ReactionsAttachmentFailed;
-  }
-
-  /**
-   * @inheritdoc ContributesToRoomLifecycle
-   */
-  get detachmentErrorCode(): ErrorCodes {
-    return ErrorCodes.ReactionsDetachmentFailed;
   }
 }
