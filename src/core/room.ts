@@ -8,7 +8,7 @@ import { Logger } from './logger.js';
 import { DefaultMessages, Messages } from './messages.js';
 import { DefaultOccupancy, Occupancy } from './occupancy.js';
 import { DefaultPresence, Presence } from './presence.js';
-import { RoomLifeCycleManager } from './room-lifecycle-manager.js';
+import { RoomLifecycleManager } from './room-lifecycle-manager.js';
 import { InternalRoomOptions, RoomOptions, validateRoomOptions } from './room-options.js';
 import { DefaultRoomReactions, RoomReactions } from './room-reactions.js';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus, RoomStatusListener } from './room-status.js';
@@ -139,7 +139,7 @@ export class DefaultRoom implements Room {
   private readonly _occupancy: DefaultOccupancy;
   private readonly _logger: Logger;
   private readonly _lifecycle: DefaultRoomLifecycle;
-  private readonly _lifecycleManager: RoomLifeCycleManager;
+  private readonly _lifecycleManager: RoomLifecycleManager;
   private readonly _finalizer: () => Promise<void>;
   private readonly _channelManager: ChannelManager;
 
@@ -190,7 +190,7 @@ export class DefaultRoom implements Room {
 
     // Set the lifecycle manager last, so it becomes the last thing to find out about channel state changes
     // This is to allow Messages to reset subscription points before users get told of a discontinuity
-    this._lifecycleManager = new RoomLifeCycleManager(roomId, channelManager, this._lifecycle, this._logger);
+    this._lifecycleManager = new RoomLifecycleManager(roomId, channelManager, this._lifecycle, this._logger));
 
     // Setup a finalization function to clean up resources
     let finalized = false;
@@ -347,7 +347,7 @@ export class DefaultRoom implements Room {
   /**
    * @internal
    */
-  get lifecycleManager(): RoomLifeCycleManager {
+  get lifecycleManager(): RoomLifecycleManager {
     return this._lifecycleManager;
   }
 

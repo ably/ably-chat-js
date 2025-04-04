@@ -4,13 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChannelManager } from '../../src/core/channel-manager.js';
 import { ErrorCodes } from '../../src/core/errors.js';
 import { Logger } from '../../src/core/logger.js';
-import { RoomLifeCycleManager } from '../../src/core/room-lifecycle-manager.js';
+import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.js';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus } from '../../src/core/room-status.js';
 import { ErrorInfoCompareType } from '../helper/expectations.js';
 import { makeTestLogger } from '../helper/logger.js';
 
 interface TestContext {
-  roomLifeCycleManager: RoomLifeCycleManager;
+  roomLifeCycleManager: RoomLifecycleManager;
   channelManager: ChannelManager;
   roomStatus: InternalRoomLifecycle;
   logger: Logger;
@@ -26,7 +26,7 @@ interface TestContext {
 
 vi.mock('ably');
 
-describe('RoomLifeCycleManager', () => {
+describe('RoomLifecycleManager', () => {
   beforeEach<TestContext>((context) => {
     const logger = makeTestLogger();
 
@@ -87,7 +87,7 @@ describe('RoomLifeCycleManager', () => {
 
     context.roomStatus = new DefaultRoomLifecycle('test-room', logger);
     context.logger = logger;
-    context.roomLifeCycleManager = new RoomLifeCycleManager(
+    context.roomLifeCycleManager = new RoomLifecycleManager(
       'test-room',
       context.channelManager,
       context.roomStatus,
