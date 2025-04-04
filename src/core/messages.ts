@@ -555,9 +555,7 @@ export class DefaultMessages implements Messages, HandlesDiscontinuity, Contribu
 
     // Add a handler for unhandled rejections incase the room is released before the subscription point is resolved
     resolvedSubscriptionStart.catch(() => {
-      this._logger.debug('Messages.subscribe(); subscription point was not resolved before the room was released', {
-        roomId: this._roomId,
-      });
+      this._logger.debug('Messages.subscribe(); subscription point was not resolved before the room was released');
     });
 
     this._listenerSubscriptionPoints.set(wrapped, resolvedSubscriptionStart);
