@@ -1,6 +1,5 @@
 import * as Ably from 'ably';
 
-import { roomChannelName } from './channel.js';
 import { ChannelOptionsMerger } from './channel-manager.js';
 import { PresenceEvents } from './events.js';
 import { Logger } from './logger.js';
@@ -166,13 +165,12 @@ export class DefaultPresence implements Presence {
 
   /**
    * Constructs a new `DefaultPresence` instance.
-   * @param roomId The unique identifier of the room.
    * @param channel The Realtime channel instance.
    * @param clientId The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channel: Ably.RealtimeChannel, clientId: string, logger: Logger) {
+  constructor(channel: Ably.RealtimeChannel, clientId: string, logger: Logger) {
     this._channel = channel;
     this._clientId = clientId;
     this._logger = logger;
@@ -331,16 +329,6 @@ export class DefaultPresence implements Presence {
       );
     }
   };
-
-  /**
-   * Returns the channel name for the presence channel.
-   *
-   * @param roomId The unique identifier of the room.
-   * @returns The channel name for the presence channel.
-   */
-  static channelName(roomId: string): string {
-    return roomChannelName(roomId);
-  }
 
   /**
    * Merges the channel options for the room with the ones required for presence.
