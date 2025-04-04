@@ -189,7 +189,6 @@ export class DefaultOccupancy implements Occupancy {
       return;
     }
 
-    this._logger.debug('emitting occupancy update');
     this._emitter.emit(OccupancyEvents.Occupancy, {
       connections: connections,
       presenceMembers: presenceMembers,
