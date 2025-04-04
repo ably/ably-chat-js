@@ -85,7 +85,7 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
 
   const receivedEventNumber = useRef(0);
   const triggeredEventNumber = useRef(0);
-  const retryTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const retryTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const numRetries = useRef(0);
   const latestPresentData = useRef<PresenceMember[]>([]);
   const [presenceData, setPresenceData] = useState<PresenceMember[]>([]);
@@ -120,7 +120,7 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
       // clear the previous retry if we have received a new event
       if (retryTimeout.current) {
         clearTimeout(retryTimeout.current);
-        retryTimeout.current = undefined;
+        retryTimeout.current = null;
         numRetries.current = 0;
       }
 
@@ -140,7 +140,7 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
               // clear the retry now we have resolved
               if (retryTimeout.current) {
                 clearTimeout(retryTimeout.current);
-                retryTimeout.current = undefined;
+                retryTimeout.current = null;
                 numRetries.current = 0;
               }
 
@@ -192,7 +192,7 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
               });
 
               retryTimeout.current = setTimeout(() => {
-                retryTimeout.current = undefined;
+                retryTimeout.current = null;
                 receivedEventNumber.current += 1;
                 getAndSetState(receivedEventNumber.current);
               }, waitBeforeRetry);
