@@ -130,13 +130,8 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     return wrapRoomPromise(
       context.room,
       (room) => {
-<<<<<<< HEAD
         logger.debug('useTyping(); applying onDiscontinuity listener');
-        const { off } = room.typing.onDiscontinuity(onDiscontinuityRef);
-=======
-        logger.debug('useTyping(); applying onDiscontinuity listener', { roomId: context.roomId });
         const { off } = room.onDiscontinuity(onDiscontinuityRef);
->>>>>>> ccf7094 (feat: consolidate onto a single channel)
         return () => {
           logger.debug('useTyping(); removing onDiscontinuity listener');
           off();
