@@ -190,7 +190,7 @@ export class DefaultRoom implements Room {
 
     // Set the lifecycle manager last, so it becomes the last thing to find out about channel state changes
     // This is to allow Messages to reset subscription points before users get told of a discontinuity
-    this._lifecycleManager = new RoomLifecycleManager(roomId, channelManager, this._lifecycle, this._logger));
+    this._lifecycleManager = new RoomLifecycleManager(roomId, channelManager, this._lifecycle, this._logger);
 
     // Setup a finalization function to clean up resources
     let finalized = false;
