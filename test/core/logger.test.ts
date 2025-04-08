@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
 import { LogContext, Logger, LogLevel, makeLogger } from '../../src/core/logger.ts';
@@ -83,6 +83,72 @@ describe('logger', () => {
       code: 50000,
     });
   });
+});
+
+describe('withContext', () => {
+  it('creates new logger with merged context', () =>
+    new Promise<void>((done) => {
+      const baseContext = { baseKey: 'baseValue', sharedKey: 'baseSharedValue' };
+      const newContext = { newKey: 'newValue', sharedKey: 'newSharedValue' };
+
+      const handler = (message: string, level: LogLevel, context?: LogContext) => {
+        expect(context).toEqual({
+          baseKey: 'baseValue',
+          newKey: 'newValue',
+          sharedKey: 'newSharedValue', // New context overrides base context
+        });
+        expect(level).toBe(LogLevel.Debug);
+        expect(message).toBe('test message');
+        done();
+      };
+
+      const baseLogger = makeLogger(
+        normalizeClientOptions({
+          logLevel: LogLevel.Debug,
+          logHandler: handler,
+        }),
+      );
+      const newLogger = baseLogger.withContext(baseContext).withContext(newContext);
+
+      newLogger.debug('test message');
+    }));
+
+  it('maintains original log level', () => {
+    const handler = vi.fn();
+    const baseLogger = makeLogger(
+      normalizeClientOptions({
+        logLevel: LogLevel.Warn,
+        logHandler: handler,
+      }),
+    );
+    const newLogger = baseLogger.withContext({ key: 'value' });
+
+    newLogger.debug('should not log'); // Below warn level
+    newLogger.warn('should log');
+    newLogger.error('should log');
+
+    expect(handler).toHaveBeenCalledTimes(2);
+  });
+
+  it('handles undefined base context', () =>
+    new Promise<void>((done) => {
+      const newContext = { key: 'value' };
+
+      const handler = (message: string, level: LogLevel, context?: LogContext) => {
+        expect(context).toEqual(newContext);
+        done();
+      };
+
+      const baseLogger = makeLogger(
+        normalizeClientOptions({
+          logLevel: LogLevel.Debug,
+          logHandler: handler,
+        }),
+      );
+      const newLogger = baseLogger.withContext(newContext);
+
+      newLogger.debug('test message');
+    }));
 });
 
 const callMethodForLevel = (log: Logger, level: Omit<LogLevel, 'silent'>, context?: object) => {

@@ -20,7 +20,7 @@
     "copilot:from-cursor": "(cd .github && npx tsx ./copilot-from-cursor.ts)",
     "lint": "eslint . && npm run cspell",
     "lint:fix": "eslint --fix .; (npm run format > /dev/null)",
-    "format": "prettier --write src test __mocks__ demo/src",
+    "format": "prettier --list-different --write src test __mocks__ demo/src",
     "format:check": "prettier --check src test __mocks__ demo/src",
     "test": "vitest run",
     "test:chat": "vitest run --project chat",

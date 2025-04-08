@@ -8,7 +8,7 @@ import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { useChatConnection } from './use-chat-connection.js';
-import { useLogger } from './use-logger.js';
+import { useRoomLogger } from './use-logger.js';
 
 /**
  * The parameters for the {@link useRoom} hook.
@@ -63,8 +63,8 @@ export interface UseRoomResponse extends ChatStatusResponse {
 export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
   const context = useRoomContext('useRoom');
   const roomId = context.roomId;
-  const logger = useLogger();
-  logger.debug('useRoom();', { roomId: roomId });
+  const logger = useRoomLogger();
+  logger.debug('useRoom();');
 
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
     onStatusChange: params?.onConnectionStatusChange,

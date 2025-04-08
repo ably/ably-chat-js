@@ -40,6 +40,14 @@ export interface Logger {
    * @param context The context of the log message as key-value pairs.
    */
   error(message: string, context?: LogContext): void;
+
+  /**
+   * Creates a new logger with a context that will be merged with any context provided to individual log calls.
+   * The context will be overridden by any matching keys in the individual log call's context.
+   * @param context The context to use for all log calls.
+   * @returns A new logger instance with the context.
+   */
+  withContext(context: LogContext): Logger;
 }
 
 /**
@@ -167,9 +175,11 @@ const logLevelNumberMap = new Map<LogLevel, LogLevelNumbers>([
 class DefaultLogger implements Logger {
   private readonly _handler: LogHandler;
   private readonly _levelNumber: LogLevelNumbers;
+  private readonly _context?: LogContext;
 
-  constructor(handler: LogHandler, level: LogLevel) {
+  constructor(handler: LogHandler, level: LogLevel, context?: LogContext) {
     this._handler = handler;
+    this._context = context;
 
     const levelNumber = logLevelNumberMap.get(level);
     if (levelNumber === undefined) {
@@ -199,9 +209,25 @@ class DefaultLogger implements Logger {
     this._write(message, LogLevel.Error, LogLevelNumbers.Error, context);
   }
 
+  withContext(context: LogContext): Logger {
+    // Get the original log level by finding the key in logLevelNumberMap that matches this._levelNumber
+    const originalLevel =
+      [...logLevelNumberMap.entries()].find(([, value]) => value === this._levelNumber)?.[0] ?? LogLevel.Error;
+
+    return new DefaultLogger(this._handler, originalLevel, this._mergeContext(context));
+  }
+
   private _write(message: string, level: LogLevel, levelNumber: LogLevelNumbers, context?: LogContext): void {
     if (levelNumber >= this._levelNumber) {
-      this._handler(message, level, context);
+      this._handler(message, level, this._mergeContext(context));
     }
+  }
+
+  private _mergeContext(context?: LogContext): LogContext | undefined {
+    if (!this._context) {
+      return context ?? undefined;
+    }
+
+    return context ? { ...this._context, ...context } : this._context;
   }
 }

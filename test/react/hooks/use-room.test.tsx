@@ -163,6 +163,7 @@ describe('useRoom', () => {
       />,
     );
 
+    // On the first render, the room attach should have been called once by the second component
     expect(called1).toBe(1);
     expect(called2).toBe(1);
     await vi.waitFor(() => {
@@ -171,6 +172,8 @@ describe('useRoom', () => {
     expect(room.detach).toHaveBeenCalledTimes(0);
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
+    // On this rerender, the first component is unmounted, but the second remains mounted
+    // As the first component does not do attach or release, the room should not register any changes
     r.rerender(
       <TestProvider
         room1={false}
@@ -185,6 +188,8 @@ describe('useRoom', () => {
     expect(room.detach).toHaveBeenCalledTimes(0);
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
+    // We bring back component 1, and both components are mounted
+    // Again, because component 1 does not do attach or release, the room should not register any changes
     r.rerender(
       <TestProvider
         room1={true}
@@ -199,6 +204,8 @@ describe('useRoom', () => {
     expect(room.detach).toHaveBeenCalledTimes(0);
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
+    // We unmount component 1 again
+    // The room should not be released, as component 2 is still mounted
     r.rerender(
       <TestProvider
         room1={false}
@@ -213,6 +220,8 @@ describe('useRoom', () => {
     expect(room.detach).toHaveBeenCalledTimes(0);
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
+    // We unmount both components
+    // As component 2 does attach and release, the room should be released
     r.rerender(
       <TestProvider
         room1={false}

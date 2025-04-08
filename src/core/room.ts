@@ -156,42 +156,44 @@ export class DefaultRoom implements Room {
   ) {
     validateRoomOptions(options);
     this._nonce = nonce;
-    logger.debug('Room();', { roomId, options, nonce: this._nonce });
+
+    // Create a logger with room context
+    this._logger = logger.withContext({ roomId, roomNonce: nonce });
+    this._logger.debug('Room();', { options });
 
     this._roomId = roomId;
     this._options = options;
     this._chatApi = chatApi;
-    this._logger = logger;
-    this._lifecycle = new DefaultRoomLifecycle(roomId, logger);
+    this._lifecycle = new DefaultRoomLifecycle(roomId, this._logger);
 
-    const channelManager = (this._channelManager = this._getChannelManager(options, realtime, logger));
+    const channelManager = (this._channelManager = this._getChannelManager(options, realtime, this._logger));
 
     // Setup features
-    this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, logger);
+    this._messages = new DefaultMessages(roomId, channelManager, this._chatApi, realtime.auth.clientId, this._logger);
 
     const features: ContributesToRoomLifecycle[] = [this._messages];
 
     if (options.presence) {
-      this._logger.debug('enabling presence on room', { roomId });
-      this._presence = new DefaultPresence(roomId, channelManager, realtime.auth.clientId, logger);
+      this._logger.debug('enabling presence on room');
+      this._presence = new DefaultPresence(roomId, channelManager, realtime.auth.clientId, this._logger);
       features.push(this._presence);
     }
 
     if (options.typing) {
-      this._logger.debug('enabling typing on room', { roomId });
-      this._typing = new DefaultTyping(roomId, options.typing, channelManager, realtime.auth.clientId, logger);
+      this._logger.debug('enabling typing on room');
+      this._typing = new DefaultTyping(roomId, options.typing, channelManager, realtime.auth.clientId, this._logger);
       features.push(this._typing);
     }
 
     if (options.reactions) {
-      this._logger.debug('enabling reactions on room', { roomId });
-      this._reactions = new DefaultRoomReactions(roomId, channelManager, realtime.auth.clientId, logger);
+      this._logger.debug('enabling reactions on room');
+      this._reactions = new DefaultRoomReactions(roomId, channelManager, realtime.auth.clientId, this._logger);
       features.push(this._reactions);
     }
 
     if (options.occupancy) {
-      this._logger.debug('enabling occupancy on room', { roomId });
-      this._occupancy = new DefaultOccupancy(roomId, channelManager, this._chatApi, logger);
+      this._logger.debug('enabling occupancy on room');
+      this._occupancy = new DefaultOccupancy(roomId, channelManager, this._chatApi, this._logger);
       features.push(this._occupancy);
     }
 
@@ -338,7 +340,7 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   async attach() {
-    this._logger.trace('Room.attach();', { nonce: this._nonce, roomId: this._roomId });
+    this._logger.trace('Room.attach();');
     return this._lifecycleManager.attach();
   }
 
@@ -346,7 +348,7 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   async detach(): Promise<void> {
-    this._logger.trace('Room.detach();', { nonce: this._nonce, roomId: this._roomId });
+    this._logger.trace('Room.detach();');
     return this._lifecycleManager.detach();
   }
 
@@ -355,7 +357,7 @@ export class DefaultRoom implements Room {
    * We guarantee that this does not throw an error.
    */
   release(): Promise<void> {
-    this._logger.trace('Room.release();', { nonce: this._nonce, roomId: this._roomId });
+    this._logger.trace('Room.release();');
     return this._finalizer();
   }
 
