@@ -88,8 +88,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       return new Set<string>();
     });
 
-    let mounted = true;
-
     void context.room
       .then((room) => {
         // If we're not attached, we can't call typing.get() right now
@@ -97,10 +95,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
           const typing = room.typing.get();
           logger.debug('useTyping(); room attached, getting initial typers', { typing });
           setCurrentlyTyping(typing);
-        } else {
-          if (!mounted) return;
-          logger.debug('useTyping(); room not attached, setting currentlyTyping to empty');
-          setCurrentlyTyping(new Set());
         }
       })
       .catch();
@@ -115,7 +109,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
 
         return () => {
           logger.debug('useTyping(); unsubscribing from typing events');
-          mounted = false;
           unsubscribe();
         };
       },
