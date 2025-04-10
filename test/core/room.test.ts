@@ -82,7 +82,7 @@ describe('Room', () => {
       const room = context.getRoom(
         {
           occupancy: {
-            enableInboundOccupancy: true,
+            enableEvents: true,
           },
         },
         setReact,
