@@ -23,14 +23,14 @@ const DefaultRoomOptions: Omit<InternalRoomOptions, 'isReactClient'> = {
     /**
      * Whether to enable occupancy events.
      */
-    enableOccupancyEvents: false,
+    enableEvents: false,
   },
 
   /**
    * The default presence options for the room.
    */
   presence: {
-    enablePresenceEvents: true,
+    enableEvents: true,
   },
 };
 
@@ -62,7 +62,7 @@ export interface OccupancyOptions {
    *
    * @defaultValue false
    */
-  enableOccupancyEvents?: boolean;
+  enableEvents?: boolean;
 }
 
 /**
@@ -76,7 +76,7 @@ export interface PresenceOptions {
    *
    * @defaultValue true
    */
-  enablePresenceEvents?: boolean;
+  enableEvents?: boolean;
 }
 
 /**

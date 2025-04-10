@@ -90,7 +90,7 @@ describe('occupancy', () => {
   it<TestContext>('allows subscriptions to inband occupancy', { timeout: TEST_TIMEOUT }, async (context) => {
     const { chat } = context;
 
-    const room = await getRandomRoom(chat, { occupancy: { enableOccupancyEvents: true } });
+    const room = await getRandomRoom(chat, { occupancy: { enableEvents: true } });
 
     // Subscribe to occupancy
     const occupancyUpdates: OccupancyEvent[] = [];

@@ -46,7 +46,7 @@ describe('ChatRoomProvider', () => {
       expect(roomResolved).toBeTruthy();
     });
     await expect(() =>
-      chatClient.rooms.get(roomId, { occupancy: { enableOccupancyEvents: true } }),
+      chatClient.rooms.get(roomId, { occupancy: { enableEvents: true } }),
     ).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
@@ -77,7 +77,7 @@ describe('ChatRoomProvider', () => {
 
     // Try to get the client to get a room with different options, should fail
     await expect(() =>
-      chatClient.rooms.get(roomId, { occupancy: { enableOccupancyEvents: true } }),
+      chatClient.rooms.get(roomId, { occupancy: { enableEvents: true } }),
     ).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
@@ -132,7 +132,7 @@ describe('ChatRoomProvider', () => {
 
     // Try to get the client to get a room with different options, should fail
     await expect(() =>
-      chatClient.rooms.get(roomId, { occupancy: { enableOccupancyEvents: true } }),
+      chatClient.rooms.get(roomId, { occupancy: { enableEvents: true } }),
     ).rejects.toBeErrorInfoWithCode(40000);
   });
 
@@ -173,7 +173,7 @@ describe('ChatRoomProvider', () => {
 
     // Try to get the client to get a room with different options, should fail (since it should not be released)
     await expect(() =>
-      chatClient.rooms.get(roomId, { occupancy: { enableOccupancyEvents: true } }),
+      chatClient.rooms.get(roomId, { occupancy: { enableEvents: true } }),
     ).rejects.toBeErrorInfoWithCode(40000);
 
     await chatClient.rooms.release(roomId);

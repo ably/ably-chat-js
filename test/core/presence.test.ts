@@ -37,7 +37,7 @@ describe('Presence', () => {
     });
 
     it<TestContext>('throws ErrorInfo if presence events are not enabled', (context) => {
-      const room = context.makeRoom({ presence: { enablePresenceEvents: false } });
+      const room = context.makeRoom({ presence: { enableEvents: false } });
 
       expect(() => {
         room.presence.subscribe(() => {});
@@ -98,7 +98,7 @@ describe('Presence', () => {
   describe<TestContext>('room configuration', () => {
     it<TestContext>('removes the presence channel mode if room option disabled', (context) => {
       vi.spyOn(context.realtime.channels, 'get');
-      const room = context.makeRoom({ presence: { enablePresenceEvents: false } });
+      const room = context.makeRoom({ presence: { enableEvents: false } });
 
       // Check the channel was called as planned
       expect(context.realtime.channels.get).toHaveBeenCalledOnce();
@@ -113,7 +113,7 @@ describe('Presence', () => {
 
   it<TestContext>('does not remove mode if option enabled', (context) => {
     vi.spyOn(context.realtime.channels, 'get');
-    const room = context.makeRoom({ presence: { enablePresenceEvents: true } });
+    const room = context.makeRoom({ presence: { enableEvents: true } });
 
     // Check the channel was called as planned
     expect(context.realtime.channels.get).toHaveBeenCalledOnce();

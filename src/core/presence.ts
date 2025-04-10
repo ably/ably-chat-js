@@ -139,7 +139,7 @@ export interface Presence {
    * Subscribe the given listener from the given list of events.
    *
    * Note that this method will throw an error if presence events are not enabled in the room options.
-   * Make sure to set `enablePresenceEvents: true` in your room options to use this feature.
+   * Make sure to set `enableEvents: true` in your room options to use this feature.
    *
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
@@ -151,7 +151,7 @@ export interface Presence {
    * Subscribe the given listener to all presence events.
    *
    * Note that this method will throw an error if presence events are not enabled in the room options.
-   * Make sure to set `enablePresenceEvents: true` in your room options to use this feature.
+   * Make sure to set `enableEvents: true` in your room options to use this feature.
    *
    * @param listener listener to subscribe
    * @throws {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
@@ -269,7 +269,7 @@ export class DefaultPresence implements Presence {
    * Subscribe the given listener from the given list of events.
    *
    * Note that this method will throw an error if presence events are not enabled in the room options.
-   * Make sure to set `enablePresenceEvents: true` in your room options to use this feature.
+   * Make sure to set `enableEvents: true` in your room options to use this feature.
    *
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
@@ -280,7 +280,7 @@ export class DefaultPresence implements Presence {
    * Subscribe the given listener to all presence events.
    *
    * Note that this method will throw an error if presence events are not enabled in the room options.
-   * Make sure to set `enablePresenceEvents: true` in your room options to use this feature.
+   * Make sure to set `enableEvents: true` in your room options to use this feature.
    *
    * @param listener listener to subscribe
    * @throws {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
@@ -293,7 +293,7 @@ export class DefaultPresence implements Presence {
     this._logger.trace('Presence.subscribe(); listenerOrEvents', { listenerOrEvents });
 
     // Check if presence events are enabled
-    if (!this._options.presence.enablePresenceEvents) {
+    if (!this._options.presence.enableEvents) {
       this._logger.error('could not subscribe to presence; presence events are not enabled');
       throw new Ably.ErrorInfo('could not subscribe to presence; presence events are not enabled', 40000, 400);
     }
@@ -369,7 +369,7 @@ export class DefaultPresence implements Presence {
   static channelOptionMerger(roomOptions: InternalRoomOptions): ChannelOptionsMerger {
     return (options) => {
       // User wants to receive presence events, so we don't need to do anything.
-      if (roomOptions.presence.enablePresenceEvents) {
+      if (roomOptions.presence.enableEvents) {
         return options;
       }
 
