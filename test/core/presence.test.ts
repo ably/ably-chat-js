@@ -36,6 +36,17 @@ describe('Presence', () => {
       });
     });
 
+    it<TestContext>('throws ErrorInfo if presence events are not enabled', (context) => {
+      const room = context.makeRoom({ presence: { enablePresenceEvents: false } });
+
+      expect(() => {
+        room.presence.subscribe(() => {});
+      }).toThrowErrorInfo({
+        message: 'could not subscribe to presence; presence events are not enabled',
+        code: 40000,
+      });
+    });
+
     it<TestContext>('should only unsubscribe the correct subscription', (context) => {
       const { room } = context;
       const received: PresenceEvent[] = [];
@@ -87,7 +98,7 @@ describe('Presence', () => {
   describe<TestContext>('room configuration', () => {
     it<TestContext>('removes the presence channel mode if room option disabled', (context) => {
       vi.spyOn(context.realtime.channels, 'get');
-      const room = context.makeRoom({ presence: { receivePresenceEvents: false } });
+      const room = context.makeRoom({ presence: { enablePresenceEvents: false } });
 
       // Check the channel was called as planned
       expect(context.realtime.channels.get).toHaveBeenCalledOnce();
@@ -102,7 +113,7 @@ describe('Presence', () => {
 
   it<TestContext>('does not remove mode if option enabled', (context) => {
     vi.spyOn(context.realtime.channels, 'get');
-    const room = context.makeRoom({ presence: { receivePresenceEvents: true } });
+    const room = context.makeRoom({ presence: { enablePresenceEvents: true } });
 
     // Check the channel was called as planned
     expect(context.realtime.channels.get).toHaveBeenCalledOnce();

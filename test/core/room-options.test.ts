@@ -14,7 +14,7 @@ describe('normalizeRoomOptions', () => {
         enableOccupancyEvents: false,
       },
       presence: {
-        receivePresenceEvents: true,
+        enablePresenceEvents: true,
       },
       isReactClient: false,
     });
@@ -38,7 +38,7 @@ describe('normalizeRoomOptions', () => {
       heartbeatThrottleMs: 5000,
     });
     expect(result.presence).toEqual({
-      receivePresenceEvents: true,
+      enablePresenceEvents: true,
     });
   });
 
@@ -59,14 +59,14 @@ describe('normalizeRoomOptions', () => {
   it('should merge provided presence options with defaults', () => {
     const options: RoomOptions = {
       presence: {
-        receivePresenceEvents: false,
+        enablePresenceEvents: false,
       },
     };
 
     const result = normalizeRoomOptions(options, false);
 
     expect(result.presence).toEqual({
-      receivePresenceEvents: false,
+      enablePresenceEvents: false,
     });
   });
 
@@ -76,7 +76,7 @@ describe('normalizeRoomOptions', () => {
         heartbeatThrottleMs: 3000,
       },
       presence: {
-        receivePresenceEvents: false,
+        enablePresenceEvents: false,
       },
     };
 
@@ -90,7 +90,7 @@ describe('normalizeRoomOptions', () => {
         enableOccupancyEvents: false, // Default preserved
       },
       presence: {
-        receivePresenceEvents: false,
+        enablePresenceEvents: false,
       },
       isReactClient: false,
     });

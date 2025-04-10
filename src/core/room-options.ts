@@ -30,7 +30,7 @@ const DefaultRoomOptions: Omit<InternalRoomOptions, 'isReactClient'> = {
    * The default presence options for the room.
    */
   presence: {
-    receivePresenceEvents: true,
+    enablePresenceEvents: true,
   },
 };
 
@@ -76,7 +76,7 @@ export interface PresenceOptions {
    *
    * @defaultValue true
    */
-  receivePresenceEvents?: boolean;
+  enablePresenceEvents?: boolean;
 }
 
 /**

@@ -137,14 +137,24 @@ export interface Presence {
 
   /**
    * Subscribe the given listener from the given list of events.
+   *
+   * Note that this method will throw an error if presence events are not enabled in the room options.
+   * Make sure to set `enablePresenceEvents: true` in your room options to use this feature.
+   *
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
+   * @throws {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
   subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Subscription;
 
   /**
    * Subscribe the given listener to all presence events.
+   *
+   * Note that this method will throw an error if presence events are not enabled in the room options.
+   * Make sure to set `enablePresenceEvents: true` in your room options to use this feature.
+   *
    * @param listener listener to subscribe
+   * @throws {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
   subscribe(listener?: PresenceListener): Subscription;
 
@@ -162,6 +172,7 @@ export class DefaultPresence implements Presence {
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<PresenceEventsMap>();
+  private readonly _options: InternalRoomOptions;
 
   /**
    * Constructs a new `DefaultPresence` instance.
@@ -169,11 +180,13 @@ export class DefaultPresence implements Presence {
    * @param clientId The client ID, attached to presences messages as an identifier of the sender.
    * A channel can have multiple connections using the same clientId.
    * @param logger An instance of the Logger.
+   * @param options The room options.
    */
-  constructor(channel: Ably.RealtimeChannel, clientId: string, logger: Logger) {
+  constructor(channel: Ably.RealtimeChannel, clientId: string, logger: Logger, options: InternalRoomOptions) {
     this._channel = channel;
     this._clientId = clientId;
     this._logger = logger;
+    this._options = options;
 
     this._applyChannelSubscriptions();
   }
@@ -254,13 +267,23 @@ export class DefaultPresence implements Presence {
 
   /**
    * Subscribe the given listener from the given list of events.
+   *
+   * Note that this method will throw an error if presence events are not enabled in the room options.
+   * Make sure to set `enablePresenceEvents: true` in your room options to use this feature.
+   *
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
+   * @throws {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
   subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Subscription;
   /**
    * Subscribe the given listener to all presence events.
+   *
+   * Note that this method will throw an error if presence events are not enabled in the room options.
+   * Make sure to set `enablePresenceEvents: true` in your room options to use this feature.
+   *
    * @param listener listener to subscribe
+   * @throws {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
   subscribe(listener?: PresenceListener): Subscription;
   subscribe(
@@ -268,6 +291,13 @@ export class DefaultPresence implements Presence {
     listener?: PresenceListener,
   ): Subscription {
     this._logger.trace('Presence.subscribe(); listenerOrEvents', { listenerOrEvents });
+
+    // Check if presence events are enabled
+    if (!this._options.presence.enablePresenceEvents) {
+      this._logger.error('could not subscribe to presence; presence events are not enabled');
+      throw new Ably.ErrorInfo('could not subscribe to presence; presence events are not enabled', 40000, 400);
+    }
+
     if (!listenerOrEvents && !listener) {
       this._logger.error('could not subscribe to presence; invalid arguments');
       throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400);
@@ -339,7 +369,7 @@ export class DefaultPresence implements Presence {
   static channelOptionMerger(roomOptions: InternalRoomOptions): ChannelOptionsMerger {
     return (options) => {
       // User wants to receive presence events, so we don't need to do anything.
-      if (roomOptions.presence.receivePresenceEvents) {
+      if (roomOptions.presence.enablePresenceEvents) {
         return options;
       }
 
