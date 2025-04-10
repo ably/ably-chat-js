@@ -88,17 +88,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
       return new Set<string>();
     });
 
-    void context.room
-      .then((room) => {
-        // If we're not attached, we can't call typing.get() right now
-        if (room.status === RoomStatus.Attached) {
-          const typing = room.typing.get();
-          logger.debug('useTyping(); room attached, getting initial typers', { typing });
-          setCurrentlyTyping(typing);
-        }
-      })
-      .catch();
-
     return wrapRoomPromise(
       context.room,
       (room) => {
@@ -106,6 +95,13 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
         const { unsubscribe } = room.typing.subscribe((event) => {
           setCurrentlyTyping(event.currentlyTyping);
         });
+
+        // If we're not attached, we can't call typing.get() right now
+        if (room.status === RoomStatus.Attached) {
+          const typing = room.typing.get();
+          logger.debug('useTyping(); room attached, getting initial typers', { typing });
+          setCurrentlyTyping(typing);
+        }
 
         return () => {
           logger.debug('useTyping(); unsubscribing from typing events');
