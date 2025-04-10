@@ -63,8 +63,8 @@ class DefaultRoomPromise implements RoomPromise {
     this._onResolve = onResolve;
     this._logger = logger;
 
-    this.mount(room).catch(() => {
-      this._logger.trace('DefaultRoomPromise(); mount error');
+    this.mount(room).catch((error: unknown) => {
+      this._logger.trace('DefaultRoomPromise(); mount error', { roomId: this._roomId, error: error });
     });
   }
 

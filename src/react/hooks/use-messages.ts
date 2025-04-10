@@ -11,6 +11,13 @@ import {
   QueryOptions,
   SendMessageParams,
 } from '../../core/messages.js';
+import type {
+  AddMessageReactionParams,
+  DeleteMessageReactionParams,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  MessagesReactions,
+} from '../../core/messages-reactions.js'; // imported for typedoc links
+import { MessageRawReactionListener, MessageReactionListener } from '../../core/messages-reactions.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
@@ -47,6 +54,16 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly deleteMessage: Messages['delete'];
 
   /**
+   * A shortcut to the {@link MessagesReactions.add} method.
+   */
+  readonly addReaction: Messages['reactions']['add'];
+
+  /**
+   * A shortcut to the {@link MessagesReactions.delete} method.
+   */
+  readonly deleteReaction: Messages['reactions']['delete'];
+
+  /**
    * Provides access to the underlying {@link Messages} instance of the room.
    */
   readonly messages?: Messages;
@@ -76,6 +93,19 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
    * The listener is removed when the component unmounts.
    */
   listener?: MessageListener;
+
+  /**
+   * An optional listener that can be provided to receive reaction summaries to
+   * messages in the room. The listener is removed when the component unmounts.
+   */
+  reactionsListener?: MessageReactionListener;
+
+  /**
+   * An optional listener that can be provided to receive individual reactions
+   * to messages in the room. The listener is removed when the component
+   * unmounts.
+   */
+  rawReactionsListener?: MessageRawReactionListener;
 }
 
 /**
@@ -118,6 +148,18 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   const update = useCallback(
     (message: Message, details?: OperationDetails) =>
       context.room.then((room) => room.messages.update(message, details)),
+    [context],
+  );
+
+  const addReaction: Messages['reactions']['add'] = useCallback(
+    (message: Message, params: AddMessageReactionParams) =>
+      context.room.then((room) => room.messages.reactions.add(message, params)),
+    [context],
+  );
+
+  const deleteReaction: Messages['reactions']['delete'] = useCallback(
+    (message: Message, params?: DeleteMessageReactionParams) =>
+      context.room.then((room) => room.messages.reactions.delete(message, params)),
     [context],
   );
 
@@ -183,6 +225,47 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     ).unmount();
   }, [context, logger, onDiscontinuityRef]);
 
+  useEffect(() => {
+    if (!params?.reactionsListener) return;
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        if (!params.reactionsListener) {
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
+          return () => {};
+        }
+        logger.debug('useMessages(); applying reactions listener', { roomId: context.roomId });
+        const { unsubscribe } = room.messages.reactions.subscribe(params.reactionsListener);
+        return () => {
+          logger.debug('useMessages(); removing reactions listener', { roomId: context.roomId });
+          unsubscribe();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, logger, params?.reactionsListener]);
+
+  useEffect(() => {
+    if (!params?.rawReactionsListener) return;
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        if (!params.rawReactionsListener) {
+          return () => void 0;
+        }
+        logger.debug('useMessages(); applying raw reactions listener', { roomId: context.roomId });
+        const { unsubscribe } = room.messages.reactions.subscribeRaw(params.rawReactionsListener);
+        return () => {
+          logger.debug('useMessages(); removing raw reactions listener', { roomId: context.roomId });
+          unsubscribe();
+        };
+      },
+      logger,
+      context.roomId,
+    ).unmount();
+  }, [context, logger, params?.rawReactionsListener]);
+
   return {
     messages: useEventualRoomProperty((room) => room.messages),
     send,
@@ -190,6 +273,8 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     get,
     deleteMessage,
     getPreviousMessages,
+    addReaction,
+    deleteReaction,
     connectionStatus,
     connectionError,
     roomStatus,
