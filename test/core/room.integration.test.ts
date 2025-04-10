@@ -24,19 +24,19 @@ describe('Room', () => {
     expect(room.status).toEqual(RoomStatus.Attached);
 
     // If we check the underlying channels, they should be attached too
-    const messagesChannel = room.messages.channel;
+    const messagesChannel = room.channel;
     expect(messagesChannel.state).toEqual('attached');
 
-    const reactionsChannel = room.reactions.channel;
+    const reactionsChannel = room.channel;
     expect(reactionsChannel.state).toEqual('attached');
 
-    const typingChannel = room.typing.channel;
+    const typingChannel = room.channel;
     expect(typingChannel.state).toEqual('attached');
 
-    const presenceChannel = room.presence.channel;
+    const presenceChannel = room.channel;
     expect(presenceChannel.state).toEqual('attached');
 
-    const occupancyChannel = room.occupancy.channel;
+    const occupancyChannel = room.channel;
     expect(occupancyChannel.state).toEqual('attached');
   });
 
@@ -48,19 +48,19 @@ describe('Room', () => {
     expect(room.status).toEqual(RoomStatus.Detached);
 
     // If we check the underlying channels, they should be detached too
-    const messagesChannel = room.messages.channel;
+    const messagesChannel = room.channel;
     expect(messagesChannel.state).toEqual('detached');
 
-    const reactionsChannel = room.reactions.channel;
+    const reactionsChannel = room.channel;
     expect(reactionsChannel.state).toEqual('detached');
 
-    const typingChannel = room.typing.channel;
+    const typingChannel = room.channel;
     expect(typingChannel.state).toEqual('detached');
 
-    const presenceChannel = room.presence.channel;
+    const presenceChannel = room.channel;
     expect(presenceChannel.state).toEqual('detached');
 
-    const occupancyChannel = room.occupancy.channel;
+    const occupancyChannel = room.channel;
     expect(occupancyChannel.state).toEqual('detached');
   });
 

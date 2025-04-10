@@ -121,7 +121,7 @@ export class ChatApi {
       }
     }
 
-    const data = await this._makeAuthorizedPaginatedRequest<Message>(`/chat/v2/rooms/${roomId}/messages`, apiParams);
+    const data = await this._makeAuthorizedPaginatedRequest<Message>(`/chat/v3/rooms/${roomId}/messages`, apiParams);
     return this._recursivePaginateMessages(data);
   }
 
@@ -129,19 +129,13 @@ export class ChatApi {
     const mapToDefaultMessage = (message: Message): DefaultMessage => {
       const metadata = message.metadata as MessageMetadata | undefined;
       const headers = message.headers as MessageHeaders | undefined;
-      return new DefaultMessage(
-        message.serial,
-        message.clientId,
-        message.roomId,
-        message.text,
-        metadata ?? {},
-        headers ?? {},
-        message.action,
-        message.version,
-        (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
-        new Date(message.timestamp),
-        message.operation,
-      );
+      return new DefaultMessage({
+        ...message,
+        metadata: metadata ?? {},
+        headers: headers ?? {},
+        createdAt: (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
+        timestamp: new Date(message.timestamp),
+      });
     };
 
     const paginatedResult: PaginatedResult<Message> = {} as PaginatedResult<Message>;
@@ -169,7 +163,7 @@ export class ChatApi {
     serial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
-      `/chat/v2/rooms/${roomId}/messages/${serial}/delete`,
+      `/chat/v3/rooms/${roomId}/messages/${serial}/delete`,
       'POST',
       body,
       {},
@@ -189,14 +183,14 @@ export class ChatApi {
       body.headers = params.headers;
     }
     roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v2/rooms/${roomId}/messages`, 'POST', body);
+    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v3/rooms/${roomId}/messages`, 'POST', body);
   }
 
   async updateMessage(roomId: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
     const encodedSerial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest<UpdateMessageResponse>(
-      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}`,
+      `/chat/v3/rooms/${roomId}/messages/${encodedSerial}`,
       'PUT',
       params,
     );
@@ -204,7 +198,7 @@ export class ChatApi {
 
   async getOccupancy(roomId: string): Promise<OccupancyEvent> {
     roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v1/rooms/${roomId}/occupancy`, 'GET');
+    return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v3/rooms/${roomId}/occupancy`, 'GET');
   }
 
   private async _makeAuthorizedRequest<RES = undefined>(

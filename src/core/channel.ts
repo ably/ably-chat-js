@@ -1,6 +1,7 @@
 /**
- * Get the channel name for the chat messages channel.
+ * Gets the single main channel for the chat room.
+ *
  * @param roomId The room ID.
- * @returns The channel name.
+ * @returns  The channel name.
  */
-export const messagesChannelName = (roomId: string): string => `${roomId}::$chat::$chatMessages`;
+export const roomChannelName = (roomId: string): string => `${roomId}::$chat`;

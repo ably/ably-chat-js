@@ -4,8 +4,7 @@ import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { ChatClient } from '../../core/chat.js';
 import { Logger } from '../../core/logger.js';
 import { Room } from '../../core/room.js';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { type AllFeaturesEnabled, RoomOptions } from '../../core/room-options.js';
+import { RoomOptions } from '../../core/room-options.js';
 import { ChatRoomContext, ChatRoomContextType } from '../contexts/chat-room-context.js';
 import { useChatClient } from '../hooks/use-chat-client.js';
 import { useLogger } from '../hooks/use-logger.js';
@@ -18,23 +17,12 @@ export interface ChatRoomProviderProps {
   id: string;
 
   /**
-   * The options to use when creating the room. A convenient default value is
-   * provided by {@link AllFeaturesEnabled}, but it must explicitly be set
-   * here.
-   *
-   * {@link AllFeaturesEnabled} can also be used partially, for example:
-   *
-   * ```tsx
-   * <ChatRoomProvider id="room-id" options={{
-   *   presence: AllFeaturesEnabled.presence,
-   *   reactions: AllFeaturesEnabled.reactions,
-   * }} />
-   * ```
+   * Overriding options to use when creating the room.
    *
    * NOTE: This value is not memoized by the provider. It must be memoized in your component to prevent
    * re-renders of a parent component from causing the room to be recreated.
    */
-  options: RoomOptions;
+  options?: RoomOptions;
 
   /**
    * Set to `false` to disable auto-releasing the room when component unmounts,
@@ -68,7 +56,7 @@ export interface ChatRoomProviderProps {
 
 interface RoomReleaseOp {
   id: string;
-  options: RoomOptions;
+  options: RoomOptions | undefined;
   abort: AbortController;
 }
 
@@ -80,7 +68,7 @@ class RoomReleaseQueue {
     this._logger = logger;
   }
 
-  enqueue(client: ChatClient, id: string, options: RoomOptions) {
+  enqueue(client: ChatClient, id: string, options: RoomOptions | undefined) {
     const abort = new AbortController();
     const op: RoomReleaseOp = { id, options, abort };
     this._queue.push(op);
@@ -103,7 +91,7 @@ class RoomReleaseQueue {
       });
   }
 
-  abort(id: string, options: RoomOptions) {
+  abort(id: string, options: RoomOptions | undefined) {
     this._logger.debug(`RoomReleaseQueue(); checking for abort`, { id, options, length: this._queue.length });
     const op = this._queue.find((op) => op.id === id && op.options === options);
     if (op) {
