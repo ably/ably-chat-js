@@ -27,7 +27,7 @@ describe('Occupancy', () => {
       realtime: context.realtime,
       options: {
         occupancy: {
-          enableOccupancyEvents: true,
+          enableEvents: true,
         },
       },
     });
@@ -35,13 +35,13 @@ describe('Occupancy', () => {
     context.emulateOccupancyUpdate = channelEventEmitter(channel);
   });
 
-  it<TestContext>('throws an error when subscribing with enableOccupancyEvents disabled', (context) => {
+  it<TestContext>('throws an error when subscribing with enableEvents disabled', (context) => {
     const room = makeRandomRoom({
       chatApi: context.chatApi,
       realtime: context.realtime,
       options: {
         occupancy: {
-          enableOccupancyEvents: false,
+          enableEvents: false,
         },
       },
     });
@@ -55,13 +55,13 @@ describe('Occupancy', () => {
 
   it<TestContext>('receives occupancy updates', (context) =>
     new Promise<void>((done, reject) => {
-      // Setup room with enableOccupancyEvents enabled
+      // Setup room with enableEvents enabled
       const room = makeRandomRoom({
         chatApi: context.chatApi,
         realtime: context.realtime,
         options: {
           occupancy: {
-            enableOccupancyEvents: true,
+            enableEvents: true,
           },
         },
       });
