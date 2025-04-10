@@ -143,7 +143,7 @@ export interface Presence {
    *
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
-   * @throws {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
+   * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
   subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Subscription;
 
@@ -154,7 +154,7 @@ export interface Presence {
    * Make sure to set `enableEvents: true` in your room options to use this feature.
    *
    * @param listener listener to subscribe
-   * @throws {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
+   * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
   subscribe(listener?: PresenceListener): Subscription;
 
