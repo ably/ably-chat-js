@@ -186,7 +186,7 @@ export class DefaultRoom implements Room {
     this._presence = new DefaultPresence(channel, realtime.auth.clientId, this._logger);
     this._typing = new DefaultTyping(roomId, options.typing, channel, realtime.auth.clientId, this._logger);
     this._reactions = new DefaultRoomReactions(roomId, channel, realtime.auth.clientId, this._logger);
-    this._occupancy = new DefaultOccupancy(roomId, channel, this._chatApi, this._logger);
+    this._occupancy = new DefaultOccupancy(roomId, channel, this._chatApi, this._logger, options);
 
     // Set the lifecycle manager last, so it becomes the last thing to find out about channel state changes
     // This is to allow Messages to reset subscription points before users get told of a discontinuity

@@ -53,7 +53,7 @@ describe('useOccupancy', () => {
           id={roomId}
           options={{
             occupancy: {
-              enableInboundOccupancy: true,
+              enableOccupancyEvents: true,
             },
           }}
         >

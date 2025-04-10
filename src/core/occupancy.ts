@@ -18,8 +18,12 @@ export interface Occupancy {
   /**
    * Subscribe a given listener to occupancy updates of the chat room.
    *
+   * Note: This requires occupancy events to be enabled via the `enableOccupancyEvents` option in
+   * the room options. If this is not enabled, an error will be thrown.
+   *
    * @param listener A listener to be called when the occupancy of the room changes.
-   * @returns A promise resolves to the channel attachment state change event from the implicit channel attach operation.
+   * @returns A subscription object that can be used to unsubscribe the listener.
+   * @throws {Ably.ErrorInfo} If occupancy events are not enabled for this room.
    */
   subscribe(listener: OccupancyListener): Subscription;
 
@@ -74,6 +78,7 @@ export class DefaultOccupancy implements Occupancy {
   private readonly _chatApi: ChatApi;
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<OccupancyEventsMap>();
+  private readonly _roomOptions: InternalRoomOptions;
 
   /**
    * Constructs a new `DefaultOccupancy` instance.
@@ -81,12 +86,20 @@ export class DefaultOccupancy implements Occupancy {
    * @param channel An instance of the Realtime channel.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
+   * @param roomOptions The room options.
    */
-  constructor(roomId: string, channel: Ably.RealtimeChannel, chatApi: ChatApi, logger: Logger) {
+  constructor(
+    roomId: string,
+    channel: Ably.RealtimeChannel,
+    chatApi: ChatApi,
+    logger: Logger,
+    roomOptions: InternalRoomOptions,
+  ) {
     this._roomId = roomId;
     this._channel = channel;
     this._chatApi = chatApi;
     this._logger = logger;
+    this._roomOptions = roomOptions;
 
     this._applyChannelSubscriptions();
   }
@@ -104,6 +117,15 @@ export class DefaultOccupancy implements Occupancy {
    */
   subscribe(listener: OccupancyListener): Subscription {
     this._logger.trace('Occupancy.subscribe();');
+
+    if (!this._roomOptions.occupancy.enableOccupancyEvents) {
+      throw new Ably.ErrorInfo(
+        'cannot subscribe to occupancy; occupancy events are not enabled in room options',
+        40000,
+        400,
+      ) as unknown as Error;
+    }
+
     const wrapped = wrap(listener);
     this._emitter.on(wrapped);
 
@@ -203,7 +225,7 @@ export class DefaultOccupancy implements Occupancy {
   static channelOptionMerger(roomOptions: InternalRoomOptions): ChannelOptionsMerger {
     return (options) => {
       // Occupancy not required, so we can skip this.
-      if (!roomOptions.occupancy.enableInboundOccupancy) {
+      if (!roomOptions.occupancy.enableOccupancyEvents) {
         return options;
       }
 
