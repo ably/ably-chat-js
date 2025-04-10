@@ -54,16 +54,7 @@ describe('usePresence', () => {
     mockLogger = makeTestLogger();
     mockCurrentConnectionStatus = ConnectionStatus.Connected;
     mockCurrentRoomStatus = RoomStatus.Attached;
-    updateMockRoom(
-      makeRandomRoom({
-        options: {
-          presence: {
-            enter: true,
-            subscribe: true,
-          },
-        },
-      }),
-    );
+    updateMockRoom(makeRandomRoom());
   });
 
   afterEach(() => {
@@ -106,16 +97,7 @@ describe('usePresence', () => {
     expect(result.current.isPresent).toBe(true);
 
     // change the mock room instance
-    updateMockRoom(
-      makeRandomRoom({
-        options: {
-          presence: {
-            enter: true,
-            subscribe: true,
-          },
-        },
-      }),
-    );
+    updateMockRoom(makeRandomRoom());
 
     vi.spyOn(mockRoom.presence, 'enter');
 
@@ -239,7 +221,7 @@ describe('usePresence', () => {
 
     // spy on the onDiscontinuity method of the presence instance
     let discontinuityListener: DiscontinuityListener | undefined;
-    vi.spyOn(mockRoom.presence, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
       discontinuityListener = listener;
       return { off: mockOff };
     });

@@ -1,4 +1,3 @@
-import * as Ably from 'ably';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
@@ -6,14 +5,12 @@ import { ChatMessageActions, MessageEvents } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
-import { AllFeaturesEnabled } from '../../src/core/room-options.ts';
-import { RoomStatus } from '../../src/core/room-status.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
-import { getRandomRoom, waitForRoomStatus } from '../helper/room.ts';
+import { getRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
   chat: ChatClient;
@@ -28,7 +25,7 @@ describe('messages integration', { timeout: 10000 }, () => {
     const { chat } = context;
 
     const room = await getRandomRoom(chat);
-    const channel = room.messages.channel as RealtimeChannelWithOptions;
+    const channel = room.channel as RealtimeChannelWithOptions;
 
     expect(channel.channelOptions.params).toEqual(expect.objectContaining({ agent: CHANNEL_OPTIONS_AGENT_STRING }));
   });
@@ -713,59 +710,10 @@ describe('messages integration', { timeout: 10000 }, () => {
     expect(historyPreSubscription2.items).toEqual(historyPreSubscription3.items);
   });
 
-  it<TestContext>('handles discontinuities', async (context) => {
-    const { chat } = context;
-
-    const room = await getRandomRoom(chat);
-
-    // Attach the room
-    await room.attach();
-
-    // Subscribe discontinuity events
-    const discontinuityErrors: (Ably.ErrorInfo | undefined)[] = [];
-    const { off } = room.messages.onDiscontinuity((error: Ably.ErrorInfo | undefined) => {
-      discontinuityErrors.push(error);
-    });
-
-    const channelSuspendable = room.messages.channel as Ably.RealtimeChannel & {
-      notifyState(state: 'suspended' | 'attached'): void;
-    };
-
-    // Simulate a discontinuity by forcing a channel into suspended state
-    channelSuspendable.notifyState('suspended');
-
-    // Wait for the room to go into suspended
-    await waitForRoomStatus(room, RoomStatus.Suspended);
-
-    // Force the channel back into attached state - to simulate recovery
-    channelSuspendable.notifyState('attached');
-
-    // Wait for the room to go into attached
-    await waitForRoomStatus(room, RoomStatus.Attached);
-
-    // Wait for a discontinuity event to be received
-    expect(discontinuityErrors.length).toBe(1);
-
-    // Unsubscribe from discontinuity events
-    off();
-
-    // Simulate a discontinuity by forcing a channel into suspended state
-    channelSuspendable.notifyState('suspended');
-
-    // Wait for the room to go into suspended
-    await waitForRoomStatus(room, RoomStatus.Suspended);
-
-    // We shouldn't get any more discontinuity events
-    expect(discontinuityErrors.length).toBe(1);
-
-    // Calling off again should be a no-op
-    off();
-  });
-
   it<TestContext>('handles the room being released before getPreviousMessages is called', async (context) => {
     const chat = context.chat;
     const roomId = randomRoomId();
-    const room = await chat.rooms.get(roomId, AllFeaturesEnabled);
+    const room = await chat.rooms.get(roomId);
 
     // Create a subscription to messages
     room.messages.subscribe(() => {});

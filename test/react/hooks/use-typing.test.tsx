@@ -233,7 +233,7 @@ describe('useTyping', () => {
 
     // spy on the onDiscontinuity method of the typing instance
     let discontinuityListener: DiscontinuityListener | undefined;
-    vi.spyOn(mockRoom.typing, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
       discontinuityListener = listener;
       return { off: mockOff };
     });
