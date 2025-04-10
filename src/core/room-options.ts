@@ -21,9 +21,9 @@ const DefaultRoomOptions: Omit<InternalRoomOptions, 'isReactClient'> = {
    */
   occupancy: {
     /**
-     * Whether to enable inbound occupancy events.
+     * Whether to enable occupancy events.
      */
-    enableInboundOccupancy: false,
+    enableOccupancyEvents: false,
   },
 
   /**
@@ -55,13 +55,14 @@ export interface TypingOptions {
  */
 export interface OccupancyOptions {
   /**
-   * Whether to enable inbound occupancy events.
+   * Whether to enable occupancy events.
    *
-   * Note that enabling this feature will increase the number of messages received by the client.
+   * Note that enabling this feature will increase the number of messages received by the client as additional
+   * messages will be sent by the server to indicate occupancy changes.
    *
    * @defaultValue false
    */
-  enableInboundOccupancy?: boolean;
+  enableOccupancyEvents?: boolean;
 }
 
 /**

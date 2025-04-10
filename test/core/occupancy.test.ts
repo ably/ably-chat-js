@@ -22,14 +22,51 @@ describe('Occupancy', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
-    context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
+    context.room = makeRandomRoom({
+      chatApi: context.chatApi,
+      realtime: context.realtime,
+      options: {
+        occupancy: {
+          enableOccupancyEvents: true,
+        },
+      },
+    });
     const channel = context.room.channel;
     context.emulateOccupancyUpdate = channelEventEmitter(channel);
   });
 
+  it<TestContext>('throws an error when subscribing with enableOccupancyEvents disabled', (context) => {
+    const room = makeRandomRoom({
+      chatApi: context.chatApi,
+      realtime: context.realtime,
+      options: {
+        occupancy: {
+          enableOccupancyEvents: false,
+        },
+      },
+    });
+
+    expect(() => {
+      room.occupancy.subscribe(() => {
+        // This should not be called
+      });
+    }).toThrow('cannot subscribe to occupancy; occupancy events are not enabled in room options');
+  });
+
   it<TestContext>('receives occupancy updates', (context) =>
     new Promise<void>((done, reject) => {
-      context.room.occupancy.subscribe((event: OccupancyEvent) => {
+      // Setup room with enableOccupancyEvents enabled
+      const room = makeRandomRoom({
+        chatApi: context.chatApi,
+        realtime: context.realtime,
+        options: {
+          occupancy: {
+            enableOccupancyEvents: true,
+          },
+        },
+      });
+
+      room.occupancy.subscribe((event: OccupancyEvent) => {
         try {
           expect(event).toEqual({
             connections: 5,
@@ -41,7 +78,8 @@ describe('Occupancy', () => {
         }
       });
 
-      context.emulateOccupancyUpdate({
+      const emitter = channelEventEmitter(room.channel);
+      emitter({
         name: '[meta]occupancy',
         data: {
           metrics: {

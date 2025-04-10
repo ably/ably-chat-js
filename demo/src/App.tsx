@@ -52,7 +52,7 @@ const App: FC<AppProps> = () => {
       id={roomIdState}
       release={true}
       attach={true}
-      options={{ occupancy: { enableInboundOccupancy: true } }}
+      options={{ occupancy: { enableOccupancyEvents: true } }}
     >
       <div
         style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto', height: '650px' }}

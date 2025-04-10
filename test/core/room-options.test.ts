@@ -11,7 +11,7 @@ describe('normalizeRoomOptions', () => {
         heartbeatThrottleMs: 10000,
       },
       occupancy: {
-        enableInboundOccupancy: false,
+        enableOccupancyEvents: false,
       },
       presence: {
         receivePresenceEvents: true,
@@ -45,14 +45,14 @@ describe('normalizeRoomOptions', () => {
   it('should merge provided occupancy options with defaults', () => {
     const options: RoomOptions = {
       occupancy: {
-        enableInboundOccupancy: true,
+        enableOccupancyEvents: true,
       },
     };
 
     const result = normalizeRoomOptions(options, false);
 
     expect(result.occupancy).toEqual({
-      enableInboundOccupancy: true,
+      enableOccupancyEvents: true,
     });
   });
 
@@ -87,7 +87,7 @@ describe('normalizeRoomOptions', () => {
         heartbeatThrottleMs: 3000,
       },
       occupancy: {
-        enableInboundOccupancy: false, // Default preserved
+        enableOccupancyEvents: false, // Default preserved
       },
       presence: {
         receivePresenceEvents: false,
