@@ -1,14 +1,8 @@
 import { FC, useState } from 'react';
 import '../../../styles/global.css';
 import './UserPresenceComponent.css';
-import {
-  ConnectionStatus,
-  PresenceMember,
-  useChatClient,
-  useChatConnection,
-  usePresence,
-  usePresenceListener,
-} from '@ably/chat';
+import { ConnectionStatus, PresenceMember } from '@ably/chat';
+import { useChatClient, useChatConnection, usePresence, usePresenceListener } from '@ably/chat/react';
 
 interface UserListComponentProps {}
 

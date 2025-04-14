@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { MessageInput } from '../../components/MessageInput';
-import { useChatClient, useChatConnection, ConnectionStatus } from '@ably/chat';
+import { useChatClient, useChatConnection } from '@ably/chat/react';
+import { ConnectionStatus } from '@ably/chat';
 import { ConnectionStatusComponent } from '../../components/ConnectionStatusComponent';
 import { TypingIndicatorPanel } from '../../components/TypingIndicatorPanel';
 import { ChatBoxComponent } from '../../components/ChatBoxComponent';

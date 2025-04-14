@@ -28,6 +28,7 @@ export default [
   {
     ignores: [
       'demo/**',
+      'react/**',
       '**/eslint.config.js',
       '**/dist',
       '**/node_modules',

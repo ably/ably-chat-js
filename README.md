@@ -118,7 +118,7 @@ async function getStartedWithChat() {
 
   // Get a room to join, subscribe to messages and then attach to the room
   const room = await chatClient.rooms.get(
-    "readme-getting-started", 
+    "readme-getting-started",
      AllFeaturesEnabled
   );
   const { off: unsubscribeRoomStatus } = room.onStatusChange(
@@ -185,7 +185,8 @@ Create a new file, `Messages.tsx`, with the following content. This component is
 
 ```tsx
 import React, { useState } from 'react';
-import { Message, MessageEvent, useMessages } from '@ably/chat';
+import { Message, MessageEvent } from '@ably/chat';
+import { useMessages } from '@ably/chat/react';
 
 // This is a simple chat component that uses the useMessages hook in Ably Chat to send and receive messages.
 export function Messages() {
@@ -216,15 +217,15 @@ export function Messages() {
 
   // This is a very simple UI that displays the messages and a text input for sending messages.
   return (
-    <div style={{ 
+    <div style={{
       maxWidth: '600px',
       minWidth: '400px',
       margin: '20px auto',
       fontFamily: 'Arial, sans-serif'
     }}>
       {/* Container for the messages */}
-      <div className="messages-container" style={{ 
-        height: '400px', 
+      <div className="messages-container" style={{
+        height: '400px',
         overflowY: 'auto',
         border: '1px solid #e0e0e0',
         borderRadius: '8px',
@@ -233,8 +234,8 @@ export function Messages() {
         backgroundColor: '#f8f9fa'
       }}>
         {messages.map((msg, index) => (
-          <div 
-            key={index} 
+          <div
+            key={index}
             className="message"
             style={{
               backgroundColor: 'white',
@@ -280,7 +281,7 @@ export function Messages() {
           }}
         />
         {/* Button for sending messages */}
-        <button 
+        <button
           onClick={handleSend}
           style={{
             padding: '10px 20px',
@@ -335,7 +336,7 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
 ```
 
 Now, start the development environment:

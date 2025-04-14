@@ -14,6 +14,12 @@
       "import": "./dist/chat/ably-chat.js",
       "require": "./dist/chat/ably-chat.umd.cjs"
     },
+    "./react": {
+      "react-native": "./dist/react/ably-chat-react.umd.cjs",
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/ably-chat-react.js",
+      "require": "./dist/react/ably-chat-react.umd.cjs"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -29,9 +35,10 @@
     "test:chat-unit": "vitest run --project chat --exclude \"test/**/*.integration.test.ts?(x)\"",
     "test:react-unit": "vitest run --project react-hooks --exclude \"test/**/*.integration.test.ts?(x)\"",
     "test:watch": "vitest watch",
-    "build": "npm run build:chat && npm run build:core",
+    "build": "npm run build:chat && npm run build:core && npm run build:react",
     "build:chat": "vite build --config ./src/vite.config.ts --emptyOutDir",
     "build:core": "vite build --config ./src/core/vite.config.ts --emptyOutDir",
+    "build:react": "vite build --config ./src/react/vite.config.ts --emptyOutDir",
     "build:start-demo": "npm run build && (cd demo && npm start)",
     "prepare": "npm run build",
     "test:typescript": "tsc",
@@ -42,7 +49,8 @@
   },
   "files": [
     "dist/**",
-    "src/**"
+    "src/**",
+    "react/**"
   ],
   "repository": {
     "type": "git",

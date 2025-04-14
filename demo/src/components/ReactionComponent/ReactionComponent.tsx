@@ -1,7 +1,7 @@
 import { ReactionInput } from '../ReactionInput';
 import { FC, useEffect, useState } from 'react';
 import { ConnectionStatus, Reaction } from '@ably/chat';
-import { useChatConnection, useRoom, useRoomReactions } from '@ably/chat';
+import { useChatConnection, useRoom, useRoomReactions } from '@ably/chat/react';
 
 interface ReactionComponentProps {}
 
