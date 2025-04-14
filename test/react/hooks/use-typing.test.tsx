@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { TypingEvents } from '../../../src/core/events.ts';
+import { TypingEvent, TypingEvents } from '../../../src/core/events.ts';
 import { Logger } from '../../../src/core/logger.ts';
 import { Room } from '../../../src/core/room.ts';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus } from '../../../src/core/room-status.ts';
@@ -91,7 +91,8 @@ describe('useTyping', () => {
     await waitForEventualHookValueToBeDefined(result, (value) => value.typingIndicators);
 
     // verify that subscribe was called with the mock listener on mount by triggering an event
-    const typingEvent = {
+    const typingEvent: TypingEvent = {
+      type: TypingEvents.SetChanged,
       change: { clientId: 'someClientId', type: TypingEvents.Stop },
       currentlyTyping: new Set<string>(),
     };
@@ -167,7 +168,11 @@ describe('useTyping', () => {
     // emit a typing event which should update the DOM
     act(() => {
       if (subscribedListener) {
-        subscribedListener({ change: { clientId: 'user2', type: TypingEvents.Start }, currentlyTyping: testSet });
+        subscribedListener({
+          type: TypingEvents.SetChanged,
+          change: { clientId: 'user2', type: TypingEvents.Start },
+          currentlyTyping: testSet,
+        });
       }
     });
 

@@ -85,8 +85,7 @@ export type TypingListener = (event: TypingEvent) => void;
  * Represents the typing events mapped to their respective event payloads.
  */
 interface TypingEventsMap {
-  [TypingEvents.Start]: TypingEvent;
-  [TypingEvents.Stop]: TypingEvent;
+  [TypingEvents.SetChanged]: TypingEvent;
 }
 
 /**
@@ -353,7 +352,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
       // Remove client whose timeout has expired
       this._currentlyTyping.delete(clientId);
-      this.emit(TypingEvents.Stop, {
+      this.emit(TypingEvents.SetChanged, {
+        type: TypingEvents.SetChanged,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
         change: {
           clientId,
@@ -391,7 +391,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         roomId: this._roomId,
         clientId,
       });
-      this.emit(TypingEvents.Start, {
+      this.emit(TypingEvents.SetChanged, {
+        type: TypingEvents.SetChanged,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
         change: {
           clientId,
@@ -422,7 +423,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     clearTimeout(existingTimeout);
     this._currentlyTyping.delete(clientId);
     // Emit stop event only when the client is removed
-    this.emit(TypingEvents.Stop, {
+    this.emit(TypingEvents.SetChanged, {
+      type: TypingEvents.SetChanged,
       currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
       change: {
         clientId,
