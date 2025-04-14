@@ -299,6 +299,7 @@ describe('Typing', () => {
         // Ensure that the listener received the event
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
+          type: TypingEvents.SetChanged,
           change: {
             clientId: 'otherClient',
             type: TypingEvents.Start,
@@ -356,6 +357,7 @@ describe('Typing', () => {
         // Ensure that the listener received the event
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
+          type: TypingEvents.SetChanged,
           change: {
             clientId: 'otherClient',
             type: TypingEvents.Start,
@@ -367,6 +369,7 @@ describe('Typing', () => {
         // Ensure that the second listener received the event
         expect(receivedEvents2).toHaveLength(1);
         expect(receivedEvents2[0]).toEqual({
+          type: TypingEvents.SetChanged,
           change: {
             clientId: 'otherClient',
             type: TypingEvents.Start,
@@ -481,6 +484,7 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 1);
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
+          type: TypingEvents.SetChanged,
           change: {
             clientId: 'otherClient',
             type: TypingEvents.Start,
@@ -517,6 +521,7 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 1);
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
+          type: TypingEvents.SetChanged,
           change: {
             clientId: 'otherClient',
             type: TypingEvents.Start,
@@ -566,6 +571,7 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 1);
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
+          type: TypingEvents.SetChanged,
           change: {
             clientId: 'otherClient',
             type: TypingEvents.Start,
@@ -585,6 +591,7 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 2);
         expect(receivedEvents).toHaveLength(2);
         expect(receivedEvents[1]).toEqual({
+          type: TypingEvents.SetChanged,
           change: {
             clientId: 'otherClient',
             type: TypingEvents.Stop,
@@ -613,6 +620,7 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 1);
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
+          type: TypingEvents.SetChanged,
           change: {
             clientId: 'otherClient',
             type: TypingEvents.Start,
@@ -635,6 +643,7 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 2);
         expect(receivedEvents).toHaveLength(2);
         expect(receivedEvents[1]).toEqual({
+          type: TypingEvents.SetChanged,
           change: {
             clientId: 'otherClient',
             type: TypingEvents.Stop,
