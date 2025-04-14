@@ -74,6 +74,11 @@ export enum PresenceEvents {
  */
 export enum TypingEvents {
   /**
+   * Event triggered when a change occurs in the set of typers.
+   */
+  SetChanged = 'typing.set.changed',
+
+  /**
    * Event triggered when a user is typing.
    */
   Start = 'typing.started',
@@ -88,6 +93,11 @@ export enum TypingEvents {
  * Represents a change in the state of current typers.
  */
 export interface TypingEvent {
+  /**
+   * The type of the event.
+   */
+  type: TypingEvents;
+
   /**
    * The set of clientIds that are currently typing.
    */
@@ -105,7 +115,7 @@ export interface TypingEvent {
     /**
      * Type of the change. Either `typing.started` or `typing.stopped`.
      */
-    type: TypingEvents;
+    type: TypingEvents.Start | TypingEvents.Stop;
   };
 }
 

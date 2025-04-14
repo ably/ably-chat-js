@@ -127,10 +127,12 @@ describe('Typing', () => {
       await client2Room.typing.keystroke();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
+        type: TypingEvents.SetChanged,
         currentlyTyping: new Set([clientId1]),
         change: { clientId: clientId1, type: TypingEvents.Start },
       });
       await waitForTypingEvent(events, {
+        type: TypingEvents.SetChanged,
         currentlyTyping: new Set([clientId1, clientId2]),
         change: { clientId: clientId2, type: TypingEvents.Start },
       });
@@ -145,6 +147,7 @@ describe('Typing', () => {
       await client1Room.typing.stop();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
+        type: TypingEvents.SetChanged,
         currentlyTyping: new Set([clientId2]),
         change: { clientId: clientId1, type: TypingEvents.Stop },
       });
