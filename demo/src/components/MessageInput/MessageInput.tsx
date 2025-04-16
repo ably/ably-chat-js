@@ -1,5 +1,5 @@
 import { ChangeEventHandler, FC, FormEventHandler, useEffect, useRef, useState } from 'react';
-import { useChatConnection, useMessages, useTyping } from '@ably/chat';
+import { useChatConnection, useMessages, useTyping } from '@ably/chat/react';
 import { ConnectionStatus } from '@ably/chat';
 
 interface MessageInputProps {}
