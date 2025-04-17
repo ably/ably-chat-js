@@ -2,7 +2,13 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
-## [0.5.1](https://github.com/ably/ably-chat-js/tree/0.5.0) (2025-03-17)
+## [0.6.0](https://github.com/ably/ably-chat-js/tree/0.6.0) (2025-04-17)
+
+- build: move react to subpath export, add react-native workaround [#525](https://github.com/ably/ably-chat-js/pull/525)
+- fix: in the case that the same listener is subscribed more than once, calling `unsubscribe` only removes it once [#518](https://github.com/ably/ably-chat-js/pull/518)
+- docs: Update README Chat install section [#517](https://github.com/ably/ably-chat-js/pull/517)
+
+## [0.5.1](https://github.com/ably/ably-chat-js/tree/0.5.1) (2025-03-17)
 
 ### Fixes
 
