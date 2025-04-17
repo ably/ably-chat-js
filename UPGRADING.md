@@ -2,9 +2,19 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 0.5.x to 0.6.x
+
+### React Package Move
+
+**Expected Impact: High**
+
+Our react APIs (react hooks, context providers, etc) have been moved to a subpath export of the main `@ably/chat` package. This means that you should now import them from `@ably/chat/react` instead of `@ably/chat`.
+
+This change improves overall developer experience, as it allows for better tree-shaking and avoids build issues for projects not using react.
+
 ## 0.4.0 to 0.5.0
 
-## Message Version Comparison Methods
+### Message Version Comparison Methods
 
 **Expected Impact: Medium**
 
@@ -12,19 +22,19 @@ The message version comparison methods `versionBefore`, `versionAfter` and `vers
 
 These methods no longer throw an error if two distinct messages are compared, instead returning false.
 
-## Room Options Renaming
+### Room Options Renaming
 
 **Expected Impact: Low**
 
 The field `RoomOptionsDefault` has been renamed to `AllFeaturesEnabled`. Please update any references to this in your code.
 
-## Client Options Renaming
+### Client Options Renaming
 
 **Expected Impact: Low**
 
 The type `ClientOptions` has been renamed to `ChatClientOptions`. Please update any references to this in your code.
 
-## Message Event Type Renaming
+### Message Event Type Renaming
 
 **Expected Impact: Low**
 
