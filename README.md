@@ -111,8 +111,7 @@ async function getStartedWithChat() {
   // Create a new Ably Chat client, using the Ably client you created
   // The same client can be re-used for as long as your application is running
   const chatClient = new ChatClient(ablyClient);
-  const { off: unsubscribeConnectionStatus } =
-    chatClient.connection.onStatusChange((change: ConnectionStatusChange) => {
+  const connectionStatus = chatClient.connection.onStatusChange((change: ConnectionStatusChange) => {
       console.log("Connection state changed to", change.current);
     });
 
@@ -121,13 +120,13 @@ async function getStartedWithChat() {
     "readme-getting-started",
      AllFeaturesEnabled
   );
-  const { off: unsubscribeRoomStatus } = room.onStatusChange(
+  const roomStatus = room.onStatusChange(
     (change: RoomStatusChange) => {
       console.log("Room state changed to", change.current);
     }
   );
 
-  const { unsubscribe: messageUnsubscribe } = room.messages.subscribe(
+  const messageSubscription = room.messages.subscribe(
     (message: MessageEvent) => {
       console.log("Received message:", message.message.text);
     }
@@ -142,9 +141,9 @@ async function getStartedWithChat() {
   // After 5 seconds, release the room, remove our subscriptions and close the connection
   setTimeout(async () => {
     await chatClient.rooms.release(room.roomId);
-    messageUnsubscribe();
-    unsubscribeConnectionStatus();
-    unsubscribeRoomStatus();
+    messageSubscription.unsubscribe();
+    connectionStatus.off();
+    roomStatus.off();
     await ablyClient.close();
   }, 5000);
 }
