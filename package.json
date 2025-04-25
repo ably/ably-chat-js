@@ -45,7 +45,8 @@
     "demo:reload": "npm run build && cd demo && npm i file:../",
     "docs": "typedoc",
     "modulereport": "tsc --noEmit --esModuleInterop scripts/moduleReport.ts && esr scripts/moduleReport.ts",
-    "cspell": "cspell '{src,test}/**' './*.md'"
+    "cspell": "cspell '{src,test}/**' './*.md'",
+    "test:no-integration": "vitest run --exclude \"test/**/*.integration.test.ts?(x)\""
   },
   "files": [
     "dist/**",
@@ -72,7 +73,7 @@
     "node": ">=18.0.0"
   },
   "peerDependencies": {
-    "ably": "^2.6.3",
+    "ably": "^2.7.0",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },

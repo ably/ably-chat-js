@@ -4,6 +4,8 @@ import { OccupancyComponent } from './components/OccupancyComponent';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
 import { AllFeaturesEnabled } from '@ably/chat';
 import { ChatRoomProvider } from '@ably/chat/react';
+import { ReactionTypeProvider } from './containers/ReactionTypeProvider';
+import { MessageReactionTypeSelector } from './components/MessageReactionTypeSelector';
 
 // We read the roomID from the URL query string and default to 'abcd' if none
 // provided. We make sure the URL is updated to always include the roomId. This
@@ -46,28 +48,37 @@ const App: FC<AppProps> = () => {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [setRoomId]);
 
   return (
-    <ChatRoomProvider
-      id={roomIdState}
-      release={true}
-      attach={true}
-      options={AllFeaturesEnabled}
-    >
-      <div
-        style={{ display: 'flex', justifyContent: 'space-between', width: '800px', margin: 'auto', height: '650px' }}
+    <ReactionTypeProvider>
+      <ChatRoomProvider
+        id={roomIdState}
+        release={true}
+        attach={true}
+        options={AllFeaturesEnabled}
       >
-        <Chat
-          setRoomId={updateRoomId}
-          roomId={roomIdState}
-        />
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <UserPresenceComponent />
-          <OccupancyComponent />
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            width: '800px',
+            margin: 'auto',
+            height: '650px',
+          }}
+        >
+          <Chat
+            setRoomId={updateRoomId}
+            roomId={roomIdState}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <UserPresenceComponent />
+            <OccupancyComponent />
+            <MessageReactionTypeSelector />
+          </div>
         </div>
-      </div>
-    </ChatRoomProvider>
+      </ChatRoomProvider>
+    </ReactionTypeProvider>
   );
 };
 export default App;
