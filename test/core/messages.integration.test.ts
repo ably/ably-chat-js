@@ -664,7 +664,7 @@ describe('messages integration', { timeout: 10000 }, () => {
     const { getPreviousMessages: getPreviousMessagesListener2 } = room.messages.subscribe(() => {});
 
     // Check we see the latest messages
-    await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // TODO wait for persistence - this will not be necessary in the future
     const historyPreSubscription2 = await getPreviousMessagesListener2({ limit: 50 });
 
     // Should have the latest messages
