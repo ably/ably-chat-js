@@ -16,6 +16,10 @@ describe('normalizeRoomOptions', () => {
       presence: {
         enableEvents: true,
       },
+      messages: {
+        defaultMessageReactionType: 'reaction:distinct.v1',
+        rawMessageReactions: true,
+      },
       isReactClient: false,
     });
   });

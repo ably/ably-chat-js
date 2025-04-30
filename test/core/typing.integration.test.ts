@@ -4,7 +4,7 @@ import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
-import { TypingEvent, TypingEvents } from '../../src/core/events.ts';
+import { TypingEventTypes, TypingSetEvent, TypingSetEventTypes } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { waitForArrayLength } from '../helper/common.ts';
@@ -23,7 +23,7 @@ interface TestContext {
 }
 
 // Wait for a typing event matching the expected event to be received
-const waitForTypingEvent = async (events: TypingEvent[], expected: TypingEvent) => {
+const waitForTypingEvent = async (events: TypingSetEvent[], expected: TypingSetEvent) => {
   await vi.waitFor(
     () => {
       expect(events.some((event) => dequal(event, expected))).toBe(true);
@@ -47,7 +47,7 @@ describe('Typing', () => {
   it<TestContext>(
     'successfully starts typing and then stops after the default timeout',
     async (context) => {
-      const events: TypingEvent[] = [];
+      const events: TypingSetEvent[] = [];
       // Subscribe to typing events
       context.chatRoom.typing.subscribe((event) => {
         events.push(event);
@@ -69,7 +69,7 @@ describe('Typing', () => {
   it<TestContext>(
     'subscribes to all typing events, sent by keystroke and stop',
     async (context) => {
-      const events: TypingEvent[] = [];
+      const events: TypingSetEvent[] = [];
       context.chatRoom.typing.subscribe((event) => {
         events.push(event);
       });
@@ -93,7 +93,7 @@ describe('Typing', () => {
   it<TestContext>(
     'gets the set of currently typing client ids',
     async (context) => {
-      let events: TypingEvent[] = [];
+      let events: TypingSetEvent[] = [];
       // Subscribe to typing events
       context.chatRoom.typing.subscribe((event) => {
         events.push(event);
@@ -127,14 +127,14 @@ describe('Typing', () => {
       await client2Room.typing.keystroke();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
-        type: TypingEvents.SetChanged,
+        type: TypingSetEventTypes.SetChanged,
         currentlyTyping: new Set([clientId1]),
-        change: { clientId: clientId1, type: TypingEvents.Start },
+        change: { clientId: clientId1, type: TypingEventTypes.Start },
       });
       await waitForTypingEvent(events, {
-        type: TypingEvents.SetChanged,
+        type: TypingSetEventTypes.SetChanged,
         currentlyTyping: new Set([clientId1, clientId2]),
-        change: { clientId: clientId2, type: TypingEvents.Start },
+        change: { clientId: clientId2, type: TypingEventTypes.Start },
       });
       // Get the currently typing client ids
       const currentlyTypingClientIds = context.chatRoom.typing.get();
@@ -147,9 +147,9 @@ describe('Typing', () => {
       await client1Room.typing.stop();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
-        type: TypingEvents.SetChanged,
+        type: TypingSetEventTypes.SetChanged,
         currentlyTyping: new Set([clientId2]),
-        change: { clientId: clientId1, type: TypingEvents.Stop },
+        change: { clientId: clientId1, type: TypingEventTypes.Stop },
       });
       // Get the currently typing client ids
       const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.get();

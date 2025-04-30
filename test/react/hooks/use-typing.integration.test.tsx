@@ -2,7 +2,7 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { TypingEvent } from '../../../src/core/events.ts';
+import { TypingSetEvent } from '../../../src/core/events.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
 import { TypingListener } from '../../../src/core/typing.ts';
 import { useTyping } from '../../../src/react/hooks/use-typing.ts';
@@ -28,7 +28,7 @@ describe('useTyping', () => {
     await roomTwo.attach();
 
     // start listening for typing events on room two
-    const typingEventsRoomTwo: TypingEvent[] = [];
+    const typingEventsRoomTwo: TypingSetEvent[] = [];
     roomTwo.typing.subscribe((typingEvent) => typingEventsRoomTwo.push(typingEvent));
 
     const TestComponent = () => {
@@ -72,7 +72,7 @@ describe('useTyping', () => {
     await roomTwo.attach();
 
     // store the received typing events for room one
-    const typingEventsRoomOne: TypingEvent[] = [];
+    const typingEventsRoomOne: TypingSetEvent[] = [];
 
     // store the currently typing state from the hook
     let currentlyTypingSet = new Set<string>();

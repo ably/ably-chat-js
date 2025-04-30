@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
-import { TypingEvent } from '../../core/events.js';
+import { TypingSetEvent } from '../../core/events.js';
 import { RoomStatus } from '../../core/room-status.js';
 import { Typing, TypingListener } from '../../core/typing.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
@@ -42,7 +42,7 @@ export interface UseTypingResponse extends ChatStatusResponse {
    * A state value representing the set of client IDs that are currently typing in the room.
    * It automatically updates based on typing events received from the room.
    */
-  readonly currentlyTyping: TypingEvent['currentlyTyping'];
+  readonly currentlyTyping: TypingSetEvent['currentlyTyping'];
 
   /**
    * Provides access to the underlying {@link Typing} instance of the room.

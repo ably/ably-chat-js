@@ -13,14 +13,15 @@ export type {
   MessageReactionEvents,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
-  TypingEvent,
+  TypingSetEvent,
 } from './events.js';
 export {
   ChatMessageActions,
   MessageEvents,
   MessageReactionType as MessageReactionType,
   PresenceEvents,
-  TypingEvents,
+  TypingEventTypes,
+  TypingSetEventTypes,
 } from './events.js';
 export type { Headers } from './headers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
-import { TypingEvent, TypingEvents } from '../../src/core/events.ts';
+import { TypingEventTypes, TypingSetEvent, TypingSetEventTypes } from '../../src/core/events.ts';
 import { Logger } from '../../src/core/logger.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
@@ -26,14 +26,14 @@ interface TestContext {
 const TEST_HEARTBEAT_THROTTLE_MS = 200;
 
 const startMessage: Ably.Message = {
-  name: TypingEvents.Start,
+  name: TypingEventTypes.Start,
   extras: {
     ephemeral: true,
   },
 };
 
 const stopMessage: Ably.Message = {
-  name: TypingEvents.Stop,
+  name: TypingEventTypes.Stop,
   extras: {
     ephemeral: true,
   },
@@ -75,7 +75,7 @@ describe('Typing', () => {
 
     // Emulate a typing event
     context.emulateBackendPublish({
-      name: TypingEvents.Start,
+      name: TypingEventTypes.Start,
       clientId: 'some',
     });
 
@@ -277,20 +277,20 @@ describe('Typing', () => {
         const { room } = context;
 
         // Add a listener
-        const receivedEvents: TypingEvent[] = [];
-        const { unsubscribe } = room.typing.subscribe((event: TypingEvent) => {
+        const receivedEvents: TypingSetEvent[] = [];
+        const { unsubscribe } = room.typing.subscribe((event: TypingSetEvent) => {
           receivedEvents.push(event);
         });
 
         // Another listener used to receive all events, to make sure events were emitted
-        const allEvents: TypingEvent[] = [];
-        const allSubscription = room.typing.subscribe((event: TypingEvent) => {
+        const allEvents: TypingSetEvent[] = [];
+        const allSubscription = room.typing.subscribe((event: TypingSetEvent) => {
           allEvents.push(event);
         });
 
         // Emulate a typing event
         context.emulateBackendPublish({
-          name: TypingEvents.Start,
+          name: TypingEventTypes.Start,
           clientId: 'otherClient',
         });
 
@@ -299,10 +299,10 @@ describe('Typing', () => {
         // Ensure that the listener received the event
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
-          type: TypingEvents.SetChanged,
+          type: TypingSetEventTypes.SetChanged,
           change: {
             clientId: 'otherClient',
-            type: TypingEvents.Start,
+            type: TypingEventTypes.Start,
           },
           currentlyTyping: new Set(['otherClient']),
         });
@@ -312,7 +312,7 @@ describe('Typing', () => {
 
         // Emulate another typing event for anotherClient
         context.emulateBackendPublish({
-          name: TypingEvents.Start,
+          name: TypingEventTypes.Start,
           clientId: 'anotherClient',
         });
 
@@ -335,20 +335,20 @@ describe('Typing', () => {
         const { room } = context;
 
         // Add a listener
-        const receivedEvents: TypingEvent[] = [];
-        const { unsubscribe } = room.typing.subscribe((event: TypingEvent) => {
+        const receivedEvents: TypingSetEvent[] = [];
+        const { unsubscribe } = room.typing.subscribe((event: TypingSetEvent) => {
           receivedEvents.push(event);
         });
 
         // Add another
-        const receivedEvents2: TypingEvent[] = [];
-        const { unsubscribe: unsubscribe2 } = room.typing.subscribe((event: TypingEvent) => {
+        const receivedEvents2: TypingSetEvent[] = [];
+        const { unsubscribe: unsubscribe2 } = room.typing.subscribe((event: TypingSetEvent) => {
           receivedEvents2.push(event);
         });
 
         // Emulate a typing event
         context.emulateBackendPublish({
-          name: TypingEvents.Start,
+          name: TypingEventTypes.Start,
           clientId: 'otherClient',
         });
 
@@ -357,10 +357,10 @@ describe('Typing', () => {
         // Ensure that the listener received the event
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
-          type: TypingEvents.SetChanged,
+          type: TypingSetEventTypes.SetChanged,
           change: {
             clientId: 'otherClient',
-            type: TypingEvents.Start,
+            type: TypingEventTypes.Start,
           },
           currentlyTyping: new Set(['otherClient']),
         });
@@ -369,10 +369,10 @@ describe('Typing', () => {
         // Ensure that the second listener received the event
         expect(receivedEvents2).toHaveLength(1);
         expect(receivedEvents2[0]).toEqual({
-          type: TypingEvents.SetChanged,
+          type: TypingSetEventTypes.SetChanged,
           change: {
             clientId: 'otherClient',
-            type: TypingEvents.Start,
+            type: TypingEventTypes.Start,
           },
           currentlyTyping: new Set(['otherClient']),
         });
@@ -381,14 +381,14 @@ describe('Typing', () => {
         room.typing.unsubscribeAll();
 
         // subscribe a check subscriber
-        const checkEvents: TypingEvent[] = [];
+        const checkEvents: TypingSetEvent[] = [];
         room.typing.subscribe((event) => {
           checkEvents.push(event);
         });
 
         // Emulate another typing event
         context.emulateBackendPublish({
-          name: TypingEvents.Start,
+          name: TypingEventTypes.Start,
           clientId: 'anotherClient2',
         });
 
@@ -409,7 +409,7 @@ describe('Typing', () => {
         [
           'no client id',
           {
-            name: TypingEvents.Start,
+            name: TypingEventTypes.Start,
             connectionId: '',
             id: '',
             encoding: '',
@@ -421,7 +421,7 @@ describe('Typing', () => {
         [
           'empty client id',
           {
-            name: TypingEvents.Start,
+            name: TypingEventTypes.Start,
             clientId: '',
             connectionId: '',
             id: '',
@@ -449,8 +449,8 @@ describe('Typing', () => {
           const { room } = context;
 
           // Subscribe to typing events
-          const receivedEvents: TypingEvent[] = [];
-          room.typing.subscribe((event: TypingEvent) => {
+          const receivedEvents: TypingSetEvent[] = [];
+          room.typing.subscribe((event: TypingSetEvent) => {
             receivedEvents.push(event);
           });
 
@@ -469,14 +469,14 @@ describe('Typing', () => {
         const { room } = context;
 
         // Subscribe to typing events
-        const receivedEvents: TypingEvent[] = [];
-        room.typing.subscribe((event: TypingEvent) => {
+        const receivedEvents: TypingSetEvent[] = [];
+        room.typing.subscribe((event: TypingSetEvent) => {
           receivedEvents.push(event);
         });
 
         // Emulate a typing event
         context.emulateBackendPublish({
-          name: TypingEvents.Start,
+          name: TypingEventTypes.Start,
           clientId: 'otherClient',
         });
 
@@ -484,10 +484,10 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 1);
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
-          type: TypingEvents.SetChanged,
+          type: TypingSetEventTypes.SetChanged,
           change: {
             clientId: 'otherClient',
-            type: TypingEvents.Start,
+            type: TypingEventTypes.Start,
           },
           currentlyTyping: new Set(['otherClient']),
         });
@@ -506,14 +506,14 @@ describe('Typing', () => {
         const { room } = context;
 
         // Subscribe to typing events
-        const receivedEvents: TypingEvent[] = [];
-        room.typing.subscribe((event: TypingEvent) => {
+        const receivedEvents: TypingSetEvent[] = [];
+        room.typing.subscribe((event: TypingSetEvent) => {
           receivedEvents.push(event);
         });
 
         // Emulate a typing event
         context.emulateBackendPublish({
-          name: TypingEvents.Start,
+          name: TypingEventTypes.Start,
           clientId: 'otherClient',
         });
 
@@ -521,10 +521,10 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 1);
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
-          type: TypingEvents.SetChanged,
+          type: TypingSetEventTypes.SetChanged,
           change: {
             clientId: 'otherClient',
-            type: TypingEvents.Start,
+            type: TypingEventTypes.Start,
           },
           currentlyTyping: new Set(['otherClient']),
         });
@@ -536,7 +536,7 @@ describe('Typing', () => {
 
         // Now send another typing event
         context.emulateBackendPublish({
-          name: TypingEvents.Start,
+          name: TypingEventTypes.Start,
           clientId: 'otherClient',
         });
 
@@ -556,14 +556,14 @@ describe('Typing', () => {
         const { room } = context;
 
         // Subscribe to typing events
-        const receivedEvents: TypingEvent[] = [];
-        room.typing.subscribe((event: TypingEvent) => {
+        const receivedEvents: TypingSetEvent[] = [];
+        room.typing.subscribe((event: TypingSetEvent) => {
           receivedEvents.push(event);
         });
 
         // Emulate a typing event
         context.emulateBackendPublish({
-          name: TypingEvents.Start,
+          name: TypingEventTypes.Start,
           clientId: 'otherClient',
         });
 
@@ -571,10 +571,10 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 1);
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
-          type: TypingEvents.SetChanged,
+          type: TypingSetEventTypes.SetChanged,
           change: {
             clientId: 'otherClient',
-            type: TypingEvents.Start,
+            type: TypingEventTypes.Start,
           },
           currentlyTyping: new Set(['otherClient']),
         });
@@ -591,10 +591,10 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 2);
         expect(receivedEvents).toHaveLength(2);
         expect(receivedEvents[1]).toEqual({
-          type: TypingEvents.SetChanged,
+          type: TypingSetEventTypes.SetChanged,
           change: {
             clientId: 'otherClient',
-            type: TypingEvents.Stop,
+            type: TypingEventTypes.Stop,
           },
           currentlyTyping: new Set(),
         });
@@ -605,14 +605,14 @@ describe('Typing', () => {
         const { room } = context;
 
         // Subscribe to typing events
-        const receivedEvents: TypingEvent[] = [];
-        room.typing.subscribe((event: TypingEvent) => {
+        const receivedEvents: TypingSetEvent[] = [];
+        room.typing.subscribe((event: TypingSetEvent) => {
           receivedEvents.push(event);
         });
 
         // Emulate a typing event
         context.emulateBackendPublish({
-          name: TypingEvents.Start,
+          name: TypingEventTypes.Start,
           clientId: 'otherClient',
         });
 
@@ -620,10 +620,10 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 1);
         expect(receivedEvents).toHaveLength(1);
         expect(receivedEvents[0]).toEqual({
-          type: TypingEvents.SetChanged,
+          type: TypingSetEventTypes.SetChanged,
           change: {
             clientId: 'otherClient',
-            type: TypingEvents.Start,
+            type: TypingEventTypes.Start,
           },
           currentlyTyping: new Set(['otherClient']),
         });
@@ -635,7 +635,7 @@ describe('Typing', () => {
 
         // Emulate a typing stop event
         context.emulateBackendPublish({
-          name: TypingEvents.Stop,
+          name: TypingEventTypes.Stop,
           clientId: 'otherClient',
         });
 
@@ -643,10 +643,10 @@ describe('Typing', () => {
         await waitForArrayLength(receivedEvents, 2);
         expect(receivedEvents).toHaveLength(2);
         expect(receivedEvents[1]).toEqual({
-          type: TypingEvents.SetChanged,
+          type: TypingSetEventTypes.SetChanged,
           change: {
             clientId: 'otherClient',
-            type: TypingEvents.Stop,
+            type: TypingEventTypes.Stop,
           },
           currentlyTyping: new Set(),
         });
@@ -660,14 +660,14 @@ describe('Typing', () => {
         const { room } = context;
 
         // Subscribe to typing events
-        const receivedEvents: TypingEvent[] = [];
-        room.typing.subscribe((event: TypingEvent) => {
+        const receivedEvents: TypingSetEvent[] = [];
+        room.typing.subscribe((event: TypingSetEvent) => {
           receivedEvents.push(event);
         });
 
         // Emulate a typing stop event
         context.emulateBackendPublish({
-          name: TypingEvents.Stop,
+          name: TypingEventTypes.Stop,
           clientId: 'otherClient',
         });
 
@@ -677,16 +677,16 @@ describe('Typing', () => {
 
       it<TestContext>('should only unsubscribe the correct subscription', async (context) => {
         const { room } = context;
-        const received: TypingEvent[] = [];
+        const received: TypingSetEvent[] = [];
 
-        const emulateTypingEvent = (clientId: string, event: TypingEvents) => {
+        const emulateTypingEvent = (clientId: string, event: TypingEventTypes) => {
           context.emulateBackendPublish({
             name: event,
             clientId: clientId,
           });
         };
 
-        const listener = (event: TypingEvent) => {
+        const listener = (event: TypingSetEvent) => {
           received.push(event);
         };
 
@@ -695,15 +695,15 @@ describe('Typing', () => {
         const subscription2 = room.typing.subscribe(listener);
 
         // Both subscriptions should trigger the listener
-        emulateTypingEvent('user1', TypingEvents.Start);
+        emulateTypingEvent('user1', TypingEventTypes.Start);
         await waitForArrayLength(received, 2);
 
         // Unsubscribe first subscription
         subscription1.unsubscribe();
 
         // One subscription should still trigger the listener
-        emulateTypingEvent('user2', TypingEvents.Start);
-        emulateTypingEvent('user2', TypingEvents.Start);
+        emulateTypingEvent('user2', TypingEventTypes.Start);
+        emulateTypingEvent('user2', TypingEventTypes.Start);
         await waitForArrayLength(received, 3);
 
         // Unsubscribe second subscription
