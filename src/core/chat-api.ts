@@ -247,14 +247,14 @@ export class ChatApi {
   addMessageReaction(roomId: string, serial: string, data: AddMessageReactionParams): Promise<void> {
     const encodedSerial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedRequest(`/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`, 'POST', data);
+    return this._makeAuthorizedRequest(`/chat/v3/rooms/${roomId}/messages/${encodedSerial}/reactions`, 'POST', data);
   }
 
   deleteMessageReaction(roomId: string, serial: string, data: DeleteMessageReactionParams): Promise<void> {
     const encodedSerial = encodeURIComponent(serial);
     roomId = encodeURIComponent(roomId);
     return this._makeAuthorizedRequest(
-      `/chat/v2/rooms/${roomId}/messages/${encodedSerial}/reactions`,
+      `/chat/v3/rooms/${roomId}/messages/${encodedSerial}/reactions`,
       'DELETE',
       undefined,
       data,
