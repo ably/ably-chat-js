@@ -14,7 +14,7 @@ import {
   MessageReactionType,
 } from './events.js';
 import { Logger } from './logger.js';
-import { MessageOptions, RoomOptions } from './room-options.js';
+import { InternalRoomOptions, MessageOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter from './utils/event-emitter.js';
 
@@ -311,22 +311,23 @@ export class DefaultMessageReactions implements MessagesReactions {
     };
   }
 
-  /**applies the correct option
+  /**
    * Merges the channel options to add support for message reactions.
    *
    * @param roomOptions The room options to merge for.
    * @returns A function that merges the channel options for the room with the ones required for presence.
    */
-  static channelOptionMerger(roomOptions: RoomOptions): ChannelOptionsMerger {
+  static channelOptionMerger(roomOptions: InternalRoomOptions): ChannelOptionsMerger {
     return (options) => {
-      if (roomOptions.messages?.rawMessageReactions) {
-        return options;
+      // annotation publish is always required for message reactions
+      if (!options.modes.includes('ANNOTATION_PUBLISH')) {
+        options.modes.push('ANNOTATION_PUBLISH');
       }
-      const modes = options.modes ?? ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'ANNOTATION_PUBLISH'];
-      return {
-        ...options,
-        modes,
-      };
+      // annotation subscribe is only required if the room has raw message reactions
+      if (roomOptions.messages.rawMessageReactions && !options.modes.includes('ANNOTATION_SUBSCRIBE')) {
+        options.modes.push('ANNOTATION_SUBSCRIBE');
+      }
+      return options;
     };
   }
 }

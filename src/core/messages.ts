@@ -314,9 +314,8 @@ export class DefaultMessages implements Messages {
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
 
-    this._applyChannelSubscriptions();
-
     this.reactions = new DefaultMessageReactions(this._logger, options, this._chatApi, this._roomId, this._channel);
+    this._applyChannelSubscriptions();
   }
 
   /**

@@ -1,6 +1,5 @@
 import * as Ably from 'ably';
 
-import { roomChannelName } from './channel.js';
 import { ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import { Logger } from './logger.js';
@@ -231,15 +230,5 @@ export class DefaultOccupancy implements Occupancy {
 
       return { ...options, params: { ...options.params, occupancy: 'metrics' } };
     };
-  }
-
-  /**
-   * Returns the channel name for the occupancy channel.
-   *
-   * @param roomId The unique identifier of the room.
-   * @returns The channel name for the occupancy channel.
-   */
-  static channelName(roomId: string): string {
-    return roomChannelName(roomId);
   }
 }

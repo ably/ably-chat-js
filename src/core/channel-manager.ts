@@ -4,12 +4,14 @@ import { roomChannelName } from './channel.js';
 import { Logger } from './logger.js';
 import { DEFAULT_CHANNEL_OPTIONS, DEFAULT_CHANNEL_OPTIONS_REACT } from './version.js';
 
-export type ChannelOptionsMerger = (options: Ably.ChannelOptions) => Ably.ChannelOptions;
+export type ChannelOptionsWithModes = Omit<Ably.ChannelOptions, 'modes'> & Required<Pick<Ably.ChannelOptions, 'modes'>>;
+
+export type ChannelOptionsMerger = (options: ChannelOptionsWithModes) => ChannelOptionsWithModes;
 
 export class ChannelManager {
   private readonly _realtime: Ably.Realtime;
   private readonly _logger: Logger;
-  private _registeredOptions: Ably.ChannelOptions;
+  private _registeredOptions: ChannelOptionsWithModes;
   private readonly _isReact: boolean;
   private _resolvedChannel?: Ably.RealtimeChannel;
   private readonly _channelId: string;
@@ -51,7 +53,14 @@ export class ChannelManager {
     this._realtime.channels.release(this._channelId);
   }
 
-  private _defaultChannelOptions(): Ably.ChannelOptions {
-    return this._isReact ? DEFAULT_CHANNEL_OPTIONS_REACT : DEFAULT_CHANNEL_OPTIONS;
+  private _defaultChannelOptions(): ChannelOptionsWithModes {
+    this._logger.trace('ChannelManager._defaultChannelOptions();');
+
+    const baseOptions = this._isReact ? DEFAULT_CHANNEL_OPTIONS_REACT : DEFAULT_CHANNEL_OPTIONS;
+    this._logger.trace(this._isReact ? 'using react channel options' : 'using default channel options');
+
+    // Create a deep copy of the options, ensuring modes array is also copied
+    const modes = baseOptions.modes ?? [];
+    return { ...baseOptions, modes: [...modes] as Ably.ChannelMode[] } as ChannelOptionsWithModes;
   }
 }

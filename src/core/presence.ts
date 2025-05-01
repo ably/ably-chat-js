@@ -368,16 +368,15 @@ export class DefaultPresence implements Presence {
    */
   static channelOptionMerger(roomOptions: InternalRoomOptions): ChannelOptionsMerger {
     return (options) => {
-      // User wants to receive presence events, so we don't need to do anything.
-      if (roomOptions.presence.enableEvents) {
-        return options;
+      // Presence mode is always required
+      if (!options.modes.includes('PRESENCE')) {
+        options.modes.push('PRESENCE');
       }
-
-      const modes = options.modes ?? ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'ANNOTATION_PUBLISH'];
-      return {
-        ...options,
-        modes,
-      };
+      // If presence events are enabled, add the PRESENCE_SUBSCRIBE mode
+      if (roomOptions.presence.enableEvents && !options.modes.includes('PRESENCE_SUBSCRIBE')) {
+        options.modes.push('PRESENCE_SUBSCRIBE');
+      }
+      return options;
     };
   }
 }
