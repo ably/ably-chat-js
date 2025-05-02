@@ -140,6 +140,8 @@ describe('MessagesReactions', () => {
             messageSerial: '01672531200002-123@xyzdefghij',
             multiple: { '🍌': { clientIds: { user1: 10 }, total: 10 } },
           },
+          { messageSerial: '01672531200002-123@xyzdefghij' },
+          { messageSerial: '01672531200002-123@xyzdefghij' },
         ];
 
         let nextExpected = 0;
@@ -196,6 +198,23 @@ describe('MessagesReactions', () => {
           summary: {
             [MessageReactionType.Multiple]: { '🍌': { clientIds: { user1: 10 }, total: 10, totalUnidentified: 0 } },
           },
+        });
+
+        context.emulateBackendPublish({
+          name: 'chat.message',
+          serial: '01672531200002-123@xyzdefghij',
+          version: '01672531200002-123@abcdefghij',
+          action: ChatMessageActions.MessageAnnotationSummary,
+          timestamp: publishTimestamp,
+          summary: {},
+        });
+
+        context.emulateBackendPublish({
+          name: 'chat.message',
+          serial: '01672531200002-123@xyzdefghij',
+          version: '01672531200002-123@abcdefghij',
+          action: ChatMessageActions.MessageAnnotationSummary,
+          timestamp: publishTimestamp,
         });
       }));
 
