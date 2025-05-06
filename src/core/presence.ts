@@ -138,8 +138,8 @@ export interface Presence {
   /**
    * Subscribe the given listener from the given list of events.
    *
-   * Note that this method will throw an error if presence events are not enabled in the room options.
-   * Make sure to set `enableEvents: true` in your room options to use this feature.
+   * Note: This requires presence events to be enabled via the `enableEvents` option in
+   * the {@link PresenceOptions} provided to the room. If this is not enabled, an error will be thrown.
    *
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
@@ -150,8 +150,8 @@ export interface Presence {
   /**
    * Subscribe the given listener to all presence events.
    *
-   * Note that this method will throw an error if presence events are not enabled in the room options.
-   * Make sure to set `enableEvents: true` in your room options to use this feature.
+   * Note: This requires presence events to be enabled via the `enableEvents` option in
+   * the {@link PresenceOptions} provided to the room. If this is not enabled, an error will be thrown.
    *
    * @param listener listener to subscribe
    * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
@@ -227,9 +227,7 @@ export class DefaultPresence implements Presence {
   }
 
   /**
-   * Method to join room presence, will emit an enter event to all subscribers. Repeat calls will trigger more enter events.
-   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
-   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   * @inheritDoc
    */
   async enter(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.enter()`, { data });
@@ -240,9 +238,7 @@ export class DefaultPresence implements Presence {
   }
 
   /**
-   * Method to update room presence, will emit an update event to all subscribers. If the user is not present, it will be treated as a join event.
-   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
-   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   * @inheritDoc
    */
   async update(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.update()`, { data });
@@ -253,9 +249,7 @@ export class DefaultPresence implements Presence {
   }
 
   /**
-   * Method to leave room presence, will emit a leave event to all subscribers. If the user is not present, it will be treated as a no-op.
-   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
-   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link ErrorInfo} object which explains the error.
+   * @inheritDoc
    */
   async leave(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.leave()`, { data });
@@ -266,24 +260,11 @@ export class DefaultPresence implements Presence {
   }
 
   /**
-   * Subscribe the given listener from the given list of events.
-   *
-   * Note that this method will throw an error if presence events are not enabled in the room options.
-   * Make sure to set `enableEvents: true` in your room options to use this feature.
-   *
-   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
-   * @param listener listener to subscribe
-   * @throws {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
+   * @inheritDoc
    */
   subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Subscription;
   /**
-   * Subscribe the given listener to all presence events.
-   *
-   * Note that this method will throw an error if presence events are not enabled in the room options.
-   * Make sure to set `enableEvents: true` in your room options to use this feature.
-   *
-   * @param listener listener to subscribe
-   * @throws {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
+   * @inheritDoc
    */
   subscribe(listener?: PresenceListener): Subscription;
   subscribe(
@@ -326,7 +307,7 @@ export class DefaultPresence implements Presence {
   }
 
   /**
-   * Unsubscribe all listeners from all presence events.
+   * @inheritDoc
    */
   unsubscribeAll(): void {
     this._logger.trace('Presence.unsubscribeAll()');

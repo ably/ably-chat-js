@@ -18,7 +18,7 @@ export interface Occupancy {
    * Subscribe a given listener to occupancy updates of the chat room.
    *
    * Note: This requires occupancy events to be enabled via the `enableEvents` option in
-   * the room options. If this is not enabled, an error will be thrown.
+   * the {@link OccupancyOptions} options provided to the room. If this is not enabled, an error will be thrown.
    *
    * @param listener A listener to be called when the occupancy of the room changes.
    * @returns A subscription object that can be used to unsubscribe the listener.
