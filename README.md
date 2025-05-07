@@ -305,7 +305,8 @@ own key from the Ably dashboard.
 
 ```tsx
 import * as Ably from 'ably';
-import { ChatClient, ChatClientProvider, ChatRoomProvider, AllFeaturesEnabled } from '@ably/chat';
+import { ChatClient, AllFeaturesEnabled } from '@ably/chat';
+import { ChatClientProvider, ChatRoomProvider } from '@ably/chat/react';
 import { Messages } from './Messages';
 
 // Initialize an Ably Realtime client, which we'll use to power the chat client
