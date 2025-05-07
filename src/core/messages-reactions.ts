@@ -207,7 +207,9 @@ export class DefaultMessageReactions implements MessagesReactions {
       return;
     }
     if (!event.summary) {
-      return;
+      // This means the summary is now empty, which is valid.
+      // Happens when there are no reactions such as after deleting the last reaction.
+      event.summary = {};
     }
 
     // they must have a serial
