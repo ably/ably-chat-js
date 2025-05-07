@@ -1,14 +1,12 @@
-import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { OccupancyEvent } from '../../src/core/occupancy.ts';
 import { Room } from '../../src/core/room.ts';
-import { RoomStatus } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForExpectedInbandOccupancy } from '../helper/common.ts';
 import { ablyRealtimeClientWithToken } from '../helper/realtime-client.ts';
-import { getRandomRoom, waitForRoomStatus } from '../helper/room.ts';
+import { getRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
   chat: ChatClient;
@@ -45,7 +43,7 @@ describe('occupancy', () => {
       presenceMembers: 0,
     });
 
-    const { name: channelName } = room.messages.channel;
+    const { name: channelName } = room.channel;
 
     // In a separate realtime client, attach to the same room
     const realtimeClient = ablyRealtimeClientWithToken();
@@ -92,7 +90,7 @@ describe('occupancy', () => {
   it<TestContext>('allows subscriptions to inband occupancy', { timeout: TEST_TIMEOUT }, async (context) => {
     const { chat } = context;
 
-    const room = await getRandomRoom(chat);
+    const room = await getRandomRoom(chat, { occupancy: { enableEvents: true } });
 
     // Subscribe to occupancy
     const occupancyUpdates: OccupancyEvent[] = [];
@@ -115,7 +113,7 @@ describe('occupancy', () => {
 
     // In a separate realtime client, attach to the same room
     const realtimeClient = ablyRealtimeClientWithToken();
-    const { name: channelName } = room.messages.channel;
+    const { name: channelName } = room.channel;
     const realtimeChannel = realtimeClient.channels.get(channelName);
     await realtimeChannel.attach();
     await realtimeChannel.presence.enter();
@@ -129,54 +127,5 @@ describe('occupancy', () => {
       },
       TEST_TIMEOUT,
     );
-  });
-
-  it<TestContext>('handles discontinuities', async (context) => {
-    const { chat } = context;
-
-    const room = await getRandomRoom(chat);
-
-    // Attach the room
-    await room.attach();
-
-    // Subscribe discontinuity events
-    const discontinuityErrors: (Ably.ErrorInfo | undefined)[] = [];
-    const { off } = room.occupancy.onDiscontinuity((error: Ably.ErrorInfo | undefined) => {
-      discontinuityErrors.push(error);
-    });
-
-    const channelSuspendable = room.messages.channel as Ably.RealtimeChannel & {
-      notifyState(state: 'suspended' | 'attached'): void;
-    };
-
-    // Simulate a discontinuity by forcing a channel into suspended state
-    channelSuspendable.notifyState('suspended');
-
-    // Wait for the room to go into suspended
-    await waitForRoomStatus(room, RoomStatus.Suspended);
-
-    // Force the channel back into attached state - to simulate recovery
-    channelSuspendable.notifyState('attached');
-
-    // Wait for the room to go into attached
-    await waitForRoomStatus(room, RoomStatus.Attached);
-
-    // Wait for a discontinuity event to be received
-    expect(discontinuityErrors.length).toBe(1);
-
-    // Unsubscribe from discontinuity events
-    off();
-
-    // Simulate a discontinuity by forcing a channel into suspended state
-    channelSuspendable.notifyState('suspended');
-
-    // Wait for the room to go into suspended
-    await waitForRoomStatus(room, RoomStatus.Suspended);
-
-    // We shouldn't get any more discontinuity events
-    expect(discontinuityErrors.length).toBe(1);
-
-    // Calling off again should be a no-op
-    off();
   });
 });

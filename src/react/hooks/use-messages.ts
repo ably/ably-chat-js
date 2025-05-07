@@ -214,7 +214,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
       context.room,
       (room) => {
         logger.debug('useMessages(); applying onDiscontinuity listener');
-        const { off } = room.messages.onDiscontinuity(onDiscontinuityRef);
+        const { off } = room.onDiscontinuity(onDiscontinuityRef);
         return () => {
           logger.debug('useMessages(); removing onDiscontinuity listener');
           off();

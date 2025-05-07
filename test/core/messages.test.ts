@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
 import { ChatMessageActions, MessageEvent, MessageEvents } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
-import { DefaultMessages, OrderBy } from '../../src/core/messages.ts';
+import { OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
 import {
   channelEventEmitter,
@@ -56,7 +56,7 @@ describe('Messages', () => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger());
     context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
-    const channel = context.room.messages.channel;
+    const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
     context.emulateBackendStateChange = channelStateEventEmitter(channel);
   });
@@ -192,29 +192,6 @@ describe('Messages', () => {
     subscription2.unsubscribe();
     sendMessage('c');
     expect(received).toEqual(['a', 'a', 'b']);
-  });
-
-  it<TestContext>('should only unsubscribe the correct subscription for discontinuities', (context) => {
-    const { room } = context;
-
-    const received: string[] = [];
-    const listener = (error?: Ably.ErrorInfo) => {
-      received.push(error?.message ?? 'no error');
-    };
-
-    const subscription1 = room.messages.onDiscontinuity(listener);
-    const subscription2 = room.messages.onDiscontinuity(listener);
-
-    (room.messages as DefaultMessages).discontinuityDetected(new Ably.ErrorInfo('error1', 0, 0));
-    expect(received).toEqual(['error1', 'error1']);
-
-    subscription1.off();
-    (room.messages as DefaultMessages).discontinuityDetected(new Ably.ErrorInfo('error2', 0, 0));
-    expect(received).toEqual(['error1', 'error1', 'error2']);
-
-    subscription2.off();
-    (room.messages as DefaultMessages).discontinuityDetected(new Ably.ErrorInfo('error3', 0, 0));
-    expect(received).toEqual(['error1', 'error1', 'error2']);
   });
 
   describe('subscribing to updates', () => {
@@ -745,7 +722,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = room.messages.channel;
+    const msgChannel = room.channel;
 
     // Force ts to recognize the channel properties
     const channel = msgChannel as RealtimeChannel & {
@@ -805,7 +782,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = room.messages.channel;
+    const msgChannel = room.channel;
 
     // Force ts to recognize the channel properties
     const channel = msgChannel as RealtimeChannel & {
@@ -842,7 +819,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = room.messages.channel;
+    const msgChannel = room.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -939,7 +916,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = room.messages.channel;
+    const msgChannel = room.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -1027,7 +1004,7 @@ describe('Messages', () => {
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
-    const msgChannel = room.messages.channel;
+    const msgChannel = room.channel;
     const channel = msgChannel as RealtimeChannel & {
       properties: {
         attachSerial: string | undefined;
@@ -1124,13 +1101,5 @@ describe('Messages', () => {
 
     // Run a history query for the listener and check the chat api call is made with the previous attach serial
     await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
-  });
-
-  it<TestContext>('has an attachment error code', (context) => {
-    expect((context.room.messages as DefaultMessages).attachmentErrorCode).toBe(102001);
-  });
-
-  it<TestContext>('has a detachment error code', (context) => {
-    expect((context.room.messages as DefaultMessages).detachmentErrorCode).toBe(102050);
   });
 });

@@ -5,6 +5,11 @@ import * as Ably from 'ably';
  */
 export enum ErrorCodes {
   /**
+   * The request was invalid.
+   */
+  BadRequest = 40000,
+
+  /**
    * The message was rejected before publishing by a rule on the chat room.
    */
   MessageRejectedByBeforePublishRule = 42211,
@@ -13,58 +18,6 @@ export enum ErrorCodes {
    * The message was rejected before publishing by a moderation rule on the chat room.
    */
   MessageRejectedByModeration = 42213,
-
-  /**
-   * The messages feature failed to attach.
-   */
-  MessagesAttachmentFailed = 102001,
-
-  /**
-   * The presence feature failed to attach.
-   */
-  PresenceAttachmentFailed = 102002,
-
-  /**
-   * The reactions feature failed to attach.
-   */
-  ReactionsAttachmentFailed = 102003,
-
-  /**
-   * The occupancy feature failed to attach.
-   */
-  OccupancyAttachmentFailed = 102004,
-
-  /**
-   * The typing feature failed to attach.
-   */
-  TypingAttachmentFailed = 102005,
-  // 102006 - 102049 reserved for future use for attachment errors
-
-  /**
-   * The messages feature failed to detach.
-   */
-  MessagesDetachmentFailed = 102050,
-
-  /**
-   * The presence feature failed to detach.
-   */
-  PresenceDetachmentFailed = 102051,
-
-  /**
-   * The reactions feature failed to detach.
-   */
-  ReactionsDetachmentFailed = 102052,
-
-  /**
-   * The occupancy feature failed to detach.
-   */
-  OccupancyDetachmentFailed = 102053,
-
-  /**
-   * The typing feature failed to detach.
-   */
-  TypingDetachmentFailed = 102054,
-  // 102055 - 102099 reserved for future use for detachment errors
 
   /**
    * The room has experienced a discontinuity.
@@ -87,16 +40,6 @@ export enum ErrorCodes {
    * Cannot perform operation because the room is in a released state.
    */
   RoomIsReleased = 102103,
-
-  /**
-   * Cannot perform operation because the previous operation failed.
-   */
-  PreviousOperationFailed = 102104,
-
-  /**
-   * An unknown error has happened in the room lifecycle.
-   */
-  RoomLifecycleError = 102105,
 
   /**
    * Room was released before the operation could complete.

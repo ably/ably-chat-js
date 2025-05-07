@@ -3,44 +3,37 @@ import * as Ably from 'ably';
 import { MessageReactionType } from './events.js';
 
 /**
- * A set of example options for a Chat room that enables all features, this is
- * useful for testing and demonstration purposes.
+ * The default values for RoomOptions.
  */
-export const AllFeaturesEnabled = {
-  /**
-   * The default presence options for a chat room.
-   */
-  presence: {
-    /**
-     * The client should be able to enter presence.
-     */
-    enter: true,
-
-    /**
-     * The client should be able to subscribe to presence.
-     */
-    subscribe: true,
-  } as PresenceOptions,
-
+const DefaultRoomOptions: Omit<InternalRoomOptions, 'isReactClient'> = {
   /**
    * The default typing options for a chat room.
    */
   typing: {
     /**
-     * The default timeout for typing events in milliseconds.
+     * The default time that a client will wait between sending one typing heartbeat and the next.
+     *
+     * Spec: CHA-T10.
      */
-    timeoutMs: 5000,
-  } as TypingOptions,
-
-  /**
-   * The default reactions options for a chat room.
-   */
-  reactions: {} as RoomReactionsOptions,
+    heartbeatThrottleMs: 10000,
+  },
 
   /**
    * The default occupancy options for a chat room.
    */
-  occupancy: {} as OccupancyOptions,
+  occupancy: {
+    /**
+     * Whether to enable occupancy events.
+     */
+    enableEvents: false,
+  },
+
+  /**
+   * The default presence options for the room.
+   */
+  presence: {
+    enableEvents: true,
+  },
 
   /**
    * The default options for messages.
@@ -48,7 +41,7 @@ export const AllFeaturesEnabled = {
   messages: {
     rawMessageReactions: true,
     defaultMessageReactionType: MessageReactionType.Distinct,
-  } as MessageOptions,
+  },
 };
 
 /**
@@ -78,92 +71,123 @@ export interface MessageOptions {
 }
 
 /**
- * Represents the presence options for a chat room.
- */
-export interface PresenceOptions {
-  /**
-   * Whether the underlying Realtime channel should use the presence enter mode, allowing entry into presence.
-   * This property does not affect the presence lifecycle, and users must still call {@link Presence.enter}
-   * in order to enter presence.
-   * @defaultValue true
-   */
-  enter?: boolean;
-
-  /**
-   * Whether the underlying Realtime channel should use the presence subscribe mode, allowing subscription to presence.
-   * This property does not affect the presence lifecycle, and users must still call {@link Presence.subscribe}
-   * in order to subscribe to presence.
-   * @defaultValue true
-   */
-  subscribe?: boolean;
-}
-
-/**
  * Represents the typing options for a chat room.
  */
 export interface TypingOptions {
   /**
-   * The timeout for typing events in milliseconds. If typing.start() is not called for this amount of time, a stop
-   * typing event will be fired, resulting in the user being removed from the currently typing set.
-   * @defaultValue 5000
+   * A throttle, in milliseconds, that enforces the minimum time interval between consecutive `typing.started`
+   * events sent by the client to the server.
+   * If typing.start() is called, the first call will emit an event immediately.
+   * Later calls will no-op until the time has elapsed.
+   * Calling typing.stop() will immediately send a `typing.stopped` event to the server and reset the interval,
+   * allowing the client to send another `typing.started` event immediately.
+   * @defaultValue 10000
    */
-  timeoutMs: number;
+  heartbeatThrottleMs?: number;
 }
-
-/**
- * Represents the reactions options for a chat room.
- */
-export type RoomReactionsOptions = object;
 
 /**
  * Represents the occupancy options for a chat room.
  */
-export type OccupancyOptions = object;
+export interface OccupancyOptions {
+  /**
+   * Whether to enable occupancy events.
+   *
+   * Note that enabling this feature will increase the number of messages received by the client as additional
+   * messages will be sent by the server to indicate occupancy changes.
+   *
+   * @defaultValue false
+   */
+  enableEvents?: boolean;
+}
+
+/**
+ * Represents the presence options for a chat room.
+ */
+export interface PresenceOptions {
+  /**
+   * Whether or not the client should receive presence events from the server. This setting
+   * can be disabled if you are using presence in your Chat Room, but this particular client does not
+   * need to receive the messages.
+   *
+   * @defaultValue true
+   */
+  enableEvents?: boolean;
+}
 
 /**
  * Represents the options for a given chat room.
  */
 export interface RoomOptions {
   /**
-   * The presence options for the room. To enable presence in the room, set this property. You may
-   * use {@link AllFeaturesEnabled.presence} to enable presence with default options.
-   * @defaultValue undefined
-   */
-  presence?: PresenceOptions;
-
-  /**
-   * The typing options for the room. To enable typing in the room, set this property. You may use
-   * {@link AllFeaturesEnabled.typing} to enable typing with default options.
+   * The typing options for the room.
    */
   typing?: TypingOptions;
 
   /**
-   * The reactions options for the room. To enable reactions in the room, set this property. You may use
-   * {@link AllFeaturesEnabled.reactions} to enable reactions with default options.
-   */
-  reactions?: RoomReactionsOptions;
-
-  /**
-   * The occupancy options for the room. To enable occupancy in the room, set this property. You may use
-   * {@link AllFeaturesEnabled.occupancy} to enable occupancy with default options.
+   * The occupancy options for the room.
    */
   occupancy?: OccupancyOptions;
 
   /**
-   * The message options for the room. Messages are always enabled, this object is for additional
-   * configuration. You may use {@link AllFeaturesEnabled.messages} or leave empty to use the defaults.
+   * The presence options for the room.
+   */
+  presence?: PresenceOptions;
+
+  /**
+   * The message options for the room.
    */
   messages?: MessageOptions;
 }
 
 /**
+ * Represents the normalized typing options for a chat room, which makes every property required.
+ */
+export type InternalTypingOptions = Required<TypingOptions>;
+
+/**
+ * Represents the normalized occupancy options for a chat room. Everything becomes required.
+ */
+export type InternalOccupancyOptions = Required<OccupancyOptions>;
+
+/**
+ * Represents the normalized presence options for a chat room. Everything becomes required.
+ */
+export type InternalPresenceOptions = Required<PresenceOptions>;
+
+/**
+ * Represents the normalized message options for a chat room. Everything becomes required.
+ */
+export type InternalMessageOptions = Required<MessageOptions>;
+
+/**
  * Represents the normalized options for a chat room.
  */
-export interface NormalizedRoomOptions extends RoomOptions {
+export interface InternalRoomOptions {
   /**
    * Are we running the client in a React environment?
    */
   isReactClient: boolean;
+
+  /**
+   * Typing options with everything made mandatory.
+   */
+  typing: InternalTypingOptions;
+
+  /**
+   * Occupancy options with everything made mandatory.
+   */
+  occupancy: InternalOccupancyOptions;
+
+  /**
+   * Presence options with everything made mandatory.
+   */
+  presence: InternalPresenceOptions;
+
+  /**
+   * Message options with everything made mandatory.
+   */
+  messages: InternalMessageOptions;
 }
 
 /**
@@ -175,15 +199,50 @@ export interface NormalizedRoomOptions extends RoomOptions {
 const invalidRoomConfiguration = (reason: string): Error =>
   new Ably.ErrorInfo(`invalid room configuration: ${reason}`, 40001, 400);
 
-export const validateRoomOptions = (options: RoomOptions): void => {
-  if (options.typing && options.typing.timeoutMs <= 0) {
-    throw invalidRoomConfiguration('typing timeout must be greater than 0');
+export const validateRoomOptions = (options: InternalRoomOptions): void => {
+  validateTypingOptions(options.typing);
+};
+
+const validateTypingOptions = (options: InternalTypingOptions): void => {
+  if (options.heartbeatThrottleMs <= 0) {
+    throw invalidRoomConfiguration('typing heartbeat interval must be greater than 0');
   }
 };
 
-export const normalizeRoomOptions = (options: RoomOptions, react: boolean): NormalizedRoomOptions => {
+const normalizeTypingOptions = (options: RoomOptions | undefined): InternalTypingOptions => {
   return {
-    ...options,
+    ...DefaultRoomOptions.typing,
+    ...options?.typing,
+  };
+};
+
+const normalizeOccupancyOptions = (options: RoomOptions | undefined): InternalOccupancyOptions => {
+  return {
+    ...DefaultRoomOptions.occupancy,
+    ...options?.occupancy,
+  };
+};
+
+const normalizePresenceOptions = (options: RoomOptions | undefined): InternalPresenceOptions => {
+  return {
+    ...DefaultRoomOptions.presence,
+    ...options?.presence,
+  };
+};
+
+const normalizeMessageOptions = (options: RoomOptions | undefined): InternalMessageOptions => {
+  return {
+    ...DefaultRoomOptions.messages,
+    ...options?.messages,
+  };
+};
+
+export const normalizeRoomOptions = (options: RoomOptions | undefined, react: boolean): InternalRoomOptions => {
+  return {
+    typing: normalizeTypingOptions(options),
+    occupancy: normalizeOccupancyOptions(options),
+    presence: normalizePresenceOptions(options),
+    messages: normalizeMessageOptions(options),
     isReactClient: react,
   };
 };
