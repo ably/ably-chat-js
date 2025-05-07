@@ -4,6 +4,7 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { Message, MessageEvent, MessageEvents, PaginatedResult } from '@ably/chat';
 import { ErrorInfo } from 'ably';
 import { useReactionType } from '../MessageReactions';
+import { MessageInput } from '../MessageInput';
 
 interface ChatBoxComponentProps {}
 
@@ -178,35 +179,12 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const reactionType = useReactionType();
 
   return (
-    <div className="chat-box">
+    <div>
       {loading && <div className="text-center m-auto">loading...</div>}
       {!loading && (
-        <div
-          id="messages"
-          className="chat-window"
-        >
-          {messages.map((msg) => {
-            if (msg.isDeleted) {
-              return (
-                <div
-                  key={msg.serial}
-                  className="deleted-message"
-                >
-                  This message was deleted.
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onUpdateMessage(msg);
-                    }}
-                  >
-                    Edit
-                  </a>
-                  .
-                </div>
-              );
-            }
-            return (
+        <div className="flex flex-col w-full h-[600px] item-left border-1 border-blue-500 rounded-lg overflow-hidden mx-auto font-sans">
+          <div className="flex-1 p-4 overflow-y-auto space-y-2">
+            {messages.map((msg) => (
               <MessageComponent
                 key={msg.serial}
                 self={msg.clientId === clientId}
@@ -216,10 +194,11 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
                 onReactionDelete={deleteReaction}
                 onMessageDelete={onDeleteMessage}
                 onMessageUpdate={onUpdateMessage}
-              ></MessageComponent>
-            );
-          })}
-          <div ref={messagesEndRef} />
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+          <MessageInput />
         </div>
       )}
     </div>

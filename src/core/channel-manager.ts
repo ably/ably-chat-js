@@ -37,9 +37,8 @@ export class ChannelManager {
 
   get(): Ably.RealtimeChannel {
     this._logger.trace('ChannelManager.get();');
-    if (!this._resolvedChannel) {
-      this._resolvedChannel = this._realtime.channels.get(this._channelId, this._registeredOptions);
-    }
+
+    this._resolvedChannel ??= this._realtime.channels.get(this._channelId, this._registeredOptions);
 
     return this._resolvedChannel;
   }
