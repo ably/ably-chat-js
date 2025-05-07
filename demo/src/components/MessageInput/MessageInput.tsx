@@ -6,7 +6,7 @@ interface MessageInputProps {}
 
 export const MessageInput: FC<MessageInputProps> = ({}) => {
   const { send } = useMessages();
-  const { start, stop } = useTyping();
+  const { keystroke, stop } = useTyping();
   const { currentStatus } = useChatConnection();
   const [shouldDisable, setShouldDisable] = useState(true);
 
@@ -16,7 +16,7 @@ export const MessageInput: FC<MessageInputProps> = ({}) => {
   }, [currentStatus]);
 
   const handleStartTyping = () => {
-    start().catch((error: unknown) => {
+    keystroke().catch((error: unknown) => {
       console.error('Failed to start typing indicator', error);
     });
   };

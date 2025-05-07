@@ -2,7 +2,6 @@ import { FC, useEffect, useState } from 'react';
 import { Chat } from './containers/Chat';
 import { OccupancyComponent } from './components/OccupancyComponent';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
-import { AllFeaturesEnabled } from '@ably/chat';
 import { ChatRoomProvider } from '@ably/chat/react';
 import { ReactionTypeProvider } from './containers/ReactionTypeProvider';
 import { MessageReactionTypeSelector } from './components/MessageReactionTypeSelector';
@@ -56,7 +55,7 @@ const App: FC<AppProps> = () => {
         id={roomIdState}
         release={true}
         attach={true}
-        options={AllFeaturesEnabled}
+        options={{ occupancy: { enableEvents: true } }}
       >
         <div
           style={{

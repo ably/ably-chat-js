@@ -181,19 +181,19 @@ describe('useMessages', () => {
 
     const deleteSpy = vi.spyOn(mockRoom.messages, 'delete').mockResolvedValue({} as unknown as Message);
 
-    const message = new DefaultMessage(
-      '01719948956834-000@108TeGZDQBderu97202638',
-      'client-1',
-      'some-room',
-      'I have the high ground now',
-      {},
-      {},
-      ChatMessageActions.MessageCreate,
-      '01719948956834-000@108TeGZDQBderu97202638',
-      new Date(1719948956834),
-      new Date(1719948956834),
-      emptyMessageReactions(),
-    );
+    const message = new DefaultMessage({
+      serial: '01719948956834-000@108TeGZDQBderu97202638',
+      clientId: 'client-1',
+      roomId: 'some-room',
+      text: 'I have the high ground now',
+      metadata: {},
+      headers: {},
+      action: ChatMessageActions.MessageCreate,
+      version: '01719948956834-000@108TeGZDQBderu97202638',
+      createdAt: new Date(1719948956834),
+      timestamp: new Date(1719948956834),
+      reactions: emptyMessageReactions(),
+    });
     // call both methods and ensure they call the underlying messages methods
     await act(async () => {
       await result.current.send({ text: 'test message' });
@@ -222,7 +222,7 @@ describe('useMessages', () => {
     // change the mock room instance
     updateMockRoom(makeRandomRoom({}));
 
-    // re-render to trigger the useEffect
+    // re-render to trigger the useEffectYou
     rerender();
 
     // check that the messages instance is updated
@@ -233,10 +233,10 @@ describe('useMessages', () => {
     const mockOff = vi.fn();
     const mockDiscontinuityListener = vi.fn();
 
-    // spy on the onDiscontinuity method of the messages instance
+    // spy on the onDiscontinuity method of the room instance
     let discontinuityListener: DiscontinuityListener | undefined;
-    vi.spyOn(mockRoom.messages, 'onDiscontinuity').mockImplementation((listener) => {
-      discontinuityListener = listener;
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((error) => {
+      discontinuityListener = error;
       return { off: mockOff };
     });
 

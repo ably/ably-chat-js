@@ -285,7 +285,7 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
       context.room,
       (room) => {
         logger.debug('usePresenceListener(); applying onDiscontinuity listener');
-        const { off } = room.presence.onDiscontinuity(onDiscontinuityRef);
+        const { off } = room.onDiscontinuity(onDiscontinuityRef);
 
         return () => {
           logger.debug('usePresenceListener(); removing onDiscontinuity listener');
