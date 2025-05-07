@@ -6,19 +6,16 @@ interface TypingIndicatorPanelProps {}
 export const TypingIndicatorPanel: FC<TypingIndicatorPanelProps> = () => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
-  const { currentlyTyping, error } = useTyping();
+  const { currentlyTyping } = useTyping();
 
   return (
-    <div>
-      {error && <div className="text-red-600 dark:text-red-500 p-3">Typing indicator error: {error.message}</div>}
-      {!error && (
-        <div className="typing-indicator-container">
-          {new Array(...currentlyTyping)
-            .filter((client) => client !== clientId)
-            .map((client) => (
-              <p key={client}>{client} is typing...</p>
-            ))}
-        </div>
+    <div className="h-6 px-2 pt-2">
+      {currentlyTyping.size > 0 && (
+        <p className="text-sm text-gray-700 overflow-hidden">
+          {Array.from(currentlyTyping).filter((client) => client !== clientId).join(', ')}
+          {' '}
+          {currentlyTyping.size > 1 ? 'are' : 'is'} typing...
+        </p>
       )}
     </div>
   );
