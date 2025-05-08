@@ -240,9 +240,6 @@ export interface MessageReactionSummaryEvent {
 
   /** The message reactions summary. */
   summary: {
-    /** When the summary was generated */
-    timestamp: Date;
-
     /** Reference to the original message's serial number */
     messageSerial: string;
 

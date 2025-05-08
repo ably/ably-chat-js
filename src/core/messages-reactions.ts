@@ -225,7 +225,6 @@ export class DefaultMessageReactions implements MessagesReactions {
     this._emitter.emit(MessageReactionEvents.Summary, {
       type: MessageReactionEvents.Summary,
       summary: {
-        timestamp: new Date(event.timestamp),
         messageSerial: event.serial,
         unique: unique,
         distinct: distinct,
