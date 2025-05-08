@@ -1,5 +1,6 @@
 import React from 'react';
 import { Message, MessageReactionType, Messages } from '@ably/chat';
+import './styles.css';
 
 interface MessageReactionsDistinctProps {
   message: Message;
@@ -44,6 +45,7 @@ export const MessageReactionsDistinct: React.FC<MessageReactionsDistinctProps> =
             e.preventDefault();
             handleReactionClick(emoji);
           }}
+          className="reaction-button"
         >
           {emoji} ({distinct[emoji]?.total || 0})
         </button>

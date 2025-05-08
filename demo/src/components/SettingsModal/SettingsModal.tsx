@@ -45,14 +45,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ className = '' }) 
 
       {isOpen && (
         <div className="fixed inset-0 flex bg-white items-center justify-center z-50">
-          <div className="fixed inset-0 bg-white bg-opacity-30" onClick={toggleModal}></div>
-          <div 
+          <div
+            className="fixed inset-0 bg-white bg-opacity-30"
+            onClick={toggleModal}
+          ></div>
+          <div
             ref={modalRef}
             className="bg-white rounded-lg shadow-xl p-4 w-80 z-50 relative"
           >
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-lg text-black font-medium">Reaction Settings</h3>
-              <button 
+              <button
                 onClick={toggleModal}
                 className="text-black-500 !bg-grey-500 hover:text-black-700 focus:outline-none"
               >
