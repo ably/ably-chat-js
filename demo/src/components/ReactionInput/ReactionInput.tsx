@@ -25,13 +25,19 @@ export const ReactionInput: FC<ReactionInputProps> = ({ reactions, onSend, disab
         }
       }}
       href="#"
-      className={disabled ? 'cursor-not-allowed' : "text-xl p-1 border border-blue-500 rounded hover:bg-blue-100 text-blue-500 transition-colors"}
+      className={
+        disabled
+          ? 'cursor-not-allowed'
+          : 'text-xl p-1 border border-blue-500 rounded hover:bg-blue-100 text-blue-500 transition-colors'
+      }
     >
       {reaction}
     </a>
   ));
 
-  return (<div className="flex justify-evenly items-center px-4 py-2 border-t border-gray-300 bg-white mx-auto">
-    {buttons}
-  </div>)
+  return (
+    <div className="flex justify-evenly items-center px-4 py-2 border-t border-gray-300 bg-white mx-auto">
+      {buttons}
+    </div>
+  );
 };

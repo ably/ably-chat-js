@@ -198,7 +198,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
             ))}
             <div ref={messagesEndRef} />
           </div>
-          <MessageInput/>
+          <MessageInput />
         </div>
       )}
     </div>

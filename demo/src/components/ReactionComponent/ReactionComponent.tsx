@@ -55,4 +55,4 @@ export const ReactionComponent: FC<ReactionComponentProps> = () => {
       </div>
     </div>
   );
-}
+};

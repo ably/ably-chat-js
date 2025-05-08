@@ -119,17 +119,17 @@ export const MessageComponent: React.FC<MessageProps> = ({
           <div className="text-xs text-gray-500">
             <span>{message.clientId}</span> &middot;{' '}
             <span className="sent-at-time">
-            <span className="short">{shortDate(message.createdAt)}</span>
-            <span className="long">{message.createdAt.toLocaleString()}</span>
-          </span>
+              <span className="short">{shortDate(message.createdAt)}</span>
+              <span className="long">{message.createdAt.toLocaleString()}</span>
+            </span>
             {message.isUpdated && message.updatedAt ? (
               <>
                 {' '}
                 &middot; Edited{' '}
                 <span className="sent-at-time">
-                <span className="short">{shortDate(message.updatedAt)}</span>
-                <span className="long">{message.updatedAt.toLocaleString()}</span>
-              </span>
+                  <span className="short">{shortDate(message.updatedAt)}</span>
+                  <span className="long">{message.updatedAt.toLocaleString()}</span>
+                </span>
                 {message.updatedBy ? <span> by {message.updatedBy}</span> : ''}
               </>
             ) : (
@@ -181,4 +181,4 @@ export const MessageComponent: React.FC<MessageProps> = ({
       </div>
     </div>
   );
-}
+};

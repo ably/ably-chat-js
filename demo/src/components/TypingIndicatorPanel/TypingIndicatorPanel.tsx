@@ -15,9 +15,7 @@ export const TypingIndicatorPanel: FC<TypingIndicatorPanelProps> = () => {
     <div className="h-6 px-2 pt-2">
       {otherTypingUsers.length > 0 && (
         <p className="text-sm text-gray-700 overflow-hidden">
-          {otherTypingUsers.join(', ')}
-          {' '}
-          {otherTypingUsers.length > 1 ? 'are' : 'is'} typing...
+          {otherTypingUsers.join(', ')} {otherTypingUsers.length > 1 ? 'are' : 'is'} typing...
         </p>
       )}
     </div>

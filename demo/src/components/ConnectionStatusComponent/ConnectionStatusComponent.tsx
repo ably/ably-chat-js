@@ -4,8 +4,14 @@ import { useChatConnection, useChatClient } from '@ably/chat/react';
 
 const STATUS_MAP: Record<string, { text: string; color: string }> = {
   [ConnectionStatus.Connecting]: { text: 'Connecting...', color: 'text-blue-500' },
-  [ConnectionStatus.Disconnected]: { text: 'Disconnected - will retry to connect automatically', color: 'text-yellow-800' },
-  [ConnectionStatus.Suspended]: { text: 'Connection suspended - will retry to connect automatically', color: 'text-yellow-800' },
+  [ConnectionStatus.Disconnected]: {
+    text: 'Disconnected - will retry to connect automatically',
+    color: 'text-yellow-800',
+  },
+  [ConnectionStatus.Suspended]: {
+    text: 'Connection suspended - will retry to connect automatically',
+    color: 'text-yellow-800',
+  },
   [ConnectionStatus.Failed]: { text: 'Connection failed. Refresh the page to try again.', color: 'text-red-800' },
   [ConnectionStatus.Connected]: { text: 'Connected', color: 'text-green-800' },
 };
@@ -67,7 +73,9 @@ export const ConnectionStatusComponent: React.FC = () => {
 
   return (
     <div className="p-4 text-left h-full border border-gray-300 bg-gray-100 rounded shadow-sm">
-      <h2 className="text-lg text-center font-semibold text-blue-500 pb-2 border-b border-gray-200">Connection Status</h2>
+      <h2 className="text-lg text-center font-semibold text-blue-500 pb-2 border-b border-gray-200">
+        Connection Status
+      </h2>
       <div className="mt-3 text-black">
         <div className="flex items-baseline mb-1">
           <span className="w-20">Status:</span>

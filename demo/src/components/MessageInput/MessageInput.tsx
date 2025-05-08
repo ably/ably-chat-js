@@ -68,9 +68,11 @@ export const MessageInput: FC<MessageInputProps> = ({}) => {
   };
 
   return (
-    <div className="flex flex-col border-t border-gray-300 bg-gray-100"
-      style={{minHeight: '100px', maxHeight: '100px'}}>
-      <TypingIndicatorPanel/>
+    <div
+      className="flex flex-col border-t border-gray-300 bg-gray-100"
+      style={{ minHeight: '100px', maxHeight: '100px' }}
+    >
+      <TypingIndicatorPanel />
       <form
         onSubmit={handleFormSubmit}
         className="flex items-center px-2 mt-auto mb-2"
