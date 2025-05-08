@@ -16,7 +16,7 @@ import {
 import { Logger } from './logger.js';
 import { InternalRoomOptions, MessageOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
-import EventEmitter from './utils/event-emitter.js';
+import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
  * A listener for summary message reaction events.
@@ -279,13 +279,11 @@ export class DefaultMessageReactions implements MessagesReactions {
   subscribe(listener: MessageReactionListener): Subscription {
     this._logger.trace('MessagesReactions.subscribe();');
 
-    const unique = (event: MessageReactionSummaryEvent) => {
-      listener(event);
-    };
-    this._emitter.on(MessageReactionEvents.Summary, unique);
+    const wrapped = wrap(listener);
+    this._emitter.on(MessageReactionEvents.Summary, wrapped);
     return {
       unsubscribe: () => {
-        this._emitter.off(unique);
+        this._emitter.off(wrapped);
       },
     };
   }
@@ -299,13 +297,11 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (!this._options?.rawMessageReactions) {
       throw new Ably.ErrorInfo('Raw message reactions are not enabled', 40001, 400);
     }
-    const unique = (event: MessageReactionRawEvent) => {
-      listener(event);
-    };
-    this._emitter.on([MessageReactionEvents.Create, MessageReactionEvents.Delete], unique);
+    const wrapped = wrap(listener);
+    this._emitter.on([MessageReactionEvents.Create, MessageReactionEvents.Delete], wrapped);
     return {
       unsubscribe: () => {
-        this._emitter.off(unique);
+        this._emitter.off(wrapped);
       },
     };
   }
