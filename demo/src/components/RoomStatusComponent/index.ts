@@ -1,1 +1,1 @@
-export { RoomStatusComponent } from './RoomStatusComponent';
+export { RoomStatusComponent } from './RoomStatusComponent.tsx';

@@ -1,6 +1,6 @@
 import { useState, KeyboardEvent, ChangeEvent, useEffect } from 'react';
 import { useRoom } from '@ably/chat/react';
-import { RoomStatus } from '../../../../src';
+import { RoomStatus } from '@ably/chat';
 
 const STATUS_MAP: Record<string, { text: string; color: string }> = {
   [RoomStatus.Attaching]: { text: 'Attaching...', color: 'text-blue-500' },

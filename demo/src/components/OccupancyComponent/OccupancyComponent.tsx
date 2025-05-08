@@ -1,6 +1,5 @@
 import { FC } from 'react';
 import { useOccupancy } from '@ably/chat/react';
-import './OccupancyComponent.css';
 
 /**
  * Displays the occupancy metrics of the current room.

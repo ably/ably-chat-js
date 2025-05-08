@@ -1,7 +1,6 @@
 import { FC, useEffect, useState } from 'react';
 import { ChatRoomProvider } from '@ably/chat/react';
 import { ReactionTypeProvider } from './containers/ReactionTypeProvider';
-// import { ReactionComponent } from './components/ReactionComponent';
 import { UserPresenceComponent } from './components/UserPresenceComponent';
 import './App.css';
 import { ConnectionStatusComponent } from './components/ConnectionStatusComponent';
@@ -59,6 +58,7 @@ const App: FC<AppProps> = () => {
         id={roomIdState} // The room ID you want to create or join
         release={true} // Release the room automatically when unmounted
         attach={true} // Attach to the room automatically when mounted
+        options={{ occupancy: { enableEvents: true } }} // Enable occupancy events
       >
         <div className="flex flex-col w-[900px] h-full border-1 border-blue-500 rounded-lg overflow-hidden mx-auto font-sans">
           <div className="flex flex-row w-full border-1 border-blue-500 rounded-lg overflow-hidden mx-auto font-sans">

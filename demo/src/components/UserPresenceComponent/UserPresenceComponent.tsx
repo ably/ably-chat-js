@@ -1,5 +1,4 @@
 import { FC } from 'react';
-import './UserPresenceComponent.css';
 import { PresenceMember } from '@ably/chat';
 import { useChatClient, usePresence, usePresenceListener } from '@ably/chat/react';
 
