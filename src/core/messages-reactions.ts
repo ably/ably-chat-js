@@ -36,9 +36,9 @@ export type MessageRawReactionListener = (event: MessageReactionRawEvent) => voi
  */
 export interface AddMessageReactionParams {
   /**
-   * The reaction to add; ie. the emoji.
+   * The reaction name to add; ie. the emoji.
    */
-  reaction: string;
+  name: string;
 
   /**
    * The type of reaction, must be one of {@link MessageReactionType}.
@@ -59,10 +59,10 @@ export interface AddMessageReactionParams {
  */
 export interface DeleteMessageReactionParams {
   /**
-   * The reaction to add; ie. the emoji. Required for all reaction types
+   * The reaction name to delete; ie. the emoji. Required for all reaction types
    * except {@link MessageReactionType.Unique}.
    */
-  reaction?: string;
+  name?: string;
 
   /**
    * The type of reaction, must be one of {@link MessageReactionType}.
@@ -187,7 +187,7 @@ export class DefaultMessageReactions implements MessagesReactions {
       reaction: {
         messageSerial: event.messageSerial,
         type: reactionType,
-        reaction: name,
+        name: name,
         clientId: event.clientId ?? '',
       },
     };
@@ -246,7 +246,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (type === MessageReactionType.Multiple && !count) {
       count = 1;
     }
-    const apiParams: APIAddMessageReactionParams = { type, reaction: params.reaction };
+    const apiParams: APIAddMessageReactionParams = { type, name: params.name };
     if (count) {
       apiParams.count = count;
     }
@@ -263,12 +263,12 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (!type) {
       type = this._defaultType;
     }
-    if (type !== MessageReactionType.Unique && !params?.reaction) {
-      throw new Ably.ErrorInfo(`cannot delete reaction of type ${type} without a reaction`, 40001, 400);
+    if (type !== MessageReactionType.Unique && !params?.name) {
+      throw new Ably.ErrorInfo(`cannot delete reaction of type ${type} without a name`, 40001, 400);
     }
     const apiParams: APIDeleteMessageReactionParams = { type };
     if (type !== MessageReactionType.Unique) {
-      apiParams.reaction = params?.reaction;
+      apiParams.name = params?.name;
     }
     return this._api.deleteMessageReaction(this._roomID, message.serial, apiParams);
   }

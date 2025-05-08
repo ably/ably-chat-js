@@ -219,8 +219,8 @@ export interface MessageReactionRawEvent {
     /** Type of reaction */
     type: MessageReactionType;
 
-    /** The reaction (typically an emoji) */
-    reaction: string;
+    /** The reaction name (typically an emoji) */
+    name: string;
 
     /** Count of the reaction (only for type Multiple, if set) */
     count?: number;

@@ -18,11 +18,11 @@ export const MessageReactionsUnique: React.FC<MessageReactionsUniqueProps> = ({
 }) => {
   const unique = message.reactions.unique ?? {};
 
-  const handleReactionClick = (emoji: string) => {
-    if (unique[emoji]?.clientIds.includes(clientId)) {
-      onReactionRemove(message, { type: MessageReactionType.Unique, reaction: emoji });
+  const handleReactionClick = (name: string) => {
+    if (unique[name]?.clientIds.includes(clientId)) {
+      onReactionRemove(message, { type: MessageReactionType.Unique, name: name });
     } else {
-      onReactionAdd(message, { type: MessageReactionType.Unique, reaction: emoji });
+      onReactionAdd(message, { type: MessageReactionType.Unique, name: name });
     }
   };
 
@@ -35,15 +35,15 @@ export const MessageReactionsUnique: React.FC<MessageReactionsUniqueProps> = ({
 
   return (
     <>
-      {currentEmojis.map((emoji) => (
+      {currentEmojis.map((name) => (
         <button
-          key={emoji}
+          key={name}
           onClick={(e) => {
             e.preventDefault();
-            handleReactionClick(emoji);
+            handleReactionClick(name);
           }}
         >
-          {emoji} ({unique[emoji]?.total || 0})
+          {name} ({unique[name]?.total || 0})
         </button>
       ))}
     </>
