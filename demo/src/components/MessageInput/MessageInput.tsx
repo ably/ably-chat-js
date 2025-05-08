@@ -2,6 +2,7 @@ import { ChangeEventHandler, FC, FormEventHandler, useEffect, useRef, useState }
 import { useChatConnection, useMessages, useTyping } from '@ably/chat/react';
 import { ConnectionStatus } from '@ably/chat';
 import { TypingIndicatorPanel } from '../TypingIndicatorPanel';
+import { SettingsModal } from '../SettingsModal';
 
 interface MessageInputProps {}
 
@@ -82,7 +83,7 @@ export const MessageInput: FC<MessageInputProps> = ({}) => {
           onChange={handleValueChange}
           disabled={shouldDisable}
           placeholder="Say something"
-          className="flex-1 p-2 border border-gray-400 rounded outline-none bg-white"
+          className="flex-1 p-2 border border-gray-400 rounded outline-none bg-white text-black"
           ref={messageInputRef}
           autoFocus
         />
@@ -92,6 +93,7 @@ export const MessageInput: FC<MessageInputProps> = ({}) => {
         >
           Send
         </button>
+        <SettingsModal className="ml-2 !bg-grey-900" />
       </form>
     </div>
   );
