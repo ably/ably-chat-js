@@ -55,9 +55,8 @@ export type ChatClientContextValue = Record<string, ChatClientContextProviderPro
  */
 function getChatContext(): React.Context<ChatClientContextValue> {
   let context = globalObjectForContext[contextKey];
-  if (!context) {
-    context = globalObjectForContext[contextKey] = React.createContext<ChatClientContextValue>({});
-  }
+
+  context ??= globalObjectForContext[contextKey] = React.createContext<ChatClientContextValue>({});
 
   return context;
 }
