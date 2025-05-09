@@ -108,27 +108,27 @@ export const MessageComponent: React.FC<MessageProps> = ({
   }
 
   return (
-    <div className="chat-message">
-      <div className={clsx('flex items-end', { ['justify-end']: self, ['justify-start']: !self })}>
+    <div className="chat-message group">
+      <div className={clsx('flex items-end', { 'justify-end': self, 'justify-start': !self })}>
         <div
-          className={clsx('flex flex-col text max-w-xs mx-2 relative', {
-            ['items-end order-1']: self,
-            ['items-start order-2']: !self,
+          className={clsx('flex flex-col max-w-xs mx-2 relative', {
+            'items-end order-1': self,
+            'items-start order-2': !self,
           })}
         >
-          <div className="text-xs">
+          <div className="text-xs text-gray-500">
             <span>{message.clientId}</span> &middot;{' '}
-            <span className="sent-at-time">
-              <span className="short">{shortDate(message.createdAt)}</span>
-              <span className="long">{message.createdAt.toLocaleString()}</span>
+            <span className="group/time relative">
+              <span className="group-hover/time:hidden">{shortDate(message.createdAt)}</span>
+              <span className="hidden group-hover/time:inline">{message.createdAt.toLocaleString()}</span>
             </span>
             {message.isUpdated && message.updatedAt ? (
               <>
                 {' '}
                 &middot; Edited{' '}
-                <span className="sent-at-time">
-                  <span className="short">{shortDate(message.updatedAt)}</span>
-                  <span className="long">{message.updatedAt.toLocaleString()}</span>
+                <span className="group/time relative">
+                  <span className="group-hover/time:hidden">{shortDate(message.updatedAt)}</span>
+                  <span className="hidden group-hover/time:inline">{message.updatedAt.toLocaleString()}</span>
                 </span>
                 {message.updatedBy ? <span> by {message.updatedBy}</span> : ''}
               </>
@@ -138,24 +138,40 @@ export const MessageComponent: React.FC<MessageProps> = ({
           </div>
           <div
             className={clsx('px-4 py-2 rounded-lg inline-block', {
-              ['rounded-br bg-blue-600 text-white']: self,
-              ['rounded-bl justify-start bg-gray-300 text-gray-600']: !self,
+              'rounded-br bg-blue-600 text-white': self,
+              'rounded-bl justify-start bg-gray-300 text-gray-600': !self,
             })}
           >
-            {message.text}
+            {message.isDeleted ? (
+              <>
+                This message was deleted.
+                <a
+                  href="#"
+                  className="ml-1 text-blue-500 hover:text-blue-700"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onMessageUpdate?.(message);
+                  }}
+                >
+                  Edit
+                </a>
+              </>
+            ) : (
+              message.text
+            )}
           </div>
           <div
-            className="buttons"
+            className="buttons hidden group-hover:flex space-x-1 mt-1"
             role="group"
             aria-label="Message actions"
           >
             <FaPencil
-              className="cursor-pointer text-gray-100 m-1 hover:text-gray-500 inline-block"
+              className="cursor-pointer text-gray-400 hover:text-gray-600 m-1 inline-block"
               onClick={handleMessageUpdate}
               aria-label="Edit message"
-            ></FaPencil>
+            />
             <FaTrash
-              className="cursor-pointer text-red-500 m-1 hover:text-red-700 inline-block"
+              className="cursor-pointer text-red-500 hover:text-red-700 m-1 inline-block"
               onClick={handleMessageDelete}
               aria-label="Delete message"
             />

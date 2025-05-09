@@ -241,9 +241,9 @@ export class DefaultMessageReactions implements MessagesReactions {
     this._logger.trace('MessagesReactions.add();', { message, params });
 
     let { type, count } = params;
-    if (!type) {
-      type = this._defaultType;
-    }
+
+    type ??= this._defaultType;
+
     if (type === MessageReactionType.Multiple && !count) {
       count = 1;
     }
@@ -261,9 +261,9 @@ export class DefaultMessageReactions implements MessagesReactions {
     this._logger.trace('MessagesReactions.delete();', { message, params });
 
     let type = params?.type;
-    if (!type) {
-      type = this._defaultType;
-    }
+
+    type ??= this._defaultType;
+
     if (type !== MessageReactionType.Unique && !params?.reaction) {
       throw new Ably.ErrorInfo(`cannot delete reaction of type ${type} without a reaction`, 40001, 400);
     }

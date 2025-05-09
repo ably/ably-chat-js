@@ -1,6 +1,8 @@
 import { ChangeEventHandler, FC, FormEventHandler, useEffect, useRef, useState } from 'react';
 import { useChatConnection, useMessages, useTyping } from '@ably/chat/react';
 import { ConnectionStatus } from '@ably/chat';
+import { TypingIndicatorPanel } from '../TypingIndicatorPanel';
+import { SettingsModal } from '../SettingsModal';
 
 interface MessageInputProps {}
 
@@ -67,37 +69,31 @@ export const MessageInput: FC<MessageInputProps> = ({}) => {
   };
 
   return (
-    <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
+    <div
+      className="flex flex-col border-t border-gray-300 bg-gray-100"
+      style={{ minHeight: '100px', maxHeight: '100px' }}
+    >
+      <TypingIndicatorPanel />
       <form
         onSubmit={handleFormSubmit}
-        className="flex"
+        className="flex items-center px-2 mt-auto mb-2"
       >
         <input
           type="text"
           onChange={handleValueChange}
           disabled={shouldDisable}
           placeholder="Say something"
-          className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-2 pr-2 bg-gray-200 rounded-l-md py-1"
+          className="flex-1 p-2 border border-gray-400 rounded outline-none bg-white text-black"
           ref={messageInputRef}
           autoFocus
         />
-        <div className="items-center inset-y-0 flex">
-          <button
-            disabled={shouldDisable}
-            type="submit"
-            className="inline-flex items-center justify-center rounded-r-md px-3 py-1 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            Send
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-6 w-6 ml-2 transform rotate-90"
-            >
-              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
-            </svg>
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="!bg-blue-500 text-white px-4 ml-2 h-10 flex items-center justify-center rounded hover:bg-blue-600 transition-colors"
+        >
+          Send
+        </button>
+        <SettingsModal className="ml-2 !bg-grey-900" />
       </form>
     </div>
   );

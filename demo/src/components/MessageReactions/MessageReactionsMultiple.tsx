@@ -1,5 +1,6 @@
 import React from 'react';
 import { Message, MessageReactionType, Messages } from '@ably/chat';
+import './styles.css';
 
 interface MessageReactionsMultipleProps {
   message: Message;
@@ -48,6 +49,7 @@ export const MessageReactionsMultiple: React.FC<MessageReactionsMultipleProps> =
             e.preventDefault();
             handleReactionRemoveClick(emoji);
           }}
+          className="reaction-button"
         >
           {emoji} ({multiple[emoji]?.total || 0})
         </button>
