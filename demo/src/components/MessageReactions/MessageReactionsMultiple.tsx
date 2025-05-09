@@ -14,12 +14,12 @@ export const MessageReactionsMultiple: React.FC<MessageReactionsMultipleProps> =
   onReactionAdd,
   onReactionDelete: onReactionRemove,
 }) => {
-  const handleReactionClick = (emoji: string) => {
-    onReactionAdd(message, { type: MessageReactionType.Multiple, reaction: emoji });
+  const handleReactionClick = (name: string) => {
+    onReactionAdd(message, { type: MessageReactionType.Multiple, name: name });
   };
 
-  const handleReactionRemoveClick = (emoji: string) => {
-    onReactionRemove(message, { type: MessageReactionType.Multiple, reaction: emoji });
+  const handleReactionRemoveClick = (name: string) => {
+    onReactionRemove(message, { type: MessageReactionType.Multiple, name: name });
   };
 
   const multiple = message.reactions.multiple ?? {};
@@ -33,23 +33,23 @@ export const MessageReactionsMultiple: React.FC<MessageReactionsMultipleProps> =
 
   return (
     <>
-      {currentEmojis.map((emoji) => (
+      {currentEmojis.map((name) => (
         <button
-          key={emoji}
+          key={name}
           onClick={(e) => {
             e.preventDefault();
             if (e.type === 'contextmenu') {
-              handleReactionRemoveClick(emoji);
+              handleReactionRemoveClick(name);
             } else {
-              handleReactionClick(emoji);
+              handleReactionClick(name);
             }
           }}
           onContextMenu={(e) => {
             e.preventDefault();
-            handleReactionRemoveClick(emoji);
+            handleReactionRemoveClick(name);
           }}
         >
-          {emoji} ({multiple[emoji]?.total || 0})
+          {name} ({multiple[name]?.total || 0})
         </button>
       ))}
     </>

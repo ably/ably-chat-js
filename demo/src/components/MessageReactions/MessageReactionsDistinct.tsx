@@ -18,34 +18,32 @@ export const MessageReactionsDistinct: React.FC<MessageReactionsDistinctProps> =
 }) => {
   const distinct = message.reactions.distinct ?? {};
 
-  const handleReactionClick = (emoji: string) => {
-    if (distinct[emoji]?.clientIds.includes(clientId)) {
-      onReactionRemove(message, { type: MessageReactionType.Distinct, reaction: emoji });
+  const handleReactionClick = (name: string) => {
+    if (distinct[name]?.clientIds.includes(clientId)) {
+      onReactionRemove(message, { type: MessageReactionType.Distinct, name: name });
     } else {
-      onReactionAdd(message, { type: MessageReactionType.Distinct, reaction: emoji });
+      onReactionAdd(message, { type: MessageReactionType.Distinct, name: name });
     }
   };
 
   const currentEmojis = emojis.slice();
-  if (distinct) {
-    for (const emoji in distinct) {
-      if (!currentEmojis.includes(emoji)) {
-        currentEmojis.push(emoji);
-      }
+  for (const emoji in distinct) {
+    if (!currentEmojis.includes(emoji)) {
+      currentEmojis.push(emoji);
     }
   }
 
   return (
     <>
-      {currentEmojis.map((emoji) => (
+      {currentEmojis.map((name) => (
         <button
-          key={emoji}
+          key={name}
           onClick={(e) => {
             e.preventDefault();
-            handleReactionClick(emoji);
+            handleReactionClick(name);
           }}
         >
-          {emoji} ({distinct[emoji]?.total || 0})
+          {name} ({distinct[name]?.total || 0})
         </button>
       ))}
     </>

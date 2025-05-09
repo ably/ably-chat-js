@@ -102,9 +102,9 @@ export interface AddMessageReactionParams {
   type: string;
 
   /**
-   * The reaction to add; ie. the emoji.
+   * The reaction name to add; ie. the emoji.
    */
-  reaction: string;
+  name: string;
 
   /**
    * The count of the reaction for type {@link MessageReactionType.Multiple}.
@@ -124,10 +124,10 @@ export interface DeleteMessageReactionParams {
   type: string;
 
   /**
-   * The reaction to remove, ie. the emoji. Required for all reaction types
+   * The reaction name to remove, ie. the emoji. Required for all reaction types
    * except {@link MessageReactionType.Unique}.
    */
-  reaction?: string;
+  name?: string;
 }
 
 /**
