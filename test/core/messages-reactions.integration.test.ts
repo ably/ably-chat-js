@@ -104,6 +104,12 @@ describe('message reactions integration', { timeout: 60000 }, () => {
       found.push(event);
     });
 
+    // wait 1s
+    // todo: reminder to remove this when no longer needed
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    });
+
     await room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '👍' });
     await room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '👍', count: 10 });
     await room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '❤️', count: 3 });
