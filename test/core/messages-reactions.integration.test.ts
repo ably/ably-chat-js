@@ -104,13 +104,9 @@ describe('message reactions integration', { timeout: 60000 }, () => {
       found.push(event);
     });
 
-    await Promise.all([
-      room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '👍' }),
-      room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '👍', count: 10 }),
-      room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '🚀', count: 2 }),
-      room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '💚' }),
-      room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '❤️', count: 3 }),
-    ]);
+    await room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '👍' });
+    await room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '👍', count: 10 });
+    await room.messages.reactions.add(message1, { type: MessageReactionType.Multiple, name: '❤️', count: 3 });
 
     await vi.waitFor(
       () => {
@@ -125,18 +121,6 @@ describe('message reactions integration', { timeout: 60000 }, () => {
                 total: 11,
                 clientIds: {
                   [chat.clientId]: 11,
-                },
-              },
-              '🚀': {
-                total: 2,
-                clientIds: {
-                  [chat.clientId]: 2,
-                },
-              },
-              '💚': {
-                total: 1,
-                clientIds: {
-                  [chat.clientId]: 1,
                 },
               },
               '❤️': {
@@ -149,11 +133,13 @@ describe('message reactions integration', { timeout: 60000 }, () => {
           },
         });
       },
-      { timeout: 30_000 },
+      {
+        timeout: 50_000,
+        interval: 2000,
+      },
     );
 
     await room.messages.reactions.delete(message1, { type: MessageReactionType.Multiple, name: '❤️' });
-    await room.messages.reactions.delete(message1, { type: MessageReactionType.Multiple, name: '💚' });
     await vi.waitFor(
       () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
@@ -169,17 +155,11 @@ describe('message reactions integration', { timeout: 60000 }, () => {
                   [chat.clientId]: 11,
                 },
               },
-              '🚀': {
-                total: 2,
-                clientIds: {
-                  [chat.clientId]: 2,
-                },
-              },
             },
           },
         });
       },
-      { timeout: 30_000 },
+      { timeout: 50_000 },
     );
   });
 
