@@ -60,6 +60,7 @@ jobs:
       contents: read
       pull-requests: write
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18, 20, 22]
     name: test node ${{ matrix.node-version }}
