@@ -50,37 +50,37 @@ describe('MessagesReactions', () => {
 
       const msg = { serial: serial };
 
-      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Unique, reaction: '🥕' });
+      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Unique, name: '🥕' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Unique,
-        reaction: '🥕',
+        name: '🥕',
       });
 
-      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Distinct, reaction: '🥕' });
+      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Distinct, name: '🥕' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Distinct,
-        reaction: '🥕',
+        name: '🥕',
       });
 
-      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, reaction: '🥕' });
+      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, name: '🥕' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Multiple,
-        reaction: '🥕',
+        name: '🥕',
         count: 1,
       });
 
-      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, reaction: '🥕', count: 10 });
+      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, name: '🥕', count: 10 });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Multiple,
-        reaction: '🥕',
+        name: '🥕',
         count: 10,
       });
 
       // default is distinct for AllFeaturesEnabled
-      await context.room.messages.reactions.add(msg, { reaction: '👻' });
+      await context.room.messages.reactions.add(msg, { name: '👻' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Distinct,
-        reaction: '👻',
+        name: '👻',
       });
     });
   });
@@ -99,23 +99,23 @@ describe('MessagesReactions', () => {
         type: MessageReactionType.Unique,
       });
 
-      await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Distinct, reaction: '🥕' });
+      await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Distinct, name: '🥕' });
       expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Distinct,
-        reaction: '🥕',
+        name: '🥕',
       });
 
-      await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Multiple, reaction: '🥕' });
+      await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Multiple, name: '🥕' });
       expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Multiple,
-        reaction: '🥕',
+        name: '🥕',
       });
 
       // default is distinct for AllFeaturesEnabled
-      await context.room.messages.reactions.delete(msg, { reaction: '👻' });
+      await context.room.messages.reactions.delete(msg, { name: '👻' });
       expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
         type: MessageReactionType.Distinct,
-        reaction: '👻',
+        name: '👻',
       });
     });
   });
@@ -213,7 +213,7 @@ describe('MessagesReactions', () => {
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
-              reaction: '🥦',
+              name: '🥦',
               clientId: 'u1',
               type: MessageReactionType.Unique,
             },
@@ -223,7 +223,7 @@ describe('MessagesReactions', () => {
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
-              reaction: '',
+              name: '',
               clientId: 'u1',
               type: MessageReactionType.Unique,
             },
@@ -233,7 +233,7 @@ describe('MessagesReactions', () => {
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
-              reaction: '🚀',
+              name: '🚀',
               clientId: 'u1',
               type: MessageReactionType.Distinct,
             },
@@ -243,7 +243,7 @@ describe('MessagesReactions', () => {
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
-              reaction: '🔥',
+              name: '🔥',
               clientId: 'u1',
               type: MessageReactionType.Multiple,
               count: 10,
@@ -254,7 +254,7 @@ describe('MessagesReactions', () => {
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
-              reaction: '👍',
+              name: '👍',
               clientId: 'u1',
               type: MessageReactionType.Multiple,
               count: 1,
@@ -265,7 +265,7 @@ describe('MessagesReactions', () => {
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
-              reaction: '🍌',
+              name: '🍌',
               clientId: 'u1',
               type: MessageReactionType.Multiple,
             },
