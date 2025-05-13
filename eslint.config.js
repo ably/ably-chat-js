@@ -97,6 +97,7 @@ export default [
       'simple-import-sort/exports': 'error',
       'unicorn/filename-case': 'error',
       'node/no-missing-import': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
 
       '@typescript-eslint/naming-convention': [
         'error',
