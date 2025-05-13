@@ -23,7 +23,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
   it<TestContext>('should be able to send and receive raw message reactions', async (context) => {
     const { chat } = context;
 
-    const room = await getRandomRoom(chat);
+    const room = await getRandomRoom(chat, { messages: { rawMessageReactions: true } });
 
     // Attach the room
     await room.attach();

@@ -31,17 +31,17 @@ interface TestContext {
 vi.mock('ably');
 
 describe('MessagesReactions', () => {
-  beforeEach<TestContext>((context) => {
-    context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
-    context.chatApi = new ChatApi(context.realtime, makeTestLogger());
-    context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
-    const channel = context.room.channel;
-    context.emulateBackendPublish = channelEventEmitter(channel);
-    context.emulateBackendStateChange = channelStateEventEmitter(channel);
-    context.emulateBackendAnnotation = channelAnnotationEventEmitter(channel);
-  });
+  describe('message reaction basics', () => {
+    beforeEach<TestContext>((context) => {
+      context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
+      context.chatApi = new ChatApi(context.realtime, makeTestLogger());
+      context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
+      const channel = context.room.channel;
+      context.emulateBackendPublish = channelEventEmitter(channel);
+      context.emulateBackendStateChange = channelStateEventEmitter(channel);
+      context.emulateBackendAnnotation = channelAnnotationEventEmitter(channel);
+    });
 
-  describe('add message reaction', () => {
     it<TestContext>('should correctly send message reaction', async (context) => {
       const { chatApi } = context;
       const timestamp = Date.now();
@@ -83,9 +83,7 @@ describe('MessagesReactions', () => {
         name: '👻',
       });
     });
-  });
 
-  describe('delete message reaction', () => {
     it<TestContext>('should correctly delete message reaction', async (context) => {
       const { chatApi } = context;
       const timestamp = Date.now();
@@ -118,9 +116,7 @@ describe('MessagesReactions', () => {
         name: '👻',
       });
     });
-  });
 
-  describe('subscribing to message reactions', () => {
     it<TestContext>('should receive summary events', (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = Date.now();
@@ -217,6 +213,105 @@ describe('MessagesReactions', () => {
           timestamp: publishTimestamp,
         });
       }));
+
+    it<TestContext>('should unsubscribe from summary events', (context) => {
+      const { room } = context;
+      let c1 = 0;
+      let c2 = 0;
+      let cu = 0;
+
+      const s1 = room.messages.reactions.subscribe(() => {
+        c1++;
+      });
+      const s2 = room.messages.reactions.subscribe(() => {
+        c2++;
+      });
+      const uniqueListener = () => {
+        cu++;
+      };
+      const s3 = room.messages.reactions.subscribe(uniqueListener);
+      const s4 = room.messages.reactions.subscribe(uniqueListener);
+
+      const publishTimestamp = Date.now();
+
+      context.emulateBackendPublish({
+        name: 'chat.message',
+        serial: '01672531200000-123@abcdefghij',
+        version: '01672531200000-123@abcdefghij',
+        refSerial: '01672531200000-123@xyzdefghij',
+        action: ChatMessageActions.MessageAnnotationSummary,
+        timestamp: publishTimestamp,
+        summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+      });
+
+      expect(c1).toEqual(1);
+      expect(c2).toEqual(1);
+      expect(cu).toEqual(2);
+
+      context.emulateBackendPublish({
+        name: 'chat.message',
+        serial: '01672531200000-123@abcdefghij',
+        version: '01672531200000-123@abcdefghij',
+        refSerial: '01672531200000-123@xyzdefghij',
+        action: ChatMessageActions.MessageAnnotationSummary,
+        timestamp: publishTimestamp,
+        summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+      });
+
+      expect(c1).toEqual(2);
+      expect(c2).toEqual(2);
+      expect(cu).toEqual(4);
+
+      s2.unsubscribe();
+      s3.unsubscribe();
+
+      context.emulateBackendPublish({
+        name: 'chat.message',
+        serial: '01672531200000-123@abcdefghij',
+        version: '01672531200000-123@abcdefghij',
+        refSerial: '01672531200000-123@xyzdefghij',
+        action: ChatMessageActions.MessageAnnotationSummary,
+        timestamp: publishTimestamp,
+        summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+      });
+
+      expect(c1).toEqual(3);
+      expect(c2).toEqual(2);
+      expect(cu).toEqual(5);
+
+      s1.unsubscribe();
+      s4.unsubscribe();
+
+      context.emulateBackendPublish({
+        name: 'chat.message',
+        serial: '01672531200000-123@abcdefghij',
+        version: '01672531200000-123@abcdefghij',
+        refSerial: '01672531200000-123@xyzdefghij',
+        action: ChatMessageActions.MessageAnnotationSummary,
+        timestamp: publishTimestamp,
+        summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+      });
+
+      expect(c1).toEqual(3);
+      expect(c2).toEqual(2);
+      expect(cu).toEqual(5);
+    });
+  });
+
+  describe('raw message reactions', () => {
+    beforeEach<TestContext>((context) => {
+      context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
+      context.chatApi = new ChatApi(context.realtime, makeTestLogger());
+      context.room = makeRandomRoom({
+        chatApi: context.chatApi,
+        realtime: context.realtime,
+        options: { messages: { rawMessageReactions: true } },
+      });
+      const channel = context.room.channel;
+      context.emulateBackendPublish = channelEventEmitter(channel);
+      context.emulateBackendStateChange = channelStateEventEmitter(channel);
+      context.emulateBackendAnnotation = channelAnnotationEventEmitter(channel);
+    });
 
     it<TestContext>('should receive raw reaction events', (context) =>
       new Promise<void>((done, reject) => {
@@ -378,243 +473,160 @@ describe('MessagesReactions', () => {
           timestamp: publishTimestamp,
         });
       }));
-  });
 
-  it<TestContext>('should unsubscribe from summary events', (context) => {
-    const { room } = context;
-    let c1 = 0;
-    let c2 = 0;
-    let cu = 0;
+    it<TestContext>('should unsubscribe from raw events', (context) => {
+      const { room } = context;
+      let c1 = 0;
+      let c2 = 0;
+      let cu = 0;
 
-    const s1 = room.messages.reactions.subscribe(() => {
-      c1++;
-    });
-    const s2 = room.messages.reactions.subscribe(() => {
-      c2++;
-    });
-    const uniqueListener = () => {
-      cu++;
-    };
-    const s3 = room.messages.reactions.subscribe(uniqueListener);
-    const s4 = room.messages.reactions.subscribe(uniqueListener);
+      const s1 = room.messages.reactions.subscribeRaw(() => {
+        c1++;
+      });
+      const s2 = room.messages.reactions.subscribeRaw(() => {
+        c2++;
+      });
+      const uniqueListener = () => {
+        cu++;
+      };
+      const s3 = room.messages.reactions.subscribeRaw(uniqueListener);
+      const s4 = room.messages.reactions.subscribeRaw(uniqueListener);
 
-    const publishTimestamp = Date.now();
+      const publishTimestamp = Date.now();
 
-    context.emulateBackendPublish({
-      name: 'chat.message',
-      serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij',
-      refSerial: '01672531200000-123@xyzdefghij',
-      action: ChatMessageActions.MessageAnnotationSummary,
-      timestamp: publishTimestamp,
-      summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
-    });
-
-    expect(c1).toEqual(1);
-    expect(c2).toEqual(1);
-    expect(cu).toEqual(2);
-
-    context.emulateBackendPublish({
-      name: 'chat.message',
-      serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij',
-      refSerial: '01672531200000-123@xyzdefghij',
-      action: ChatMessageActions.MessageAnnotationSummary,
-      timestamp: publishTimestamp,
-      summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
-    });
-
-    expect(c1).toEqual(2);
-    expect(c2).toEqual(2);
-    expect(cu).toEqual(4);
-
-    s2.unsubscribe();
-    s3.unsubscribe();
-
-    context.emulateBackendPublish({
-      name: 'chat.message',
-      serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij',
-      refSerial: '01672531200000-123@xyzdefghij',
-      action: ChatMessageActions.MessageAnnotationSummary,
-      timestamp: publishTimestamp,
-      summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
-    });
-
-    expect(c1).toEqual(3);
-    expect(c2).toEqual(2);
-    expect(cu).toEqual(5);
-
-    s1.unsubscribe();
-    s4.unsubscribe();
-
-    context.emulateBackendPublish({
-      name: 'chat.message',
-      serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij',
-      refSerial: '01672531200000-123@xyzdefghij',
-      action: ChatMessageActions.MessageAnnotationSummary,
-      timestamp: publishTimestamp,
-      summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
-    });
-
-    expect(c1).toEqual(3);
-    expect(c2).toEqual(2);
-    expect(cu).toEqual(5);
-  });
-
-  it<TestContext>('should unsubscribe from raw events', (context) => {
-    const { room } = context;
-    let c1 = 0;
-    let c2 = 0;
-    let cu = 0;
-
-    const s1 = room.messages.reactions.subscribeRaw(() => {
-      c1++;
-    });
-    const s2 = room.messages.reactions.subscribeRaw(() => {
-      c2++;
-    });
-    const uniqueListener = () => {
-      cu++;
-    };
-    const s3 = room.messages.reactions.subscribeRaw(uniqueListener);
-    const s4 = room.messages.reactions.subscribeRaw(uniqueListener);
-
-    const publishTimestamp = Date.now();
-
-    context.emulateBackendAnnotation({
-      serial: '01672531200003-123@abcdefghij',
-      messageSerial: '01672531200000-123@xyzdefghij',
-      type: MessageReactionType.Distinct,
-      name: '🚀',
-      clientId: 'u1',
-      action: 'annotation.create',
-      timestamp: publishTimestamp,
-    });
-
-    expect(c1).toEqual(1);
-    expect(c2).toEqual(1);
-    expect(cu).toEqual(2);
-
-    context.emulateBackendAnnotation({
-      serial: '01672531200003-123@abcdefghij',
-      messageSerial: '01672531200000-123@xyzdefghij',
-      type: MessageReactionType.Distinct,
-      name: '🚀',
-      clientId: 'u1',
-      action: 'annotation.create',
-      timestamp: publishTimestamp,
-    });
-
-    expect(c1).toEqual(2);
-    expect(c2).toEqual(2);
-    expect(cu).toEqual(4);
-
-    s2.unsubscribe();
-    s3.unsubscribe();
-
-    context.emulateBackendAnnotation({
-      serial: '01672531200003-123@abcdefghij',
-      messageSerial: '01672531200000-123@xyzdefghij',
-      type: MessageReactionType.Distinct,
-      name: '🚀',
-      clientId: 'u1',
-      action: 'annotation.create',
-      timestamp: publishTimestamp,
-    });
-
-    expect(c1).toEqual(3);
-    expect(c2).toEqual(2);
-    expect(cu).toEqual(5);
-
-    s1.unsubscribe();
-    s4.unsubscribe();
-
-    context.emulateBackendAnnotation({
-      serial: '01672531200003-123@abcdefghij',
-      messageSerial: '01672531200000-123@xyzdefghij',
-      type: MessageReactionType.Distinct,
-      name: '🚀',
-      clientId: 'u1',
-      action: 'annotation.create',
-      timestamp: publishTimestamp,
-    });
-
-    expect(c1).toEqual(3);
-    expect(c2).toEqual(2);
-    expect(cu).toEqual(5);
-  });
-
-  describe.each([
-    [
-      'unknown annotation type',
-      {
-        serial: '01672531200003-123@abcdefghij',
-        messageSerial: '01672531200000-123@xyzdefghij',
-        type: 'reaction:unknown.v1',
-        data: '🚀',
-        clientId: 'u1',
-        action: 'annotation.create',
-        timestamp: Date.now(),
-      },
-    ],
-    [
-      'unknown action',
-      {
+      context.emulateBackendAnnotation({
         serial: '01672531200003-123@abcdefghij',
         messageSerial: '01672531200000-123@xyzdefghij',
         type: MessageReactionType.Distinct,
-        data: '🚀',
-        clientId: 'u1',
-        action: 'annotation.bla',
-        timestamp: Date.now(),
-      },
-    ],
-    [
-      'no data',
-      {
-        serial: '01672531200003-123@abcdefghij',
-        messageSerial: '01672531200000-123@xyzdefghij',
-        type: MessageReactionType.Distinct,
+        name: '🚀',
         clientId: 'u1',
         action: 'annotation.create',
-        timestamp: Date.now(),
-      },
-    ],
-    [
-      'no messageSerial',
-      {
-        serial: '01672531200003-123@abcdefghij',
-        type: MessageReactionType.Distinct,
-        data: '🚀',
-        clientId: 'u1',
-        action: 'annotation.create',
-        timestamp: Date.now(),
-      },
-    ],
-  ])('invalid incoming raw reactions', (name: string, inboundMessage: unknown) => {
-    it<TestContext>('should handle invalid inbound raw reaction: ' + name, (context) => {
-      const room = context.room;
-      let listenerCalled = false;
-      room.messages.reactions.subscribeRaw(() => {
-        listenerCalled = true;
+        timestamp: publishTimestamp,
       });
 
-      context.emulateBackendAnnotation(inboundMessage as Ably.Annotation);
-      expect(listenerCalled).toBe(false);
-    });
-  });
+      expect(c1).toEqual(1);
+      expect(c2).toEqual(1);
+      expect(cu).toEqual(2);
 
-  it<TestContext>('should throw error when subscribing to raw reactions if not enabled', (context) => {
-    const room = makeRandomRoom({
-      options: { messages: { rawMessageReactions: false } },
-      chatApi: context.chatApi,
-      realtime: context.realtime,
+      context.emulateBackendAnnotation({
+        serial: '01672531200003-123@abcdefghij',
+        messageSerial: '01672531200000-123@xyzdefghij',
+        type: MessageReactionType.Distinct,
+        name: '🚀',
+        clientId: 'u1',
+        action: 'annotation.create',
+        timestamp: publishTimestamp,
+      });
+
+      expect(c1).toEqual(2);
+      expect(c2).toEqual(2);
+      expect(cu).toEqual(4);
+
+      s2.unsubscribe();
+      s3.unsubscribe();
+
+      context.emulateBackendAnnotation({
+        serial: '01672531200003-123@abcdefghij',
+        messageSerial: '01672531200000-123@xyzdefghij',
+        type: MessageReactionType.Distinct,
+        name: '🚀',
+        clientId: 'u1',
+        action: 'annotation.create',
+        timestamp: publishTimestamp,
+      });
+
+      expect(c1).toEqual(3);
+      expect(c2).toEqual(2);
+      expect(cu).toEqual(5);
+
+      s1.unsubscribe();
+      s4.unsubscribe();
+
+      context.emulateBackendAnnotation({
+        serial: '01672531200003-123@abcdefghij',
+        messageSerial: '01672531200000-123@xyzdefghij',
+        type: MessageReactionType.Distinct,
+        name: '🚀',
+        clientId: 'u1',
+        action: 'annotation.create',
+        timestamp: publishTimestamp,
+      });
+
+      expect(c1).toEqual(3);
+      expect(c2).toEqual(2);
+      expect(cu).toEqual(5);
     });
 
-    expect(() => {
-      room.messages.reactions.subscribeRaw(() => {});
-    }).toThrowErrorInfo({ code: 40001, message: 'Raw message reactions are not enabled', statusCode: 400 });
+    describe.each([
+      [
+        'unknown annotation type',
+        {
+          serial: '01672531200003-123@abcdefghij',
+          messageSerial: '01672531200000-123@xyzdefghij',
+          type: 'reaction:unknown.v1',
+          data: '🚀',
+          clientId: 'u1',
+          action: 'annotation.create',
+          timestamp: Date.now(),
+        },
+      ],
+      [
+        'unknown action',
+        {
+          serial: '01672531200003-123@abcdefghij',
+          messageSerial: '01672531200000-123@xyzdefghij',
+          type: MessageReactionType.Distinct,
+          data: '🚀',
+          clientId: 'u1',
+          action: 'annotation.bla',
+          timestamp: Date.now(),
+        },
+      ],
+      [
+        'no data',
+        {
+          serial: '01672531200003-123@abcdefghij',
+          messageSerial: '01672531200000-123@xyzdefghij',
+          type: MessageReactionType.Distinct,
+          clientId: 'u1',
+          action: 'annotation.create',
+          timestamp: Date.now(),
+        },
+      ],
+      [
+        'no messageSerial',
+        {
+          serial: '01672531200003-123@abcdefghij',
+          type: MessageReactionType.Distinct,
+          data: '🚀',
+          clientId: 'u1',
+          action: 'annotation.create',
+          timestamp: Date.now(),
+        },
+      ],
+    ])('invalid incoming raw reactions', (name: string, inboundMessage: unknown) => {
+      it<TestContext>('should handle invalid inbound raw reaction: ' + name, (context) => {
+        const room = context.room;
+        let listenerCalled = false;
+        room.messages.reactions.subscribeRaw(() => {
+          listenerCalled = true;
+        });
+
+        context.emulateBackendAnnotation(inboundMessage as Ably.Annotation);
+        expect(listenerCalled).toBe(false);
+      });
+    });
+
+    it<TestContext>('should throw error when subscribing to raw reactions if not enabled', (context) => {
+      const room = makeRandomRoom({
+        options: { messages: { rawMessageReactions: false } },
+        chatApi: context.chatApi,
+        realtime: context.realtime,
+      });
+
+      expect(() => {
+        room.messages.reactions.subscribeRaw(() => {});
+      }).toThrowErrorInfo({ code: 40001, message: 'Raw message reactions are not enabled', statusCode: 400 });
+    });
   });
 });
