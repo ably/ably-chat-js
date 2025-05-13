@@ -38,10 +38,19 @@ export const ReactionComponent: FC<ReactionComponentProps> = () => {
         ></ReactionInput>
       </div>
       <div>
-        Received reactions:{' '}
-        {roomReactions.map((r, idx) => (
-          <span key={idx}>{r.type}</span>
-        ))}{' '}
+        <div className="flex gap-2 px-2 py-3 border-t bg-white border-gray-300 mx-auto text-black">
+          <span>Received reactions:</span>
+          <div className="flex-1 flex items-center max-h-[24px] gap-1 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300">
+            {roomReactions.map((r, idx) => (
+              <span
+                key={idx}
+                className="px-2 py-1 bg-white rounded text-blue-600"
+              >
+                {r.type}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

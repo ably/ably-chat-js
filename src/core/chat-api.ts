@@ -200,6 +200,10 @@ export class ChatApi {
 
     paginatedResult.current = () => data.current().then((currentData) => this._recursivePaginateMessages(currentData));
 
+    paginatedResult.hasNext = () => data.hasNext();
+
+    paginatedResult.isLast = () => data.isLast();
+
     return { ...data, ...paginatedResult };
   }
 
