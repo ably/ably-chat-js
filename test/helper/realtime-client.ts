@@ -57,12 +57,11 @@ const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtim
   const claims = {
     iat: currentTime,
     exp: currentTime + 3600,
-    'x-ably-capability': '{"*":["*"], "[chat]*":["*"]}',
+    'x-ably-capability': '{"[chat]*":["*"]}',
     'x-ably-clientId': options.clientId,
   };
 
-  const token = jwt.sign(claims, keySecret, { header: header });
-  options.token = token;
+  options.token = jwt.sign(claims, keySecret, { header: header });
 
   return ablyRealtimeClient(options);
 };

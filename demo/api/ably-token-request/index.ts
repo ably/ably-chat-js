@@ -29,7 +29,6 @@ Please see README.md for more details on configuring your Ably API Key.`);
   const tokenRequestData = await client.auth.createTokenRequest({
     capability: {
       '[chat]*': ['*'],
-      '*': ['*'],
     },
     clientId: clientId,
   });
