@@ -18,7 +18,7 @@ describe('normalizeRoomOptions', () => {
       },
       messages: {
         defaultMessageReactionType: 'reaction:distinct.v1',
-        rawMessageReactions: true,
+        rawMessageReactions: false,
       },
       isReactClient: false,
     });
@@ -98,7 +98,7 @@ describe('normalizeRoomOptions', () => {
       },
       messages: {
         defaultMessageReactionType: 'reaction:distinct.v1',
-        rawMessageReactions: true,
+        rawMessageReactions: false,
       },
       isReactClient: false,
     });

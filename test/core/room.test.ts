@@ -91,6 +91,31 @@ describe('Room', () => {
       // Check that the shared channel for messages, occupancy and presence was called with the correct options
       const expectedChannelOptions = {
         params: { occupancy: 'metrics', agent: agentString },
+        modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE', 'ANNOTATION_PUBLISH'],
+        attachOnSubscribe: false,
+      };
+
+      expect(context.realtime.channels.get).toHaveBeenCalledOnce();
+      expect(context.realtime.channels.get).toHaveBeenNthCalledWith(1, room.channel.name, expectedChannelOptions);
+    });
+
+    it<TestContext>('correctly enables individual annotations', (context) => {
+      vi.spyOn(context.realtime.channels, 'get');
+      const room = context.getRoom(
+        {
+          occupancy: {
+            enableEvents: true,
+          },
+          messages: {
+            rawMessageReactions: true,
+          },
+        },
+        setReact,
+      ) as DefaultRoom;
+
+      // Check that the shared channel for messages, occupancy and presence was called with the correct options
+      const expectedChannelOptions = {
+        params: { occupancy: 'metrics', agent: agentString },
         modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'PRESENCE_SUBSCRIBE', 'ANNOTATION_PUBLISH', 'ANNOTATION_SUBSCRIBE'],
         attachOnSubscribe: false,
       };

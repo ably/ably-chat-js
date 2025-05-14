@@ -105,7 +105,7 @@ describe('Presence', () => {
       expect(context.realtime.channels.get).toHaveBeenCalledWith(
         room.channel.name,
         expect.objectContaining({
-          modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'ANNOTATION_PUBLISH', 'ANNOTATION_SUBSCRIBE'],
+          modes: ['PUBLISH', 'SUBSCRIBE', 'PRESENCE', 'ANNOTATION_PUBLISH'],
         }),
       );
     });

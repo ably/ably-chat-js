@@ -39,7 +39,7 @@ const DefaultRoomOptions: Omit<InternalRoomOptions, 'isReactClient'> = {
    * The default options for messages.
    */
   messages: {
-    rawMessageReactions: true,
+    rawMessageReactions: false,
     defaultMessageReactionType: MessageReactionType.Distinct,
   },
 };
@@ -55,7 +55,7 @@ export interface MessageOptions {
    * Note reaction summaries (aggregates) are always available regardless of
    * this setting.
    *
-   * @defaultValue true
+   * @defaultValue false
    */
   rawMessageReactions?: boolean;
 
