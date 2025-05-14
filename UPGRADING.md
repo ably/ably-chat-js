@@ -159,6 +159,23 @@ const tokenRequestData = await client.auth.createTokenRequest({
 
 The `[chat]` qualifier now represents both the REST and Channel access for the new single `my-room::$chat` channel.
 
+### REST endpoint Changes
+
+**Expected Impact: low**
+
+The REST endpoints for the SDK have all been updated to use the latest v3 API. This may be an issue if you are using the REST API directly, but should not affect most users.
+
+Before:
+```ts
+const messagesEndpoint = 'https://realtime.ably.io/chat/v2/rooms/${roomId}/messages'
+const occupancyEndpoint = 'https://realtime.ably.io/chat/v2/rooms/${roomId}/occupancy'
+````
+
+After:
+```ts
+const messagesEndpoint =  'https://realtime.ably.io/chat/v3/rooms/${roomId}/messages'
+const occupancyEndpoint = 'https://realtime.ably.io/chat/v3/rooms/${roomId}/occupancy'
+```
 
 ## 0.5.x to 0.6.x
 
