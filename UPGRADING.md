@@ -15,13 +15,17 @@ Room options are now organized into categories:
 - `typing` - Options for typing indicators
 - `occupancy` - Options for room occupancy events
 - `presence` - Options for presence events
+- `messages` - (Experimental) Options for message reactions
 
 Events for `presence` and `occupancy` can now be enabled or disabled through the `enableEvents` property of their respective options objects.
 
 If no options for a particular feature are provided, the default options will be used. Please note:
 - Occupancy events are disabled by default (`occupancy.enableEvents: false`)
 - Presence events are enabled by default (`presence.enableEvents: true`)
+- Message reactions are disabled by default (`messages.rawMessageReactions: false`)
 - Typing indicators use a default heartbeat throttle of 10000ms
+
+If some options are provided, the default options will be merged with the provided options, the provided options taking precedence.
 
 Previously:
 ```ts
