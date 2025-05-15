@@ -2,14 +2,14 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
-## [0.7.0](https://github.com/ably/ably-chat-js/tree/0.7.0) (2025-04-13)
+## [0.7.0](https://github.com/ably/ably-chat-js/tree/0.7.0) (2025-05-15)
 
 ### Breaking Changes
 
 This release contains breaking API changes. Please see `UPGRADING.md` for full guidance on upgrading from version 0.6.0.
 
 - **Channel Architecture Change**: Moved from a multi-channel to a single-channel architecture, simplifying internal logic and capability definitions. [#521](https://github.com/ably/ably-chat-js/pull/521)
-- **Room Options Restructuring**: Room options are now optional and organized into (`typing`, `occupancy` and `presence`). The `AllFeaturesEnabled` constant has been removed. [#521](https://github.com/ably/ably-chat-js/pull/521)
+- **Room Options Restructuring**: Room options are now optional and organized into (`typing`, `occupancy`, `presence` and `messages`). The `AllFeaturesEnabled` constant has been removed. [#521](https://github.com/ably/ably-chat-js/pull/521)
 - **Typing Feature Changes**: Changed the typing event payload structure and replaced `typing.start()` with `typing.keystroke()`. [#524](https://github.com/ably/ably-chat-js/pull/524)
 - **Discontinuity Listener Changes**: The `onDiscontinuity` listener is now only exposed at the room level, whereas before it was exposed in each feature. [#521](https://github.com/ably/ably-chat-js/pull/521)
 
