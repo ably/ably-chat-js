@@ -53,7 +53,7 @@ const roomWithOptions = await chat.rooms.get('room-name', {
 The typing event payload structure has changed::
 
 1. The typing event payload now contains a `type` field and `change` field at the root level
-2. The `change` field contains the single change that occurred, which is either `TypingEvents.Start` or `TypingEvents.Stop`, and the `clientId` of the user who started or stopped typing.
+2. The `change` field contains the single change that occurred, which is either `TypingEventTypes.Start` or `TypingEventTypes.Stop`, and the `clientId` of the user who started or stopped typing.
 
 Before:
 ```ts
