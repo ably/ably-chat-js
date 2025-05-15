@@ -50,7 +50,7 @@ You will need the following prerequisites:
   - Use the default or create a new API key in an app within
     your [Ably account dashboard](https://ably.com/dashboard).
   - Make sure your API key has the
-    following [capabilities](https://ably.com/docs/auth/capabilities): `publish`, `subscribe`, `presence`, `history` and `channel-metadata`.
+    following [capabilities](https://ably.com/docs/auth/capabilities): `publish`, `subscribe`, `presence`, `history`, `channel-metadata`, `message-update-own` and `message-delete-own`.
 
 ## Installation
 
@@ -95,7 +95,6 @@ import * as Ably from "ably";
 import {
   ChatClient,
   ConnectionStatusChange,
-  AllFeaturesEnabled,
   MessageEvent,
   RoomStatusChange,
 } from "@ably/chat";
@@ -118,7 +117,7 @@ async function getStartedWithChat() {
   // Get a room to join, subscribe to messages and then attach to the room
   const room = await chatClient.rooms.get(
     "readme-getting-started",
-     AllFeaturesEnabled
+    { occupancy: { enableEvents: true } }
   );
   const roomStatus = room.onStatusChange(
     (change: RoomStatusChange) => {
@@ -127,8 +126,8 @@ async function getStartedWithChat() {
   );
 
   const messageSubscription = room.messages.subscribe(
-    (message: MessageEvent) => {
-      console.log("Received message:", message.message.text);
+    (event: MessageEvent) => {
+      console.log("Received message:", event.message.text);
     }
   );
   await room.attach();
@@ -196,7 +195,7 @@ export function Messages() {
   const { send } = useMessages(
     {
       listener: (event: MessageEvent) => {
-        console.log('message', message);
+        console.log('message', event.message);
         setMessages(prev => [...prev, event.message]);
       }
     }
@@ -305,7 +304,7 @@ own key from the Ably dashboard.
 
 ```tsx
 import * as Ably from 'ably';
-import { ChatClient, AllFeaturesEnabled } from '@ably/chat';
+import { ChatClient } from '@ably/chat';
 import { ChatClientProvider, ChatRoomProvider } from '@ably/chat/react';
 import { Messages } from './Messages';
 
@@ -317,7 +316,7 @@ const ablyClient = new Ably.Realtime({
 });
 
 // Create the chat client
-const chatClient = new ChatClient(ablyClient, {});
+const chatClient = new ChatClient(ablyClient);
 
 // This an example App component that uses the chat client to power a chat UI. Your app will likely be
 // much different to this.
@@ -327,7 +326,7 @@ const chatClient = new ChatClient(ablyClient, {});
 function App() {
   return (
     <ChatClientProvider client={chatClient}>
-      <ChatRoomProvider id="readme-getting-started" options={AllFeaturesEnabled}>
+      <ChatRoomProvider id="readme-getting-started" options={{ occupancy: { enableEvents: true } }}>
         <div>
           <Messages />
         </div>
