@@ -95,8 +95,8 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
         logger.debug('useOccupancy(); applying internal listener');
         const { unsubscribe } = room.occupancy.subscribe((occupancyEvent) => {
           setOccupancyMetrics({
-            connections: occupancyEvent.connections,
-            presenceMembers: occupancyEvent.presenceMembers,
+            connections: occupancyEvent.occupancy.connections,
+            presenceMembers: occupancyEvent.occupancy.presenceMembers,
           });
         });
         return () => {

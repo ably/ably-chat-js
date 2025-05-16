@@ -3,7 +3,8 @@ import { dequal } from 'dequal';
 import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { OccupancyEvent, OccupancyListener } from '../../../src/core/occupancy.ts';
+import { OccupancyEvent, OccupancyEventType } from '../../../src/core/events.ts';
+import { OccupancyListener } from '../../../src/core/occupancy.ts';
 import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
@@ -71,7 +72,17 @@ describe('useOccupancy', () => {
     }
 
     // we don't have the requested occupancy yet, so wait for the occupancy events to be received
-    await waitForExpectedInbandOccupancy(occupancyEvents, { connections: 3, presenceMembers: 2 }, 20000);
+    await waitForExpectedInbandOccupancy(
+      occupancyEvents,
+      {
+        type: OccupancyEventType.Updated,
+        occupancy: {
+          connections: 3,
+          presenceMembers: 2,
+        },
+      },
+      20000,
+    );
 
     // check the occupancy metrics
     expect(occupancyState.connections).toBe(3);

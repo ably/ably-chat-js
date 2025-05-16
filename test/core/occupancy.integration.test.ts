@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
-import { OccupancyEvent } from '../../src/core/occupancy.ts';
+import { OccupancyEvent, OccupancyEventType } from '../../src/core/events.ts';
+import { OccupancyData } from '../../src/core/occupancy.ts';
 import { Room } from '../../src/core/room.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForExpectedInbandOccupancy } from '../helper/common.ts';
@@ -16,7 +17,7 @@ const TEST_TIMEOUT = 30000;
 
 // Wait for the occupancy of a room to reach the expected occupancy.
 // Do this with a 10s timeout.
-const waitForExpectedInstantaneousOccupancy = async (room: Room, expectedOccupancy: OccupancyEvent) => {
+const waitForExpectedInstantaneousOccupancy = async (room: Room, expectedOccupancy: OccupancyData) => {
   await vi.waitFor(
     async () => {
       const occupancy = await room.occupancy.get();
@@ -105,8 +106,11 @@ describe('occupancy', () => {
     await waitForExpectedInbandOccupancy(
       occupancyUpdates,
       {
-        connections: 1,
-        presenceMembers: 0,
+        type: OccupancyEventType.Updated,
+        occupancy: {
+          connections: 1,
+          presenceMembers: 0,
+        },
       },
       TEST_TIMEOUT,
     );
@@ -122,8 +126,11 @@ describe('occupancy', () => {
     await waitForExpectedInbandOccupancy(
       occupancyUpdates,
       {
-        connections: 2,
-        presenceMembers: 1,
+        type: OccupancyEventType.Updated,
+        occupancy: {
+          connections: 2,
+          presenceMembers: 1,
+        },
       },
       TEST_TIMEOUT,
     );

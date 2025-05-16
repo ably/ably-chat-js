@@ -1,6 +1,6 @@
 import { expect, vi } from 'vitest';
 
-import { OccupancyEvent } from '../../src/core/occupancy.ts';
+import { OccupancyEvent } from '../../src/core/events.ts';
 
 export function waitForExpectedInbandOccupancy(
   occupancyEvents: OccupancyEvent[],
@@ -11,8 +11,8 @@ export function waitForExpectedInbandOccupancy(
     () => {
       const occupancy = occupancyEvents.find(
         (occupancy) =>
-          occupancy.connections === expectedOccupancy.connections &&
-          occupancy.presenceMembers === expectedOccupancy.presenceMembers,
+          occupancy.occupancy.connections === expectedOccupancy.occupancy.connections &&
+          occupancy.occupancy.presenceMembers === expectedOccupancy.occupancy.presenceMembers,
       );
 
       expect(occupancy).toBeDefined();

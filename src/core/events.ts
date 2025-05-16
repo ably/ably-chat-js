@@ -26,6 +26,14 @@ export enum RealtimeMessageNames {
 }
 
 /**
+ * Realtime meta event types.
+ */
+export enum RealtimeMetaEventType {
+  /** Represents a meta occupancy event. */
+  Occupancy = '[meta]occupancy',
+}
+
+/**
  * Chat Message Actions.
  */
 export enum ChatMessageActions {
@@ -277,6 +285,41 @@ export interface MessageReactionSummaryEvent {
 
     /** Map of multiple-type reactions summaries */
     multiple: Ably.SummaryMultipleValues;
+  };
+}
+
+/**
+ * Enum representing occupancy events.
+ */
+export enum OccupancyEventType {
+  /**
+   * Event triggered when occupancy is updated.
+   */
+  Updated = 'occupancy.updated',
+}
+
+/**
+ * Represents an occupancy event.
+ */
+export interface OccupancyEvent {
+  /**
+   * The type of the occupancy event.
+   */
+  type: OccupancyEventType;
+
+  /**
+   * The occupancy data.
+   */
+  occupancy: {
+    /**
+     * The number of connections to the chat room.
+     */
+    connections: number;
+
+    /**
+     * The number of presence members in the chat room - members who have entered presence.
+     */
+    presenceMembers: number;
   };
 }
 

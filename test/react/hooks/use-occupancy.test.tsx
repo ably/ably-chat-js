@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { OccupancyEvent, OccupancyListener } from '../../../src/core/occupancy.ts';
+import { OccupancyEvent, OccupancyEventType } from '../../../src/core/events.ts';
+import { OccupancyListener } from '../../../src/core/occupancy.ts';
 import { Room } from '../../../src/core/room.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
 import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
@@ -99,8 +100,20 @@ describe('useOccupancy', () => {
     await waitForEventualHookValueToBeDefined(result, (value) => value.occupancy);
 
     // verify that subscribe was called with the mock listener on mount by triggering an occupancy event
-    mockOccupancy.callAllListeners({ connections: 5, presenceMembers: 3 });
-    expect(mockListener).toHaveBeenCalledWith({ connections: 5, presenceMembers: 3 });
+    mockOccupancy.callAllListeners({
+      type: OccupancyEventType.Updated,
+      occupancy: {
+        connections: 5,
+        presenceMembers: 3,
+      },
+    });
+    expect(mockListener).toHaveBeenCalledWith({
+      type: OccupancyEventType.Updated,
+      occupancy: {
+        connections: 5,
+        presenceMembers: 3,
+      },
+    });
 
     // unmount the hook and verify that unsubscribe was called
     unmount();
@@ -132,7 +145,13 @@ describe('useOccupancy', () => {
 
     // emit an occupancy event which should update the DOM
     act(() => {
-      subscribedListener({ connections: 5, presenceMembers: 3 });
+      subscribedListener({
+        type: OccupancyEventType.Updated,
+        occupancy: {
+          connections: 5,
+          presenceMembers: 3,
+        },
+      });
     });
 
     // check the states of the occupancy metrics are correctly updated
