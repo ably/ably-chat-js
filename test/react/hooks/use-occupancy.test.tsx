@@ -135,6 +135,11 @@ describe('useOccupancy', () => {
       return { unsubscribe: vi.fn() };
     });
 
+    vi.spyOn(mockRoom.occupancy, 'current').mockReturnValueOnce({
+      connections: 0,
+      presenceMembers: 0,
+    });
+
     // render the hook and check the initial state of the occupancy metrics
     const { result } = renderHook(() => useOccupancy());
 
@@ -157,6 +162,21 @@ describe('useOccupancy', () => {
     // check the states of the occupancy metrics are correctly updated
     expect(result.current.connections).toBe(5);
     expect(result.current.presenceMembers).toBe(3);
+  });
+
+  it('should load the initial occupancy metrics from current', async () => {
+    vi.spyOn(mockRoom.occupancy, 'current').mockReturnValueOnce({
+      connections: 6,
+      presenceMembers: 4,
+    });
+
+    // render the hook and check the initial state of the occupancy metrics
+    const { result } = renderHook(() => useOccupancy());
+
+    await waitForEventualHookValueToBeDefined(result, (value) => value.occupancy);
+
+    expect(result.current.connections).toBe(6);
+    expect(result.current.presenceMembers).toBe(4);
   });
 
   it('should handle rerender if the room instance changes', async () => {
