@@ -1,6 +1,7 @@
 ---
 description: Conventions for the React package
 globs: src/react/**/*.tsx,src/react/**/*.ts
+alwaysApply: false
 ---
 # React Conventions
 
@@ -62,3 +63,7 @@ const listenerRef = useEventListenerRef(params?.listener);
 - Always clean up subscriptions and listeners
 - Handle component unmounting gracefully
 - Clear timers and intervals in cleanup functions
+
+## Exports
+
+We export the public API types in [index.ts](mdc:src/react/index.ts) If you change any types that are part of the public API, update them here.
