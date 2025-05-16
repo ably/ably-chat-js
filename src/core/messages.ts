@@ -169,23 +169,23 @@ export interface MessageSubscriptionResponse extends Subscription {
    * Get the previous messages that were sent to the room before the listener was subscribed.
    *
    * If the client experiences a discontinuity event (i.e. the connection was lost and could not be resumed), the starting point of
-   * getPreviousMessages will be reset.
+   * historyBeforeSubscribe will be reset.
    *
-   * Calls to getPreviousMessages will wait for continuity to be restored before resolving.
+   * Calls to historyBeforeSubscribe will wait for continuity to be restored before resolving.
    *
    * Once continuity is restored, the subscription point will be set to the beginning of this new period of continuity. To
-   * ensure that no messages are missed, you should call getPreviousMessages after any period of discontinuity to
+   * ensure that no messages are missed, you should call historyBeforeSubscribe after any period of discontinuity to
    * fill any gaps in the message history.
    *
    * ```typescript
-   * const { getPreviousMessages } = room.messages.subscribe(listener);
-   * await getPreviousMessages({ limit: 10 });
+   * const { historyBeforeSubscribe } = room.messages.subscribe(listener);
+   * await historyBeforeSubscribe({ limit: 10 });
    * ```
    *
    * @param params Options for the history query.
    * @returns A promise that resolves with the paginated result of messages, in newest-to-oldest order.
    */
-  getPreviousMessages(params: Omit<QueryOptions, 'orderBy'>): Promise<PaginatedResult<Message>>;
+  historyBeforeSubscribe(params: Omit<QueryOptions, 'orderBy'>): Promise<PaginatedResult<Message>>;
 }
 
 /**
@@ -214,7 +214,7 @@ export interface Messages {
    * @returns A promise that resolves with the paginated result of messages. This paginated result can
    * be used to fetch more messages if available.
    */
-  get(options: QueryOptions): Promise<PaginatedResult<Message>>;
+  history(options: QueryOptions): Promise<PaginatedResult<Message>>;
 
   /**
    * Send a message in the chat room.
@@ -464,7 +464,7 @@ export class DefaultMessages implements Messages {
   /**
    * @inheritdoc Messages
    */
-  async get(options: QueryOptions): Promise<PaginatedResult<Message>> {
+  async history(options: QueryOptions): Promise<PaginatedResult<Message>> {
     this._logger.trace('Messages.query();');
     return this._chatApi.getMessages(this._roomId, options);
   }
@@ -584,7 +584,8 @@ export class DefaultMessages implements Messages {
         this._logger.trace('Messages.unsubscribe();');
         this._emitter.off(wrapped);
       },
-      getPreviousMessages: (params: Omit<QueryOptions, 'orderBy'>) => this._getBeforeSubscriptionStart(wrapped, params),
+      historyBeforeSubscribe: (params: Omit<QueryOptions, 'orderBy'>) =>
+        this._getBeforeSubscriptionStart(wrapped, params),
     };
   }
 

@@ -243,15 +243,15 @@ describe('useMessages', () => {
     await roomTwo.messages.send({ text: 'I have the high ground' });
     await roomTwo.messages.send({ text: 'You underestimate my power' });
 
-    let getPreviousMessagesRoomOne: ReturnType<typeof useMessages>['getPreviousMessages'];
+    let historyBeforeSubscribeRoomOne: ReturnType<typeof useMessages>['historyBeforeSubscribe'];
     let roomStatusRoomOne: RoomStatus;
 
     const TestComponent = () => {
-      const { getPreviousMessages, roomStatus } = useMessages({
+      const { historyBeforeSubscribe, roomStatus } = useMessages({
         listener: () => {},
       });
 
-      getPreviousMessagesRoomOne = getPreviousMessages;
+      historyBeforeSubscribeRoomOne = historyBeforeSubscribe;
       roomStatusRoomOne = roomStatus;
 
       return null;
@@ -279,11 +279,11 @@ describe('useMessages', () => {
     await roomTwo.messages.send({ text: 'Tis but a scratch' });
     await roomTwo.messages.send({ text: 'Time is an illusion. Lunchtime doubly so.' });
 
-    if (!getPreviousMessagesRoomOne) {
-      expect.fail('getPreviousMessages was not defined');
+    if (!historyBeforeSubscribeRoomOne) {
+      expect.fail('historyBeforeSubscribe was not defined');
     }
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const results = await getPreviousMessagesRoomOne({ limit: 30 });
+    const results = await historyBeforeSubscribeRoomOne({ limit: 30 });
 
     expect(results.items.length).toBe(3);
     expect(results.items.find((item) => item.text === 'The force is strong with this one')).toBeDefined();
@@ -291,7 +291,7 @@ describe('useMessages', () => {
     expect(results.items.find((item) => item.text === 'You underestimate my power')).toBeDefined();
   }, 10000);
 
-  it('should reset getPreviousMessages if the listener becomes undefined then redefined', async () => {
+  it('should reset historyBeforeSubscribe if the listener becomes undefined then redefined', async () => {
     const chatClient = newChatClient();
 
     // create a second room instance so we can send messages from it
@@ -317,14 +317,14 @@ describe('useMessages', () => {
       { timeout: 3000 },
     );
 
-    let getPreviousMessages: ReturnType<typeof useMessages>['getPreviousMessages'] | undefined;
+    let historyBeforeSubscribe: ReturnType<typeof useMessages>['historyBeforeSubscribe'] | undefined;
 
     const TestComponent = ({ defineListener }: { defineListener: boolean }) => {
-      const { getPreviousMessages: previous } = useMessages({
+      const { historyBeforeSubscribe: previous } = useMessages({
         listener: defineListener ? () => {} : undefined,
       });
 
-      getPreviousMessages = previous;
+      historyBeforeSubscribe = previous;
 
       return null;
     };
@@ -339,20 +339,20 @@ describe('useMessages', () => {
 
     const { rerender } = render(<TestProvider defineListener={true} />);
 
-    // Wait until the getPreviousMessages is defined
+    // Wait until the historyBeforeSubscribe is defined
     await waitFor(
       () => {
-        expect(getPreviousMessages).toBeDefined();
+        expect(historyBeforeSubscribe).toBeDefined();
       },
       { timeout: 3000 },
     );
 
     // Do a get previous messages call
-    if (!getPreviousMessages) {
-      expect.fail('getPreviousMessages was not defined');
+    if (!historyBeforeSubscribe) {
+      expect.fail('historyBeforeSubscribe was not defined');
     }
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const results = await getPreviousMessages({ limit: 3 });
+    const results = await historyBeforeSubscribe({ limit: 3 });
 
     // Check we get the expected messages
     expect(results.items.length).toBe(3);
@@ -364,10 +364,10 @@ describe('useMessages', () => {
     // Rerender the component with the listener undefined
     rerender(<TestProvider defineListener={false} />);
 
-    // Wait until the getPreviousMessages is undefined
+    // Wait until the historyBeforeSubscribe is undefined
     await waitFor(
       () => {
-        expect(getPreviousMessages).toBeUndefined();
+        expect(historyBeforeSubscribe).toBeUndefined();
       },
       { timeout: 3000 },
     );
@@ -387,17 +387,17 @@ describe('useMessages', () => {
     // Rerender the component with the listener defined
     rerender(<TestProvider defineListener={true} />);
 
-    // Wait until the getPreviousMessages is defined
+    // Wait until the historyBeforeSubscribe is defined
     await waitFor(
       () => {
-        expect(getPreviousMessages).toBeDefined();
+        expect(historyBeforeSubscribe).toBeDefined();
       },
       { timeout: 3000 },
     );
 
     // Check we get the expected messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const results2 = await getPreviousMessages({ limit: 3 });
+    const results2 = await historyBeforeSubscribe({ limit: 3 });
     expect(results2.items.length).toBe(3);
     const messageTexts2 = results2.items.map((item) => item.text);
     expect(messageTexts2[0]).toBe('Time is an illusion. Lunchtime doubly so.');
@@ -417,7 +417,7 @@ describe('useMessages', () => {
 
     // Do a get previous messages call, we should still get the same messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const results3 = await getPreviousMessages({ limit: 3 });
+    const results3 = await historyBeforeSubscribe({ limit: 3 });
     expect(results3.items.length).toBe(3);
     const messageTexts3 = results3.items.map((item) => item.text);
     expect(messageTexts3[0]).toBe('Time is an illusion. Lunchtime doubly so.');
@@ -425,7 +425,7 @@ describe('useMessages', () => {
     expect(messageTexts3[2]).toBe('You underestimate my power');
   }, 20000);
 
-  it('should persist the getPreviousMessages subscription point across renders, if listener remains defined', async () => {
+  it('should persist the historyBeforeSubscribe subscription point across renders, if listener remains defined', async () => {
     const chatClient = newChatClient();
 
     // create a second room instance so we can send messages from it
@@ -451,14 +451,14 @@ describe('useMessages', () => {
       { timeout: 3000 },
     );
 
-    let getPreviousMessages: ReturnType<typeof useMessages>['getPreviousMessages'] | undefined;
+    let historyBeforeSubscribe: ReturnType<typeof useMessages>['historyBeforeSubscribe'] | undefined;
 
     const TestComponent = ({ listener }: { listener: MessageListener }) => {
-      const { getPreviousMessages: previous } = useMessages({
+      const { historyBeforeSubscribe: previous } = useMessages({
         listener,
       });
 
-      getPreviousMessages = previous;
+      historyBeforeSubscribe = previous;
 
       return null;
     };
@@ -473,20 +473,20 @@ describe('useMessages', () => {
 
     const { rerender } = render(<TestProvider listener={vi.fn()} />);
 
-    // Wait until the getPreviousMessages is defined
+    // Wait until the historyBeforeSubscribe is defined
     await waitFor(
       () => {
-        expect(getPreviousMessages).toBeDefined();
+        expect(historyBeforeSubscribe).toBeDefined();
       },
       { timeout: 3000 },
     );
 
     // Do a get previous messages call
-    if (!getPreviousMessages) {
-      expect.fail('getPreviousMessages was not defined');
+    if (!historyBeforeSubscribe) {
+      expect.fail('historyBeforeSubscribe was not defined');
     }
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const results = await getPreviousMessages({ limit: 3 });
+    const results = await historyBeforeSubscribe({ limit: 3 });
 
     // Check we get the expected messages
     expect(results.items.length).toBe(3);
@@ -508,7 +508,7 @@ describe('useMessages', () => {
     // Wait 3 seconds to make sure all messages are received
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    const results2 = await getPreviousMessages({ limit: 3 });
+    const results2 = await historyBeforeSubscribe({ limit: 3 });
 
     // Check we get the expected messages
     expect(results.items.length).toBe(3);
