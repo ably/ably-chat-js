@@ -12,6 +12,7 @@ export type {
   MessageEvent,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
+  OccupancyEvent,
   RoomReactionEvent,
   RoomReactionEventType,
   RoomReactionRealtimeEventType,
@@ -22,6 +23,7 @@ export {
   MessageEvents,
   MessageReactionEvents,
   MessageReactionType,
+  OccupancyEventType,
   PresenceEvents,
   TypingEventTypes,
   TypingSetEventTypes,
@@ -56,7 +58,7 @@ export type {
   MessagesReactions,
 } from './messages-reactions.js';
 export type { Metadata } from './metadata.js';
-export type { Occupancy, OccupancyEvent, OccupancyListener } from './occupancy.js';
+export type { Occupancy, OccupancyData, OccupancyListener } from './occupancy.js';
 export type { OperationMetadata } from './operation-metadata.js';
 export type { Presence, PresenceData, PresenceEvent, PresenceListener, PresenceMember } from './presence.js';
 export type { PaginatedResult } from './query.js';

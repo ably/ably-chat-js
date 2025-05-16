@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
-import { OccupancyEvent } from '../../src/core/occupancy.ts';
+import { OccupancyEvent } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -69,8 +69,11 @@ describe('Occupancy', () => {
       room.occupancy.subscribe((event: OccupancyEvent) => {
         try {
           expect(event).toEqual({
-            connections: 5,
-            presenceMembers: 3,
+            type: 'occupancy.updated',
+            occupancy: {
+              connections: 5,
+              presenceMembers: 3,
+            },
           });
           done();
         } catch (error: unknown) {
@@ -95,8 +98,11 @@ describe('Occupancy', () => {
       context.room.occupancy.subscribe((event: OccupancyEvent) => {
         try {
           expect(event).toEqual({
-            connections: 0,
-            presenceMembers: 0,
+            type: 'occupancy.updated',
+            occupancy: {
+              connections: 0,
+              presenceMembers: 0,
+            },
           });
           done();
         } catch (error: unknown) {
@@ -149,8 +155,11 @@ describe('Occupancy', () => {
     // Check that we only received the first event
     expect(receivedEvents).toHaveLength(1);
     expect(receivedEvents[0]).toEqual({
-      connections: 0,
-      presenceMembers: 0,
+      type: 'occupancy.updated',
+      occupancy: {
+        connections: 0,
+        presenceMembers: 0,
+      },
     });
 
     // Calling unsubscribe again should not throw
@@ -196,13 +205,19 @@ describe('Occupancy', () => {
     // Check that we only received the first event
     expect(receivedEvents).toHaveLength(1);
     expect(receivedEvents[0]).toEqual({
-      connections: 0,
-      presenceMembers: 0,
+      type: 'occupancy.updated',
+      occupancy: {
+        connections: 0,
+        presenceMembers: 0,
+      },
     });
     expect(receivedEvents2).toHaveLength(1);
     expect(receivedEvents2[0]).toEqual({
-      connections: 0,
-      presenceMembers: 0,
+      type: 'occupancy.updated',
+      occupancy: {
+        connections: 0,
+        presenceMembers: 0,
+      },
     });
 
     // Calling unsubscribe again should not throw

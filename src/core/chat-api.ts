@@ -10,7 +10,7 @@ import {
   MessageOperationMetadata,
 } from './message.js';
 import { OrderBy } from './messages.js';
-import { OccupancyEvent } from './occupancy.js';
+import { OccupancyData } from './occupancy.js';
 import { PaginatedResult } from './query.js';
 
 export interface GetMessagesQueryParams {
@@ -265,9 +265,9 @@ export class ChatApi {
     );
   }
 
-  getOccupancy(roomId: string): Promise<OccupancyEvent> {
+  getOccupancy(roomId: string): Promise<OccupancyData> {
     roomId = encodeURIComponent(roomId);
-    return this._makeAuthorizedRequest<OccupancyEvent>(`/chat/v3/rooms/${roomId}/occupancy`, 'GET');
+    return this._makeAuthorizedRequest<OccupancyData>(`/chat/v3/rooms/${roomId}/occupancy`, 'GET');
   }
 
   private async _makeAuthorizedRequest<RES = undefined>(

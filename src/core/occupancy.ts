@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 
 import { ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
+import { OccupancyEvent, OccupancyEventType, RealtimeMetaEventType } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
@@ -36,13 +37,13 @@ export interface Occupancy {
    *
    * @returns A promise that resolves to the current occupancy of the chat room.
    */
-  get(): Promise<OccupancyEvent>;
+  get(): Promise<OccupancyData>;
 }
 
 /**
- * Represents the occupancy of a chat room.
+ * Represents the occupancy data of a chat room.
  */
-export interface OccupancyEvent {
+export interface OccupancyData {
   /**
    * The number of connections to the chat room.
    */
@@ -60,12 +61,8 @@ export interface OccupancyEvent {
  */
 export type OccupancyListener = (event: OccupancyEvent) => void;
 
-enum OccupancyEvents {
-  Occupancy = 'occupancy',
-}
-
 interface OccupancyEventsMap {
-  [OccupancyEvents.Occupancy]: OccupancyEvent;
+  [OccupancyEventType.Updated]: OccupancyEvent;
 }
 
 /**
@@ -108,7 +105,7 @@ export class DefaultOccupancy implements Occupancy {
    */
   private _applyChannelSubscriptions(): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.subscribe(['[meta]occupancy'], this._internalOccupancyListener.bind(this));
+    void this._channel.subscribe([RealtimeMetaEventType.Occupancy], this._internalOccupancyListener.bind(this));
   }
 
   /**
@@ -147,7 +144,7 @@ export class DefaultOccupancy implements Occupancy {
   /**
    * @inheritdoc Occupancy
    */
-  async get(): Promise<OccupancyEvent> {
+  async get(): Promise<OccupancyData> {
     this._logger.trace('Occupancy.get();');
     return this._chatApi.getOccupancy(this._roomId);
   }
@@ -210,9 +207,12 @@ export class DefaultOccupancy implements Occupancy {
       return;
     }
 
-    this._emitter.emit(OccupancyEvents.Occupancy, {
-      connections: connections,
-      presenceMembers: presenceMembers,
+    this._emitter.emit(OccupancyEventType.Updated, {
+      type: OccupancyEventType.Updated,
+      occupancy: {
+        connections: connections,
+        presenceMembers: presenceMembers,
+      },
     });
   }
 
