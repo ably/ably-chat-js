@@ -20,11 +20,12 @@ export type {
 } from './events.js';
 export {
   ChatMessageActions,
-  MessageEvents,
-  MessageReactionEvents,
+  MessageEventType,
+  MessageReactionEventType,
   MessageReactionType,
   OccupancyEventType,
   PresenceEventType,
+  RoomEventType,
   TypingEventTypes,
   TypingSetEventTypes,
 } from './events.js';

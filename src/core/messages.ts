@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatApi } from './chat-api.js';
-import { ChatMessageActions, MessageEvent, MessageEvents, RealtimeMessageNames } from './events.js';
+import { ChatMessageActions, MessageEvent, MessageEventType, RealtimeMessageNames } from './events.js';
 import { Logger } from './logger.js';
 import {
   DefaultMessage,
@@ -22,18 +22,21 @@ import EventEmitter, { wrap } from './utils/event-emitter.js';
  * Event names and their respective payloads emitted by the messages feature.
  */
 interface MessageEventsMap {
-  [MessageEvents.Created]: MessageEvent;
-  [MessageEvents.Updated]: MessageEvent;
-  [MessageEvents.Deleted]: MessageEvent;
+  [MessageEventType.Created]: MessageEvent;
+  [MessageEventType.Updated]: MessageEvent;
+  [MessageEventType.Deleted]: MessageEvent;
 }
 
 /**
  * Mapping of chat message actions to message events.
  */
-const MessageActionsToEventsMap: Map<ChatMessageActions, MessageEvents> = new Map<ChatMessageActions, MessageEvents>([
-  [ChatMessageActions.MessageCreate, MessageEvents.Created],
-  [ChatMessageActions.MessageUpdate, MessageEvents.Updated],
-  [ChatMessageActions.MessageDelete, MessageEvents.Deleted],
+const MessageActionsToEventsMap: Map<ChatMessageActions, MessageEventType> = new Map<
+  ChatMessageActions,
+  MessageEventType
+>([
+  [ChatMessageActions.MessageCreate, MessageEventType.Created],
+  [ChatMessageActions.MessageUpdate, MessageEventType.Updated],
+  [ChatMessageActions.MessageDelete, MessageEventType.Deleted],
 ]);
 
 /**
@@ -562,7 +565,7 @@ export class DefaultMessages implements Messages {
   subscribe(listener: MessageListener): MessageSubscriptionResponse {
     this._logger.trace('Messages.subscribe();');
     const wrapped = wrap(listener);
-    this._emitter.on([MessageEvents.Created, MessageEvents.Updated, MessageEvents.Deleted], wrapped);
+    this._emitter.on([MessageEventType.Created, MessageEventType.Updated, MessageEventType.Deleted], wrapped);
 
     // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
     const resolvedSubscriptionStart = this._resolveSubscriptionStart();

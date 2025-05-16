@@ -3,8 +3,8 @@ import { ErrorInfo, SummaryDistinctValues, SummaryMultipleValues, SummaryUniqueV
 import {
   ChatMessageActions,
   MessageEvent,
-  MessageEvents,
-  MessageReactionEvents,
+  MessageEventType,
+  MessageReactionEventType,
   MessageReactionSummaryEvent,
 } from './events.js';
 import { Headers } from './headers.js';
@@ -236,7 +236,7 @@ export interface Message {
    *
    * @param event The event to be applied to the returned message.
    * @throws {@link ErrorInfo} if the event is for a different message.
-   * @throws {@link ErrorInfo} if the event is a {@link MessageEvents.Created}.
+   * @throws {@link ErrorInfo} if the event is a {@link MessageEventType.Created}.
    * @returns A new message instance with the event applied. If the event is a no-op, such
    *    as an event for an old version, the same message is returned (not a copy).
    */
@@ -427,12 +427,12 @@ export class DefaultMessage implements Message {
   }
 
   with(event: MessageEvent | MessageReactionSummaryEvent): Message {
-    if (event.type === MessageEvents.Created) {
+    if (event.type === MessageEventType.Created) {
       throw new ErrorInfo('cannot apply a created event to a message', 40000, 400);
     }
 
     // reaction summary
-    if (event.type === MessageReactionEvents.Summary) {
+    if (event.type === MessageReactionEventType.Summary) {
       if (event.summary.messageSerial !== this.serial) {
         throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
       }

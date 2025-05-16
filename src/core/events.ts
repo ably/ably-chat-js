@@ -6,7 +6,7 @@ import { Reaction } from './reaction.js';
 /**
  * All chat message events.
  */
-export enum MessageEvents {
+export enum MessageEventType {
   /** Fires when a new chat message is received. */
   Created = 'message.created',
 
@@ -175,7 +175,7 @@ export interface MessageEvent {
   /**
    * The type of the message event.
    */
-  type: MessageEvents;
+  type: MessageEventType;
 
   /**
    * The message that was received.
@@ -220,7 +220,7 @@ export enum MessageReactionType {
  * Enum representing different message reaction events in the chat system.
  * @enum {string}
  */
-export enum MessageReactionEvents {
+export enum MessageReactionEventType {
   /**
    * A reaction was added to a message.
    */
@@ -240,7 +240,7 @@ export enum MessageReactionEvents {
  */
 export interface MessageReactionRawEvent {
   /** Whether reaction was added or removed */
-  type: MessageReactionEvents.Create | MessageReactionEvents.Delete;
+  type: MessageReactionEventType.Create | MessageReactionEventType.Delete;
 
   /** The timestamp of this event */
   timestamp: Date;
@@ -270,7 +270,7 @@ export interface MessageReactionRawEvent {
  */
 export interface MessageReactionSummaryEvent {
   /** The type of the event */
-  type: MessageReactionEvents.Summary;
+  type: MessageReactionEventType.Summary;
 
   /** The message reactions summary. */
   summary: {
@@ -326,7 +326,7 @@ export interface OccupancyEvent {
 /**
  * Room events.
  */
-export enum RoomEvents {
+export enum RoomEventType {
   /**
    * Event triggered when a discontinuity is detected in the room's channel connection.
    * A discontinuity occurs when an attached or update event comes from the channel with resume=false,

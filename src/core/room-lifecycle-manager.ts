@@ -4,7 +4,7 @@ import { Mutex } from 'async-mutex';
 import { ChannelManager } from './channel-manager.js';
 import { DiscontinuityListener } from './discontinuity.js';
 import { ErrorCodes } from './errors.js';
-import { RoomEvents } from './events.js';
+import { RoomEventType } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomLifecycle, RoomStatus } from './room-status.js';
 import { StatusSubscription } from './subscription.js';
@@ -14,7 +14,7 @@ import EventEmitter, { wrap } from './utils/event-emitter.js';
  * Events that can be emitted by the RoomLifecycleManager
  */
 export interface RoomLifeCycleEvents {
-  [RoomEvents.Discontinuity]: Ably.ErrorInfo;
+  [RoomEventType.Discontinuity]: Ably.ErrorInfo;
 }
 
 /**
@@ -113,7 +113,7 @@ export class RoomLifecycleManager {
           roomId: this._roomId,
           error,
         });
-        this._eventEmitter.emit(RoomEvents.Discontinuity, error);
+        this._eventEmitter.emit(RoomEventType.Discontinuity, error);
       }
     });
 
@@ -137,7 +137,7 @@ export class RoomLifecycleManager {
           roomId: this._roomId,
           error,
         });
-        this._eventEmitter.emit(RoomEvents.Discontinuity, error);
+        this._eventEmitter.emit(RoomEventType.Discontinuity, error);
       }
     });
   }
@@ -150,10 +150,10 @@ export class RoomLifecycleManager {
   onDiscontinuity(handler: DiscontinuityListener): StatusSubscription {
     this._logger.trace('RoomLifecycleManager.onDiscontinuity()');
     const wrapped = wrap(handler);
-    this._eventEmitter.on(RoomEvents.Discontinuity, wrapped);
+    this._eventEmitter.on(RoomEventType.Discontinuity, wrapped);
     return {
       off: () => {
-        this._eventEmitter.off(RoomEvents.Discontinuity, wrapped);
+        this._eventEmitter.off(RoomEventType.Discontinuity, wrapped);
       },
     };
   }
