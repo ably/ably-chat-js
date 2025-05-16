@@ -27,7 +27,7 @@ export interface Typing {
    * Get the current typers, a set of clientIds.
    * @returns The set of clientIds that are currently typing.
    */
-  get(): Set<string>;
+  current(): Set<string>;
 
   /**
    * This will send a `typing.started` event to the server.
@@ -157,8 +157,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    *
    * @inheritDoc
    */
-  get(): Set<string> {
-    this._logger.trace(`DefaultTyping.get();`, { roomId: this._roomId });
+  current(): Set<string> {
+    this._logger.trace(`DefaultTyping.current();`, { roomId: this._roomId });
     return new Set<string>(this._currentlyTyping.keys());
   }
 
