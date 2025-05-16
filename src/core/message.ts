@@ -1,7 +1,7 @@
 import { ErrorInfo, SummaryDistinctValues, SummaryMultipleValues, SummaryUniqueValues } from 'ably';
 
 import {
-  ChatMessageActions,
+  ChatMessageAction,
   MessageEvent,
   MessageEventType,
   MessageReactionEventType,
@@ -105,7 +105,7 @@ export interface Message {
   /**
    * The action type of the message. This can be used to determine if the message was created, updated, or deleted.
    */
-  readonly action: ChatMessageActions;
+  readonly action: ChatMessageAction;
 
   /**
    * A unique identifier for the latest version of this message.
@@ -301,7 +301,7 @@ export interface DefaultMessageParams {
   text: string;
   metadata: MessageMetadata;
   headers: MessageHeaders;
-  action: ChatMessageActions;
+  action: ChatMessageAction;
   version: string;
   createdAt: Date;
   timestamp: Date;
@@ -321,7 +321,7 @@ export class DefaultMessage implements Message {
   public readonly text: string;
   public readonly metadata: MessageMetadata;
   public readonly headers: MessageHeaders;
-  public readonly action: ChatMessageActions;
+  public readonly action: ChatMessageAction;
   public readonly version: string;
   public readonly createdAt: Date;
   public readonly timestamp: Date;
@@ -363,11 +363,11 @@ export class DefaultMessage implements Message {
   }
 
   get isUpdated(): boolean {
-    return this.action === ChatMessageActions.MessageUpdate;
+    return this.action === ChatMessageAction.MessageUpdate;
   }
 
   get isDeleted(): boolean {
-    return this.action === ChatMessageActions.MessageDelete;
+    return this.action === ChatMessageAction.MessageDelete;
   }
 
   get updatedBy(): string | undefined {

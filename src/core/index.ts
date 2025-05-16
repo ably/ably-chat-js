@@ -7,7 +7,7 @@ export type { ChatClientOptions } from './config.js';
 export type { Connection, ConnectionStatusChange, ConnectionStatusListener } from './connection.js';
 export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener } from './discontinuity.js';
-export { ErrorCodes, errorInfoIs } from './errors.js';
+export { ErrorCode, errorInfoIs } from './errors.js';
 export type {
   MessageEvent,
   MessageReactionRawEvent,
@@ -19,15 +19,15 @@ export type {
   TypingSetEvent,
 } from './events.js';
 export {
-  ChatMessageActions,
+  ChatMessageAction,
   MessageEventType,
   MessageReactionEventType,
   MessageReactionType,
   OccupancyEventType,
   PresenceEventType,
   RoomEventType,
-  TypingEventTypes,
-  TypingSetEventTypes,
+  TypingEventType,
+  TypingSetEventType,
 } from './events.js';
 export type { Headers } from './headers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';

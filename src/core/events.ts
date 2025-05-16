@@ -20,7 +20,7 @@ export enum MessageEventType {
 /**
  * Realtime chat message names.
  */
-export enum RealtimeMessageNames {
+export enum RealtimeMessageName {
   /** Represents a regular chat message. */
   ChatMessage = 'chat.message',
 }
@@ -36,7 +36,7 @@ export enum RealtimeMetaEventType {
 /**
  * Chat Message Actions.
  */
-export enum ChatMessageActions {
+export enum ChatMessageAction {
   /** Action applied to a new message. */
   MessageCreate = 'message.create',
 
@@ -80,7 +80,7 @@ export enum PresenceEventType {
 /**
  * Enum representing the typing event types.
  */
-export enum TypingEventTypes {
+export enum TypingEventType {
   /**
    * Event triggered when a user is typing.
    */
@@ -95,7 +95,7 @@ export enum TypingEventTypes {
 /**
  * Enum representing the typing set event types.
  */
-export enum TypingSetEventTypes {
+export enum TypingSetEventType {
   /**
    * Event triggered when a change occurs in the set of typers.
    */
@@ -109,7 +109,7 @@ export interface TypingSetEvent {
   /**
    * The type of the event.
    */
-  type: TypingSetEventTypes;
+  type: TypingSetEventType;
 
   /**
    * The set of clientIds that are currently typing.
@@ -128,7 +128,7 @@ export interface TypingSetEvent {
     /**
      * Type of the change.
      */
-    type: TypingEventTypes;
+    type: TypingEventType;
   };
 }
 

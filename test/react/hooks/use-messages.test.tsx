@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { ChatMessageActions, MessageEventType } from '../../../src/core/events.ts';
+import { ChatMessageAction, MessageEventType } from '../../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
 import { PaginatedResult } from '../../../src/core/query.ts';
@@ -112,7 +112,7 @@ describe('useMessages', () => {
         clientId: '123',
         roomId: '123',
         createdAt: new Date(),
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         version: '123',
         isUpdated: false,
         isDeleted: false,
@@ -190,7 +190,7 @@ describe('useMessages', () => {
       text: 'I have the high ground now',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: '01719948956834-000@108TeGZDQBderu97202638',
       createdAt: new Date(1719948956834),
       timestamp: new Date(1719948956834),

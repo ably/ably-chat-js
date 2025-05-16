@@ -7,7 +7,7 @@ import {
   DeleteMessageReactionParams as APIDeleteMessageReactionParams,
 } from './chat-api.js';
 import {
-  ChatMessageActions,
+  ChatMessageAction,
   MessageReactionEventType,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
@@ -203,7 +203,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     this._logger.trace('MessagesReactions._processMessageEvent();', { event });
 
     // only process summary events
-    if (event.action !== ChatMessageActions.MessageAnnotationSummary) {
+    if (event.action !== ChatMessageAction.MessageAnnotationSummary) {
       return;
     }
     if (!event.summary) {

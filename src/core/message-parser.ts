@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { ChatMessageActions } from './events.js';
+import { ChatMessageAction } from './events.js';
 import {
   DefaultMessage,
   emptyMessageReactions,
@@ -69,9 +69,9 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
   }
 
   switch (message.action) {
-    case ChatMessageActions.MessageCreate:
-    case ChatMessageActions.MessageUpdate:
-    case ChatMessageActions.MessageDelete: {
+    case ChatMessageAction.MessageCreate:
+    case ChatMessageAction.MessageUpdate:
+    case ChatMessageAction.MessageDelete: {
       break;
     }
     default: {
@@ -85,7 +85,7 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
     text: message.data.text,
     metadata: message.data.metadata ?? {},
     headers: message.extras.headers ?? {},
-    action: message.action as ChatMessageActions,
+    action: message.action as ChatMessageAction,
     version: message.version,
     createdAt: new Date(message.createdAt),
     timestamp: new Date(message.timestamp),
