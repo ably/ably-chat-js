@@ -93,6 +93,13 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
       context.room,
       (room) => {
         logger.debug('useOccupancy(); applying internal listener');
+        // Set the initial metrics from current(), or 0 if not available
+        const currentOccupancy = room.occupancy.current();
+        setOccupancyMetrics({
+          connections: currentOccupancy?.connections ?? 0,
+          presenceMembers: currentOccupancy?.presenceMembers ?? 0,
+        });
+
         const { unsubscribe } = room.occupancy.subscribe((occupancyEvent) => {
           setOccupancyMetrics({
             connections: occupancyEvent.occupancy.connections,
