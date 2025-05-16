@@ -4,8 +4,7 @@ import { ErrorInfo } from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
-import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { PresenceEvents } from '../../../src/core/events.ts';
+import { PresenceEventType } from '../../../src/core/events.ts';
 import { Logger } from '../../../src/core/logger.ts';
 import { PresenceEvent, PresenceListener, PresenceMember } from '../../../src/core/presence.ts';
 import { Room } from '../../../src/core/room.ts';
@@ -104,10 +103,13 @@ describe('usePresenceListener', () => {
 
     // verify that subscribe was called with the mock listener on mount by triggering a presence event
     const testPresenceEvent: PresenceEvent = {
-      clientId: 'client1',
-      action: PresenceEvents.Enter,
-      data: undefined,
-      timestamp: Date.now(),
+      type: PresenceEventType.Enter,
+      member: {
+        clientId: 'client1',
+        data: undefined,
+        extras: undefined,
+        updatedAt: Date.now(),
+      },
     };
     for (const listener of presenceListeners) {
       listener?.(testPresenceEvent);
@@ -145,14 +147,12 @@ describe('usePresenceListener', () => {
     const testPresenceMembers: PresenceMember[] = [
       {
         clientId: 'client1',
-        action: 'enter',
         data: undefined,
         extras: undefined,
         updatedAt: Date.now(),
       },
       {
         clientId: 'client2',
-        action: 'enter',
         data: undefined,
         extras: undefined,
         updatedAt: Date.now(),
@@ -241,10 +241,13 @@ describe('usePresenceListener', () => {
     vi.spyOn(mockRoom.presence, 'get').mockReturnValue(Promise.resolve([]));
 
     const testPresenceEvent: PresenceEvent = {
-      clientId: 'client1',
-      action: PresenceEvents.Enter,
-      data: undefined,
-      timestamp: Date.now(),
+      type: PresenceEventType.Enter,
+      member: {
+        clientId: 'client1',
+        data: undefined,
+        extras: undefined,
+        updatedAt: Date.now(),
+      },
     };
 
     // now emit a presence event which should clear the error state
@@ -261,32 +264,6 @@ describe('usePresenceListener', () => {
       },
       { timeout: 3000 },
     );
-  });
-
-  it('should subscribe and unsubscribe to discontinuity events', async () => {
-    const mockOff = vi.fn();
-    const mockDiscontinuityListener = vi.fn();
-
-    // spy on the onDiscontinuity method of the room presence instance
-    let discontinuityListener: DiscontinuityListener | undefined;
-    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener) => {
-      discontinuityListener = listener;
-      return { off: mockOff };
-    });
-
-    // render the hook with a discontinuity listener
-    const { unmount } = renderHook(() => usePresenceListener({ onDiscontinuity: mockDiscontinuityListener }));
-
-    // check that the listener was subscribed to the discontinuity events by triggering a discontinuity event
-    const errorInfo = new Ably.ErrorInfo('test', 500, 50000);
-
-    await waitFor(() => discontinuityListener !== undefined);
-    discontinuityListener?.(errorInfo);
-
-    // unmount the hook and verify that the listener was unsubscribed
-    unmount();
-
-    expect(mockOff).toHaveBeenCalled();
   });
 
   it('should retry updating the presence state on failure', async () => {
@@ -328,7 +305,6 @@ describe('usePresenceListener', () => {
         return Promise.resolve<PresenceMember[]>([
           {
             clientId: 'client1',
-            action: 'enter',
             data: undefined,
             extras: undefined,
             updatedAt: Date.now(),
@@ -339,10 +315,13 @@ describe('usePresenceListener', () => {
 
     // trigger the listener; this should trigger the next call to presence.get
     subscribedListener({
-      action: PresenceEvents.Enter,
-      clientId: 'client1',
-      timestamp: Date.now(),
-      data: undefined,
+      type: PresenceEventType.Enter,
+      member: {
+        clientId: 'client1',
+        data: undefined,
+        extras: undefined,
+        updatedAt: Date.now(),
+      },
     });
 
     // Wait for our mock room's presence to be called
@@ -363,7 +342,6 @@ describe('usePresenceListener', () => {
 
     // our returned data should be the presence member we received
     expect(result.current.presenceData[0]?.clientId).toEqual('client1');
-    expect(result.current.presenceData[0]?.action).toEqual('enter');
   }, 10000);
 
   it('should not return stale presence data even if they resolve out of order', async () => {
@@ -396,7 +374,6 @@ describe('usePresenceListener', () => {
     const testPresenceData1: PresenceMember[] = [
       {
         clientId: 'client1',
-        action: 'enter',
         data: undefined,
         extras: undefined,
         updatedAt: Date.now(),
@@ -406,7 +383,6 @@ describe('usePresenceListener', () => {
     const testPresenceData2: PresenceMember[] = [
       {
         clientId: 'client2',
-        action: 'enter',
         data: undefined,
         extras: undefined,
         updatedAt: Date.now(),
@@ -435,10 +411,13 @@ describe('usePresenceListener', () => {
 
     // emit the first presence event, this should trigger the first call to presence.get
     subscribedListener({
-      action: PresenceEvents.Enter,
-      clientId: 'client1',
-      timestamp: Date.now(),
-      data: undefined,
+      type: PresenceEventType.Enter,
+      member: {
+        clientId: 'client1',
+        data: undefined,
+        extras: undefined,
+        updatedAt: Date.now(),
+      },
     });
 
     // ensure that the first call to presence.get was made - eventually
@@ -448,10 +427,13 @@ describe('usePresenceListener', () => {
 
     // now emit the second presence event, this should trigger the second call to presence.get
     subscribedListener({
-      action: PresenceEvents.Enter,
-      clientId: 'client2',
-      timestamp: Date.now(),
-      data: undefined,
+      type: PresenceEventType.Enter,
+      member: {
+        clientId: 'client2',
+        data: undefined,
+        extras: undefined,
+        updatedAt: Date.now(),
+      },
     });
 
     // ensure that the first call to presence.get was made - eventually

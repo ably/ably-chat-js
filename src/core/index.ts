@@ -24,7 +24,7 @@ export {
   MessageEvents,
   MessageReactionType,
   OccupancyEventType,
-  PresenceEvents,
+  PresenceEventType,
   TypingEventTypes,
   TypingSetEventTypes,
 } from './events.js';
