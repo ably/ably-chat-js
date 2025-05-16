@@ -59,11 +59,6 @@ export interface Message {
   readonly clientId: string;
 
   /**
-   * The roomId of the chat room to which the message belongs.
-   */
-  readonly roomId: string;
-
-  /**
    * The text of the message.
    */
   readonly text: string;
@@ -297,7 +292,6 @@ export interface MessageReactions {
 export interface DefaultMessageParams {
   serial: string;
   clientId: string;
-  roomId: string;
   text: string;
   metadata: MessageMetadata;
   headers: MessageHeaders;
@@ -317,7 +311,6 @@ export interface DefaultMessageParams {
 export class DefaultMessage implements Message {
   public readonly serial: string;
   public readonly clientId: string;
-  public readonly roomId: string;
   public readonly text: string;
   public readonly metadata: MessageMetadata;
   public readonly headers: MessageHeaders;
@@ -331,7 +324,6 @@ export class DefaultMessage implements Message {
   constructor({
     serial,
     clientId,
-    roomId,
     text,
     metadata,
     headers,
@@ -344,7 +336,6 @@ export class DefaultMessage implements Message {
   }: DefaultMessageParams) {
     this.serial = serial;
     this.clientId = clientId;
-    this.roomId = roomId;
     this.text = text;
     this.metadata = metadata;
     this.headers = headers;
@@ -465,7 +456,6 @@ export class DefaultMessage implements Message {
     return new DefaultMessage({
       serial: replace?.serial ?? source.serial,
       clientId: replace?.clientId ?? source.clientId,
-      roomId: replace?.roomId ?? source.roomId,
       text: replace?.text ?? source.text,
       metadata: replace?.metadata ?? structuredClone(source.metadata),
       headers: replace?.headers ?? structuredClone(source.headers),

@@ -11,7 +11,6 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -25,7 +24,6 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -46,7 +44,6 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -60,7 +57,6 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -81,7 +77,6 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -95,7 +90,6 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -116,7 +110,6 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -130,7 +123,6 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -151,7 +143,6 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -165,7 +156,6 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -186,7 +176,6 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -200,7 +189,6 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -220,7 +208,6 @@ describe('ChatMessage', () => {
       const firstMessage = new DefaultMessage({
         serial: firstSerial,
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'hello there',
         metadata: {},
         headers: {},
@@ -242,7 +229,6 @@ describe('ChatMessage', () => {
       const firstMessage = new DefaultMessage({
         serial: firstSerial,
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'hello there',
         metadata: {},
         headers: {},
@@ -267,7 +253,6 @@ describe('ChatMessage', () => {
       const firstMessage = new DefaultMessage({
         serial: firstSerial,
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'hello there',
         metadata: {},
         headers: {},
@@ -281,7 +266,6 @@ describe('ChatMessage', () => {
       const secondMessage = new DefaultMessage({
         serial: secondSerial,
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'hello there',
         metadata: {},
         headers: {},
@@ -348,7 +332,6 @@ describe('ChatMessage', () => {
         const firstMessage = new DefaultMessage({
           serial: messageSerial,
           clientId: 'clientId',
-          roomId: 'roomId',
           text: 'hello there',
           metadata: {},
           headers: {},
@@ -362,7 +345,6 @@ describe('ChatMessage', () => {
         const secondMessage = new DefaultMessage({
           serial: messageSerial,
           clientId: 'clientId',
-          roomId: 'roomId',
           text: 'hello there',
           metadata: {},
           headers: {},
@@ -381,7 +363,6 @@ describe('ChatMessage', () => {
     const message = new DefaultMessage({
       serial: '01672531200000-123@abcdefghij',
       clientId: 'yoda',
-      roomId: 'rebel-alliance-general',
       text: 'hello there',
       metadata: {},
       headers: {},
@@ -398,7 +379,6 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'hello there',
         metadata: {},
         headers: {},
@@ -426,7 +406,6 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: message.serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'hello there',
         metadata: {},
         headers: {},
@@ -454,7 +433,6 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: message.serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'hi!',
         metadata: {},
         headers: {},
@@ -480,7 +458,6 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: message.serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'hola',
         metadata: {},
         headers: {},
@@ -506,7 +483,6 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: message.serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'old one',
         metadata: {},
         headers: {},
@@ -531,7 +507,6 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: message.serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'old one',
         metadata: {},
         headers: {},
@@ -558,7 +533,6 @@ describe('ChatMessage', () => {
       const originalMessage = new DefaultMessage({
         serial: '01672531200000-123@abcdefghij',
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'original text',
         metadata: { key: 'value' },
         headers: { headerKey: 'headerValue' },
@@ -579,7 +553,6 @@ describe('ChatMessage', () => {
       expect(copiedMessage.headers).toEqual({ headerKey: 'headerValue' });
       expect(copiedMessage.serial).toBe(originalMessage.serial);
       expect(copiedMessage.clientId).toBe(originalMessage.clientId);
-      expect(copiedMessage.roomId).toBe(originalMessage.roomId);
       expect(copiedMessage.action).toBe(originalMessage.action);
       expect(copiedMessage.version).toBe(originalMessage.version);
       expect(copiedMessage.createdAt).toEqual(originalMessage.createdAt);
@@ -590,7 +563,6 @@ describe('ChatMessage', () => {
       const originalMessage = new DefaultMessage({
         serial: '01672531200000-123@abcdefghij',
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'original text',
         metadata: { key: 'value' },
         headers: { headerKey: 'headerValue' },
@@ -626,7 +598,6 @@ describe('ChatMessage', () => {
 
       expect(copiedMessage.serial).toBe(originalMessage.serial);
       expect(copiedMessage.clientId).toBe(originalMessage.clientId);
-      expect(copiedMessage.roomId).toBe(originalMessage.roomId);
       expect(copiedMessage.action).toBe(originalMessage.action);
       expect(copiedMessage.version).toBe(originalMessage.version);
       expect(copiedMessage.createdAt).toEqual(originalMessage.createdAt);
@@ -643,7 +614,6 @@ describe('ChatMessage', () => {
       const originalMessage = new DefaultMessage({
         serial: '01672531200000-123@abcdefghij',
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'original text',
         metadata: {
           key: 'value',
@@ -681,7 +651,6 @@ describe('ChatMessage', () => {
       const originalMessage = new DefaultMessage({
         serial: '01672531200000-123@abcdefghij',
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'original text',
         metadata: {
           key: 'value',

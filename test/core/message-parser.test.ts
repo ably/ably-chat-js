@@ -8,14 +8,7 @@ import { parseMessage } from '../../src/core/message-parser.js';
 describe('parseMessage', () => {
   describe.each([
     {
-      description: 'roomId is undefined',
-      roomId: undefined,
-      message: {},
-      expectedError: 'received incoming message without roomId',
-    },
-    {
       description: 'message.data is undefined',
-      roomId: 'room1',
       message: {
         clientId: 'client1',
         timestamp: 1728402074206,
@@ -28,7 +21,6 @@ describe('parseMessage', () => {
     },
     {
       description: 'message.clientId is undefined',
-      roomId: 'room1',
       message: {
         data: { text: 'hello' },
         timestamp: 1728402074206,
@@ -41,7 +33,6 @@ describe('parseMessage', () => {
     },
     {
       description: 'message.data.text is undefined',
-      roomId: 'room1',
       message: {
         data: {},
         clientId: 'client1',
@@ -55,7 +46,6 @@ describe('parseMessage', () => {
     },
     {
       description: 'message.extras is undefined',
-      roomId: 'room1',
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
@@ -68,7 +58,6 @@ describe('parseMessage', () => {
     },
     {
       description: 'message.serial is undefined',
-      roomId: 'room1',
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
@@ -82,7 +71,6 @@ describe('parseMessage', () => {
     },
     {
       description: 'message.version is undefined',
-      roomId: 'room1',
       message: {
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         data: { text: 'hello' },
@@ -96,7 +84,6 @@ describe('parseMessage', () => {
     },
     {
       description: 'message.action is unhandled',
-      roomId: 'room1',
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
@@ -109,10 +96,10 @@ describe('parseMessage', () => {
       },
       expectedError: 'received incoming message with unhandled action; unhandled.action',
     },
-  ])('should throw an error ', ({ description, roomId, message, expectedError }) => {
+  ])('should throw an error ', ({ description, message, expectedError }) => {
     it(`should throw an error if ${description}`, () => {
       expect(() => {
-        parseMessage(roomId, message as Ably.InboundMessage);
+        parseMessage(message as Ably.InboundMessage);
       }).toThrowErrorInfo({
         code: 50000,
         message: expectedError,
@@ -134,12 +121,11 @@ describe('parseMessage', () => {
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
     } as Ably.InboundMessage;
 
-    const result = parseMessage('room1', message);
+    const result = parseMessage(message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
     expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.clientId).toBe('client1');
-    expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
     expect(result.createdAt).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
@@ -173,12 +159,11 @@ describe('parseMessage', () => {
       operation: { clientId: 'client2', description: 'update message', metadata: { 'custom-update': 'some flag' } },
     } as Ably.InboundMessage;
 
-    const result = parseMessage('room1', message);
+    const result = parseMessage(message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
     expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.clientId).toBe('client1');
-    expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
     expect(result.createdAt).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
@@ -218,12 +203,11 @@ describe('parseMessage', () => {
       },
     } as Ably.InboundMessage;
 
-    const result = parseMessage('room1', message);
+    const result = parseMessage(message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
     expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.clientId).toBe('client1');
-    expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
     expect(result.createdAt).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
