@@ -33,6 +33,14 @@ export interface Occupancy {
    * @returns A promise that resolves to the current occupancy of the chat room.
    */
   get(): Promise<OccupancyData>;
+
+  /**
+   * Get the latest occupancy data received from realtime events.
+   *
+   * @returns The latest occupancy data, or undefined if no realtime events have been received yet.
+   * @throws {Ably.ErrorInfo} If occupancy events are not enabled for this room.
+   */
+  current(): OccupancyData | undefined;
 }
 
 /**
@@ -70,6 +78,7 @@ export class DefaultOccupancy implements Occupancy {
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<OccupancyEventsMap>();
   private readonly _roomOptions: InternalRoomOptions;
+  private _latestOccupancyData?: OccupancyData;
 
   /**
    * Constructs a new `DefaultOccupancy` instance.
@@ -137,6 +146,23 @@ export class DefaultOccupancy implements Occupancy {
   }
 
   /**
+   * @inheritdoc Occupancy
+   */
+  current(): OccupancyData | undefined {
+    this._logger.trace('Occupancy.current();');
+
+    if (!this._roomOptions.occupancy.enableEvents) {
+      throw new Ably.ErrorInfo(
+        'cannot get current occupancy; occupancy events are not enabled in room options',
+        40000,
+        400,
+      ) as unknown as Error;
+    }
+
+    return this._latestOccupancyData;
+  }
+
+  /**
    * An internal listener that listens for occupancy events from the underlying channel and translates them into
    * occupancy events for the public API.
    */
@@ -194,12 +220,14 @@ export class DefaultOccupancy implements Occupancy {
       return;
     }
 
+    this._latestOccupancyData = {
+      connections: connections,
+      presenceMembers: presenceMembers,
+    };
+
     this._emitter.emit(OccupancyEventType.Updated, {
       type: OccupancyEventType.Updated,
-      occupancy: {
-        connections: connections,
-        presenceMembers: presenceMembers,
-      },
+      occupancy: this._latestOccupancyData,
     });
   }
 

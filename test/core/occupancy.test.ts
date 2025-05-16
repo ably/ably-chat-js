@@ -245,4 +245,60 @@ describe('Occupancy', () => {
       expect(listenerCalled).toBe(false);
     });
   });
+
+  describe('current()', () => {
+    it<TestContext>('throws an error when events are disabled', (context) => {
+      const room = makeRandomRoom({
+        chatApi: context.chatApi,
+        realtime: context.realtime,
+        options: {
+          occupancy: {
+            enableEvents: false,
+          },
+        },
+      });
+
+      expect(() => {
+        room.occupancy.current();
+      }).toThrow('cannot get current occupancy; occupancy events are not enabled in room options');
+    });
+
+    it<TestContext>('returns undefined when no events have been received', (context) => {
+      expect(context.room.occupancy.current()).toBeUndefined();
+    });
+
+    it<TestContext>('returns the latest occupancy data after receiving events', (context) => {
+      // Send first event
+      context.emulateOccupancyUpdate({
+        name: '[meta]occupancy',
+        data: {
+          metrics: {
+            connections: 5,
+            presenceMembers: 3,
+          },
+        },
+      });
+
+      expect(context.room.occupancy.current()).toEqual({
+        connections: 5,
+        presenceMembers: 3,
+      });
+
+      // Send second event
+      context.emulateOccupancyUpdate({
+        name: '[meta]occupancy',
+        data: {
+          metrics: {
+            connections: 7,
+            presenceMembers: 4,
+          },
+        },
+      });
+
+      expect(context.room.occupancy.current()).toEqual({
+        connections: 7,
+        presenceMembers: 4,
+      });
+    });
+  });
 });
