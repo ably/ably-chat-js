@@ -84,11 +84,6 @@ export interface RoomReactions {
    * @returns A response object that allows you to control the subscription.
    */
   subscribe(listener: RoomReactionListener): Subscription;
-
-  /**
-   * Unsubscribe all listeners from receiving room-level reaction events.
-   */
-  unsubscribeAll(): void;
 }
 
 interface RoomReactionEventsMap {
@@ -176,14 +171,6 @@ export class DefaultRoomReactions implements RoomReactions {
         this._emitter.off(wrapped);
       },
     };
-  }
-
-  /**
-   * @inheritDoc Reactions
-   */
-  unsubscribeAll() {
-    this._logger.trace(`RoomReactions.unsubscribeAll();`, { roomId: this._roomId });
-    this._emitter.off();
   }
 
   // parses reactions from realtime channel into Reaction objects and forwards them to the EventEmitter

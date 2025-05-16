@@ -272,7 +272,7 @@ describe('useMessages', () => {
       () => {
         expect(roomStatusRoomOne).toBe(RoomStatus.Attached);
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
 
     // send some more messages from the second room

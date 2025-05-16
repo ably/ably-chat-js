@@ -141,11 +141,6 @@ export interface Presence {
    * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
   subscribe(listener?: PresenceListener): Subscription;
-
-  /**
-   * Unsubscribe all listeners from all presence events.
-   */
-  unsubscribeAll(): void;
 }
 
 /**
@@ -288,14 +283,6 @@ export class DefaultPresence implements Presence {
         },
       };
     }
-  }
-
-  /**
-   * @inheritDoc
-   */
-  unsubscribeAll(): void {
-    this._logger.trace('Presence.unsubscribeAll()');
-    this._emitter.off();
   }
 
   /**
