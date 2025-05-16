@@ -8,7 +8,12 @@ import { Logger } from '../../src/core/logger.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { DefaultTyping, Typing } from '../../src/core/typing.ts';
-import { channelEventEmitter, ChannelEventEmitterReturnType } from '../helper/channel.ts';
+import {
+  channelEventEmitter,
+  ChannelEventEmitterReturnType,
+  channelStateEventEmitter,
+  ChannelStateEventEmitterReturnType,
+} from '../helper/channel.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';
@@ -19,6 +24,7 @@ interface TestContext {
   chatApi: ChatApi;
   room: Room;
   emulateBackendPublish: ChannelEventEmitterReturnType<Partial<Ably.InboundMessage>>;
+  emulateChannelStateChange: ChannelStateEventEmitterReturnType;
   options: RoomOptions;
   logger: Logger;
 }
@@ -60,6 +66,7 @@ describe('Typing', () => {
     context.room = makeRandomRoom(context);
     const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
+    context.emulateChannelStateChange = channelStateEventEmitter(channel);
   });
 
   // CHA-T8
@@ -709,6 +716,140 @@ describe('Typing', () => {
         // Unsubscribe second subscription
         subscription2.unsubscribe();
       });
+    });
+  });
+
+  describe('handle channel state changes', () => {
+    beforeEach<TestContext>(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach<TestContext>(() => {
+      vi.useRealTimers();
+    });
+
+    describe.each([
+      [
+        'channel is detached',
+        {
+          current: 'detached',
+          previous: 'attached',
+          resumed: false,
+        },
+      ],
+      [
+        'channel is failed',
+        {
+          current: 'failed',
+          previous: 'attached',
+          resumed: false,
+        },
+      ],
+      [
+        'channel is suspended',
+        {
+          current: 'suspended',
+          previous: 'attaching',
+          resumed: false,
+        },
+      ],
+    ])('clears all typing states when %s', (description: string, channelStateChange) => {
+      it<TestContext>(`clears all typing states when ${description}`, async (context) => {
+        const { room } = context;
+
+        // Subscribe to typing events
+        const receivedEvents: TypingSetEvent[] = [];
+        room.typing.subscribe((event: TypingSetEvent) => {
+          receivedEvents.push(event);
+        });
+
+        // Emulate typing events for multiple clients
+        context.emulateBackendPublish({
+          name: TypingEventTypes.Start,
+          clientId: 'client1',
+        });
+        context.emulateBackendPublish({
+          name: TypingEventTypes.Start,
+          clientId: 'client2',
+        });
+
+        // Ensure that the typing events were processed
+        await waitForArrayLength(receivedEvents, 2);
+        expect(receivedEvents).toHaveLength(2);
+        expect(room.typing.get()).toEqual(new Set(['client1', 'client2']));
+
+        // Get the typing instance and check internal state
+        const defaultTyping = room.typing as TestTypingInterface;
+        expect(defaultTyping._currentlyTyping.size).toBe(2);
+        expect(defaultTyping._currentlyTyping.has('client1')).toBe(true);
+        expect(defaultTyping._currentlyTyping.has('client2')).toBe(true);
+
+        // Simulate a channel state change
+        context.emulateChannelStateChange(channelStateChange as Ably.ChannelStateChange);
+
+        // Verify that all typing states are cleared
+        expect(defaultTyping._currentlyTyping.size).toBe(0);
+        expect(room.typing.get()).toEqual(new Set());
+      });
+    });
+
+    it<TestContext>('clears heartbeat timer when channel is detached, failed or suspended', async (context) => {
+      const { room, realtime } = context;
+      const channel = room.channel;
+      const realtimeChannel = realtime.channels.get(channel.name);
+
+      // Mock implementation for `publish` to simulate successful publish
+      vi.spyOn(realtimeChannel, 'publish').mockImplementation(() => Promise.resolve());
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+
+      // Start typing to set the heartbeat timer
+      await room.typing.keystroke();
+
+      // Get the typing instance and check internal state
+      const defaultTyping = room.typing as TestTypingInterface;
+      expect(defaultTyping._heartbeatTimerId).toBeDefined();
+
+      // Simulate a channel state change to detached
+      context.emulateChannelStateChange({
+        current: 'detached',
+        previous: 'detaching',
+        resumed: false,
+      });
+
+      // Verify that the heartbeat timer is cleared
+      expect(defaultTyping._heartbeatTimerId).toBeUndefined();
+
+      // Start typing to set the heartbeat timer
+      await room.typing.keystroke();
+
+      // Get the typing instance and check internal state
+      expect(defaultTyping._heartbeatTimerId).toBeDefined();
+
+      // Simulate a channel state change to detached
+      context.emulateChannelStateChange({
+        current: 'failed',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      // Verify that the heartbeat timer is cleared
+      expect(defaultTyping._heartbeatTimerId).toBeUndefined();
+
+      // Start typing to set the heartbeat timer
+      await room.typing.keystroke();
+
+      // Get the typing instance and check internal state
+      expect(defaultTyping._heartbeatTimerId).toBeDefined();
+
+      // Simulate a channel state change to detached
+      context.emulateChannelStateChange({
+        current: 'suspended',
+        previous: 'attaching',
+        resumed: false,
+      });
+
+      // Verify that the heartbeat timer is cleared
+      expect(defaultTyping._heartbeatTimerId).toBeUndefined();
     });
   });
 });
