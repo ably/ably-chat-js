@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatApi } from '../../src/core/chat-api.ts';
 import {
   ChatMessageActions,
-  MessageReactionEvents,
+  MessageReactionEventType,
   MessageReactionRawEvent,
   MessageReactionType,
 } from '../../src/core/events.ts';
@@ -323,7 +323,7 @@ describe('MessagesReactions', () => {
 
         const expected: MessageReactionRawEvent[] = [
           {
-            type: MessageReactionEvents.Create,
+            type: MessageReactionEventType.Create,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
@@ -333,7 +333,7 @@ describe('MessagesReactions', () => {
             },
           },
           {
-            type: MessageReactionEvents.Delete,
+            type: MessageReactionEventType.Delete,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
@@ -343,7 +343,7 @@ describe('MessagesReactions', () => {
             },
           },
           {
-            type: MessageReactionEvents.Create,
+            type: MessageReactionEventType.Create,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
@@ -353,7 +353,7 @@ describe('MessagesReactions', () => {
             },
           },
           {
-            type: MessageReactionEvents.Create,
+            type: MessageReactionEventType.Create,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
@@ -364,7 +364,7 @@ describe('MessagesReactions', () => {
             },
           },
           {
-            type: MessageReactionEvents.Create,
+            type: MessageReactionEventType.Create,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
@@ -375,7 +375,7 @@ describe('MessagesReactions', () => {
             },
           },
           {
-            type: MessageReactionEvents.Delete,
+            type: MessageReactionEventType.Delete,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',

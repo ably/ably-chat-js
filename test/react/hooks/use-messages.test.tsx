@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { ChatMessageActions, MessageEvents } from '../../../src/core/events.ts';
+import { ChatMessageActions, MessageEventType } from '../../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
 import { PaginatedResult } from '../../../src/core/query.ts';
@@ -104,7 +104,7 @@ describe('useMessages', () => {
 
     // verify that subscribe was called with the mock listener on mount by invoking it
     const messageEvent = {
-      type: MessageEvents.Created,
+      type: MessageEventType.Created,
       message: {
         timestamp: new Date(),
         text: 'test message',

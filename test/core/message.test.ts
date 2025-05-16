@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ChatMessageActions, MessageEvent, MessageEvents } from '../../src/core/events.ts';
+import { ChatMessageActions, MessageEvent, MessageEventType } from '../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
@@ -411,7 +411,7 @@ describe('ChatMessage', () => {
       });
 
       const event: MessageEvent = {
-        type: MessageEvents.Updated,
+        type: MessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -439,7 +439,7 @@ describe('ChatMessage', () => {
       });
 
       const event: MessageEvent = {
-        type: MessageEvents.Created,
+        type: MessageEventType.Created,
         message: eventMessage,
       };
 
@@ -467,7 +467,7 @@ describe('ChatMessage', () => {
       });
 
       const event: MessageEvent = {
-        type: MessageEvents.Updated,
+        type: MessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -493,7 +493,7 @@ describe('ChatMessage', () => {
       });
 
       const event: MessageEvent = {
-        type: MessageEvents.Updated,
+        type: MessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -519,7 +519,7 @@ describe('ChatMessage', () => {
       });
 
       const event: MessageEvent = {
-        type: MessageEvents.Updated,
+        type: MessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -544,7 +544,7 @@ describe('ChatMessage', () => {
       });
 
       const event: MessageEvent = {
-        type: MessageEvents.Updated,
+        type: MessageEventType.Updated,
         message: eventMessage,
       };
 
