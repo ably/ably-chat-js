@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
-import { ChatMessageActions } from '../../src/core/events.ts';
+import { ChatMessageAction } from '../../src/core/events.ts';
 import { DefaultMessage } from '../../src/core/message.ts';
 import { parseMessage } from '../../src/core/message-parser.js';
 
@@ -22,7 +22,7 @@ describe('parseMessage', () => {
         createdAt: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without data',
     },
@@ -35,7 +35,7 @@ describe('parseMessage', () => {
         createdAt: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without clientId',
     },
@@ -49,7 +49,7 @@ describe('parseMessage', () => {
         createdAt: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without text',
     },
@@ -62,7 +62,7 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         createdAt: 1728402074206,
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without extras',
     },
@@ -75,7 +75,7 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         createdAt: 1728402074206,
         extras: {},
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       },
       expectedError: 'received incoming message without serial',
@@ -90,7 +90,7 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         createdAt: 1728402074206,
         extras: {},
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without version',
     },
@@ -130,7 +130,7 @@ describe('parseMessage', () => {
       },
       timestamp: 1728402074206,
       version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
     } as Ably.InboundMessage;
 
@@ -153,7 +153,7 @@ describe('parseMessage', () => {
     expect(result.updatedAt).toBeUndefined();
     expect(result.updatedBy).toBeUndefined();
 
-    expect(result.action).toEqual(ChatMessageActions.MessageCreate);
+    expect(result.action).toEqual(ChatMessageAction.MessageCreate);
     expect(result.operation).toBeUndefined();
   });
 
@@ -166,7 +166,7 @@ describe('parseMessage', () => {
       extras: {
         headers: { headerKey: 'headerValue' },
       },
-      action: ChatMessageActions.MessageUpdate,
+      action: ChatMessageAction.MessageUpdate,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       timestamp: 1728402074206,
       version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
@@ -185,7 +185,7 @@ describe('parseMessage', () => {
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
     expect(result.updatedAt).toEqual(new Date(1728402074206));
     expect(result.updatedBy).toBe('client2');
-    expect(result.action).toEqual(ChatMessageActions.MessageUpdate);
+    expect(result.action).toEqual(ChatMessageAction.MessageUpdate);
     expect(result.version).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.operation).toEqual({
       clientId: 'client2',
@@ -207,7 +207,7 @@ describe('parseMessage', () => {
       extras: {
         headers: { headerKey: 'headerValue' },
       },
-      action: ChatMessageActions.MessageDelete,
+      action: ChatMessageAction.MessageDelete,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       timestamp: 1728402074206,
       version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',

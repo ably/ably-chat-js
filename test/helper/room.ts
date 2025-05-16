@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
-import { ErrorCodes } from '../../src/core/errors.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
@@ -22,7 +22,7 @@ export const waitForRoomLifecycleStatus = async (lifecycle: RoomLifecycle, expec
 };
 
 // Wait 3 seconds for the room error to reach an expected code
-export const waitForRoomError = async (status: RoomLifecycle, expected: ErrorCodes) => {
+export const waitForRoomError = async (status: RoomLifecycle, expected: ErrorCode) => {
   return vi.waitUntil(() => status.error?.code === expected, 3000);
 };
 

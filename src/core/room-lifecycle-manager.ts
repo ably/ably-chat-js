@@ -3,7 +3,7 @@ import { Mutex } from 'async-mutex';
 
 import { ChannelManager } from './channel-manager.js';
 import { DiscontinuityListener } from './discontinuity.js';
-import { ErrorCodes } from './errors.js';
+import { ErrorCode } from './errors.js';
 import { RoomEventType } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomLifecycle, RoomStatus } from './room-status.js';
@@ -104,7 +104,7 @@ export class RoomLifecycleManager {
       if (!stateChange.resumed && this._hasAttachedOnce && !this._isExplicitlyDetached) {
         const error = new Ably.ErrorInfo(
           'discontinuity detected',
-          ErrorCodes.RoomDiscontinuity,
+          ErrorCode.RoomDiscontinuity,
           stateChange.reason?.statusCode ?? 0,
           stateChange.reason,
         );
@@ -128,7 +128,7 @@ export class RoomLifecycleManager {
       ) {
         const error = new Ably.ErrorInfo(
           'discontinuity detected',
-          ErrorCodes.RoomDiscontinuity,
+          ErrorCode.RoomDiscontinuity,
           stateChange.reason?.statusCode ?? 0,
           stateChange.reason,
         );
@@ -220,7 +220,7 @@ export class RoomLifecycleManager {
 
       // CHA-RL2d
       if (this._roomStatusIs(RoomStatus.Failed)) {
-        throw new Ably.ErrorInfo('cannot detach room, room is in failed state', ErrorCodes.RoomInFailedState, 400);
+        throw new Ably.ErrorInfo('cannot detach room, room is in failed state', ErrorCode.RoomInFailedState, 400);
       }
 
       // CHA-RL2b, CHA-RL2c
@@ -343,10 +343,10 @@ export class RoomLifecycleManager {
   private _checkRoomNotReleasing(op: string) {
     switch (this._roomLifecycle.status) {
       case RoomStatus.Released: {
-        throw new Ably.ErrorInfo(`cannot ${op} room, room is released`, ErrorCodes.RoomIsReleased, 400);
+        throw new Ably.ErrorInfo(`cannot ${op} room, room is released`, ErrorCode.RoomIsReleased, 400);
       }
       case RoomStatus.Releasing: {
-        throw new Ably.ErrorInfo(`cannot ${op} room, room is currently releasing`, ErrorCodes.RoomIsReleasing, 400);
+        throw new Ably.ErrorInfo(`cannot ${op} room, room is currently releasing`, ErrorCode.RoomIsReleasing, 400);
       }
     }
   }

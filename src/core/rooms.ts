@@ -3,7 +3,7 @@ import { dequal } from 'dequal';
 
 import { ChatApi } from './chat-api.js';
 import { ChatClientOptions, NormalizedChatClientOptions } from './config.js';
-import { ErrorCodes } from './errors.js';
+import { ErrorCode } from './errors.js';
 import { randomId } from './id.js';
 import { Logger } from './logger.js';
 import { DefaultRoom, Room } from './room.js';
@@ -147,7 +147,7 @@ export class DefaultRooms implements Rooms {
         reject(
           new Ably.ErrorInfo(
             'room released before get operation could complete',
-            ErrorCodes.RoomReleasedBeforeOperationCompleted,
+            ErrorCode.RoomReleasedBeforeOperationCompleted,
             400,
           ),
         );

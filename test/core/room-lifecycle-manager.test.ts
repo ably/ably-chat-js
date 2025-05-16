@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChannelManager } from '../../src/core/channel-manager.js';
-import { ErrorCodes } from '../../src/core/errors.js';
+import { ErrorCode } from '../../src/core/errors.js';
 import { Logger } from '../../src/core/logger.js';
 import { RoomLifecycleManager } from '../../src/core/room-lifecycle-manager.js';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus } from '../../src/core/room-status.js';
@@ -122,7 +122,7 @@ describe('RoomLifecycleManager', () => {
       // Act & Assert
       await expect(roomLifeCycleManager.attach()).rejects.toBeErrorInfo({
         message: 'cannot attach room, room is released',
-        code: ErrorCodes.RoomIsReleased,
+        code: ErrorCode.RoomIsReleased,
         statusCode: 400,
       });
       expect(mockChannel.attach).not.toHaveBeenCalled();
@@ -139,7 +139,7 @@ describe('RoomLifecycleManager', () => {
       // Act & Assert
       await expect(roomLifeCycleManager.attach()).rejects.toBeErrorInfo({
         message: 'cannot attach room, room is currently releasing',
-        code: ErrorCodes.RoomIsReleasing,
+        code: ErrorCode.RoomIsReleasing,
         statusCode: 400,
       });
       expect(mockChannel.attach).not.toHaveBeenCalled();
@@ -216,7 +216,7 @@ describe('RoomLifecycleManager', () => {
       // Act & Assert
       await expect(roomLifeCycleManager.detach()).rejects.toBeErrorInfo({
         message: 'cannot detach room, room is in failed state',
-        code: ErrorCodes.RoomInFailedState,
+        code: ErrorCode.RoomInFailedState,
         statusCode: 400,
       });
       expect(mockChannel.detach).not.toHaveBeenCalled();
@@ -233,7 +233,7 @@ describe('RoomLifecycleManager', () => {
       // Act & Assert
       await expect(roomLifeCycleManager.detach()).rejects.toBeErrorInfo({
         message: 'cannot detach room, room is released',
-        code: ErrorCodes.RoomIsReleased,
+        code: ErrorCode.RoomIsReleased,
         statusCode: 400,
       });
       expect(mockChannel.detach).not.toHaveBeenCalled();
@@ -250,7 +250,7 @@ describe('RoomLifecycleManager', () => {
       // Act & Assert
       await expect(roomLifeCycleManager.detach()).rejects.toBeErrorInfo({
         message: 'cannot detach room, room is currently releasing',
-        code: ErrorCodes.RoomIsReleasing,
+        code: ErrorCode.RoomIsReleasing,
         statusCode: 400,
       });
       expect(mockChannel.detach).not.toHaveBeenCalled();
@@ -663,7 +663,7 @@ describe('RoomLifecycleManager', () => {
       expect(handler).toHaveBeenCalledWith(
         expect.toBeErrorInfo({
           message: 'discontinuity detected',
-          code: ErrorCodes.RoomDiscontinuity,
+          code: ErrorCode.RoomDiscontinuity,
           statusCode: 503,
           cause: reason as ErrorInfoCompareType,
         }),
@@ -825,7 +825,7 @@ describe('RoomLifecycleManager', () => {
       expect(handler).toHaveBeenCalledWith(
         expect.toBeErrorInfo({
           message: 'discontinuity detected',
-          code: ErrorCodes.RoomDiscontinuity,
+          code: ErrorCode.RoomDiscontinuity,
           statusCode: 503,
           cause: reason as ErrorInfoCompareType,
         }),

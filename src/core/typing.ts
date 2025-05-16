@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { E_CANCELED, Mutex } from 'async-mutex';
 
-import { TypingEventTypes, TypingSetEvent, TypingSetEventTypes } from './events.js';
+import { TypingEventType, TypingSetEvent, TypingSetEventType } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
 import { InternalTypingOptions } from './room-options.js';
@@ -80,7 +80,7 @@ export type TypingListener = (event: TypingSetEvent) => void;
  * Represents the typing events mapped to their respective event payloads.
  */
 interface TypingEventsMap {
-  [TypingSetEventTypes.SetChanged]: TypingSetEvent;
+  [TypingSetEventType.SetChanged]: TypingSetEvent;
 }
 
 /**
@@ -147,7 +147,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     // CHA-T8
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void this._channel.subscribe(
-      [TypingEventTypes.Start, TypingEventTypes.Stop],
+      [TypingEventType.Start, TypingEventType.Stop],
       this._internalSubscribeToEvents.bind(this),
     );
   }
@@ -224,7 +224,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
       // Perform the publish
       // CHA-T4a3
-      await this._channel.publish(ephemeralMessage(TypingEventTypes.Start));
+      await this._channel.publish(ephemeralMessage(TypingEventType.Start));
 
       // Start the timer after publishing
       // CHA-T4a5
@@ -269,7 +269,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       }
 
       // CHA-T5d
-      await this._channel.publish(ephemeralMessage(TypingEventTypes.Stop));
+      await this._channel.publish(ephemeralMessage(TypingEventType.Stop));
       this._logger.trace(`DefaultTyping.stop(); clearing timers`, { roomId: this._roomId });
 
       // CHA-T5e
@@ -304,10 +304,10 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @param clientId The client ID of the user.
    * @param event The typing event.
    */
-  private _updateCurrentlyTyping(clientId: string, event: TypingEventTypes): void {
+  private _updateCurrentlyTyping(clientId: string, event: TypingEventType): void {
     this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { roomId: this._roomId, clientId, event });
 
-    if (event === TypingEventTypes.Start) {
+    if (event === TypingEventType.Start) {
       this._handleTypingStart(clientId);
     } else {
       this._handleTypingStop(clientId);
@@ -342,12 +342,12 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
       // Remove client whose timeout has expired
       this._currentlyTyping.delete(clientId);
-      this.emit(TypingSetEventTypes.SetChanged, {
-        type: TypingSetEventTypes.SetChanged,
+      this.emit(TypingSetEventType.SetChanged, {
+        type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
         change: {
           clientId,
-          type: TypingEventTypes.Stop,
+          type: TypingEventType.Stop,
         },
       });
     }, this._heartbeatThrottleMs + this._timeoutMs);
@@ -355,7 +355,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   }
 
   /**
-   * Handles logic for TypingEventTypes.Start, including starting a new timeout or resetting an existing one.
+   * Handles logic for TypingEventType.Start, including starting a new timeout or resetting an existing one.
    * @param clientId
    */
   private _handleTypingStart(clientId: string): void {
@@ -381,19 +381,19 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         roomId: this._roomId,
         clientId,
       });
-      this.emit(TypingSetEventTypes.SetChanged, {
-        type: TypingSetEventTypes.SetChanged,
+      this.emit(TypingSetEventType.SetChanged, {
+        type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
         change: {
           clientId,
-          type: TypingEventTypes.Start,
+          type: TypingEventType.Start,
         },
       });
     }
   }
 
   /**
-   * Handles logic for TypingEventTypes.Stop, including clearing the timeout for the client.
+   * Handles logic for TypingEventType.Stop, including clearing the timeout for the client.
    * @param clientId
    * @private
    */
@@ -413,12 +413,12 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     clearTimeout(existingTimeout);
     this._currentlyTyping.delete(clientId);
     // Emit stop event only when the client is removed
-    this.emit(TypingSetEventTypes.SetChanged, {
-      type: TypingSetEventTypes.SetChanged,
+    this.emit(TypingSetEventType.SetChanged, {
+      type: TypingSetEventType.SetChanged,
       currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
       change: {
         clientId,
-        type: TypingEventTypes.Stop,
+        type: TypingEventType.Stop,
       },
     });
   }
@@ -443,7 +443,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     }
 
     // Safety check to ensure we are handling only typing events
-    if (name === TypingEventTypes.Start || name === TypingEventTypes.Stop) {
+    if (name === TypingEventType.Start || name === TypingEventType.Stop) {
       this._updateCurrentlyTyping(clientId, name);
     } else {
       this._logger.warn(`DefaultTyping._internalSubscribeToEvents(); unrecognized event`, {
