@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat.ts';
-import { Reaction } from '../../src/core/reaction.ts';
-import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
-import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.ts';
-import { newChatClient } from '../helper/chat.ts';
-import { getRandomRoom } from '../helper/room.ts';
+import { ChatClient } from '../../src/core/chat.js';
+import { RoomReactionEvent, RoomReactionEventType } from '../../src/core/events.js';
+import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.js';
+import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.js';
+import { newChatClient } from '../helper/chat.js';
+import { getRandomRoom } from '../helper/room.js';
 
 interface TestContext {
   chat: ChatClient;
@@ -60,8 +60,9 @@ describe('room-level reactions integration test', () => {
     const expectedReactions = ['like', 'like', 'love', 'hate'];
     const reactions: string[] = [];
 
-    room.reactions.subscribe((reaction: Reaction) => {
-      reactions.push(reaction.type);
+    room.reactions.subscribe((event: RoomReactionEvent) => {
+      expect(event.type).toBe(RoomReactionEventType.Reaction);
+      reactions.push(event.reaction.type);
     });
 
     // Attach the room

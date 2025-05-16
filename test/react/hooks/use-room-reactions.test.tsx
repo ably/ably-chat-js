@@ -2,15 +2,16 @@ import { act, cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionStatus } from '../../../src/core/connection.ts';
+import { ConnectionStatus } from '../../../src/core/connection.js';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { Room } from '../../../src/core/room.ts';
-import { RoomReactionListener } from '../../../src/core/room-reactions.ts';
-import { RoomStatus } from '../../../src/core/room-status.ts';
-import { useRoomReactions } from '../../../src/react/hooks/use-room-reactions.ts';
-import { makeTestLogger } from '../../helper/logger.ts';
-import { makeRandomRoom } from '../../helper/room.ts';
-import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
+import { RoomReactionEventType } from '../../../src/core/events.js';
+import { Room } from '../../../src/core/room.js';
+import { RoomReactionListener } from '../../../src/core/room-reactions.js';
+import { RoomStatus } from '../../../src/core/room-status.js';
+import { useRoomReactions } from '../../../src/react/hooks/use-room-reactions.js';
+import { makeTestLogger } from '../../helper/logger.js';
+import { makeRandomRoom } from '../../helper/room.js';
+import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.js';
 
 let mockRoom: Room;
 let mockLogger: ReturnType<typeof makeTestLogger>;
@@ -122,9 +123,15 @@ describe('useRoomReactions', () => {
       isSelf: false,
     };
     for (const listener of mockReactions.listeners) {
-      listener(reaction);
+      listener({
+        type: RoomReactionEventType.Reaction,
+        reaction,
+      });
     }
-    expect(mockListener).toHaveBeenCalledWith(reaction);
+    expect(mockListener).toHaveBeenCalledWith({
+      type: RoomReactionEventType.Reaction,
+      reaction,
+    });
 
     // unmount the hook and verify that unsubscribe was called
     unmount();

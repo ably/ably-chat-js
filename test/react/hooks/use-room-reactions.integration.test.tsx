@@ -31,8 +31,8 @@ describe('useRoomReactions', () => {
     const reactions: Reaction[] = [];
 
     // subscribe to the reactions
-    roomTwo.reactions.subscribe((reaction) => {
-      reactions.push(reaction);
+    roomTwo.reactions.subscribe((event) => {
+      reactions.push(event.reaction);
     });
 
     // the test component should send a reaction
@@ -93,7 +93,7 @@ describe('useRoomReactions', () => {
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
         <ChatRoomProvider id={roomId}>
-          <TestComponent listener={(reaction) => reactions.push(reaction)} />
+          <TestComponent listener={(event) => reactions.push(event.reaction)} />
         </ChatRoomProvider>
       </ChatClientProvider>
     );

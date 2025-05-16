@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { RoomReactionEvents } from './events.js';
+import { RoomReactionEvent, RoomReactionEventType, RoomReactionRealtimeEventType } from './events.js';
 import { Logger } from './logger.js';
 import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
 import { parseReaction } from './reaction-parser.js';
@@ -53,9 +53,9 @@ export interface SendReactionParams {
 /**
  * The listener function type for room-level reactions.
  *
- * @param reaction The reaction that was received.
+ * @param event The reaction event that was received.
  */
-export type RoomReactionListener = (reaction: Reaction) => void;
+export type RoomReactionListener = (event: RoomReactionEvent) => void;
 
 /**
  * This interface is used to interact with room-level reactions in a chat room: subscribing to reactions and sending them.
@@ -92,7 +92,7 @@ export interface RoomReactions {
 }
 
 interface RoomReactionEventsMap {
-  [RoomReactionEvents.Reaction]: Reaction;
+  [RoomReactionEventType.Reaction]: RoomReactionEvent;
 }
 
 interface ReactionPayload {
@@ -131,7 +131,7 @@ export class DefaultRoomReactions implements RoomReactions {
    */
   private _applyChannelSubscriptions(): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.subscribe([RoomReactionEvents.Reaction], this._forwarder.bind(this));
+    void this._channel.subscribe([RoomReactionRealtimeEventType.Reaction], this._forwarder.bind(this));
   }
 
   /**
@@ -152,7 +152,7 @@ export class DefaultRoomReactions implements RoomReactions {
     };
 
     const realtimeMessage: Ably.Message = {
-      name: RoomReactionEvents.Reaction,
+      name: RoomReactionRealtimeEventType.Reaction,
       data: payload,
       extras: {
         headers: headers ?? {},
@@ -193,7 +193,10 @@ export class DefaultRoomReactions implements RoomReactions {
       // ignore non-reactions
       return;
     }
-    this._emitter.emit(RoomReactionEvents.Reaction, reaction);
+    this._emitter.emit(RoomReactionEventType.Reaction, {
+      type: RoomReactionEventType.Reaction,
+      reaction,
+    });
   };
 
   private _parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {

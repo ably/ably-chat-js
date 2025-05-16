@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { RoomReactionEventType } from '../../src/core/events.ts';
 import { Reaction } from '../../src/core/reaction.ts';
 import { Room } from '../../src/core/room.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
@@ -52,9 +53,10 @@ describe('Reactions', () => {
         const publishTimestamp = Date.now();
         const { room } = context;
 
-        room.reactions.subscribe((reaction) => {
+        room.reactions.subscribe((event) => {
           try {
-            expect(reaction).toEqual(
+            expect(event.type).toBe(RoomReactionEventType.Reaction);
+            expect(event.reaction).toEqual(
               expect.objectContaining({
                 clientId: 'yoda',
                 isSelf: false,
@@ -83,9 +85,10 @@ describe('Reactions', () => {
         const publishTimestamp = Date.now();
         const { room } = context;
 
-        room.reactions.subscribe((reaction) => {
+        room.reactions.subscribe((event) => {
           try {
-            expect(reaction).toEqual(
+            expect(event.type).toBe(RoomReactionEventType.Reaction);
+            expect(event.reaction).toEqual(
               expect.objectContaining({
                 clientId: 'd.vader',
                 isSelf: true,
@@ -115,8 +118,8 @@ describe('Reactions', () => {
     const { room } = context;
 
     const receivedReactions: Reaction[] = [];
-    const { unsubscribe } = room.reactions.subscribe((reaction) => {
-      receivedReactions.push(reaction);
+    const { unsubscribe } = room.reactions.subscribe((event) => {
+      receivedReactions.push(event.reaction);
     });
 
     // Publish the first reaction
@@ -159,8 +162,8 @@ describe('Reactions', () => {
     const { room } = context;
 
     const received: string[] = [];
-    const listener = (reaction: Reaction) => {
-      received.push(reaction.type);
+    const listener = (event: { reaction: Reaction }) => {
+      received.push(event.reaction.type);
     };
     const subscription1 = room.reactions.subscribe(listener);
     const subscription2 = room.reactions.subscribe(listener);
@@ -208,13 +211,13 @@ describe('Reactions', () => {
     const { room } = context;
 
     const receivedReactions: Reaction[] = [];
-    room.reactions.subscribe((reaction) => {
-      receivedReactions.push(reaction);
+    room.reactions.subscribe((event) => {
+      receivedReactions.push(event.reaction);
     });
 
     const receivedReactions2: Reaction[] = [];
-    room.reactions.subscribe((reaction) => {
-      receivedReactions2.push(reaction);
+    room.reactions.subscribe((event) => {
+      receivedReactions2.push(event.reaction);
     });
 
     // Publish the first reaction
@@ -298,10 +301,15 @@ describe('Reactions', () => {
           try {
             expect(reaction).toEqual(
               expect.objectContaining({
-                clientId: 'd.vader',
-                isSelf: true,
-                createdAt: context.publishTimestamp,
-                type: 'love',
+                type: RoomReactionEventType.Reaction,
+                reaction: {
+                  clientId: 'd.vader',
+                  isSelf: true,
+                  createdAt: context.publishTimestamp,
+                  type: 'love',
+                  headers: {},
+                  metadata: {},
+                },
               }),
             );
 
@@ -334,22 +342,25 @@ describe('Reactions', () => {
           try {
             expect(reaction).toEqual(
               expect.objectContaining({
-                clientId: 'd.vader',
-                isSelf: true,
-                createdAt: context.publishTimestamp,
-                type: 'love',
-                headers: {
-                  action: 'strike back',
-                  number: 1980,
-                },
-                metadata: {
-                  side: 'empire',
-                  bla: {
-                    abc: true,
-                    xyz: 3.14,
+                type: RoomReactionEventType.Reaction,
+                reaction: {
+                  clientId: 'd.vader',
+                  isSelf: true,
+                  createdAt: context.publishTimestamp,
+                  type: 'love',
+                  headers: {
+                    action: 'strike back',
+                    number: 1980,
+                  },
+                  metadata: {
+                    side: 'empire',
+                    bla: {
+                      abc: true,
+                      xyz: 3.14,
+                    },
                   },
                 },
-              } as Reaction),
+              }),
             );
           } catch (error: unknown) {
             reject(error as Error);
