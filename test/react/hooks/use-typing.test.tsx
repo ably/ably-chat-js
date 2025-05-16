@@ -81,7 +81,7 @@ describe('useTyping', () => {
         return { unsubscribe: mockUnsubscribe };
       }),
       onDiscontinuity: vi.fn().mockReturnValue({ off: vi.fn() }),
-      get: mockRoom.typing.get,
+      current: mockRoom.typing.current,
     };
 
     // update the mock room with the new typing object
@@ -146,7 +146,7 @@ describe('useTyping', () => {
     });
 
     // spy on the get method of the typing instance, for now return an empty set
-    vi.spyOn(mockRoom.typing, 'get').mockReturnValue(new Set());
+    vi.spyOn(mockRoom.typing, 'current').mockReturnValue(new Set());
 
     // render the hook and check the initial state
     const { result } = renderHook(() => useTyping());
@@ -188,7 +188,7 @@ describe('useTyping', () => {
 
     const testSet = new Set<string>(['user1', 'user2']);
     // spy on the get method of the typing instance, return an initial set
-    vi.spyOn(mockRoom.typing, 'get').mockReturnValue(testSet);
+    vi.spyOn(mockRoom.typing, 'current').mockReturnValue(testSet);
 
     // render the hook and check the initial state
     const { result } = renderHook(() => useTyping());
@@ -202,7 +202,7 @@ describe('useTyping', () => {
     );
 
     expect(mockRoom.typing.subscribe).toHaveBeenCalledTimes(1);
-    expect(mockRoom.typing.get).toHaveBeenCalledOnce();
+    expect(mockRoom.typing.current).toHaveBeenCalledOnce();
 
     // check the states of the occupancy metrics are correctly updated
     expect(result.current.currentlyTyping).toEqual(testSet);

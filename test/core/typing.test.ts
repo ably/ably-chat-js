@@ -80,7 +80,7 @@ describe('Typing', () => {
     });
 
     // Ensure that the typing status is correct
-    expect(room.typing.get()).toEqual(new Set(['some']));
+    expect(room.typing.current()).toEqual(new Set(['some']));
   });
 
   it<TestContext>('ensures multiple keystroke/stop calls are resolved in order', async (context) => {
@@ -419,7 +419,7 @@ describe('Typing', () => {
         });
 
         // Check our current typers
-        expect(room.typing.get()).toEqual(new Set(['otherClient']));
+        expect(room.typing.current()).toEqual(new Set(['otherClient']));
 
         // Check we have an active timer
         const defaultTyping = room.typing as TestTypingInterface;
