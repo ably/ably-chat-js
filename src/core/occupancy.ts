@@ -28,11 +28,6 @@ export interface Occupancy {
   subscribe(listener: OccupancyListener): Subscription;
 
   /**
-   * Unsubscribe all listeners from the occupancy updates of the chat room.
-   */
-  unsubscribeAll(): void;
-
-  /**
    * Get the current occupancy of the chat room.
    *
    * @returns A promise that resolves to the current occupancy of the chat room.
@@ -131,14 +126,6 @@ export class DefaultOccupancy implements Occupancy {
         this._emitter.off(wrapped);
       },
     };
-  }
-
-  /**
-   * @inheritdoc Occupancy
-   */
-  unsubscribeAll(): void {
-    this._logger.trace('Occupancy.unsubscribeAll();');
-    this._emitter.off();
   }
 
   /**

@@ -206,66 +206,6 @@ describe('Reactions', () => {
     expect(received).toEqual(['like', 'like', 'love']);
   });
 
-  it<TestContext>('should be able to unsubscribe all reactions', (context) => {
-    const publishTimestamp = Date.now();
-    const { room } = context;
-
-    const receivedReactions: Reaction[] = [];
-    room.reactions.subscribe((event) => {
-      receivedReactions.push(event.reaction);
-    });
-
-    const receivedReactions2: Reaction[] = [];
-    room.reactions.subscribe((event) => {
-      receivedReactions2.push(event.reaction);
-    });
-
-    // Publish the first reaction
-    context.emulateBackendPublish({
-      clientId: 'yoda',
-      name: 'roomReaction',
-      data: {
-        type: 'like',
-      },
-      timestamp: publishTimestamp,
-    });
-
-    // Unsubscribe
-    room.reactions.unsubscribeAll();
-
-    // Publish the second reaction
-    context.emulateBackendPublish({
-      clientId: 'yoda2',
-      name: 'roomReaction',
-      data: {
-        type: 'like',
-      },
-      timestamp: publishTimestamp,
-    });
-
-    // Check that we only received the first reaction
-    expect(receivedReactions).toHaveLength(1);
-    expect(receivedReactions[0]).toEqual(
-      expect.objectContaining({
-        clientId: 'yoda',
-        isSelf: false,
-        createdAt: new Date(publishTimestamp),
-        type: 'like',
-      }),
-    );
-
-    // Check that we only received the first reaction
-    expect(receivedReactions2).toHaveLength(1);
-    expect(receivedReactions2[0]).toEqual(
-      expect.objectContaining({
-        clientId: 'yoda',
-        isSelf: false,
-        createdAt: new Date(publishTimestamp),
-        type: 'like',
-      }),
-    );
-  });
-
   describe.each([
     ['empty client id', { clientId: '', name: 'roomReaction', data: { type: 'like' }, timestamp: 123 }],
     ['no client id', { name: 'roomReaction', data: { type: 'like' }, timestamp: 123 }],
