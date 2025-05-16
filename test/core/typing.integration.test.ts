@@ -4,7 +4,7 @@ import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
-import { TypingEventTypes, TypingSetEvent, TypingSetEventTypes } from '../../src/core/events.ts';
+import { TypingEventType, TypingSetEvent, TypingSetEventType } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { waitForArrayLength } from '../helper/common.ts';
@@ -127,14 +127,14 @@ describe('Typing', () => {
       await client2Room.typing.keystroke();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
-        type: TypingSetEventTypes.SetChanged,
+        type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId1]),
-        change: { clientId: clientId1, type: TypingEventTypes.Start },
+        change: { clientId: clientId1, type: TypingEventType.Start },
       });
       await waitForTypingEvent(events, {
-        type: TypingSetEventTypes.SetChanged,
+        type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId1, clientId2]),
-        change: { clientId: clientId2, type: TypingEventTypes.Start },
+        change: { clientId: clientId2, type: TypingEventType.Start },
       });
       // Get the currently typing client ids
       const currentlyTypingClientIds = context.chatRoom.typing.current();
@@ -147,9 +147,9 @@ describe('Typing', () => {
       await client1Room.typing.stop();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
-        type: TypingSetEventTypes.SetChanged,
+        type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId2]),
-        change: { clientId: clientId1, type: TypingEventTypes.Stop },
+        change: { clientId: clientId1, type: TypingEventType.Stop },
       });
       // Get the currently typing client ids
       const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.current();

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
-import { ErrorCodes } from '../../src/index.ts';
+import { ErrorCode } from '../../src/index.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -76,7 +76,7 @@ describe('rooms', () => {
       await expect(room1).resolves.toBeDefined();
       await expect(room2).rejects.toBeErrorInfo({
         statusCode: 400,
-        code: ErrorCodes.RoomReleasedBeforeOperationCompleted,
+        code: ErrorCode.RoomReleasedBeforeOperationCompleted,
         message: 'room released before get operation could complete',
       });
       await expect(releasedPromise2).resolves.toBeUndefined();
@@ -98,18 +98,18 @@ describe('rooms', () => {
       await expect(releasePromise1).resolves.toBeUndefined();
       await expect(room2).rejects.toBeErrorInfo({
         statusCode: 400,
-        code: ErrorCodes.RoomReleasedBeforeOperationCompleted,
+        code: ErrorCode.RoomReleasedBeforeOperationCompleted,
         message: 'room released before get operation could complete',
       });
       await expect(releasedPromise2).resolves.toBeUndefined();
       await expect(room3).rejects.toBeErrorInfo({
         statusCode: 400,
-        code: ErrorCodes.RoomReleasedBeforeOperationCompleted,
+        code: ErrorCode.RoomReleasedBeforeOperationCompleted,
         message: 'room released before get operation could complete',
       });
       await expect(room4).rejects.toBeErrorInfo({
         statusCode: 400,
-        code: ErrorCodes.RoomReleasedBeforeOperationCompleted,
+        code: ErrorCode.RoomReleasedBeforeOperationCompleted,
         message: 'room released before get operation could complete',
       });
       await expect(releasePromise3).resolves.toBeUndefined();

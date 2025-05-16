@@ -3,7 +3,7 @@ import * as Ably from 'ably';
 /**
  * Error codes for the Chat SDK.
  */
-export enum ErrorCodes {
+export enum ErrorCode {
   /**
    * The request was invalid.
    */
@@ -48,11 +48,11 @@ export enum ErrorCodes {
 }
 
 /**
- * Returns true if the {@link Ably.ErrorInfo} code matches the provided ErrorCodes value.
+ * Returns true if the {@link Ably.ErrorInfo} code matches the provided ErrorCode value.
  *
  * @param errorInfo The error info to check.
  * @param error The error code to compare against.
  * @returns true if the error code matches, false otherwise.
  */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-export const errorInfoIs = (errorInfo: Ably.ErrorInfo, error: ErrorCodes): boolean => errorInfo.code === error;
+export const errorInfoIs = (errorInfo: Ably.ErrorInfo, error: ErrorCode): boolean => errorInfo.code === error;

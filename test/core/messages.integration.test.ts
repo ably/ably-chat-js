@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
-import { ChatMessageActions, MessageEventType } from '../../src/core/events.ts';
+import { ChatMessageAction, MessageEventType } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
@@ -102,7 +102,7 @@ describe('messages integration', { timeout: 10000 }, () => {
     // deleted message should look like a deleted message and convenience getters should work
     expect(deletedMessage1.version).not.toEqual(deletedMessage1.serial);
     expect(deletedMessage1.version).not.toEqual(message1.version);
-    expect(deletedMessage1.action).toEqual(ChatMessageActions.MessageDelete);
+    expect(deletedMessage1.action).toEqual(ChatMessageAction.MessageDelete);
     expect(deletedMessage1.deletedAt).toBeDefined();
     expect(deletedMessage1.deletedAt).toEqual(deletedMessage1.timestamp);
     expect(deletedMessage1.deletedBy).toBeDefined();
@@ -129,7 +129,7 @@ describe('messages integration', { timeout: 10000 }, () => {
         clientId: chat.clientId,
         serial: deletedMessage1.serial,
         timestamp: deletedMessage1.deletedAt,
-        action: ChatMessageActions.MessageDelete,
+        action: ChatMessageAction.MessageDelete,
         version: deletedMessage1.version,
       }),
     ]);
@@ -195,7 +195,7 @@ describe('messages integration', { timeout: 10000 }, () => {
         serial: message1.serial,
         updatedAt: updated1.updatedAt,
         updatedBy: chat.clientId,
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
         version: updated1.version,
         createdAt: message1.createdAt,
       }),
@@ -260,7 +260,7 @@ describe('messages integration', { timeout: 10000 }, () => {
         serial: deletedMessage1.serial,
         createdAt: message1.timestamp,
         timestamp: deletedMessage1.deletedAt,
-        action: ChatMessageActions.MessageDelete,
+        action: ChatMessageAction.MessageDelete,
       }),
     ]);
 
@@ -299,7 +299,7 @@ describe('messages integration', { timeout: 10000 }, () => {
         serial: updatedMessage1.serial,
         createdAt: message1.createdAt,
         timestamp: updatedMessage1.updatedAt,
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
       }),
     ]);
 

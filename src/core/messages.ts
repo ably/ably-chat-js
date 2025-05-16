@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatApi } from './chat-api.js';
-import { ChatMessageActions, MessageEvent, MessageEventType, RealtimeMessageNames } from './events.js';
+import { ChatMessageAction, MessageEvent, MessageEventType, RealtimeMessageName } from './events.js';
 import { Logger } from './logger.js';
 import {
   DefaultMessage,
@@ -30,13 +30,13 @@ interface MessageEventsMap {
 /**
  * Mapping of chat message actions to message events.
  */
-const MessageActionsToEventsMap: Map<ChatMessageActions, MessageEventType> = new Map<
-  ChatMessageActions,
+const MessageActionsToEventsMap: Map<ChatMessageAction, MessageEventType> = new Map<
+  ChatMessageAction,
   MessageEventType
 >([
-  [ChatMessageActions.MessageCreate, MessageEventType.Created],
-  [ChatMessageActions.MessageUpdate, MessageEventType.Updated],
-  [ChatMessageActions.MessageDelete, MessageEventType.Deleted],
+  [ChatMessageAction.MessageCreate, MessageEventType.Created],
+  [ChatMessageAction.MessageUpdate, MessageEventType.Updated],
+  [ChatMessageAction.MessageDelete, MessageEventType.Deleted],
 ]);
 
 /**
@@ -321,7 +321,7 @@ export class DefaultMessages implements Messages {
    */
   private _applyChannelSubscriptions(): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.subscribe([RealtimeMessageNames.ChatMessage], this._processEvent.bind(this));
+    void this._channel.subscribe([RealtimeMessageName.ChatMessage], this._processEvent.bind(this));
 
     // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
     // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
@@ -480,7 +480,7 @@ export class DefaultMessages implements Messages {
       text: text,
       metadata: metadata ?? {},
       headers: headers ?? {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: response.serial,
       createdAt: new Date(response.createdAt),
       timestamp: new Date(response.createdAt), // timestamp is the same as createdAt for new messages
@@ -507,7 +507,7 @@ export class DefaultMessages implements Messages {
       text: message.text,
       metadata: message.metadata,
       headers: message.headers,
-      action: ChatMessageActions.MessageUpdate,
+      action: ChatMessageAction.MessageUpdate,
       version: response.version,
       createdAt: new Date(message.createdAt),
       timestamp: new Date(response.timestamp),
@@ -538,7 +538,7 @@ export class DefaultMessages implements Messages {
       text: message.text,
       metadata: message.metadata,
       headers: message.headers,
-      action: ChatMessageActions.MessageDelete,
+      action: ChatMessageAction.MessageDelete,
       version: response.version,
       createdAt: new Date(message.createdAt),
       timestamp: new Date(response.timestamp),
@@ -589,7 +589,7 @@ export class DefaultMessages implements Messages {
       channelEventMessage,
     });
     const { action } = channelEventMessage;
-    const event = MessageActionsToEventsMap.get(action as ChatMessageActions);
+    const event = MessageActionsToEventsMap.get(action as ChatMessageAction);
     if (!event) {
       this._logger.debug('Messages._processEvent(); received unknown message action', { action });
       return;

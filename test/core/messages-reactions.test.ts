@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import {
-  ChatMessageActions,
+  ChatMessageAction,
   MessageReactionEventType,
   MessageReactionRawEvent,
   MessageReactionType,
@@ -167,7 +167,7 @@ describe('MessagesReactions', () => {
           name: 'chat.message',
           serial: '01672531200000-123@xyzdefghij',
           version: '01672531200000-123@abcdefghij',
-          action: ChatMessageActions.MessageAnnotationSummary,
+          action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
             [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
@@ -178,7 +178,7 @@ describe('MessagesReactions', () => {
           name: 'chat.message',
           serial: '01672531200001-123@xyzdefghij',
           version: '01672531200001-123@abcdefghij',
-          action: ChatMessageActions.MessageAnnotationSummary,
+          action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
             [MessageReactionType.Distinct]: { '🥦': { total: 1, clientIds: ['user2'] } },
@@ -189,7 +189,7 @@ describe('MessagesReactions', () => {
           name: 'chat.message',
           serial: '01672531200002-123@xyzdefghij',
           version: '01672531200002-123@abcdefghij',
-          action: ChatMessageActions.MessageAnnotationSummary,
+          action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
             [MessageReactionType.Multiple]: { '🍌': { clientIds: { user1: 10 }, total: 10, totalUnidentified: 0 } },
@@ -200,7 +200,7 @@ describe('MessagesReactions', () => {
           name: 'chat.message',
           serial: '01672531200002-123@xyzdefghij',
           version: '01672531200002-123@abcdefghij',
-          action: ChatMessageActions.MessageAnnotationSummary,
+          action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {},
         });
@@ -209,7 +209,7 @@ describe('MessagesReactions', () => {
           name: 'chat.message',
           serial: '01672531200002-123@xyzdefghij',
           version: '01672531200002-123@abcdefghij',
-          action: ChatMessageActions.MessageAnnotationSummary,
+          action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
         });
       }));
@@ -239,7 +239,7 @@ describe('MessagesReactions', () => {
         serial: '01672531200000-123@abcdefghij',
         version: '01672531200000-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
-        action: ChatMessageActions.MessageAnnotationSummary,
+        action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
         summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
       });
@@ -253,7 +253,7 @@ describe('MessagesReactions', () => {
         serial: '01672531200000-123@abcdefghij',
         version: '01672531200000-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
-        action: ChatMessageActions.MessageAnnotationSummary,
+        action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
         summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
       });
@@ -270,7 +270,7 @@ describe('MessagesReactions', () => {
         serial: '01672531200000-123@abcdefghij',
         version: '01672531200000-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
-        action: ChatMessageActions.MessageAnnotationSummary,
+        action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
         summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
       });
@@ -287,7 +287,7 @@ describe('MessagesReactions', () => {
         serial: '01672531200000-123@abcdefghij',
         version: '01672531200000-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
-        action: ChatMessageActions.MessageAnnotationSummary,
+        action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
         summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
       });

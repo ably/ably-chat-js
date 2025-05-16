@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../../src/core/chat.ts';
-import { ChatMessageActions, MessageEventType } from '../../../src/core/events.ts';
+import { ChatMessageAction, MessageEventType } from '../../../src/core/events.ts';
 import { Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
@@ -171,7 +171,7 @@ describe('useMessages', () => {
     expect(update?.updatedBy).toBe(chatClientOne.clientId);
     expect(update?.text).toBe('hello universe');
     expect(update?.metadata).toEqual({ icon: 'universe' });
-    expect(update?.action).toBe(ChatMessageActions.MessageUpdate);
+    expect(update?.action).toBe(ChatMessageAction.MessageUpdate);
     expect(update?.operation?.description).toBe('make it better');
     expect(update?.operation?.metadata).toEqual({ something: 'else' });
   }, 10000);
