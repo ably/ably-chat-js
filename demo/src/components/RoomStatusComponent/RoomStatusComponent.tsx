@@ -16,30 +16,30 @@ const STATUS_MAP: Record<string, { text: string; color: string }> = {
 };
 
 interface RoomStatusComponentProps {
-  updateRoomId?: (newRoomId: string) => void;
+  updateRoomName?: (newRoomName: string) => void;
 }
 
-export function RoomStatusComponent({ updateRoomId }: RoomStatusComponentProps) {
+export function RoomStatusComponent({ updateRoomName }: RoomStatusComponentProps) {
   const [roomStatus, setRoomStatus] = useState('');
-  const { roomId } = useRoom({
+  const { roomName } = useRoom({
     onStatusChange: (status) => setRoomStatus(status.current),
   });
-  const [editableRoomId, setEditableRoomId] = useState(roomId);
+  const [editableRoomName, setEditableRoomName] = useState(roomName);
 
-  const handleRoomIdChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setEditableRoomId(e.target.value);
+  const handleRoomNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setEditableRoomName(e.target.value);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && updateRoomId) {
-      updateRoomId(editableRoomId);
+    if (e.key === 'Enter' && updateRoomName) {
+      updateRoomName(editableRoomName);
     }
   };
 
   // Update the editable room ID when the actual room ID changes
   useEffect(() => {
-    setEditableRoomId(roomId);
-  }, [roomId]);
+    setEditableRoomName(roomName);
+  }, [roomName]);
 
   const { text: statusText = 'Unknown', color: statusColor = 'text-gray-500' } = STATUS_MAP[roomStatus] || {};
 
@@ -55,8 +55,8 @@ export function RoomStatusComponent({ updateRoomId }: RoomStatusComponentProps) 
           <span className="w-20">Room:</span>
           <input
             type="text"
-            value={editableRoomId}
-            onChange={handleRoomIdChange}
+            value={editableRoomName}
+            onChange={handleRoomNameChange}
             onKeyDown={handleKeyDown}
             className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-blue-300 transition-colors"
             placeholder="Enter room ID"
