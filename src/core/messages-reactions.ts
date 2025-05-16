@@ -125,7 +125,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     private readonly _logger: Logger,
     private readonly _options: MessageOptions | undefined,
     private readonly _api: ChatApi,
-    private readonly _roomID: string,
+    private readonly _roomName: string,
     private readonly _channel: Ably.RealtimeChannel,
   ) {
     void _channel.subscribe(this._processMessageEvent.bind(this));
@@ -252,7 +252,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (count) {
       apiParams.count = count;
     }
-    return this._api.addMessageReaction(this._roomID, message.serial, apiParams);
+    return this._api.addMessageReaction(this._roomName, message.serial, apiParams);
   }
 
   /**
@@ -272,7 +272,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (type !== MessageReactionType.Unique) {
       apiParams.name = params?.name;
     }
-    return this._api.deleteMessageReaction(this._roomID, message.serial, apiParams);
+    return this._api.deleteMessageReaction(this._roomName, message.serial, apiParams);
   }
 
   /**

@@ -188,11 +188,11 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     });
 
     const client2 = newChatClient();
-    const room2 = await client2.rooms.get(room.roomId);
+    const room2 = await client2.rooms.get(room.name);
     await room2.attach();
 
     const client3 = newChatClient();
-    const room3 = await client3.rooms.get(room.roomId);
+    const room3 = await client3.rooms.get(room.name);
     await room3.attach();
 
     await Promise.all([
@@ -294,7 +294,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     });
 
     const client2 = newChatClient();
-    const room2 = await client2.rooms.get(room.roomId);
+    const room2 = await client2.rooms.get(room.name);
     await room2.attach();
 
     // First client reactions - only the last one (❤️) should remain

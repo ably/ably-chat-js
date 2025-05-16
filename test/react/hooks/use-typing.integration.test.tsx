@@ -10,7 +10,7 @@ import { ChatClientProvider } from '../../../src/react/providers/chat-client-pro
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 import { waitForArrayLength } from '../../helper/common.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { randomRoomName } from '../../helper/identifier.ts';
 
 describe('useTyping', () => {
   afterEach(() => {
@@ -23,8 +23,8 @@ describe('useTyping', () => {
     const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can listen for typing events
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // start listening for typing events on room two
@@ -48,7 +48,7 @@ describe('useTyping', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent />
         </ChatRoomProvider>
       </ChatClientProvider>
@@ -67,8 +67,8 @@ describe('useTyping', () => {
     const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can send typing events
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // store the received typing events for room one
@@ -89,7 +89,7 @@ describe('useTyping', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent
             listener={(typingEvent) => {
               typingEventsRoomOne.push(typingEvent);

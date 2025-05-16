@@ -8,7 +8,7 @@ import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.t
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForArrayLength } from '../helper/common.ts';
-import { randomRoomId } from '../helper/identifier.ts';
+import { randomRoomName } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { getRandomRoom } from '../helper/room.ts';
 
@@ -712,8 +712,8 @@ describe('messages integration', { timeout: 10000 }, () => {
 
   it<TestContext>('handles the room being released before historyBeforeSubscribe is called', async (context) => {
     const chat = context.chat;
-    const roomId = randomRoomId();
-    const room = await chat.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const room = await chat.rooms.get(roomName);
 
     // Create a subscription to messages
     room.messages.subscribe(() => {});
@@ -722,6 +722,6 @@ describe('messages integration', { timeout: 10000 }, () => {
     // We should not have any unhanded promise rejections
     // Note that an unhandled rejection will not cause the test to fail, but it will cause the process to exit
     // with a non-zero exit code.
-    await chat.rooms.release(roomId);
+    await chat.rooms.release(roomName);
   });
 });

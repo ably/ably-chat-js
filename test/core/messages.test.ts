@@ -527,8 +527,8 @@ describe('Messages', () => {
 
     const { room, chatApi } = context;
 
-    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
-      expect(roomId).toEqual(room.roomId);
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+      expect(roomName).toEqual(room.name);
       expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(testAttachSerial);
@@ -587,8 +587,8 @@ describe('Messages', () => {
 
     const { room, chatApi } = context;
 
-    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
-      expect(roomId).toEqual(room.roomId);
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+      expect(roomName).toEqual(room.name);
       expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(latestChannelSerial);
@@ -623,12 +623,12 @@ describe('Messages', () => {
     const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
-    let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
+    let expectFunction: (roomName: string, params: GetMessagesQueryParams) => void = () => {};
 
     const { room, chatApi } = context;
 
-    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
-      expectFunction(roomId, params);
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+      expectFunction(roomName, params);
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
@@ -663,8 +663,8 @@ describe('Messages', () => {
     });
 
     // Check we are using the attachSerial
-    expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
-      expect(roomId).toEqual(room.roomId);
+    expectFunction = (roomName: string, params: GetMessagesQueryParams) => {
+      expect(roomName).toEqual(room.name);
       expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstAttachmentSerial);
@@ -720,12 +720,12 @@ describe('Messages', () => {
     const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
-    let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
+    let expectFunction: (roomName: string, params: GetMessagesQueryParams) => void = () => {};
 
     const { room, chatApi } = context;
 
-    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
-      expectFunction(roomId, params);
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+      expectFunction(roomName, params);
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
@@ -752,8 +752,8 @@ describe('Messages', () => {
     const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Check we are using the channel serial
-    expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
-      expect(roomId).toEqual(room.roomId);
+    expectFunction = (roomName: string, params: GetMessagesQueryParams) => {
+      expect(roomName).toEqual(room.name);
       expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstChannelSerial);
@@ -808,12 +808,12 @@ describe('Messages', () => {
     const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
-    let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
+    let expectFunction: (roomName: string, params: GetMessagesQueryParams) => void = () => {};
 
     const { room, chatApi } = context;
 
-    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
-      expectFunction(roomId, params);
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+      expectFunction(roomName, params);
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
@@ -841,8 +841,8 @@ describe('Messages', () => {
     const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Check we are using the channel serial
-    expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
-      expect(roomId).toEqual(room.roomId);
+    expectFunction = (roomName: string, params: GetMessagesQueryParams) => {
+      expect(roomName).toEqual(room.name);
       expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstChannelSerial);

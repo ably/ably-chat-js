@@ -103,17 +103,14 @@ export class DefaultRoomReactions implements RoomReactions {
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<RoomReactionEventsMap>();
-  private readonly _roomId: string;
 
   /**
    * Constructs a new `DefaultRoomReactions` instance.
-   * @param roomId The unique identifier of the room.
    * @param channel The Realtime channel instance.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, channel: Ably.RealtimeChannel, clientId: string, logger: Logger) {
-    this._roomId = roomId;
+  constructor(channel: Ably.RealtimeChannel, clientId: string, logger: Logger) {
     this._channel = channel;
     this._clientId = clientId;
     this._logger = logger;
@@ -161,13 +158,13 @@ export class DefaultRoomReactions implements RoomReactions {
    * @inheritDoc Reactions
    */
   subscribe(listener: RoomReactionListener): Subscription {
-    this._logger.trace(`RoomReactions.subscribe();`, { roomId: this._roomId });
+    this._logger.trace(`RoomReactions.subscribe();`);
     const wrapped = wrap(listener);
     this._emitter.on(wrapped);
 
     return {
       unsubscribe: () => {
-        this._logger.trace('RoomReactions.unsubscribe();', { roomId: this._roomId });
+        this._logger.trace('RoomReactions.unsubscribe();');
         this._emitter.off(wrapped);
       },
     };
@@ -193,7 +190,6 @@ export class DefaultRoomReactions implements RoomReactions {
       this._logger.error(`failed to parse incoming reaction;`, {
         inbound,
         error: error as Ably.ErrorInfo,
-        roomId: this._roomId,
       });
     }
   }

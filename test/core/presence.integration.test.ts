@@ -10,7 +10,7 @@ import { PresenceData, PresenceEvent } from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForExpectedPresenceEvent } from '../helper/common.ts';
-import { randomRoomId } from '../helper/identifier.ts';
+import { randomRoomName } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 
 // Define the test context interface
@@ -83,10 +83,10 @@ describe('UserPresence', { timeout: 30000 }, () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>(async (context) => {
     context.realtime = ablyRealtimeClient();
-    const roomId = randomRoomId();
+    const roomName = randomRoomName();
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
-    context.chatRoom = await context.chat.rooms.get(roomId);
+    context.chatRoom = await context.chat.rooms.get(roomName);
 
     // Attach the chat room to ensure it is ready for presence operations
     await context.chatRoom.attach();

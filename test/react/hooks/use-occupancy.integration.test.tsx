@@ -10,7 +10,7 @@ import { ChatClientProvider } from '../../../src/react/providers/chat-client-pro
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 import { waitForExpectedInbandOccupancy } from '../../helper/common.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { randomRoomName } from '../../helper/identifier.ts';
 
 describe('useOccupancy', () => {
   afterEach(() => {
@@ -24,9 +24,9 @@ describe('useOccupancy', () => {
     const chatClientThree = newChatClient();
 
     // create two more rooms and attach to contribute towards occupancy metrics
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
-    const roomThree = await chatClientThree.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
+    const roomThree = await chatClientThree.rooms.get(roomName);
     await roomTwo.attach();
     await roomThree.attach();
 
@@ -51,7 +51,7 @@ describe('useOccupancy', () => {
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
         <ChatRoomProvider
-          id={roomId}
+          name={roomName}
           options={{
             occupancy: {
               enableEvents: true,

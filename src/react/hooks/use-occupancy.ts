@@ -83,7 +83,6 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, onDiscontinuityRef, logger]);
 
@@ -112,7 +111,6 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, logger]);
 
@@ -130,7 +128,6 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [listenerRef, context, logger]);
 

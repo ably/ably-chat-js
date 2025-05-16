@@ -85,14 +85,9 @@ describe('RoomLifecycleManager', () => {
       release: vi.fn(),
     } as unknown as ChannelManager;
 
-    context.roomStatus = new DefaultRoomLifecycle('test-room', logger);
+    context.roomStatus = new DefaultRoomLifecycle(logger);
     context.logger = logger;
-    context.roomLifeCycleManager = new RoomLifecycleManager(
-      'test-room',
-      context.channelManager,
-      context.roomStatus,
-      context.logger,
-    );
+    context.roomLifeCycleManager = new RoomLifecycleManager(context.channelManager, context.roomStatus, context.logger);
   });
 
   describe('attach', () => {

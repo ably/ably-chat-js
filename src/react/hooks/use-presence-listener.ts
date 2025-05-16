@@ -198,7 +198,6 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
           };
         },
         logger,
-        context.roomId,
       );
     };
 
@@ -255,7 +254,6 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, setErrorState, clearErrorState, logger]);
 
@@ -274,7 +272,6 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, listenerRef, logger]);
 
@@ -293,7 +290,6 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, onDiscontinuityRef, logger]);
 

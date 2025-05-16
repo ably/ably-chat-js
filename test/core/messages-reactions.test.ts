@@ -51,26 +51,26 @@ describe('MessagesReactions', () => {
       const msg = { serial: serial };
 
       await context.room.messages.reactions.add(msg, { type: MessageReactionType.Unique, name: '🥕' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Unique,
         name: '🥕',
       });
 
       await context.room.messages.reactions.add(msg, { type: MessageReactionType.Distinct, name: '🥕' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '🥕',
       });
 
       await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, name: '🥕' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
         count: 1,
       });
 
       await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, name: '🥕', count: 10 });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
         count: 10,
@@ -78,7 +78,7 @@ describe('MessagesReactions', () => {
 
       // default is distinct for AllFeaturesEnabled
       await context.room.messages.reactions.add(msg, { name: '👻' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '👻',
       });
@@ -93,25 +93,25 @@ describe('MessagesReactions', () => {
       const msg = { serial: serial };
 
       await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Unique });
-      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Unique,
       });
 
       await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Distinct, name: '🥕' });
-      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '🥕',
       });
 
       await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Multiple, name: '🥕' });
-      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
       });
 
       // default is distinct for AllFeaturesEnabled
       await context.room.messages.reactions.delete(msg, { name: '👻' });
-      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '👻',
       });

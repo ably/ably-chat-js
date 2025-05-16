@@ -123,7 +123,7 @@ async function getStartedWithChat() {
 
   // After 5 seconds, release the room, remove our subscriptions and close the connection
   setTimeout(async () => {
-    await chatClient.rooms.release(room.roomId);
+    await chatClient.rooms.release(room.name);
     messageSubscription.unsubscribe();
     connectionStatus.off();
     roomStatus.off();
