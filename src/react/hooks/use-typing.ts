@@ -96,9 +96,9 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
           setCurrentlyTyping(event.currentlyTyping);
         });
 
-        // If we're not attached, we can't call typing.get() right now
+        // If we're not attached, we can't call typing.current() right now
         if (room.status === RoomStatus.Attached) {
-          const typing = room.typing.get();
+          const typing = room.typing.current();
           logger.debug('useTyping(); room attached, getting initial typers', { typing });
           setCurrentlyTyping(typing);
         }
