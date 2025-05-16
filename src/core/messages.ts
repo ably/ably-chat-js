@@ -272,7 +272,7 @@ export interface Messages {
  * @inheritDoc
  */
 export class DefaultMessages implements Messages {
-  private readonly _roomId: string;
+  private readonly _roomName: string;
   private readonly _options: MessageOptions;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
@@ -290,21 +290,21 @@ export class DefaultMessages implements Messages {
 
   /**
    * Constructs a new `DefaultMessages` instance.
-   * @param roomId The unique identifier of the room.
+   * @param roomName The unique identifier of the room.
    * @param channel An instance of the Realtime channel for the room.
    * @param chatApi An instance of the ChatApi.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
   constructor(
-    roomId: string,
+    roomName: string,
     options: MessageOptions,
     channel: Ably.RealtimeChannel,
     chatApi: ChatApi,
     clientId: string,
     logger: Logger,
   ) {
-    this._roomId = roomId;
+    this._roomName = roomName;
     this._options = options;
     this._channel = channel;
     this._chatApi = chatApi;
@@ -312,7 +312,7 @@ export class DefaultMessages implements Messages {
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
 
-    this.reactions = new DefaultMessageReactions(this._logger, options, this._chatApi, this._roomId, this._channel);
+    this.reactions = new DefaultMessageReactions(this._logger, options, this._chatApi, this._roomName, this._channel);
     this._applyChannelSubscriptions();
   }
 
@@ -363,7 +363,7 @@ export class DefaultMessages implements Messages {
     const subscriptionPointParams = await subscriptionPoint;
 
     // Query messages from the subscription point to the start of the time window
-    return this._chatApi.getMessages(this._roomId, {
+    return this._chatApi.getMessages(this._roomName, {
       ...params,
       orderBy: OrderBy.NewestFirst,
       ...subscriptionPointParams,
@@ -461,7 +461,7 @@ export class DefaultMessages implements Messages {
    */
   async history(options: QueryOptions): Promise<PaginatedResult<Message>> {
     this._logger.trace('Messages.query();');
-    return this._chatApi.getMessages(this._roomId, options);
+    return this._chatApi.getMessages(this._roomName, options);
   }
 
   /**
@@ -472,7 +472,7 @@ export class DefaultMessages implements Messages {
 
     const { text, metadata, headers } = params;
 
-    const response = await this._chatApi.sendMessage(this._roomId, { text, headers, metadata });
+    const response = await this._chatApi.sendMessage(this._roomName, { text, headers, metadata });
     return new DefaultMessage({
       serial: response.serial,
       clientId: this._clientId,
@@ -490,7 +490,7 @@ export class DefaultMessages implements Messages {
   async update(message: Message, details?: OperationDetails): Promise<Message> {
     this._logger.trace('Messages.update();', { message, details });
 
-    const response = await this._chatApi.updateMessage(this._roomId, message.serial, {
+    const response = await this._chatApi.updateMessage(this._roomName, message.serial, {
       message: {
         text: message.text,
         metadata: message.metadata,
@@ -527,7 +527,7 @@ export class DefaultMessages implements Messages {
   async delete(message: Message, params?: DeleteMessageParams): Promise<Message> {
     this._logger.trace('Messages.delete();', { params });
 
-    const response = await this._chatApi.deleteMessage(this._roomId, message.serial, params);
+    const response = await this._chatApi.deleteMessage(this._roomName, message.serial, params);
 
     const deletedMessage: Message = new DefaultMessage({
       serial: message.serial,

@@ -66,7 +66,7 @@ describe('Typing', () => {
   it<TestContext>('uses the correct realtime channel', (context) => {
     const typing = context.room.typing as DefaultTyping;
 
-    expect(typing.channel.name).toBe(`${context.room.roomId}::$chat`);
+    expect(typing.channel.name).toBe(`${context.room.name}::$chat`);
   });
 
   // CHA-T9

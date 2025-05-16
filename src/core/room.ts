@@ -22,9 +22,10 @@ import { DefaultTyping, Typing } from './typing.js';
 export interface Room {
   /**
    * The unique identifier of the room.
-   * @returns The room identifier.
+   *
+   * @returns The room name.
    */
-  get roomId(): string;
+  get name(): string;
 
   /**
    * Allows you to send, subscribe-to and query messages in the room.
@@ -125,7 +126,7 @@ export interface Room {
 }
 
 export class DefaultRoom implements Room {
-  private readonly _roomId: string;
+  private readonly _name: string;
   private readonly _options: RoomOptions;
   private readonly _chatApi: ChatApi;
   private readonly _messages: DefaultMessages;
@@ -147,7 +148,7 @@ export class DefaultRoom implements Room {
   /**
    * Constructs a new Room instance.
    *
-   * @param roomId The unique identifier of the room.
+   * @param name The unique identifier of the room.
    * @param nonce A random identifier for the room instance, useful in debugging and logging.
    * @param options The options for the room.
    * @param realtime An instance of the Ably Realtime client.
@@ -155,7 +156,7 @@ export class DefaultRoom implements Room {
    * @param logger An instance of the Logger.
    */
   constructor(
-    roomId: string,
+    name: string,
     nonce: string,
     options: InternalRoomOptions,
     realtime: Ably.Realtime,
@@ -166,20 +167,20 @@ export class DefaultRoom implements Room {
     this._nonce = nonce;
 
     // Create a logger with room context
-    this._logger = logger.withContext({ roomId, roomNonce: nonce });
+    this._logger = logger.withContext({ roomName: name, roomNonce: nonce });
     this._logger.debug('Room();', { options });
 
-    this._roomId = roomId;
+    this._name = name;
     this._options = options;
     this._chatApi = chatApi;
-    this._lifecycle = new DefaultRoomLifecycle(roomId, this._logger);
+    this._lifecycle = new DefaultRoomLifecycle(this._logger);
 
     const channelManager = (this._channelManager = this._getChannelManager(options, realtime, this._logger));
     const channel = channelManager.get();
 
     // Setup features
     this._messages = new DefaultMessages(
-      roomId,
+      name,
       options.messages,
       channel,
       this._chatApi,
@@ -187,13 +188,13 @@ export class DefaultRoom implements Room {
       this._logger,
     );
     this._presence = new DefaultPresence(channel, realtime.auth.clientId, this._logger, options);
-    this._typing = new DefaultTyping(roomId, options.typing, channel, realtime.auth.clientId, this._logger);
-    this._reactions = new DefaultRoomReactions(roomId, channel, realtime.auth.clientId, this._logger);
-    this._occupancy = new DefaultOccupancy(roomId, channel, this._chatApi, this._logger, options);
+    this._typing = new DefaultTyping(options.typing, channel, realtime.auth.clientId, this._logger);
+    this._reactions = new DefaultRoomReactions(channel, realtime.auth.clientId, this._logger);
+    this._occupancy = new DefaultOccupancy(name, channel, this._chatApi, this._logger, options);
 
     // Set the lifecycle manager last, so it becomes the last thing to find out about channel state changes
     // This is to allow Messages to reset subscription points before users get told of a discontinuity
-    this._lifecycleManager = new RoomLifecycleManager(roomId, channelManager, this._lifecycle, this._logger);
+    this._lifecycleManager = new RoomLifecycleManager(channelManager, this._lifecycle, this._logger);
 
     // Setup a finalization function to clean up resources
     let finalized = false;
@@ -219,7 +220,7 @@ export class DefaultRoom implements Room {
    * @param logger An instance of the Logger.
    */
   private _getChannelManager(options: InternalRoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
-    const manager = new ChannelManager(this.roomId, realtime, logger, options.isReactClient);
+    const manager = new ChannelManager(this._name, realtime, logger, options.isReactClient);
 
     manager.mergeOptions(DefaultOccupancy.channelOptionMerger(options));
     manager.mergeOptions(DefaultPresence.channelOptionMerger(options));
@@ -230,8 +231,8 @@ export class DefaultRoom implements Room {
   /**
    * @inheritdoc Room
    */
-  get roomId(): string {
-    return this._roomId;
+  get name(): string {
+    return this._name;
   }
 
   /**
@@ -351,7 +352,7 @@ export class DefaultRoom implements Room {
    * @inheritdoc Room
    */
   onDiscontinuity(handler: DiscontinuityListener): StatusSubscription {
-    this._logger.trace('Room.onDiscontinuity();', { nonce: this._nonce, roomId: this._roomId });
+    this._logger.trace('Room.onDiscontinuity();');
     return this._lifecycleManager.onDiscontinuity(handler);
   }
 

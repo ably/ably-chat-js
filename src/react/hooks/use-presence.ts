@@ -151,7 +151,6 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, connectionStatus, roomStatus, logger]);
 
@@ -168,7 +167,6 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, onDiscontinuityRef, logger]);
 

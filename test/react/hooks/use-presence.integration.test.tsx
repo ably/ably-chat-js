@@ -9,7 +9,7 @@ import { ChatClientProvider } from '../../../src/react/providers/chat-client-pro
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 import { waitForExpectedPresenceEvent } from '../../helper/common.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { randomRoomName } from '../../helper/identifier.ts';
 
 describe('usePresence', () => {
   afterEach(() => {
@@ -22,8 +22,8 @@ describe('usePresence', () => {
     const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can listen for presence events
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // start listening for presence events on room two
@@ -55,7 +55,7 @@ describe('usePresence', () => {
     };
     const Providers = ({ children }: React.PropsWithChildren) => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>{children}</ChatRoomProvider>
+        <ChatRoomProvider name={roomName}>{children}</ChatRoomProvider>
       </ChatClientProvider>
     );
 

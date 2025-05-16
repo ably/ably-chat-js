@@ -11,7 +11,7 @@ import { RoomStatus } from '../../src/core/room-status.ts';
 import { DefaultTyping } from '../../src/core/typing.ts';
 import EventEmitter from '../../src/core/utils/event-emitter.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING, CHANNEL_OPTIONS_AGENT_STRING_REACT } from '../../src/core/version.ts';
-import { randomRoomId } from '../helper/identifier.ts';
+import { randomRoomName } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { waitForRoomStatus } from '../helper/room.ts';
@@ -30,7 +30,7 @@ describe('Room', () => {
     const chatApi = new ChatApi(context.realtime, logger);
     context.getRoom = (options?: RoomOptions, useReact?: boolean) =>
       new DefaultRoom(
-        randomRoomId(),
+        randomRoomName(),
         randomId(),
         normalizeRoomOptions(options, useReact ?? false),
         context.realtime,

@@ -156,16 +156,13 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
   private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
-  private readonly _roomId: string;
   private readonly _emitter = new EventEmitter<RoomStatusEventsMap>();
 
   /**
    * Constructs a new DefaultRoomLifecycle instance.
-   * @param roomId The unique identifier of the room.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, logger: Logger) {
-    this._roomId = roomId;
+  constructor(logger: Logger) {
     this._logger = logger;
   }
 

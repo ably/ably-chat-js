@@ -5,7 +5,7 @@ import { RoomStatus } from '../../../src/core/room-status.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { randomRoomName } from '../../helper/identifier.ts';
 
 describe('ChatRoomProvider', () => {
   beforeEach(() => {
@@ -23,13 +23,13 @@ describe('ChatRoomProvider', () => {
     const TestComponent = () => {
       return <div />;
     };
-    const roomId = randomRoomId();
+    const roomName = randomRoomName();
 
     const TestProvider = () => {
       return (
         <ChatClientProvider client={chatClient}>
           <ChatRoomProvider
-            id={roomId}
+            name={roomName}
             attach={true}
             release={false}
           >
@@ -40,7 +40,7 @@ describe('ChatRoomProvider', () => {
     };
     render(<TestProvider />);
 
-    const room = await chatClient.rooms.get(roomId);
+    const room = await chatClient.rooms.get(roomName);
     await vi.waitFor(
       () => {
         expect(room.status).toBe(RoomStatus.Attached);
