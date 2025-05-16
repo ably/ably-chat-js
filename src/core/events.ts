@@ -56,7 +56,7 @@ export enum ChatMessageActions {
 /**
  * Enum representing presence events.
  */
-export enum PresenceEvents {
+export enum PresenceEventType {
   /**
    * Event triggered when a user enters.
    */

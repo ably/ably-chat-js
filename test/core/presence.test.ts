@@ -2,9 +2,10 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { PresenceEventType } from '../../src/core/events.ts';
 import { DefaultPresence, PresenceData, PresenceEvent } from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
-import { PresenceEvents, RoomOptions } from '../../src/index.ts';
+import { RoomOptions } from '../../src/core/room-options.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
@@ -51,9 +52,9 @@ describe('Presence', () => {
       const { room } = context;
       const received: PresenceEvent[] = [];
 
-      const emulatePresenceEvent = (clientId: string, action: PresenceEvents, data?: PresenceData) => {
+      const emulatePresenceEvent = (clientId: string, type: PresenceEventType, data?: PresenceData) => {
         const presenceMessage: Ably.PresenceMessage = {
-          action,
+          action: type,
           clientId,
           timestamp: Date.now(),
           data: data ? { userCustomData: data } : undefined,
@@ -76,21 +77,21 @@ describe('Presence', () => {
       const subscription2 = room.presence.subscribe(listener);
 
       // Both subscriptions should trigger the listener
-      emulatePresenceEvent('user1', PresenceEvents.Enter, { foo: 'bar' });
+      emulatePresenceEvent('user1', PresenceEventType.Enter, { foo: 'bar' });
       expect(received).toHaveLength(2);
 
       // Unsubscribe first subscription
       subscription1.unsubscribe();
 
       // One subscription should still trigger the listener
-      emulatePresenceEvent('user2', PresenceEvents.Enter, { baz: 'qux' });
+      emulatePresenceEvent('user2', PresenceEventType.Enter, { baz: 'qux' });
       expect(received).toHaveLength(3);
 
       // Unsubscribe second subscription
       subscription2.unsubscribe();
 
       // No subscriptions should trigger the listener
-      emulatePresenceEvent('user3', PresenceEvents.Enter, { test: 'data' });
+      emulatePresenceEvent('user3', PresenceEventType.Enter, { test: 'data' });
       expect(received).toHaveLength(3);
     });
   });
