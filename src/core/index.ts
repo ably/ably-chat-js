@@ -13,12 +13,15 @@ export type {
   MessageReactionEvents,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
+  RoomReactionEvent,
+  RoomReactionEventType,
+  RoomReactionRealtimeEventType,
   TypingSetEvent,
 } from './events.js';
 export {
   ChatMessageActions,
   MessageEvents,
-  MessageReactionType as MessageReactionType,
+  MessageReactionType,
   PresenceEvents,
   TypingEventTypes,
   TypingSetEventTypes,

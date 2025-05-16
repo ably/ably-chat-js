@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { Message } from './message.js';
+import { Reaction } from './reaction.js';
 
 /**
  * All chat message events.
@@ -127,11 +128,36 @@ export interface TypingSetEvent {
  * Room reaction events. This is used for the realtime system since room reactions
  * have only one event: "roomReaction".
  */
-export enum RoomReactionEvents {
+export enum RoomReactionRealtimeEventType {
   /**
    * Event triggered when a room reaction was received.
    */
   Reaction = 'roomReaction',
+}
+
+/**
+ * The type of room reaction events.
+ */
+export enum RoomReactionEventType {
+  /**
+   * Event triggered when a room reaction was received.
+   */
+  Reaction = 'reaction',
+}
+
+/**
+ * Event that is emitted when a room reaction is received.
+ */
+export interface RoomReactionEvent {
+  /**
+   * The type of the event.
+   */
+  readonly type: RoomReactionEventType;
+
+  /**
+   * The reaction that was received.
+   */
+  readonly reaction: Reaction;
 }
 
 /**
