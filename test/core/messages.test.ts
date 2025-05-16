@@ -696,12 +696,12 @@ describe('Messages', () => {
   it<TestContext>('should throw an error for listener history if not subscribed', async (context) => {
     const { room } = context;
 
-    const { unsubscribe, getPreviousMessages } = room.messages.subscribe(() => {});
+    const { unsubscribe, historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Unsubscribe the listener
     unsubscribe();
 
-    await expect(getPreviousMessages({ limit: 50 })).rejects.toBeErrorInfo({
+    await expect(historyBeforeSubscribe({ limit: 50 })).rejects.toBeErrorInfo({
       code: 40000,
       message: 'cannot query history; listener has not been subscribed yet',
     });
@@ -739,7 +739,7 @@ describe('Messages', () => {
     });
 
     // Subscribe to the messages
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // This test was failing because now we wait for the channel promise inside
     // DefaultMessages._resolveSubscriptionStart. That got resolved a tick after
@@ -763,7 +763,7 @@ describe('Messages', () => {
     });
 
     // Run a history query for the listener and check the chat api call is made with the channel attachment serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('should query listener history with latest channel serial if already attached to the channel', async (context) => {
@@ -799,10 +799,10 @@ describe('Messages', () => {
     channel.properties.channelSerial = latestChannelSerial;
 
     // Subscribe to the messages
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Run a history query for the listener and check the chat api call is made with the channel serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('when attach occurs, should query with correct params if listener registered before attach', async (context) => {
@@ -830,7 +830,7 @@ describe('Messages', () => {
     // Set the serials for before attachment testing
     channel.properties.attachSerial = firstAttachmentSerial;
 
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // wait
     await new Promise<void>((resolve) =>
@@ -858,7 +858,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel attachment serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Now update the attach serial
     const secondAttachmentSerial = '01992531200000-001@108hhDJ2dBOihn12345678';
@@ -877,7 +877,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel attachment serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Test the case where we receive an attached state change with resume.
 
@@ -897,7 +897,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the previous attach serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('when attach occurs, should query with correct params if listener register after attach', async (context) => {
@@ -936,7 +936,7 @@ describe('Messages', () => {
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
 
     // Subscribe to the messages
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Check we are using the channel serial
     expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
@@ -947,7 +947,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Change the attach and channel serials
     const secondChannelSerial = '01992531200000-001@108hhDJ2hpOihn12345678';
@@ -968,7 +968,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the first channel serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Initiate a re-attach this time without resume, should cause listener points to reset to new attach serial
     context.emulateBackendStateChange({
@@ -983,7 +983,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the attach serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('when update occurs, should query with correct params', async (context) => {
@@ -1025,7 +1025,7 @@ describe('Messages', () => {
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
 
     // Subscribe to the messages
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Check we are using the channel serial
     expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
@@ -1036,7 +1036,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel serial
-    await getPreviousMessages({ limit: 50 });
+    await historyBeforeSubscribe({ limit: 50 });
 
     // Change the attach and channel serials
     const secondChannelSerial = '01992531200000-001@108StIJ2hpOihn12345678';
@@ -1060,7 +1060,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the previous channel serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Initiate a re-attach this time without resume, should cause listener points to reset to new attach serial
     context.emulateBackendStateChange(
@@ -1078,7 +1078,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the new attach serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Change the attach serial again
     channel.properties.attachSerial = '01992531200000-001@108DrInRiKGihn12345678';
@@ -1100,6 +1100,6 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the previous attach serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
   });
 });

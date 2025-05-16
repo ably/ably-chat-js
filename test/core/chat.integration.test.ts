@@ -76,7 +76,7 @@ describe('Chat', () => {
 
     // Request history, and expect it to succeed
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for cassandra
-    const history = await room.messages.get({ limit: 1 });
+    const history = await room.messages.history({ limit: 1 });
     expect(history.items).toEqual(
       expect.arrayContaining([expect.objectContaining({ text: 'my message', clientId: chat.clientId })]),
     );
@@ -96,7 +96,7 @@ describe('Chat', () => {
 
     // Request history, and expect it to succeed
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history = await room.messages.get({ limit: 1 });
+    const history = await room.messages.history({ limit: 1 });
     expect(history.items).toEqual(
       expect.arrayContaining([expect.objectContaining({ text: 'my message', clientId: chat.clientId })]),
     );
