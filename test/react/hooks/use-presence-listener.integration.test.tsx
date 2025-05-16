@@ -9,7 +9,7 @@ import { ChatClientProvider } from '../../../src/react/providers/chat-client-pro
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 import { waitForArrayLength } from '../../helper/common.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { randomRoomName } from '../../helper/identifier.ts';
 
 describe('usePresenceListener', () => {
   afterEach(() => {
@@ -22,8 +22,8 @@ describe('usePresenceListener', () => {
     const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can send presence events with it
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // store the current presence member state
@@ -47,7 +47,7 @@ describe('usePresenceListener', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent
             listener={(event: PresenceEvent) => {
               presenceEventsReceived.push(event);

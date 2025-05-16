@@ -8,7 +8,7 @@ import { TypingEventType, TypingSetEvent, TypingSetEventType } from '../../src/c
 import { Room } from '../../src/core/room.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { waitForArrayLength } from '../helper/common.ts';
-import { randomClientId, randomRoomId } from '../helper/identifier.ts';
+import { randomClientId, randomRoomName } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 
@@ -38,7 +38,7 @@ describe('Typing', () => {
     context.realtime = ablyRealtimeClient();
     context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
     context.clientId = context.realtime.auth.clientId;
-    context.chatRoom = await context.chat.get(randomRoomId(), {
+    context.chatRoom = await context.chat.get(randomRoomName(), {
       typing: { heartbeatThrottleMs: 600 },
     });
   });
@@ -114,8 +114,8 @@ describe('Typing', () => {
 
       const roomOptions = { typing: { heartbeatThrottleMs: 10000 } };
 
-      const client1Room = await client1.get(context.chatRoom.roomId, roomOptions);
-      const client2Room = await client2.get(context.chatRoom.roomId, roomOptions);
+      const client1Room = await client1.get(context.chatRoom.name, roomOptions);
+      const client2Room = await client2.get(context.chatRoom.name, roomOptions);
 
       // Attach the rooms
       await context.chatRoom.attach();

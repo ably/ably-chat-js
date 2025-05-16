@@ -205,7 +205,6 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, logger, listenerRef]);
 
@@ -222,7 +221,6 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, logger, onDiscontinuityRef]);
 
@@ -235,15 +233,14 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
           // eslint-disable-next-line @typescript-eslint/no-empty-function
           return () => {};
         }
-        logger.debug('useMessages(); applying reactions listener', { roomId: context.roomId });
+        logger.debug('useMessages(); applying reactions listener');
         const { unsubscribe } = room.messages.reactions.subscribe(params.reactionsListener);
         return () => {
-          logger.debug('useMessages(); removing reactions listener', { roomId: context.roomId });
+          logger.debug('useMessages(); removing reactions listener');
           unsubscribe();
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, logger, params?.reactionsListener]);
 
@@ -255,15 +252,14 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
         if (!params.rawReactionsListener) {
           return () => void 0;
         }
-        logger.debug('useMessages(); applying raw reactions listener', { roomId: context.roomId });
+        logger.debug('useMessages(); applying raw reactions listener');
         const { unsubscribe } = room.messages.reactions.subscribeRaw(params.rawReactionsListener);
         return () => {
-          logger.debug('useMessages(); removing raw reactions listener', { roomId: context.roomId });
+          logger.debug('useMessages(); removing raw reactions listener');
           unsubscribe();
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, logger, params?.rawReactionsListener]);
 

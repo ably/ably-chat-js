@@ -72,7 +72,7 @@ interface OccupancyEventsMap {
  * @inheritDoc
  */
 export class DefaultOccupancy implements Occupancy {
-  private readonly _roomId: string;
+  private readonly _roomName: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private readonly _logger: Logger;
@@ -82,20 +82,20 @@ export class DefaultOccupancy implements Occupancy {
 
   /**
    * Constructs a new `DefaultOccupancy` instance.
-   * @param roomId The unique identifier of the room.
+   * @param roomName The unique identifier of the room.
    * @param channel An instance of the Realtime channel.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
    * @param roomOptions The room options.
    */
   constructor(
-    roomId: string,
+    roomName: string,
     channel: Ably.RealtimeChannel,
     chatApi: ChatApi,
     logger: Logger,
     roomOptions: InternalRoomOptions,
   ) {
-    this._roomId = roomId;
+    this._roomName = roomName;
     this._channel = channel;
     this._chatApi = chatApi;
     this._logger = logger;
@@ -142,7 +142,7 @@ export class DefaultOccupancy implements Occupancy {
    */
   async get(): Promise<OccupancyData> {
     this._logger.trace('Occupancy.get();');
-    return this._chatApi.getOccupancy(this._roomId);
+    return this._chatApi.getOccupancy(this._roomName);
   }
 
   /**

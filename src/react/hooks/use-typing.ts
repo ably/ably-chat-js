@@ -109,7 +109,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, logger]);
 
@@ -127,7 +126,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, onDiscontinuityRef, logger]);
 
@@ -145,7 +143,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, listenerRef, logger]);
 

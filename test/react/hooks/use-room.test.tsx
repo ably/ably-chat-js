@@ -7,7 +7,7 @@ import { RoomStatus, RoomStatusListener } from '../../../src/core/room-status.ts
 import { ChatRoomProvider, useRoom, UseRoomResponse } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { randomRoomName } from '../../helper/identifier.ts';
 
 const TestComponent: React.FC<{ callback?: (room: UseRoomResponse) => void }> = ({ callback }) => {
   const response = useRoom();
@@ -45,11 +45,11 @@ describe('useRoom', () => {
   it('should get the room from the context without error', async () => {
     const chatClient = newChatClient();
     let latestResponse: UseRoomResponse | undefined;
-    const roomId = randomRoomId();
+    const roomName = randomRoomName();
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
         <ChatRoomProvider
-          id={roomId}
+          name={roomName}
           attach={false}
           release={false}
         >
@@ -63,7 +63,7 @@ describe('useRoom', () => {
     );
     render(<TestProvider />);
     await vi.waitFor(() => {
-      expect(latestResponse?.room?.roomId).toBe(roomId);
+      expect(latestResponse?.room?.name).toBe(roomName);
     });
     expect(latestResponse?.attach).toBeTruthy();
     expect(latestResponse?.detach).toBeTruthy();
@@ -73,11 +73,11 @@ describe('useRoom', () => {
   it('should return working shortcuts for attach and detach functions', async () => {
     const chatClient = newChatClient();
     let called = false;
-    const roomId = randomRoomId();
+    const roomName = randomRoomName();
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
         <ChatRoomProvider
-          id={roomId}
+          name={roomName}
           attach={false}
           release={false}
         >
@@ -107,8 +107,8 @@ describe('useRoom', () => {
     const chatClient = newChatClient();
     let called1 = 0;
     let called2 = 0;
-    const roomId = randomRoomId();
-    const room = await chatClient.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const room = await chatClient.rooms.get(roomName);
 
     vi.spyOn(room, 'attach').mockImplementation(() => Promise.resolve());
     vi.spyOn(room, 'detach').mockImplementation(() => Promise.resolve());
@@ -117,7 +117,7 @@ describe('useRoom', () => {
     const TestProvider = ({ room1 = true, room2 = true }) => {
       const component1 = (
         <ChatRoomProvider
-          id={roomId}
+          name={roomName}
           attach={false}
           release={false}
         >
@@ -131,7 +131,7 @@ describe('useRoom', () => {
 
       const component2 = (
         <ChatRoomProvider
-          id={roomId}
+          name={roomName}
           attach={true}
           release={true}
         >
@@ -231,14 +231,14 @@ describe('useRoom', () => {
     // room.detach is not called when releasing, detach happens via lifecycleManager but skipping the public API
     expect(room.detach).toHaveBeenCalledTimes(0);
     await vi.waitFor(() => {
-      expect(chatClient.rooms.release).toHaveBeenCalledWith(roomId);
+      expect(chatClient.rooms.release).toHaveBeenCalledWith(roomName);
     });
   });
 
   it('should correctly set room status callback', async () => {
     const chatClient = newChatClient();
-    const roomId = randomRoomId();
-    const room = await chatClient.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const room = await chatClient.rooms.get(roomName);
 
     let listeners: RoomStatusListener[] = [];
 
@@ -261,7 +261,7 @@ describe('useRoom', () => {
     const WithClient = ({ children }: { children: React.ReactNode }) => {
       return (
         <ChatClientProvider client={chatClient}>
-          <ChatRoomProvider id={roomId}>{children}</ChatRoomProvider>
+          <ChatRoomProvider name={roomName}>{children}</ChatRoomProvider>
         </ChatClientProvider>
       );
     };
@@ -289,8 +289,8 @@ describe('useRoom', () => {
 
   it('should correctly set room status and error state variables', async () => {
     const chatClient = newChatClient();
-    const roomId = randomRoomId();
-    const room = await chatClient.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const room = await chatClient.rooms.get(roomName);
 
     let listeners: RoomStatusListener[] = [];
 
@@ -306,7 +306,7 @@ describe('useRoom', () => {
     const WithClient = ({ children }: { children: React.ReactNode }) => {
       return (
         <ChatClientProvider client={chatClient}>
-          <ChatRoomProvider id={roomId}>{children}</ChatRoomProvider>
+          <ChatRoomProvider name={roomName}>{children}</ChatRoomProvider>
         </ChatClientProvider>
       );
     };

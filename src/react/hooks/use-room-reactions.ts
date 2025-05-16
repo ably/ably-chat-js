@@ -72,7 +72,6 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, onDiscontinuityRef, logger]);
 
@@ -90,7 +89,6 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, listenerRef, logger]);
 

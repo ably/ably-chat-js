@@ -44,7 +44,6 @@ export type RoomResolutionCallback = (room: Room) => UnmountCallback;
  * Default implementation of RoomPromise.
  */
 class DefaultRoomPromise implements RoomPromise {
-  private readonly _roomId?: string;
   private readonly _logger: Logger;
   private readonly _onResolve: RoomResolutionCallback;
   private _onUnmount?: UnmountCallback;
@@ -56,15 +55,13 @@ class DefaultRoomPromise implements RoomPromise {
    * @param room  The promise that resolves to a Room instance.
    * @param onResolve  The callback that is called when the promise resolves to a Room instance.
    * @param logger  The logger to use for logging.
-   * @param roomId The ID of the room, used for logging.
    */
-  constructor(room: Promise<Room>, onResolve: RoomResolutionCallback, logger: Logger, roomId?: string) {
-    this._roomId = roomId;
+  constructor(room: Promise<Room>, onResolve: RoomResolutionCallback, logger: Logger) {
     this._onResolve = onResolve;
     this._logger = logger;
 
     this.mount(room).catch((error: unknown) => {
-      this._logger.trace('DefaultRoomPromise(); mount error', { roomId: this._roomId, error: error });
+      this._logger.trace('DefaultRoomPromise(); mount error', { error: error });
     });
   }
 
@@ -139,14 +136,8 @@ class DefaultRoomPromise implements RoomPromise {
  * @param room The promise that resolves to a Room instance.
  * @param onResolve The callback that is called when the promise resolves to a Room instance.
  * @param logger The logger to use for logging.
- * @param id The ID of the room, used for logging.
  * @returns A RoomPromise instance that can be used to clean up resources.
  */
-export function wrapRoomPromise(
-  room: Promise<Room>,
-  onResolve: RoomResolutionCallback,
-  logger: Logger,
-  id?: string,
-): RoomPromise {
-  return new DefaultRoomPromise(room, onResolve, logger, id);
+export function wrapRoomPromise(room: Promise<Room>, onResolve: RoomResolutionCallback, logger: Logger): RoomPromise {
+  return new DefaultRoomPromise(room, onResolve, logger);
 }
