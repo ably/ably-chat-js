@@ -2,14 +2,14 @@
 import { PresenceMember } from '@ably/chat';
 import * as Ably from 'ably';
 import { PresenceAction, Realtime } from 'ably';
-import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
-import { PresenceEvents } from '../../src/core/events.ts';
+import { PresenceEventType } from '../../src/core/events.ts';
 import { PresenceData, PresenceEvent } from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
 import { newChatClient } from '../helper/chat.ts';
+import { waitForExpectedPresenceEvent } from '../helper/common.ts';
 import { randomRoomId } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 
@@ -21,29 +21,12 @@ interface TestContext {
   chat: ChatClient;
 }
 
-// Wait a maximum of 20 seconds for a particular presence event to be received
-const waitForPresenceEvent = async (
-  events: PresenceEvent[],
-  action: PresenceEvents,
-  clientId: string,
-  data?: unknown,
-) => {
-  await vi.waitFor(
-    () => {
-      expect(
-        events.some((event) => event.action === action && dequal(event.data, data) && event.clientId === clientId),
-      ).toBe(true);
-    },
-    { timeout: 20000, interval: 100 },
-  );
-};
-
 // Wait a maximum of 10 seconds to assert that a presence event has not been received
-const assertNoPresenceEvent = async (events: PresenceEvent[], action: PresenceEvents, clientId: string) => {
+const assertNoPresenceEvent = async (events: PresenceEvent[], type: PresenceEventType, clientId: string) => {
   return new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       for (const event of events) {
-        if (event.action === action && event.clientId === clientId) {
+        if (event.type === type && event.member.clientId === clientId) {
           clearInterval(interval);
           reject(new Error('Presence event was received'));
         }
@@ -204,17 +187,14 @@ describe('UserPresence', { timeout: 30000 }, () => {
         expect.arrayContaining([
           expect.objectContaining({
             clientId: 'clientId1',
-            action: 'present',
             data: undefined,
           }),
           expect.objectContaining({
             clientId: 'clientId2',
-            action: 'present',
             data: { customKeyOne: 1 },
           }),
           expect.objectContaining({
             clientId: 'clientId3',
-            action: 'present',
             data: undefined,
           }),
         ]),
@@ -228,7 +208,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
     // Wait for up to 5 seconds for the presence list to update after clients leave
     await waitForPresenceList(context.chatRoom, (fetchedPresenceAfterLeave) => {
       expect(fetchedPresenceAfterLeave, 'fetched presence should not contain clientId3').not.toEqual(
-        expect.arrayContaining([{ clientId: 'clientId3', status: 'present' }]),
+        expect.arrayContaining([{ clientId: 'clientId3' }]),
       );
     });
   });
@@ -248,7 +228,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
   it<TestContext>('should successfully subscribe to enter events ', async (context) => {
     // Subscribe to enter events
     const presenceEvents: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe(PresenceEvents.Enter, (event) => {
+    context.chatRoom.presence.subscribe(PresenceEventType.Enter, (event) => {
       presenceEvents.push(event);
     });
 
@@ -256,13 +236,16 @@ describe('UserPresence', { timeout: 30000 }, () => {
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
 
     // Wait for the enter event to be received
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId, { customKeyOne: 1 });
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Enter, data: { customKeyOne: 1 } },
+      presenceEvents,
+    );
   });
 
   it<TestContext>('does not send unrelated presence events', async (context) => {
     // Subscribe to enter events
     const presenceEvents: PresenceEvent[] = [];
-    const { unsubscribe } = context.chatRoom.presence.subscribe(PresenceEvents.Leave, (event) => {
+    const { unsubscribe } = context.chatRoom.presence.subscribe(PresenceEventType.Leave, (event) => {
       presenceEvents.push(event);
     });
 
@@ -270,7 +253,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
     await context.chatRoom.presence.update({ customKeyOne: 1 });
 
     // Wait for the enter event to be received
-    await assertNoPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId);
+    await assertNoPresenceEvent(presenceEvents, PresenceEventType.Enter, context.chat.clientId);
 
     // Unsubscribe from presence events
     unsubscribe();
@@ -279,7 +262,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
   it<TestContext>('should unsubscribe from presence events', async (context) => {
     const presenceEvents: PresenceEvent[] = [];
     const { unsubscribe } = context.chatRoom.presence.subscribe(
-      [PresenceEvents.Enter, PresenceEvents.Update],
+      [PresenceEventType.Enter, PresenceEventType.Update],
       (event) => {
         presenceEvents.push(event);
       },
@@ -289,7 +272,10 @@ describe('UserPresence', { timeout: 30000 }, () => {
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
 
     // Wait for the enter event to be received
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId, { customKeyOne: 1 });
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Enter, data: { customKeyOne: 1 } },
+      presenceEvents,
+    );
 
     // Unsubscribe from presence events
     unsubscribe();
@@ -298,7 +284,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
     await context.chatRoom.presence.update({ customKeyOne: 2 });
 
     // Assert that the update event was not received
-    await assertNoPresenceEvent(presenceEvents, PresenceEvents.Update, context.chat.clientId);
+    await assertNoPresenceEvent(presenceEvents, PresenceEventType.Update, context.chat.clientId);
 
     // A second call to unsubscribe should not throw an error
     unsubscribe();
@@ -306,12 +292,12 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
   it<TestContext>('should unsubscribe all listeners from presence events', async (context) => {
     const presenceEvents: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe([PresenceEvents.Enter, PresenceEvents.Update], (event) => {
+    context.chatRoom.presence.subscribe([PresenceEventType.Enter, PresenceEventType.Update], (event) => {
       presenceEvents.push(event);
     });
 
     const presenceEvents2: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe([PresenceEvents.Enter, PresenceEvents.Update], (event) => {
+    context.chatRoom.presence.subscribe([PresenceEventType.Enter, PresenceEventType.Update], (event) => {
       presenceEvents2.push(event);
     });
 
@@ -319,8 +305,14 @@ describe('UserPresence', { timeout: 30000 }, () => {
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
 
     // Wait for the enter event to be received
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId, { customKeyOne: 1 });
-    await waitForPresenceEvent(presenceEvents2, PresenceEvents.Enter, context.chat.clientId, { customKeyOne: 1 });
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Enter, data: { customKeyOne: 1 } },
+      presenceEvents,
+    );
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Enter, data: { customKeyOne: 1 } },
+      presenceEvents2,
+    );
 
     // Unsubscribe all listeners
     context.chatRoom.presence.unsubscribeAll();
@@ -329,14 +321,14 @@ describe('UserPresence', { timeout: 30000 }, () => {
     await context.chatRoom.presence.update({ customKeyOne: 2 });
 
     // Assert that the update event was not received
-    await assertNoPresenceEvent(presenceEvents, PresenceEvents.Update, context.chat.clientId);
-    await assertNoPresenceEvent(presenceEvents2, PresenceEvents.Update, context.chat.clientId);
+    await assertNoPresenceEvent(presenceEvents, PresenceEventType.Update, context.chat.clientId);
+    await assertNoPresenceEvent(presenceEvents2, PresenceEventType.Update, context.chat.clientId);
   });
 
   it<TestContext>('should successfully subscribe to update events ', async (context) => {
     // Subscribe to update events
     const presenceEvents: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe(PresenceEvents.Update, (event) => {
+    context.chatRoom.presence.subscribe(PresenceEventType.Update, (event) => {
       presenceEvents.push(event);
     });
 
@@ -345,13 +337,16 @@ describe('UserPresence', { timeout: 30000 }, () => {
     await context.chatRoom.presence.update({ customKeyOne: 2 });
 
     // Wait for the update event to be received
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Update, context.chat.clientId, { customKeyOne: 2 });
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: { customKeyOne: 2 } },
+      presenceEvents,
+    );
   });
 
   it<TestContext>('should successfully subscribe to leave events ', async (context) => {
     // Subscribe to leave events
     const presenceEvents: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe(PresenceEvents.Leave, (event) => {
+    context.chatRoom.presence.subscribe(PresenceEventType.Leave, (event) => {
       presenceEvents.push(event);
     });
 
@@ -360,8 +355,12 @@ describe('UserPresence', { timeout: 30000 }, () => {
     await context.chatRoom.presence.leave({ customKeyOne: 3 });
 
     // Wait for the update event to be received
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Leave, context.chat.clientId, { customKeyOne: 3 });
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Leave, data: { customKeyOne: 3 } },
+      presenceEvents,
+    );
   });
+
   it<TestContext>('should successfully handle multiple data types', async (context) => {
     // Subscribe to leave events
     const presenceEvents: PresenceEvent[] = [];
@@ -370,18 +369,33 @@ describe('UserPresence', { timeout: 30000 }, () => {
     });
     // Enter presence to trigger the enter event with undefined data
     await context.chatRoom.presence.enter();
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Enter, context.chat.clientId);
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Enter, data: undefined },
+      presenceEvents,
+    );
     // Update with string
     await context.chatRoom.presence.update('string');
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Update, context.chat.clientId, 'string');
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: 'string' },
+      presenceEvents,
+    );
     // Update with number
     await context.chatRoom.presence.update(1);
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Update, context.chat.clientId, 1);
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: 1 },
+      presenceEvents,
+    );
     // Update with boolean
     await context.chatRoom.presence.update(true);
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Update, context.chat.clientId, true);
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: true },
+      presenceEvents,
+    );
     // Update with object
     await context.chatRoom.presence.update({ key: 'value' });
-    await waitForPresenceEvent(presenceEvents, PresenceEvents.Update, context.chat.clientId, { key: 'value' });
+    await waitForExpectedPresenceEvent(
+      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: { key: 'value' } },
+      presenceEvents,
+    );
   });
 });

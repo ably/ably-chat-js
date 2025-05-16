@@ -73,10 +73,10 @@ describe('usePresenceListener', () => {
 
     // expect a presence enter and update event from the test component to be received
     await waitForArrayLength(presenceEventsReceived, 2);
-    expect(presenceEventsReceived[0]?.clientId).toBe(chatClientTwo.clientId);
-    expect(presenceEventsReceived[0]?.data).toBe('test enter');
-    expect(presenceEventsReceived[1]?.clientId).toBe(chatClientTwo.clientId);
-    expect(presenceEventsReceived[1]?.data).toBe('test update');
+    expect(presenceEventsReceived[0]?.member.clientId).toBe(chatClientTwo.clientId);
+    expect(presenceEventsReceived[0]?.member.data).toBe('test enter');
+    expect(presenceEventsReceived[1]?.member.clientId).toBe(chatClientTwo.clientId);
+    expect(presenceEventsReceived[1]?.member.data).toBe('test update');
 
     // expect the current presence state to reflect only the latest presence data
     expect(currentPresenceData.length).toBe(1);
