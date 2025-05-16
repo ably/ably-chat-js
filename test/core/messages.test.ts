@@ -81,7 +81,6 @@ describe('Messages', () => {
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
-          roomId: context.room.roomId,
         }),
       );
     });
@@ -111,7 +110,6 @@ describe('Messages', () => {
           clientId: 'clientId',
           timestamp: new Date(deleteTimestamp),
           createdAt: new Date(sendTimestamp),
-          roomId: context.room.roomId,
         }),
       );
 
@@ -144,7 +142,6 @@ describe('Messages', () => {
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
-          roomId: room.roomId,
           headers: {
             something: 'else',
             abc: 123,

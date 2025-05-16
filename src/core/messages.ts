@@ -476,7 +476,6 @@ export class DefaultMessages implements Messages {
     return new DefaultMessage({
       serial: response.serial,
       clientId: this._clientId,
-      roomId: this._roomId,
       text: text,
       metadata: metadata ?? {},
       headers: headers ?? {},
@@ -503,7 +502,6 @@ export class DefaultMessages implements Messages {
     const updatedMessage: Message = new DefaultMessage({
       serial: message.serial,
       clientId: message.clientId,
-      roomId: this._roomId,
       text: message.text,
       metadata: message.metadata,
       headers: message.headers,
@@ -534,7 +532,6 @@ export class DefaultMessages implements Messages {
     const deletedMessage: Message = new DefaultMessage({
       serial: message.serial,
       clientId: message.clientId,
-      roomId: this._roomId,
       text: message.text,
       metadata: message.metadata,
       headers: message.headers,
@@ -608,7 +605,7 @@ export class DefaultMessages implements Messages {
    */
   private _parseNewMessage(channelEventMessage: Ably.InboundMessage): Message | undefined {
     try {
-      return parseMessage(this._roomId, channelEventMessage);
+      return parseMessage(channelEventMessage);
     } catch (error: unknown) {
       this._logger.error(`failed to parse incoming message;`, { channelEventMessage, error: error as Ably.ErrorInfo });
     }

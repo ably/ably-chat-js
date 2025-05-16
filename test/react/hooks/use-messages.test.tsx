@@ -110,7 +110,6 @@ describe('useMessages', () => {
         text: 'test message',
         serial: '123',
         clientId: '123',
-        roomId: '123',
         createdAt: new Date(),
         action: ChatMessageAction.MessageCreate,
         version: '123',
@@ -186,7 +185,6 @@ describe('useMessages', () => {
     const message = new DefaultMessage({
       serial: '01719948956834-000@108TeGZDQBderu97202638',
       clientId: 'client-1',
-      roomId: 'some-room',
       text: 'I have the high ground now',
       metadata: {},
       headers: {},
