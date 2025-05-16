@@ -24,11 +24,6 @@ export interface Typing {
   subscribe(listener: TypingListener): Subscription;
 
   /**
-   * Unsubscribe all listeners from receiving typing events.
-   */
-  unsubscribeAll(): void;
-
-  /**
    * Get the current typers, a set of clientIds.
    * @returns The set of clientIds that are currently typing.
    */
@@ -301,14 +296,6 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         this.off(wrapped);
       },
     };
-  }
-
-  /**
-   * @inheritDoc
-   */
-  unsubscribeAll(): void {
-    this._logger.trace(`DefaultTyping.unsubscribeAll();`, { roomId: this._roomId });
-    this.off();
   }
 
   /**

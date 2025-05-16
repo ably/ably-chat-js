@@ -105,21 +105,6 @@ describe('connection', () => {
       done();
     }));
 
-  it<TestContext>('listeners can all be removed', (context) =>
-    new Promise<void>((done, reject) => {
-      const connection = new DefaultConnection(context.realtime, makeTestLogger());
-      connection.onStatusChange(() => {
-        reject(new Error('Expected onChange to not be called'));
-      });
-      connection.onStatusChange(() => {
-        reject(new Error('Expected onChange to not be called'));
-      });
-
-      connection.offAllStatusChange();
-      context.emulateStateChange({ current: 'connected', previous: 'disconnected' });
-      done();
-    }));
-
   it<TestContext>('subscriptions are unique even for same listener', (context) => {
     const connection = new DefaultConnection(context.realtime, makeTestLogger());
 

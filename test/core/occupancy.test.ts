@@ -166,65 +166,6 @@ describe('Occupancy', () => {
     unsubscribe();
   });
 
-  it<TestContext>('allows all listeners to be unsubscribed', (context) => {
-    const receivedEvents: OccupancyEvent[] = [];
-    const { unsubscribe } = context.room.occupancy.subscribe((event: OccupancyEvent) => {
-      receivedEvents.push(event);
-    });
-
-    const receivedEvents2: OccupancyEvent[] = [];
-    const { unsubscribe: unsubscribe2 } = context.room.occupancy.subscribe((event: OccupancyEvent) => {
-      receivedEvents2.push(event);
-    });
-
-    // We should get this event
-    context.emulateOccupancyUpdate({
-      name: '[meta]occupancy',
-      data: {
-        metrics: {
-          connections: 0,
-          presenceMembers: 0,
-        },
-      },
-    });
-
-    // Unsubscribe all
-    context.room.occupancy.unsubscribeAll();
-
-    // We should not get this event
-    context.emulateOccupancyUpdate({
-      name: '[meta]occupancy',
-      data: {
-        metrics: {
-          connections: 5,
-          presenceMembers: 3,
-        },
-      },
-    });
-
-    // Check that we only received the first event
-    expect(receivedEvents).toHaveLength(1);
-    expect(receivedEvents[0]).toEqual({
-      type: 'occupancy.updated',
-      occupancy: {
-        connections: 0,
-        presenceMembers: 0,
-      },
-    });
-    expect(receivedEvents2).toHaveLength(1);
-    expect(receivedEvents2[0]).toEqual({
-      type: 'occupancy.updated',
-      occupancy: {
-        connections: 0,
-        presenceMembers: 0,
-      },
-    });
-
-    // Calling unsubscribe again should not throw
-    unsubscribe();
-    unsubscribe2();
-  });
-
   it<TestContext>('should only unsubscribe the correct subscription', (context) => {
     const { room } = context;
     const received: OccupancyEvent[] = [];

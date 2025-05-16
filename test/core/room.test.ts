@@ -181,51 +181,6 @@ describe('Room', () => {
       // Change should not be recorded
       expect(statuses).toEqual([RoomStatus.Failed, RoomStatus.Releasing]);
     });
-
-    it<TestContext>('should allow all subscriptions to be removed', async (context) => {
-      const room = context.getRoom();
-
-      const statuses: RoomStatus[] = [];
-      const errors: Ably.ErrorInfo[] = [];
-      room.onStatusChange((change) => {
-        statuses.push(change.current);
-        if (change.error) {
-          errors.push(change.error);
-        }
-      });
-
-      const statuses2 = [] as RoomStatus[];
-      const errors2 = [] as Ably.ErrorInfo[];
-      room.onStatusChange((change) => {
-        statuses2.push(change.current);
-        if (change.error) {
-          errors2.push(change.error);
-        }
-      });
-
-      // Wait for the room to be initialized
-      await waitForRoomStatus(room, RoomStatus.Initialized);
-
-      // Now change its status to an error
-      const lifecycle = (room as DefaultRoom).lifecycle;
-      lifecycle.setStatus({ status: RoomStatus.Failed, error: new Ably.ErrorInfo('test', 50000, 500) });
-
-      // Check both subscriptions received the change
-      expect(statuses).toEqual([RoomStatus.Failed]);
-      expect(errors).toEqual([new Ably.ErrorInfo('test', 50000, 500)]);
-      expect(statuses2).toEqual([RoomStatus.Failed]);
-      expect(errors2).toEqual([new Ably.ErrorInfo('test', 50000, 500)]);
-
-      // Now remove all subscriptions
-      room.offAllStatusChange();
-
-      // Send another event and check that its not received
-      lifecycle.setStatus({ status: RoomStatus.Failed });
-      expect(statuses).toEqual([RoomStatus.Failed]);
-      expect(errors).toEqual([new Ably.ErrorInfo('test', 50000, 500)]);
-      expect(statuses2).toEqual([RoomStatus.Failed]);
-      expect(errors2).toEqual([new Ably.ErrorInfo('test', 50000, 500)]);
-    });
   });
 
   describe('room release', () => {

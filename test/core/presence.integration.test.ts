@@ -290,41 +290,6 @@ describe('UserPresence', { timeout: 30000 }, () => {
     unsubscribe();
   });
 
-  it<TestContext>('should unsubscribe all listeners from presence events', async (context) => {
-    const presenceEvents: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe([PresenceEventType.Enter, PresenceEventType.Update], (event) => {
-      presenceEvents.push(event);
-    });
-
-    const presenceEvents2: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe([PresenceEventType.Enter, PresenceEventType.Update], (event) => {
-      presenceEvents2.push(event);
-    });
-
-    // Enter presence to trigger the enter event
-    await context.chatRoom.presence.enter({ customKeyOne: 1 });
-
-    // Wait for the enter event to be received
-    await waitForExpectedPresenceEvent(
-      { clientId: context.chat.clientId, type: PresenceEventType.Enter, data: { customKeyOne: 1 } },
-      presenceEvents,
-    );
-    await waitForExpectedPresenceEvent(
-      { clientId: context.chat.clientId, type: PresenceEventType.Enter, data: { customKeyOne: 1 } },
-      presenceEvents2,
-    );
-
-    // Unsubscribe all listeners
-    context.chatRoom.presence.unsubscribeAll();
-
-    // Trigger an update event
-    await context.chatRoom.presence.update({ customKeyOne: 2 });
-
-    // Assert that the update event was not received
-    await assertNoPresenceEvent(presenceEvents, PresenceEventType.Update, context.chat.clientId);
-    await assertNoPresenceEvent(presenceEvents2, PresenceEventType.Update, context.chat.clientId);
-  });
-
   it<TestContext>('should successfully subscribe to update events ', async (context) => {
     // Subscribe to update events
     const presenceEvents: PresenceEvent[] = [];

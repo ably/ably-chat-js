@@ -81,11 +81,6 @@ export interface Room {
   onStatusChange(listener: RoomStatusListener): StatusSubscription;
 
   /**
-   * Removes all listeners that were added by the `onStatusChange` method.
-   */
-  offAllStatusChange(): void;
-
-  /**
    * Attaches to the room to receive events in realtime.
    *
    * If a room fails to attach, it will enter either the {@link RoomStatus.Suspended} or {@link RoomStatus.Failed} state.
@@ -300,13 +295,6 @@ export class DefaultRoom implements Room {
    */
   onStatusChange(listener: RoomStatusListener): StatusSubscription {
     return this._lifecycle.onChange(listener);
-  }
-
-  /**
-   * @inheritdoc Room
-   */
-  offAllStatusChange(): void {
-    this._lifecycle.offAll();
   }
 
   /**

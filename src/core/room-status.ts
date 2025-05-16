@@ -107,11 +107,6 @@ export interface RoomLifecycle {
    * @returns An object that can be used to unregister the listener.
    */
   onChange(listener: RoomStatusListener): StatusSubscription;
-
-  /**
-   * Removes all listeners that were added by the `onChange` method.
-   */
-  offAll(): void;
 }
 
 /**
@@ -204,13 +199,6 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
 
   onChangeOnce(listener: RoomStatusListener): void {
     this._internalEmitter.once(listener);
-  }
-
-  /**
-   * @inheritdoc
-   */
-  offAll(): void {
-    this._emitter.off();
   }
 
   setStatus(params: NewRoomStatus): void {

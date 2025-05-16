@@ -96,11 +96,6 @@ export interface Connection {
    * @returns An object that can be used to unregister the listener.
    */
   onStatusChange(listener: ConnectionStatusListener): StatusSubscription;
-
-  /**
-   * Removes all listeners that were added by the `onStatusChange` method.
-   */
-  offAllStatusChange(): void;
 }
 
 type ConnectionEventsMap = Record<ConnectionStatus, ConnectionStatusChange>;
@@ -194,13 +189,6 @@ export class DefaultConnection implements Connection {
         this._emitter.off(wrapped);
       },
     };
-  }
-
-  /**
-   * @inheritdoc
-   */
-  offAllStatusChange(): void {
-    this._emitter.off();
   }
 
   private _applyStatusChange(change: ConnectionStatusChange): void {

@@ -38,22 +38,6 @@ describe('room status', () => {
       done();
     }));
 
-  it('listeners can all be removed', () =>
-    new Promise<void>((done, reject) => {
-      const status = new DefaultRoomLifecycle('roomId', makeTestLogger());
-      status.onChange(() => {
-        reject(new Error('Expected onChange to not be called'));
-      });
-
-      status.onChange(() => {
-        reject(new Error('Expected onChange to not be called'));
-      });
-
-      status.offAll();
-      status.setStatus({ status: RoomStatus.Attached, error: baseError });
-      done();
-    }));
-
   it('subscriptions are unique even if listeners are identical', () =>
     new Promise<void>((done, reject) => {
       const status = new DefaultRoomLifecycle('roomId', makeTestLogger());

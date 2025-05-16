@@ -203,11 +203,6 @@ export interface Messages {
   subscribe(listener: MessageListener): MessageSubscriptionResponse;
 
   /**
-   * Unsubscribe all listeners from new messages in the chat room.
-   */
-  unsubscribeAll(): void;
-
-  /**
    * Get messages that have been previously sent to the chat room, based on the provided options.
    *
    * @param options Options for the query.
@@ -587,15 +582,6 @@ export class DefaultMessages implements Messages {
       historyBeforeSubscribe: (params: Omit<QueryOptions, 'orderBy'>) =>
         this._getBeforeSubscriptionStart(wrapped, params),
     };
-  }
-
-  /**
-   * @inheritdoc Messages
-   */
-  unsubscribeAll(): void {
-    this._logger.trace('Messages.unsubscribeAll();');
-    this._emitter.off();
-    this._listenerSubscriptionPoints.clear();
   }
 
   private _processEvent(channelEventMessage: Ably.InboundMessage) {
