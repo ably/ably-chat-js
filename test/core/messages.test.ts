@@ -3,7 +3,7 @@ import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
-import { ChatMessageActions, MessageEvent, MessageEvents } from '../../src/core/events.ts';
+import { ChatMessageActions, MessageEvent, MessageEventType } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
@@ -260,15 +260,15 @@ describe('Messages', () => {
     const receivedUpdates: Message[] = [];
     const listener = (message: MessageEvent) => {
       switch (message.type) {
-        case MessageEvents.Created: {
+        case MessageEventType.Created: {
           receivedMessages.push(message.message);
           break;
         }
-        case MessageEvents.Deleted: {
+        case MessageEventType.Deleted: {
           receivedDeletions.push(message.message);
           break;
         }
-        case MessageEvents.Updated: {
+        case MessageEventType.Updated: {
           receivedUpdates.push(message.message);
           break;
         }
@@ -405,15 +405,15 @@ describe('Messages', () => {
 
     const listener = (message: MessageEvent) => {
       switch (message.type) {
-        case MessageEvents.Created: {
+        case MessageEventType.Created: {
           receivedMessages.push(message.message);
           break;
         }
-        case MessageEvents.Deleted: {
+        case MessageEventType.Deleted: {
           receivedDeletions.push(message.message);
           break;
         }
-        case MessageEvents.Updated: {
+        case MessageEventType.Updated: {
           receivedUpdates.push(message.message);
           break;
         }
@@ -426,15 +426,15 @@ describe('Messages', () => {
 
     const listener2 = (message: MessageEvent) => {
       switch (message.type) {
-        case MessageEvents.Created: {
+        case MessageEventType.Created: {
           receivedMessages2.push(message.message);
           break;
         }
-        case MessageEvents.Deleted: {
+        case MessageEventType.Deleted: {
           receivedDeletions2.push(message.message);
           break;
         }
-        case MessageEvents.Updated: {
+        case MessageEventType.Updated: {
           receivedUpdates2.push(message.message);
           break;
         }

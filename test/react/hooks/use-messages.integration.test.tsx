@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../../src/core/chat.ts';
-import { ChatMessageActions, MessageEvents } from '../../../src/core/events.ts';
+import { ChatMessageActions, MessageEventType } from '../../../src/core/events.ts';
 import { Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
@@ -73,7 +73,7 @@ describe('useMessages', () => {
     // start listening for deletions
     const deletionsRoomTwo: Message[] = [];
     roomTwo.messages.subscribe((message) => {
-      if (message.type === MessageEvents.Deleted) {
+      if (message.type === MessageEventType.Deleted) {
         deletionsRoomTwo.push(message.message);
       }
     });
@@ -124,7 +124,7 @@ describe('useMessages', () => {
     // start listening for updates
     const updatesRoomTwo: Message[] = [];
     roomTwo.messages.subscribe((message) => {
-      if (message.type === MessageEvents.Updated) {
+      if (message.type === MessageEventType.Updated) {
         updatesRoomTwo.push(message.message);
       }
     });

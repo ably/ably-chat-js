@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
-import { RoomEvents } from '../../src/core/events.ts';
+import { RoomEventType } from '../../src/core/events.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { RoomLifeCycleEvents } from '../../src/core/room-lifecycle-manager.ts';
@@ -307,7 +307,7 @@ describe('Room', () => {
       const error = new Ably.ErrorInfo('test discontinuity', 50000, 500);
       const eventEmitter = (room.lifecycleManager as unknown as { _eventEmitter: EventEmitter<RoomLifeCycleEvents> })
         ._eventEmitter;
-      eventEmitter.emit(RoomEvents.Discontinuity, new Ably.ErrorInfo('discontinuity detected', 80003, 500, error));
+      eventEmitter.emit(RoomEventType.Discontinuity, new Ably.ErrorInfo('discontinuity detected', 80003, 500, error));
 
       expect(discontinuityErrors).toEqual([new Ably.ErrorInfo('discontinuity detected', 80003, 500, error)]);
 
@@ -315,7 +315,7 @@ describe('Room', () => {
       off();
 
       // Simulate another discontinuity event
-      eventEmitter.emit(RoomEvents.Discontinuity, new Ably.ErrorInfo('discontinuity detected', 80003, 500, error));
+      eventEmitter.emit(RoomEventType.Discontinuity, new Ably.ErrorInfo('discontinuity detected', 80003, 500, error));
 
       // Change should not be recorded since we removed the listener
       expect(discontinuityErrors).toEqual([new Ably.ErrorInfo('discontinuity detected', 80003, 500, error)]);
@@ -333,21 +333,21 @@ describe('Room', () => {
       const subscription2 = room.onDiscontinuity(listener);
 
       (room.lifecycleManager as unknown as { _eventEmitter: EventEmitter<RoomLifeCycleEvents> })._eventEmitter.emit(
-        RoomEvents.Discontinuity,
+        RoomEventType.Discontinuity,
         new Ably.ErrorInfo('error1', 0, 0),
       );
       expect(received).toEqual(['error1', 'error1']);
 
       subscription1.off();
       (room.lifecycleManager as unknown as { _eventEmitter: EventEmitter<RoomLifeCycleEvents> })._eventEmitter.emit(
-        RoomEvents.Discontinuity,
+        RoomEventType.Discontinuity,
         new Ably.ErrorInfo('error2', 0, 0),
       );
       expect(received).toEqual(['error1', 'error1', 'error2']);
 
       subscription2.off();
       (room.lifecycleManager as unknown as { _eventEmitter: EventEmitter<RoomLifeCycleEvents> })._eventEmitter.emit(
-        RoomEvents.Discontinuity,
+        RoomEventType.Discontinuity,
         new Ably.ErrorInfo('error3', 0, 0),
       );
       expect(received).toEqual(['error1', 'error1', 'error2']);

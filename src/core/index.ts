@@ -10,7 +10,6 @@ export type { DiscontinuityListener } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
 export type {
   MessageEvent,
-  MessageReactionEvents,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
   OccupancyEvent,
@@ -21,10 +20,12 @@ export type {
 } from './events.js';
 export {
   ChatMessageActions,
-  MessageEvents,
+  MessageEventType,
+  MessageReactionEventType,
   MessageReactionType,
   OccupancyEventType,
   PresenceEventType,
+  RoomEventType,
   TypingEventTypes,
   TypingSetEventTypes,
 } from './events.js';
