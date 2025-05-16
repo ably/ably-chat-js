@@ -152,6 +152,7 @@ Use full `Ably.Realtime` clients to talk to a real Ably service.
 ---
 description: Conventions for the React package
 globs: src/react/**/*.tsx,src/react/**/*.ts
+alwaysApply: false
 ---
 # React Conventions
 
@@ -213,6 +214,10 @@ const listenerRef = useEventListenerRef(params?.listener);
 - Always clean up subscriptions and listeners
 - Handle component unmounting gracefully
 - Clear timers and intervals in cleanup functions
+
+## Exports
+
+We export the public API types in [index.ts](mdc:src/react/index.ts) If you change any types that are part of the public API, update them here.
 #### START OF FILE testing.mdc ####
 ---
 description: Test helpers
@@ -354,6 +359,7 @@ Refer to [feature-specification.mdc](mdc:.cursor/rules/feature-specification.mdc
 ---
 description: Typescript coding conventions
 globs: *.ts,*.tsx
+alwaysApply: false
 ---
 # TypeScript Coding Conventions
 
@@ -547,6 +553,10 @@ async send(params: SendMessageParams): Promise<Message> {
 }
 ```
 
+## Exports
+
+We export the public API types in [index.ts](mdc:src/core/index.ts). If you change any types that are part of the public API, update them here.
+
 ## Feature Specification
 
 Refer to [feature-specification.mdc](mdc:.cursor/rules/feature-specification.mdc) for information on how to handle feature specification points in code.
@@ -730,3 +740,4 @@ Use random room IDs to avoid conflicts.
 ## Data Driven Tests
 
 Use .each to write table/data driven tests.
+
