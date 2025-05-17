@@ -45,6 +45,7 @@ const updateMockRoom = (newRoom: Room) => {
   mockRoom = newRoom;
   (mockRoom as unknown as { _lifecycle: InternalRoomLifecycle })._lifecycle.setStatus({ status: RoomStatus.Attached });
   mockRoomContext = { room: Promise.resolve(newRoom) };
+  vi.spyOn(mockRoom.channel, 'state', 'get').mockReturnValue('attached');
 };
 
 describe('usePresence', () => {

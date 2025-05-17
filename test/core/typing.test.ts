@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ConnectionStatus } from '../../src/core/connection.ts';
 import { TypingEventType, TypingSetEvent, TypingSetEventType } from '../../src/core/events.ts';
 import { Logger } from '../../src/core/logger.ts';
 import { Room } from '../../src/core/room.ts';
@@ -57,7 +58,9 @@ describe('Typing', () => {
     };
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, context.logger);
-    context.room = makeRandomRoom(context);
+    context.room = makeRandomRoom({
+      ...context,
+    });
     const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
   });
@@ -143,14 +146,6 @@ describe('Typing', () => {
 
   // CHA-T4
   describe('start typing', () => {
-    // CHA-T4d
-    it<TestContext>('does not allow typing start if channel is not attached or attaching', async (context) => {
-      const { room } = context;
-      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
-
-      await expect(room.typing.keystroke()).rejects.toBeErrorInfoWithCode(50000);
-    });
-
     // CHA-T4a
     it<TestContext>('starts typing', async (context) => {
       const { room, realtime } = context;
@@ -205,230 +200,180 @@ describe('Typing', () => {
       expect(realtimeChannel.publish).toHaveBeenCalledTimes(1);
     });
 
-    describe<TestContext>('explicit typing stop', () => {
-      // CHA-T5a
-      it<TestContext>('is no-op if stop called whilst not typing', async (context) => {
-        const { room, realtime } = context;
-        const channel = room.channel;
-        const realtimeChannel = realtime.channels.get(channel.name);
+    it<TestContext>('does not allow typing start if connection is not connected', async (context) => {
+      const { room } = context;
+      vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
 
-        // If stop is called, the test should fail as the timer should not have expired
-        vi.spyOn(room.typing, 'stop').mockImplementation(async (): Promise<void> => {});
-        vi.spyOn(room.channel, 'publish').mockImplementation(async (): Promise<void> => {});
-        vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+      // Start typing
+      await expect(room.typing.keystroke()).rejects.toBeErrorInfoWithCode(40000);
+    });
+  });
 
-        // Stop typing
-        await room.typing.stop();
+  describe<TestContext>('explicit typing stop', () => {
+    // CHA-T5a
+    it<TestContext>('is no-op if stop called whilst not typing', async (context) => {
+      const { room, realtime } = context;
+      const channel = room.channel;
+      const realtimeChannel = realtime.channels.get(channel.name);
 
-        // Ensure that no messages were sent
-        expect(realtimeChannel.publish).not.toHaveBeenCalled();
-      });
+      // If stop is called, the test should fail as the timer should not have expired
+      vi.spyOn(room.typing, 'stop').mockImplementation(async (): Promise<void> => {});
+      vi.spyOn(room.channel, 'publish').mockImplementation(async (): Promise<void> => {});
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
-      // CHA-T5c
-      it<TestContext>('throws an error if typing.stop is called when the channel is not attached', async (context) => {
-        const { room, realtime } = context;
-        const channel = room.channel;
-        const realtimeChannel = realtime.channels.get(channel.name);
-        vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-        vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
-        await room.typing.keystroke();
-        vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
+      // Stop typing
+      await room.typing.stop();
 
-        await expect(room.typing.stop()).rejects.toBeErrorInfoWithCode(50000);
-
-        // Check that no messages were sent
-        expect(realtimeChannel.publish).toHaveBeenCalledTimes(1);
-      });
-
-      it<TestContext>('when stop is called, immediately stops typing', async (context) => {
-        const { realtime, room } = context;
-        const channel = room.channel;
-        const realtimeChannel = realtime.channels.get(channel.name);
-
-        // If stop is called, it should publish a leave message
-        vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
-        vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
-
-        await Promise.all([room.typing.keystroke(), room.typing.stop()]);
-
-        expect(realtimeChannel.publish).toHaveBeenCalledTimes(2);
-        // Ensure that publish was called with typing.started only once
-        expect(realtimeChannel.publish).toHaveBeenNthCalledWith(1, startMessage);
-        // Ensure that publish was called with typing.stopped only once
-        expect(realtimeChannel.publish).toHaveBeenNthCalledWith(2, stopMessage);
-
-        // Check that the timers have been cleared
-        const defaultTyping = room.typing as TestTypingInterface;
-        expect(defaultTyping._heartbeatTimerId).toBeUndefined();
-      });
+      // Ensure that no messages were sent
+      expect(realtimeChannel.publish).not.toHaveBeenCalled();
     });
 
-    describe<TestContext>('typing subscriptions', () => {
-      beforeEach<TestContext>(() => {
-        vi.useFakeTimers();
+    it<TestContext>('throws an error if typing.stop is called when the connection is not connected', async (context) => {
+      const { room, realtime } = context;
+      const channel = room.channel;
+      const realtimeChannel = realtime.channels.get(channel.name);
+      vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
+      await room.typing.keystroke();
+      vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
+
+      await expect(room.typing.stop()).rejects.toBeErrorInfoWithCode(40000);
+
+      // Check that no messages were sent
+      expect(realtimeChannel.publish).toHaveBeenCalledTimes(1);
+    });
+
+    it<TestContext>('when stop is called, immediately stops typing', async (context) => {
+      const { realtime, room } = context;
+      const channel = room.channel;
+      const realtimeChannel = realtime.channels.get(channel.name);
+
+      // If stop is called, it should publish a leave message
+      vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+
+      await Promise.all([room.typing.keystroke(), room.typing.stop()]);
+
+      expect(realtimeChannel.publish).toHaveBeenCalledTimes(2);
+      // Ensure that publish was called with typing.started only once
+      expect(realtimeChannel.publish).toHaveBeenNthCalledWith(1, startMessage);
+      // Ensure that publish was called with typing.stopped only once
+      expect(realtimeChannel.publish).toHaveBeenNthCalledWith(2, stopMessage);
+
+      // Check that the timers have been cleared
+      const defaultTyping = room.typing as TestTypingInterface;
+      expect(defaultTyping._heartbeatTimerId).toBeUndefined();
+    });
+  });
+
+  describe<TestContext>('typing subscriptions', () => {
+    beforeEach<TestContext>(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach<TestContext>(() => {
+      vi.useRealTimers();
+    });
+
+    // CHA-T6a, CHA-T6b
+    it<TestContext>('allows listeners to be subscribed and unsubscribed', async (context) => {
+      const { room } = context;
+
+      // Add a listener
+      const receivedEvents: TypingSetEvent[] = [];
+      const { unsubscribe } = room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
       });
 
-      afterEach<TestContext>(() => {
-        vi.useRealTimers();
+      // Another listener used to receive all events, to make sure events were emitted
+      const allEvents: TypingSetEvent[] = [];
+      const allSubscription = room.typing.subscribe((event: TypingSetEvent) => {
+        allEvents.push(event);
       });
 
-      // CHA-T6a, CHA-T6b
-      it<TestContext>('allows listeners to be subscribed and unsubscribed', async (context) => {
-        const { room } = context;
+      // Emulate a typing event
+      context.emulateBackendPublish({
+        name: TypingEventType.Start,
+        clientId: 'otherClient',
+      });
 
-        // Add a listener
-        const receivedEvents: TypingSetEvent[] = [];
-        const { unsubscribe } = room.typing.subscribe((event: TypingSetEvent) => {
-          receivedEvents.push(event);
-        });
+      await waitForArrayLength(receivedEvents, 1);
 
-        // Another listener used to receive all events, to make sure events were emitted
-        const allEvents: TypingSetEvent[] = [];
-        const allSubscription = room.typing.subscribe((event: TypingSetEvent) => {
-          allEvents.push(event);
-        });
-
-        // Emulate a typing event
-        context.emulateBackendPublish({
-          name: TypingEventType.Start,
+      // Ensure that the listener received the event
+      expect(receivedEvents).toHaveLength(1);
+      expect(receivedEvents[0]).toEqual({
+        type: TypingSetEventType.SetChanged,
+        change: {
           clientId: 'otherClient',
-        });
+          type: TypingEventType.Start,
+        },
+        currentlyTyping: new Set(['otherClient']),
+      });
 
-        await waitForArrayLength(receivedEvents, 1);
+      // Unsubscribe the listener
+      unsubscribe();
 
-        // Ensure that the listener received the event
-        expect(receivedEvents).toHaveLength(1);
-        expect(receivedEvents[0]).toEqual({
-          type: TypingSetEventType.SetChanged,
-          change: {
-            clientId: 'otherClient',
-            type: TypingEventType.Start,
-          },
-          currentlyTyping: new Set(['otherClient']),
-        });
+      // Emulate another typing event for anotherClient
+      context.emulateBackendPublish({
+        name: TypingEventType.Start,
+        clientId: 'anotherClient',
+      });
 
-        // Unsubscribe the listener
-        unsubscribe();
+      // wait for check events to be length 2 to make sure second event was triggered
+      await waitForArrayLength(allEvents, 2);
+      expect(allEvents.length).toEqual(2);
+      expect(allEvents[1]?.currentlyTyping).toEqual(new Set(['otherClient', 'anotherClient']));
 
-        // Emulate another typing event for anotherClient
-        context.emulateBackendPublish({
+      // Ensure that the listener did not receive the event
+      expect(receivedEvents).toHaveLength(1);
+
+      // Calling unsubscribe again should not throw
+      unsubscribe();
+
+      allSubscription.unsubscribe();
+    });
+
+    // CHA-T13a
+    describe.each([
+      [
+        'no client id',
+        {
           name: TypingEventType.Start,
-          clientId: 'anotherClient',
-        });
-
-        // wait for check events to be length 2 to make sure second event was triggered
-        await waitForArrayLength(allEvents, 2);
-        expect(allEvents.length).toEqual(2);
-        expect(allEvents[1]?.currentlyTyping).toEqual(new Set(['otherClient', 'anotherClient']));
-
-        // Ensure that the listener did not receive the event
-        expect(receivedEvents).toHaveLength(1);
-
-        // Calling unsubscribe again should not throw
-        unsubscribe();
-
-        allSubscription.unsubscribe();
-      });
-
-      // CHA-T13a
-      describe.each([
-        [
-          'no client id',
-          {
-            name: TypingEventType.Start,
-            connectionId: '',
-            id: '',
-            encoding: '',
-            timestamp: 0,
-            extras: {},
-            data: {},
-          } as Ably.InboundMessage,
-        ],
-        [
-          'empty client id',
-          {
-            name: TypingEventType.Start,
-            clientId: '',
-            connectionId: '',
-            id: '',
-            encoding: '',
-            timestamp: 0,
-            extras: {},
-            data: {},
-          } as Ably.InboundMessage,
-        ],
-        [
-          'unhandled event name',
-          {
-            name: 'notATypingEvent',
-            clientId: 'someClient',
-            connectionId: '',
-            id: '',
-            encoding: '',
-            timestamp: 0,
-            extras: {},
-            data: {},
-          } as Ably.InboundMessage,
-        ],
-      ])('invalid incoming typing messages: %s', (description: string, inbound: Ably.InboundMessage) => {
-        test<TestContext>(`does not process invalid incoming typing messages: ${description}`, (context) => {
-          const { room } = context;
-
-          // Subscribe to typing events
-          const receivedEvents: TypingSetEvent[] = [];
-          room.typing.subscribe((event: TypingSetEvent) => {
-            receivedEvents.push(event);
-          });
-
-          // Emulate a typing event
-          context.emulateBackendPublish({
-            ...inbound,
-          } as Ably.InboundMessage);
-
-          // Ensure that no typing events were received
-          expect(receivedEvents).toHaveLength(0);
-        });
-      });
-
-      // CHA-T13b1
-      it<TestContext>('starts typing for inbound typing start event', async (context) => {
-        const { room } = context;
-
-        // Subscribe to typing events
-        const receivedEvents: TypingSetEvent[] = [];
-        room.typing.subscribe((event: TypingSetEvent) => {
-          receivedEvents.push(event);
-        });
-
-        // Emulate a typing event
-        context.emulateBackendPublish({
+          connectionId: '',
+          id: '',
+          encoding: '',
+          timestamp: 0,
+          extras: {},
+          data: {},
+        } as Ably.InboundMessage,
+      ],
+      [
+        'empty client id',
+        {
           name: TypingEventType.Start,
-          clientId: 'otherClient',
-        });
-
-        // Ensure that the listener received the event
-        await waitForArrayLength(receivedEvents, 1);
-        expect(receivedEvents).toHaveLength(1);
-        expect(receivedEvents[0]).toEqual({
-          type: TypingSetEventType.SetChanged,
-          change: {
-            clientId: 'otherClient',
-            type: TypingEventType.Start,
-          },
-          currentlyTyping: new Set(['otherClient']),
-        });
-
-        // Check our current typers
-        expect(room.typing.current()).toEqual(new Set(['otherClient']));
-
-        // Check we have an active timer
-        const defaultTyping = room.typing as TestTypingInterface;
-        const inactivity = defaultTyping._currentlyTyping.get('otherClient');
-        expect(inactivity).toBeDefined();
-      });
-
-      // CHA-T13b2
-      it<TestContext>('resets the inactivity timer on inbound typing start event', async (context) => {
+          clientId: '',
+          connectionId: '',
+          id: '',
+          encoding: '',
+          timestamp: 0,
+          extras: {},
+          data: {},
+        } as Ably.InboundMessage,
+      ],
+      [
+        'unhandled event name',
+        {
+          name: 'notATypingEvent',
+          clientId: 'someClient',
+          connectionId: '',
+          id: '',
+          encoding: '',
+          timestamp: 0,
+          extras: {},
+          data: {},
+        } as Ably.InboundMessage,
+      ],
+    ])('invalid incoming typing messages: %s', (description: string, inbound: Ably.InboundMessage) => {
+      test<TestContext>(`does not process invalid incoming typing messages: ${description}`, (context) => {
         const { room } = context;
 
         // Subscribe to typing events
@@ -439,202 +384,258 @@ describe('Typing', () => {
 
         // Emulate a typing event
         context.emulateBackendPublish({
-          name: TypingEventType.Start,
-          clientId: 'otherClient',
-        });
-
-        // Ensure that the listener received the event
-        await waitForArrayLength(receivedEvents, 1);
-        expect(receivedEvents).toHaveLength(1);
-        expect(receivedEvents[0]).toEqual({
-          type: TypingSetEventType.SetChanged,
-          change: {
-            clientId: 'otherClient',
-            type: TypingEventType.Start,
-          },
-          currentlyTyping: new Set(['otherClient']),
-        });
-
-        // Get current inactivity timer
-        const defaultTyping = room.typing as TestTypingInterface;
-        const inactivity = defaultTyping._currentlyTyping.get('otherClient');
-        expect(inactivity).toBeDefined();
-
-        // Now send another typing event
-        context.emulateBackendPublish({
-          name: TypingEventType.Start,
-          clientId: 'otherClient',
-        });
-
-        // Check that eventually (yay promises), the inactivity timer has been reset
-        await vi.waitFor(
-          () => {
-            const newInactivity = defaultTyping._currentlyTyping.get('otherClient');
-            expect(newInactivity).toBeDefined();
-            expect(newInactivity).not.toBe(inactivity);
-          },
-          { timeout: 1000 },
-        );
-      });
-
-      // CHA-T13b3
-      it<TestContext>('emits a typing stop event when the inactivity timer expires', async (context) => {
-        const { room } = context;
-
-        // Subscribe to typing events
-        const receivedEvents: TypingSetEvent[] = [];
-        room.typing.subscribe((event: TypingSetEvent) => {
-          receivedEvents.push(event);
-        });
-
-        // Emulate a typing event
-        context.emulateBackendPublish({
-          name: TypingEventType.Start,
-          clientId: 'otherClient',
-        });
-
-        // Ensure that the listener received the event
-        await waitForArrayLength(receivedEvents, 1);
-        expect(receivedEvents).toHaveLength(1);
-        expect(receivedEvents[0]).toEqual({
-          type: TypingSetEventType.SetChanged,
-          change: {
-            clientId: 'otherClient',
-            type: TypingEventType.Start,
-          },
-          currentlyTyping: new Set(['otherClient']),
-        });
-
-        // Get current inactivity timer
-        const defaultTyping = room.typing as TestTypingInterface;
-        const inactivity = defaultTyping._currentlyTyping.get('otherClient');
-        expect(inactivity).toBeDefined();
-
-        // Expire the inactivity timer
-        vi.advanceTimersToNextTimer();
-
-        // Ensure that the listener received the event
-        await waitForArrayLength(receivedEvents, 2);
-        expect(receivedEvents).toHaveLength(2);
-        expect(receivedEvents[1]).toEqual({
-          type: TypingSetEventType.SetChanged,
-          change: {
-            clientId: 'otherClient',
-            type: TypingEventType.Stop,
-          },
-          currentlyTyping: new Set(),
-        });
-      });
-
-      // CHA-T13b4
-      it<TestContext>('stops typing for inbound typing stop event', async (context) => {
-        const { room } = context;
-
-        // Subscribe to typing events
-        const receivedEvents: TypingSetEvent[] = [];
-        room.typing.subscribe((event: TypingSetEvent) => {
-          receivedEvents.push(event);
-        });
-
-        // Emulate a typing event
-        context.emulateBackendPublish({
-          name: TypingEventType.Start,
-          clientId: 'otherClient',
-        });
-
-        // Ensure that the listener received the event
-        await waitForArrayLength(receivedEvents, 1);
-        expect(receivedEvents).toHaveLength(1);
-        expect(receivedEvents[0]).toEqual({
-          type: TypingSetEventType.SetChanged,
-          change: {
-            clientId: 'otherClient',
-            type: TypingEventType.Start,
-          },
-          currentlyTyping: new Set(['otherClient']),
-        });
-
-        // Get current inactivity timer
-        const defaultTyping = room.typing as TestTypingInterface;
-        const inactivity = defaultTyping._currentlyTyping.get('otherClient');
-        expect(inactivity).toBeDefined();
-
-        // Emulate a typing stop event
-        context.emulateBackendPublish({
-          name: TypingEventType.Stop,
-          clientId: 'otherClient',
-        });
-
-        // Ensure that the listener received the event
-        await waitForArrayLength(receivedEvents, 2);
-        expect(receivedEvents).toHaveLength(2);
-        expect(receivedEvents[1]).toEqual({
-          type: TypingSetEventType.SetChanged,
-          change: {
-            clientId: 'otherClient',
-            type: TypingEventType.Stop,
-          },
-          currentlyTyping: new Set(),
-        });
-
-        // Check that the inactivity timer has been cleared
-        expect(defaultTyping._currentlyTyping.get('otherClient')).toBeUndefined();
-      });
-
-      // CHA-T13b5
-      it<TestContext>('ignores stopped typing events for clients not currently typing', (context) => {
-        const { room } = context;
-
-        // Subscribe to typing events
-        const receivedEvents: TypingSetEvent[] = [];
-        room.typing.subscribe((event: TypingSetEvent) => {
-          receivedEvents.push(event);
-        });
-
-        // Emulate a typing stop event
-        context.emulateBackendPublish({
-          name: TypingEventType.Stop,
-          clientId: 'otherClient',
-        });
+          ...inbound,
+        } as Ably.InboundMessage);
 
         // Ensure that no typing events were received
         expect(receivedEvents).toHaveLength(0);
       });
+    });
 
-      it<TestContext>('should only unsubscribe the correct subscription', async (context) => {
-        const { room } = context;
-        const received: TypingSetEvent[] = [];
+    // CHA-T13b1
+    it<TestContext>('starts typing for inbound typing start event', async (context) => {
+      const { room } = context;
 
-        const emulateTypingEvent = (clientId: string, event: TypingEventType) => {
-          context.emulateBackendPublish({
-            name: event,
-            clientId: clientId,
-          });
-        };
-
-        const listener = (event: TypingSetEvent) => {
-          received.push(event);
-        };
-
-        // Subscribe the same listener twice
-        const subscription1 = room.typing.subscribe(listener);
-        const subscription2 = room.typing.subscribe(listener);
-
-        // Both subscriptions should trigger the listener
-        emulateTypingEvent('user1', TypingEventType.Start);
-        await waitForArrayLength(received, 2);
-
-        // Unsubscribe first subscription
-        subscription1.unsubscribe();
-
-        // One subscription should still trigger the listener
-        emulateTypingEvent('user2', TypingEventType.Start);
-        emulateTypingEvent('user2', TypingEventType.Start);
-        await waitForArrayLength(received, 3);
-
-        // Unsubscribe second subscription
-        subscription2.unsubscribe();
+      // Subscribe to typing events
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
       });
+
+      // Emulate a typing event
+      context.emulateBackendPublish({
+        name: TypingEventType.Start,
+        clientId: 'otherClient',
+      });
+
+      // Ensure that the listener received the event
+      await waitForArrayLength(receivedEvents, 1);
+      expect(receivedEvents).toHaveLength(1);
+      expect(receivedEvents[0]).toEqual({
+        type: TypingSetEventType.SetChanged,
+        change: {
+          clientId: 'otherClient',
+          type: TypingEventType.Start,
+        },
+        currentlyTyping: new Set(['otherClient']),
+      });
+
+      // Check our current typers
+      expect(room.typing.current()).toEqual(new Set(['otherClient']));
+
+      // Check we have an active timer
+      const defaultTyping = room.typing as TestTypingInterface;
+      const inactivity = defaultTyping._currentlyTyping.get('otherClient');
+      expect(inactivity).toBeDefined();
+    });
+
+    // CHA-T13b2
+    it<TestContext>('resets the inactivity timer on inbound typing start event', async (context) => {
+      const { room } = context;
+
+      // Subscribe to typing events
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
+      });
+
+      // Emulate a typing event
+      context.emulateBackendPublish({
+        name: TypingEventType.Start,
+        clientId: 'otherClient',
+      });
+
+      // Ensure that the listener received the event
+      await waitForArrayLength(receivedEvents, 1);
+      expect(receivedEvents).toHaveLength(1);
+      expect(receivedEvents[0]).toEqual({
+        type: TypingSetEventType.SetChanged,
+        change: {
+          clientId: 'otherClient',
+          type: TypingEventType.Start,
+        },
+        currentlyTyping: new Set(['otherClient']),
+      });
+
+      // Get current inactivity timer
+      const defaultTyping = room.typing as TestTypingInterface;
+      const inactivity = defaultTyping._currentlyTyping.get('otherClient');
+      expect(inactivity).toBeDefined();
+
+      // Now send another typing event
+      context.emulateBackendPublish({
+        name: TypingEventType.Start,
+        clientId: 'otherClient',
+      });
+
+      // Check that eventually (yay promises), the inactivity timer has been reset
+      await vi.waitFor(
+        () => {
+          const newInactivity = defaultTyping._currentlyTyping.get('otherClient');
+          expect(newInactivity).toBeDefined();
+          expect(newInactivity).not.toBe(inactivity);
+        },
+        { timeout: 1000 },
+      );
+    });
+
+    // CHA-T13b3
+    it<TestContext>('emits a typing stop event when the inactivity timer expires', async (context) => {
+      const { room } = context;
+
+      // Subscribe to typing events
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
+      });
+
+      // Emulate a typing event
+      context.emulateBackendPublish({
+        name: TypingEventType.Start,
+        clientId: 'otherClient',
+      });
+
+      // Ensure that the listener received the event
+      await waitForArrayLength(receivedEvents, 1);
+      expect(receivedEvents).toHaveLength(1);
+      expect(receivedEvents[0]).toEqual({
+        type: TypingSetEventType.SetChanged,
+        change: {
+          clientId: 'otherClient',
+          type: TypingEventType.Start,
+        },
+        currentlyTyping: new Set(['otherClient']),
+      });
+
+      // Get current inactivity timer
+      const defaultTyping = room.typing as TestTypingInterface;
+      const inactivity = defaultTyping._currentlyTyping.get('otherClient');
+      expect(inactivity).toBeDefined();
+
+      // Expire the inactivity timer
+      vi.advanceTimersToNextTimer();
+
+      // Ensure that the listener received the event
+      await waitForArrayLength(receivedEvents, 2);
+      expect(receivedEvents).toHaveLength(2);
+      expect(receivedEvents[1]).toEqual({
+        type: TypingSetEventType.SetChanged,
+        change: {
+          clientId: 'otherClient',
+          type: TypingEventType.Stop,
+        },
+        currentlyTyping: new Set(),
+      });
+    });
+
+    // CHA-T13b4
+    it<TestContext>('stops typing for inbound typing stop event', async (context) => {
+      const { room } = context;
+
+      // Subscribe to typing events
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
+      });
+
+      // Emulate a typing event
+      context.emulateBackendPublish({
+        name: TypingEventType.Start,
+        clientId: 'otherClient',
+      });
+
+      // Ensure that the listener received the event
+      await waitForArrayLength(receivedEvents, 1);
+      expect(receivedEvents).toHaveLength(1);
+      expect(receivedEvents[0]).toEqual({
+        type: TypingSetEventType.SetChanged,
+        change: {
+          clientId: 'otherClient',
+          type: TypingEventType.Start,
+        },
+        currentlyTyping: new Set(['otherClient']),
+      });
+
+      // Get current inactivity timer
+      const defaultTyping = room.typing as TestTypingInterface;
+      const inactivity = defaultTyping._currentlyTyping.get('otherClient');
+      expect(inactivity).toBeDefined();
+
+      // Emulate a typing stop event
+      context.emulateBackendPublish({
+        name: TypingEventType.Stop,
+        clientId: 'otherClient',
+      });
+
+      // Ensure that the listener received the event
+      await waitForArrayLength(receivedEvents, 2);
+      expect(receivedEvents).toHaveLength(2);
+      expect(receivedEvents[1]).toEqual({
+        type: TypingSetEventType.SetChanged,
+        change: {
+          clientId: 'otherClient',
+          type: TypingEventType.Stop,
+        },
+        currentlyTyping: new Set(),
+      });
+
+      // Check that the inactivity timer has been cleared
+      expect(defaultTyping._currentlyTyping.get('otherClient')).toBeUndefined();
+    });
+
+    // CHA-T13b5
+    it<TestContext>('ignores stopped typing events for clients not currently typing', (context) => {
+      const { room } = context;
+
+      // Subscribe to typing events
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
+      });
+
+      // Emulate a typing stop event
+      context.emulateBackendPublish({
+        name: TypingEventType.Stop,
+        clientId: 'otherClient',
+      });
+
+      // Ensure that no typing events were received
+      expect(receivedEvents).toHaveLength(0);
+    });
+
+    it<TestContext>('should only unsubscribe the correct subscription', async (context) => {
+      const { room } = context;
+      const received: TypingSetEvent[] = [];
+
+      const emulateTypingEvent = (clientId: string, event: TypingEventType) => {
+        context.emulateBackendPublish({
+          name: event,
+          clientId: clientId,
+        });
+      };
+
+      const listener = (event: TypingSetEvent) => {
+        received.push(event);
+      };
+
+      // Subscribe the same listener twice
+      const subscription1 = room.typing.subscribe(listener);
+      const subscription2 = room.typing.subscribe(listener);
+
+      // Both subscriptions should trigger the listener
+      emulateTypingEvent('user1', TypingEventType.Start);
+      await waitForArrayLength(received, 2);
+
+      // Unsubscribe first subscription
+      subscription1.unsubscribe();
+
+      // One subscription should still trigger the listener
+      emulateTypingEvent('user2', TypingEventType.Start);
+      emulateTypingEvent('user2', TypingEventType.Start);
+      await waitForArrayLength(received, 3);
+
+      // Unsubscribe second subscription
+      subscription2.unsubscribe();
     });
   });
 });

@@ -68,9 +68,9 @@ export interface RoomReactions {
    *
    * This method accepts parameters for a room-level reaction. It accepts an object
    *
-   *
    * @param params an object containing {type, headers, metadata} for the room
    * reaction to be sent. Type is required, metadata and headers are optional.
+   * @throws If the `Connection` is not in the `Connected` state.
    * @returns The returned promise resolves when the reaction was sent. Note
    * that it is possible to receive your own reaction via the reactions
    * listener before this promise resolves.
@@ -100,6 +100,7 @@ interface ReactionPayload {
  */
 export class DefaultRoomReactions implements RoomReactions {
   private readonly _channel: Ably.RealtimeChannel;
+  private readonly _connection: Ably.Connection;
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<RoomReactionEventsMap>();
@@ -107,11 +108,13 @@ export class DefaultRoomReactions implements RoomReactions {
   /**
    * Constructs a new `DefaultRoomReactions` instance.
    * @param channel The Realtime channel instance.
+   * @param connection The connection instance.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(channel: Ably.RealtimeChannel, clientId: string, logger: Logger) {
+  constructor(channel: Ably.RealtimeChannel, connection: Ably.Connection, clientId: string, logger: Logger) {
     this._channel = channel;
+    this._connection = connection;
     this._clientId = clientId;
     this._logger = logger;
 
@@ -136,6 +139,10 @@ export class DefaultRoomReactions implements RoomReactions {
 
     if (!type) {
       return Promise.reject(new Ably.ErrorInfo('unable to send reaction; type not set and it is required', 40001, 400));
+    }
+
+    if (this._connection.state !== 'connected') {
+      return Promise.reject(new Ably.ErrorInfo('unable to send reaction; not connected to Ably', 40000, 400));
     }
 
     const payload: ReactionPayload = {

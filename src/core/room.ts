@@ -154,6 +154,7 @@ export class DefaultRoom implements Room {
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
+   * @param connection An instance of the Connection.
    */
   constructor(
     name: string,
@@ -188,8 +189,14 @@ export class DefaultRoom implements Room {
       this._logger,
     );
     this._presence = new DefaultPresence(channel, realtime.auth.clientId, this._logger, options);
-    this._typing = new DefaultTyping(options.typing, channel, realtime.auth.clientId, this._logger);
-    this._reactions = new DefaultRoomReactions(channel, realtime.auth.clientId, this._logger);
+    this._typing = new DefaultTyping(
+      options.typing,
+      realtime.connection,
+      channel,
+      realtime.auth.clientId,
+      this._logger,
+    );
+    this._reactions = new DefaultRoomReactions(channel, realtime.connection, realtime.auth.clientId, this._logger);
     this._occupancy = new DefaultOccupancy(name, channel, this._chatApi, this._logger, options);
 
     // Set the lifecycle manager last, so it becomes the last thing to find out about channel state changes

@@ -44,7 +44,7 @@ export interface Typing {
    *   resolve to a consistent and correct state.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
-   * @throws If the `RoomStatus` is not either `Attached` or `Attaching`.
+   * @throws If the `Connection` is not in the `Connected` state.
    * @throws If the operation fails to send the event to the server.
    * @throws If there is a problem acquiring the mutex that controls serialization.
    */
@@ -63,7 +63,7 @@ export interface Typing {
    *   resolve to a consistent and correct state.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
-   * @throws If the `RoomStatus` is not either `Attached` or `Attaching`.
+   * @throws If the `Connection` is not in the `Connected` state.
    * @throws If the operation fails to send the event to the server.
    * @throws If there is a problem acquiring the mutex that controls serialization.
    */
@@ -94,6 +94,7 @@ type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
 export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
   private readonly _clientId: string;
   private readonly _channel: Ably.RealtimeChannel;
+  private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
 
   // Throttle for the heartbeat, how often we should emit a typing event with repeated calls to keystroke()
@@ -112,14 +113,22 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * Constructs a new `DefaultTyping` instance.
    * @param options The options for typing in the room.
+   * @param connection The connection instance.
    * @param channel The channel for the room.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
-  constructor(options: InternalTypingOptions, channel: Ably.RealtimeChannel, clientId: string, logger: Logger) {
+  constructor(
+    options: InternalTypingOptions,
+    connection: Ably.Connection,
+    channel: Ably.RealtimeChannel,
+    clientId: string,
+    logger: Logger,
+  ) {
     super();
     this._clientId = clientId;
     this._channel = channel;
+    this._connection = connection;
 
     // Interval for the heartbeat, how often we should emit a typing event with repeated calls to start()
     this._heartbeatThrottleMs = options.heartbeatThrottleMs;
@@ -192,13 +201,12 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
     });
     try {
-      // CHA-T4d
-      // Ensure room is attached
-      if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-        this._logger.error(`DefaultTyping.keystroke(); room is not in the correct state `, {
-          state: this.channel.state,
+      // Check if connection is connected
+      if (this._connection.state !== 'connected') {
+        this._logger.error(`DefaultTyping.keystroke(); connection is not connected`, {
+          status: this._connection.state,
         });
-        throw new Ably.ErrorInfo('cannot type, room is not in the correct state', 50000, 500);
+        throw new Ably.ErrorInfo('cannot type, connection is not connected', 40000, 400);
       }
 
       // Check whether user is already typing before publishing again
@@ -238,12 +246,12 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
     });
     try {
-      // CHA-T5c
-      if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-        this._logger.error(`DefaultTyping.stop(); room is not in the correct state `, {
-          state: this.channel.state,
+      // Check if connection is connected
+      if (this._connection.state !== 'connected') {
+        this._logger.error(`DefaultTyping.stop(); connection is not connected`, {
+          status: this._connection.state,
         });
-        throw new Ably.ErrorInfo('cannot stop typing, room is not in the correct state', 50000, 500);
+        throw new Ably.ErrorInfo('cannot stop typing, connection is not connected', 40000, 400);
       }
 
       // If the user is not typing, do nothing.
