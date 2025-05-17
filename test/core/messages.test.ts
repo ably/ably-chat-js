@@ -3,7 +3,7 @@ import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
-import { ChatMessageActions, MessageEvent, MessageEvents } from '../../src/core/events.ts';
+import { ChatMessageAction, MessageEvent, MessageEventType } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
@@ -81,7 +81,6 @@ describe('Messages', () => {
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
-          roomId: context.room.roomId,
         }),
       );
     });
@@ -111,7 +110,6 @@ describe('Messages', () => {
           clientId: 'clientId',
           timestamp: new Date(deleteTimestamp),
           createdAt: new Date(sendTimestamp),
-          roomId: context.room.roomId,
         }),
       );
 
@@ -144,7 +142,6 @@ describe('Messages', () => {
           text: 'hello there',
           clientId: 'clientId',
           createdAt: new Date(timestamp),
-          roomId: room.roomId,
           headers: {
             something: 'else',
             abc: 123,
@@ -170,7 +167,7 @@ describe('Messages', () => {
         },
         serial: serial,
         version: serial,
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         extras: {},
         timestamp: publishTimestamp,
         createdAt: publishTimestamp,
@@ -216,7 +213,7 @@ describe('Messages', () => {
             text: 'this message has been deleted',
           },
           serial: '01672531200000-123@abcdefghij',
-          action: ChatMessageActions.MessageDelete,
+          action: ChatMessageAction.MessageDelete,
           version: '01672531200000-123@abcdefghij',
           extras: {},
           timestamp: publishTimestamp,
@@ -230,7 +227,7 @@ describe('Messages', () => {
             text: 'some updated text',
           },
           serial: '01672531200000-123@abcdefghij',
-          action: ChatMessageActions.MessageUpdate,
+          action: ChatMessageAction.MessageUpdate,
           version: '01672531200000-123@abcdefghij',
           extras: {},
           timestamp: publishTimestamp,
@@ -245,7 +242,7 @@ describe('Messages', () => {
           },
           version: '01672531200000-123@abcdefghij',
           serial: '01672531200000-123@abcdefghij',
-          action: ChatMessageActions.MessageCreate,
+          action: ChatMessageAction.MessageCreate,
           extras: {},
           timestamp: publishTimestamp,
           createdAt: publishTimestamp,
@@ -260,15 +257,15 @@ describe('Messages', () => {
     const receivedUpdates: Message[] = [];
     const listener = (message: MessageEvent) => {
       switch (message.type) {
-        case MessageEvents.Created: {
+        case MessageEventType.Created: {
           receivedMessages.push(message.message);
           break;
         }
-        case MessageEvents.Deleted: {
+        case MessageEventType.Deleted: {
           receivedDeletions.push(message.message);
           break;
         }
-        case MessageEvents.Updated: {
+        case MessageEventType.Updated: {
           receivedUpdates.push(message.message);
           break;
         }
@@ -288,7 +285,7 @@ describe('Messages', () => {
       },
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij',
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       extras: {},
       timestamp: publishTimestamp,
       createdAt: publishTimestamp,
@@ -300,7 +297,7 @@ describe('Messages', () => {
         text: 'I have the high ground now',
       },
       serial: '01672531200000-123@abcdefghij',
-      action: ChatMessageActions.MessageUpdate,
+      action: ChatMessageAction.MessageUpdate,
       extras: {},
       timestamp: updateTimestamp,
       createdAt: publishTimestamp,
@@ -316,7 +313,7 @@ describe('Messages', () => {
         text: 'I have the high ground now',
       },
       serial: '01672531200000-123@abcdefghij',
-      action: ChatMessageActions.MessageDelete,
+      action: ChatMessageAction.MessageDelete,
       extras: {},
       timestamp: deletionTimestamp,
       createdAt: publishTimestamp,
@@ -347,7 +344,7 @@ describe('Messages', () => {
       },
       serial: '01672535500000-123@abcdefghij',
       version: '01672535500000-123@abcdefghij',
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       extras: {},
       timestamp: publishTimestamp,
       createdAt: publishTimestamp,
@@ -359,7 +356,7 @@ describe('Messages', () => {
         text: 'I have the high ground now',
       },
       serial: '01672535500000-123@abcdefghij',
-      action: ChatMessageActions.MessageUpdate,
+      action: ChatMessageAction.MessageUpdate,
       extras: {},
       timestamp: updateTimestamp,
       createdAt: publishTimestamp,
@@ -375,7 +372,7 @@ describe('Messages', () => {
         text: 'I have the high ground now',
       },
       serial: '01672535500000-123@abcdefghij',
-      action: ChatMessageActions.MessageDelete,
+      action: ChatMessageAction.MessageDelete,
       extras: {},
       timestamp: deletionTimestamp,
       createdAt: publishTimestamp,
@@ -397,190 +394,6 @@ describe('Messages', () => {
     unsubscribe();
   });
 
-  it<TestContext>('unsubscribing from all messages', (context) => {
-    const { room } = context;
-    const receivedMessages: Message[] = [];
-    const receivedDeletions: Message[] = [];
-    const receivedUpdates: Message[] = [];
-
-    const listener = (message: MessageEvent) => {
-      switch (message.type) {
-        case MessageEvents.Created: {
-          receivedMessages.push(message.message);
-          break;
-        }
-        case MessageEvents.Deleted: {
-          receivedDeletions.push(message.message);
-          break;
-        }
-        case MessageEvents.Updated: {
-          receivedUpdates.push(message.message);
-          break;
-        }
-      }
-    };
-
-    const receivedMessages2: Message[] = [];
-    const receivedDeletions2: Message[] = [];
-    const receivedUpdates2: Message[] = [];
-
-    const listener2 = (message: MessageEvent) => {
-      switch (message.type) {
-        case MessageEvents.Created: {
-          receivedMessages2.push(message.message);
-          break;
-        }
-        case MessageEvents.Deleted: {
-          receivedDeletions2.push(message.message);
-          break;
-        }
-        case MessageEvents.Updated: {
-          receivedUpdates2.push(message.message);
-          break;
-        }
-      }
-    };
-
-    const { unsubscribe } = room.messages.subscribe(listener);
-    const { unsubscribe: unsubscribe2 } = room.messages.subscribe(listener2);
-
-    let publishTimestamp = Date.now();
-    let updateTimestamp = Date.now() + 500;
-    let deletionTimestamp = Date.now() + 1000;
-    context.emulateBackendPublish({
-      clientId: 'yoda',
-      name: 'chat.message',
-      data: {
-        text: 'may the fourth be with you',
-      },
-      serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij',
-      action: ChatMessageActions.MessageCreate,
-      extras: {},
-      timestamp: publishTimestamp,
-      createdAt: publishTimestamp,
-    });
-    context.emulateBackendPublish({
-      clientId: 'yoda',
-      name: 'chat.message',
-      data: {
-        text: 'I have the high ground now',
-      },
-      serial: '01672531200000-123@abcdefghij',
-      action: ChatMessageActions.MessageUpdate,
-      version: '01672531200000-123@abcdefghij:0',
-      operation: {
-        clientId: 'yoda',
-      },
-      extras: {},
-      timestamp: updateTimestamp,
-      createdAt: publishTimestamp,
-    });
-    context.emulateBackendPublish({
-      clientId: 'yoda',
-      name: 'chat.message',
-      data: {
-        text: 'I have the high ground now',
-      },
-      serial: '01672531200000-123@abcdefghij',
-      action: ChatMessageActions.MessageDelete,
-      extras: {},
-      timestamp: deletionTimestamp,
-      createdAt: publishTimestamp,
-      version: '01672531200000-123@abcdefghij:0',
-      operation: {
-        clientId: 'yoda',
-      },
-    });
-
-    // We should have received the message above and the update and delete
-    expect(receivedMessages).toHaveLength(1);
-    expect(receivedMessages[0]?.clientId).toEqual('yoda');
-    expect(receivedMessages2).toHaveLength(1);
-    expect(receivedMessages2[0]?.clientId).toEqual('yoda');
-
-    expect(receivedDeletions).toHaveLength(1);
-    expect(receivedDeletions[0]?.clientId).toEqual('yoda');
-    expect(receivedDeletions2).toHaveLength(1);
-    expect(receivedDeletions2[0]?.clientId).toEqual('yoda');
-
-    expect(receivedUpdates).toHaveLength(1);
-    expect(receivedUpdates[0]?.clientId).toEqual('yoda');
-    expect(receivedUpdates2).toHaveLength(1);
-    expect(receivedUpdates2[0]?.clientId).toEqual('yoda');
-
-    room.messages.unsubscribeAll();
-
-    publishTimestamp = Date.now();
-    updateTimestamp = Date.now() + 500;
-    deletionTimestamp = Date.now() + 1000;
-    context.emulateBackendPublish({
-      clientId: 'yoda2',
-      name: 'chat.message',
-      data: {
-        text: 'may the fourth be with you',
-      },
-      serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij',
-      action: ChatMessageActions.MessageCreate,
-      extras: {},
-      createdAt: publishTimestamp,
-      timestamp: publishTimestamp,
-    });
-    context.emulateBackendPublish({
-      clientId: 'yoda',
-      name: 'chat.message',
-      data: {
-        text: 'I have the high ground now',
-      },
-      serial: '01672531200000-123@abcdefghij',
-      action: ChatMessageActions.MessageUpdate,
-      version: '01672531200000-123@abcdefghij:0',
-      operation: {
-        clientId: 'yoda',
-      },
-      extras: {},
-      createdAt: publishTimestamp,
-      timestamp: updateTimestamp,
-    });
-    context.emulateBackendPublish({
-      clientId: 'yoda2',
-      name: 'chat.message',
-      data: {
-        text: 'I have the high ground now',
-      },
-      serial: '01672531200000-123@abcdefghij',
-      action: ChatMessageActions.MessageDelete,
-      extras: {},
-      createdAt: publishTimestamp,
-      timestamp: deletionTimestamp,
-      version: '01672531200000-123@abcdefghij:0',
-      operation: {
-        clientId: 'yoda2',
-      },
-    });
-
-    // We should not have received anything new - do same assertions again
-    expect(receivedMessages).toHaveLength(1);
-    expect(receivedMessages[0]?.clientId).toEqual('yoda');
-    expect(receivedMessages2).toHaveLength(1);
-    expect(receivedMessages2[0]?.clientId).toEqual('yoda');
-
-    expect(receivedDeletions).toHaveLength(1);
-    expect(receivedDeletions[0]?.clientId).toEqual('yoda');
-    expect(receivedDeletions2).toHaveLength(1);
-    expect(receivedDeletions2[0]?.clientId).toEqual('yoda');
-
-    expect(receivedUpdates).toHaveLength(1);
-    expect(receivedUpdates[0]?.clientId).toEqual('yoda');
-    expect(receivedUpdates2).toHaveLength(1);
-    expect(receivedUpdates2[0]?.clientId).toEqual('yoda');
-
-    // A double off should not throw
-    unsubscribe();
-    unsubscribe2();
-  });
-
   describe.each([
     [
       'unknown event name',
@@ -591,7 +404,7 @@ describe('Messages', () => {
           text: 'may the fourth be with you',
         },
         serial: '01672531200000-123@abcdefghij',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         extras: {},
         timestamp: Date.now(),
         createdAt: Date.now(),
@@ -618,7 +431,7 @@ describe('Messages', () => {
         clientId: 'yoda2',
         name: 'chat.message',
         serial: '01672531200000-123@abcdefghij',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         extras: {},
         timestamp: Date.now(),
         createdAt: Date.now(),
@@ -631,7 +444,7 @@ describe('Messages', () => {
         name: 'chat.message',
         data: {},
         serial: '01672531200000-123@abcdefghij',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         extras: {},
         timestamp: Date.now(),
         createdAt: Date.now(),
@@ -645,7 +458,7 @@ describe('Messages', () => {
           text: 'may the fourth be with you',
         },
         serial: '01672531200000-123@abcdefghij',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         extras: {},
         timestamp: Date.now(),
         createdAt: Date.now(),
@@ -660,7 +473,7 @@ describe('Messages', () => {
           text: 'may the fourth be with you',
         },
         serial: '01672531200000-123@abcdefghij',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         timestamp: Date.now(),
         createdAt: Date.now(),
       },
@@ -674,7 +487,7 @@ describe('Messages', () => {
         data: {
           text: 'may the fourth be with you',
         },
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         timestamp: Date.now(),
         createdAt: Date.now(),
       },
@@ -696,12 +509,12 @@ describe('Messages', () => {
   it<TestContext>('should throw an error for listener history if not subscribed', async (context) => {
     const { room } = context;
 
-    const { unsubscribe, getPreviousMessages } = room.messages.subscribe(() => {});
+    const { unsubscribe, historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Unsubscribe the listener
     unsubscribe();
 
-    await expect(getPreviousMessages({ limit: 50 })).rejects.toBeErrorInfo({
+    await expect(historyBeforeSubscribe({ limit: 50 })).rejects.toBeErrorInfo({
       code: 40000,
       message: 'cannot query history; listener has not been subscribed yet',
     });
@@ -714,8 +527,8 @@ describe('Messages', () => {
 
     const { room, chatApi } = context;
 
-    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
-      expect(roomId).toEqual(room.roomId);
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+      expect(roomName).toEqual(room.name);
       expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(testAttachSerial);
@@ -739,7 +552,7 @@ describe('Messages', () => {
     });
 
     // Subscribe to the messages
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // This test was failing because now we wait for the channel promise inside
     // DefaultMessages._resolveSubscriptionStart. That got resolved a tick after
@@ -763,7 +576,7 @@ describe('Messages', () => {
     });
 
     // Run a history query for the listener and check the chat api call is made with the channel attachment serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('should query listener history with latest channel serial if already attached to the channel', async (context) => {
@@ -774,8 +587,8 @@ describe('Messages', () => {
 
     const { room, chatApi } = context;
 
-    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
-      expect(roomId).toEqual(room.roomId);
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+      expect(roomName).toEqual(room.name);
       expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(latestChannelSerial);
@@ -799,10 +612,10 @@ describe('Messages', () => {
     channel.properties.channelSerial = latestChannelSerial;
 
     // Subscribe to the messages
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Run a history query for the listener and check the chat api call is made with the channel serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('when attach occurs, should query with correct params if listener registered before attach', async (context) => {
@@ -810,12 +623,12 @@ describe('Messages', () => {
     const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
-    let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
+    let expectFunction: (roomName: string, params: GetMessagesQueryParams) => void = () => {};
 
     const { room, chatApi } = context;
 
-    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
-      expectFunction(roomId, params);
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+      expectFunction(roomName, params);
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
@@ -830,7 +643,7 @@ describe('Messages', () => {
     // Set the serials for before attachment testing
     channel.properties.attachSerial = firstAttachmentSerial;
 
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // wait
     await new Promise<void>((resolve) =>
@@ -850,15 +663,15 @@ describe('Messages', () => {
     });
 
     // Check we are using the attachSerial
-    expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
-      expect(roomId).toEqual(room.roomId);
+    expectFunction = (roomName: string, params: GetMessagesQueryParams) => {
+      expect(roomName).toEqual(room.name);
       expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstAttachmentSerial);
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel attachment serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Now update the attach serial
     const secondAttachmentSerial = '01992531200000-001@108hhDJ2dBOihn12345678';
@@ -877,7 +690,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel attachment serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Test the case where we receive an attached state change with resume.
 
@@ -897,7 +710,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the previous attach serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('when attach occurs, should query with correct params if listener register after attach', async (context) => {
@@ -907,12 +720,12 @@ describe('Messages', () => {
     const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
-    let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
+    let expectFunction: (roomName: string, params: GetMessagesQueryParams) => void = () => {};
 
     const { room, chatApi } = context;
 
-    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
-      expectFunction(roomId, params);
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+      expectFunction(roomName, params);
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
@@ -936,18 +749,18 @@ describe('Messages', () => {
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
 
     // Subscribe to the messages
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Check we are using the channel serial
-    expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
-      expect(roomId).toEqual(room.roomId);
+    expectFunction = (roomName: string, params: GetMessagesQueryParams) => {
+      expect(roomName).toEqual(room.name);
       expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstChannelSerial);
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Change the attach and channel serials
     const secondChannelSerial = '01992531200000-001@108hhDJ2hpOihn12345678';
@@ -968,7 +781,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the first channel serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Initiate a re-attach this time without resume, should cause listener points to reset to new attach serial
     context.emulateBackendStateChange({
@@ -983,7 +796,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the attach serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
   });
 
   it<TestContext>('when update occurs, should query with correct params', async (context) => {
@@ -995,12 +808,12 @@ describe('Messages', () => {
     const testOrderBy = OrderBy.NewestFirst;
     const testLimit = 50;
 
-    let expectFunction: (roomId: string, params: GetMessagesQueryParams) => void = () => {};
+    let expectFunction: (roomName: string, params: GetMessagesQueryParams) => void = () => {};
 
     const { room, chatApi } = context;
 
-    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomId, params): Promise<Ably.PaginatedResult<Message>> => {
-      expectFunction(roomId, params);
+    vi.spyOn(chatApi, 'getMessages').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+      expectFunction(roomName, params);
       return Promise.resolve(mockPaginatedResultWithItems([]));
     });
 
@@ -1025,18 +838,18 @@ describe('Messages', () => {
     vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
 
     // Subscribe to the messages
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Check we are using the channel serial
-    expectFunction = (roomId: string, params: GetMessagesQueryParams) => {
-      expect(roomId).toEqual(room.roomId);
+    expectFunction = (roomName: string, params: GetMessagesQueryParams) => {
+      expect(roomName).toEqual(room.name);
       expect(params.orderBy).toEqual(testOrderBy);
       expect(params.limit).toEqual(testLimit);
       expect(params.fromSerial).toEqual(firstChannelSerial);
     };
 
     // Run a history query for the listener and check the chat api call is made with the channel serial
-    await getPreviousMessages({ limit: 50 });
+    await historyBeforeSubscribe({ limit: 50 });
 
     // Change the attach and channel serials
     const secondChannelSerial = '01992531200000-001@108StIJ2hpOihn12345678';
@@ -1060,7 +873,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the previous channel serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Initiate a re-attach this time without resume, should cause listener points to reset to new attach serial
     context.emulateBackendStateChange(
@@ -1078,7 +891,7 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the new attach serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
 
     // Change the attach serial again
     channel.properties.attachSerial = '01992531200000-001@108DrInRiKGihn12345678';
@@ -1100,6 +913,6 @@ describe('Messages', () => {
     };
 
     // Run a history query for the listener and check the chat api call is made with the previous attach serial
-    await expect(getPreviousMessages({ limit: 50 })).resolves.toBeTruthy();
+    await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
   });
 });

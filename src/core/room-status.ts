@@ -107,11 +107,6 @@ export interface RoomLifecycle {
    * @returns An object that can be used to unregister the listener.
    */
   onChange(listener: RoomStatusListener): StatusSubscription;
-
-  /**
-   * Removes all listeners that were added by the `onChange` method.
-   */
-  offAll(): void;
 }
 
 /**
@@ -161,16 +156,13 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
   private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
-  private readonly _roomId: string;
   private readonly _emitter = new EventEmitter<RoomStatusEventsMap>();
 
   /**
    * Constructs a new DefaultRoomLifecycle instance.
-   * @param roomId The unique identifier of the room.
    * @param logger An instance of the Logger.
    */
-  constructor(roomId: string, logger: Logger) {
-    this._roomId = roomId;
+  constructor(logger: Logger) {
     this._logger = logger;
   }
 
@@ -204,13 +196,6 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
 
   onChangeOnce(listener: RoomStatusListener): void {
     this._internalEmitter.once(listener);
-  }
-
-  /**
-   * @inheritdoc
-   */
-  offAll(): void {
-    this._emitter.off();
   }
 
   setStatus(params: NewRoomStatus): void {

@@ -1,6 +1,6 @@
 import { ReactionInput } from '../ReactionInput';
 import { FC, useEffect, useState } from 'react';
-import { ConnectionStatus, Reaction } from '@ably/chat';
+import { ConnectionStatus, Reaction, RoomReactionEvent } from '@ably/chat';
 import { useChatConnection, useRoom, useRoomReactions } from '@ably/chat/react';
 
 interface ReactionComponentProps {}
@@ -9,19 +9,19 @@ export const ReactionComponent: FC<ReactionComponentProps> = () => {
   const [isConnected, setIsConnected] = useState(true);
   const { currentStatus } = useChatConnection();
   const [roomReactions, setRoomReactions] = useState<Reaction[]>([]);
-  const { roomId } = useRoom();
+  const { roomName } = useRoom();
   const { send: sendReaction } = useRoomReactions({
-    listener: (reaction: Reaction) => {
-      setRoomReactions([...roomReactions, reaction]);
+    listener: (event: RoomReactionEvent) => {
+      setRoomReactions([...roomReactions, event.reaction]);
     },
   });
 
   useEffect(() => {
     // clear reactions when the room changes
-    if (roomId) {
+    if (roomName) {
       setRoomReactions([]);
     }
-  }, [roomId]);
+  }, [roomName]);
 
   useEffect(() => {
     // enable/disable the input based on the connection status

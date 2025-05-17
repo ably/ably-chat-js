@@ -31,7 +31,6 @@ describe('room-promise', () => {
         };
       },
       makeTestLogger(),
-      'test-room',
     );
 
     // Now say the promise should resolve
@@ -69,7 +68,6 @@ describe('room-promise', () => {
         };
       },
       makeTestLogger(),
-      'test-room',
     );
 
     // Now call unmount

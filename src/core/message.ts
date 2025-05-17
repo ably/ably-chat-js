@@ -1,10 +1,10 @@
 import { ErrorInfo, SummaryDistinctValues, SummaryMultipleValues, SummaryUniqueValues } from 'ably';
 
 import {
-  ChatMessageActions,
+  ChatMessageAction,
   MessageEvent,
-  MessageEvents,
-  MessageReactionEvents,
+  MessageEventType,
+  MessageReactionEventType,
   MessageReactionSummaryEvent,
 } from './events.js';
 import { Headers } from './headers.js';
@@ -59,11 +59,6 @@ export interface Message {
   readonly clientId: string;
 
   /**
-   * The roomId of the chat room to which the message belongs.
-   */
-  readonly roomId: string;
-
-  /**
    * The text of the message.
    */
   readonly text: string;
@@ -105,7 +100,7 @@ export interface Message {
   /**
    * The action type of the message. This can be used to determine if the message was created, updated, or deleted.
    */
-  readonly action: ChatMessageActions;
+  readonly action: ChatMessageAction;
 
   /**
    * A unique identifier for the latest version of this message.
@@ -236,7 +231,7 @@ export interface Message {
    *
    * @param event The event to be applied to the returned message.
    * @throws {@link ErrorInfo} if the event is for a different message.
-   * @throws {@link ErrorInfo} if the event is a {@link MessageEvents.Created}.
+   * @throws {@link ErrorInfo} if the event is a {@link MessageEventType.Created}.
    * @returns A new message instance with the event applied. If the event is a no-op, such
    *    as an event for an old version, the same message is returned (not a copy).
    */
@@ -297,11 +292,10 @@ export interface MessageReactions {
 export interface DefaultMessageParams {
   serial: string;
   clientId: string;
-  roomId: string;
   text: string;
   metadata: MessageMetadata;
   headers: MessageHeaders;
-  action: ChatMessageActions;
+  action: ChatMessageAction;
   version: string;
   createdAt: Date;
   timestamp: Date;
@@ -317,11 +311,10 @@ export interface DefaultMessageParams {
 export class DefaultMessage implements Message {
   public readonly serial: string;
   public readonly clientId: string;
-  public readonly roomId: string;
   public readonly text: string;
   public readonly metadata: MessageMetadata;
   public readonly headers: MessageHeaders;
-  public readonly action: ChatMessageActions;
+  public readonly action: ChatMessageAction;
   public readonly version: string;
   public readonly createdAt: Date;
   public readonly timestamp: Date;
@@ -331,7 +324,6 @@ export class DefaultMessage implements Message {
   constructor({
     serial,
     clientId,
-    roomId,
     text,
     metadata,
     headers,
@@ -344,7 +336,6 @@ export class DefaultMessage implements Message {
   }: DefaultMessageParams) {
     this.serial = serial;
     this.clientId = clientId;
-    this.roomId = roomId;
     this.text = text;
     this.metadata = metadata;
     this.headers = headers;
@@ -363,11 +354,11 @@ export class DefaultMessage implements Message {
   }
 
   get isUpdated(): boolean {
-    return this.action === ChatMessageActions.MessageUpdate;
+    return this.action === ChatMessageAction.MessageUpdate;
   }
 
   get isDeleted(): boolean {
-    return this.action === ChatMessageActions.MessageDelete;
+    return this.action === ChatMessageAction.MessageDelete;
   }
 
   get updatedBy(): string | undefined {
@@ -427,12 +418,12 @@ export class DefaultMessage implements Message {
   }
 
   with(event: MessageEvent | MessageReactionSummaryEvent): Message {
-    if (event.type === MessageEvents.Created) {
+    if (event.type === MessageEventType.Created) {
       throw new ErrorInfo('cannot apply a created event to a message', 40000, 400);
     }
 
     // reaction summary
-    if (event.type === MessageReactionEvents.Summary) {
+    if (event.type === MessageReactionEventType.Summary) {
       if (event.summary.messageSerial !== this.serial) {
         throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
       }
@@ -465,7 +456,6 @@ export class DefaultMessage implements Message {
     return new DefaultMessage({
       serial: replace?.serial ?? source.serial,
       clientId: replace?.clientId ?? source.clientId,
-      roomId: replace?.roomId ?? source.roomId,
       text: replace?.text ?? source.text,
       metadata: replace?.metadata ?? structuredClone(source.metadata),
       headers: replace?.headers ?? structuredClone(source.headers),

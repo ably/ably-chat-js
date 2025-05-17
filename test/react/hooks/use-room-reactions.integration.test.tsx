@@ -10,7 +10,7 @@ import { ChatClientProvider } from '../../../src/react/providers/chat-client-pro
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 import { waitForArrayLength } from '../../helper/common.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { randomRoomName } from '../../helper/identifier.ts';
 
 describe('useRoomReactions', () => {
   afterEach(() => {
@@ -23,16 +23,16 @@ describe('useRoomReactions', () => {
     const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can receive reactions
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // store the received reactions
     const reactions: Reaction[] = [];
 
     // subscribe to the reactions
-    roomTwo.reactions.subscribe((reaction) => {
-      reactions.push(reaction);
+    roomTwo.reactions.subscribe((event) => {
+      reactions.push(event.reaction);
     });
 
     // the test component should send a reaction
@@ -51,7 +51,7 @@ describe('useRoomReactions', () => {
     // create the test providers and render it, sending a reaction
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent />
         </ChatRoomProvider>
       </ChatClientProvider>
@@ -71,8 +71,8 @@ describe('useRoomReactions', () => {
     const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can send a reaction
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // store the received reactions
@@ -92,8 +92,8 @@ describe('useRoomReactions', () => {
     // create the test providers and render it
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
-          <TestComponent listener={(reaction) => reactions.push(reaction)} />
+        <ChatRoomProvider name={roomName}>
+          <TestComponent listener={(event) => reactions.push(event.reaction)} />
         </ChatRoomProvider>
       </ChatClientProvider>
     );

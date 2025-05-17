@@ -37,14 +37,14 @@ describe('useRoom', () => {
     const TestUseRoom: React.FC = () => {
       const context = useRoomContext('foo');
       expect(context).toBeDefined();
-      expect(context.roomId).toBe('foo');
+      expect(context.roomName).toBe('foo');
       expect(context.options).toBeUndefined();
       return null;
     };
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
-        <ChatRoomProvider id="foo">
+        <ChatRoomProvider name="foo">
           <TestUseRoom />
         </ChatRoomProvider>
       </ChatClientProvider>

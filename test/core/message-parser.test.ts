@@ -1,47 +1,38 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
-import { ChatMessageActions } from '../../src/core/events.ts';
+import { ChatMessageAction } from '../../src/core/events.ts';
 import { DefaultMessage } from '../../src/core/message.ts';
 import { parseMessage } from '../../src/core/message-parser.js';
 
 describe('parseMessage', () => {
   describe.each([
     {
-      description: 'roomId is undefined',
-      roomId: undefined,
-      message: {},
-      expectedError: 'received incoming message without roomId',
-    },
-    {
       description: 'message.data is undefined',
-      roomId: 'room1',
       message: {
         clientId: 'client1',
         timestamp: 1728402074206,
         createdAt: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without data',
     },
     {
       description: 'message.clientId is undefined',
-      roomId: 'room1',
       message: {
         data: { text: 'hello' },
         timestamp: 1728402074206,
         createdAt: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without clientId',
     },
     {
       description: 'message.data.text is undefined',
-      roomId: 'room1',
       message: {
         data: {},
         clientId: 'client1',
@@ -49,40 +40,37 @@ describe('parseMessage', () => {
         createdAt: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without text',
     },
     {
       description: 'message.extras is undefined',
-      roomId: 'room1',
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
         timestamp: 1728402074206,
         createdAt: 1728402074206,
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without extras',
     },
     {
       description: 'message.serial is undefined',
-      roomId: 'room1',
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
         timestamp: 1728402074206,
         createdAt: 1728402074206,
         extras: {},
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       },
       expectedError: 'received incoming message without serial',
     },
     {
       description: 'message.version is undefined',
-      roomId: 'room1',
       message: {
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         data: { text: 'hello' },
@@ -90,13 +78,12 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         createdAt: 1728402074206,
         extras: {},
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without version',
     },
     {
       description: 'message.action is unhandled',
-      roomId: 'room1',
       message: {
         data: { text: 'hello' },
         clientId: 'client1',
@@ -109,10 +96,10 @@ describe('parseMessage', () => {
       },
       expectedError: 'received incoming message with unhandled action; unhandled.action',
     },
-  ])('should throw an error ', ({ description, roomId, message, expectedError }) => {
+  ])('should throw an error ', ({ description, message, expectedError }) => {
     it(`should throw an error if ${description}`, () => {
       expect(() => {
-        parseMessage(roomId, message as Ably.InboundMessage);
+        parseMessage(message as Ably.InboundMessage);
       }).toThrowErrorInfo({
         code: 50000,
         message: expectedError,
@@ -130,16 +117,15 @@ describe('parseMessage', () => {
       },
       timestamp: 1728402074206,
       version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
     } as Ably.InboundMessage;
 
-    const result = parseMessage('room1', message);
+    const result = parseMessage(message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
     expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.clientId).toBe('client1');
-    expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
     expect(result.createdAt).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
@@ -153,7 +139,7 @@ describe('parseMessage', () => {
     expect(result.updatedAt).toBeUndefined();
     expect(result.updatedBy).toBeUndefined();
 
-    expect(result.action).toEqual(ChatMessageActions.MessageCreate);
+    expect(result.action).toEqual(ChatMessageAction.MessageCreate);
     expect(result.operation).toBeUndefined();
   });
 
@@ -166,26 +152,25 @@ describe('parseMessage', () => {
       extras: {
         headers: { headerKey: 'headerValue' },
       },
-      action: ChatMessageActions.MessageUpdate,
+      action: ChatMessageAction.MessageUpdate,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       timestamp: 1728402074206,
       version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       operation: { clientId: 'client2', description: 'update message', metadata: { 'custom-update': 'some flag' } },
     } as Ably.InboundMessage;
 
-    const result = parseMessage('room1', message);
+    const result = parseMessage(message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
     expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.clientId).toBe('client1');
-    expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
     expect(result.createdAt).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
     expect(result.updatedAt).toEqual(new Date(1728402074206));
     expect(result.updatedBy).toBe('client2');
-    expect(result.action).toEqual(ChatMessageActions.MessageUpdate);
+    expect(result.action).toEqual(ChatMessageAction.MessageUpdate);
     expect(result.version).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.operation).toEqual({
       clientId: 'client2',
@@ -207,7 +192,7 @@ describe('parseMessage', () => {
       extras: {
         headers: { headerKey: 'headerValue' },
       },
-      action: ChatMessageActions.MessageDelete,
+      action: ChatMessageAction.MessageDelete,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       timestamp: 1728402074206,
       version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
@@ -218,12 +203,11 @@ describe('parseMessage', () => {
       },
     } as Ably.InboundMessage;
 
-    const result = parseMessage('room1', message);
+    const result = parseMessage(message);
 
     expect(result).toBeInstanceOf(DefaultMessage);
     expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.clientId).toBe('client1');
-    expect(result.roomId).toBe('room1');
     expect(result.text).toBe('hello');
     expect(result.createdAt).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });

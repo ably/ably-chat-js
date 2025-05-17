@@ -1,7 +1,7 @@
 import { MessageComponent } from '../MessageComponent';
 import { useChatClient, useMessages } from '@ably/chat/react';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { Message, MessageEvent, MessageEvents, PaginatedResult } from '@ably/chat';
+import { Message, MessageEvent, MessageEventType, PaginatedResult } from '@ably/chat';
 import { ErrorInfo } from 'ably';
 import { useReactionType } from '../MessageReactions';
 import { MessageInput } from '../MessageInput';
@@ -14,11 +14,11 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
 
-  const { getPreviousMessages, deleteMessage, update, addReaction, deleteReaction } = useMessages({
+  const { historyBeforeSubscribe, deleteMessage, update, addReaction, deleteReaction } = useMessages({
     listener: (event: MessageEvent) => {
       const message = event.message;
       switch (event.type) {
-        case MessageEvents.Created: {
+        case MessageEventType.Created: {
           setMessages((prevMessages) => {
             // if already exists do nothing
             const index = prevMessages.findIndex((other) => message.isSameAs(other));
@@ -36,8 +36,8 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
           });
           break;
         }
-        case MessageEvents.Updated:
-        case MessageEvents.Deleted: {
+        case MessageEventType.Updated:
+        case MessageEventType.Deleted: {
           setMessages((prevMessages) => {
             const index = prevMessages.findIndex((other) => message.isSameAs(other));
             if (index === -1) {
@@ -94,13 +94,15 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
       setLoading(true);
 
       // Do a message backfill
-      backfillPreviousMessages(getPreviousMessages);
+      backfillPreviousMessages(historyBeforeSubscribe);
     },
   });
 
-  const backfillPreviousMessages = (getPreviousMessages: ReturnType<typeof useMessages>['getPreviousMessages']) => {
-    if (getPreviousMessages) {
-      getPreviousMessages({ limit: 50 })
+  const backfillPreviousMessages = (
+    historyBeforeSubscribe: ReturnType<typeof useMessages>['historyBeforeSubscribe'],
+  ) => {
+    if (historyBeforeSubscribe) {
+      historyBeforeSubscribe({ limit: 50 })
         .then((result: PaginatedResult<Message>) => {
           setMessages(result.items.reverse());
           setLoading(false);
@@ -162,9 +164,9 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    console.debug('updating getPreviousMessages useEffect', { getPreviousMessages });
-    backfillPreviousMessages(getPreviousMessages);
-  }, [getPreviousMessages]);
+    console.debug('updating historyBeforeSubscribe useEffect', { historyBeforeSubscribe });
+    backfillPreviousMessages(historyBeforeSubscribe);
+  }, [historyBeforeSubscribe]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
