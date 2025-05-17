@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ConnectionStatus } from '../../src/core/connection.ts';
 import { RoomReactionEventType } from '../../src/core/events.ts';
 import { Reaction } from '../../src/core/reaction.ts';
 import { Room } from '../../src/core/room.ts';
@@ -32,7 +33,10 @@ describe('Reactions', () => {
       context.publishTimestamp = date;
     };
 
-    context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
+    context.room = makeRandomRoom({
+      chatApi: context.chatApi,
+      realtime: context.realtime,
+    });
     const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
 
@@ -273,6 +277,15 @@ describe('Reactions', () => {
 
         void room.reactions.send({ type: 'love' });
       }));
+
+    it<TestContext>('should reject when sending a reaction while not connected to Ably', async (context) => {
+      const { room } = context;
+
+      // Mock connection status to be disconnected
+      vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
+
+      await expect(room.reactions.send({ type: 'love' })).rejects.toBeErrorInfoWithCode(40000);
+    });
 
     it<TestContext>('should be able to send a reaction and receive a reaction with metadata and headers', (context) =>
       new Promise<void>((done, reject) => {

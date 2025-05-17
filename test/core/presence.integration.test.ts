@@ -74,6 +74,9 @@ describe('UserPresence', { timeout: 30000 }, () => {
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
     context.chatRoom = await context.chat.rooms.get(roomName);
+
+    // Attach the room before the test starts
+    await context.chatRoom.attach();
   });
 
   // Test for successful entering with clientId and custom user data

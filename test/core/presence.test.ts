@@ -125,4 +125,64 @@ describe('Presence', () => {
       }),
     );
   });
+
+  describe<TestContext>('isUserPresent', () => {
+    it<TestContext>('throws ErrorInfo if channel is not attached', async (context) => {
+      const room = context.makeRoom({ presence: { enableEvents: true } });
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
+
+      await expect(room.presence.isUserPresent('clientId')).rejects.toBeErrorInfo({
+        code: 40000,
+        message: 'could not perform presence operation; channel is not attached',
+      });
+    });
+  });
+
+  describe<TestContext>('enter', () => {
+    it<TestContext>('throws ErrorInfo if channel is not attached', async (context) => {
+      const room = context.makeRoom({ presence: { enableEvents: true } });
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
+
+      await expect(room.presence.enter({ foo: 'bar' })).rejects.toBeErrorInfo({
+        code: 40000,
+        message: 'could not perform presence operation; channel is not attached',
+      });
+    });
+  });
+
+  describe<TestContext>('update', () => {
+    it<TestContext>('throws ErrorInfo if channel is not attached', async (context) => {
+      const room = context.makeRoom({ presence: { enableEvents: true } });
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
+
+      await expect(room.presence.enter({ foo: 'bar' })).rejects.toBeErrorInfo({
+        code: 40000,
+        message: 'could not perform presence operation; channel is not attached',
+      });
+    });
+  });
+
+  describe<TestContext>('leave', () => {
+    it<TestContext>('throws ErrorInfo if channel is not attached', async (context) => {
+      const room = context.makeRoom({ presence: { enableEvents: true } });
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
+
+      await expect(room.presence.leave()).rejects.toBeErrorInfo({
+        code: 40000,
+        message: 'could not perform presence operation; channel is not attached',
+      });
+    });
+  });
+
+  describe<TestContext>('get', () => {
+    it<TestContext>('throws ErrorInfo if channel is not attached', async (context) => {
+      const room = context.makeRoom({ presence: { enableEvents: true } });
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
+
+      await expect(room.presence.get()).rejects.toBeErrorInfo({
+        code: 40000,
+        message: 'could not perform presence operation; channel is not attached',
+      });
+    });
+  });
 });
