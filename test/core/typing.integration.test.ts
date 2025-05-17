@@ -36,7 +36,8 @@ describe('Typing', () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>(async (context) => {
     context.realtime = ablyRealtimeClient();
-    context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
+    const logger = makeTestLogger();
+    context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), logger);
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = await context.chat.get(randomRoomName(), {
       typing: { heartbeatThrottleMs: 600 },
@@ -111,7 +112,6 @@ describe('Typing', () => {
         normalizeClientOptions({}),
         makeTestLogger(),
       );
-
       const roomOptions = { typing: { heartbeatThrottleMs: 10000 } };
 
       const client1Room = await client1.get(context.chatRoom.name, roomOptions);
