@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ChatMessageAction, MessageEvent, MessageEventType } from '../../src/core/events.ts';
+import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType } from '../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
@@ -390,8 +390,8 @@ describe('ChatMessage', () => {
         operation: { clientId: 'luke' },
       });
 
-      const event: MessageEvent = {
-        type: MessageEventType.Updated,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -417,8 +417,8 @@ describe('ChatMessage', () => {
         operation: { clientId: 'luke' },
       });
 
-      const event: MessageEvent = {
-        type: MessageEventType.Created,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Created,
         message: eventMessage,
       };
 
@@ -444,8 +444,8 @@ describe('ChatMessage', () => {
         operation: { clientId: 'luke' },
       });
 
-      const event: MessageEvent = {
-        type: MessageEventType.Updated,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -469,8 +469,8 @@ describe('ChatMessage', () => {
         operation: { clientId: 'luke' },
       });
 
-      const event: MessageEvent = {
-        type: MessageEventType.Updated,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -494,8 +494,8 @@ describe('ChatMessage', () => {
         reactions: emptyMessageReactions(),
       });
 
-      const event: MessageEvent = {
-        type: MessageEventType.Updated,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -518,8 +518,8 @@ describe('ChatMessage', () => {
         operation: { clientId: 'luke' },
       });
 
-      const event: MessageEvent = {
-        type: MessageEventType.Updated,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Updated,
         message: eventMessage,
       };
 

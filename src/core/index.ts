@@ -9,7 +9,7 @@ export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener } from './discontinuity.js';
 export { ErrorCode, errorInfoIs } from './errors.js';
 export type {
-  MessageEvent,
+  ChatMessageEvent,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
   OccupancyEvent,
@@ -20,7 +20,7 @@ export type {
 } from './events.js';
 export {
   ChatMessageAction,
-  MessageEventType,
+  ChatMessageEventType,
   MessageReactionEventType,
   MessageReactionType,
   OccupancyEventType,

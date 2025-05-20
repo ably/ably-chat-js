@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatApi } from './chat-api.js';
-import { ChatMessageAction, MessageEvent, MessageEventType, RealtimeMessageName } from './events.js';
+import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType, RealtimeMessageName } from './events.js';
 import { Logger } from './logger.js';
 import {
   DefaultMessage,
@@ -22,21 +22,21 @@ import EventEmitter, { wrap } from './utils/event-emitter.js';
  * Event names and their respective payloads emitted by the messages feature.
  */
 interface MessageEventsMap {
-  [MessageEventType.Created]: MessageEvent;
-  [MessageEventType.Updated]: MessageEvent;
-  [MessageEventType.Deleted]: MessageEvent;
+  [ChatMessageEventType.Created]: ChatMessageEvent;
+  [ChatMessageEventType.Updated]: ChatMessageEvent;
+  [ChatMessageEventType.Deleted]: ChatMessageEvent;
 }
 
 /**
  * Mapping of chat message actions to message events.
  */
-const MessageActionsToEventsMap: Map<ChatMessageAction, MessageEventType> = new Map<
+const MessageActionsToEventsMap: Map<ChatMessageAction, ChatMessageEventType> = new Map<
   ChatMessageAction,
-  MessageEventType
+  ChatMessageEventType
 >([
-  [ChatMessageAction.MessageCreate, MessageEventType.Created],
-  [ChatMessageAction.MessageUpdate, MessageEventType.Updated],
-  [ChatMessageAction.MessageDelete, MessageEventType.Deleted],
+  [ChatMessageAction.MessageCreate, ChatMessageEventType.Created],
+  [ChatMessageAction.MessageUpdate, ChatMessageEventType.Updated],
+  [ChatMessageAction.MessageDelete, ChatMessageEventType.Deleted],
 ]);
 
 /**
@@ -159,7 +159,7 @@ export interface SendMessageParams {
  * A listener for message events in a chat room.
  * @param event The message event that was received.
  */
-export type MessageListener = (event: MessageEvent) => void;
+export type MessageListener = (event: ChatMessageEvent) => void;
 
 /**
  * A response object that allows you to control a message subscription.
@@ -557,7 +557,10 @@ export class DefaultMessages implements Messages {
   subscribe(listener: MessageListener): MessageSubscriptionResponse {
     this._logger.trace('Messages.subscribe();');
     const wrapped = wrap(listener);
-    this._emitter.on([MessageEventType.Created, MessageEventType.Updated, MessageEventType.Deleted], wrapped);
+    this._emitter.on(
+      [ChatMessageEventType.Created, ChatMessageEventType.Updated, ChatMessageEventType.Deleted],
+      wrapped,
+    );
 
     // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
     const resolvedSubscriptionStart = this._resolveSubscriptionStart();

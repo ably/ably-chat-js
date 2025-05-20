@@ -1,7 +1,8 @@
 import { MessageComponent } from '../MessageComponent';
 import { useChatClient, useMessages } from '@ably/chat/react';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { Message, MessageEvent, MessageEventType, PaginatedResult } from '@ably/chat';
+import { Message, PaginatedResult, ChatMessageEventType } from '@ably/chat';
+import type { ChatMessageEvent } from '@ably/chat';
 import { ErrorInfo } from 'ably';
 import { useReactionType } from '../MessageReactions';
 import { MessageInput } from '../MessageInput';
@@ -15,10 +16,10 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const clientId = chatClient.clientId;
 
   const { historyBeforeSubscribe, deleteMessage, update, addReaction, deleteReaction } = useMessages({
-    listener: (event: MessageEvent) => {
+    listener: (event: ChatMessageEvent) => {
       const message = event.message;
       switch (event.type) {
-        case MessageEventType.Created: {
+        case ChatMessageEventType.Created: {
           setMessages((prevMessages) => {
             // if already exists do nothing
             const index = prevMessages.findIndex((other) => message.isSameAs(other));
@@ -36,8 +37,8 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
           });
           break;
         }
-        case MessageEventType.Updated:
-        case MessageEventType.Deleted: {
+        case ChatMessageEventType.Updated:
+        case ChatMessageEventType.Deleted: {
           setMessages((prevMessages) => {
             const index = prevMessages.findIndex((other) => message.isSameAs(other));
             if (index === -1) {
