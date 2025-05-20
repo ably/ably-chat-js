@@ -6,7 +6,7 @@ import { Reaction } from './reaction.js';
 /**
  * All chat message events.
  */
-export enum MessageEventType {
+export enum ChatMessageEventType {
   /** Fires when a new chat message is received. */
   Created = 'message.created',
 
@@ -171,11 +171,11 @@ export interface RoomReactionEvent {
 /**
  * Payload for a message event.
  */
-export interface MessageEvent {
+export interface ChatMessageEvent {
   /**
    * The type of the message event.
    */
-  type: MessageEventType;
+  type: ChatMessageEventType;
 
   /**
    * The message that was received.

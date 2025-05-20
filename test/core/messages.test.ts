@@ -3,7 +3,7 @@ import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
-import { ChatMessageAction, MessageEvent, MessageEventType } from '../../src/core/events.ts';
+import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
@@ -175,7 +175,7 @@ describe('Messages', () => {
     };
 
     const received: string[] = [];
-    const listener = (message: MessageEvent) => {
+    const listener = (message: ChatMessageEvent) => {
       received.push(message.message.serial);
     };
     const subscription1 = room.messages.subscribe(listener);
@@ -255,17 +255,17 @@ describe('Messages', () => {
     const receivedMessages: Message[] = [];
     const receivedDeletions: Message[] = [];
     const receivedUpdates: Message[] = [];
-    const listener = (message: MessageEvent) => {
+    const listener = (message: ChatMessageEvent) => {
       switch (message.type) {
-        case MessageEventType.Created: {
+        case ChatMessageEventType.Created: {
           receivedMessages.push(message.message);
           break;
         }
-        case MessageEventType.Deleted: {
+        case ChatMessageEventType.Deleted: {
           receivedDeletions.push(message.message);
           break;
         }
-        case MessageEventType.Updated: {
+        case ChatMessageEventType.Updated: {
           receivedUpdates.push(message.message);
           break;
         }

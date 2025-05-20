@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
-import { ChatMessageAction, MessageEventType } from '../../src/core/events.ts';
+import { ChatMessageAction, ChatMessageEventType } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
@@ -78,11 +78,11 @@ describe('messages integration', { timeout: 10000 }, () => {
     const deletions: Message[] = [];
     room.messages.subscribe((messageEvent) => {
       switch (messageEvent.type) {
-        case MessageEventType.Created: {
+        case ChatMessageEventType.Created: {
           messages.push(messageEvent.message);
           break;
         }
-        case MessageEventType.Deleted: {
+        case ChatMessageEventType.Deleted: {
           deletions.push(messageEvent.message);
           break;
         }
@@ -150,11 +150,11 @@ describe('messages integration', { timeout: 10000 }, () => {
     const updates: Message[] = [];
     room.messages.subscribe((messageEvent) => {
       switch (messageEvent.type) {
-        case MessageEventType.Created: {
+        case ChatMessageEventType.Created: {
           messages.push(messageEvent.message);
           break;
         }
-        case MessageEventType.Updated: {
+        case ChatMessageEventType.Updated: {
           updates.push(messageEvent.message);
           break;
         }
