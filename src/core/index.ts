@@ -8,16 +8,11 @@ export type { Connection, ConnectionStatusChange, ConnectionStatusListener } fro
 export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener } from './discontinuity.js';
 export { ErrorCodes, errorInfoIs } from './errors.js';
-export type {
-  MessageEvent,
-  MessageReactionEvents,
-  MessageReactionRawEvent,
-  MessageReactionSummaryEvent,
-  TypingSetEvent,
-} from './events.js';
+export type { MessageEvent, MessageReactionRawEvent, MessageReactionSummaryEvent, TypingSetEvent } from './events.js';
 export {
   ChatMessageActions,
   MessageEvents,
+  MessageReactionEvents,
   MessageReactionType as MessageReactionType,
   PresenceEvents,
   TypingEventTypes,
