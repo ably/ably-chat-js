@@ -115,6 +115,7 @@ export class DefaultConnection implements Connection {
     this._logger = logger;
 
     // Set our initial status and error
+    // CHA-RS5
     this._status = this._mapAblyStatusToChat(ably.connection.state);
     this._error = ably.connection.errorReason;
 

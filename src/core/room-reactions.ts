@@ -141,6 +141,7 @@ export class DefaultRoomReactions implements RoomReactions {
       return Promise.reject(new Ably.ErrorInfo('unable to send reaction; type not set and it is required', 40001, 400));
     }
 
+    // CHA-ER3f
     if (this._connection.state !== 'connected') {
       return Promise.reject(new Ably.ErrorInfo('unable to send reaction; not connected to Ably', 40000, 400));
     }

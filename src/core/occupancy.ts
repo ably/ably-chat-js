@@ -151,6 +151,7 @@ export class DefaultOccupancy implements Occupancy {
   current(): OccupancyData | undefined {
     this._logger.trace('Occupancy.current();');
 
+    // CHA-O7c
     if (!this._roomOptions.occupancy.enableEvents) {
       throw new Ably.ErrorInfo(
         'cannot get current occupancy; occupancy events are not enabled in room options',
@@ -159,6 +160,8 @@ export class DefaultOccupancy implements Occupancy {
       ) as unknown as Error;
     }
 
+    // CHA-07a
+    // CHA-07b
     return this._latestOccupancyData;
   }
 
