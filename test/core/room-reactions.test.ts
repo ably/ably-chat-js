@@ -278,6 +278,7 @@ describe('Reactions', () => {
         void room.reactions.send({ type: 'love' });
       }));
 
+    // CHA-ER3f
     it<TestContext>('should reject when sending a reaction while not connected to Ably', async (context) => {
       const { room } = context;
 

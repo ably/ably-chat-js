@@ -72,6 +72,7 @@ describe('connection', () => {
     vi.spyOn(connection, 'errorReason', 'get').mockReturnValue(new Ably.ErrorInfo('error', 500, 50000));
   });
 
+  // CHA-RS5
   it<TestContext>('should set the initial channel state from the connection', (context) => {
     const connection = new DefaultConnection(context.realtime, makeTestLogger());
 

@@ -153,7 +153,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   }
 
   /**
-   * CHA-T9
+   * CHA-T16
    *
    * @inheritDoc
    */
@@ -202,6 +202,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     });
     try {
       // Check if connection is connected
+      // CHA-T4e
       if (this._connection.state !== 'connected') {
         this._logger.error(`DefaultTyping.keystroke(); connection is not connected`, {
           status: this._connection.state,
@@ -255,7 +256,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       }
 
       // If the user is not typing, do nothing.
-      // CHA-T5a
+      // CHA-T5f
       if (!this._heartbeatTimerId) {
         this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`);
         return;

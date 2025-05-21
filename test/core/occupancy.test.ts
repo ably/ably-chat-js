@@ -246,7 +246,9 @@ describe('Occupancy', () => {
     });
   });
 
+  // CHA-O7
   describe('current()', () => {
+    // CHA-O7c
     it<TestContext>('throws an error when events are disabled', (context) => {
       const room = makeRandomRoom({
         chatApi: context.chatApi,
@@ -263,10 +265,12 @@ describe('Occupancy', () => {
       }).toThrow('cannot get current occupancy; occupancy events are not enabled in room options');
     });
 
+    // CHA-O7b
     it<TestContext>('returns undefined when no events have been received', (context) => {
       expect(context.room.occupancy.current()).toBeUndefined();
     });
 
+    // CHA-O7a
     it<TestContext>('returns the latest occupancy data after receiving events', (context) => {
       // Send first event
       context.emulateOccupancyUpdate({

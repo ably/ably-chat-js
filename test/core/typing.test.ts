@@ -200,6 +200,7 @@ describe('Typing', () => {
       expect(realtimeChannel.publish).toHaveBeenCalledTimes(1);
     });
 
+    // CHA-T4e
     it<TestContext>('does not allow typing start if connection is not connected', async (context) => {
       const { room } = context;
       vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
@@ -228,6 +229,7 @@ describe('Typing', () => {
       expect(realtimeChannel.publish).not.toHaveBeenCalled();
     });
 
+    // CHA-T5f
     it<TestContext>('throws an error if typing.stop is called when the connection is not connected', async (context) => {
       const { room, realtime } = context;
       const channel = room.channel;
