@@ -10,7 +10,7 @@ import EventEmitter, { wrap } from './utils/event-emitter.js';
 /**
  * Interface for PresenceEventsMap
  */
-export interface PresenceEventsMap {
+interface PresenceEventsMap {
   [PresenceEventType.Enter]: PresenceEvent;
   [PresenceEventType.Leave]: PresenceEvent;
   [PresenceEventType.Update]: PresenceEvent;
@@ -349,8 +349,8 @@ export class DefaultPresence implements Presence {
 
   private _assertChannelState(): void {
     if (this._channel.state !== 'attaching' && this._channel.state !== 'attached') {
-      this._logger.error('could not perform presence operation; channel is not attached');
-      throw new Ably.ErrorInfo('could not perform presence operation; channel is not attached', 40000, 400);
+      this._logger.error('could not perform presence operation; room is not attached');
+      throw new Ably.ErrorInfo('could not perform presence operation; room is not attached', 40000, 400);
     }
   }
 }
