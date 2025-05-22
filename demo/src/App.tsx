@@ -55,7 +55,7 @@ const App: FC<AppProps> = () => {
   return (
     <ReactionTypeProvider>
       <ChatRoomProvider
-        name={roomNameState} // The room ID you want to create or join
+        name={roomNameState} // The room name you want to create or join
         release={true} // Release the room automatically when unmounted
         attach={true} // Attach to the room automatically when mounted
         options={{ occupancy: { enableEvents: true } }} // Enable occupancy events

@@ -133,7 +133,7 @@ describe('Presence', () => {
 
       await expect(room.presence.isUserPresent('clientId')).rejects.toBeErrorInfo({
         code: 40000,
-        message: 'could not perform presence operation; channel is not attached',
+        message: 'could not perform presence operation; room is not attached',
       });
     });
   });
@@ -145,7 +145,7 @@ describe('Presence', () => {
 
       await expect(room.presence.enter({ foo: 'bar' })).rejects.toBeErrorInfo({
         code: 40000,
-        message: 'could not perform presence operation; channel is not attached',
+        message: 'could not perform presence operation; room is not attached',
       });
     });
   });
@@ -157,7 +157,7 @@ describe('Presence', () => {
 
       await expect(room.presence.enter({ foo: 'bar' })).rejects.toBeErrorInfo({
         code: 40000,
-        message: 'could not perform presence operation; channel is not attached',
+        message: 'could not perform presence operation; room is not attached',
       });
     });
   });
@@ -169,7 +169,7 @@ describe('Presence', () => {
 
       await expect(room.presence.leave()).rejects.toBeErrorInfo({
         code: 40000,
-        message: 'could not perform presence operation; channel is not attached',
+        message: 'could not perform presence operation; room is not attached',
       });
     });
   });
@@ -181,7 +181,7 @@ describe('Presence', () => {
 
       await expect(room.presence.get()).rejects.toBeErrorInfo({
         code: 40000,
-        message: 'could not perform presence operation; channel is not attached',
+        message: 'could not perform presence operation; room is not attached',
       });
     });
   });
