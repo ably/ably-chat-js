@@ -5,9 +5,9 @@ import { ClientOptions } from 'ably';
 import { ChatClient, LogLevel } from '@ably/chat';
 import { ChatClientProvider } from '@ably/chat/react';
 import { nanoid } from 'nanoid';
-import App from './App.tsx';
 import './index.css';
 import { AblyProvider } from 'ably/react';
+import App from './App';
 
 // Generate a random clientId and remember it for the length of the session, so
 // if refreshing the page you still see your own messages as yours.
