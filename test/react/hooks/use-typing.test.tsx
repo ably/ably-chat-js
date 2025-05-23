@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { TypingEventTypes, TypingSetEvent, TypingSetEventTypes } from '../../../src/core/events.ts';
+import { TypingEventType, TypingSetEvent, TypingSetEventType } from '../../../src/core/events.ts';
 import { Logger } from '../../../src/core/logger.ts';
 import { Room } from '../../../src/core/room.ts';
 import { DefaultRoomLifecycle, InternalRoomLifecycle, RoomStatus } from '../../../src/core/room-status.ts';
@@ -81,19 +81,19 @@ describe('useTyping', () => {
         return { unsubscribe: mockUnsubscribe };
       }),
       onDiscontinuity: vi.fn().mockReturnValue({ off: vi.fn() }),
-      get: mockRoom.typing.get,
+      current: mockRoom.typing.current,
     };
 
     // update the mock room with the new typing object
-    updateMockRoom({ ...mockRoom, _lifecycle: new DefaultRoomLifecycle('roomId', mockLogger), typing: mockTyping });
+    updateMockRoom({ ...mockRoom, _lifecycle: new DefaultRoomLifecycle(mockLogger), typing: mockTyping });
     const { result, unmount } = renderHook(() => useTyping({ listener: mockListener }));
 
     await waitForEventualHookValueToBeDefined(result, (value) => value.typingIndicators);
 
     // verify that subscribe was called with the mock listener on mount by triggering an event
     const typingEvent: TypingSetEvent = {
-      type: TypingSetEventTypes.SetChanged,
-      change: { clientId: 'someClientId', type: TypingEventTypes.Stop },
+      type: TypingSetEventType.SetChanged,
+      change: { clientId: 'someClientId', type: TypingEventType.Stop },
       currentlyTyping: new Set<string>(),
     };
     for (const listener of mockTyping.listeners) {
@@ -146,7 +146,7 @@ describe('useTyping', () => {
     });
 
     // spy on the get method of the typing instance, for now return an empty set
-    vi.spyOn(mockRoom.typing, 'get').mockReturnValue(new Set());
+    vi.spyOn(mockRoom.typing, 'current').mockReturnValue(new Set());
 
     // render the hook and check the initial state
     const { result } = renderHook(() => useTyping());
@@ -169,8 +169,8 @@ describe('useTyping', () => {
     act(() => {
       if (subscribedListener) {
         subscribedListener({
-          type: TypingSetEventTypes.SetChanged,
-          change: { clientId: 'user2', type: TypingEventTypes.Start },
+          type: TypingSetEventType.SetChanged,
+          change: { clientId: 'user2', type: TypingEventType.Start },
           currentlyTyping: testSet,
         });
       }
@@ -188,7 +188,7 @@ describe('useTyping', () => {
 
     const testSet = new Set<string>(['user1', 'user2']);
     // spy on the get method of the typing instance, return an initial set
-    vi.spyOn(mockRoom.typing, 'get').mockReturnValue(testSet);
+    vi.spyOn(mockRoom.typing, 'current').mockReturnValue(testSet);
 
     // render the hook and check the initial state
     const { result } = renderHook(() => useTyping());
@@ -202,7 +202,7 @@ describe('useTyping', () => {
     );
 
     expect(mockRoom.typing.subscribe).toHaveBeenCalledTimes(1);
-    expect(mockRoom.typing.get).toHaveBeenCalledOnce();
+    expect(mockRoom.typing.current).toHaveBeenCalledOnce();
 
     // check the states of the occupancy metrics are correctly updated
     expect(result.current.currentlyTyping).toEqual(testSet);

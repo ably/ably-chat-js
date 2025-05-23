@@ -1,11 +1,12 @@
 import * as Ably from 'ably';
 
 import { Message } from './message.js';
+import { Reaction } from './reaction.js';
 
 /**
  * All chat message events.
  */
-export enum MessageEvents {
+export enum ChatMessageEventType {
   /** Fires when a new chat message is received. */
   Created = 'message.created',
 
@@ -19,15 +20,23 @@ export enum MessageEvents {
 /**
  * Realtime chat message names.
  */
-export enum RealtimeMessageNames {
+export enum RealtimeMessageName {
   /** Represents a regular chat message. */
   ChatMessage = 'chat.message',
 }
 
 /**
+ * Realtime meta event types.
+ */
+export enum RealtimeMetaEventType {
+  /** Represents a meta occupancy event. */
+  Occupancy = '[meta]occupancy',
+}
+
+/**
  * Chat Message Actions.
  */
-export enum ChatMessageActions {
+export enum ChatMessageAction {
   /** Action applied to a new message. */
   MessageCreate = 'message.create',
 
@@ -47,7 +56,7 @@ export enum ChatMessageActions {
 /**
  * Enum representing presence events.
  */
-export enum PresenceEvents {
+export enum PresenceEventType {
   /**
    * Event triggered when a user enters.
    */
@@ -71,7 +80,7 @@ export enum PresenceEvents {
 /**
  * Enum representing the typing event types.
  */
-export enum TypingEventTypes {
+export enum TypingEventType {
   /**
    * Event triggered when a user is typing.
    */
@@ -86,7 +95,7 @@ export enum TypingEventTypes {
 /**
  * Enum representing the typing set event types.
  */
-export enum TypingSetEventTypes {
+export enum TypingSetEventType {
   /**
    * Event triggered when a change occurs in the set of typers.
    */
@@ -100,7 +109,7 @@ export interface TypingSetEvent {
   /**
    * The type of the event.
    */
-  type: TypingSetEventTypes;
+  type: TypingSetEventType;
 
   /**
    * The set of clientIds that are currently typing.
@@ -119,7 +128,7 @@ export interface TypingSetEvent {
     /**
      * Type of the change.
      */
-    type: TypingEventTypes;
+    type: TypingEventType;
   };
 }
 
@@ -127,7 +136,7 @@ export interface TypingSetEvent {
  * Room reaction events. This is used for the realtime system since room reactions
  * have only one event: "roomReaction".
  */
-export enum RoomReactionEvents {
+export enum RoomReactionRealtimeEventType {
   /**
    * Event triggered when a room reaction was received.
    */
@@ -135,13 +144,38 @@ export enum RoomReactionEvents {
 }
 
 /**
+ * The type of room reaction events.
+ */
+export enum RoomReactionEventType {
+  /**
+   * Event triggered when a room reaction was received.
+   */
+  Reaction = 'reaction',
+}
+
+/**
+ * Event that is emitted when a room reaction is received.
+ */
+export interface RoomReactionEvent {
+  /**
+   * The type of the event.
+   */
+  readonly type: RoomReactionEventType;
+
+  /**
+   * The reaction that was received.
+   */
+  readonly reaction: Reaction;
+}
+
+/**
  * Payload for a message event.
  */
-export interface MessageEvent {
+export interface ChatMessageEvent {
   /**
    * The type of the message event.
    */
-  type: MessageEvents;
+  type: ChatMessageEventType;
 
   /**
    * The message that was received.
@@ -186,7 +220,7 @@ export enum MessageReactionType {
  * Enum representing different message reaction events in the chat system.
  * @enum {string}
  */
-export enum MessageReactionEvents {
+export enum MessageReactionEventType {
   /**
    * A reaction was added to a message.
    */
@@ -206,7 +240,7 @@ export enum MessageReactionEvents {
  */
 export interface MessageReactionRawEvent {
   /** Whether reaction was added or removed */
-  type: MessageReactionEvents.Create | MessageReactionEvents.Delete;
+  type: MessageReactionEventType.Create | MessageReactionEventType.Delete;
 
   /** The timestamp of this event */
   timestamp: Date;
@@ -236,7 +270,7 @@ export interface MessageReactionRawEvent {
  */
 export interface MessageReactionSummaryEvent {
   /** The type of the event */
-  type: MessageReactionEvents.Summary;
+  type: MessageReactionEventType.Summary;
 
   /** The message reactions summary. */
   summary: {
@@ -255,9 +289,44 @@ export interface MessageReactionSummaryEvent {
 }
 
 /**
+ * Enum representing occupancy events.
+ */
+export enum OccupancyEventType {
+  /**
+   * Event triggered when occupancy is updated.
+   */
+  Updated = 'occupancy.updated',
+}
+
+/**
+ * Represents an occupancy event.
+ */
+export interface OccupancyEvent {
+  /**
+   * The type of the occupancy event.
+   */
+  type: OccupancyEventType;
+
+  /**
+   * The occupancy data.
+   */
+  occupancy: {
+    /**
+     * The number of connections to the chat room.
+     */
+    connections: number;
+
+    /**
+     * The number of presence members in the chat room - members who have entered presence.
+     */
+    presenceMembers: number;
+  };
+}
+
+/**
  * Room events.
  */
-export enum RoomEvents {
+export enum RoomEventType {
   /**
    * Event triggered when a discontinuity is detected in the room's channel connection.
    * A discontinuity occurs when an attached or update event comes from the channel with resume=false,

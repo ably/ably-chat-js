@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
-import { ChatMessageActions, MessageEvents } from '../../src/core/events.ts';
+import { ChatMessageAction, ChatMessageEventType } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForArrayLength } from '../helper/common.ts';
-import { randomRoomId } from '../helper/identifier.ts';
+import { randomRoomName } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { getRandomRoom } from '../helper/room.ts';
 
@@ -78,11 +78,11 @@ describe('messages integration', { timeout: 10000 }, () => {
     const deletions: Message[] = [];
     room.messages.subscribe((messageEvent) => {
       switch (messageEvent.type) {
-        case MessageEvents.Created: {
+        case ChatMessageEventType.Created: {
           messages.push(messageEvent.message);
           break;
         }
-        case MessageEvents.Deleted: {
+        case ChatMessageEventType.Deleted: {
           deletions.push(messageEvent.message);
           break;
         }
@@ -102,7 +102,7 @@ describe('messages integration', { timeout: 10000 }, () => {
     // deleted message should look like a deleted message and convenience getters should work
     expect(deletedMessage1.version).not.toEqual(deletedMessage1.serial);
     expect(deletedMessage1.version).not.toEqual(message1.version);
-    expect(deletedMessage1.action).toEqual(ChatMessageActions.MessageDelete);
+    expect(deletedMessage1.action).toEqual(ChatMessageAction.MessageDelete);
     expect(deletedMessage1.deletedAt).toBeDefined();
     expect(deletedMessage1.deletedAt).toEqual(deletedMessage1.timestamp);
     expect(deletedMessage1.deletedBy).toBeDefined();
@@ -129,7 +129,7 @@ describe('messages integration', { timeout: 10000 }, () => {
         clientId: chat.clientId,
         serial: deletedMessage1.serial,
         timestamp: deletedMessage1.deletedAt,
-        action: ChatMessageActions.MessageDelete,
+        action: ChatMessageAction.MessageDelete,
         version: deletedMessage1.version,
       }),
     ]);
@@ -150,11 +150,11 @@ describe('messages integration', { timeout: 10000 }, () => {
     const updates: Message[] = [];
     room.messages.subscribe((messageEvent) => {
       switch (messageEvent.type) {
-        case MessageEvents.Created: {
+        case ChatMessageEventType.Created: {
           messages.push(messageEvent.message);
           break;
         }
-        case MessageEvents.Updated: {
+        case ChatMessageEventType.Updated: {
           updates.push(messageEvent.message);
           break;
         }
@@ -195,7 +195,7 @@ describe('messages integration', { timeout: 10000 }, () => {
         serial: message1.serial,
         updatedAt: updated1.updatedAt,
         updatedBy: chat.clientId,
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
         version: updated1.version,
         createdAt: message1.createdAt,
       }),
@@ -214,7 +214,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get all 3 messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history = await room.messages.get({ limit: 3, orderBy: OrderBy.OldestFirst });
+    const history = await room.messages.history({ limit: 3, orderBy: OrderBy.OldestFirst });
 
     expect(history.items).toEqual([
       expect.objectContaining({
@@ -251,7 +251,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the deleted message
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history = await room.messages.get({ limit: 3, orderBy: OrderBy.OldestFirst });
+    const history = await room.messages.history({ limit: 3, orderBy: OrderBy.OldestFirst });
 
     expect(history.items).toEqual([
       expect.objectContaining({
@@ -260,7 +260,7 @@ describe('messages integration', { timeout: 10000 }, () => {
         serial: deletedMessage1.serial,
         createdAt: message1.timestamp,
         timestamp: deletedMessage1.deletedAt,
-        action: ChatMessageActions.MessageDelete,
+        action: ChatMessageAction.MessageDelete,
       }),
     ]);
 
@@ -290,7 +290,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the update message
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history = await room.messages.get({ limit: 3, orderBy: OrderBy.OldestFirst });
+    const history = await room.messages.history({ limit: 3, orderBy: OrderBy.OldestFirst });
 
     expect(history.items).toEqual([
       expect.objectContaining({
@@ -299,7 +299,7 @@ describe('messages integration', { timeout: 10000 }, () => {
         serial: updatedMessage1.serial,
         createdAt: message1.createdAt,
         timestamp: updatedMessage1.updatedAt,
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
       }),
     ]);
 
@@ -327,7 +327,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the first 3 messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history1 = await room.messages.get({ limit: 3, orderBy: OrderBy.OldestFirst });
+    const history1 = await room.messages.history({ limit: 3, orderBy: OrderBy.OldestFirst });
 
     expect(history1.items).toEqual([
       expect.objectContaining({
@@ -433,7 +433,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the first 3 messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history1 = await room.messages.get({ limit: 3, orderBy: OrderBy.OldestFirst });
+    const history1 = await room.messages.history({ limit: 3, orderBy: OrderBy.OldestFirst });
 
     expect(history1.items).toEqual([
       expect.objectContaining({
@@ -484,7 +484,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the last 3 messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history1 = await room.messages.get({ limit: 3, orderBy: OrderBy.NewestFirst });
+    const history1 = await room.messages.history({ limit: 3, orderBy: OrderBy.NewestFirst });
 
     expect(history1.items).toEqual([
       expect.objectContaining({
@@ -573,7 +573,7 @@ describe('messages integration', { timeout: 10000 }, () => {
     ]);
 
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const history = await room.messages.get({ limit: 2, orderBy: OrderBy.OldestFirst });
+    const history = await room.messages.history({ limit: 2, orderBy: OrderBy.OldestFirst });
 
     expect(history.items.length).toEqual(2);
     expect(history.items, 'history messages to match').toEqual([
@@ -593,7 +593,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Subscribe to messages and add them to a list when they arrive
     const messages: Message[] = [];
-    const { getPreviousMessages } = room.messages.subscribe((messageEvent) => {
+    const { historyBeforeSubscribe } = room.messages.subscribe((messageEvent) => {
       messages.push(messageEvent.message);
     });
 
@@ -601,7 +601,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Do a history request to get the messages before up
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const historyPreSubscription1 = await getPreviousMessages({ limit: 50 });
+    const historyPreSubscription1 = await historyBeforeSubscribe({ limit: 50 });
 
     // Check the items in the history
     expect(historyPreSubscription1.items).toEqual([
@@ -623,7 +623,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // Try and get history again
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const historyPreSubscription2 = await getPreviousMessages({ limit: 50 });
+    const historyPreSubscription2 = await historyBeforeSubscribe({ limit: 50 });
 
     // It should not contain the new messages since we should be getting messages based on initial attach serial
     expect(historyPreSubscription2.items).toEqual([
@@ -646,7 +646,7 @@ describe('messages integration', { timeout: 10000 }, () => {
     const room = await getRandomRoom(chat);
 
     // Subscribe to messages, which will also set up the listener subscription point
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
     // Attach the room
     await room.attach();
@@ -656,16 +656,16 @@ describe('messages integration', { timeout: 10000 }, () => {
     const message2 = await room.messages.send({ text: 'I have the high ground!' });
 
     // Do a history request which should use attach serial
-    const historyPreSubscription1 = await getPreviousMessages({ limit: 50 });
+    const historyPreSubscription1 = await historyBeforeSubscribe({ limit: 50 });
 
     // Should have no items since we are using attach serial
     expect(historyPreSubscription1.items).toEqual([]);
 
-    const { getPreviousMessages: getPreviousMessagesListener2 } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe: historyBeforeSubscribeListener2 } = room.messages.subscribe(() => {});
 
     // Check we see the latest messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // TODO wait for persistence - this will not be necessary in the future
-    const historyPreSubscription2 = await getPreviousMessagesListener2({ limit: 50 });
+    const historyPreSubscription2 = await historyBeforeSubscribeListener2({ limit: 50 });
 
     // Should have the latest messages
     expect(historyPreSubscription2.items).toEqual([
@@ -694,26 +694,26 @@ describe('messages integration', { timeout: 10000 }, () => {
     // Attach the room
     await room.attach();
 
-    const { getPreviousMessages } = room.messages.subscribe(() => {});
-    const { getPreviousMessages: getPreviousMessages2 } = room.messages.subscribe(() => {});
-    const { getPreviousMessages: getPreviousMessages3 } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe: historyBeforeSubscribe2 } = room.messages.subscribe(() => {});
+    const { historyBeforeSubscribe: historyBeforeSubscribe3 } = room.messages.subscribe(() => {});
 
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
 
     // Do a history request to get the messages before up
-    const historyPreSubscription1 = await getPreviousMessages({ limit: 50 });
-    const historyPreSubscription2 = await getPreviousMessages2({ limit: 50 });
-    const historyPreSubscription3 = await getPreviousMessages3({ limit: 50 });
+    const historyPreSubscription1 = await historyBeforeSubscribe({ limit: 50 });
+    const historyPreSubscription2 = await historyBeforeSubscribe2({ limit: 50 });
+    const historyPreSubscription3 = await historyBeforeSubscribe3({ limit: 50 });
 
     // Expect all listeners to have the same history
     expect(historyPreSubscription1.items).toEqual(historyPreSubscription2.items);
     expect(historyPreSubscription2.items).toEqual(historyPreSubscription3.items);
   });
 
-  it<TestContext>('handles the room being released before getPreviousMessages is called', async (context) => {
+  it<TestContext>('handles the room being released before historyBeforeSubscribe is called', async (context) => {
     const chat = context.chat;
-    const roomId = randomRoomId();
-    const room = await chat.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const room = await chat.rooms.get(roomName);
 
     // Create a subscription to messages
     room.messages.subscribe(() => {});
@@ -722,6 +722,6 @@ describe('messages integration', { timeout: 10000 }, () => {
     // We should not have any unhanded promise rejections
     // Note that an unhandled rejection will not cause the test to fail, but it will cause the process to exit
     // with a non-zero exit code.
-    await chat.rooms.release(roomId);
+    await chat.rooms.release(roomName);
   });
 });

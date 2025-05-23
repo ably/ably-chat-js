@@ -6,7 +6,7 @@ import { useRoom } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { randomRoomName } from '../../helper/identifier.ts';
 
 vi.mock('ably');
 
@@ -25,12 +25,12 @@ describe('ChatRoomProvider', () => {
       }
       return <div />;
     };
-    const roomId = randomRoomId();
+    const roomName = randomRoomName();
     const TestProvider = () => {
       return (
         <ChatClientProvider client={chatClient}>
           <ChatRoomProvider
-            id={roomId}
+            name={roomName}
             attach={false}
             release={true}
           >
@@ -46,12 +46,12 @@ describe('ChatRoomProvider', () => {
       expect(roomResolved).toBeTruthy();
     });
     await expect(() =>
-      chatClient.rooms.get(roomId, { occupancy: { enableEvents: true } }),
+      chatClient.rooms.get(roomName, { occupancy: { enableEvents: true } }),
     ).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
-    await chatClient.rooms.get(roomId);
-    expect(() => chatClient.rooms.get(roomId)).toBeTruthy();
+    await chatClient.rooms.get(roomName);
+    expect(() => chatClient.rooms.get(roomName)).toBeTruthy();
   });
 
   it('should correctly release rooms', async () => {
@@ -59,12 +59,12 @@ describe('ChatRoomProvider', () => {
     const TestComponent = () => {
       return <div />;
     };
-    const roomId = randomRoomId();
+    const roomName = randomRoomName();
     const TestProvider = () => {
       return (
         <ChatClientProvider client={chatClient}>
           <ChatRoomProvider
-            id={roomId}
+            name={roomName}
             attach={false}
             release={true}
           >
@@ -77,18 +77,18 @@ describe('ChatRoomProvider', () => {
 
     // Try to get the client to get a room with different options, should fail
     await expect(() =>
-      chatClient.rooms.get(roomId, { occupancy: { enableEvents: true } }),
+      chatClient.rooms.get(roomName, { occupancy: { enableEvents: true } }),
     ).rejects.toBeErrorInfoWithCode(40000);
 
     // Now try it with the right options, should be fine
-    expect(() => chatClient.rooms.get(roomId));
+    expect(() => chatClient.rooms.get(roomName));
 
     // Unmount provider
     r.unmount();
 
     // Since the room is supposed to be released on unmount, we should be able
     // to get it again with different settings
-    expect(() => chatClient.rooms.get(roomId)).toBeTruthy();
+    expect(() => chatClient.rooms.get(roomName)).toBeTruthy();
   });
 
   it('should attach and detach correctly', async () => {
@@ -96,9 +96,9 @@ describe('ChatRoomProvider', () => {
     const TestComponent = () => {
       return <div />;
     };
-    const roomId = randomRoomId();
+    const roomName = randomRoomName();
 
-    const room = await chatClient.rooms.get(roomId);
+    const room = await chatClient.rooms.get(roomName);
     expect(room).toBeTruthy();
 
     vi.spyOn(room, 'attach');
@@ -108,7 +108,7 @@ describe('ChatRoomProvider', () => {
       return (
         <ChatClientProvider client={chatClient}>
           <ChatRoomProvider
-            id={roomId}
+            name={roomName}
             attach={true}
             release={false}
           >
@@ -132,7 +132,7 @@ describe('ChatRoomProvider', () => {
 
     // Try to get the client to get a room with different options, should fail
     await expect(() =>
-      chatClient.rooms.get(roomId, { occupancy: { enableEvents: true } }),
+      chatClient.rooms.get(roomName, { occupancy: { enableEvents: true } }),
     ).rejects.toBeErrorInfoWithCode(40000);
   });
 
@@ -141,9 +141,9 @@ describe('ChatRoomProvider', () => {
     const TestComponent = () => {
       return <div />;
     };
-    const roomId = randomRoomId();
+    const roomName = randomRoomName();
 
-    const room = await chatClient.rooms.get(roomId);
+    const room = await chatClient.rooms.get(roomName);
     expect(room).toBeTruthy();
 
     vi.spyOn(room, 'attach');
@@ -153,7 +153,7 @@ describe('ChatRoomProvider', () => {
       return (
         <ChatClientProvider client={chatClient}>
           <ChatRoomProvider
-            id={roomId}
+            name={roomName}
             attach={false}
             release={false}
           >
@@ -173,9 +173,9 @@ describe('ChatRoomProvider', () => {
 
     // Try to get the client to get a room with different options, should fail (since it should not be released)
     await expect(() =>
-      chatClient.rooms.get(roomId, { occupancy: { enableEvents: true } }),
+      chatClient.rooms.get(roomName, { occupancy: { enableEvents: true } }),
     ).rejects.toBeErrorInfoWithCode(40000);
 
-    await chatClient.rooms.release(roomId);
+    await chatClient.rooms.release(roomName);
   });
 });

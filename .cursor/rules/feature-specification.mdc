@@ -1,6 +1,7 @@
 ---
 description: 
 globs: 
+alwaysApply: false
 ---
 # Feature Specification
 
@@ -20,6 +21,9 @@ This library is backed by a feature specification, stored in another repository.
   - A point like CHA-M10a1 is a sub-point of the second-level point
 - The `@[Testable]@` annotation means that there MUST be a unit test that accompanies it.
 - Specification points without a `@[Testable]@` annotation are intended to be informative or relevant blurb.
-- Whenever you are given a specification point for a particular piece of instruction (either directly, or in reference to some other instruction) you must:
+
+# Documenting The Spec
+
+Whenever you are given a specification point for a particular piece of instruction (either directly, or in reference to some other instruction) you must:
   - Include an annotation of the specification point at the relevant section of the code, e.g. `// @CHA-M10a`
   - Include an annotation of the specification point in the relevant test methods, e.g `// CHA-M10a`.

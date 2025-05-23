@@ -5,11 +5,6 @@ import { StatusSubscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
- * Default timeout for transient states before we attempt to handle them as a state change.
- */
-const TRANSIENT_TIMEOUT = 5000;
-
-/**
  * The different states that the connection can be in through its lifecycle.
  */
 export enum ConnectionStatus {
@@ -96,11 +91,6 @@ export interface Connection {
    * @returns An object that can be used to unregister the listener.
    */
   onStatusChange(listener: ConnectionStatusListener): StatusSubscription;
-
-  /**
-   * Removes all listeners that were added by the `onStatusChange` method.
-   */
-  offAllStatusChange(): void;
 }
 
 type ConnectionEventsMap = Record<ConnectionStatus, ConnectionStatusChange>;
@@ -114,7 +104,6 @@ export class DefaultConnection implements Connection {
   private _error?: Ably.ErrorInfo;
   private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
-  private _transientTimeout?: ReturnType<typeof setTimeout>;
   private _emitter = new EventEmitter<ConnectionEventsMap>();
 
   /**
@@ -126,6 +115,7 @@ export class DefaultConnection implements Connection {
     this._logger = logger;
 
     // Set our initial status and error
+    // CHA-RS5
     this._status = this._mapAblyStatusToChat(ably.connection.state);
     this._error = ably.connection.errorReason;
 
@@ -143,26 +133,6 @@ export class DefaultConnection implements Connection {
         error: change.reason,
         retryIn: change.retryIn,
       };
-
-      // If we're in the disconnected state, assume it's transient and set a timeout to propagate the change
-      if (chatState === ConnectionStatus.Disconnected && !this._transientTimeout) {
-        this._transientTimeout = setTimeout(() => {
-          this._onTransientDisconnectTimeout(stateChange);
-        }, TRANSIENT_TIMEOUT);
-        return;
-      }
-
-      if (this._transientTimeout) {
-        // If we're in the connecting state, or disconnected state, and we have a transient timeout, we should ignore it -
-        // if we can reach connected in a reasonable time, we can assume the disconnect was transient and suppress the
-        // change
-        if (chatState === ConnectionStatus.Connecting || chatState === ConnectionStatus.Disconnected) {
-          this._logger.debug('ignoring transient state due to transient disconnect timeout', stateChange);
-          return;
-        }
-
-        this._cancelTransientDisconnectTimeout();
-      }
 
       this._applyStatusChange(stateChange);
     });
@@ -196,13 +166,6 @@ export class DefaultConnection implements Connection {
     };
   }
 
-  /**
-   * @inheritdoc
-   */
-  offAllStatusChange(): void {
-    this._emitter.off();
-  }
-
   private _applyStatusChange(change: ConnectionStatusChange): void {
     this._status = change.current;
     this._error = change.error;
@@ -219,32 +182,6 @@ export class DefaultConnection implements Connection {
       default: {
         return status as ConnectionStatus;
       }
-    }
-  }
-
-  /**
-   * Handles a transient disconnect timeout.
-   *
-   * @param statusChange The change in status.
-   */
-  private _onTransientDisconnectTimeout(statusChange: ConnectionStatusChange): void {
-    this._logger.debug('transient disconnect timeout reached');
-    this._cancelTransientDisconnectTimeout();
-
-    // When we apply the status change, we should apply whatever the current state is at the time
-    this._applyStatusChange({
-      ...statusChange,
-      current: this._mapAblyStatusToChat(this._connection.state),
-    });
-  }
-
-  /**
-   * Cancels the transient disconnect timeout.
-   */
-  private _cancelTransientDisconnectTimeout(): void {
-    if (this._transientTimeout) {
-      clearTimeout(this._transientTimeout);
-      this._transientTimeout = undefined;
     }
   }
 }

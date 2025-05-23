@@ -1,6 +1,7 @@
 ---
 description: Typescript coding conventions
 globs: *.ts,*.tsx
+alwaysApply: false
 ---
 # TypeScript Coding Conventions
 
@@ -193,6 +194,10 @@ async send(params: SendMessageParams): Promise<Message> {
   return new DefaultMessage(/* ... */);
 }
 ```
+
+## Exports
+
+We export the public API types in [index.ts](mdc:src/core/index.ts). If you change any types that are part of the public API, update them here.
 
 ## Feature Specification
 

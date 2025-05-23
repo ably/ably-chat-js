@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { ChatMessageActions, MessageEvents } from '../../../src/core/events.ts';
+import { ChatMessageAction, ChatMessageEventType } from '../../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
 import { PaginatedResult } from '../../../src/core/query.ts';
@@ -82,15 +82,15 @@ describe('useMessages', () => {
   });
 
   it('should correctly subscribe and unsubscribe to message events', async () => {
-    // mock listener and associated unsubscribe and getPreviousMessages functions
+    // mock listener and associated unsubscribe and historyBeforeSubscribe functions
     const mockListener = vi.fn();
     const mockUnsubscribe = vi.fn();
-    const mockGetPreviousMessages = vi.fn().mockResolvedValue({ items: [] });
+    const mockHistoryBeforeSubscribe = vi.fn().mockResolvedValue({ items: [] });
 
     const messageListeners = new Set<MessageListener>();
     vi.spyOn(mockRoom.messages, 'subscribe').mockImplementation((listener) => {
       messageListeners.add(listener);
-      return { unsubscribe: mockUnsubscribe, getPreviousMessages: mockGetPreviousMessages };
+      return { unsubscribe: mockUnsubscribe, historyBeforeSubscribe: mockHistoryBeforeSubscribe };
     });
 
     const { result, unmount } = renderHook(() =>
@@ -99,20 +99,19 @@ describe('useMessages', () => {
       }),
     );
 
-    await waitForEventualHookValueToBeDefined(result, (value) => value.getPreviousMessages);
-    const getPreviousMessages = result.current.getPreviousMessages;
+    await waitForEventualHookValueToBeDefined(result, (value) => value.historyBeforeSubscribe);
+    const historyBeforeSubscribe = result.current.historyBeforeSubscribe;
 
     // verify that subscribe was called with the mock listener on mount by invoking it
     const messageEvent = {
-      type: MessageEvents.Created,
+      type: ChatMessageEventType.Created,
       message: {
         timestamp: new Date(),
         text: 'test message',
         serial: '123',
         clientId: '123',
-        roomId: '123',
         createdAt: new Date(),
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         version: '123',
         isUpdated: false,
         isDeleted: false,
@@ -144,20 +143,20 @@ describe('useMessages', () => {
     }
     expect(mockListener).toHaveBeenCalledWith(messageEvent);
 
-    // wait for the getPreviousMessages function to be defined
+    // wait for the historyBeforeSubscribe function to be defined
     await waitFor(
       async () => {
-        expect(getPreviousMessages).toBeDefined();
-        // call the getPreviousMessages function and verify that it was called
-        if (getPreviousMessages) {
-          await getPreviousMessages({ limit: 10 });
+        expect(historyBeforeSubscribe).toBeDefined();
+        // call the historyBeforeSubscribe function and verify that it was called
+        if (historyBeforeSubscribe) {
+          await historyBeforeSubscribe({ limit: 10 });
         }
       },
       { timeout: 3000 },
     );
 
-    // verify the getPreviousMessages function was called with the correct parameters
-    expect(mockGetPreviousMessages).toHaveBeenCalledWith({ limit: 10 });
+    // verify the historyBeforeSubscribe function was called with the correct parameters
+    expect(mockHistoryBeforeSubscribe).toHaveBeenCalledWith({ limit: 10 });
 
     // unmount the hook and verify that unsubscribe was called
     unmount();
@@ -167,7 +166,7 @@ describe('useMessages', () => {
     renderHook(() => useMessages({ listener: mockListener }));
 
     // the mock should not have been called again
-    expect(mockGetPreviousMessages).toHaveBeenCalledTimes(1);
+    expect(mockHistoryBeforeSubscribe).toHaveBeenCalledTimes(1);
   });
 
   it('should correctly call the methods exposed by the hook', async () => {
@@ -176,19 +175,20 @@ describe('useMessages', () => {
     // spy on the send method of the messages instance
     const sendSpy = vi.spyOn(mockRoom.messages, 'send').mockResolvedValue({} as unknown as Message);
 
-    // spy on the get method of the messages instance
-    const getSpy = vi.spyOn(mockRoom.messages, 'get').mockResolvedValue({} as unknown as PaginatedResult<Message>);
+    // spy on the history method of the messages instance
+    const historySpy = vi
+      .spyOn(mockRoom.messages, 'history')
+      .mockResolvedValue({} as unknown as PaginatedResult<Message>);
 
     const deleteSpy = vi.spyOn(mockRoom.messages, 'delete').mockResolvedValue({} as unknown as Message);
 
     const message = new DefaultMessage({
       serial: '01719948956834-000@108TeGZDQBderu97202638',
       clientId: 'client-1',
-      roomId: 'some-room',
       text: 'I have the high ground now',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: '01719948956834-000@108TeGZDQBderu97202638',
       createdAt: new Date(1719948956834),
       timestamp: new Date(1719948956834),
@@ -197,7 +197,7 @@ describe('useMessages', () => {
     // call both methods and ensure they call the underlying messages methods
     await act(async () => {
       await result.current.send({ text: 'test message' });
-      await result.current.get({ limit: 10 });
+      await result.current.history({ limit: 10 });
       await result.current.deleteMessage(message, {
         description: 'deleted',
         metadata: { reason: 'test' },
@@ -205,7 +205,7 @@ describe('useMessages', () => {
     });
 
     expect(sendSpy).toHaveBeenCalledWith({ text: 'test message' });
-    expect(getSpy).toHaveBeenCalledWith({ limit: 10 });
+    expect(historySpy).toHaveBeenCalledWith({ limit: 10 });
     expect(deleteSpy).toHaveBeenCalledWith(message, {
       description: 'deleted',
       metadata: { reason: 'test' },

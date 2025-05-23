@@ -13,8 +13,8 @@ import { useLogger } from '../hooks/use-logger.js';
  * Props for the {@link ChatRoomProvider} component.
  */
 export interface ChatRoomProviderProps {
-  /** The id of the room. */
-  id: string;
+  /** The name of the room. */
+  name: string;
 
   /**
    * Overriding options to use when creating the room.
@@ -112,7 +112,7 @@ class RoomReleaseQueue {
  * provider to automatically attach, detach and/or release the room.
  */
 export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
-  id: roomId,
+  name: roomName,
   options,
   release = true,
   attach = true,
@@ -120,7 +120,7 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
 }) => {
   const client = useChatClient();
   const clientLogger = useLogger();
-  const logger = useMemo(() => clientLogger.withContext({ roomId }), [clientLogger, roomId]);
+  const logger = useMemo(() => clientLogger.withContext({ roomName }), [clientLogger, roomName]);
   logger.debug(`ChatRoomProvider();`, { options, release, attach });
 
   // Set the initial room promise, we do this in a function to avoid rooms.get being called
@@ -128,9 +128,9 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
   // In StrictMode this will be called twice one after the other, but that's ok
   const [value, setValue] = useState<ChatRoomContextType>(() => {
     logger.debug(`ChatRoomProvider(); initializing value`, { options });
-    const room = client.rooms.get(roomId, options);
+    const room = client.rooms.get(roomName, options);
     room.catch(() => void 0);
-    return { room: room, roomId: roomId, options: options, client: client };
+    return { room: room, roomName: roomName, options: options, client: client };
   });
 
   // Create a queue to manage release ops
@@ -156,22 +156,22 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
     const currentReleaseQueue = roomReleaseQueue.current;
 
     // If there was a previous release queued for this room (same id and options), abort it
-    currentReleaseQueue.abort(roomId, options);
+    currentReleaseQueue.abort(roomName, options);
 
     // Get the room promise
-    const room = client.rooms.get(roomId, options);
+    const room = client.rooms.get(roomName, options);
     room.catch(() => void 0);
 
     // If we've had a change in the room id or options, update the value in the state
     setValue((prev: ChatRoomContextType) => {
       // If the room id and options haven't changed, then we don't need to do anything
-      if (prev.client === client && prev.roomId === roomId && prev.options === options) {
+      if (prev.client === client && prev.roomName === roomName && prev.options === options) {
         logger.debug(`ChatRoomProvider(); no change in room id or options`, { options });
         return prev;
       }
 
       logger.debug(`ChatRoomProvider(); updating value`, { options });
-      return { room: room, roomId, options, client };
+      return { room: room, roomName, options, client };
     });
 
     // Use the room promise to attach
@@ -205,7 +205,7 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
       // when using StrictMode
       if (release) {
         logger.debug(`ChatRoomProvider(); releasing room`);
-        currentReleaseQueue.enqueue(client, roomId, options);
+        currentReleaseQueue.enqueue(client, roomName, options);
         return;
       } else if (resolvedRoom && attach) {
         // If we're not releasing, but we are attaching, then we should detach the room, but only iff the room
@@ -216,7 +216,7 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({
         });
       }
     };
-  }, [roomId, options, logger, attach, release, client]);
+  }, [roomName, options, logger, attach, release, client]);
 
   return <ChatRoomContext.Provider value={value}>{children}</ChatRoomContext.Provider>;
 };
