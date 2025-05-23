@@ -8,7 +8,12 @@ import { Logger } from '../../src/core/logger.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { DefaultTyping, Typing } from '../../src/core/typing.ts';
-import { channelEventEmitter, ChannelEventEmitterReturnType } from '../helper/channel.ts';
+import {
+  channelEventEmitter,
+  ChannelEventEmitterReturnType,
+  channelStateEventEmitter,
+  ChannelStateEventEmitterReturnType,
+} from '../helper/channel.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';
@@ -19,6 +24,7 @@ interface TestContext {
   chatApi: ChatApi;
   room: Room;
   emulateBackendPublish: ChannelEventEmitterReturnType<Partial<Ably.InboundMessage>>;
+  emulateChannelStateChange: ChannelStateEventEmitterReturnType;
   options: RoomOptions;
   logger: Logger;
 }
@@ -45,6 +51,10 @@ interface TestTypingInterface extends Typing {
   _currentlyTyping: Map<string, ReturnType<typeof setTimeout>>;
 }
 
+interface TestRoomInterface extends Room {
+  release: () => Promise<void>;
+}
+
 vi.mock('ably');
 
 describe('Typing', () => {
@@ -60,6 +70,7 @@ describe('Typing', () => {
     context.room = makeRandomRoom(context);
     const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
+    context.emulateChannelStateChange = channelStateEventEmitter(channel);
   });
 
   // CHA-T8
@@ -709,6 +720,42 @@ describe('Typing', () => {
         // Unsubscribe second subscription
         subscription2.unsubscribe();
       });
+    });
+  });
+
+  describe('handle room release', () => {
+    it<TestContext>('clears typing resources when channel is released', async (context) => {
+      const { room, realtime } = context;
+      const channel = room.channel;
+      const realtimeChannel = realtime.channels.get(channel.name);
+      const defaultTyping = room.typing as TestTypingInterface;
+      const defaultRoom = room as TestRoomInterface;
+      // Mock implementation for `publish` to simulate successful publish
+      vi.spyOn(realtimeChannel, 'publish').mockImplementation(() => Promise.resolve());
+
+      // Put the room into the attached state
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+
+      // Add a typer to the state
+      context.emulateBackendPublish({
+        name: TypingEventTypes.Start,
+        clientId: 'user1',
+      });
+      expect(defaultTyping._currentlyTyping.get('user1')).toBeDefined();
+
+      // Start typing to set the heartbeat timer
+      await room.typing.keystroke();
+
+      // Get the typing instance and check internal state
+      expect(defaultTyping._heartbeatTimerId).toBeDefined();
+
+      // Release the room
+      await defaultRoom.release();
+
+      // Verify that the heartbeat timer is cleared
+      expect(defaultTyping._heartbeatTimerId).toBeUndefined();
+      // Verify that the typing set is cleared
+      expect(defaultTyping._currentlyTyping.get('user1')).toBeUndefined();
     });
   });
 });

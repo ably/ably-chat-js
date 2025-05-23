@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import { E_CANCELED, Mutex } from 'async-mutex';
 
+import { Disposable } from './disposable.js';
 import { TypingEventTypes, TypingSetEvent, TypingSetEventTypes } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
@@ -96,7 +97,7 @@ type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
 /**
  * @inheritDoc
  */
-export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
+export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing, Disposable {
   private readonly _roomId: string;
   private readonly _clientId: string;
   private readonly _channel: Ably.RealtimeChannel;
@@ -158,6 +159,47 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   }
 
   /**
+   * Clears all typing states.
+   * This includes clearing all timeouts and the currently typing map.
+   * @private
+   */
+  private _clearAllTypingStates(): void {
+    this._logger.debug(`DefaultTyping._clearAllTypingStates(); clearing all typing states`, {
+      roomId: this._roomId,
+    });
+    this._clearHeartbeatTimer();
+    this._clearCurrentlyTyping();
+  }
+
+  /**
+   * Clears the heartbeat timer.
+   * @private
+   */
+  private _clearHeartbeatTimer(): void {
+    this._logger.trace(`DefaultTyping._clearHeartbeatTimer(); clearing heartbeat timer`, {
+      roomId: this._roomId,
+    });
+    if (this._heartbeatTimerId) {
+      clearTimeout(this._heartbeatTimerId);
+      this._heartbeatTimerId = undefined;
+    }
+  }
+
+  /**
+   * Clears the currently typing store and removes all timeouts for associated clients.
+   * @private
+   */
+  private _clearCurrentlyTyping(): void {
+    this._logger.trace('DefaultTyping._clearCurrentlyTyping(); clearing current store and timeouts');
+    // Clear all client typing timeouts
+    for (const [, timeoutId] of this._currentlyTyping.entries()) {
+      clearTimeout(timeoutId);
+    }
+    // Clear the currently typing map
+    this._currentlyTyping.clear();
+  }
+
+  /**
    * CHA-T9
    *
    * @inheritDoc
@@ -198,7 +240,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     this._mutex.cancel();
 
     // Acquire a mutex
-    await this._mutex.acquire().catch((error: unknown) => {
+    try {
+      await this._mutex.acquire();
+    } catch (error: unknown) {
       if (error === E_CANCELED) {
         this._logger.debug(`DefaultTyping.keystroke(); mutex was canceled by a later operation`, {
           roomId: this._roomId,
@@ -206,7 +250,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         return;
       }
       throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
-    });
+    }
     try {
       // CHA-T4d
       // Ensure room is attached
@@ -249,13 +293,15 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
     this._mutex.cancel();
     // Acquire a mutex
-    await this._mutex.acquire().catch((error: unknown) => {
+    try {
+      await this._mutex.acquire();
+    } catch (error: unknown) {
       if (error === E_CANCELED) {
         this._logger.debug(`DefaultTyping.stop(); mutex was canceled by a later operation`, { roomId: this._roomId });
         return;
       }
       throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
-    });
+    }
     try {
       // CHA-T5c
       if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
@@ -309,6 +355,14 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   unsubscribeAll(): void {
     this._logger.trace(`DefaultTyping.unsubscribeAll();`, { roomId: this._roomId });
     this.off();
+  }
+
+  /**
+   * @inheritDoc
+   */
+  dispose(): void {
+    this._logger.trace(`DefaultTyping.dispose();`, { roomId: this._roomId });
+    this._clearAllTypingStates();
   }
 
   /**
