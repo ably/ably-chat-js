@@ -60,10 +60,7 @@ The Chat SDK can be installed either from NPM, or included directly from Ably's 
 
 ```sh
 npm install ably @ably/chat
-npm install react
 ```
-NOTE: React dependency is currently required even if you are not using Chat React components.
-This is a known issue and will be removed in a future release.
 
 ### CDN
 
