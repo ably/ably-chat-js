@@ -108,6 +108,8 @@ describe('messages integration', { timeout: 10000 }, () => {
     expect(deletedMessage1.deletedBy).toBeDefined();
     expect(deletedMessage1.operation?.clientId).toBeDefined();
     expect(deletedMessage1.deletedBy).toEqual(deletedMessage1.operation?.clientId);
+    expect(deletedMessage1.operation?.description).toEqual('Deleted message');
+    expect(deletedMessage1.operation?.metadata).toEqual({ key: 'value' });
 
     // Wait up to 5 seconds for the promises to resolve
     await waitForArrayLength(messages, 1);
@@ -166,13 +168,18 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // send a message, and then update it
     const message1 = await room.messages.send({ text: 'Hello there!' });
-    const updated1 = await room.messages.update(message1.copy({ text: 'bananas' }));
+    const updated1 = await room.messages.update(message1.copy({ text: 'bananas' }), {
+      description: 'updated message',
+      metadata: { key: 'value' },
+    });
 
     expect(updated1.text).toBe('bananas');
     expect(updated1.serial).toBe(message1.serial);
     expect(updated1.createdAt.getTime()).toBe(message1.createdAt.getTime());
     expect(updated1.updatedAt).toBeDefined();
     expect(updated1.updatedBy).toBe(chat.clientId);
+    expect(updated1.operation?.description).toEqual('updated message');
+    expect(updated1.operation?.metadata).toEqual({ key: 'value' });
 
     // Wait up to 5 seconds for the promises to resolve
     await waitForArrayLength(messages, 1);

@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { ChatApi } from './chat-api.js';
+import { ChatApi, MessageOperationResponse } from './chat-api.js';
 import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType, RealtimeMessageName } from './events.js';
 import { Logger } from './logger.js';
 import {
@@ -499,26 +499,8 @@ export class DefaultMessages implements Messages {
       ...details,
     });
 
-    const updatedMessage: Message = new DefaultMessage({
-      serial: message.serial,
-      clientId: message.clientId,
-      text: message.text,
-      metadata: message.metadata,
-      headers: message.headers,
-      action: ChatMessageAction.MessageUpdate,
-      version: response.version,
-      createdAt: new Date(message.createdAt),
-      timestamp: new Date(response.timestamp),
-      reactions: emptyMessageReactions(),
-      operation: {
-        clientId: this._clientId,
-        description: details?.description,
-        metadata: details?.metadata,
-      },
-    });
-
     this._logger.debug('Messages.update(); message update successfully', { message });
-    return updatedMessage;
+    return this._updateResponseToMessage(response);
   }
 
   /**
@@ -529,26 +511,7 @@ export class DefaultMessages implements Messages {
 
     const response = await this._chatApi.deleteMessage(this._roomName, message.serial, params);
 
-    const deletedMessage: Message = new DefaultMessage({
-      serial: message.serial,
-      clientId: message.clientId,
-      text: message.text,
-      metadata: message.metadata,
-      headers: message.headers,
-      action: ChatMessageAction.MessageDelete,
-      version: response.version,
-      createdAt: new Date(message.createdAt),
-      timestamp: new Date(response.timestamp),
-      reactions: emptyMessageReactions(),
-      operation: {
-        clientId: this._clientId,
-        description: params?.description,
-        metadata: params?.metadata,
-      },
-    });
-
-    this._logger.debug('Messages.delete(); message deleted successfully', { deletedMessage });
-    return deletedMessage;
+    return this._updateResponseToMessage(response);
   }
 
   /**
@@ -612,5 +575,23 @@ export class DefaultMessages implements Messages {
     } catch (error: unknown) {
       this._logger.error(`failed to parse incoming message;`, { channelEventMessage, error: error as Ably.ErrorInfo });
     }
+  }
+
+  private _updateResponseToMessage(response: MessageOperationResponse): DefaultMessage {
+    const { message } = response;
+
+    return new DefaultMessage({
+      serial: message.serial,
+      clientId: message.clientId,
+      text: message.text,
+      metadata: message.metadata,
+      headers: message.headers,
+      action: message.action,
+      version: message.version,
+      createdAt: new Date(message.createdAt),
+      timestamp: new Date(message.timestamp),
+      reactions: message.reactions,
+      operation: response.message.operation,
+    });
   }
 }

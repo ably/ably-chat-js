@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { ChatMessageAction } from './events.js';
 import { Logger } from './logger.js';
 import {
   DefaultMessage,
@@ -8,6 +9,7 @@ import {
   MessageHeaders,
   MessageMetadata,
   MessageOperationMetadata,
+  MessageReactions,
 } from './message.js';
 import { OrderBy } from './messages.js';
 import { OccupancyData } from './occupancy.js';
@@ -50,7 +52,7 @@ interface SendMessageParams {
 /**
  * Represents the response for deleting or updating a message.
  */
-interface MessageOperationResponse {
+export interface MessageOperationResponse {
   /**
    * The new message version.
    */
@@ -60,6 +62,27 @@ interface MessageOperationResponse {
    * The timestamp of the operation.
    */
   timestamp: number;
+
+  /**
+   * The message that was created or updated.
+   */
+  message: {
+    serial: string;
+    clientId: string;
+    text: string;
+    metadata: MessageMetadata;
+    headers: MessageHeaders;
+    action: ChatMessageAction;
+    version: string;
+    createdAt: number;
+    timestamp: number;
+    reactions: MessageReactions;
+    operation: {
+      clientId: string;
+      description?: string;
+      metadata?: MessageOperationMetadata;
+    };
+  };
 }
 
 type UpdateMessageResponse = MessageOperationResponse;

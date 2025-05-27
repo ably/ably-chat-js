@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, GetMessagesQueryParams } from '../../src/core/chat-api.ts';
 import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType } from '../../src/core/events.ts';
-import { Message } from '../../src/core/message.ts';
+import { emptyMessageReactions, Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
 import {
@@ -98,6 +98,21 @@ describe('Messages', () => {
       vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
         version: '01672531200001-123@abcdefghij:0',
         timestamp: deleteTimestamp,
+        message: {
+          serial: sendSerial,
+          clientId: 'clientId',
+          text: 'hello there',
+          metadata: {},
+          headers: {},
+          action: ChatMessageAction.MessageDelete,
+          version: '01672531200001-123@abcdefghij:0',
+          createdAt: sendTimestamp,
+          timestamp: deleteTimestamp,
+          reactions: emptyMessageReactions(),
+          operation: {
+            clientId: 'clientId',
+          },
+        },
       });
 
       const message1 = await context.room.messages.send({ text: 'hello there' });
