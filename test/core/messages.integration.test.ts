@@ -168,7 +168,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
     // send a message, and then update it
     const message1 = await room.messages.send({ text: 'Hello there!' });
-    const updated1 = await room.messages.update(message1.copy({ text: 'bananas' }), {
+    const updated1 = await room.messages.update(message1, message1.copy({ text: 'bananas' }), {
       description: 'updated message',
       metadata: { key: 'value' },
     });
@@ -291,7 +291,7 @@ describe('messages integration', { timeout: 10000 }, () => {
     const message1 = await room.messages.send({ text: 'Hello there!' });
 
     // Update the message
-    const updatedMessage1 = await room.messages.update(message1.copy({ text: 'Hello test!' }), {
+    const updatedMessage1 = await room.messages.update(message1, message1.copy({ text: 'Hello test!' }), {
       description: 'updated message',
     });
 
@@ -730,5 +730,259 @@ describe('messages integration', { timeout: 10000 }, () => {
     // Note that an unhandled rejection will not cause the test to fail, but it will cause the process to exit
     // with a non-zero exit code.
     await chat.rooms.release(roomName);
+  });
+
+  it<TestContext>('should be able to delete a message using just the serial string', async (context) => {
+    const { chat } = context;
+
+    const room = await getRandomRoom(chat);
+
+    // Attach the room
+    await room.attach();
+
+    // Subscribe to messages and filter them when they arrive
+    const messages: Message[] = [];
+    const deletions: Message[] = [];
+    room.messages.subscribe((messageEvent) => {
+      switch (messageEvent.type) {
+        case ChatMessageEventType.Created: {
+          messages.push(messageEvent.message);
+          break;
+        }
+        case ChatMessageEventType.Deleted: {
+          deletions.push(messageEvent.message);
+          break;
+        }
+        default: {
+          throw new Error('Unexpected message event type');
+        }
+      }
+    });
+
+    // send a message, and then delete it using just the serial
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const deletedMessage1 = await room.messages.delete(message1.serial, {
+      description: 'Deleted message',
+      metadata: { key: 'value' },
+    });
+
+    // Wait up to 5 seconds for the promises to resolve
+    await waitForArrayLength(messages, 1);
+    await waitForArrayLength(deletions, 1);
+
+    // Check that the message was received
+    expect(messages).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        serial: message1.serial,
+      }),
+    ]);
+
+    // Check that the deletion was received
+    expect(deletions).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        serial: deletedMessage1.serial,
+        timestamp: deletedMessage1.deletedAt,
+        action: ChatMessageAction.MessageDelete,
+        version: deletedMessage1.version,
+      }),
+    ]);
+
+    expect(deletions[0]?.operation?.clientId).toEqual(chat.clientId);
+  });
+
+  it<TestContext>('should be able to update a message using just the serial string', async (context) => {
+    const { chat } = context;
+
+    const room = await getRandomRoom(chat);
+
+    // Attach the room
+    await room.attach();
+
+    // Subscribe to messages and filter them when they arrive
+    const messages: Message[] = [];
+    const updates: Message[] = [];
+    room.messages.subscribe((messageEvent) => {
+      switch (messageEvent.type) {
+        case ChatMessageEventType.Created: {
+          messages.push(messageEvent.message);
+          break;
+        }
+        case ChatMessageEventType.Updated: {
+          updates.push(messageEvent.message);
+          break;
+        }
+        default: {
+          throw new Error('Unexpected message event type');
+        }
+      }
+    });
+
+    // send a message, and then update it using just the serial
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const updated1 = await room.messages.update(message1.serial, {
+      text: 'bananas',
+      metadata: { key: 'value' },
+    });
+
+    // Wait up to 5 seconds for the promises to resolve
+    await waitForArrayLength(messages, 1);
+    await waitForArrayLength(updates, 1);
+
+    // Check that the message was received
+    expect(messages).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        serial: message1.serial,
+      }),
+    ]);
+
+    // Check that the update was received
+    expect(updates).toEqual([
+      expect.objectContaining({
+        text: 'bananas',
+        clientId: chat.clientId,
+        serial: message1.serial,
+        updatedAt: updated1.updatedAt,
+        updatedBy: chat.clientId,
+        action: ChatMessageAction.MessageUpdate,
+        version: updated1.version,
+        createdAt: message1.createdAt,
+      }),
+    ]);
+  });
+
+  it<TestContext>('should be able to delete a message using an object with serial', async (context) => {
+    const { chat } = context;
+
+    const room = await getRandomRoom(chat);
+
+    // Attach the room
+    await room.attach();
+
+    // Subscribe to messages and filter them when they arrive
+    const messages: Message[] = [];
+    const deletions: Message[] = [];
+    room.messages.subscribe((messageEvent) => {
+      switch (messageEvent.type) {
+        case ChatMessageEventType.Created: {
+          messages.push(messageEvent.message);
+          break;
+        }
+        case ChatMessageEventType.Deleted: {
+          deletions.push(messageEvent.message);
+          break;
+        }
+        default: {
+          throw new Error('Unexpected message event type');
+        }
+      }
+    });
+
+    // send a message, and then delete it using an object with serial
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const deletedMessage1 = await room.messages.delete(
+      { serial: message1.serial },
+      {
+        description: 'Deleted message',
+        metadata: { key: 'value' },
+      },
+    );
+
+    // Wait up to 5 seconds for the promises to resolve
+    await waitForArrayLength(messages, 1);
+    await waitForArrayLength(deletions, 1);
+
+    // Check that the message was received
+    expect(messages).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        serial: message1.serial,
+      }),
+    ]);
+
+    // Check that the deletion was received
+    expect(deletions).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        serial: deletedMessage1.serial,
+        timestamp: deletedMessage1.deletedAt,
+        action: ChatMessageAction.MessageDelete,
+        version: deletedMessage1.version,
+      }),
+    ]);
+
+    expect(deletions[0]?.operation?.clientId).toEqual(chat.clientId);
+  });
+
+  it<TestContext>('should be able to update a message using an object with serial', async (context) => {
+    const { chat } = context;
+
+    const room = await getRandomRoom(chat);
+
+    // Attach the room
+    await room.attach();
+
+    // Subscribe to messages and filter them when they arrive
+    const messages: Message[] = [];
+    const updates: Message[] = [];
+    room.messages.subscribe((messageEvent) => {
+      switch (messageEvent.type) {
+        case ChatMessageEventType.Created: {
+          messages.push(messageEvent.message);
+          break;
+        }
+        case ChatMessageEventType.Updated: {
+          updates.push(messageEvent.message);
+          break;
+        }
+        default: {
+          throw new Error('Unexpected message event type');
+        }
+      }
+    });
+
+    // send a message, and then update it using an object with serial
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+    const updated1 = await room.messages.update(
+      { serial: message1.serial },
+      {
+        text: 'bananas',
+        metadata: { key: 'value' },
+      },
+    );
+
+    // Wait up to 5 seconds for the promises to resolve
+    await waitForArrayLength(messages, 1);
+    await waitForArrayLength(updates, 1);
+
+    // Check that the message was received
+    expect(messages).toEqual([
+      expect.objectContaining({
+        text: 'Hello there!',
+        clientId: chat.clientId,
+        serial: message1.serial,
+      }),
+    ]);
+
+    // Check that the update was received
+    expect(updates).toEqual([
+      expect.objectContaining({
+        text: 'bananas',
+        clientId: chat.clientId,
+        serial: message1.serial,
+        updatedAt: updated1.updatedAt,
+        updatedBy: chat.clientId,
+        action: ChatMessageAction.MessageUpdate,
+        version: updated1.version,
+        createdAt: message1.createdAt,
+      }),
+    ]);
   });
 });

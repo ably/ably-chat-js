@@ -235,7 +235,7 @@ export interface Message {
    * @returns A new message instance with the event applied. If the event is a no-op, such
    *    as an event for an old version, the same message is returned (not a copy).
    */
-  with(event: ChatMessageEvent | MessageReactionSummaryEvent): Message;
+  with(event: Message | ChatMessageEvent | MessageReactionSummaryEvent): Message;
 
   /**
    * Creates a copy of the message with fields replaced per the parameters.
@@ -417,7 +417,13 @@ export class DefaultMessage implements Message {
     return this.equal(message);
   }
 
-  with(event: ChatMessageEvent | MessageReactionSummaryEvent): Message {
+  with(event: Message | ChatMessageEvent | MessageReactionSummaryEvent): Message {
+    // If event doesn't have the property "type", then it's just a message
+    if (!('type' in event)) {
+      return this._getLatestMessageVersion(event);
+    }
+
+    // If the event is a created event, throw an error
     if (event.type === ChatMessageEventType.Created) {
       throw new Ably.ErrorInfo('cannot apply a created event to a message', 40000, 400);
     }
@@ -437,18 +443,31 @@ export class DefaultMessage implements Message {
       return DefaultMessage._clone(this, { reactions: newReactions });
     }
 
+    // Message event (update or delete)
+    return this._getLatestMessageVersion(event.message);
+  }
+
+  /**
+   * Get the latest message version, based on the event.
+   * If "this" is the latest version, return "this", otherwise clone the message and apply the reactions.
+   *
+   * @param message The message to get the latest version of
+   * @returns The latest message version
+   */
+  private _getLatestMessageVersion(message: Message): Message {
     // message event (update or delete)
-    if (event.message.serial !== this.serial) {
+    if (message.serial !== this.serial) {
       throw new Ably.ErrorInfo('cannot apply event for a different message', 40000, 400);
     }
 
     // event is older, keep this instead
-    if (this.version >= event.message.version) {
+    if (this.version >= message.version) {
       return this;
     }
 
     // event is newer, copy reactions from this and make new message from event
-    return DefaultMessage._clone(event.message, { reactions: this.reactions });
+    // TODO: This ignores summaries being newer on the message passed in, and is something we need to address
+    return DefaultMessage._clone(message, { reactions: this.reactions });
   }
 
   // Clone a message, optionally replace the given fields

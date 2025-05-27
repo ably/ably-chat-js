@@ -526,6 +526,107 @@ describe('ChatMessage', () => {
       const newMessage = message.with(event);
       expect(newMessage === message).toBe(true);
     });
+
+    it('should correctly apply to a message instance', () => {
+      const message = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-123@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const message2 = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi 2!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-124@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const newMessage = message.with(message2);
+      expect(newMessage !== message).toBe(true);
+      expect(newMessage).toEqual(message2);
+    });
+
+    it('should return original message if newer message is older', () => {
+      const message = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-123@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const message2 = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi 2!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-124@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const newMessage = message.with(message2);
+      expect(newMessage !== message).toBe(true);
+      expect(newMessage).toEqual(message2);
+    });
+
+    it('should return original message if newer message same version', () => {
+      const message = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-123@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const message2 = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi 2!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-123@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const newMessage = message.with(message2);
+      expect(newMessage === message).toBe(true);
+    });
   });
 
   describe('message copy', () => {

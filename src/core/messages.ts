@@ -109,6 +109,26 @@ export interface OperationDetails {
 }
 
 /**
+ * Parameters for updating a message.
+ */
+export interface UpdateMessageParams {
+  /**
+   * The new text of the message.
+   */
+  text: string;
+
+  /**
+   * Optional metadata of the message.
+   */
+  metadata?: MessageMetadata;
+
+  /**
+   * Optional headers of the message.
+   */
+  headers?: MessageHeaders;
+}
+
+/**
  * Parameters for deleting a message.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -242,11 +262,14 @@ export interface Messages {
    * and a deleted message may not be restorable in this way.
    *
    * @returns A promise that resolves when the message was deleted.
-   * @param message - The message to delete.
+   * @param messageOrSerial - The message object or serial string of the message to delete.
    * @param deleteMessageParams - Optional details to record about the delete action.
    * @return A promise that resolves to the deleted message.
    */
-  delete(message: Message, deleteMessageParams?: DeleteMessageParams): Promise<Message>;
+  delete(
+    messageOrSerial: Message | string | { serial: string },
+    deleteMessageParams?: DeleteMessageParams,
+  ): Promise<Message>;
 
   /**
    * Update a message in the chat room.
@@ -256,11 +279,16 @@ export interface Messages {
    * was just sent in a callback to `subscribe` before the returned promise
    * resolves.
    *
-   * @param message The message to update.
-   * @param details Optional details to record about the update action.
+   * @param messageOrSerial - The message object or serial string of the message to update.
+   * @param updateParams - The parameters for updating the message.
+   * @param details - Optional details to record about the update action.
    * @returns A promise of the updated message.
    */
-  update(message: Message, details?: OperationDetails): Promise<Message>;
+  update(
+    messageOrSerial: Message | string | { serial: string },
+    updateParams: UpdateMessageParams,
+    details?: OperationDetails,
+  ): Promise<Message>;
 
   /**
    * Add, delete, and subscribe to message reactions.
@@ -487,31 +515,52 @@ export class DefaultMessages implements Messages {
     });
   }
 
-  async update(message: Message, details?: OperationDetails): Promise<Message> {
-    this._logger.trace('Messages.update();', { message, details });
+  /**
+   * @inheritdoc Messages
+   */
+  async delete(messageOrSerial: Message | string | { serial: string }, params?: DeleteMessageParams): Promise<Message> {
+    this._logger.trace('Messages.delete();', { params });
 
-    const response = await this._chatApi.updateMessage(this._roomName, message.serial, {
-      message: {
-        text: message.text,
-        metadata: message.metadata,
-        headers: message.headers,
-      },
-      ...details,
-    });
+    const serial = this._serialFromMessageOrSerial(messageOrSerial);
+    this._logger.debug('Messages.delete(); serial', { serial });
+    const response = await this._chatApi.deleteMessage(this._roomName, serial, params);
 
-    this._logger.debug('Messages.update(); message update successfully', { message });
     return this._updateResponseToMessage(response);
   }
 
   /**
    * @inheritdoc Messages
    */
-  async delete(message: Message, params?: DeleteMessageParams): Promise<Message> {
-    this._logger.trace('Messages.delete();', { params });
+  async update(
+    messageOrSerial: Message | string | { serial: string },
+    updateParams: UpdateMessageParams,
+    details?: OperationDetails,
+  ): Promise<Message> {
+    this._logger.trace('Messages.update();', { updateParams, details });
 
-    const response = await this._chatApi.deleteMessage(this._roomName, message.serial, params);
+    const serial = this._serialFromMessageOrSerial(messageOrSerial);
+    this._logger.debug('Messages.update(); serial', { serial });
+    const response = await this._chatApi.updateMessage(this._roomName, serial, {
+      message: {
+        text: updateParams.text,
+        metadata: updateParams.metadata,
+        headers: updateParams.headers,
+      },
+      ...details,
+    });
 
+    this._logger.debug('Messages.update(); message update successfully', { updateParams });
     return this._updateResponseToMessage(response);
+  }
+
+  private _serialFromMessageOrSerial(messageOrSerial: Message | string | { serial: string }): string {
+    if (typeof messageOrSerial === 'string') {
+      return messageOrSerial;
+    } else if ('serial' in messageOrSerial) {
+      return messageOrSerial.serial;
+    }
+
+    throw new Ably.ErrorInfo('invalid message or serial', 40000, 400);
   }
 
   /**

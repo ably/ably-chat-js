@@ -130,6 +130,214 @@ describe('Messages', () => {
 
       expect(deleteMessage1.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
     });
+
+    it<TestContext>('should be able to delete a message with object containing serial', async (context) => {
+      const { room } = context;
+      const { chatApi } = context;
+      const sendTimestamp = Date.now();
+      const sendSerial = '01672531200001-123@abcdefghij:0';
+      vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
+        serial: sendSerial,
+        createdAt: sendTimestamp,
+      });
+
+      const deleteTimestamp = Date.now();
+      vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
+        version: '01672531200001-123@abcdefghij:0',
+        timestamp: deleteTimestamp,
+        message: {
+          serial: sendSerial,
+          clientId: 'clientId',
+          text: 'hello there',
+          metadata: {},
+          headers: {},
+          action: ChatMessageAction.MessageDelete,
+          version: '01672531200001-123@abcdefghij:0',
+          createdAt: sendTimestamp,
+          timestamp: deleteTimestamp,
+          reactions: emptyMessageReactions(),
+          operation: {
+            clientId: 'clientId',
+          },
+        },
+      });
+
+      const message = await room.messages.send({ text: 'hello there' });
+      const deleteMessage = await room.messages.delete({ serial: message.serial });
+      expect(deleteMessage).toEqual(
+        expect.objectContaining({
+          serial: sendSerial,
+          text: 'hello there',
+          clientId: 'clientId',
+          timestamp: new Date(deleteTimestamp),
+          createdAt: new Date(sendTimestamp),
+        }),
+      );
+
+      expect(deleteMessage.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
+    });
+
+    it<TestContext>('should be able to delete a message with string serial', async (context) => {
+      const { room } = context;
+      const { chatApi } = context;
+      const sendTimestamp = Date.now();
+      const sendSerial = '01672531200001-123@abcdefghij:0';
+      vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
+        serial: sendSerial,
+        createdAt: sendTimestamp,
+      });
+
+      const deleteTimestamp = Date.now();
+      vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
+        version: '01672531200001-123@abcdefghij:0',
+        timestamp: deleteTimestamp,
+        message: {
+          serial: sendSerial,
+          clientId: 'clientId',
+          text: 'hello there',
+          metadata: {},
+          headers: {},
+          action: ChatMessageAction.MessageDelete,
+          version: '01672531200001-123@abcdefghij:0',
+          createdAt: sendTimestamp,
+          timestamp: deleteTimestamp,
+          reactions: emptyMessageReactions(),
+          operation: {
+            clientId: 'clientId',
+          },
+        },
+      });
+
+      const message = await room.messages.send({ text: 'hello there' });
+      const deleteMessage = await room.messages.delete(message.serial);
+      expect(deleteMessage).toEqual(
+        expect.objectContaining({
+          serial: sendSerial,
+          text: 'hello there',
+          clientId: 'clientId',
+          timestamp: new Date(deleteTimestamp),
+          createdAt: new Date(sendTimestamp),
+        }),
+      );
+
+      expect(deleteMessage.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
+    });
+
+    it<TestContext>('should update a message using an object containing serial', async (context) => {
+      const { room } = context;
+      const { chatApi } = context;
+      const sendTimestamp = Date.now();
+      const sendSerial = '01672531200001-123@abcdefghij:0';
+      vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
+        serial: sendSerial,
+        createdAt: sendTimestamp,
+      });
+
+      const deleteTimestamp = Date.now();
+      vi.spyOn(chatApi, 'updateMessage').mockResolvedValue({
+        version: '01672531200001-123@abcdefghij:0',
+        timestamp: deleteTimestamp,
+        message: {
+          serial: sendSerial,
+          clientId: 'clientId',
+          text: 'hello there',
+          metadata: {},
+          headers: {},
+          action: ChatMessageAction.MessageDelete,
+          version: '01672531200001-123@abcdefghij:0',
+          createdAt: sendTimestamp,
+          timestamp: deleteTimestamp,
+          reactions: emptyMessageReactions(),
+          operation: {
+            clientId: 'clientId',
+          },
+        },
+      });
+
+      const message = await room.messages.send({ text: 'hello there' });
+      const updateMessage = await room.messages.update(
+        { serial: message.serial },
+        { text: 'hello there' },
+        { metadata: { hello: 'world' } },
+      );
+      expect(updateMessage).toEqual(
+        expect.objectContaining({
+          serial: sendSerial,
+          text: 'hello there',
+          clientId: 'clientId',
+          timestamp: new Date(deleteTimestamp),
+          createdAt: new Date(sendTimestamp),
+        }),
+      );
+
+      expect(updateMessage.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
+    });
+
+    it<TestContext>('should update a message using a string serial', async (context) => {
+      const { room } = context;
+      const { chatApi } = context;
+      const sendTimestamp = Date.now();
+      const sendSerial = '01672531200001-123@abcdefghij:0';
+      vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
+        serial: sendSerial,
+        createdAt: sendTimestamp,
+      });
+
+      const deleteTimestamp = Date.now();
+      vi.spyOn(chatApi, 'updateMessage').mockResolvedValue({
+        version: '01672531200001-123@abcdefghij:0',
+        timestamp: deleteTimestamp,
+        message: {
+          serial: sendSerial,
+          clientId: 'clientId',
+          text: 'hello there',
+          metadata: {},
+          headers: {},
+          action: ChatMessageAction.MessageDelete,
+          version: '01672531200001-123@abcdefghij:0',
+          createdAt: sendTimestamp,
+          timestamp: deleteTimestamp,
+          reactions: emptyMessageReactions(),
+          operation: {
+            clientId: 'clientId',
+          },
+        },
+      });
+
+      const message = await room.messages.send({ text: 'hello there' });
+      const updateMessage = await room.messages.update(
+        message.serial,
+        { text: 'hello there' },
+        { metadata: { hello: 'world' } },
+      );
+      expect(updateMessage).toEqual(
+        expect.objectContaining({
+          serial: sendSerial,
+          text: 'hello there',
+          clientId: 'clientId',
+          timestamp: new Date(deleteTimestamp),
+          createdAt: new Date(sendTimestamp),
+        }),
+      );
+
+      expect(updateMessage.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
+    });
+
+    it<TestContext>('should throw an error if no serial when updating a message', async (context) => {
+      const { room } = context;
+      await expect(room.messages.update({} as Message, { text: 'hello there' })).rejects.toBeErrorInfo({
+        code: 40000,
+        message: 'invalid message or serial',
+      });
+    });
+
+    it<TestContext>('should throw an error if no serial when deleting a message', async (context) => {
+      const { room } = context;
+      await expect(room.messages.delete({} as Message)).rejects.toBeErrorInfo({
+        code: 40000,
+        message: 'invalid message or serial',
+      });
+    });
   });
 
   describe('headers and metadata', () => {
