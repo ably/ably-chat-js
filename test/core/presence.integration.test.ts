@@ -91,6 +91,9 @@ describe('UserPresence', { timeout: 30000 }, () => {
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
     context.chatRoom = await context.chat.rooms.get(roomId);
+
+    // Ensure we have just performed a sync so we don't get a `present` event instead of an `enter` event
+    await context.chatRoom.presence.get({ waitForSync: true });
   });
 
   // Test for successful entering with clientId and custom user data
@@ -99,7 +102,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
       context.realtime,
-      ['enter', 'present'],
+      ['enter'],
       messageChannelName,
       (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
