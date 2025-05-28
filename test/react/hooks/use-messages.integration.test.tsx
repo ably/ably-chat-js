@@ -136,6 +136,7 @@ describe('useMessages', () => {
         if (roomStatus === RoomStatus.Attached) {
           void send({ text: 'hello world' }).then((message) => {
             void update(
+              message.serial,
               message.copy({
                 text: 'hello universe',
                 metadata: { icon: 'universe' },

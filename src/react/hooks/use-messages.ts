@@ -1,7 +1,6 @@
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Message } from '../../core/message.js';
 import {
   DeleteMessageParams,
   MessageListener,
@@ -10,6 +9,7 @@ import {
   OperationDetails,
   QueryOptions,
   SendMessageParams,
+  UpdateMessageParams,
 } from '../../core/messages.js';
 import type {
   AddMessageReactionParams,
@@ -18,6 +18,7 @@ import type {
   MessagesReactions,
 } from '../../core/messages-reactions.js'; // imported for typedoc links
 import { MessageRawReactionListener, MessageReactionListener } from '../../core/messages-reactions.js';
+import { Serial } from '../../core/serial.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
@@ -137,8 +138,8 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
   const deleteMessage = useCallback(
-    (message: Message, deleteMessageParams?: DeleteMessageParams) =>
-      context.room.then((room) => room.messages.delete(message, deleteMessageParams)),
+    (serial: Serial, deleteMessageParams?: DeleteMessageParams) =>
+      context.room.then((room) => room.messages.delete(serial, deleteMessageParams)),
     [context],
   );
   const history = useCallback(
@@ -146,20 +147,20 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
   const update = useCallback(
-    (message: Message, details?: OperationDetails) =>
-      context.room.then((room) => room.messages.update(message, details)),
+    (serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails) =>
+      context.room.then((room) => room.messages.update(serial, updateParams, details)),
     [context],
   );
 
   const addReaction: Messages['reactions']['add'] = useCallback(
-    (message: Message, params: AddMessageReactionParams) =>
-      context.room.then((room) => room.messages.reactions.add(message, params)),
+    (serial: Serial, params: AddMessageReactionParams) =>
+      context.room.then((room) => room.messages.reactions.add(serial, params)),
     [context],
   );
 
   const deleteReaction: Messages['reactions']['delete'] = useCallback(
-    (message: Message, params?: DeleteMessageReactionParams) =>
-      context.room.then((room) => room.messages.reactions.delete(message, params)),
+    (serial: Serial, params?: DeleteMessageReactionParams) =>
+      context.room.then((room) => room.messages.reactions.delete(serial, params)),
     [context],
   );
 
