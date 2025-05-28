@@ -1,4 +1,5 @@
 // Import necessary modules and dependencies
+import { PresenceMember } from '@ably/chat';
 import * as Ably from 'ably';
 import { PresenceAction, Realtime } from 'ably';
 import { dequal } from 'dequal';
@@ -83,6 +84,18 @@ const waitForEvent = async (
   return waitFor;
 };
 
+// Helper function to wait for presence list to match the expectation
+// Wait a maximum of 5 seconds for the presence list to match
+const waitForPresenceList = async (room: Room, expectationFn: (presenceList: PresenceMember[]) => void) => {
+  return vi.waitFor(
+    async () => {
+      const fetchedPresence = await room.presence.get();
+      expectationFn(fetchedPresence);
+    },
+    { timeout: 5000 },
+  );
+};
+
 describe('UserPresence', { timeout: 30000 }, () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>(async (context) => {
@@ -91,6 +104,11 @@ describe('UserPresence', { timeout: 30000 }, () => {
     context.chat = newChatClient(undefined, context.realtime);
     context.defaultTestClientId = context.realtime.auth.clientId;
     context.chatRoom = await context.chat.rooms.get(roomId);
+
+    // Attach the chat room to ensure it is ready for presence operations
+    await context.chatRoom.attach();
+    // Ensure we have just performed a sync so we don't get a `present` events instead of an `enter` event
+    await context.chatRoom.presence.get({ waitForSync: true });
   });
 
   // Test for successful entering with clientId and custom user data
@@ -99,7 +117,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
       context.realtime,
-      ['enter', 'present'],
+      ['enter'],
       messageChannelName,
       (member: Ably.PresenceMessage) => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
@@ -180,36 +198,39 @@ describe('UserPresence', { timeout: 30000 }, () => {
     await client2.presence.enterClient('clientId2', testData);
     await client3.presence.enterClient('clientId3');
 
-    // Check if all clients are present
-    const fetchedPresence = await context.chatRoom.presence.get();
-    // Expect statements
-    expect(fetchedPresence).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          clientId: 'clientId1',
-          action: 'present',
-          data: undefined,
-        }),
-        expect.objectContaining({
-          clientId: 'clientId2',
-          action: 'present',
-          data: { customKeyOne: 1 },
-        }),
-        expect.objectContaining({
-          clientId: 'clientId3',
-          action: 'present',
-          data: undefined,
-        }),
-      ]),
-    );
+    // Check if all clients are present, retrying for up to 5 seconds
+    await waitForPresenceList(context.chatRoom, (fetchedPresence) => {
+      expect(fetchedPresence).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            clientId: 'clientId1',
+            action: 'present',
+            data: undefined,
+          }),
+          expect.objectContaining({
+            clientId: 'clientId2',
+            action: 'present',
+            data: { customKeyOne: 1 },
+          }),
+          expect.objectContaining({
+            clientId: 'clientId3',
+            action: 'present',
+            data: undefined,
+          }),
+        ]),
+      );
+    });
 
     // Check if clients leaves presence, the clients are no longer present in the fetched list.
     await client1.presence.leave();
     await client2.presence.leave();
-    const fetchedPresenceAfterLeave = await context.chatRoom.presence.get();
-    expect(fetchedPresenceAfterLeave, 'fetched presence should not contain clientId3').not.toEqual(
-      expect.arrayContaining([{ clientId: 'clientId3', status: 'present' }]),
-    );
+
+    // Wait for up to 5 seconds for the presence list to update after clients leave
+    await waitForPresenceList(context.chatRoom, (fetchedPresenceAfterLeave) => {
+      expect(fetchedPresenceAfterLeave, 'fetched presence should not contain clientId3').not.toEqual(
+        expect.arrayContaining([{ clientId: 'clientId3', status: 'present' }]),
+      );
+    });
   });
 
   it<TestContext>('should successfully fetch a single presence user ', async (context) => {
