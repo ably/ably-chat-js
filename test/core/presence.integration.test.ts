@@ -105,7 +105,9 @@ describe('UserPresence', { timeout: 30000 }, () => {
     context.defaultTestClientId = context.realtime.auth.clientId;
     context.chatRoom = await context.chat.rooms.get(roomId);
 
-    // Ensure we have just performed a sync so we don't get a `present` event instead of an `enter` event
+    // Attach the chat room to ensure it is ready for presence operations
+    await context.chatRoom.attach();
+    // Ensure we have just performed a sync so we don't get a `present` events instead of an `enter` event
     await context.chatRoom.presence.get({ waitForSync: true });
   });
 
