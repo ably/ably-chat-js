@@ -15,6 +15,7 @@ import { parseMessage } from './message-parser.js';
 import { DefaultMessageReactions, MessagesReactions } from './messages-reactions.js';
 import { PaginatedResult } from './query.js';
 import { MessageOptions } from './room-options.js';
+import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
@@ -262,14 +263,11 @@ export interface Messages {
    * and a deleted message may not be restorable in this way.
    *
    * @returns A promise that resolves when the message was deleted.
-   * @param messageOrSerial - The message object or serial string of the message to delete.
+   * @param serial - A string or object that conveys the serial of the message to delete.
    * @param deleteMessageParams - Optional details to record about the delete action.
    * @return A promise that resolves to the deleted message.
    */
-  delete(
-    messageOrSerial: Message | string | { serial: string },
-    deleteMessageParams?: DeleteMessageParams,
-  ): Promise<Message>;
+  delete(serial: Serial, deleteMessageParams?: DeleteMessageParams): Promise<Message>;
 
   /**
    * Update a message in the chat room.
@@ -279,16 +277,12 @@ export interface Messages {
    * was just sent in a callback to `subscribe` before the returned promise
    * resolves.
    *
-   * @param messageOrSerial - The message object or serial string of the message to update.
+   * @param serial - A string or object that conveys the serial of the message to update.
    * @param updateParams - The parameters for updating the message.
    * @param details - Optional details to record about the update action.
    * @returns A promise of the updated message.
    */
-  update(
-    messageOrSerial: Message | string | { serial: string },
-    updateParams: UpdateMessageParams,
-    details?: OperationDetails,
-  ): Promise<Message>;
+  update(serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
    * Add, delete, and subscribe to message reactions.
@@ -518,10 +512,10 @@ export class DefaultMessages implements Messages {
   /**
    * @inheritdoc Messages
    */
-  async delete(messageOrSerial: Message | string | { serial: string }, params?: DeleteMessageParams): Promise<Message> {
+  async delete(serial: Serial, params?: DeleteMessageParams): Promise<Message> {
     this._logger.trace('Messages.delete();', { params });
 
-    const serial = this._serialFromMessageOrSerial(messageOrSerial);
+    serial = serialToString(serial);
     this._logger.debug('Messages.delete(); serial', { serial });
     const response = await this._chatApi.deleteMessage(this._roomName, serial, params);
 
@@ -531,14 +525,10 @@ export class DefaultMessages implements Messages {
   /**
    * @inheritdoc Messages
    */
-  async update(
-    messageOrSerial: Message | string | { serial: string },
-    updateParams: UpdateMessageParams,
-    details?: OperationDetails,
-  ): Promise<Message> {
+  async update(serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message> {
     this._logger.trace('Messages.update();', { updateParams, details });
 
-    const serial = this._serialFromMessageOrSerial(messageOrSerial);
+    serial = serialToString(serial);
     this._logger.debug('Messages.update(); serial', { serial });
     const response = await this._chatApi.updateMessage(this._roomName, serial, {
       message: {
@@ -551,16 +541,6 @@ export class DefaultMessages implements Messages {
 
     this._logger.debug('Messages.update(); message update successfully', { updateParams });
     return this._updateResponseToMessage(response);
-  }
-
-  private _serialFromMessageOrSerial(messageOrSerial: Message | string | { serial: string }): string {
-    if (typeof messageOrSerial === 'string') {
-      return messageOrSerial;
-    } else if ('serial' in messageOrSerial) {
-      return messageOrSerial.serial;
-    }
-
-    throw new Ably.ErrorInfo('invalid message or serial', 40000, 400);
   }
 
   /**

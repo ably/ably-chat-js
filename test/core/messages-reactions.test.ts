@@ -117,6 +117,26 @@ describe('MessagesReactions', () => {
       });
     });
 
+    it<TestContext>('should throw error when adding reaction with invalid serial', (context) => {
+      const { room } = context;
+
+      expect(() => room.messages.reactions.add('', { type: MessageReactionType.Unique, name: '🥕' })).toThrowErrorInfo({
+        code: 40000,
+        statusCode: 400,
+        message: 'invalid serial; must be string or object with serial property',
+      });
+    });
+
+    it<TestContext>('should throw error when deleting reaction with invalid serial', (context) => {
+      const { room } = context;
+
+      expect(() => room.messages.reactions.delete('', { type: MessageReactionType.Unique })).toThrowErrorInfo({
+        code: 40000,
+        statusCode: 400,
+        message: 'invalid serial; must be string or object with serial property',
+      });
+    });
+
     it<TestContext>('should receive summary events', (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = Date.now();

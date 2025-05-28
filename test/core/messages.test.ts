@@ -264,7 +264,7 @@ describe('Messages', () => {
       const { room } = context;
       await expect(room.messages.delete({} as Message)).rejects.toBeErrorInfo({
         code: 40000,
-        message: 'invalid message or serial',
+        message: 'invalid serial; must be string or object with serial property',
       });
     });
   });
@@ -374,7 +374,7 @@ describe('Messages', () => {
       const { room } = context;
       await expect(room.messages.update({} as Message, { text: 'hello there' })).rejects.toBeErrorInfo({
         code: 40000,
-        message: 'invalid message or serial',
+        message: 'invalid serial; must be string or object with serial property',
       });
     });
   });

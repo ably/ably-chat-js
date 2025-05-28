@@ -418,8 +418,8 @@ export class DefaultMessage implements Message {
   }
 
   with(event: Message | ChatMessageEvent | MessageReactionSummaryEvent): Message {
-    // If event doesn't have the property "type", then it's just a message
-    if (!('type' in event)) {
+    // If event has the property "serial", then it's a message
+    if ('serial' in event) {
       return this._getLatestMessageVersion(event);
     }
 
