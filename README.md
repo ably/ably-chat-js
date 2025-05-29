@@ -18,19 +18,27 @@ Everything you need to get started with Ably:
 
 ## Supported Platforms
 
+Ably aims to support a wide range of platforms. If you experience any compatibility issues, open an issue in the repository or contact [Ably support](https://ably.com/support).
+
 This SDK supports the following platforms:
 
-**Browsers**: All major desktop and mobile browsers, including (but not limited to) Chrome, Firefox, Edge, Safari on iOS and macOS, Opera, and Android browsers. Internet Explorer is not supported.
+| Platform     | Support |
+|--------------|---------|
+| Browsers     | All major desktop and mobile browsers, including Chrome, Firefox, Edge, Safari (iOS/macOS), Opera, and Android. Internet Explorer is not supported. |
+| Node.js      | Version 18 or newer. |
+| TypeScript   | Fully supported, the library is written in TypeScript. |
+| React        | Includes providers and hooks for deep integration with the React ecosystem. |
+| React Native | All React Native platforms. Issues can be reported or support requested. |
+| Android      | Supported via the [Kotlin](https://github.com/ably/ably-chat-kotlin). |
+| iOS          | Supported via the [Swift](https://github.com/ably/ably-chat-swift) SDK. |
 
-**Node.js**: Version 18 or newer.
+> [!IMPORTANT]
+> SDK versions <  1.2.36 will be [deprecated](https://ably.com/docs/platform/deprecate/protocol-v1) from November 1, 2025.
 
-**Typescript**: This library is written in TypeScript and has full TypeScript support.
+> [!NOTE]
+> The Chat SDK can be installed either from NPM, or included directly from Ably's CDN. Note that you also need to install the core Ably SDK.
 
-**React**: The library ships with a number of providers and hooks for React, which provide a closer integration with that ecosystem.
-
-**React Native** We aim to support all platforms supported by React Native. If you find any issues please raise an issue or contact us.
-
-**Android and iOS** are also supported by the [Kotlin](https://github.com/ably/ably-chat-kotlin) and [Swift](https://github.com/ably/ably-chat-swift) SDKs respectively.
+---
 
 ## Prerequisites
 
