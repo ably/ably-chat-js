@@ -46,9 +46,11 @@ The [CHANGELOG.md](/ably/ably-chat-js/blob/main/CHANGELOG.md) contains details o
 
 ---
 
-## Contributing
+## Contribute
 
-For guidance on how to contribute to this project, see the [contributing guidelines](CONTRIBUTING.md).
+Read the [CONTRIBUTING.md](./CONTRIBUTING.md) guidelines to contribute to Ably or [Share feedback or request](https://forms.gle/mBw9M53NYuCBLFpMA) a new feature.
+
+---
 
 ## Support, feedback and troubleshooting
 
