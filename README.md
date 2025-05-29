@@ -40,44 +40,6 @@ This SDK supports the following platforms:
 
 ---
 
-## Prerequisites
-
-You will need the following prerequisites:
-
-- An Ably account
-  - You can [sign up](https://ably.com/signup) to the generous free tier.
-- An Ably API key
-  - Use the default or create a new API key in an app within
-    your [Ably account dashboard](https://ably.com/dashboard).
-  - Make sure your API key has the
-    following [capabilities](https://ably.com/docs/auth/capabilities): `publish`, `subscribe`, `presence`, `history`, `channel-metadata`, `message-update-own` and `message-delete-own`.
-
-## Installation
-
-The Chat SDK can be installed either from NPM, or included directly from Ably's CDN. Note that you also need to install the core Ably SDK.
-
-### npm
-
-```sh
-npm install ably @ably/chat
-```
-
-### CDN
-
-For browsers, you can also include the Chat SDK directly into your HTML:
-
-```html
-<!-- Ably Chat also requires the core Ably SDK to be available -->
-<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
-<script src="https://cdn.ably.com/lib/ably-chat.umd.cjs-0.js"></script>
-<script>
-  const realtime = new Ably.Realtime({ key: 'your-ably-key' });
-  const chatClient = new AblyChat.ChatClient(realtime);
-</script>
-```
-
-The Ably client library follows [Semantic Versioning](http://semver.org/). To lock into a major or minor version of the client library, you can specify a specific version number such as https://cdn.ably.com/lib/ably-chat-0.js for all v0._ versions, or https://cdn.ably.com/lib/ably-chat-0.1.js for all v0.1._ versions, or you can lock into a single release with https://cdn.ably.com/lib/ably-chat-0.1.0.js. See https://github.com/ably/ably-chat-js/tags for a list of tagged releases.
-
 ## Getting Started
 
 By the end of this guide, you will have initialized the Ably Chat client and sent your first chat message.
