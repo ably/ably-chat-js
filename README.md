@@ -52,8 +52,6 @@ Read the [CONTRIBUTING.md](./CONTRIBUTING.md) guidelines to contribute to Ably o
 
 ---
 
-## Support, feedback and troubleshooting
+## Support, Feedback, and Troubleshooting
 
-Please visit http://support.ably.com/ for access to our knowledge base and to ask for any assistance. You can also view the [community reported Github issues](https://github.com/ably/ably-chat-js/issues) or raise one yourself.
-
-To see what has changed in recent versions, see the [changelog](CHANGELOG.md).
+For help or technical support, visit Ably's [support page](https://ably.com/support). You can also view the [community reported Github issues](https://github.com/ably/ably-chat-js/issues) or raise one yourself.
