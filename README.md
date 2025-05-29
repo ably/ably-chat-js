@@ -4,6 +4,18 @@
 
 Ably Chat is a set of purpose-built APIs for a host of chat features enabling you to create 1:1, 1:Many, Many:1 and Many:Many chat rooms for any scale. It is designed to meet a wide range of chat use cases, such as livestreams, in-game communication, customer support, or social interactions in SaaS products. Built on [Ably's](https://ably.com/) core service, it abstracts complex details to enable efficient chat architectures.
 
+---
+
+## Getting started
+
+Everything you need to get started with Ably:
+
+* [Getting started with Ably Chat in JavaScript](https://ably.com/docs/chat/getting-started/javascript)
+* [Getting started with Ably Chat in React](https://ably.com/docs/chat/getting-started/react)
+* Play with the [livestream chat demo](https://ably-livestream-chat-demo.vercel.app/).
+
+---
+
 ## Supported Platforms
 
 This SDK supports the following platforms:
