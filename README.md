@@ -1,15 +1,8 @@
-# Ably Chat SDK for TypeScript and React
-
-<p style="text-align: left">
-    <img src="https://badgen.net/github/license/3scale/saas-operator" alt="License" />
-    <img src="https://img.shields.io/npm/v/@ably/chat.svg?style=flat">
-</p>
-
-Ably Chat is a set of purpose-built APIs for a host of chat features enabling you to create 1:1, 1:Many, Many:1 and Many:Many chat rooms for any scale. It is designed to meet a wide range of chat use cases, such as livestreams, in-game communication, customer support, or social interactions in SaaS products. Built on [Ably's](https://ably.com/) core service, it abstracts complex details to enable efficient chat architectures.
-
-Get started using the [📚 documentation](https://ably.com/docs/products/chat) and [🚀check out the live demo](https://ably-livestream-chat-demo.vercel.app/), or [📘 browse the API reference](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/).
+# Ably Chat JavaScript, TypeScript and React SDK
 
 ![Ably Chat Header](/images/ably-chat-github-header.png)
+
+Ably Chat is a set of purpose-built APIs for a host of chat features enabling you to create 1:1, 1:Many, Many:1 and Many:Many chat rooms for any scale. It is designed to meet a wide range of chat use cases, such as livestreams, in-game communication, customer support, or social interactions in SaaS products. Built on [Ably's](https://ably.com/) core service, it abstracts complex details to enable efficient chat architectures.
 
 ## Supported Platforms
 
