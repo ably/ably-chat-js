@@ -40,6 +40,12 @@ This SDK supports the following platforms:
 
 ---
 
+## Releases
+
+The [CHANGELOG.md](/ably/ably-chat-js/blob/main/CHANGELOG.md) contains details of the latest releases for this SDK. You can also view all Ably releases on [changelog.ably.com](https://changelog.ably.com).
+
+---
+
 ## Contributing
 
 For guidance on how to contribute to this project, see the [contributing guidelines](CONTRIBUTING.md).
