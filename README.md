@@ -57,9 +57,3 @@ Read the [CONTRIBUTING.md](./CONTRIBUTING.md) guidelines to contribute to Ably o
 Please visit http://support.ably.com/ for access to our knowledge base and to ask for any assistance. You can also view the [community reported Github issues](https://github.com/ably/ably-chat-js/issues) or raise one yourself.
 
 To see what has changed in recent versions, see the [changelog](CHANGELOG.md).
-
-## Further reading
-
-- See a [simple chat example](/demo/) in this repo.
-- Play with the [livestream chat demo](https://ably-livestream-chat-demo.vercel.app/).
-- [Share feedback or request](https://forms.gle/mBw9M53NYuCBLFpMA) a new feature.
