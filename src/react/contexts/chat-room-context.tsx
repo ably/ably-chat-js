@@ -14,9 +14,9 @@ export interface ChatRoomContextType {
   room: Promise<Room>;
 
   /**
-   * The ID of the room that promise will resolve to.
+   * The unique identifier of the room that promise will resolve to.
    */
-  roomId: string;
+  roomName: string;
 
   /**
    * Options used to create the room.

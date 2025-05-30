@@ -7,16 +7,27 @@ export type { ChatClientOptions } from './config.js';
 export type { Connection, ConnectionStatusChange, ConnectionStatusListener } from './connection.js';
 export { ConnectionStatus } from './connection.js';
 export type { DiscontinuityListener } from './discontinuity.js';
-export { ErrorCodes, errorInfoIs } from './errors.js';
-export type { MessageEvent, MessageReactionRawEvent, MessageReactionSummaryEvent, TypingSetEvent } from './events.js';
+export { ErrorCode, errorInfoIs } from './errors.js';
+export type {
+  ChatMessageEvent,
+  MessageReactionRawEvent,
+  MessageReactionSummaryEvent,
+  OccupancyEvent,
+  RoomReactionEvent,
+  RoomReactionEventType,
+  RoomReactionRealtimeEventType,
+  TypingSetEvent,
+} from './events.js';
 export {
-  ChatMessageActions,
-  MessageEvents,
-  MessageReactionEvents,
-  MessageReactionType as MessageReactionType,
-  PresenceEvents,
-  TypingEventTypes,
-  TypingSetEventTypes,
+  ChatMessageAction,
+  ChatMessageEventType,
+  MessageReactionEventType,
+  MessageReactionType,
+  OccupancyEventType,
+  PresenceEventType,
+  RoomEventType,
+  TypingEventType,
+  TypingSetEventType,
 } from './events.js';
 export type { Headers } from './headers.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
@@ -38,6 +49,7 @@ export type {
   OperationDetails,
   QueryOptions,
   SendMessageParams,
+  UpdateMessageParams,
 } from './messages.js';
 export { OrderBy } from './messages.js';
 export type {
@@ -48,7 +60,7 @@ export type {
   MessagesReactions,
 } from './messages-reactions.js';
 export type { Metadata } from './metadata.js';
-export type { Occupancy, OccupancyEvent, OccupancyListener } from './occupancy.js';
+export type { Occupancy, OccupancyData, OccupancyListener } from './occupancy.js';
 export type { OperationMetadata } from './operation-metadata.js';
 export type { Presence, PresenceData, PresenceEvent, PresenceListener, PresenceMember } from './presence.js';
 export type { PaginatedResult } from './query.js';
@@ -59,6 +71,7 @@ export type { RoomReactionListener, RoomReactions, SendReactionParams } from './
 export type { RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
+export type { Serial } from './serial.js';
 export type { StatusSubscription, Subscription } from './subscription.js';
 export type { Typing, TypingListener } from './typing.js';
 export type { ErrorInfo, RealtimePresenceParams } from 'ably';

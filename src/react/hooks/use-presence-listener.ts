@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ErrorCodes, errorInfoIs } from '../../core/errors.js';
+import { ErrorCode, errorInfoIs } from '../../core/errors.js';
 import { Presence, PresenceListener, PresenceMember } from '../../core/presence.js';
 import { Room } from '../../core/room.js';
 import { RoomStatus } from '../../core/room-status.js';
@@ -198,7 +198,6 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
           };
         },
         logger,
-        context.roomId,
       );
     };
 
@@ -223,7 +222,7 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
             })
             .catch((error: unknown) => {
               const errorInfo = error as Ably.ErrorInfo;
-              if (errorInfoIs(errorInfo, ErrorCodes.RoomIsReleased)) return;
+              if (errorInfoIs(errorInfo, ErrorCode.RoomIsReleased)) return;
 
               logger.error('usePresenceListener(); error fetching initial presence data', {
                 error,
@@ -255,7 +254,6 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, setErrorState, clearErrorState, logger]);
 
@@ -274,7 +272,6 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, listenerRef, logger]);
 
@@ -293,7 +290,6 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, onDiscontinuityRef, logger]);
 

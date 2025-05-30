@@ -34,9 +34,9 @@ export interface UseRoomParams {
  */
 export interface UseRoomResponse extends ChatStatusResponse {
   /**
-   * The id of the room.
+   * The unique identifier of the room.
    */
-  readonly roomId: string;
+  readonly roomName: string;
 
   /** The room object. */
   room?: Room;
@@ -62,7 +62,7 @@ export interface UseRoomResponse extends ChatStatusResponse {
  */
 export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
   const context = useRoomContext('useRoom');
-  const roomId = context.roomId;
+  const roomName = context.roomName;
   const logger = useRoomLogger();
   logger.debug('useRoom();');
 
@@ -79,7 +79,7 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
   const detach = useCallback(() => context.room.then((room: Room) => room.detach()), [context]);
 
   return {
-    roomId: roomId,
+    roomName: roomName,
     room: useEventualRoom(),
     attach: attach,
     detach: detach,

@@ -148,7 +148,7 @@ export const makeLogger = (options: NormalizedChatClientOptions): Logger => {
 /**
  * A convenient list of log levels as numbers that can be used for easier comparison.
  */
-enum LogLevelNumbers {
+enum LogLevelNumber {
   Trace = 0,
   Debug = 1,
   Info = 2,
@@ -160,13 +160,13 @@ enum LogLevelNumbers {
 /**
  * A mapping of log levels to their numeric equivalents.
  */
-const logLevelNumberMap = new Map<LogLevel, LogLevelNumbers>([
-  [LogLevel.Trace, LogLevelNumbers.Trace],
-  [LogLevel.Debug, LogLevelNumbers.Debug],
-  [LogLevel.Info, LogLevelNumbers.Info],
-  [LogLevel.Warn, LogLevelNumbers.Warn],
-  [LogLevel.Error, LogLevelNumbers.Error],
-  [LogLevel.Silent, LogLevelNumbers.Silent],
+const logLevelNumberMap = new Map<LogLevel, LogLevelNumber>([
+  [LogLevel.Trace, LogLevelNumber.Trace],
+  [LogLevel.Debug, LogLevelNumber.Debug],
+  [LogLevel.Info, LogLevelNumber.Info],
+  [LogLevel.Warn, LogLevelNumber.Warn],
+  [LogLevel.Error, LogLevelNumber.Error],
+  [LogLevel.Silent, LogLevelNumber.Silent],
 ]);
 
 /**
@@ -174,7 +174,7 @@ const logLevelNumberMap = new Map<LogLevel, LogLevelNumbers>([
  */
 class DefaultLogger implements Logger {
   private readonly _handler: LogHandler;
-  private readonly _levelNumber: LogLevelNumbers;
+  private readonly _levelNumber: LogLevelNumber;
   private readonly _context?: LogContext;
 
   constructor(handler: LogHandler, level: LogLevel, context?: LogContext) {
@@ -190,23 +190,23 @@ class DefaultLogger implements Logger {
   }
 
   trace(message: string, context?: LogContext): void {
-    this._write(message, LogLevel.Trace, LogLevelNumbers.Trace, context);
+    this._write(message, LogLevel.Trace, LogLevelNumber.Trace, context);
   }
 
   debug(message: string, context?: LogContext): void {
-    this._write(message, LogLevel.Debug, LogLevelNumbers.Debug, context);
+    this._write(message, LogLevel.Debug, LogLevelNumber.Debug, context);
   }
 
   info(message: string, context?: LogContext): void {
-    this._write(message, LogLevel.Info, LogLevelNumbers.Info, context);
+    this._write(message, LogLevel.Info, LogLevelNumber.Info, context);
   }
 
   warn(message: string, context?: LogContext): void {
-    this._write(message, LogLevel.Warn, LogLevelNumbers.Warn, context);
+    this._write(message, LogLevel.Warn, LogLevelNumber.Warn, context);
   }
 
   error(message: string, context?: LogContext): void {
-    this._write(message, LogLevel.Error, LogLevelNumbers.Error, context);
+    this._write(message, LogLevel.Error, LogLevelNumber.Error, context);
   }
 
   withContext(context: LogContext): Logger {
@@ -217,7 +217,7 @@ class DefaultLogger implements Logger {
     return new DefaultLogger(this._handler, originalLevel, this._mergeContext(context));
   }
 
-  private _write(message: string, level: LogLevel, levelNumber: LogLevelNumbers, context?: LogContext): void {
+  private _write(message: string, level: LogLevel, levelNumber: LogLevelNumber, context?: LogContext): void {
     if (levelNumber >= this._levelNumber) {
       this._handler(message, level, this._mergeContext(context));
     }

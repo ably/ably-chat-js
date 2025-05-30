@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../../src/core/chat.ts';
-import { ChatMessageActions, MessageEvents } from '../../../src/core/events.ts';
+import { ChatMessageAction, ChatMessageEventType } from '../../../src/core/events.ts';
 import { Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
@@ -12,7 +12,7 @@ import { ChatClientProvider } from '../../../src/react/providers/chat-client-pro
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 import { waitForArrayLength } from '../../helper/common.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { randomRoomName } from '../../helper/identifier.ts';
 
 describe('useMessages', () => {
   afterEach(() => {
@@ -25,8 +25,8 @@ describe('useMessages', () => {
     const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can listen for messages
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // start listening for messages
@@ -47,7 +47,7 @@ describe('useMessages', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent />
         </ChatRoomProvider>
       </ChatClientProvider>
@@ -66,14 +66,14 @@ describe('useMessages', () => {
     const chatClientTwo = newChatClient() as unknown as ChatClient;
 
     // create a second room and attach it, so we can listen for deletions
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // start listening for deletions
     const deletionsRoomTwo: Message[] = [];
     roomTwo.messages.subscribe((message) => {
-      if (message.type === MessageEvents.Deleted) {
+      if (message.type === ChatMessageEventType.Deleted) {
         deletionsRoomTwo.push(message.message);
       }
     });
@@ -97,7 +97,7 @@ describe('useMessages', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent />
         </ChatRoomProvider>
       </ChatClientProvider>
@@ -117,14 +117,14 @@ describe('useMessages', () => {
     const chatClientTwo = newChatClient() as unknown as ChatClient;
 
     // create a second room and attach it, so we can listen for updates
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // start listening for updates
     const updatesRoomTwo: Message[] = [];
     roomTwo.messages.subscribe((message) => {
-      if (message.type === MessageEvents.Updated) {
+      if (message.type === ChatMessageEventType.Updated) {
         updatesRoomTwo.push(message.message);
       }
     });
@@ -136,6 +136,7 @@ describe('useMessages', () => {
         if (roomStatus === RoomStatus.Attached) {
           void send({ text: 'hello world' }).then((message) => {
             void update(
+              message.serial,
               message.copy({
                 text: 'hello universe',
                 metadata: { icon: 'universe' },
@@ -155,7 +156,7 @@ describe('useMessages', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent />
         </ChatRoomProvider>
       </ChatClientProvider>
@@ -171,7 +172,7 @@ describe('useMessages', () => {
     expect(update?.updatedBy).toBe(chatClientOne.clientId);
     expect(update?.text).toBe('hello universe');
     expect(update?.metadata).toEqual({ icon: 'universe' });
-    expect(update?.action).toBe(ChatMessageActions.MessageUpdate);
+    expect(update?.action).toBe(ChatMessageAction.MessageUpdate);
     expect(update?.operation?.description).toBe('make it better');
     expect(update?.operation?.metadata).toEqual({ something: 'else' });
   }, 10000);
@@ -182,8 +183,8 @@ describe('useMessages', () => {
     const chatClientTwo = newChatClient();
 
     // create a second room so we can send messages from it
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
 
     // start listening for messages
     const messagesRoomOne: Message[] = [];
@@ -204,7 +205,7 @@ describe('useMessages', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent />
         </ChatRoomProvider>
       </ChatClientProvider>
@@ -234,8 +235,8 @@ describe('useMessages', () => {
     const chatClientTwo = newChatClient();
 
     // create a second room instance so we can send messages from it
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // send a few messages before the first room has subscribed
@@ -243,15 +244,15 @@ describe('useMessages', () => {
     await roomTwo.messages.send({ text: 'I have the high ground' });
     await roomTwo.messages.send({ text: 'You underestimate my power' });
 
-    let getPreviousMessagesRoomOne: ReturnType<typeof useMessages>['getPreviousMessages'];
+    let historyBeforeSubscribeRoomOne: ReturnType<typeof useMessages>['historyBeforeSubscribe'];
     let roomStatusRoomOne: RoomStatus;
 
     const TestComponent = () => {
-      const { getPreviousMessages, roomStatus } = useMessages({
+      const { historyBeforeSubscribe, roomStatus } = useMessages({
         listener: () => {},
       });
 
-      getPreviousMessagesRoomOne = getPreviousMessages;
+      historyBeforeSubscribeRoomOne = historyBeforeSubscribe;
       roomStatusRoomOne = roomStatus;
 
       return null;
@@ -259,7 +260,7 @@ describe('useMessages', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent />
         </ChatRoomProvider>
       </ChatClientProvider>
@@ -272,18 +273,18 @@ describe('useMessages', () => {
       () => {
         expect(roomStatusRoomOne).toBe(RoomStatus.Attached);
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
 
     // send some more messages from the second room
     await roomTwo.messages.send({ text: 'Tis but a scratch' });
     await roomTwo.messages.send({ text: 'Time is an illusion. Lunchtime doubly so.' });
 
-    if (!getPreviousMessagesRoomOne) {
-      expect.fail('getPreviousMessages was not defined');
+    if (!historyBeforeSubscribeRoomOne) {
+      expect.fail('historyBeforeSubscribe was not defined');
     }
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const results = await getPreviousMessagesRoomOne({ limit: 30 });
+    const results = await historyBeforeSubscribeRoomOne({ limit: 30 });
 
     expect(results.items.length).toBe(3);
     expect(results.items.find((item) => item.text === 'The force is strong with this one')).toBeDefined();
@@ -291,12 +292,12 @@ describe('useMessages', () => {
     expect(results.items.find((item) => item.text === 'You underestimate my power')).toBeDefined();
   }, 10000);
 
-  it('should reset getPreviousMessages if the listener becomes undefined then redefined', async () => {
+  it('should reset historyBeforeSubscribe if the listener becomes undefined then redefined', async () => {
     const chatClient = newChatClient();
 
     // create a second room instance so we can send messages from it
-    const roomId = randomRoomId();
-    const room = await chatClient.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const room = await chatClient.rooms.get(roomName);
     await room.attach();
 
     let lastSeenMessageText: string | undefined;
@@ -317,21 +318,21 @@ describe('useMessages', () => {
       { timeout: 3000 },
     );
 
-    let getPreviousMessages: ReturnType<typeof useMessages>['getPreviousMessages'] | undefined;
+    let historyBeforeSubscribe: ReturnType<typeof useMessages>['historyBeforeSubscribe'] | undefined;
 
     const TestComponent = ({ defineListener }: { defineListener: boolean }) => {
-      const { getPreviousMessages: previous } = useMessages({
+      const { historyBeforeSubscribe: previous } = useMessages({
         listener: defineListener ? () => {} : undefined,
       });
 
-      getPreviousMessages = previous;
+      historyBeforeSubscribe = previous;
 
       return null;
     };
 
     const TestProvider = ({ defineListener }: { defineListener: boolean }) => (
       <ChatClientProvider client={chatClient}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent defineListener={defineListener} />
         </ChatRoomProvider>
       </ChatClientProvider>
@@ -339,20 +340,20 @@ describe('useMessages', () => {
 
     const { rerender } = render(<TestProvider defineListener={true} />);
 
-    // Wait until the getPreviousMessages is defined
+    // Wait until the historyBeforeSubscribe is defined
     await waitFor(
       () => {
-        expect(getPreviousMessages).toBeDefined();
+        expect(historyBeforeSubscribe).toBeDefined();
       },
       { timeout: 3000 },
     );
 
     // Do a get previous messages call
-    if (!getPreviousMessages) {
-      expect.fail('getPreviousMessages was not defined');
+    if (!historyBeforeSubscribe) {
+      expect.fail('historyBeforeSubscribe was not defined');
     }
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const results = await getPreviousMessages({ limit: 3 });
+    const results = await historyBeforeSubscribe({ limit: 3 });
 
     // Check we get the expected messages
     expect(results.items.length).toBe(3);
@@ -364,10 +365,10 @@ describe('useMessages', () => {
     // Rerender the component with the listener undefined
     rerender(<TestProvider defineListener={false} />);
 
-    // Wait until the getPreviousMessages is undefined
+    // Wait until the historyBeforeSubscribe is undefined
     await waitFor(
       () => {
-        expect(getPreviousMessages).toBeUndefined();
+        expect(historyBeforeSubscribe).toBeUndefined();
       },
       { timeout: 3000 },
     );
@@ -387,17 +388,17 @@ describe('useMessages', () => {
     // Rerender the component with the listener defined
     rerender(<TestProvider defineListener={true} />);
 
-    // Wait until the getPreviousMessages is defined
+    // Wait until the historyBeforeSubscribe is defined
     await waitFor(
       () => {
-        expect(getPreviousMessages).toBeDefined();
+        expect(historyBeforeSubscribe).toBeDefined();
       },
       { timeout: 3000 },
     );
 
     // Check we get the expected messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const results2 = await getPreviousMessages({ limit: 3 });
+    const results2 = await historyBeforeSubscribe({ limit: 3 });
     expect(results2.items.length).toBe(3);
     const messageTexts2 = results2.items.map((item) => item.text);
     expect(messageTexts2[0]).toBe('Time is an illusion. Lunchtime doubly so.');
@@ -417,7 +418,7 @@ describe('useMessages', () => {
 
     // Do a get previous messages call, we should still get the same messages
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const results3 = await getPreviousMessages({ limit: 3 });
+    const results3 = await historyBeforeSubscribe({ limit: 3 });
     expect(results3.items.length).toBe(3);
     const messageTexts3 = results3.items.map((item) => item.text);
     expect(messageTexts3[0]).toBe('Time is an illusion. Lunchtime doubly so.');
@@ -425,12 +426,12 @@ describe('useMessages', () => {
     expect(messageTexts3[2]).toBe('You underestimate my power');
   }, 20000);
 
-  it('should persist the getPreviousMessages subscription point across renders, if listener remains defined', async () => {
+  it('should persist the historyBeforeSubscribe subscription point across renders, if listener remains defined', async () => {
     const chatClient = newChatClient();
 
     // create a second room instance so we can send messages from it
-    const roomId = randomRoomId();
-    const room = await chatClient.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const room = await chatClient.rooms.get(roomName);
     await room.attach();
 
     let lastSeenMessageText: string | undefined;
@@ -451,21 +452,21 @@ describe('useMessages', () => {
       { timeout: 3000 },
     );
 
-    let getPreviousMessages: ReturnType<typeof useMessages>['getPreviousMessages'] | undefined;
+    let historyBeforeSubscribe: ReturnType<typeof useMessages>['historyBeforeSubscribe'] | undefined;
 
     const TestComponent = ({ listener }: { listener: MessageListener }) => {
-      const { getPreviousMessages: previous } = useMessages({
+      const { historyBeforeSubscribe: previous } = useMessages({
         listener,
       });
 
-      getPreviousMessages = previous;
+      historyBeforeSubscribe = previous;
 
       return null;
     };
 
     const TestProvider = ({ listener }: { listener: MessageListener }) => (
       <ChatClientProvider client={chatClient}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent listener={listener} />
         </ChatRoomProvider>
       </ChatClientProvider>
@@ -473,20 +474,20 @@ describe('useMessages', () => {
 
     const { rerender } = render(<TestProvider listener={vi.fn()} />);
 
-    // Wait until the getPreviousMessages is defined
+    // Wait until the historyBeforeSubscribe is defined
     await waitFor(
       () => {
-        expect(getPreviousMessages).toBeDefined();
+        expect(historyBeforeSubscribe).toBeDefined();
       },
       { timeout: 3000 },
     );
 
     // Do a get previous messages call
-    if (!getPreviousMessages) {
-      expect.fail('getPreviousMessages was not defined');
+    if (!historyBeforeSubscribe) {
+      expect.fail('historyBeforeSubscribe was not defined');
     }
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
-    const results = await getPreviousMessages({ limit: 3 });
+    const results = await historyBeforeSubscribe({ limit: 3 });
 
     // Check we get the expected messages
     expect(results.items.length).toBe(3);
@@ -508,7 +509,7 @@ describe('useMessages', () => {
     // Wait 3 seconds to make sure all messages are received
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    const results2 = await getPreviousMessages({ limit: 3 });
+    const results2 = await historyBeforeSubscribe({ limit: 3 });
 
     // Check we get the expected messages
     expect(results.items.length).toBe(3);

@@ -26,7 +26,7 @@ export const useRoomLogger = (): Logger => {
   const chatClient = useChatClient();
 
   return useMemo(
-    () => (chatClient as unknown as { logger: Logger }).logger.withContext({ roomId: roomContext.roomId }),
+    () => (chatClient as unknown as { logger: Logger }).logger.withContext({ roomName: roomContext.roomName }),
     [chatClient, roomContext],
   );
 };

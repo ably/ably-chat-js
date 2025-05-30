@@ -1,7 +1,6 @@
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Message } from '../../core/message.js';
 import {
   DeleteMessageParams,
   MessageListener,
@@ -10,6 +9,7 @@ import {
   OperationDetails,
   QueryOptions,
   SendMessageParams,
+  UpdateMessageParams,
 } from '../../core/messages.js';
 import type {
   AddMessageReactionParams,
@@ -18,6 +18,7 @@ import type {
   MessagesReactions,
 } from '../../core/messages-reactions.js'; // imported for typedoc links
 import { MessageRawReactionListener, MessageReactionListener } from '../../core/messages-reactions.js';
+import { Serial } from '../../core/serial.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
@@ -44,9 +45,9 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly update: Messages['update'];
 
   /**
-   * A shortcut to the {@link Messages.get} method.
+   * A shortcut to the {@link Messages.history} method.
    */
-  readonly get: Messages['get'];
+  readonly history: Messages['history'];
 
   /**
    * A shortcut to the {@link Messages.delete} method.
@@ -84,7 +85,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    *
    * @defaultValue - This will be undefined if no listener is provided in the {@link UseMessagesParams}.
    */
-  readonly getPreviousMessages?: MessageSubscriptionResponse['getPreviousMessages'];
+  readonly historyBeforeSubscribe?: MessageSubscriptionResponse['historyBeforeSubscribe'];
 }
 
 export interface UseMessagesParams extends StatusParams, Listenable<MessageListener> {
@@ -112,7 +113,7 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
  * A hook that provides access to the {@link Messages} instance in the room.
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
  * If a listener is provided, it will subscribe to new messages in the room,
- * and will also set the {@link UseMessagesResponse.getPreviousMessages}.
+ * and will also set the {@link UseMessagesResponse.historyBeforeSubscribe}.
  *
  * @param params - Allows the registering of optional callbacks.
  * @returns UsePresenceResponse - An object containing the {@link Messages} instance and methods to interact with it.
@@ -137,33 +138,34 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
   const deleteMessage = useCallback(
-    (message: Message, deleteMessageParams?: DeleteMessageParams) =>
-      context.room.then((room) => room.messages.delete(message, deleteMessageParams)),
+    (serial: Serial, deleteMessageParams?: DeleteMessageParams) =>
+      context.room.then((room) => room.messages.delete(serial, deleteMessageParams)),
     [context],
   );
-  const get = useCallback(
-    (options: QueryOptions) => context.room.then((room) => room.messages.get(options)),
+  const history = useCallback(
+    (options: QueryOptions) => context.room.then((room) => room.messages.history(options)),
     [context],
   );
   const update = useCallback(
-    (message: Message, details?: OperationDetails) =>
-      context.room.then((room) => room.messages.update(message, details)),
+    (serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails) =>
+      context.room.then((room) => room.messages.update(serial, updateParams, details)),
     [context],
   );
 
   const addReaction: Messages['reactions']['add'] = useCallback(
-    (message: Message, params: AddMessageReactionParams) =>
-      context.room.then((room) => room.messages.reactions.add(message, params)),
+    (serial: Serial, params: AddMessageReactionParams) =>
+      context.room.then((room) => room.messages.reactions.add(serial, params)),
     [context],
   );
 
   const deleteReaction: Messages['reactions']['delete'] = useCallback(
-    (message: Message, params?: DeleteMessageReactionParams) =>
-      context.room.then((room) => room.messages.reactions.delete(message, params)),
+    (serial: Serial, params?: DeleteMessageReactionParams) =>
+      context.room.then((room) => room.messages.reactions.delete(serial, params)),
     [context],
   );
 
-  const [getPreviousMessages, setGetPreviousMessages] = useState<MessageSubscriptionResponse['getPreviousMessages']>();
+  const [historyBeforeSubscribe, setHistoryBeforeSubscribe] =
+    useState<MessageSubscriptionResponse['historyBeforeSubscribe']>();
 
   useEffect(() => {
     if (!listenerRef) return;
@@ -175,9 +177,9 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
         logger.debug('useMessages(); applying listener');
         const sub = room.messages.subscribe(listenerRef);
 
-        // set the getPreviousMessages method if a listener is provided
-        setGetPreviousMessages(() => {
-          logger.debug('useMessages(); setting getPreviousMessages state', {
+        // set the historyBeforeSubscribe method if a listener is provided
+        setHistoryBeforeSubscribe(() => {
+          logger.debug('useMessages(); setting historyBeforeSubscribe state', {
             status: room.status,
             unmounted,
           });
@@ -186,25 +188,24 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
           }
 
           return (params: Omit<QueryOptions, 'orderBy'>) => {
-            // If we've unmounted, then the subscription is gone and we can't call getPreviousMessages
+            // If we've unmounted, then the subscription is gone and we can't call historyBeforeSubscribe
             // So return a dummy object that should be thrown away anyway
-            logger.debug('useMessages(); getPreviousMessages called');
+            logger.debug('useMessages(); historyBeforeSubscribe called');
             if (unmounted) {
               return Promise.reject(new Ably.ErrorInfo('component unmounted', 40000, 400));
             }
-            return sub.getPreviousMessages(params);
+            return sub.historyBeforeSubscribe(params);
           };
         });
 
         return () => {
-          logger.debug('useMessages(); removing listener and getPreviousMessages state');
+          logger.debug('useMessages(); removing listener and historyBeforeSubscribe state');
           unmounted = true;
           sub.unsubscribe();
-          setGetPreviousMessages(undefined);
+          setHistoryBeforeSubscribe(undefined);
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, logger, listenerRef]);
 
@@ -221,7 +222,6 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, logger, onDiscontinuityRef]);
 
@@ -234,15 +234,14 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
           // eslint-disable-next-line @typescript-eslint/no-empty-function
           return () => {};
         }
-        logger.debug('useMessages(); applying reactions listener', { roomId: context.roomId });
+        logger.debug('useMessages(); applying reactions listener');
         const { unsubscribe } = room.messages.reactions.subscribe(params.reactionsListener);
         return () => {
-          logger.debug('useMessages(); removing reactions listener', { roomId: context.roomId });
+          logger.debug('useMessages(); removing reactions listener');
           unsubscribe();
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, logger, params?.reactionsListener]);
 
@@ -254,30 +253,29 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
         if (!params.rawReactionsListener) {
           return () => void 0;
         }
-        logger.debug('useMessages(); applying raw reactions listener', { roomId: context.roomId });
+        logger.debug('useMessages(); applying raw reactions listener');
         const { unsubscribe } = room.messages.reactions.subscribeRaw(params.rawReactionsListener);
         return () => {
-          logger.debug('useMessages(); removing raw reactions listener', { roomId: context.roomId });
+          logger.debug('useMessages(); removing raw reactions listener');
           unsubscribe();
         };
       },
       logger,
-      context.roomId,
     ).unmount();
   }, [context, logger, params?.rawReactionsListener]);
 
   return {
-    messages: useEventualRoomProperty((room) => room.messages),
-    send,
-    update,
-    get,
-    deleteMessage,
-    getPreviousMessages,
-    addReaction,
-    deleteReaction,
     connectionStatus,
     connectionError,
     roomStatus,
     roomError,
+    send,
+    update,
+    history,
+    deleteMessage,
+    addReaction,
+    deleteReaction,
+    historyBeforeSubscribe,
+    messages: useEventualRoomProperty((room) => room.messages),
   };
 };

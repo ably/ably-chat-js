@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChannelOptionsMerger } from './channel-manager.js';
-import { PresenceEvents } from './events.js';
+import { PresenceEventType } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
@@ -11,10 +11,10 @@ import EventEmitter, { wrap } from './utils/event-emitter.js';
  * Interface for PresenceEventsMap
  */
 interface PresenceEventsMap {
-  [PresenceEvents.Enter]: PresenceEvent;
-  [PresenceEvents.Leave]: PresenceEvent;
-  [PresenceEvents.Update]: PresenceEvent;
-  [PresenceEvents.Present]: PresenceEvent;
+  [PresenceEventType.Enter]: PresenceEvent;
+  [PresenceEventType.Leave]: PresenceEvent;
+  [PresenceEventType.Update]: PresenceEvent;
+  [PresenceEventType.Present]: PresenceEvent;
 }
 
 /**
@@ -38,22 +38,12 @@ export interface PresenceEvent {
   /**
    * The type of the presence event.
    */
-  action: PresenceEvents;
+  type: PresenceEventType;
 
   /**
-   * The clientId of the client that triggered the presence event.
+   * The presence member associated with this event.
    */
-  clientId: string;
-
-  /**
-   * The timestamp of the presence event.
-   */
-  timestamp: number;
-
-  /**
-   * The data associated with the presence event.
-   */
-  data: PresenceData;
+  member: PresenceMember;
 }
 
 /**
@@ -71,15 +61,9 @@ export interface PresenceMember {
   data: PresenceData;
 
   /**
-   * The current state of the presence member.
-   */
-  action: 'present' | 'enter' | 'leave' | 'update';
-
-  /**
    * The extras associated with the presence member.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  extras: any;
+  extras: unknown;
 
   /**
    * The timestamp of when the last change in state occurred for this presence member.
@@ -103,6 +87,7 @@ export interface Presence {
   /**
    * Method to get list of the current online users and returns the latest presence messages associated to it.
    * @param {Ably.RealtimePresenceParams} params - Parameters that control how the presence set is retrieved.
+   * @throws If the room is not in the `attached` or `attaching` state.
    * @returns {Promise<PresenceMessage[]>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]>;
@@ -110,6 +95,7 @@ export interface Presence {
   /**
    * Method to check if user with supplied clientId is online
    * @param {string} clientId - The client ID to check if it is present in the room.
+   * @throws If the room is not in the `attached` or `attaching` state.
    * @returns {Promise<{boolean}>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   isUserPresent(clientId: string): Promise<boolean>;
@@ -117,6 +103,7 @@ export interface Presence {
   /**
    * Method to join room presence, will emit an enter event to all subscribers. Repeat calls will trigger more enter events.
    * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @throws If the room is not in the `attached` or `attaching` state.
    * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   enter(data?: PresenceData): Promise<void>;
@@ -124,6 +111,7 @@ export interface Presence {
   /**
    * Method to update room presence, will emit an update event to all subscribers. If the user is not present, it will be treated as a join event.
    * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @throws If the room is not in the `attached` or `attaching` state.
    * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   update(data?: PresenceData): Promise<void>;
@@ -131,6 +119,7 @@ export interface Presence {
   /**
    * Method to leave room presence, will emit a leave event to all subscribers. If the user is not present, it will be treated as a no-op.
    * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @throws If the room is not in the `attached` or `attaching` state.
    * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   leave(data?: PresenceData): Promise<void>;
@@ -145,7 +134,7 @@ export interface Presence {
    * @param listener listener to subscribe
    * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
-  subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Subscription;
+  subscribe(eventOrEvents: PresenceEventType | PresenceEventType[], listener?: PresenceListener): Subscription;
 
   /**
    * Subscribe the given listener to all presence events.
@@ -157,11 +146,6 @@ export interface Presence {
    * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
   subscribe(listener?: PresenceListener): Subscription;
-
-  /**
-   * Unsubscribe all listeners from all presence events.
-   */
-  unsubscribeAll(): void;
 }
 
 /**
@@ -204,12 +188,13 @@ export class DefaultPresence implements Presence {
    */
   async get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]> {
     this._logger.trace('Presence.get()', { params });
+    this._assertChannelState();
     const userOnPresence = await this._channel.presence.get(params);
 
     // ably-js never emits the 'absent' event, so we can safely ignore it here.
     return userOnPresence.map((user) => ({
       clientId: user.clientId,
-      action: user.action as PresenceEvents,
+
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       data: user.data?.userCustomData as PresenceData,
       updatedAt: user.timestamp,
@@ -222,6 +207,8 @@ export class DefaultPresence implements Presence {
    * @inheritDoc
    */
   async isUserPresent(clientId: string): Promise<boolean> {
+    this._logger.trace(`Presence.isUserPresent()`, { clientId });
+    this._assertChannelState();
     const presenceSet = await this._channel.presence.get({ clientId: clientId });
     return presenceSet.length > 0;
   }
@@ -231,6 +218,7 @@ export class DefaultPresence implements Presence {
    */
   async enter(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.enter()`, { data });
+    this._assertChannelState();
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
@@ -242,6 +230,7 @@ export class DefaultPresence implements Presence {
    */
   async update(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.update()`, { data });
+    this._assertChannelState();
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
@@ -253,6 +242,7 @@ export class DefaultPresence implements Presence {
    */
   async leave(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.leave()`, { data });
+    this._assertChannelState();
     const presenceEventToSend: AblyPresenceData = {
       userCustomData: data,
     };
@@ -262,13 +252,13 @@ export class DefaultPresence implements Presence {
   /**
    * @inheritDoc
    */
-  subscribe(eventOrEvents: PresenceEvents | PresenceEvents[], listener?: PresenceListener): Subscription;
+  subscribe(eventOrEvents: PresenceEventType | PresenceEventType[], listener?: PresenceListener): Subscription;
   /**
    * @inheritDoc
    */
   subscribe(listener?: PresenceListener): Subscription;
   subscribe(
-    listenerOrEvents?: PresenceEvents | PresenceEvents[] | PresenceListener,
+    listenerOrEvents?: PresenceEventType | PresenceEventType[] | PresenceListener,
     listener?: PresenceListener,
   ): Subscription {
     this._logger.trace('Presence.subscribe(); listenerOrEvents', { listenerOrEvents });
@@ -287,7 +277,7 @@ export class DefaultPresence implements Presence {
     // Add listener to all events
     if (listener) {
       const wrapped = wrap(listener);
-      this._emitter.on(listenerOrEvents as PresenceEvents, wrapped);
+      this._emitter.on(listenerOrEvents as PresenceEventType, wrapped);
       return {
         unsubscribe: () => {
           this._logger.trace('Presence.unsubscribe();', { events: listenerOrEvents });
@@ -307,14 +297,6 @@ export class DefaultPresence implements Presence {
   }
 
   /**
-   * @inheritDoc
-   */
-  unsubscribeAll(): void {
-    this._logger.trace('Presence.unsubscribeAll()');
-    this._emitter.off();
-  }
-
-  /**
    * Method to handle and emit presence events
    * @param member - PresenceMessage ably-js object
    * @returns void - Emits a transformed event to all subscribers, or upon failure,
@@ -322,13 +304,17 @@ export class DefaultPresence implements Presence {
    */
   subscribeToEvents = (member: Ably.PresenceMessage) => {
     try {
+      const presenceData = member.data as AblyPresenceData;
+
       // Ably-js never emits the 'absent' event, so we can safely ignore it here.
-      this._emitter.emit(member.action as PresenceEvents, {
-        action: member.action as PresenceEvents,
-        clientId: member.clientId,
-        timestamp: member.timestamp,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        data: member.data?.userCustomData as PresenceData,
+      this._emitter.emit(member.action as PresenceEventType, {
+        type: member.action as PresenceEventType,
+        member: {
+          clientId: member.clientId,
+          data: presenceData.userCustomData,
+          extras: member.extras,
+          updatedAt: member.timestamp,
+        },
       });
     } catch (error) {
       this._logger.error(`unable to handle presence event: not a valid presence event`, { action: member.action });
@@ -359,5 +345,12 @@ export class DefaultPresence implements Presence {
       }
       return options;
     };
+  }
+
+  private _assertChannelState(): void {
+    if (this._channel.state !== 'attaching' && this._channel.state !== 'attached') {
+      this._logger.error('could not perform presence operation; room is not attached');
+      throw new Ably.ErrorInfo('could not perform presence operation; room is not attached', 40000, 400);
+    }
   }
 }

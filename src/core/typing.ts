@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { E_CANCELED, Mutex } from 'async-mutex';
 
-import { TypingEventTypes, TypingSetEvent, TypingSetEventTypes } from './events.js';
+import { TypingEventType, TypingSetEvent, TypingSetEventType } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
 import { InternalTypingOptions } from './room-options.js';
@@ -24,15 +24,10 @@ export interface Typing {
   subscribe(listener: TypingListener): Subscription;
 
   /**
-   * Unsubscribe all listeners from receiving typing events.
-   */
-  unsubscribeAll(): void;
-
-  /**
    * Get the current typers, a set of clientIds.
    * @returns The set of clientIds that are currently typing.
    */
-  get(): Set<string>;
+  current(): Set<string>;
 
   /**
    * This will send a `typing.started` event to the server.
@@ -49,7 +44,7 @@ export interface Typing {
    *   resolve to a consistent and correct state.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
-   * @throws If the `RoomStatus` is not either `Attached` or `Attaching`.
+   * @throws If the `Connection` is not in the `Connected` state.
    * @throws If the operation fails to send the event to the server.
    * @throws If there is a problem acquiring the mutex that controls serialization.
    */
@@ -68,7 +63,7 @@ export interface Typing {
    *   resolve to a consistent and correct state.
    *
    * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
-   * @throws If the `RoomStatus` is not either `Attached` or `Attaching`.
+   * @throws If the `Connection` is not in the `Connected` state.
    * @throws If the operation fails to send the event to the server.
    * @throws If there is a problem acquiring the mutex that controls serialization.
    */
@@ -85,7 +80,7 @@ export type TypingListener = (event: TypingSetEvent) => void;
  * Represents the typing events mapped to their respective event payloads.
  */
 interface TypingEventsMap {
-  [TypingSetEventTypes.SetChanged]: TypingSetEvent;
+  [TypingSetEventType.SetChanged]: TypingSetEvent;
 }
 
 /**
@@ -97,9 +92,9 @@ type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
  * @inheritDoc
  */
 export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
-  private readonly _roomId: string;
   private readonly _clientId: string;
   private readonly _channel: Ably.RealtimeChannel;
+  private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
 
   // Throttle for the heartbeat, how often we should emit a typing event with repeated calls to keystroke()
@@ -117,23 +112,23 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
   /**
    * Constructs a new `DefaultTyping` instance.
-   * @param roomId The unique identifier of the room.
    * @param options The options for typing in the room.
+   * @param connection The connection instance.
    * @param channel The channel for the room.
    * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
   constructor(
-    roomId: string,
     options: InternalTypingOptions,
+    connection: Ably.Connection,
     channel: Ably.RealtimeChannel,
     clientId: string,
     logger: Logger,
   ) {
     super();
-    this._roomId = roomId;
     this._clientId = clientId;
     this._channel = channel;
+    this._connection = connection;
 
     // Interval for the heartbeat, how often we should emit a typing event with repeated calls to start()
     this._heartbeatThrottleMs = options.heartbeatThrottleMs;
@@ -152,18 +147,18 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     // CHA-T8
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void this._channel.subscribe(
-      [TypingEventTypes.Start, TypingEventTypes.Stop],
+      [TypingEventType.Start, TypingEventType.Stop],
       this._internalSubscribeToEvents.bind(this),
     );
   }
 
   /**
-   * CHA-T9
+   * CHA-T16
    *
    * @inheritDoc
    */
-  get(): Set<string> {
-    this._logger.trace(`DefaultTyping.get();`, { roomId: this._roomId });
+  current(): Set<string> {
+    this._logger.trace(`DefaultTyping.current();`);
     return new Set<string>(this._currentlyTyping.keys());
   }
 
@@ -179,9 +174,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    */
   private _startHeartbeatTimer(): void {
     if (!this._heartbeatTimerId) {
-      this._logger.trace(`DefaultTyping.startHeartbeatTimer();`, { roomId: this._roomId });
+      this._logger.trace(`DefaultTyping.startHeartbeatTimer();`);
       const timer = (this._heartbeatTimerId = setTimeout(() => {
-        this._logger.debug(`DefaultTyping.startHeartbeatTimer(); heartbeat timer expired`, { roomId: this._roomId });
+        this._logger.debug(`DefaultTyping.startHeartbeatTimer(); heartbeat timer expired`);
         // CHA-T2a
         if (timer === this._heartbeatTimerId) {
           this._heartbeatTimerId = undefined;
@@ -194,49 +189,44 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @inheritDoc
    */
   async keystroke(): Promise<void> {
-    this._logger.trace(`DefaultTyping.keystroke();`, { roomId: this._roomId });
+    this._logger.trace(`DefaultTyping.keystroke();`);
     this._mutex.cancel();
 
     // Acquire a mutex
     await this._mutex.acquire().catch((error: unknown) => {
       if (error === E_CANCELED) {
-        this._logger.debug(`DefaultTyping.keystroke(); mutex was canceled by a later operation`, {
-          roomId: this._roomId,
-        });
+        this._logger.debug(`DefaultTyping.keystroke(); mutex was canceled by a later operation`);
         return;
       }
       throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
     });
     try {
-      // CHA-T4d
-      // Ensure room is attached
-      if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-        this._logger.error(`DefaultTyping.keystroke(); room is not in the correct state `, {
-          roomId: this._roomId,
-          state: this.channel.state,
+      // Check if connection is connected
+      // CHA-T4e
+      if (this._connection.state !== 'connected') {
+        this._logger.error(`DefaultTyping.keystroke(); connection is not connected`, {
+          status: this._connection.state,
         });
-        throw new Ably.ErrorInfo('cannot type, room is not in the correct state', 50000, 500);
+        throw new Ably.ErrorInfo('cannot type, connection is not connected', 40000, 400);
       }
 
       // Check whether user is already typing before publishing again
       // CHA-T4c1, CHA-T4c2
       if (this._heartbeatTimerId) {
-        this._logger.debug(`DefaultTyping.keystroke(); no-op, already typing and heartbeat timer has not expired`, {
-          roomId: this._roomId,
-        });
+        this._logger.debug(`DefaultTyping.keystroke(); no-op, already typing and heartbeat timer has not expired`);
         return;
       }
 
       // Perform the publish
       // CHA-T4a3
-      await this._channel.publish(ephemeralMessage(TypingEventTypes.Start));
+      await this._channel.publish(ephemeralMessage(TypingEventType.Start));
 
       // Start the timer after publishing
       // CHA-T4a5
       this._startHeartbeatTimer();
-      this._logger.trace(`DefaultTyping.keystroke(); starting timers`, { roomId: this._roomId });
+      this._logger.trace(`DefaultTyping.keystroke(); starting timers`);
     } finally {
-      this._logger.trace(`DefaultTyping.keystroke(); releasing mutex`, { roomId: this._roomId });
+      this._logger.trace(`DefaultTyping.keystroke(); releasing mutex`);
       this._mutex.release();
     }
   }
@@ -245,44 +235,43 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @inheritDoc
    */
   async stop(): Promise<void> {
-    this._logger.trace(`DefaultTyping.stop();`, { roomId: this._roomId });
+    this._logger.trace(`DefaultTyping.stop();`);
 
     this._mutex.cancel();
     // Acquire a mutex
     await this._mutex.acquire().catch((error: unknown) => {
       if (error === E_CANCELED) {
-        this._logger.debug(`DefaultTyping.stop(); mutex was canceled by a later operation`, { roomId: this._roomId });
+        this._logger.debug(`DefaultTyping.stop(); mutex was canceled by a later operation`);
         return;
       }
       throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
     });
     try {
-      // CHA-T5c
-      if (this.channel.state !== 'attached' && this.channel.state !== 'attaching') {
-        this._logger.error(`DefaultTyping.stop(); room is not in the correct state `, {
-          roomId: this._roomId,
-          state: this.channel.state,
+      // Check if connection is connected
+      if (this._connection.state !== 'connected') {
+        this._logger.error(`DefaultTyping.stop(); connection is not connected`, {
+          status: this._connection.state,
         });
-        throw new Ably.ErrorInfo('cannot stop typing, room is not in the correct state', 50000, 500);
+        throw new Ably.ErrorInfo('cannot stop typing, connection is not connected', 40000, 400);
       }
 
       // If the user is not typing, do nothing.
-      // CHA-T5a
+      // CHA-T5f
       if (!this._heartbeatTimerId) {
-        this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`, { roomId: this._roomId });
+        this._logger.debug(`DefaultTyping.stop(); no-op, not currently typing`);
         return;
       }
 
       // CHA-T5d
-      await this._channel.publish(ephemeralMessage(TypingEventTypes.Stop));
-      this._logger.trace(`DefaultTyping.stop(); clearing timers`, { roomId: this._roomId });
+      await this._channel.publish(ephemeralMessage(TypingEventType.Stop));
+      this._logger.trace(`DefaultTyping.stop(); clearing timers`);
 
       // CHA-T5e
       // Clear the heartbeat timer
       clearTimeout(this._heartbeatTimerId);
       this._heartbeatTimerId = undefined;
     } finally {
-      this._logger.trace(`DefaultTyping.stop(); releasing mutex`, { roomId: this._roomId });
+      this._logger.trace(`DefaultTyping.stop(); releasing mutex`);
       this._mutex.release();
     }
   }
@@ -291,24 +280,16 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @inheritDoc
    */
   subscribe(listener: TypingListener): Subscription {
-    this._logger.trace(`DefaultTyping.subscribe();`, { roomId: this._roomId });
+    this._logger.trace(`DefaultTyping.subscribe();`);
     const wrapped = wrap(listener);
     this.on(wrapped);
 
     return {
       unsubscribe: () => {
-        this._logger.trace('DefaultTyping.unsubscribe();', { roomId: this._roomId });
+        this._logger.trace('DefaultTyping.unsubscribe();');
         this.off(wrapped);
       },
     };
-  }
-
-  /**
-   * @inheritDoc
-   */
-  unsubscribeAll(): void {
-    this._logger.trace(`DefaultTyping.unsubscribeAll();`, { roomId: this._roomId });
-    this.off();
   }
 
   /**
@@ -317,10 +298,10 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @param clientId The client ID of the user.
    * @param event The typing event.
    */
-  private _updateCurrentlyTyping(clientId: string, event: TypingEventTypes): void {
-    this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { roomId: this._roomId, clientId, event });
+  private _updateCurrentlyTyping(clientId: string, event: TypingEventType): void {
+    this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { clientId, event });
 
-    if (event === TypingEventTypes.Start) {
+    if (event === TypingEventType.Start) {
       this._handleTypingStart(clientId);
     } else {
       this._handleTypingStop(clientId);
@@ -335,19 +316,16 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    */
   private _startNewClientInactivityTimer(clientId: string): ReturnType<typeof setTimeout> {
     this._logger.trace(`DefaultTyping._startNewClientInactivityTimer(); starting new inactivity timer`, {
-      roomId: this._roomId,
       clientId,
     });
     // Set or reset the typing timeout for this client
     const timeoutId = setTimeout(() => {
       this._logger.trace(`DefaultTyping._startNewClientInactivityTimer(); client typing timeout expired`, {
-        roomId: this._roomId,
         clientId,
       });
       // Verify the timer is still valid (it might have been reset)
       if (this._currentlyTyping.get(clientId) !== timeoutId) {
         this._logger.debug(`DefaultTyping._startNewClientInactivityTimer(); timeout already cleared; ignoring`, {
-          roomId: this._roomId,
           clientId,
         });
         return;
@@ -355,12 +333,12 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
       // Remove client whose timeout has expired
       this._currentlyTyping.delete(clientId);
-      this.emit(TypingSetEventTypes.SetChanged, {
-        type: TypingSetEventTypes.SetChanged,
+      this.emit(TypingSetEventType.SetChanged, {
+        type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
         change: {
           clientId,
-          type: TypingEventTypes.Stop,
+          type: TypingEventType.Stop,
         },
       });
     }, this._heartbeatThrottleMs + this._timeoutMs);
@@ -368,11 +346,11 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   }
 
   /**
-   * Handles logic for TypingEventTypes.Start, including starting a new timeout or resetting an existing one.
+   * Handles logic for TypingEventType.Start, including starting a new timeout or resetting an existing one.
    * @param clientId
    */
   private _handleTypingStart(clientId: string): void {
-    this._logger.debug(`DefaultTyping._handleTypingStart();`, { roomId: this._roomId, clientId });
+    this._logger.debug(`DefaultTyping._handleTypingStart();`, { clientId });
     // Start a new timeout for the client
     const timeoutId = this._startNewClientInactivityTimer(clientId);
 
@@ -384,29 +362,27 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     if (existingTimeout) {
       // Heartbeat - User is already typing, we just need to clear the existing timeout
       this._logger.debug(`DefaultTyping._handleTypingStart(); received heartbeat for currently typing client`, {
-        roomId: this._roomId,
         clientId,
       });
       clearTimeout(existingTimeout);
     } else {
       // Otherwise, we need to emit a new typing event
       this._logger.debug(`DefaultTyping._handleTypingStart(); new client started typing`, {
-        roomId: this._roomId,
         clientId,
       });
-      this.emit(TypingSetEventTypes.SetChanged, {
-        type: TypingSetEventTypes.SetChanged,
+      this.emit(TypingSetEventType.SetChanged, {
+        type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
         change: {
           clientId,
-          type: TypingEventTypes.Start,
+          type: TypingEventType.Start,
         },
       });
     }
   }
 
   /**
-   * Handles logic for TypingEventTypes.Stop, including clearing the timeout for the client.
+   * Handles logic for TypingEventType.Stop, including clearing the timeout for the client.
    * @param clientId
    * @private
    */
@@ -416,22 +392,22 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       // Stop requested for a client that isn't currently typing
       this._logger.trace(
         `DefaultTyping._handleTypingStop(); received "Stop" event for client not in currentlyTyping list`,
-        { roomId: this._roomId, clientId },
+        { clientId },
       );
       return;
     }
 
     // Stop typing: clear their timeout and remove from the currently typing set
-    this._logger.debug(`DefaultTyping._handleTypingStop(); client stopped typing`, { roomId: this._roomId, clientId });
+    this._logger.debug(`DefaultTyping._handleTypingStop(); client stopped typing`, { clientId });
     clearTimeout(existingTimeout);
     this._currentlyTyping.delete(clientId);
     // Emit stop event only when the client is removed
-    this.emit(TypingSetEventTypes.SetChanged, {
-      type: TypingSetEventTypes.SetChanged,
+    this.emit(TypingSetEventType.SetChanged, {
+      type: TypingSetEventType.SetChanged,
       currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
       change: {
         clientId,
-        type: TypingEventTypes.Stop,
+        type: TypingEventType.Stop,
       },
     });
   }
@@ -442,25 +418,22 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   private _internalSubscribeToEvents = (inbound: Ably.InboundMessage): void => {
     const { name, clientId } = inbound;
     this._logger.trace(`DefaultTyping._internalSubscribeToEvents(); received event`, {
-      roomId: this._roomId,
       name,
       clientId,
     });
 
     if (!clientId) {
       this._logger.error(`DefaultTyping._internalSubscribeToEvents(); invalid clientId in received event`, {
-        roomId: this._roomId,
         inbound,
       });
       return;
     }
 
     // Safety check to ensure we are handling only typing events
-    if (name === TypingEventTypes.Start || name === TypingEventTypes.Stop) {
+    if (name === TypingEventType.Start || name === TypingEventType.Stop) {
       this._updateCurrentlyTyping(clientId, name);
     } else {
       this._logger.warn(`DefaultTyping._internalSubscribeToEvents(); unrecognized event`, {
-        roomId: this._roomId,
         name,
       });
     }

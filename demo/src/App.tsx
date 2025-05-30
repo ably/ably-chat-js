@@ -13,27 +13,27 @@ import { OccupancyComponent } from './components/OccupancyComponent';
 // provided. We make sure the URL is updated to always include the roomId. This
 // is useful for sharing a link to a specific room or for testing with multiple
 // rooms.
-let roomId: string;
+let roomName: string;
 (function () {
   const params = new URLSearchParams(window.location.search);
   if (!params.has('room')) {
-    roomId = 'abcd';
-    params.set('room', roomId);
+    roomName = 'abcd';
+    params.set('room', roomName);
     history.replaceState(null, '', '?' + params.toString());
   } else {
-    roomId = params.get('room')!;
+    roomName = params.get('room')!;
   }
 })();
 
 interface AppProps {}
 
 const App: FC<AppProps> = () => {
-  const [roomIdState, setRoomId] = useState(roomId);
-  const updateRoomId = (newRoomId: string) => {
+  const [roomNameState, setRoomName] = useState(roomName);
+  const updateRoomName = (newRoomName: string) => {
     const params = new URLSearchParams(window.location.search);
-    params.set('room', newRoomId);
+    params.set('room', newRoomName);
     history.pushState(null, '', '?' + params.toString());
-    setRoomId(newRoomId);
+    setRoomName(newRoomName);
   };
 
   // Add a useEffect that handles the popstate event to update the roomId when
@@ -41,8 +41,8 @@ const App: FC<AppProps> = () => {
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
-      const newRoomId = params.get('room') || 'abcd';
-      setRoomId(newRoomId);
+      const newRoomName = params.get('room') || 'abcd';
+      setRoomName(newRoomName);
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -50,12 +50,12 @@ const App: FC<AppProps> = () => {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [setRoomId]);
+  }, [setRoomName]);
 
   return (
     <ReactionTypeProvider>
       <ChatRoomProvider
-        id={roomIdState} // The room ID you want to create or join
+        name={roomNameState} // The room name you want to create or join
         release={true} // Release the room automatically when unmounted
         attach={true} // Attach to the room automatically when mounted
         options={{ occupancy: { enableEvents: true } }} // Enable occupancy events
@@ -66,7 +66,7 @@ const App: FC<AppProps> = () => {
               <ConnectionStatusComponent />
             </div>
             <div className="flex-1 border-1 border-blue-500">
-              <RoomStatusComponent updateRoomId={updateRoomId} />
+              <RoomStatusComponent updateRoomName={updateRoomName} />
             </div>
           </div>
 

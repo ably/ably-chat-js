@@ -7,14 +7,15 @@ import {
   DeleteMessageReactionParams as APIDeleteMessageReactionParams,
 } from './chat-api.js';
 import {
-  ChatMessageActions,
-  MessageReactionEvents,
+  ChatMessageAction,
+  MessageReactionEventType,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
   MessageReactionType,
 } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomOptions, MessageOptions } from './room-options.js';
+import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
@@ -77,19 +78,19 @@ export interface DeleteMessageReactionParams {
 export interface MessagesReactions {
   /**
    * Add a message reactions
-   * @param message The message to react to.
+   * @param messageSerial The serial of the message to react to
    * @param params Describe the reaction to add.
    * @returns A promise that resolves when the reaction is added.
    */
-  add(message: { serial: string }, params: AddMessageReactionParams): Promise<void>;
+  add(messageSerial: Serial, params: AddMessageReactionParams): Promise<void>;
 
   /**
    * Delete a message reaction
-   * @param message The message to remove the reaction from.
+   * @param messageSerial The serial of the message to remove the reaction from.
    * @param params The type of reaction annotation and the specific reaction to remove. The reaction to remove is required for all types except {@link MessageReactionType.Unique}.
    * @returns A promise that resolves when the reaction is deleted.
    */
-  delete(message: { serial: string }, params?: DeleteMessageReactionParams): Promise<void>;
+  delete(messageSerial: Serial, params?: DeleteMessageReactionParams): Promise<void>;
 
   /**
    * Subscribe to message reaction summaries. Use this to keep message reaction
@@ -114,9 +115,9 @@ export interface MessagesReactions {
  */
 export class DefaultMessageReactions implements MessagesReactions {
   private _emitter = new EventEmitter<{
-    [MessageReactionEvents.Create]: MessageReactionRawEvent;
-    [MessageReactionEvents.Delete]: MessageReactionRawEvent;
-    [MessageReactionEvents.Summary]: MessageReactionSummaryEvent;
+    [MessageReactionEventType.Create]: MessageReactionRawEvent;
+    [MessageReactionEventType.Delete]: MessageReactionRawEvent;
+    [MessageReactionEventType.Summary]: MessageReactionSummaryEvent;
   }>();
 
   private readonly _defaultType: MessageReactionType;
@@ -125,7 +126,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     private readonly _logger: Logger,
     private readonly _options: MessageOptions | undefined,
     private readonly _api: ChatApi,
-    private readonly _roomID: string,
+    private readonly _roomName: string,
     private readonly _channel: Ably.RealtimeChannel,
   ) {
     void _channel.subscribe(this._processMessageEvent.bind(this));
@@ -157,9 +158,9 @@ export class DefaultMessageReactions implements MessagesReactions {
     }
     const reactionType = event.type as MessageReactionType;
 
-    const typeMap: Record<string, MessageReactionEvents.Create | MessageReactionEvents.Delete> = {
-      'annotation.create': MessageReactionEvents.Create,
-      'annotation.delete': MessageReactionEvents.Delete,
+    const typeMap: Record<string, MessageReactionEventType.Create | MessageReactionEventType.Delete> = {
+      'annotation.create': MessageReactionEventType.Create,
+      'annotation.delete': MessageReactionEventType.Delete,
     };
 
     const eventType = typeMap[event.action];
@@ -173,7 +174,7 @@ export class DefaultMessageReactions implements MessagesReactions {
 
     let name = event.name;
     if (!name) {
-      if (eventType === MessageReactionEvents.Delete && reactionType === MessageReactionType.Unique) {
+      if (eventType === MessageReactionEventType.Delete && reactionType === MessageReactionType.Unique) {
         // deletes of type unique are allowed to have no data
         name = '';
       } else {
@@ -193,7 +194,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     };
     if (event.count) {
       reactionEvent.reaction.count = event.count;
-    } else if (eventType === MessageReactionEvents.Create && reactionType === MessageReactionType.Multiple) {
+    } else if (eventType === MessageReactionEventType.Create && reactionType === MessageReactionType.Multiple) {
       reactionEvent.reaction.count = 1; // count defaults to 1 for multiple if not set
     }
     this._emitter.emit(eventType, reactionEvent);
@@ -203,7 +204,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     this._logger.trace('MessagesReactions._processMessageEvent();', { event });
 
     // only process summary events
-    if (event.action !== ChatMessageActions.MessageAnnotationSummary) {
+    if (event.action !== ChatMessageAction.MessageAnnotationSummary) {
       return;
     }
     if (!event.summary) {
@@ -224,8 +225,8 @@ export class DefaultMessageReactions implements MessagesReactions {
     const distinct = (event.summary[MessageReactionType.Distinct] ?? {}) as unknown as Ably.SummaryDistinctValues;
     const multiple = (event.summary[MessageReactionType.Multiple] ?? {}) as Ably.SummaryMultipleValues;
 
-    this._emitter.emit(MessageReactionEvents.Summary, {
-      type: MessageReactionEvents.Summary,
+    this._emitter.emit(MessageReactionEventType.Summary, {
+      type: MessageReactionEventType.Summary,
       summary: {
         messageSerial: event.serial,
         unique: unique,
@@ -238,8 +239,9 @@ export class DefaultMessageReactions implements MessagesReactions {
   /**
    * @inheritDoc
    */
-  add(message: { serial: string }, params: AddMessageReactionParams): Promise<void> {
-    this._logger.trace('MessagesReactions.add();', { message, params });
+  add(messageSerial: Serial, params: AddMessageReactionParams): Promise<void> {
+    this._logger.trace('MessagesReactions.add();', { messageSerial, params });
+    const serial = serialToString(messageSerial);
 
     let { type, count } = params;
     if (!type) {
@@ -252,14 +254,15 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (count) {
       apiParams.count = count;
     }
-    return this._api.addMessageReaction(this._roomID, message.serial, apiParams);
+    return this._api.addMessageReaction(this._roomName, serial, apiParams);
   }
 
   /**
    * @inheritDoc
    */
-  delete(message: { serial: string }, params?: DeleteMessageReactionParams): Promise<void> {
-    this._logger.trace('MessagesReactions.delete();', { message, params });
+  delete(messageSerial: Serial, params?: DeleteMessageReactionParams): Promise<void> {
+    this._logger.trace('MessagesReactions.delete();', { messageSerial, params });
+    const serial = serialToString(messageSerial);
 
     let type = params?.type;
     if (!type) {
@@ -272,7 +275,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (type !== MessageReactionType.Unique) {
       apiParams.name = params?.name;
     }
-    return this._api.deleteMessageReaction(this._roomID, message.serial, apiParams);
+    return this._api.deleteMessageReaction(this._roomName, serial, apiParams);
   }
 
   /**
@@ -282,7 +285,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     this._logger.trace('MessagesReactions.subscribe();');
 
     const wrapped = wrap(listener);
-    this._emitter.on(MessageReactionEvents.Summary, wrapped);
+    this._emitter.on(MessageReactionEventType.Summary, wrapped);
     return {
       unsubscribe: () => {
         this._emitter.off(wrapped);
@@ -300,7 +303,7 @@ export class DefaultMessageReactions implements MessagesReactions {
       throw new Ably.ErrorInfo('Raw message reactions are not enabled', 40001, 400);
     }
     const wrapped = wrap(listener);
-    this._emitter.on([MessageReactionEvents.Create, MessageReactionEvents.Delete], wrapped);
+    this._emitter.on([MessageReactionEventType.Create, MessageReactionEventType.Delete], wrapped);
     return {
       unsubscribe: () => {
         this._emitter.off(wrapped);

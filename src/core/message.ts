@@ -1,10 +1,10 @@
-import { ErrorInfo, SummaryDistinctValues, SummaryMultipleValues, SummaryUniqueValues } from 'ably';
+import * as Ably from 'ably';
 
 import {
-  ChatMessageActions,
-  MessageEvent,
-  MessageEvents,
-  MessageReactionEvents,
+  ChatMessageAction,
+  ChatMessageEvent,
+  ChatMessageEventType,
+  MessageReactionEventType,
   MessageReactionSummaryEvent,
 } from './events.js';
 import { Headers } from './headers.js';
@@ -59,11 +59,6 @@ export interface Message {
   readonly clientId: string;
 
   /**
-   * The roomId of the chat room to which the message belongs.
-   */
-  readonly roomId: string;
-
-  /**
    * The text of the message.
    */
   readonly text: string;
@@ -105,7 +100,7 @@ export interface Message {
   /**
    * The action type of the message. This can be used to determine if the message was created, updated, or deleted.
    */
-  readonly action: ChatMessageActions;
+  readonly action: ChatMessageAction;
 
   /**
    * A unique identifier for the latest version of this message.
@@ -236,11 +231,11 @@ export interface Message {
    *
    * @param event The event to be applied to the returned message.
    * @throws {@link ErrorInfo} if the event is for a different message.
-   * @throws {@link ErrorInfo} if the event is a {@link MessageEvents.Created}.
+   * @throws {@link ErrorInfo} if the event is a {@link ChatMessageEventType.Created}.
    * @returns A new message instance with the event applied. If the event is a no-op, such
    *    as an event for an old version, the same message is returned (not a copy).
    */
-  with(event: MessageEvent | MessageReactionSummaryEvent): Message;
+  with(event: Message | ChatMessageEvent | MessageReactionSummaryEvent): Message;
 
   /**
    * Creates a copy of the message with fields replaced per the parameters.
@@ -278,17 +273,17 @@ export interface MessageReactions {
   /**
    * Map of reaction to the summary (total and clients) for reactions of type {@link MessageReactionType.Unique}.
    */
-  unique: SummaryUniqueValues;
+  unique: Ably.SummaryUniqueValues;
 
   /**
    * Map of reaction to the summary (total and clients) for reactions of type {@link MessageReactionType.Distinct}.
    */
-  distinct: SummaryDistinctValues;
+  distinct: Ably.SummaryDistinctValues;
 
   /**
    * Map of reaction to the summary (total and clients) for reactions of type {@link MessageReactionType.Multiple}.
    */
-  multiple: SummaryMultipleValues;
+  multiple: Ably.SummaryMultipleValues;
 }
 
 /**
@@ -297,11 +292,10 @@ export interface MessageReactions {
 export interface DefaultMessageParams {
   serial: string;
   clientId: string;
-  roomId: string;
   text: string;
   metadata: MessageMetadata;
   headers: MessageHeaders;
-  action: ChatMessageActions;
+  action: ChatMessageAction;
   version: string;
   createdAt: Date;
   timestamp: Date;
@@ -317,11 +311,10 @@ export interface DefaultMessageParams {
 export class DefaultMessage implements Message {
   public readonly serial: string;
   public readonly clientId: string;
-  public readonly roomId: string;
   public readonly text: string;
   public readonly metadata: MessageMetadata;
   public readonly headers: MessageHeaders;
-  public readonly action: ChatMessageActions;
+  public readonly action: ChatMessageAction;
   public readonly version: string;
   public readonly createdAt: Date;
   public readonly timestamp: Date;
@@ -331,7 +324,6 @@ export class DefaultMessage implements Message {
   constructor({
     serial,
     clientId,
-    roomId,
     text,
     metadata,
     headers,
@@ -344,7 +336,6 @@ export class DefaultMessage implements Message {
   }: DefaultMessageParams) {
     this.serial = serial;
     this.clientId = clientId;
-    this.roomId = roomId;
     this.text = text;
     this.metadata = metadata;
     this.headers = headers;
@@ -363,11 +354,11 @@ export class DefaultMessage implements Message {
   }
 
   get isUpdated(): boolean {
-    return this.action === ChatMessageActions.MessageUpdate;
+    return this.action === ChatMessageAction.MessageUpdate;
   }
 
   get isDeleted(): boolean {
-    return this.action === ChatMessageActions.MessageDelete;
+    return this.action === ChatMessageAction.MessageDelete;
   }
 
   get updatedBy(): string | undefined {
@@ -426,15 +417,21 @@ export class DefaultMessage implements Message {
     return this.equal(message);
   }
 
-  with(event: MessageEvent | MessageReactionSummaryEvent): Message {
-    if (event.type === MessageEvents.Created) {
-      throw new ErrorInfo('cannot apply a created event to a message', 40000, 400);
+  with(event: Message | ChatMessageEvent | MessageReactionSummaryEvent): Message {
+    // If event has the property "serial", then it's a message
+    if ('serial' in event) {
+      return this._getLatestMessageVersion(event);
+    }
+
+    // If the event is a created event, throw an error
+    if (event.type === ChatMessageEventType.Created) {
+      throw new Ably.ErrorInfo('cannot apply a created event to a message', 40000, 400);
     }
 
     // reaction summary
-    if (event.type === MessageReactionEvents.Summary) {
+    if (event.type === MessageReactionEventType.Summary) {
       if (event.summary.messageSerial !== this.serial) {
-        throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
+        throw new Ably.ErrorInfo('cannot apply event for a different message', 40000, 400);
       }
 
       const newReactions: MessageReactions = {
@@ -446,18 +443,31 @@ export class DefaultMessage implements Message {
       return DefaultMessage._clone(this, { reactions: newReactions });
     }
 
+    // Message event (update or delete)
+    return this._getLatestMessageVersion(event.message);
+  }
+
+  /**
+   * Get the latest message version, based on the event.
+   * If "this" is the latest version, return "this", otherwise clone the message and apply the reactions.
+   *
+   * @param message The message to get the latest version of
+   * @returns The latest message version
+   */
+  private _getLatestMessageVersion(message: Message): Message {
     // message event (update or delete)
-    if (event.message.serial !== this.serial) {
-      throw new ErrorInfo('cannot apply event for a different message', 40000, 400);
+    if (message.serial !== this.serial) {
+      throw new Ably.ErrorInfo('cannot apply event for a different message', 40000, 400);
     }
 
     // event is older, keep this instead
-    if (this.version >= event.message.version) {
+    if (this.version >= message.version) {
       return this;
     }
 
     // event is newer, copy reactions from this and make new message from event
-    return DefaultMessage._clone(event.message, { reactions: this.reactions });
+    // TODO: This ignores summaries being newer on the message passed in, and is something we need to address
+    return DefaultMessage._clone(message, { reactions: this.reactions });
   }
 
   // Clone a message, optionally replace the given fields
@@ -465,7 +475,6 @@ export class DefaultMessage implements Message {
     return new DefaultMessage({
       serial: replace?.serial ?? source.serial,
       clientId: replace?.clientId ?? source.clientId,
-      roomId: replace?.roomId ?? source.roomId,
       text: replace?.text ?? source.text,
       metadata: replace?.metadata ?? structuredClone(source.metadata),
       headers: replace?.headers ?? structuredClone(source.headers),

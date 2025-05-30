@@ -3,7 +3,7 @@ import { dequal } from 'dequal';
 
 import { ChatApi } from './chat-api.js';
 import { ChatClientOptions, NormalizedChatClientOptions } from './config.js';
-import { ErrorCodes } from './errors.js';
+import { ErrorCode } from './errors.js';
 import { randomId } from './id.js';
 import { Logger } from './logger.js';
 import { DefaultRoom, Room } from './room.js';
@@ -14,11 +14,11 @@ import { normalizeRoomOptions, RoomOptions } from './room-options.js';
  */
 export interface Rooms {
   /**
-   * Gets a room reference by ID. The Rooms class ensures that only one reference
+   * Gets a room reference by its unique identifier. The Rooms class ensures that only one reference
    * exists for each room. A new reference object is created if it doesn't already
-   * exist, or if the one used previously was released using release(roomId).
+   * exist, or if the one used previously was released using release(name).
    *
-   * Always call `release(roomId)` after the Room object is no longer needed.
+   * Always call `release(name)` after the Room object is no longer needed.
    *
    * If a call to `get` is made for a room that is currently being released, then the promise will resolve only when
    * the release operation is complete.
@@ -26,12 +26,12 @@ export interface Rooms {
    * If a call to `get` is made, followed by a subsequent call to `release` before the promise resolves, then the
    * promise will reject with an error.
    *
-   * @param roomId The ID of the room.
+   * @param name The unique identifier of the room.
    * @param options The options for the room.
-   * @throws {@link ErrorInfo} if a room with the same ID but different options already exists.
+   * @throws {@link ErrorInfo} if a room with the same name but different options already exists.
    * @returns Room A promise to a new or existing Room object.
    */
-  get(roomId: string, options?: RoomOptions): Promise<Room>;
+  get(name: string, options?: RoomOptions): Promise<Room>;
 
   /**
    * Release the Room object if it exists. This method only releases the reference
@@ -43,9 +43,9 @@ export interface Rooms {
    *
    * Calling this function will abort any in-progress `get` calls for the same room.
    *
-   * @param roomId The ID of the room.
+   * @param name The unique identifier of the room.
    */
-  release(roomId: string): Promise<void>;
+  release(name: string): Promise<void>;
 
   /**
    * Get the client options used to create the Chat instance.
@@ -108,33 +108,33 @@ export class DefaultRooms implements Rooms {
   /**
    * @inheritDoc
    */
-  get(roomId: string, options?: RoomOptions): Promise<Room> {
-    this._logger.trace('Rooms.get();', { roomId });
+  get(name: string, options?: RoomOptions): Promise<Room> {
+    this._logger.trace('Rooms.get();', { roomName: name });
 
-    const existing = this._rooms.get(roomId);
+    const existing = this._rooms.get(name);
     if (existing) {
       if (!dequal(existing.options, options)) {
         return Promise.reject(new Ably.ErrorInfo('room already exists with different options', 40000, 400));
       }
 
-      this._logger.debug('Rooms.get(); returning existing room', { roomId, nonce: existing.nonce });
+      this._logger.debug('Rooms.get(); returning existing room', { roomName: name, nonce: existing.nonce });
       return existing.promise;
     }
 
-    const releasing = this._releasing.get(roomId);
+    const releasing = this._releasing.get(name);
     const nonce = randomId();
 
     // We're not currently releasing the room, so we just make a new one
     if (!releasing) {
-      const room = this._makeRoom(roomId, nonce, options);
+      const room = this._makeRoom(name, nonce, options);
       const entry = {
         promise: Promise.resolve(room),
         nonce: nonce,
         options: options,
       };
 
-      this._rooms.set(roomId, entry);
-      this._logger.debug('Rooms.get(); returning new room', { roomId, nonce: room.nonce });
+      this._rooms.set(name, entry);
+      this._logger.debug('Rooms.get(); returning new room', { roomName: name, nonce: room.nonce });
       return entry.promise;
     }
 
@@ -143,11 +143,11 @@ export class DefaultRooms implements Rooms {
     const abortController = new AbortController();
     const roomPromise = new Promise<DefaultRoom>((resolve, reject) => {
       const abortListener = () => {
-        this._logger.debug('Rooms.get(); aborted before init', { roomId });
+        this._logger.debug('Rooms.get(); aborted before init', { roomName: name });
         reject(
           new Ably.ErrorInfo(
             'room released before get operation could complete',
-            ErrorCodes.RoomReleasedBeforeOperationCompleted,
+            ErrorCode.RoomReleasedBeforeOperationCompleted,
             400,
           ),
         );
@@ -159,12 +159,12 @@ export class DefaultRooms implements Rooms {
         .then(() => {
           // We aborted before resolution
           if (abortController.signal.aborted) {
-            this._logger.debug('Rooms.get(); aborted before releasing promise resolved', { roomId });
+            this._logger.debug('Rooms.get(); aborted before releasing promise resolved', { roomName: name });
             return;
           }
 
-          this._logger.debug('Rooms.get(); releasing finished', { roomId });
-          const room = this._makeRoom(roomId, nonce, options);
+          this._logger.debug('Rooms.get(); releasing finished', { roomName: name });
+          const room = this._makeRoom(name, nonce, options);
           abortController.signal.removeEventListener('abort', abortListener);
           resolve(room);
         })
@@ -173,14 +173,14 @@ export class DefaultRooms implements Rooms {
         });
     });
 
-    this._rooms.set(roomId, {
+    this._rooms.set(name, {
       promise: roomPromise,
       options: options,
       nonce: nonce,
       abort: abortController,
     });
 
-    this._logger.debug('Rooms.get(); creating new promise dependent on previous release', { roomId });
+    this._logger.debug('Rooms.get(); creating new promise dependent on previous release', { roomName: name });
     return roomPromise;
   }
 
@@ -194,11 +194,11 @@ export class DefaultRooms implements Rooms {
   /**
    * @inheritDoc
    */
-  release(roomId: string): Promise<void> {
-    this._logger.trace('Rooms.release();', { roomId });
+  release(name: string): Promise<void> {
+    this._logger.trace('Rooms.release();', { roomName: name });
 
-    const existing = this._rooms.get(roomId);
-    const releasing = this._releasing.get(roomId);
+    const existing = this._rooms.get(name);
+    const releasing = this._releasing.get(name);
 
     // If the room doesn't currently exist
     if (!existing) {
@@ -206,13 +206,13 @@ export class DefaultRooms implements Rooms {
       // to the caller so they can watch that.
       if (releasing) {
         this._logger.debug('Rooms.release(); waiting for previous release call', {
-          roomId,
+          roomName: name,
         });
         return releasing;
       }
 
       // If the room is not releasing, there is nothing else to do
-      this._logger.debug('Rooms.release(); room does not exist', { roomId });
+      this._logger.debug('Rooms.release(); room does not exist', { roomName: name });
       return Promise.resolve();
     }
 
@@ -221,26 +221,26 @@ export class DefaultRooms implements Rooms {
     // so instead of doing another release process, we just abort the current get
     if (releasing) {
       if (existing.abort) {
-        this._logger.debug('Rooms.release(); aborting get call', { roomId, existingNonce: existing.nonce });
+        this._logger.debug('Rooms.release(); aborting get call', { roomName: name, existingNonce: existing.nonce });
         existing.abort.abort();
-        this._rooms.delete(roomId);
+        this._rooms.delete(name);
       }
 
       return releasing;
     }
 
     // Room doesn't exist and we're not releasing, so its just a regular release operation
-    this._rooms.delete(roomId);
+    this._rooms.delete(name);
     const releasePromise = existing.promise.then((room) => {
-      this._logger.debug('Rooms.release(); releasing room', { roomId, nonce: existing.nonce });
+      this._logger.debug('Rooms.release(); releasing room', { roomName: name, nonce: existing.nonce });
       return room.release().then(() => {
-        this._logger.debug('Rooms.release(); room released', { roomId, nonce: existing.nonce });
-        this._releasing.delete(roomId);
+        this._logger.debug('Rooms.release(); room released', { roomName: name, nonce: existing.nonce });
+        this._releasing.delete(name);
       });
     });
 
-    this._logger.debug('Rooms.release(); creating new release promise', { roomId, nonce: existing.nonce });
-    this._releasing.set(roomId, releasePromise);
+    this._logger.debug('Rooms.release(); creating new release promise', { roomName: name, nonce: existing.nonce });
+    this._releasing.set(name, releasePromise);
 
     return releasePromise;
   }
@@ -248,15 +248,15 @@ export class DefaultRooms implements Rooms {
   /**
    * makes a new room object
    *
-   * @param roomId The ID of the room.
+   * @param name The unique identifier of the room.
    * @param nonce A random, internal identifier useful for debugging and logging.
    * @param options The options for the room.
    *
    * @returns DefaultRoom A new room object.
    */
-  private _makeRoom(roomId: string, nonce: string, options: RoomOptions | undefined): DefaultRoom {
+  private _makeRoom(name: string, nonce: string, options: RoomOptions | undefined): DefaultRoom {
     return new DefaultRoom(
-      roomId,
+      name,
       nonce,
       normalizeRoomOptions(options, this._isReact),
       this._realtime,

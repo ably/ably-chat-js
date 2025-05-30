@@ -73,7 +73,6 @@ export const useRoomStatus = (params?: UseRoomStatusParams): UseRoomStatusRespon
         };
       },
       logger,
-      context.roomId,
     );
 
     return roomPromise.unmount();
@@ -108,7 +107,6 @@ export const useRoomStatus = (params?: UseRoomStatusParams): UseRoomStatusRespon
         };
       },
       logger,
-      context.roomId,
     );
 
     return roomPromise.unmount();

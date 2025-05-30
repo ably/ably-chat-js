@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ChatMessageActions, MessageEvent, MessageEvents } from '../../src/core/events.ts';
+import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType } from '../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../src/core/message.ts';
 
 describe('ChatMessage', () => {
@@ -11,11 +11,10 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: firstSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -25,11 +24,10 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: secondSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -46,11 +44,10 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: firstSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -60,11 +57,10 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: secondSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -81,11 +77,10 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: firstSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -95,11 +90,10 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: secondSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -116,11 +110,10 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: firstSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -130,11 +123,10 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: secondSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -151,11 +143,10 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: firstSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -165,11 +156,10 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: secondSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -186,11 +176,10 @@ describe('ChatMessage', () => {
     const firstMessage = new DefaultMessage({
       serial: firstSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: firstSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -200,11 +189,10 @@ describe('ChatMessage', () => {
     const secondMessage = new DefaultMessage({
       serial: secondSerial,
       clientId: 'clientId',
-      roomId: 'roomId',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: secondSerial,
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -220,11 +208,10 @@ describe('ChatMessage', () => {
       const firstMessage = new DefaultMessage({
         serial: firstSerial,
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'hello there',
         metadata: {},
         headers: {},
-        action: ChatMessageActions.MessageDelete,
+        action: ChatMessageAction.MessageDelete,
         version: '01672531300000-123@abcdefghij:0',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531300000),
@@ -242,11 +229,10 @@ describe('ChatMessage', () => {
       const firstMessage = new DefaultMessage({
         serial: firstSerial,
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'hello there',
         metadata: {},
         headers: {},
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
         version: '01672531200000-123@abcdefghij:0',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531300000),
@@ -267,11 +253,10 @@ describe('ChatMessage', () => {
       const firstMessage = new DefaultMessage({
         serial: firstSerial,
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'hello there',
         metadata: {},
         headers: {},
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
         version: firstVersion,
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531200000),
@@ -281,11 +266,10 @@ describe('ChatMessage', () => {
       const secondMessage = new DefaultMessage({
         serial: secondSerial,
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'hello there',
         metadata: {},
         headers: {},
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
         version: secondVersion,
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531200000),
@@ -348,11 +332,10 @@ describe('ChatMessage', () => {
         const firstMessage = new DefaultMessage({
           serial: messageSerial,
           clientId: 'clientId',
-          roomId: 'roomId',
           text: 'hello there',
           metadata: {},
           headers: {},
-          action: ChatMessageActions.MessageUpdate,
+          action: ChatMessageAction.MessageUpdate,
           version: firstVersion,
           createdAt: new Date(1672531200000),
           timestamp: new Date(1672531200001),
@@ -362,11 +345,10 @@ describe('ChatMessage', () => {
         const secondMessage = new DefaultMessage({
           serial: messageSerial,
           clientId: 'clientId',
-          roomId: 'roomId',
           text: 'hello there',
           metadata: {},
           headers: {},
-          action: ChatMessageActions.MessageUpdate,
+          action: ChatMessageAction.MessageUpdate,
           version: secondVersion,
           createdAt: new Date(1672531200000),
           timestamp: new Date(1672531200001),
@@ -381,11 +363,10 @@ describe('ChatMessage', () => {
     const message = new DefaultMessage({
       serial: '01672531200000-123@abcdefghij',
       clientId: 'yoda',
-      roomId: 'rebel-alliance-general',
       text: 'hello there',
       metadata: {},
       headers: {},
-      action: ChatMessageActions.MessageCreate,
+      action: ChatMessageAction.MessageCreate,
       version: '01672531200100-123@abcdefghij',
       createdAt: new Date(1672531200000),
       timestamp: new Date(1672531200000),
@@ -398,11 +379,10 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'hello there',
         metadata: {},
         headers: {},
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
         version: '01672531200500-123@abcdefghij',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531200500),
@@ -410,8 +390,8 @@ describe('ChatMessage', () => {
         operation: { clientId: 'luke' },
       });
 
-      const event: MessageEvent = {
-        type: MessageEvents.Updated,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -426,11 +406,10 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: message.serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'hello there',
         metadata: {},
         headers: {},
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         version: '01672531200500-123@abcdefghij',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531200500),
@@ -438,8 +417,8 @@ describe('ChatMessage', () => {
         operation: { clientId: 'luke' },
       });
 
-      const event: MessageEvent = {
-        type: MessageEvents.Created,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Created,
         message: eventMessage,
       };
 
@@ -454,11 +433,10 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: message.serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'hi!',
         metadata: {},
         headers: {},
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
         version: '01672531209999-123@abcdefghij',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531209999),
@@ -466,8 +444,8 @@ describe('ChatMessage', () => {
         operation: { clientId: 'luke' },
       });
 
-      const event: MessageEvent = {
-        type: MessageEvents.Updated,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -480,11 +458,10 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: message.serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'hola',
         metadata: {},
         headers: {},
-        action: ChatMessageActions.MessageDelete,
+        action: ChatMessageAction.MessageDelete,
         version: '01672531209999-123@abcdefghij',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531209999),
@@ -492,8 +469,8 @@ describe('ChatMessage', () => {
         operation: { clientId: 'luke' },
       });
 
-      const event: MessageEvent = {
-        type: MessageEvents.Updated,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -506,11 +483,10 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: message.serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'old one',
         metadata: {},
         headers: {},
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
         version: '01672531200000-123@abcdefghij',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531209999),
@@ -518,8 +494,8 @@ describe('ChatMessage', () => {
         reactions: emptyMessageReactions(),
       });
 
-      const event: MessageEvent = {
-        type: MessageEvents.Updated,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Updated,
         message: eventMessage,
       };
 
@@ -531,11 +507,10 @@ describe('ChatMessage', () => {
       const eventMessage = new DefaultMessage({
         serial: message.serial,
         clientId: 'yoda',
-        roomId: 'rebel-alliance-general',
         text: 'old one',
         metadata: {},
         headers: {},
-        action: ChatMessageActions.MessageUpdate,
+        action: ChatMessageAction.MessageUpdate,
         version: message.version,
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531209999),
@@ -543,12 +518,113 @@ describe('ChatMessage', () => {
         operation: { clientId: 'luke' },
       });
 
-      const event: MessageEvent = {
-        type: MessageEvents.Updated,
+      const event: ChatMessageEvent = {
+        type: ChatMessageEventType.Updated,
         message: eventMessage,
       };
 
       const newMessage = message.with(event);
+      expect(newMessage === message).toBe(true);
+    });
+
+    it('should correctly apply to a message instance', () => {
+      const message = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-123@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const message2 = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi 2!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-124@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const newMessage = message.with(message2);
+      expect(newMessage !== message).toBe(true);
+      expect(newMessage).toEqual(message2);
+    });
+
+    it('should return original message if newer message is older', () => {
+      const message = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-123@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const message2 = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi 2!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-124@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const newMessage = message.with(message2);
+      expect(newMessage !== message).toBe(true);
+      expect(newMessage).toEqual(message2);
+    });
+
+    it('should return original message if newer message same version', () => {
+      const message = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-123@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const message2 = new DefaultMessage({
+        serial: 'abc',
+        clientId: 'yoda',
+        text: 'hi 2!',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageUpdate,
+        version: '01672531209999-123@abcdefghij',
+        createdAt: new Date(1672531200000),
+        timestamp: new Date(1672531209999),
+        reactions: emptyMessageReactions(),
+        operation: { clientId: 'luke' },
+      });
+
+      const newMessage = message.with(message2);
       expect(newMessage === message).toBe(true);
     });
   });
@@ -558,11 +634,10 @@ describe('ChatMessage', () => {
       const originalMessage = new DefaultMessage({
         serial: '01672531200000-123@abcdefghij',
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'original text',
         metadata: { key: 'value' },
         headers: { headerKey: 'headerValue' },
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         version: 'version1',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531200000),
@@ -579,7 +654,6 @@ describe('ChatMessage', () => {
       expect(copiedMessage.headers).toEqual({ headerKey: 'headerValue' });
       expect(copiedMessage.serial).toBe(originalMessage.serial);
       expect(copiedMessage.clientId).toBe(originalMessage.clientId);
-      expect(copiedMessage.roomId).toBe(originalMessage.roomId);
       expect(copiedMessage.action).toBe(originalMessage.action);
       expect(copiedMessage.version).toBe(originalMessage.version);
       expect(copiedMessage.createdAt).toEqual(originalMessage.createdAt);
@@ -590,11 +664,10 @@ describe('ChatMessage', () => {
       const originalMessage = new DefaultMessage({
         serial: '01672531200000-123@abcdefghij',
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'original text',
         metadata: { key: 'value' },
         headers: { headerKey: 'headerValue' },
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         version: 'version1',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531200000),
@@ -626,7 +699,6 @@ describe('ChatMessage', () => {
 
       expect(copiedMessage.serial).toBe(originalMessage.serial);
       expect(copiedMessage.clientId).toBe(originalMessage.clientId);
-      expect(copiedMessage.roomId).toBe(originalMessage.roomId);
       expect(copiedMessage.action).toBe(originalMessage.action);
       expect(copiedMessage.version).toBe(originalMessage.version);
       expect(copiedMessage.createdAt).toEqual(originalMessage.createdAt);
@@ -643,7 +715,6 @@ describe('ChatMessage', () => {
       const originalMessage = new DefaultMessage({
         serial: '01672531200000-123@abcdefghij',
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'original text',
         metadata: {
           key: 'value',
@@ -654,7 +725,7 @@ describe('ChatMessage', () => {
         headers: {
           headerKey: 'headerValue',
         },
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         version: 'version1',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531200000),
@@ -681,7 +752,6 @@ describe('ChatMessage', () => {
       const originalMessage = new DefaultMessage({
         serial: '01672531200000-123@abcdefghij',
         clientId: 'clientId',
-        roomId: 'roomId',
         text: 'original text',
         metadata: {
           key: 'value',
@@ -690,7 +760,7 @@ describe('ChatMessage', () => {
           },
         },
         headers: { headerKey: 'headerValue' },
-        action: ChatMessageActions.MessageCreate,
+        action: ChatMessageAction.MessageCreate,
         version: 'version1',
         createdAt: new Date(1672531200000),
         timestamp: new Date(1672531200000),

@@ -16,13 +16,13 @@ export class ChannelManager {
   private _resolvedChannel?: Ably.RealtimeChannel;
   private readonly _channelId: string;
 
-  constructor(roomId: string, realtime: Ably.Realtime, logger: Logger, isReact: boolean) {
+  constructor(roomName: string, realtime: Ably.Realtime, logger: Logger, isReact: boolean) {
     logger.trace('ChannelManager();', { isReact });
     this._realtime = realtime;
     this._logger = logger;
     this._isReact = isReact;
     this._registeredOptions = this._defaultChannelOptions();
-    this._channelId = roomChannelName(roomId);
+    this._channelId = roomChannelName(roomName);
   }
 
   mergeOptions(merger: ChannelOptionsMerger): void {

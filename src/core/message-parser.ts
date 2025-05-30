@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { ChatMessageActions } from './events.js';
+import { ChatMessageAction } from './events.js';
 import {
   DefaultMessage,
   emptyMessageReactions,
@@ -29,12 +29,8 @@ interface MessagePayload {
 }
 
 // Parse a realtime message to a chat message
-export function parseMessage(roomId: string | undefined, inboundMessage: Ably.InboundMessage): Message {
+export function parseMessage(inboundMessage: Ably.InboundMessage): Message {
   const message = inboundMessage as MessagePayload;
-
-  if (!roomId) {
-    throw new Ably.ErrorInfo(`received incoming message without roomId`, 50000, 500);
-  }
 
   if (!message.data) {
     throw new Ably.ErrorInfo(`received incoming message without data`, 50000, 500);
@@ -69,9 +65,9 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
   }
 
   switch (message.action) {
-    case ChatMessageActions.MessageCreate:
-    case ChatMessageActions.MessageUpdate:
-    case ChatMessageActions.MessageDelete: {
+    case ChatMessageAction.MessageCreate:
+    case ChatMessageAction.MessageUpdate:
+    case ChatMessageAction.MessageDelete: {
       break;
     }
     default: {
@@ -81,11 +77,10 @@ export function parseMessage(roomId: string | undefined, inboundMessage: Ably.In
   return new DefaultMessage({
     serial: message.serial,
     clientId: message.clientId,
-    roomId: roomId,
     text: message.data.text,
     metadata: message.data.metadata ?? {},
     headers: message.extras.headers ?? {},
-    action: message.action as ChatMessageActions,
+    action: message.action as ChatMessageAction,
     version: message.version,
     createdAt: new Date(message.createdAt),
     timestamp: new Date(message.timestamp),

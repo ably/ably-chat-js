@@ -2,6 +2,8 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ConnectionStatus } from '../../src/core/connection.ts';
+import { RoomReactionEventType } from '../../src/core/events.ts';
 import { Reaction } from '../../src/core/reaction.ts';
 import { Room } from '../../src/core/room.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
@@ -31,7 +33,10 @@ describe('Reactions', () => {
       context.publishTimestamp = date;
     };
 
-    context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
+    context.room = makeRandomRoom({
+      chatApi: context.chatApi,
+      realtime: context.realtime,
+    });
     const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
 
@@ -52,9 +57,10 @@ describe('Reactions', () => {
         const publishTimestamp = Date.now();
         const { room } = context;
 
-        room.reactions.subscribe((reaction) => {
+        room.reactions.subscribe((event) => {
           try {
-            expect(reaction).toEqual(
+            expect(event.type).toBe(RoomReactionEventType.Reaction);
+            expect(event.reaction).toEqual(
               expect.objectContaining({
                 clientId: 'yoda',
                 isSelf: false,
@@ -83,9 +89,10 @@ describe('Reactions', () => {
         const publishTimestamp = Date.now();
         const { room } = context;
 
-        room.reactions.subscribe((reaction) => {
+        room.reactions.subscribe((event) => {
           try {
-            expect(reaction).toEqual(
+            expect(event.type).toBe(RoomReactionEventType.Reaction);
+            expect(event.reaction).toEqual(
               expect.objectContaining({
                 clientId: 'd.vader',
                 isSelf: true,
@@ -115,8 +122,8 @@ describe('Reactions', () => {
     const { room } = context;
 
     const receivedReactions: Reaction[] = [];
-    const { unsubscribe } = room.reactions.subscribe((reaction) => {
-      receivedReactions.push(reaction);
+    const { unsubscribe } = room.reactions.subscribe((event) => {
+      receivedReactions.push(event.reaction);
     });
 
     // Publish the first reaction
@@ -159,8 +166,8 @@ describe('Reactions', () => {
     const { room } = context;
 
     const received: string[] = [];
-    const listener = (reaction: Reaction) => {
-      received.push(reaction.type);
+    const listener = (event: { reaction: Reaction }) => {
+      received.push(event.reaction.type);
     };
     const subscription1 = room.reactions.subscribe(listener);
     const subscription2 = room.reactions.subscribe(listener);
@@ -203,66 +210,6 @@ describe('Reactions', () => {
     expect(received).toEqual(['like', 'like', 'love']);
   });
 
-  it<TestContext>('should be able to unsubscribe all reactions', (context) => {
-    const publishTimestamp = Date.now();
-    const { room } = context;
-
-    const receivedReactions: Reaction[] = [];
-    room.reactions.subscribe((reaction) => {
-      receivedReactions.push(reaction);
-    });
-
-    const receivedReactions2: Reaction[] = [];
-    room.reactions.subscribe((reaction) => {
-      receivedReactions2.push(reaction);
-    });
-
-    // Publish the first reaction
-    context.emulateBackendPublish({
-      clientId: 'yoda',
-      name: 'roomReaction',
-      data: {
-        type: 'like',
-      },
-      timestamp: publishTimestamp,
-    });
-
-    // Unsubscribe
-    room.reactions.unsubscribeAll();
-
-    // Publish the second reaction
-    context.emulateBackendPublish({
-      clientId: 'yoda2',
-      name: 'roomReaction',
-      data: {
-        type: 'like',
-      },
-      timestamp: publishTimestamp,
-    });
-
-    // Check that we only received the first reaction
-    expect(receivedReactions).toHaveLength(1);
-    expect(receivedReactions[0]).toEqual(
-      expect.objectContaining({
-        clientId: 'yoda',
-        isSelf: false,
-        createdAt: new Date(publishTimestamp),
-        type: 'like',
-      }),
-    );
-
-    // Check that we only received the first reaction
-    expect(receivedReactions2).toHaveLength(1);
-    expect(receivedReactions2[0]).toEqual(
-      expect.objectContaining({
-        clientId: 'yoda',
-        isSelf: false,
-        createdAt: new Date(publishTimestamp),
-        type: 'like',
-      }),
-    );
-  });
-
   describe.each([
     ['empty client id', { clientId: '', name: 'roomReaction', data: { type: 'like' }, timestamp: 123 }],
     ['no client id', { name: 'roomReaction', data: { type: 'like' }, timestamp: 123 }],
@@ -298,10 +245,15 @@ describe('Reactions', () => {
           try {
             expect(reaction).toEqual(
               expect.objectContaining({
-                clientId: 'd.vader',
-                isSelf: true,
-                createdAt: context.publishTimestamp,
-                type: 'love',
+                type: RoomReactionEventType.Reaction,
+                reaction: {
+                  clientId: 'd.vader',
+                  isSelf: true,
+                  createdAt: context.publishTimestamp,
+                  type: 'love',
+                  headers: {},
+                  metadata: {},
+                },
               }),
             );
 
@@ -326,6 +278,16 @@ describe('Reactions', () => {
         void room.reactions.send({ type: 'love' });
       }));
 
+    // CHA-ER3f
+    it<TestContext>('should reject when sending a reaction while not connected to Ably', async (context) => {
+      const { room } = context;
+
+      // Mock connection status to be disconnected
+      vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
+
+      await expect(room.reactions.send({ type: 'love' })).rejects.toBeErrorInfoWithCode(40000);
+    });
+
     it<TestContext>('should be able to send a reaction and receive a reaction with metadata and headers', (context) =>
       new Promise<void>((done, reject) => {
         const { room } = context;
@@ -334,22 +296,25 @@ describe('Reactions', () => {
           try {
             expect(reaction).toEqual(
               expect.objectContaining({
-                clientId: 'd.vader',
-                isSelf: true,
-                createdAt: context.publishTimestamp,
-                type: 'love',
-                headers: {
-                  action: 'strike back',
-                  number: 1980,
-                },
-                metadata: {
-                  side: 'empire',
-                  bla: {
-                    abc: true,
-                    xyz: 3.14,
+                type: RoomReactionEventType.Reaction,
+                reaction: {
+                  clientId: 'd.vader',
+                  isSelf: true,
+                  createdAt: context.publishTimestamp,
+                  type: 'love',
+                  headers: {
+                    action: 'strike back',
+                    number: 1980,
+                  },
+                  metadata: {
+                    side: 'empire',
+                    bla: {
+                      abc: true,
+                      xyz: 3.14,
+                    },
                   },
                 },
-              } as Reaction),
+              }),
             );
           } catch (error: unknown) {
             reject(error as Error);

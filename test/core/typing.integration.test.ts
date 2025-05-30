@@ -4,11 +4,11 @@ import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
-import { TypingEventTypes, TypingSetEvent, TypingSetEventTypes } from '../../src/core/events.ts';
+import { TypingEventType, TypingSetEvent, TypingSetEventType } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { waitForArrayLength } from '../helper/common.ts';
-import { randomClientId, randomRoomId } from '../helper/identifier.ts';
+import { randomClientId, randomRoomName } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 
@@ -36,9 +36,10 @@ describe('Typing', () => {
   // Setup before each test, create a new Ably Realtime client and a new Room
   beforeEach<TestContext>(async (context) => {
     context.realtime = ablyRealtimeClient();
-    context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), makeTestLogger());
+    const logger = makeTestLogger();
+    context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), logger);
     context.clientId = context.realtime.auth.clientId;
-    context.chatRoom = await context.chat.get(randomRoomId(), {
+    context.chatRoom = await context.chat.get(randomRoomName(), {
       typing: { heartbeatThrottleMs: 600 },
     });
   });
@@ -111,11 +112,10 @@ describe('Typing', () => {
         normalizeClientOptions({}),
         makeTestLogger(),
       );
-
       const roomOptions = { typing: { heartbeatThrottleMs: 10000 } };
 
-      const client1Room = await client1.get(context.chatRoom.roomId, roomOptions);
-      const client2Room = await client2.get(context.chatRoom.roomId, roomOptions);
+      const client1Room = await client1.get(context.chatRoom.name, roomOptions);
+      const client2Room = await client2.get(context.chatRoom.name, roomOptions);
 
       // Attach the rooms
       await context.chatRoom.attach();
@@ -127,17 +127,17 @@ describe('Typing', () => {
       await client2Room.typing.keystroke();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
-        type: TypingSetEventTypes.SetChanged,
+        type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId1]),
-        change: { clientId: clientId1, type: TypingEventTypes.Start },
+        change: { clientId: clientId1, type: TypingEventType.Start },
       });
       await waitForTypingEvent(events, {
-        type: TypingSetEventTypes.SetChanged,
+        type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId1, clientId2]),
-        change: { clientId: clientId2, type: TypingEventTypes.Start },
+        change: { clientId: clientId2, type: TypingEventType.Start },
       });
       // Get the currently typing client ids
-      const currentlyTypingClientIds = context.chatRoom.typing.get();
+      const currentlyTypingClientIds = context.chatRoom.typing.current();
       // Ensure that the client ids are correct
       expect(currentlyTypingClientIds.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIds.has(clientId1), 'client1 should be typing').toEqual(true);
@@ -147,12 +147,12 @@ describe('Typing', () => {
       await client1Room.typing.stop();
       // Wait for the typing events to be received
       await waitForTypingEvent(events, {
-        type: TypingSetEventTypes.SetChanged,
+        type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId2]),
-        change: { clientId: clientId1, type: TypingEventTypes.Stop },
+        change: { clientId: clientId1, type: TypingEventType.Stop },
       });
       // Get the currently typing client ids
-      const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.get();
+      const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.current();
       // Ensure that the client ids are correct and client1 is no longer typing
       expect(currentlyTypingClientIdsAfterStop.has(clientId2), 'client2 should be typing').toEqual(true);
       expect(currentlyTypingClientIdsAfterStop.has(clientId1), 'client1 should not be typing').toEqual(false);

@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
-import { OccupancyEvent } from '../../src/core/occupancy.ts';
+import { OccupancyEvent } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -69,8 +69,11 @@ describe('Occupancy', () => {
       room.occupancy.subscribe((event: OccupancyEvent) => {
         try {
           expect(event).toEqual({
-            connections: 5,
-            presenceMembers: 3,
+            type: 'occupancy.updated',
+            occupancy: {
+              connections: 5,
+              presenceMembers: 3,
+            },
           });
           done();
         } catch (error: unknown) {
@@ -95,8 +98,11 @@ describe('Occupancy', () => {
       context.room.occupancy.subscribe((event: OccupancyEvent) => {
         try {
           expect(event).toEqual({
-            connections: 0,
-            presenceMembers: 0,
+            type: 'occupancy.updated',
+            occupancy: {
+              connections: 0,
+              presenceMembers: 0,
+            },
           });
           done();
         } catch (error: unknown) {
@@ -149,65 +155,15 @@ describe('Occupancy', () => {
     // Check that we only received the first event
     expect(receivedEvents).toHaveLength(1);
     expect(receivedEvents[0]).toEqual({
-      connections: 0,
-      presenceMembers: 0,
+      type: 'occupancy.updated',
+      occupancy: {
+        connections: 0,
+        presenceMembers: 0,
+      },
     });
 
     // Calling unsubscribe again should not throw
     unsubscribe();
-  });
-
-  it<TestContext>('allows all listeners to be unsubscribed', (context) => {
-    const receivedEvents: OccupancyEvent[] = [];
-    const { unsubscribe } = context.room.occupancy.subscribe((event: OccupancyEvent) => {
-      receivedEvents.push(event);
-    });
-
-    const receivedEvents2: OccupancyEvent[] = [];
-    const { unsubscribe: unsubscribe2 } = context.room.occupancy.subscribe((event: OccupancyEvent) => {
-      receivedEvents2.push(event);
-    });
-
-    // We should get this event
-    context.emulateOccupancyUpdate({
-      name: '[meta]occupancy',
-      data: {
-        metrics: {
-          connections: 0,
-          presenceMembers: 0,
-        },
-      },
-    });
-
-    // Unsubscribe all
-    context.room.occupancy.unsubscribeAll();
-
-    // We should not get this event
-    context.emulateOccupancyUpdate({
-      name: '[meta]occupancy',
-      data: {
-        metrics: {
-          connections: 5,
-          presenceMembers: 3,
-        },
-      },
-    });
-
-    // Check that we only received the first event
-    expect(receivedEvents).toHaveLength(1);
-    expect(receivedEvents[0]).toEqual({
-      connections: 0,
-      presenceMembers: 0,
-    });
-    expect(receivedEvents2).toHaveLength(1);
-    expect(receivedEvents2[0]).toEqual({
-      connections: 0,
-      presenceMembers: 0,
-    });
-
-    // Calling unsubscribe again should not throw
-    unsubscribe();
-    unsubscribe2();
   });
 
   it<TestContext>('should only unsubscribe the correct subscription', (context) => {
@@ -287,6 +243,66 @@ describe('Occupancy', () => {
 
       context.emulateOccupancyUpdate(event);
       expect(listenerCalled).toBe(false);
+    });
+  });
+
+  // CHA-O7
+  describe('current()', () => {
+    // CHA-O7c
+    it<TestContext>('throws an error when events are disabled', (context) => {
+      const room = makeRandomRoom({
+        chatApi: context.chatApi,
+        realtime: context.realtime,
+        options: {
+          occupancy: {
+            enableEvents: false,
+          },
+        },
+      });
+
+      expect(() => {
+        room.occupancy.current();
+      }).toThrow('cannot get current occupancy; occupancy events are not enabled in room options');
+    });
+
+    // CHA-O7b
+    it<TestContext>('returns undefined when no events have been received', (context) => {
+      expect(context.room.occupancy.current()).toBeUndefined();
+    });
+
+    // CHA-O7a
+    it<TestContext>('returns the latest occupancy data after receiving events', (context) => {
+      // Send first event
+      context.emulateOccupancyUpdate({
+        name: '[meta]occupancy',
+        data: {
+          metrics: {
+            connections: 5,
+            presenceMembers: 3,
+          },
+        },
+      });
+
+      expect(context.room.occupancy.current()).toEqual({
+        connections: 5,
+        presenceMembers: 3,
+      });
+
+      // Send second event
+      context.emulateOccupancyUpdate({
+        name: '[meta]occupancy',
+        data: {
+          metrics: {
+            connections: 7,
+            presenceMembers: 4,
+          },
+        },
+      });
+
+      expect(context.room.occupancy.current()).toEqual({
+        connections: 7,
+        presenceMembers: 4,
+      });
     });
   });
 });

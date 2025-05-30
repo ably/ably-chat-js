@@ -9,7 +9,7 @@ import { ChatClientProvider } from '../../../src/react/providers/chat-client-pro
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 import { waitForArrayLength } from '../../helper/common.ts';
-import { randomRoomId } from '../../helper/identifier.ts';
+import { randomRoomName } from '../../helper/identifier.ts';
 
 describe('usePresenceListener', () => {
   afterEach(() => {
@@ -22,8 +22,8 @@ describe('usePresenceListener', () => {
     const chatClientTwo = newChatClient();
 
     // create a second room and attach it, so we can send presence events with it
-    const roomId = randomRoomId();
-    const roomTwo = await chatClientTwo.rooms.get(roomId);
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
     await roomTwo.attach();
 
     // store the current presence member state
@@ -47,7 +47,7 @@ describe('usePresenceListener', () => {
 
     const TestProvider = () => (
       <ChatClientProvider client={chatClientOne}>
-        <ChatRoomProvider id={roomId}>
+        <ChatRoomProvider name={roomName}>
           <TestComponent
             listener={(event: PresenceEvent) => {
               presenceEventsReceived.push(event);
@@ -73,10 +73,10 @@ describe('usePresenceListener', () => {
 
     // expect a presence enter and update event from the test component to be received
     await waitForArrayLength(presenceEventsReceived, 2);
-    expect(presenceEventsReceived[0]?.clientId).toBe(chatClientTwo.clientId);
-    expect(presenceEventsReceived[0]?.data).toBe('test enter');
-    expect(presenceEventsReceived[1]?.clientId).toBe(chatClientTwo.clientId);
-    expect(presenceEventsReceived[1]?.data).toBe('test update');
+    expect(presenceEventsReceived[0]?.member.clientId).toBe(chatClientTwo.clientId);
+    expect(presenceEventsReceived[0]?.member.data).toBe('test enter');
+    expect(presenceEventsReceived[1]?.member.clientId).toBe(chatClientTwo.clientId);
+    expect(presenceEventsReceived[1]?.member.data).toBe('test update');
 
     // expect the current presence state to reflect only the latest presence data
     expect(currentPresenceData.length).toBe(1);

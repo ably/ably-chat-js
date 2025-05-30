@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import {
-  ChatMessageActions,
-  MessageReactionEvents,
+  ChatMessageAction,
+  MessageReactionEventType,
   MessageReactionRawEvent,
   MessageReactionType,
 } from '../../src/core/events.ts';
@@ -51,26 +51,26 @@ describe('MessagesReactions', () => {
       const msg = { serial: serial };
 
       await context.room.messages.reactions.add(msg, { type: MessageReactionType.Unique, name: '🥕' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Unique,
         name: '🥕',
       });
 
       await context.room.messages.reactions.add(msg, { type: MessageReactionType.Distinct, name: '🥕' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '🥕',
       });
 
       await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, name: '🥕' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
         count: 1,
       });
 
       await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, name: '🥕', count: 10 });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
         count: 10,
@@ -78,7 +78,7 @@ describe('MessagesReactions', () => {
 
       // default is distinct for AllFeaturesEnabled
       await context.room.messages.reactions.add(msg, { name: '👻' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '👻',
       });
@@ -93,27 +93,47 @@ describe('MessagesReactions', () => {
       const msg = { serial: serial };
 
       await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Unique });
-      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Unique,
       });
 
       await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Distinct, name: '🥕' });
-      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '🥕',
       });
 
       await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Multiple, name: '🥕' });
-      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
       });
 
       // default is distinct for AllFeaturesEnabled
       await context.room.messages.reactions.delete(msg, { name: '👻' });
-      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.roomId, serial, {
+      expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '👻',
+      });
+    });
+
+    it<TestContext>('should throw error when adding reaction with invalid serial', (context) => {
+      const { room } = context;
+
+      expect(() => room.messages.reactions.add('', { type: MessageReactionType.Unique, name: '🥕' })).toThrowErrorInfo({
+        code: 40000,
+        statusCode: 400,
+        message: 'invalid serial; must be string or object with serial property',
+      });
+    });
+
+    it<TestContext>('should throw error when deleting reaction with invalid serial', (context) => {
+      const { room } = context;
+
+      expect(() => room.messages.reactions.delete('', { type: MessageReactionType.Unique })).toThrowErrorInfo({
+        code: 40000,
+        statusCode: 400,
+        message: 'invalid serial; must be string or object with serial property',
       });
     });
 
@@ -167,7 +187,7 @@ describe('MessagesReactions', () => {
           name: 'chat.message',
           serial: '01672531200000-123@xyzdefghij',
           version: '01672531200000-123@abcdefghij',
-          action: ChatMessageActions.MessageAnnotationSummary,
+          action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
             [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
@@ -178,7 +198,7 @@ describe('MessagesReactions', () => {
           name: 'chat.message',
           serial: '01672531200001-123@xyzdefghij',
           version: '01672531200001-123@abcdefghij',
-          action: ChatMessageActions.MessageAnnotationSummary,
+          action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
             [MessageReactionType.Distinct]: { '🥦': { total: 1, clientIds: ['user2'] } },
@@ -189,7 +209,7 @@ describe('MessagesReactions', () => {
           name: 'chat.message',
           serial: '01672531200002-123@xyzdefghij',
           version: '01672531200002-123@abcdefghij',
-          action: ChatMessageActions.MessageAnnotationSummary,
+          action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
             [MessageReactionType.Multiple]: { '🍌': { clientIds: { user1: 10 }, total: 10, totalUnidentified: 0 } },
@@ -200,7 +220,7 @@ describe('MessagesReactions', () => {
           name: 'chat.message',
           serial: '01672531200002-123@xyzdefghij',
           version: '01672531200002-123@abcdefghij',
-          action: ChatMessageActions.MessageAnnotationSummary,
+          action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {},
         });
@@ -209,7 +229,7 @@ describe('MessagesReactions', () => {
           name: 'chat.message',
           serial: '01672531200002-123@xyzdefghij',
           version: '01672531200002-123@abcdefghij',
-          action: ChatMessageActions.MessageAnnotationSummary,
+          action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
         });
       }));
@@ -239,7 +259,7 @@ describe('MessagesReactions', () => {
         serial: '01672531200000-123@abcdefghij',
         version: '01672531200000-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
-        action: ChatMessageActions.MessageAnnotationSummary,
+        action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
         summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
       });
@@ -253,7 +273,7 @@ describe('MessagesReactions', () => {
         serial: '01672531200000-123@abcdefghij',
         version: '01672531200000-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
-        action: ChatMessageActions.MessageAnnotationSummary,
+        action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
         summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
       });
@@ -270,7 +290,7 @@ describe('MessagesReactions', () => {
         serial: '01672531200000-123@abcdefghij',
         version: '01672531200000-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
-        action: ChatMessageActions.MessageAnnotationSummary,
+        action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
         summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
       });
@@ -287,7 +307,7 @@ describe('MessagesReactions', () => {
         serial: '01672531200000-123@abcdefghij',
         version: '01672531200000-123@abcdefghij',
         refSerial: '01672531200000-123@xyzdefghij',
-        action: ChatMessageActions.MessageAnnotationSummary,
+        action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
         summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
       });
@@ -323,7 +343,7 @@ describe('MessagesReactions', () => {
 
         const expected: MessageReactionRawEvent[] = [
           {
-            type: MessageReactionEvents.Create,
+            type: MessageReactionEventType.Create,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
@@ -333,7 +353,7 @@ describe('MessagesReactions', () => {
             },
           },
           {
-            type: MessageReactionEvents.Delete,
+            type: MessageReactionEventType.Delete,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
@@ -343,7 +363,7 @@ describe('MessagesReactions', () => {
             },
           },
           {
-            type: MessageReactionEvents.Create,
+            type: MessageReactionEventType.Create,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
@@ -353,7 +373,7 @@ describe('MessagesReactions', () => {
             },
           },
           {
-            type: MessageReactionEvents.Create,
+            type: MessageReactionEventType.Create,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
@@ -364,7 +384,7 @@ describe('MessagesReactions', () => {
             },
           },
           {
-            type: MessageReactionEvents.Create,
+            type: MessageReactionEventType.Create,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
@@ -375,7 +395,7 @@ describe('MessagesReactions', () => {
             },
           },
           {
-            type: MessageReactionEvents.Delete,
+            type: MessageReactionEventType.Delete,
             timestamp: new Date(publishTimestamp),
             reaction: {
               messageSerial: '01672531200000-123@xyzdefghij',
