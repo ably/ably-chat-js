@@ -277,6 +277,9 @@ export interface Messages {
    * was just sent in a callback to `subscribe` before the returned promise
    * resolves.
    *
+   * This method uses PUT-like semantics: if headers and metadata are omitted from the updateParams, then
+   * the existing headers and metadata are replaced with the empty objects.
+   *
    * @param serial - A string or object that conveys the serial of the message to update.
    * @param updateParams - The parameters for updating the message.
    * @param details - Optional details to record about the update action.
