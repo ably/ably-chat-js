@@ -2,6 +2,70 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 0.7.x to 0.8.x
+
+### Room ID Rename
+
+**Expected Impact: High**
+
+`roomId` has been renamed to `name` or `roomName` throughout the SDK.
+
+This is to align terminology more closely with other Ably SDKs.
+
+### Edit/Delete Message Signature
+
+**Expected Impact: Low**
+
+The signature of `messages.update()` and `messages.delete()` has changed.
+
+The first argument is now a `Serial` - a union type that allows you to pass in anything that identifies a message serial.
+
+This allows messages to be updated and deleted based on only knowing the serial.
+
+### Event Restructuring
+
+**Expected Impact: Medium**
+
+In Occupancy, Room Reactions and Presence, the event received by the listeners you subscribe has changed to match the style used by messages and typing indicators. The main change is that
+the entity (e.g. presence member) is now nested in the event.
+
+All of the data that you originally had accessible by the old event versions is still present, just in different places.
+
+### Enum Changes
+
+**Expected Impact: Medium**
+
+- All enums are now **singular**.
+- The enums called `XEvents` have been renamed to `XEventType`. For example, `MessageEvents` is now `MessageEventTypes`.
+
+### Unsubscribe All
+
+**Expected Impact: Low**
+
+We have removed the `unsubscribeAll()` and `offAll()` methods from the SDK. This is to avoid situations where all listeners are accidentally removed.
+
+### Occupancy and Typing Methods Renames
+
+The method `current` has been added to Occupancy to provide the latest occupancy values received in realtime
+
+The method `Typing.get()` has been re-named to `Typing.current()` as it exhibits similar behavior.
+
+### Operation Predicates
+
+**Expected Impact: Low**
+
+- Sending typing indicators now requires the connection status to be `Connected`.
+- Sending room reactions now requires the connection status to be `Connected`.
+
+This is to avoid messages being queued, which is in contrast to their ephemeral instantaneous use-case.
+
+### Message Reactions Send
+
+**Expected Impact: Low**
+
+`messages.reactions.add()` has been renamed to `send()`
+
+
 ## 0.6.x to 0.7.x
 
 ### Room Options Restructuring
