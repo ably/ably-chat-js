@@ -153,6 +153,43 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   }
 
   /**
+   * Clears all typing states.
+   * This includes clearing all timeouts and the currently typing map.
+   * @private
+   */
+  private _clearAllTypingStates(): void {
+    this._logger.debug(`DefaultTyping._clearAllTypingStates(); clearing all typing states`);
+    this._clearHeartbeatTimer();
+    this._clearCurrentlyTyping();
+  }
+
+  /**
+   * Clears the heartbeat timer.
+   * @private
+   */
+  private _clearHeartbeatTimer(): void {
+    this._logger.trace(`DefaultTyping._clearHeartbeatTimer(); clearing heartbeat timer`);
+    if (this._heartbeatTimerId) {
+      clearTimeout(this._heartbeatTimerId);
+      this._heartbeatTimerId = undefined;
+    }
+  }
+
+  /**
+   * Clears the currently typing store and removes all timeouts for associated clients.
+   * @private
+   */
+  private _clearCurrentlyTyping(): void {
+    this._logger.trace('DefaultTyping._clearCurrentlyTyping(); clearing current store and timeouts');
+    // Clear all client typing timeouts
+    for (const [, timeoutId] of this._currentlyTyping.entries()) {
+      clearTimeout(timeoutId);
+    }
+    // Clear the currently typing map
+    this._currentlyTyping.clear();
+  }
+
+  /**
    * CHA-T16
    *
    * @inheritDoc
@@ -193,13 +230,15 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     this._mutex.cancel();
 
     // Acquire a mutex
-    await this._mutex.acquire().catch((error: unknown) => {
+    try {
+      await this._mutex.acquire();
+    } catch (error: unknown) {
       if (error === E_CANCELED) {
         this._logger.debug(`DefaultTyping.keystroke(); mutex was canceled by a later operation`);
         return;
       }
       throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
-    });
+    }
     try {
       // Check if connection is connected
       // CHA-T4e
@@ -239,13 +278,15 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
     this._mutex.cancel();
     // Acquire a mutex
-    await this._mutex.acquire().catch((error: unknown) => {
+    try {
+      await this._mutex.acquire();
+    } catch (error: unknown) {
       if (error === E_CANCELED) {
         this._logger.debug(`DefaultTyping.stop(); mutex was canceled by a later operation`);
         return;
       }
       throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
-    });
+    }
     try {
       // Check if connection is connected
       if (this._connection.state !== 'connected') {
@@ -290,6 +331,41 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         this.off(wrapped);
       },
     };
+  }
+
+  /**
+   * @inheritDoc
+   */
+  // CHA-RL3h
+  async dispose(): Promise<void> {
+    this._logger.trace(`DefaultTyping.dispose();`);
+    this._mutex.cancel();
+
+    // Keep trying to acquire the mutex; wait 200 ms between attempts.
+    for (;;) {
+      try {
+        await this._mutex.acquire();
+        break; // success – exit the loop
+      } catch (error: unknown) {
+        if (error === E_CANCELED) {
+          // In this case, the mutex was canceled by a later operation,
+          // but we are trying to release, so we should always take precedence here.
+          // Let's continue trying to acquire it until we win the acquisition lock.
+          this._logger.debug(`DefaultTyping.dispose(); mutex was canceled, retrying`);
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        } else {
+          // If we encounter any other error, we log it and exit the loop.
+          // This is to ensure that we don't get stuck in an infinite loop
+          // if the mutex acquisition fails for some other non-retryable reason.
+          this._logger.error(`DefaultTyping.dispose(); failed to acquire mutex; could not complete resource disposal`, {
+            error,
+          });
+          return;
+        }
+      }
+    }
+    this._clearAllTypingStates();
+    this._mutex.release();
   }
 
   /**
