@@ -49,6 +49,7 @@ export type {
   OperationDetails,
   QueryOptions,
   SendMessageParams,
+  UpdateMessageParams,
 } from './messages.js';
 export { OrderBy } from './messages.js';
 export type {

@@ -136,6 +136,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
         return;
       }
       update(
+        message,
         message.copy({
           text: newText,
           metadata: message.metadata,

@@ -12,7 +12,15 @@ import { Message } from './message.js';
  * The string-form of the serial should not be parsed or interpreted in any way, as it is subject to change without
  * warning.
  */
-export type Serial = Message | string | { serial: string };
+export type Serial =
+  | Message
+  | string
+  | {
+      /**
+       * The serial of the message.
+       */
+      serial: string;
+    };
 
 /**
  * Convert a type that may contain a serial into a string.

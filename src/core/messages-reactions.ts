@@ -78,7 +78,7 @@ export interface DeleteMessageReactionParams {
 export interface MessagesReactions {
   /**
    * Add a message reactions
-   * @param message The message to react to.
+   * @param messageSerial The serial of the message to react to
    * @param params Describe the reaction to add.
    * @returns A promise that resolves when the reaction is added.
    */
@@ -86,7 +86,7 @@ export interface MessagesReactions {
 
   /**
    * Delete a message reaction
-   * @param message The message to remove the reaction from.
+   * @param messageSerial The serial of the message to remove the reaction from.
    * @param params The type of reaction annotation and the specific reaction to remove. The reaction to remove is required for all types except {@link MessageReactionType.Unique}.
    * @returns A promise that resolves when the reaction is deleted.
    */
