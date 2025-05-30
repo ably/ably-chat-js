@@ -3,7 +3,12 @@ import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../../src/core/chat.ts';
-import { ChatMessageAction, ChatMessageEventType } from '../../../src/core/events.ts';
+import {
+  ChatMessageAction,
+  ChatMessageEventType,
+  MessageReactionSummaryEvent,
+  MessageReactionType,
+} from '../../../src/core/events.ts';
 import { Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
@@ -518,4 +523,116 @@ describe('useMessages', () => {
     expect(messageTexts2[1]).toBe('I have the high ground');
     expect(messageTexts2[2]).toBe('The force is strong with this one');
   }, 20000);
+
+  it('should send reactions correctly', async () => {
+    // create new clients
+    const chatClientOne = newChatClient();
+    const chatClientTwo = newChatClient();
+
+    // create a second room and attach it, so we can listen for reactions
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
+    await roomTwo.attach();
+
+    // start listening for reaction summaries
+    const reactionSummariesRoomTwo: MessageReactionSummaryEvent[] = [];
+    roomTwo.messages.reactions.subscribe((event) => reactionSummariesRoomTwo.push(event));
+
+    let sentMessage: Message | undefined;
+
+    const TestComponent = () => {
+      const { send, sendReaction, roomStatus } = useMessages();
+
+      useEffect(() => {
+        if (roomStatus === RoomStatus.Attached) {
+          void send({ text: 'hello world' }).then(async (message) => {
+            sentMessage = message;
+
+            // Wait for 1 second
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
+            // Send a reaction to the message
+            void sendReaction(message.serial, { name: '👍', type: MessageReactionType.Distinct });
+          });
+        }
+      }, [roomStatus]);
+
+      return null;
+    };
+
+    const TestProvider = () => (
+      <ChatClientProvider client={chatClientOne}>
+        <ChatRoomProvider name={roomName}>
+          <TestComponent />
+        </ChatRoomProvider>
+      </ChatClientProvider>
+    );
+
+    render(<TestProvider />);
+
+    // expect a reaction summary to be received by the second room
+    await waitForArrayLength(reactionSummariesRoomTwo, 1, 10000);
+    expect(reactionSummariesRoomTwo[0]?.summary.messageSerial).toBe(sentMessage?.serial);
+    expect(reactionSummariesRoomTwo[0]?.summary.distinct['👍']?.total).toBe(1);
+  }, 10000);
+
+  it('should delete reactions correctly', async () => {
+    // create new clients
+    const chatClientOne = newChatClient();
+    const chatClientTwo = newChatClient();
+
+    // create a second room and attach it, so we can listen for reactions
+    const roomName = randomRoomName();
+    const roomTwo = await chatClientTwo.rooms.get(roomName);
+    await roomTwo.attach();
+
+    // start listening for reaction summaries
+    const reactionSummariesRoomTwo: MessageReactionSummaryEvent[] = [];
+    roomTwo.messages.reactions.subscribe((event) => reactionSummariesRoomTwo.push(event));
+
+    let sentMessage: Message | undefined;
+
+    const TestComponent = () => {
+      const { send, sendReaction, deleteReaction, roomStatus } = useMessages();
+
+      useEffect(() => {
+        if (roomStatus === RoomStatus.Attached) {
+          void send({ text: 'hello world' }).then(async (message) => {
+            sentMessage = message;
+
+            // Wait for 1 second
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+
+            // Send a reaction to the message, then delete it
+            void sendReaction(message.serial, { name: '👍', type: MessageReactionType.Distinct }).then(() => {
+              void deleteReaction(message.serial, { name: '👍', type: MessageReactionType.Distinct });
+            });
+          });
+        }
+      }, [roomStatus]);
+
+      return null;
+    };
+
+    const TestProvider = () => (
+      <ChatClientProvider client={chatClientOne}>
+        <ChatRoomProvider name={roomName}>
+          <TestComponent />
+        </ChatRoomProvider>
+      </ChatClientProvider>
+    );
+
+    render(<TestProvider />);
+
+    // expect two reaction summaries to be received by the second room (add and delete)
+    await waitForArrayLength(reactionSummariesRoomTwo, 2, 10000);
+
+    // First event should be the reaction being added
+    expect(reactionSummariesRoomTwo[0]?.summary.messageSerial).toBe(sentMessage?.serial);
+    expect(reactionSummariesRoomTwo[0]?.summary.distinct['👍']?.total).toBe(1);
+
+    // Second event should be the reaction being removed (empty summary)
+    expect(reactionSummariesRoomTwo[1]?.summary.messageSerial).toBe(sentMessage?.serial);
+    expect(reactionSummariesRoomTwo[1]?.summary.distinct['👍']).toBeUndefined();
+  }, 10000);
 });
