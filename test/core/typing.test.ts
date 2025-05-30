@@ -9,12 +9,7 @@ import { Logger } from '../../src/core/logger.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { DefaultTyping, Typing } from '../../src/core/typing.ts';
-import {
-  channelEventEmitter,
-  ChannelEventEmitterReturnType,
-  channelStateEventEmitter,
-  ChannelStateEventEmitterReturnType,
-} from '../helper/channel.ts';
+import { channelEventEmitter, ChannelEventEmitterReturnType } from '../helper/channel.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';
@@ -25,7 +20,6 @@ interface TestContext {
   chatApi: ChatApi;
   room: Room;
   emulateBackendPublish: ChannelEventEmitterReturnType<Partial<Ably.InboundMessage>>;
-  emulateChannelStateChange: ChannelStateEventEmitterReturnType;
   options: RoomOptions;
   logger: Logger;
 }
@@ -73,7 +67,6 @@ describe('Typing', () => {
     });
     const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
-    context.emulateChannelStateChange = channelStateEventEmitter(channel);
   });
 
   // CHA-T8

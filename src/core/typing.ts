@@ -1,7 +1,6 @@
 import * as Ably from 'ably';
 import { E_CANCELED, Mutex } from 'async-mutex';
 
-import { Disposable } from './disposable.js';
 import { TypingEventType, TypingSetEvent, TypingSetEventType } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
@@ -92,7 +91,7 @@ type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
 /**
  * @inheritDoc
  */
-export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing, Disposable {
+export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
   private readonly _clientId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _connection: Ably.Connection;
@@ -338,9 +337,35 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @inheritDoc
    */
   // CHA-RL3h
-  dispose(): void {
+  async dispose(): Promise<void> {
     this._logger.trace(`DefaultTyping.dispose();`);
+    this._mutex.cancel();
+
+    // Keep trying to acquire the mutex; wait 200 ms between attempts.
+    for (;;) {
+      try {
+        await this._mutex.acquire();
+        break; // success – exit the loop
+      } catch (error: unknown) {
+        if (error === E_CANCELED) {
+          // In this case, the mutex was canceled by a later operation,
+          // but we are trying to release, so we should always take precedence here.
+          // Let's continue trying to acquire it until we win the acquisition lock.
+          this._logger.debug(`DefaultTyping.dispose(); mutex was canceled, retrying`);
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        } else {
+          // If we encounter any other error, we log it and exit the loop.
+          // This is to ensure that we don't get stuck in an infinite loop
+          // if the mutex acquisition fails for some other non-retryable reason.
+          this._logger.error(`DefaultTyping.dispose(); failed to acquire mutex; could not complete resource disposal`, {
+            error,
+          });
+          return;
+        }
+      }
+    }
     this._clearAllTypingStates();
+    this._mutex.release();
   }
 
   /**
