@@ -55,9 +55,9 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly deleteMessage: Messages['delete'];
 
   /**
-   * A shortcut to the {@link MessagesReactions.add} method.
+   * A shortcut to the {@link MessagesReactions.send} method.
    */
-  readonly addReaction: Messages['reactions']['add'];
+  readonly sendReaction: Messages['reactions']['send'];
 
   /**
    * A shortcut to the {@link MessagesReactions.delete} method.
@@ -152,9 +152,9 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
 
-  const addReaction: Messages['reactions']['add'] = useCallback(
+  const sendReaction: Messages['reactions']['send'] = useCallback(
     (serial: Serial, params: AddMessageReactionParams) =>
-      context.room.then((room) => room.messages.reactions.add(serial, params)),
+      context.room.then((room) => room.messages.reactions.send(serial, params)),
     [context],
   );
 
@@ -273,7 +273,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     update,
     history,
     deleteMessage,
-    addReaction,
+    sendReaction,
     deleteReaction,
     historyBeforeSubscribe,
     messages: useEventualRoomProperty((room) => room.messages),

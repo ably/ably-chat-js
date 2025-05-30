@@ -50,26 +50,26 @@ describe('MessagesReactions', () => {
 
       const msg = { serial: serial };
 
-      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Unique, name: '🥕' });
+      await context.room.messages.reactions.send(msg, { type: MessageReactionType.Unique, name: '🥕' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Unique,
         name: '🥕',
       });
 
-      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Distinct, name: '🥕' });
+      await context.room.messages.reactions.send(msg, { type: MessageReactionType.Distinct, name: '🥕' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '🥕',
       });
 
-      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, name: '🥕' });
+      await context.room.messages.reactions.send(msg, { type: MessageReactionType.Multiple, name: '🥕' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
         count: 1,
       });
 
-      await context.room.messages.reactions.add(msg, { type: MessageReactionType.Multiple, name: '🥕', count: 10 });
+      await context.room.messages.reactions.send(msg, { type: MessageReactionType.Multiple, name: '🥕', count: 10 });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
@@ -77,7 +77,7 @@ describe('MessagesReactions', () => {
       });
 
       // default is distinct for AllFeaturesEnabled
-      await context.room.messages.reactions.add(msg, { name: '👻' });
+      await context.room.messages.reactions.send(msg, { name: '👻' });
       expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '👻',
@@ -117,14 +117,16 @@ describe('MessagesReactions', () => {
       });
     });
 
-    it<TestContext>('should throw error when adding reaction with invalid serial', (context) => {
+    it<TestContext>('should throw error when sending reaction with invalid serial', (context) => {
       const { room } = context;
 
-      expect(() => room.messages.reactions.add('', { type: MessageReactionType.Unique, name: '🥕' })).toThrowErrorInfo({
-        code: 40000,
-        statusCode: 400,
-        message: 'invalid serial; must be string or object with serial property',
-      });
+      expect(() => room.messages.reactions.send('', { type: MessageReactionType.Unique, name: '🥕' })).toThrowErrorInfo(
+        {
+          code: 40000,
+          statusCode: 400,
+          message: 'invalid serial; must be string or object with serial property',
+        },
+      );
     });
 
     it<TestContext>('should throw error when deleting reaction with invalid serial', (context) => {

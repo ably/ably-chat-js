@@ -4,7 +4,7 @@ import './styles.css';
 
 interface MessageReactionsMultipleProps {
   message: Message;
-  onReactionAdd: Messages['reactions']['add'];
+  onReactionSend: Messages['reactions']['send'];
   onReactionDelete: Messages['reactions']['delete'];
 }
 
@@ -12,11 +12,11 @@ const emojis = ['👍', '❤️', '🔥', '🚀'];
 
 export const MessageReactionsMultiple: React.FC<MessageReactionsMultipleProps> = ({
   message,
-  onReactionAdd,
+  onReactionSend,
   onReactionDelete: onReactionRemove,
 }) => {
   const handleReactionClick = (name: string) => {
-    onReactionAdd(message, { type: MessageReactionType.Multiple, name: name });
+    onReactionSend(message, { type: MessageReactionType.Multiple, name: name });
   };
 
   const handleReactionRemoveClick = (name: string) => {

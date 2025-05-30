@@ -82,7 +82,7 @@ export interface MessagesReactions {
    * @param params Describe the reaction to add.
    * @returns A promise that resolves when the reaction is added.
    */
-  add(messageSerial: Serial, params: AddMessageReactionParams): Promise<void>;
+  send(messageSerial: Serial, params: AddMessageReactionParams): Promise<void>;
 
   /**
    * Delete a message reaction
@@ -239,7 +239,7 @@ export class DefaultMessageReactions implements MessagesReactions {
   /**
    * @inheritDoc
    */
-  add(messageSerial: Serial, params: AddMessageReactionParams): Promise<void> {
+  send(messageSerial: Serial, params: AddMessageReactionParams): Promise<void> {
     this._logger.trace('MessagesReactions.add();', { messageSerial, params });
     const serial = serialToString(messageSerial);
 
