@@ -15,7 +15,7 @@ interface MessageProps {
 
   onMessageDelete?(msg: Message): void;
 
-  onReactionAdd?: Messages['reactions']['add'];
+  onReactionAdd?: Messages['reactions']['send'];
 
   onReactionDelete?: Messages['reactions']['delete'];
 }

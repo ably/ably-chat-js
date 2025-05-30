@@ -4,7 +4,7 @@ import './styles.css';
 
 interface MessageReactionsMultipleProps {
   message: Message;
-  onReactionAdd: Messages['reactions']['add'];
+  onReactionAdd: Messages['reactions']['send'];
   onReactionDelete: Messages['reactions']['delete'];
 }
 

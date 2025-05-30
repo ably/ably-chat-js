@@ -5,7 +5,7 @@ import './styles.css';
 interface MessageReactionsUniqueProps {
   message: Message;
   clientId: string;
-  onReactionAdd: Messages['reactions']['add'];
+  onReactionAdd: Messages['reactions']['send'];
   onReactionDelete: Messages['reactions']['delete'];
 }
 
