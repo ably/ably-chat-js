@@ -215,6 +215,9 @@ export class DefaultRoom implements Room {
       // Release via the lifecycle manager
       await this._lifecycleManager.release();
 
+      // Dispose of all remaining resources only once we have fully released the room
+      await this._typing.dispose();
+
       finalized = true;
     };
   }
