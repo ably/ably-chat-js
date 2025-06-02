@@ -257,6 +257,10 @@ export interface Messages {
    * from the realtime channel. This means you may see the message that was just
    * deleted in a callback to `subscribe` before the returned promise resolves.
    *
+   * NOTE: The Message instance returned by this method is the state of the message as a result of the delete operation.
+   * If you have a subscription to message events via `subscribe`, you should discard the message instance returned by
+   * this method and use the event payloads from the subscription instead.
+   *
    * Should you wish to restore a deleted message, and providing you have the appropriate permissions,
    * you can simply send an update to the original message.
    * Note: This is subject to change in future versions, whereby a new permissions model will be introduced
@@ -276,6 +280,10 @@ export interface Messages {
    * received from the realtime channel. This means you may see the update that
    * was just sent in a callback to `subscribe` before the returned promise
    * resolves.
+   *
+   * NOTE: The Message instance returned by this method is the state of the message as a result of the update operation.
+   * If you have a subscription to message events via `subscribe`, you should discard the message instance returned by
+   * this method and use the event payloads from the subscription instead.
    *
    * This method uses PUT-like semantics: if headers and metadata are omitted from the updateParams, then
    * the existing headers and metadata are replaced with the empty objects.
