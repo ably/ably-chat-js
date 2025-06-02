@@ -5,7 +5,7 @@ import './styles.css';
 interface MessageReactionsDistinctProps {
   message: Message;
   clientId: string;
-  onReactionAdd: Messages['reactions']['add'];
+  onReactionSend: Messages['reactions']['send'];
   onReactionDelete: Messages['reactions']['delete'];
 }
 
@@ -14,7 +14,7 @@ const emojis = ['👍', '❤️', '🔥', '🚀'];
 export const MessageReactionsDistinct: React.FC<MessageReactionsDistinctProps> = ({
   message,
   clientId,
-  onReactionAdd,
+  onReactionSend,
   onReactionDelete: onReactionRemove,
 }) => {
   const distinct = message.reactions.distinct ?? {};
@@ -23,7 +23,7 @@ export const MessageReactionsDistinct: React.FC<MessageReactionsDistinctProps> =
     if (distinct[name]?.clientIds.includes(clientId)) {
       onReactionRemove(message, { type: MessageReactionType.Distinct, name: name });
     } else {
-      onReactionAdd(message, { type: MessageReactionType.Distinct, name: name });
+      onReactionSend(message, { type: MessageReactionType.Distinct, name: name });
     }
   };
 

@@ -15,7 +15,7 @@ interface MessageProps {
 
   onMessageDelete?(msg: Message): void;
 
-  onReactionAdd?: Messages['reactions']['add'];
+  onReactionSend?: Messages['reactions']['send'];
 
   onReactionDelete?: Messages['reactions']['delete'];
 }
@@ -46,7 +46,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
   reactionType = MessageReactionType.Distinct,
   onMessageUpdate,
   onMessageDelete,
-  onReactionAdd,
+  onReactionSend,
   onReactionDelete,
 }) => {
   const client = useChatClient();
@@ -70,14 +70,14 @@ export const MessageComponent: React.FC<MessageProps> = ({
 
   let reactionsUI = <></>;
 
-  if (onReactionAdd && onReactionDelete) {
+  if (onReactionSend && onReactionDelete) {
     switch (reactionType) {
       case MessageReactionType.Unique: {
         reactionsUI = (
           <MessageReactionsUnique
             message={message}
             clientId={clientId}
-            onReactionAdd={onReactionAdd}
+            onReactionSend={onReactionSend}
             onReactionDelete={onReactionDelete}
           />
         );
@@ -88,7 +88,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
           <MessageReactionsDistinct
             message={message}
             clientId={clientId}
-            onReactionAdd={onReactionAdd}
+            onReactionSend={onReactionSend}
             onReactionDelete={onReactionDelete}
           />
         );
@@ -98,7 +98,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
         reactionsUI = (
           <MessageReactionsMultiple
             message={message}
-            onReactionAdd={onReactionAdd}
+            onReactionSend={onReactionSend}
             onReactionDelete={onReactionDelete}
           />
         );

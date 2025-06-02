@@ -15,7 +15,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
 
-  const { historyBeforeSubscribe, deleteMessage, update, addReaction, deleteReaction } = useMessages({
+  const { historyBeforeSubscribe, deleteMessage, update, sendReaction, deleteReaction } = useMessages({
     listener: (event: ChatMessageEvent) => {
       const message = event.message;
       switch (event.type) {
@@ -194,7 +194,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
                 self={msg.clientId === clientId}
                 message={msg}
                 reactionType={reactionType.type}
-                onReactionAdd={addReaction}
+                onReactionSend={sendReaction}
                 onReactionDelete={deleteReaction}
                 onMessageDelete={onDeleteMessage}
                 onMessageUpdate={onUpdateMessage}
