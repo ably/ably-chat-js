@@ -2,7 +2,7 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
-## [0.8.0](https://github.com/ably/ably-chat-js/tree/0.8.0)(2025-06-04)
+## [0.8.0](https://github.com/ably/ably-chat-js/tree/0.8.0)(2025-06-05)
 
 ### Breaking Changes
 
@@ -13,6 +13,7 @@ This release is a tidy-up and improvement of the API and thus contains breaking 
 ### Fixes
 
 - MessageReactionEvents enum is now exported as a value, not type [#551](https://github.com/ably/ably-chat-js/pull/551)
+- Fixed unexpected React unmounts caused by the `useMessages` hook not using stable references for message reactions listeners [#566](https://github.com/ably/ably-chat-js/pull/566)
 
 ### Misc
 

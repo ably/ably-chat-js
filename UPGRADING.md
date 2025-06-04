@@ -31,6 +31,72 @@ the entity (e.g. presence member) is now nested in the event.
 
 All of the data that you originally had accessible by the old event versions is still present, just in different places.
 
+#### Presence
+
+**Before**
+
+```ts
+  room.presence.subscribe((event) => {
+    // Log the presence member
+    console.log(event);
+
+    // Log the presence event type
+    console.log(event.action);
+  })
+```
+
+**After**
+
+```ts
+  room.presence.subscribe((event) => {
+    // Log the presence member
+    console.log(event.member);
+
+    // Log the presence event type
+    console.log(event.type);
+  })
+```
+
+#### Occupancy
+
+**Before**
+
+```ts
+  room.occupancy.subscribe((event) => {
+    // Log the number of connections
+    console.log(event.connections);
+  })
+```
+
+**After**
+
+```ts
+  room.occupancy.subscribe((event) => {
+    // Log the number of connections
+    console.log(event.occupancy.connections)
+  })
+```
+
+#### Room Reactions
+
+**Before**
+
+```ts
+  room.reactions.subscribe((event) => {
+    // Log the reaction type
+    console.log(event.type);
+  })
+```
+
+**After**
+
+```ts
+  room.reactions.subscribe((event) => {
+    // Log the reaction type
+    console.log(event.reaction.type);
+  })
+```
+
 ### Enum Changes
 
 **Expected Impact: Medium**
