@@ -131,6 +131,8 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   // we are storing the params in a ref so that we don't end up with an infinite loop should the user pass
   // in an unstable reference
   const listenerRef = useEventListenerRef(params?.listener);
+  const reactionsListenerRef = useEventListenerRef(params?.reactionsListener);
+  const rawReactionsListenerRef = useEventListenerRef(params?.rawReactionsListener);
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
   const send = useCallback(
@@ -226,16 +228,12 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   }, [context, logger, onDiscontinuityRef]);
 
   useEffect(() => {
-    if (!params?.reactionsListener) return;
+    if (!reactionsListenerRef) return;
     return wrapRoomPromise(
       context.room,
       (room) => {
-        if (!params.reactionsListener) {
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          return () => {};
-        }
         logger.debug('useMessages(); applying reactions listener');
-        const { unsubscribe } = room.messages.reactions.subscribe(params.reactionsListener);
+        const { unsubscribe } = room.messages.reactions.subscribe(reactionsListenerRef);
         return () => {
           logger.debug('useMessages(); removing reactions listener');
           unsubscribe();
@@ -243,18 +241,15 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
       },
       logger,
     ).unmount();
-  }, [context, logger, params?.reactionsListener]);
+  }, [context, logger, reactionsListenerRef]);
 
   useEffect(() => {
-    if (!params?.rawReactionsListener) return;
+    if (!rawReactionsListenerRef) return;
     return wrapRoomPromise(
       context.room,
       (room) => {
-        if (!params.rawReactionsListener) {
-          return () => void 0;
-        }
         logger.debug('useMessages(); applying raw reactions listener');
-        const { unsubscribe } = room.messages.reactions.subscribeRaw(params.rawReactionsListener);
+        const { unsubscribe } = room.messages.reactions.subscribeRaw(rawReactionsListenerRef);
         return () => {
           logger.debug('useMessages(); removing raw reactions listener');
           unsubscribe();
@@ -262,7 +257,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
       },
       logger,
     ).unmount();
-  }, [context, logger, params?.rawReactionsListener]);
+  }, [context, logger, rawReactionsListenerRef]);
 
   return {
     connectionStatus,
