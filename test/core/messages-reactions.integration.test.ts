@@ -384,4 +384,126 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     void room.detach();
     void room2.detach();
   });
+
+  it<TestContext>('should receive 4 summaries when second client adds and deletes two distinct reactions', async (context) => {
+    const { chat } = context;
+
+    const room = await getRandomRoom(chat);
+
+    // Attach the room
+    await room.attach();
+
+    // Send a message from first client
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+
+    // Subscribe to reactions and add them to a list when they arrive
+    const found: MessageReactionSummaryEvent[] = [];
+
+    room.messages.reactions.subscribe((event) => {
+      found.push(event);
+    });
+
+    // Create second client
+    const client2 = newChatClient();
+    const room2 = await client2.rooms.get(room.roomId);
+    await room2.attach();
+
+    // Second client adds two distinct reactions
+    await room2.messages.reactions.add(message1, { type: MessageReactionType.Distinct, name: '👍' });
+    await room2.messages.reactions.add(message1, { type: MessageReactionType.Distinct, name: '❤️' });
+
+    // Wait for first two summaries (after adding reactions)
+    await vi.waitFor(
+      () => {
+        expect(found.length).toBeGreaterThanOrEqual(2);
+        
+        // Check first summary (after adding 👍)
+        const firstSummary = found.find((e) => 
+          e.summary.messageSerial === message1.serial && 
+          e.summary.distinct?.['👍'] && 
+          !e.summary.distinct?.['❤️']
+        );
+        expect(firstSummary).toMatchObject({
+          type: MessageReactionEvents.Summary,
+          summary: {
+            messageSerial: message1.serial,
+            distinct: {
+              '👍': {
+                total: 1,
+                clientIds: [client2.clientId],
+              },
+            },
+          },
+        });
+
+        // Check second summary (after adding ❤️)
+        const secondSummary = found.find((e) => 
+          e.summary.messageSerial === message1.serial && 
+          e.summary.distinct?.['👍'] && 
+          e.summary.distinct?.['❤️']
+        );
+        expect(secondSummary).toMatchObject({
+          type: MessageReactionEvents.Summary,
+          summary: {
+            messageSerial: message1.serial,
+            distinct: {
+              '👍': {
+                total: 1,
+                clientIds: [client2.clientId],
+              },
+              '❤️': {
+                total: 1,
+                clientIds: [client2.clientId],
+              },
+            },
+          },
+        });
+      },
+      { timeout: 30_000 },
+    );
+
+    // Second client deletes both reactions
+    await room2.messages.reactions.delete(message1, { type: MessageReactionType.Distinct, name: '👍' });
+    await room2.messages.reactions.delete(message1, { type: MessageReactionType.Distinct, name: '❤️' });
+
+    // Wait for all 4 summaries
+    await vi.waitFor(
+      () => {
+        expect(found.length).toBeGreaterThanOrEqual(4);
+        
+        // Check third summary (after deleting 👍)
+        const thirdSummary = found.find((e) => 
+          e.summary.messageSerial === message1.serial && 
+          !e.summary.distinct?.['👍'] && 
+          e.summary.distinct?.['❤️']
+        );
+        expect(thirdSummary).toMatchObject({
+          type: MessageReactionEvents.Summary,
+          summary: {
+            messageSerial: message1.serial,
+            distinct: {
+              '❤️': {
+                total: 1,
+                clientIds: [client2.clientId],
+              },
+            },
+          },
+        });
+
+        // Check fourth summary (after deleting ❤️ - should be empty or not have these reactions)
+        const fourthSummary = found.findLast((e) => e.summary.messageSerial === message1.serial);
+        expect(fourthSummary).toMatchObject({
+          type: MessageReactionEvents.Summary,
+          summary: {
+            messageSerial: message1.serial,
+            distinct: {},
+          },
+        });
+      },
+      { timeout: 30_000 },
+    );
+
+    void room.detach();
+    void room2.detach();
+  });
 });
