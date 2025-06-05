@@ -131,6 +131,26 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
     ).unmount();
   }, [listenerRef, context, logger]);
 
+  // The room may already be attached, so we should get any existing occupancy metrics
+  useEffect(() => {
+    return wrapRoomPromise(
+      context.room,
+      (room) => {
+        logger.debug('useOccupancy(); applying current occupancy metrics');
+        // Set the initial metrics from current(), or 0 if not available
+        const currentOccupancy = room.occupancy.current();
+        setOccupancyMetrics({
+          connections: currentOccupancy?.connections ?? 0,
+          presenceMembers: currentOccupancy?.presenceMembers ?? 0,
+        });
+        return () => {
+          //noop
+        };
+      },
+      logger,
+    ).unmount();
+  }, [context, logger]);
+
   return {
     occupancy: useEventualRoomProperty((room) => room.occupancy),
     connectionStatus,

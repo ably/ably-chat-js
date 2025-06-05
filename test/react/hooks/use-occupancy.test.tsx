@@ -196,6 +196,30 @@ describe('useOccupancy', () => {
     await waitForEventualHookValue(result, mockRoom.occupancy, (value) => value.occupancy);
   });
 
+  it('should apply existing occupancy metrics when room is already attached', async () => {
+    // Set up mock occupancy data for an already attached room
+    const existingOccupancyData = {
+      connections: 10,
+      presenceMembers: 7,
+    };
+
+    // Mock the current method to return existing occupancy data
+    vi.spyOn(mockRoom.occupancy, 'current').mockReturnValueOnce(existingOccupancyData);
+
+    // Render the hook
+    const { result } = renderHook(() => useOccupancy());
+
+    // Wait for the hook to process
+    await waitForEventualHookValueToBeDefined(result, (value) => value.occupancy);
+
+    // Verify that the hook correctly retrieved and set the initial occupancy metrics
+    expect(result.current.connections).toBe(existingOccupancyData.connections);
+    expect(result.current.presenceMembers).toBe(existingOccupancyData.presenceMembers);
+
+    // Verify that the current method was called to get the existing metrics
+    expect(mockRoom.occupancy.current).toHaveBeenCalled();
+  });
+
   it('should subscribe and unsubscribe to discontinuity events', async () => {
     const mockOff = vi.fn();
     const mockDiscontinuityListener = vi.fn();
