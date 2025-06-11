@@ -1,6 +1,11 @@
-# Ably Chat JavaScript, TypeScript and React SDK
+
 
 ![Ably Chat Header](/images/ably-chat-github-header.png)
+
+![License](https://badgen.net/github/license/3scale/saas-operator)
+![npm version](https://img.shields.io/npm/v/@ably/chat.svg?style=flat)
+
+# Ably Chat JavaScript, TypeScript and React SDK
 
 Ably Chat is a set of purpose-built APIs for a host of chat features enabling you to create 1:1, 1:Many, Many:1 and Many:Many chat rooms for any scale. It is designed to meet a wide range of chat use cases, such as livestreams, in-game communication, customer support, or social interactions in SaaS products. Built on [Ably's](https://ably.com/) core service, it abstracts complex details to enable efficient chat architectures.
 
@@ -10,9 +15,10 @@ Ably Chat is a set of purpose-built APIs for a host of chat features enabling yo
 
 Everything you need to get started with Ably:
 
-* [Getting started with Ably Chat in JavaScript](https://ably.com/docs/chat/getting-started/javascript)
-* [Getting started with Ably Chat in React](https://ably.com/docs/chat/getting-started/react)
-* Play with the [livestream chat demo](https://ably-livestream-chat-demo.vercel.app/).
+* [About Ably Chat.](https://ably.com/docs/chat)
+* [Getting started with Ably Chat in JavaScript.](https://ably.com/docs/chat/getting-started/javascript)
+* [Getting started with Ably Chat in React.](https://ably.com/docs/chat/getting-started/react)
+* Play with the [livestream chat demo.](https://ably-livestream-chat-demo.vercel.app/)
 
 ---
 
@@ -29,11 +35,8 @@ This SDK supports the following platforms:
 | TypeScript   | Fully supported, the library is written in TypeScript. |
 | React        | Includes providers and hooks for deep integration with the React ecosystem. |
 | React Native | All React Native platforms. Issues can be reported or support requested. |
-| Android      | Supported via the [Kotlin](https://github.com/ably/ably-chat-kotlin). |
-| iOS          | Supported via the [Swift](https://github.com/ably/ably-chat-swift) SDK. |
-
-> [!IMPORTANT]
-> SDK versions <  1.2.36 will be [deprecated](https://ably.com/docs/platform/deprecate/protocol-v1) from November 1, 2025.
+| Android      | Supported via the [Ably Chat Kotlin SDK.](https://github.com/ably/ably-chat-kotlin) |
+| iOS          | Supported via the [Ably Chat Swift SDK.](https://github.com/ably/ably-chat-swift) |
 
 > [!NOTE]
 > The Chat SDK can be installed either from NPM, or included directly from Ably's CDN. Note that you also need to install the core Ably SDK.
