@@ -58,7 +58,10 @@ export class ChannelManager {
     const baseOptions = this._isReact ? DEFAULT_CHANNEL_OPTIONS_REACT : DEFAULT_CHANNEL_OPTIONS;
     this._logger.trace(this._isReact ? 'using react channel options' : 'using default channel options');
 
+    console.log('baseOptions', baseOptions.modes);
+    console.log('modes', [...baseOptions.modes]);
+
     // Create a deep copy of the options, ensuring modes array is also copied
-    return { ...baseOptions, modes: baseOptions.modes } as ChannelOptionsWithModes;
+    return { ...baseOptions, modes: [...baseOptions.modes] } as ChannelOptionsWithModes;
   }
 }
