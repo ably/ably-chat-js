@@ -221,8 +221,6 @@ describe('Typing', () => {
       const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
-      // If stop is called, the test should fail as the timer should not have expired
-      vi.spyOn(room.typing, 'stop').mockImplementation(async (): Promise<void> => {});
       vi.spyOn(room.channel, 'publish').mockImplementation(async (): Promise<void> => {});
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
