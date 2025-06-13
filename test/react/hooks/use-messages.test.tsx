@@ -4,9 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { ChatMessageAction, ChatMessageEventType } from '../../../src/core/events.ts';
+import { ChatMessageAction, ChatMessageEventType, MessageReactionEventType, MessageReactionRawEvent, MessageReactionSummaryEvent, MessageReactionType } from '../../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
+import { MessageRawReactionListener, MessageReactionListener } from '../../../src/core/messages-reactions.ts';
 import { PaginatedResult } from '../../../src/core/query.ts';
 import { Room } from '../../../src/core/room.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
@@ -253,5 +254,89 @@ describe('useMessages', () => {
     unmount();
 
     expect(mockOff).toHaveBeenCalled();
+  });
+
+  it('should correctly subscribe and unsubscribe to reactions', async () => {
+    // mock listener and associated unsubscribe function
+    const mockReactionsListener = vi.fn();
+    const mockUnsubscribe = vi.fn();
+
+    const reactionsListeners = new Set<MessageReactionListener>();
+    vi.spyOn(mockRoom.messages.reactions, 'subscribe').mockImplementation((listener) => {
+      reactionsListeners.add(listener);
+      return { unsubscribe: mockUnsubscribe };
+    });
+
+    const { unmount } = renderHook(() =>
+      useMessages({
+        reactionsListener: mockReactionsListener,
+      }),
+    );
+
+    // verify that subscribe was called with the mock listener on mount by invoking it
+    const reactionEvent: MessageReactionSummaryEvent = {
+      type: MessageReactionEventType.Summary,
+      summary: {
+        messageSerial: '123',
+        unique: { '👍': { total: 1, clientIds: ['user1'] } },
+        distinct: { '👍': { total: 1, clientIds: ['user1'] } },
+        multiple: { '👍': { total: 1, totalUnidentified: 0, clientIds: { 'user1': 1 } } },
+      },
+    };
+
+    await waitFor(() => { expect(reactionsListeners.size).toBe(1); });
+    act(() => {
+      for (const listener of reactionsListeners) {
+        listener(reactionEvent);
+      }
+    });
+    expect(mockReactionsListener).toHaveBeenCalledWith(reactionEvent);
+
+    // unmount the hook and verify that unsubscribe was called
+    unmount();
+    expect(mockUnsubscribe).toHaveBeenCalled();
+  });
+
+  it('should correctly subscribe and unsubscribe to raw reactions', async () => {
+    // mock listener and associated unsubscribe function
+    const mockRawReactionsListener = vi.fn();
+    const mockUnsubscribe = vi.fn();
+
+    const rawReactionsListeners = new Set<MessageRawReactionListener>();
+    vi.spyOn(mockRoom.messages.reactions, 'subscribeRaw').mockImplementation((listener) => {
+      rawReactionsListeners.add(listener);
+      return { unsubscribe: mockUnsubscribe };
+    });
+
+    const { unmount } = renderHook(() =>
+      useMessages({
+        rawReactionsListener: mockRawReactionsListener,
+      }),
+    );
+
+    // verify that subscribe was called with the mock listener on mount by invoking it
+    const timestamp = new Date();
+    const rawReactionEvent: MessageReactionRawEvent = {
+      type: MessageReactionEventType.Create,
+      timestamp,
+      reaction: {
+        messageSerial: '123',
+        type: MessageReactionType.Unique,
+        name: '👍',
+        clientId: 'user1',
+      },
+    };
+
+    await waitFor(() => { expect(rawReactionsListeners.size).toBe(1); });
+    act(() => {
+      for (const listener of rawReactionsListeners) {
+        listener(rawReactionEvent);
+      }
+    });
+    expect(mockRawReactionsListener).toHaveBeenCalledWith(rawReactionEvent);
+
+    // unmount the hook and verify that unsubscribe was called
+    unmount();
+    expect(mockUnsubscribe).toHaveBeenCalled();
   });
 });
