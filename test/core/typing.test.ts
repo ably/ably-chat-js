@@ -794,5 +794,72 @@ describe('Typing', () => {
       // Verify that the typing set is cleared
       expect(defaultTyping._currentlyTyping.get('user1')).toBeUndefined();
     });
+
+    it<TestContext>('cancels ongoing operations when disposed', async (context) => {
+      const { room, realtime } = context;
+      const channel = room.channel;
+      const realtimeChannel = realtime.channels.get(channel.name);
+      const defaultTyping = room.typing as TestTypingInterface;
+
+      // Mock implementation for `publish` to simulate 1s delay on the keystroke call
+      const publishSpy = vi
+        .spyOn(realtimeChannel, 'publish')
+        .mockImplementationOnce(() => {
+          return new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate 2s delay
+        })
+        .mockImplementation(() => Promise.resolve()); // All subsequent calls resolve immediately
+
+      // Needed to allow typing calls to proceed
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+
+      // Start the keystroke operation (this will be delayed by 1s)
+      const keystrokePromise = room.typing.keystroke().catch(() => {
+        // Keystroke might be rejected due to dispose, which is fine
+      });
+
+      // After 250ms, call dispose
+      const disposePromise = new Promise<void>((resolve, reject) => {
+        setTimeout(() => {
+          (room.typing as DefaultTyping)
+            .dispose()
+            .then(() => {
+              resolve();
+            })
+            .catch(reject);
+        }, 250);
+      });
+
+      // After 300ms, call stop
+      // This will cancel the 
+      const stopPromise = new Promise<void>((resolve) => {
+        const timeoutId = setTimeout(() => {
+          void room.typing
+            .stop()
+            .catch((error: unknown) => {
+              // Stop should be rejected since we're disposed
+              expect(error).toBeErrorInfoWithCode(40000);
+            })
+            .finally(() => {
+              clearTimeout(timeoutId);
+              resolve();
+            });
+        }, 300);
+      });
+
+      // Wait for all operations to complete
+      await Promise.all([keystrokePromise, disposePromise, stopPromise]);
+
+      // The keystroke operation should have started (publish called once with start)
+      // but no other operations should have completed
+      expect(publishSpy).toHaveBeenCalledTimes(1);
+      expect(publishSpy).toHaveBeenCalledWith(startMessage);
+
+      // Verify that typing resources were cleared
+      expect(defaultTyping._heartbeatTimerId).toBeUndefined();
+      expect(defaultTyping._currentlyTyping.size).toBe(0);
+
+      // Cleanup mocks
+      publishSpy.mockRestore();
+    }, 5000); // Set timeout to 5 seconds to handle the 1s delay
   });
 });

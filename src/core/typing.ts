@@ -339,11 +339,11 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   // CHA-RL3h
   async dispose(): Promise<void> {
     this._logger.trace(`DefaultTyping.dispose();`);
-    this._mutex.cancel();
 
     // Keep trying to acquire the mutex; wait 200 ms between attempts.
     for (;;) {
       try {
+        this._mutex.cancel();
         await this._mutex.acquire();
         break; // success – exit the loop
       } catch (error: unknown) {
@@ -351,8 +351,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
           // In this case, the mutex was canceled by a later operation,
           // but we are trying to release, so we should always take precedence here.
           // Let's continue trying to acquire it until we win the acquisition lock.
-          this._logger.debug(`DefaultTyping.dispose(); mutex was canceled, retrying`);
+          this._logger.debug(`DefaultTyping.dispose(); mutex was canceled`);
           await new Promise((resolve) => setTimeout(resolve, 200));
+          this._logger.debug(`DefaultTyping.dispose(); retrying mutex acquisition`);
         } else {
           // If we encounter any other error, we log it and exit the loop.
           // This is to ensure that we don't get stuck in an infinite loop
@@ -517,5 +518,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
   get heartbeatThrottleMs(): number {
     return this._heartbeatThrottleMs;
+  }
+
+  get hasHeartbeatTimer(): boolean {
+    return !!this._heartbeatTimerId;
   }
 }
