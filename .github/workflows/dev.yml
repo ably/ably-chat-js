@@ -72,7 +72,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
-      - run: npm run test
+      - run: npm run test -- --coverage
       - uses: davelosert/vitest-coverage-report-action@v2
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'ably/ably-chat-js' && matrix.node-version == env.BASE_NODE_VERSION && (failure() || success()) }}
   build:
