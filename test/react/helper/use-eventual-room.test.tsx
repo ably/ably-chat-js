@@ -30,10 +30,12 @@ describe('eventual rooms', () => {
   beforeEach(() => {
     mockLogger = makeTestLogger();
     updateMockRoom(makeRandomRoom());
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
   });
 
   describe('useEventualRoom', () => {
@@ -71,6 +73,32 @@ describe('eventual rooms', () => {
         expect(result.current).toBe(newRoom);
       });
     });
+
+    it('does not update state if unmounted before room resolves', () => {
+      // Create a promise that we can control when it resolves
+      let resolveRoom: (value: Room | PromiseLike<Room>) => void = () => {};
+      const roomPromise = new Promise<Room>((resolve) => {
+        resolveRoom = resolve;
+      });
+      mockRoomContext = { room: roomPromise };
+
+      const { result, unmount } = renderHook(() => useEventualRoom());
+
+      // We should start with the room being undefined
+      expect(result.current).toBeUndefined();
+
+      // Unmount before resolving the room
+      unmount();
+
+      // Now resolve the room
+      resolveRoom(mockRoom);
+
+      // Wait a bit to ensure no state updates happen
+      vi.advanceTimersByTime(100);
+
+      // The result should still be undefined since we unmounted
+      expect(result.current).toBeUndefined();
+    });
   });
 
   describe('useEventualRoomProperty', () => {
@@ -107,6 +135,32 @@ describe('eventual rooms', () => {
       await vi.waitFor(() => {
         expect(result.current).toBe(newRoom.messages);
       });
+    });
+
+    it('does not update state if unmounted before room resolves', () => {
+      // Create a promise that we can control when it resolves
+      let resolveRoom: (value: Room | PromiseLike<Room>) => void = () => {};
+      const roomPromise = new Promise<Room>((resolve) => {
+        resolveRoom = resolve;
+      });
+      mockRoomContext = { room: roomPromise };
+
+      const { result, unmount } = renderHook(() => useEventualRoomProperty(() => mockRoom.messages));
+
+      // We should start with the room being undefined
+      expect(result.current).toBeUndefined();
+
+      // Unmount before resolving the room
+      unmount();
+
+      // Now resolve the room
+      resolveRoom(mockRoom);
+
+      // Wait a bit to ensure no state updates happen
+      vi.advanceTimersByTime(100);
+
+      // The result should still be undefined since we unmounted
+      expect(result.current).toBeUndefined();
     });
   });
 });
