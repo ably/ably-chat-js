@@ -1,5 +1,5 @@
-import { act,render } from '@testing-library/react';
-import React from 'react';
+import { act,cleanup,render } from '@testing-library/react';
+import React, { StrictMode } from 'react';
 import { afterEach,describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../../src/core/chat.js';
@@ -7,6 +7,7 @@ import { Room } from '../../../src/core/room.js';
 import { RoomOptions } from '../../../src/core/room-options.js';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.js';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.js';
+import { makeTestLogger } from '../../helper/logger.js';
 
 vi.mock('ably');
 
@@ -21,13 +22,7 @@ describe('ChatRoomProvider', () => {
       get: vi.fn(() => Promise.resolve(mockRoom)),
       release: vi.fn(() => new Promise(resolve => setTimeout(resolve, 50))), // Make release take some time
     },
-    logger: {
-      withContext: () => ({
-        debug: vi.fn(() => {}),
-        trace: vi.fn(() => {}),
-        error: vi.fn(() => {}),
-      }),
-    },
+    logger: makeTestLogger(),
     addReactAgent: vi.fn(() => {}),
   } as unknown as ChatClient;
 
@@ -36,42 +31,31 @@ describe('ChatRoomProvider', () => {
   });
 
   describe('room release behavior', () => {
-    it('should abort previous release when mounting with same room and options', async () => {
+    it('should abort previous release when mounting with same room and options', () => {
+      // Create a stable options ref
+      const options = {};
+
       // Create a component that we can show/hide
-      const TestComponent = ({ show }: { show: boolean }) => {
-        if (!show) return null;
+      const TestComponent = () => {
         return (
-          <ChatClientProvider client={mockChatClient}>
-            <ChatRoomProvider name="test-room">
-              <div>Test Content</div>
-            </ChatRoomProvider>
-          </ChatClientProvider>
+            <StrictMode>
+                <ChatClientProvider client={mockChatClient}>
+                    <ChatRoomProvider name="test-room" options={options}>
+                    <div>Test Content</div>
+                    </ChatRoomProvider>
+                </ChatClientProvider>
+          </StrictMode>
         );
       };
 
       // Initial render
-      const { rerender } = render(<TestComponent show={true} />);
-
-      // Wait for initial setup
-      await act(async () => {
-        await Promise.resolve();
-      });
-
-      // Hide the component to trigger release and immediately show it again
-      await act(async () => {
-        rerender(<TestComponent show={false} />);
-        // Immediately rerender before the release promise resolves
-        rerender(<TestComponent show={true} />);
-        await Promise.resolve();
-      });
-
-      // Wait a bit to ensure any release would have happened if not aborted
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      });
+      render(<TestComponent />, {reactStrictMode: true});
 
       // The release should have been aborted, so release should not have been called
       expect(mockChatClient.rooms.release).not.toHaveBeenCalled();
+
+      // Cleanup
+      cleanup();
     });
 
     it('should proceed with release when not remounting', async () => {
