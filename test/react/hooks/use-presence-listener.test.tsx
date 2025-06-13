@@ -4,6 +4,7 @@ import { ErrorInfo } from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
+import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
 import { PresenceEventType } from '../../../src/core/events.ts';
 import { Logger } from '../../../src/core/logger.ts';
 import { PresenceEvent, PresenceListener, PresenceMember } from '../../../src/core/presence.ts';
@@ -459,4 +460,39 @@ describe('usePresenceListener', () => {
     expect(result.current.presenceData).toHaveLength(1);
     expect(result.current.presenceData[0]).toStrictEqual(testPresenceData2[0]);
   }, 10000);
+
+  it('should correctly subscribe and unsubscribe onDiscontinuity listener', async () => {
+    // mock onDiscontinuity listener and associated off function
+    const mockOnDiscontinuity = vi.fn();
+    const mockOff = vi.fn();
+
+    let registeredListener: DiscontinuityListener | undefined;
+
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener) => {
+      registeredListener = listener;
+      return {
+        off: () => {
+          mockOff();
+        },
+      };
+    });
+
+    // Render the hook with the onDiscontinuity listener
+    const { result, unmount } = renderHook(() => usePresenceListener({ onDiscontinuity: mockOnDiscontinuity }));
+
+    await waitForEventualHookValueToBeDefined(result, () => result.current.presence);
+
+    // Verify that onDiscontinuity was called and stored our listener
+    expect(mockRoom.onDiscontinuity).toHaveBeenCalled();
+    expect(registeredListener).toBeDefined();
+
+    // Trigger the discontinuity listener with an error
+    const errorInfo = new Ably.ErrorInfo('test', 500, 50000);
+    registeredListener?.(errorInfo);
+    expect(mockOnDiscontinuity).toHaveBeenCalledWith(errorInfo);
+
+    // Unmount the hook and verify that off was called
+    unmount();
+    expect(mockOff).toHaveBeenCalled();
+  });
 });

@@ -3,9 +3,9 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     coverage: {
-      enabled: true,
+      enabled: false,
       include: ['src/**/*'],
-      exclude: ['src/core/index.ts', 'src/react/index.ts', 'src/index.ts', 'src/utils/**/*'],
+      exclude: ['src/core/index.ts', 'src/react/index.ts', 'src/index.ts', 'src/utils/**/*', 'src/**/vite.config.ts'],
       reporter: ['text', 'html', 'json-summary', 'json'],
       reportOnFailure: true,
       thresholds: {

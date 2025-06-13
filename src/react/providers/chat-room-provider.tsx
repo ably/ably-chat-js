@@ -64,6 +64,7 @@ class RoomReleaseQueue {
   private readonly _queue: RoomReleaseOp[];
   private readonly _logger: Logger;
   constructor(logger: Logger) {
+    logger.trace('RoomReleaseQueue();');
     this._queue = [];
     this._logger = logger;
   }

@@ -8,6 +8,7 @@ import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
+import { Logger } from '../../src/index.ts';
 import { randomRoomName } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
 import { ablyRealtimeClient } from './realtime-client.ts';
@@ -36,8 +37,9 @@ export const makeRandomRoom = (params?: {
   realtime?: Ably.Realtime;
   chatApi?: ChatApi;
   options?: RoomOptions;
+  logger?: Logger;
 }): Room => {
-  const logger = makeTestLogger();
+  const logger = params?.logger ?? makeTestLogger();
   const realtime = params?.realtime ?? ablyRealtimeClient();
   const chatApi = params?.chatApi ?? new ChatApi(realtime, logger);
 

@@ -106,4 +106,12 @@ describe('ChannelManager', () => {
     context.channelManager.release();
     expect(context.mockRealtime.channels.release).toHaveBeenCalledWith(roomChannelName('test-room'));
   });
+
+  it<TestContext>('should not call release if no channel has been resolved', (context) => {
+    // Act - call release without first calling get()
+    context.channelManager.release();
+
+    // Assert - release should not be called on the realtime channels
+    expect(context.mockRealtime.channels.release).not.toHaveBeenCalled();
+  });
 });

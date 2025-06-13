@@ -116,12 +116,6 @@ export interface RoomLifecycle {
  */
 export interface InternalRoomLifecycle extends RoomLifecycle {
   /**
-   * Registers a listener that will be called once when the room status changes.
-   * @param listener The function to call when the status changes.
-   */
-  onChangeOnce(listener: RoomStatusListener): void;
-
-  /**
    * Sets the status of the room.
    *
    * @param params The new status of the room.
@@ -192,10 +186,6 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
         this._emitter.off(wrapped);
       },
     };
-  }
-
-  onChangeOnce(listener: RoomStatusListener): void {
-    this._internalEmitter.once(listener);
   }
 
   setStatus(params: NewRoomStatus): void {
