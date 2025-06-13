@@ -1,6 +1,6 @@
-import { act,cleanup,render } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import React, { StrictMode } from 'react';
-import { afterEach,describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../../src/core/chat.js';
 import { Room } from '../../../src/core/room.js';
@@ -20,7 +20,7 @@ describe('ChatRoomProvider', () => {
   const mockChatClient = {
     rooms: {
       get: vi.fn(() => Promise.resolve(mockRoom)),
-      release: vi.fn(() => new Promise(resolve => setTimeout(resolve, 50))), // Make release take some time
+      release: vi.fn(() => new Promise((resolve) => setTimeout(resolve, 50))), // Make release take some time
     },
     logger: makeTestLogger(),
     addReactAgent: vi.fn(() => {}),
@@ -38,18 +38,21 @@ describe('ChatRoomProvider', () => {
       // Create a component that we can show/hide
       const TestComponent = () => {
         return (
-            <StrictMode>
-                <ChatClientProvider client={mockChatClient}>
-                    <ChatRoomProvider name="test-room" options={options}>
-                    <div>Test Content</div>
-                    </ChatRoomProvider>
-                </ChatClientProvider>
+          <StrictMode>
+            <ChatClientProvider client={mockChatClient}>
+              <ChatRoomProvider
+                name="test-room"
+                options={options}
+              >
+                <div>Test Content</div>
+              </ChatRoomProvider>
+            </ChatClientProvider>
           </StrictMode>
         );
       };
 
       // Initial render
-      render(<TestComponent />, {reactStrictMode: true});
+      render(<TestComponent />, { reactStrictMode: true });
 
       // The release should have been aborted, so release should not have been called
       expect(mockChatClient.rooms.release).not.toHaveBeenCalled();
@@ -64,7 +67,7 @@ describe('ChatRoomProvider', () => {
           <ChatRoomProvider name="test-room">
             <div>Test Content</div>
           </ChatRoomProvider>
-        </ChatClientProvider>
+        </ChatClientProvider>,
       );
 
       // Wait for initial setup
@@ -77,7 +80,7 @@ describe('ChatRoomProvider', () => {
 
       // Wait for release to complete
       await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       });
 
       // The release should have been called
@@ -90,7 +93,10 @@ describe('ChatRoomProvider', () => {
         if (!show) return null;
         return (
           <ChatClientProvider client={mockChatClient}>
-            <ChatRoomProvider name="test-room" options={options}>
+            <ChatRoomProvider
+              name="test-room"
+              options={options}
+            >
               <div>Test Content</div>
             </ChatRoomProvider>
           </ChatClientProvider>
@@ -109,17 +115,22 @@ describe('ChatRoomProvider', () => {
       await act(async () => {
         rerender(<TestComponent show={false} />);
         // Immediately rerender with different options before the release promise resolves
-        rerender(<TestComponent show={true} options={{ someOption: true } as RoomOptions} />);
+        rerender(
+          <TestComponent
+            show={true}
+            options={{ someOption: true } as RoomOptions}
+          />,
+        );
         await Promise.resolve();
       });
 
       // Wait for release to complete
       await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       });
 
       // The release should have proceeded since options changed
       expect(mockChatClient.rooms.release).toHaveBeenCalledWith('test-room');
     });
   });
-}); 
+});

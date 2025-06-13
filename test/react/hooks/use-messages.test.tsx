@@ -4,7 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
 import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
-import { ChatMessageAction, ChatMessageEventType, MessageReactionEventType, MessageReactionRawEvent, MessageReactionSummaryEvent, MessageReactionType } from '../../../src/core/events.ts';
+import {
+  ChatMessageAction,
+  ChatMessageEventType,
+  MessageReactionEventType,
+  MessageReactionRawEvent,
+  MessageReactionSummaryEvent,
+  MessageReactionType,
+} from '../../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../../src/core/message.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
 import { MessageRawReactionListener, MessageReactionListener } from '../../../src/core/messages-reactions.ts';
@@ -280,11 +287,13 @@ describe('useMessages', () => {
         messageSerial: '123',
         unique: { '👍': { total: 1, clientIds: ['user1'] } },
         distinct: { '👍': { total: 1, clientIds: ['user1'] } },
-        multiple: { '👍': { total: 1, totalUnidentified: 0, clientIds: { 'user1': 1 } } },
+        multiple: { '👍': { total: 1, totalUnidentified: 0, clientIds: { user1: 1 } } },
       },
     };
 
-    await waitFor(() => { expect(reactionsListeners.size).toBe(1); });
+    await waitFor(() => {
+      expect(reactionsListeners.size).toBe(1);
+    });
     act(() => {
       for (const listener of reactionsListeners) {
         listener(reactionEvent);
@@ -327,7 +336,9 @@ describe('useMessages', () => {
       },
     };
 
-    await waitFor(() => { expect(rawReactionsListeners.size).toBe(1); });
+    await waitFor(() => {
+      expect(rawReactionsListeners.size).toBe(1);
+    });
     act(() => {
       for (const listener of rawReactionsListeners) {
         listener(rawReactionEvent);

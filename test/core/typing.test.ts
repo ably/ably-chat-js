@@ -830,7 +830,7 @@ describe('Typing', () => {
       });
 
       // After 300ms, call stop
-      // This will cancel the 
+      // This will cancel the
       const stopPromise = new Promise<void>((resolve) => {
         const timeoutId = setTimeout(() => {
           void room.typing
