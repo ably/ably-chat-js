@@ -1,6 +1,5 @@
 
-
-![Ably Chat Header](/images/ably-chat-github-header.png)
+![Ably Chat Header](images/JavaScriptChatSDK-github.png)
 
 ![License](https://badgen.net/github/license/3scale/saas-operator)
 ![npm version](https://img.shields.io/npm/v/@ably/chat.svg?style=flat)
