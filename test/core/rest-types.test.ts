@@ -74,7 +74,7 @@ describe('messageFromRest', () => {
   });
 
   it('should handle different message actions', () => {
-    const testCases = [
+    const testCases: { action: RestMessage['action']; expected: ChatMessageAction }[] = [
       { action: 'message.create', expected: ChatMessageAction.MessageCreate },
       { action: 'message.update', expected: ChatMessageAction.MessageUpdate },
       { action: 'message.delete', expected: ChatMessageAction.MessageDelete },
@@ -346,26 +346,6 @@ describe('messageFromRest', () => {
     expect(result.reactions.multiple).toEqual({});
   });
 
-  it('should handle message with undefined metadata and headers', () => {
-    const restMessage: RestMessage = {
-      serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
-      text: 'Message without metadata/headers',
-      clientId: 'client123',
-      action: 'message.create',
-      metadata: undefined as unknown as Record<string, unknown>,
-      headers: undefined as unknown as Record<string, string>,
-      createdAt: 1672531200000,
-      timestamp: 1672531300000,
-    };
-
-    const result = messageFromRest(restMessage);
-
-    expect(result.metadata).toEqual({});
-    expect(result.headers).toEqual({});
-  });
-
   it('should handle message with no reactions field', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
@@ -502,5 +482,23 @@ describe('messageFromRest', () => {
 
     expect(result.createdAt).toEqual(new Date(0));
     expect(result.timestamp).toEqual(new Date(0));
+  });
+
+  it('should default to message.create for unknown action', () => {
+    const restMessage: RestMessage = {
+      serial: '01672531200000-123@abcdefghij',
+      version: '01672531200000-123@abcdefghij:0',
+      roomId: 'room123',
+      text: 'Test message',
+      clientId: 'client123',
+      action: 'message.unknown' as RestMessage['action'],
+      metadata: {},
+      headers: {},
+      createdAt: 1672531200000,
+      timestamp: 1672531300000,
+    };
+
+    const result = messageFromRest(restMessage);
+    expect(result.action).toBe(ChatMessageAction.MessageCreate);
   });
 });

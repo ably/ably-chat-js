@@ -1,5 +1,5 @@
 import { ChatMessageAction } from './events.js';
-import { DefaultMessage, emptyMessageReactions, Message, MessageHeaders, MessageMetadata } from './message.js';
+import { DefaultMessage, emptyMessageReactions, Message } from './message.js';
 
 // RestClientIdList represents a list of client IDs with aggregation data
 export interface RestClientIdList {
@@ -35,7 +35,7 @@ export interface RestMessage {
   roomId: string;
   text: string;
   clientId: string;
-  action: string;
+  action: 'message.create' | 'message.update' | 'message.delete';
   metadata: Record<string, unknown>;
   headers: Record<string, string>;
   createdAt: number;
@@ -51,19 +51,19 @@ export interface RestMessage {
  * @returns The converted message.
  */
 export const messageFromRest = (message: RestMessage): Message => {
-  const metadata = message.metadata as MessageMetadata | undefined;
-  const headers = message.headers as MessageHeaders | undefined;
-
   const reactions = {
     ...emptyMessageReactions(),
     ...message.reactions,
   };
 
+  // Convert the action to a ChatMessageAction enum, defaulting to MessageCreate if the action is not found.
+  const action = Object.values(ChatMessageAction).includes(message.action as ChatMessageAction)
+    ? (message.action as ChatMessageAction)
+    : ChatMessageAction.MessageCreate;
+
   return new DefaultMessage({
     ...message,
-    action: message.action as ChatMessageAction,
-    metadata: metadata ?? {},
-    headers: headers ?? {},
+    action,
     createdAt: new Date(message.createdAt),
     timestamp: new Date(message.timestamp),
     reactions: reactions,
