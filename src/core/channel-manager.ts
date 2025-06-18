@@ -59,7 +59,6 @@ export class ChannelManager {
     this._logger.trace(this._isReact ? 'using react channel options' : 'using default channel options');
 
     // Create a deep copy of the options, ensuring modes array is also copied
-    const modes = baseOptions.modes ?? [];
-    return { ...baseOptions, modes: [...modes] as Ably.ChannelMode[] } as ChannelOptionsWithModes;
+    return { ...baseOptions, modes: [...(baseOptions.modes ?? [])] } as ChannelOptionsWithModes;
   }
 }

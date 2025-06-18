@@ -2,18 +2,11 @@ import * as Ably from 'ably';
 
 import { ChatMessageAction } from './events.js';
 import { Logger } from './logger.js';
-import {
-  DefaultMessage,
-  emptyMessageReactions,
-  Message,
-  MessageHeaders,
-  MessageMetadata,
-  MessageOperationMetadata,
-  MessageReactions,
-} from './message.js';
+import { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata, MessageReactions } from './message.js';
 import { OrderBy } from './messages.js';
 import { OccupancyData } from './occupancy.js';
 import { PaginatedResult } from './query.js';
+import { messageFromRest, RestMessage } from './rest-types.js';
 
 export interface GetMessagesQueryParams {
   start?: number;
@@ -189,28 +182,16 @@ export class ChatApi {
       }
     }
 
-    const data = await this._makeAuthorizedPaginatedRequest<Message>(`/chat/v3/rooms/${roomName}/messages`, apiParams);
+    const data = await this._makeAuthorizedPaginatedRequest<RestMessage>(
+      `/chat/v3/rooms/${roomName}/messages`,
+      apiParams,
+    );
     return this._recursivePaginateMessages(data);
   }
 
-  private _recursivePaginateMessages(data: PaginatedResult<Message>): PaginatedResult<Message> {
-    const mapToDefaultMessage = (message: Message): DefaultMessage => {
-      const metadata = message.metadata as MessageMetadata | undefined;
-      const headers = message.headers as MessageHeaders | undefined;
-      const reactions = message.reactions as typeof message.reactions | undefined;
-
-      return new DefaultMessage({
-        ...message,
-        metadata: metadata ?? {},
-        headers: headers ?? {},
-        createdAt: (message.createdAt as Date | undefined) ? new Date(message.createdAt) : new Date(message.timestamp),
-        timestamp: new Date(message.timestamp),
-        reactions: reactions ?? emptyMessageReactions(),
-      });
-    };
-
+  private _recursivePaginateMessages(data: PaginatedResult<RestMessage>): PaginatedResult<Message> {
     const paginatedResult: PaginatedResult<Message> = {} as PaginatedResult<Message>;
-    paginatedResult.items = data.items.map((payload) => mapToDefaultMessage(payload));
+    paginatedResult.items = data.items.map((payload) => messageFromRest(payload));
 
     // Recursively map the next paginated data
     paginatedResult.next = () =>

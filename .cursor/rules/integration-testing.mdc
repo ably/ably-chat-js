@@ -1,12 +1,17 @@
 ---
 description: Writing integration tests
 globs: *.integration.test.ts,*.integration.test.tsx
+alwaysApply: false
 ---
 # Integration Testing Guide
 
 ## How Integration Tests Work
 
 Integration tests are intended to test behaviour whilst interacting with a real Ably service.
+
+## Rules
+
+- Always run tests after you modify them.
 
 ## Test Structure
 

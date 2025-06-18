@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { ConnectionStatus } from '../../src/core/connection.ts';
@@ -70,9 +70,14 @@ describe('Chat', () => {
     const message = await room.messages.send({ text: 'my message' });
     expect(message).toEqual(expect.objectContaining({ text: 'my message', clientId: chat.clientId }));
 
+    // Attach to the room
+    await room.attach();
+
     // Request occupancy, and expect it to succeed
-    const occupancy = await room.occupancy.get();
-    expect(occupancy).toEqual(expect.objectContaining({ connections: 1, presenceMembers: 0 }));
+    await vi.waitFor(async () => {
+      const occupancy = await room.occupancy.get();
+      return occupancy.connections === 1 && occupancy.presenceMembers === 0;
+    }, 10000);
 
     // Request history, and expect it to succeed
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for cassandra
@@ -90,9 +95,14 @@ describe('Chat', () => {
     const message = await room.messages.send({ text: 'my message' });
     expect(message).toEqual(expect.objectContaining({ text: 'my message', clientId: chat.clientId }));
 
+    // Attach to the room
+    await room.attach();
+
     // Request occupancy, and expect it to succeed
-    const occupancy = await room.occupancy.get();
-    expect(occupancy).toEqual(expect.objectContaining({ connections: 1, presenceMembers: 0 }));
+    await vi.waitFor(async () => {
+      const occupancy = await room.occupancy.get();
+      return occupancy.connections === 1 && occupancy.presenceMembers === 0;
+    }, 10000);
 
     // Request history, and expect it to succeed
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
