@@ -13,4 +13,4 @@ If you see an opportunity for improvement, make a suggestion and ask for approva
 
 Update the tests whenever you make a change.
 
-Always run the tests.
+Always run the tests after making changes to source code or tests in order to catch any regressions.
