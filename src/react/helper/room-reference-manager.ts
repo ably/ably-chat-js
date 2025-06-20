@@ -1,0 +1,286 @@
+import * as Ably from 'ably';
+import { dequal } from 'dequal';
+
+import { ChatClient } from '../../core/chat.js';
+import { ErrorCode } from '../../core/errors.js';
+import { Logger } from '../../core/logger.js';
+import { Room } from '../../core/room.js';
+import { RoomOptions } from '../../core/room-options.js';
+
+/**
+ * Reference counting entry for a room.
+ */
+interface RoomRefCountEntry {
+  count: number;
+  roomName: string;
+  options?: RoomOptions;
+  resolvedRoom?: Room;
+  pendingRelease?: NodeJS.Timeout; // Timer for delayed release
+}
+
+/**
+ * Creates a unique key for a room based on name and options.
+ */
+function createRoomKey(roomName: string, options?: RoomOptions): string {
+  return JSON.stringify({ roomName, options });
+}
+
+/**
+ * Reference counting manager for rooms within a ChatClientProvider.
+ * This manages attach/release lifecycle based on reference counts.
+ */
+export class RoomReferenceManager {
+  private readonly _refCounts = new Map<string, RoomRefCountEntry>();
+  private readonly _client: ChatClient;
+  private readonly _logger: Logger;
+  private readonly _releaseDelayMs = 100; // Delay before actually releasing to allow for abort
+  private readonly _pendingReleases = new Map<string, Promise<void>>(); // Track pending releases by room name
+
+  constructor(client: ChatClient, logger: Logger) {
+    this._client = client;
+    this._logger = logger;
+  }
+
+  /**
+   * Get the client this manager is associated with.
+   */
+  get client(): ChatClient {
+    return this._client;
+  }
+
+  /**
+   * Increment reference count for a room. Attaches on first reference.
+   */
+  async addReference(roomName: string, options?: RoomOptions): Promise<Room> {
+    this._logger.trace('RoomReferenceManager.addReference();');
+    const key = createRoomKey(roomName, options);
+    const existing = this._refCounts.get(key);
+
+    if (existing) {
+      // If there's a pending release, abort it
+      if (existing.pendingRelease) {
+        clearTimeout(existing.pendingRelease);
+        existing.pendingRelease = undefined;
+        this._logger.debug('RoomReferenceManager.addReference(); aborted pending release', {
+          roomName,
+          options,
+        });
+      }
+
+      existing.count++;
+      this._logger.debug('RoomReferenceManager.addReference(); incremented ref count', {
+        roomName,
+        options,
+        count: existing.count,
+      });
+
+      // Always return the resolved room from the existing reference
+      // We should never call client.rooms.get() again as that would cause
+      // "room already exists with different options" errors
+      if (existing.resolvedRoom) {
+        return existing.resolvedRoom;
+      }
+
+      // If the room hasn't resolved yet, wait for it
+      // This shouldn't happen in normal circumstances since we await the room
+      // creation below, but it's a safety net
+      throw new Error('Room reference exists but room is not resolved - this should not happen');
+    }
+
+    // Check if there's a pending release for this room name (regardless of options)
+    const pendingRelease = this._pendingReleases.get(roomName);
+    if (pendingRelease) {
+      this._logger.debug('RoomReferenceManager.addReference(); waiting for pending release to complete', {
+        roomName,
+        options,
+      });
+
+      try {
+        await pendingRelease;
+      } catch (error) {
+        this._logger.debug('RoomReferenceManager.addReference(); pending release failed, continuing', {
+          roomName,
+          options,
+          error,
+        });
+      }
+    }
+
+    // Check if there's already a room with the same name but different options
+    const existingWithDifferentOptions = [...this._refCounts.values()].find(
+      (entry) => entry.roomName === roomName && !dequal(entry.options, options),
+    );
+
+    if (existingWithDifferentOptions) {
+      // Only allow different options if:
+      // 1. There's a pending release for the existing room, OR
+      // 2. The reference count is 0 (meaning it's scheduled for release)
+      const hasPendingRelease = existingWithDifferentOptions.pendingRelease !== undefined;
+      const hasZeroRefCount = existingWithDifferentOptions.count <= 0;
+
+      if (!hasPendingRelease && !hasZeroRefCount) {
+        // Room is actively being used with different options - throw an error
+        throw new Ably.ErrorInfo(
+          `cannot get room with different options; room "${roomName}" is already in use with different options`,
+          ErrorCode.BadRequest,
+          400,
+        );
+      }
+
+      this._logger.debug(
+        'RoomReferenceManager.addReference(); found existing room with different options, releasing it first',
+        {
+          roomName,
+          newOptions: options,
+          existingOptions: existingWithDifferentOptions.options,
+          hasPendingRelease,
+          hasZeroRefCount,
+        },
+      );
+
+      // Cancel any pending release for the existing room
+      if (existingWithDifferentOptions.pendingRelease) {
+        clearTimeout(existingWithDifferentOptions.pendingRelease);
+        existingWithDifferentOptions.pendingRelease = undefined;
+      }
+
+      // Remove the existing room reference immediately
+      const existingKey = createRoomKey(roomName, existingWithDifferentOptions.options);
+      this._refCounts.delete(existingKey);
+
+      // Create and track the release promise
+      const releasePromise = this._client.rooms
+        .release(roomName)
+        .catch((error: unknown) => {
+          this._logger.debug('RoomReferenceManager.addReference(); release of existing room failed', {
+            roomName,
+            error,
+          });
+        })
+        .finally(() => {
+          // Remove the pending release tracking when done
+          this._pendingReleases.delete(roomName);
+        });
+
+      // Track the pending release
+      this._pendingReleases.set(roomName, releasePromise);
+
+      // Wait for the release to complete
+      try {
+        await releasePromise;
+      } catch (error) {
+        this._logger.debug('RoomReferenceManager.addReference(); release of existing room failed, continuing', {
+          roomName,
+          error,
+        });
+      }
+    }
+
+    // First reference - create entry and attach
+    const entry: RoomRefCountEntry = {
+      count: 1,
+      roomName,
+      options,
+    };
+    this._refCounts.set(key, entry);
+
+    this._logger.debug('RoomReferenceManager.addReference(); first reference, attaching room', {
+      roomName,
+      options,
+    });
+
+    try {
+      const room = await this._client.rooms.get(roomName, options);
+      entry.resolvedRoom = room;
+
+      // Attach the room on first reference
+      void room.attach().catch((error: unknown) => {
+        this._logger.error('RoomReferenceManager.addReference(); error attaching room', {
+          roomName,
+          options,
+          error,
+        });
+      });
+
+      return room;
+    } catch (error) {
+      // If room creation failed, clean up the entry
+      this._refCounts.delete(key);
+      this._logger.error('RoomReferenceManager.addReference(); error creating room', {
+        roomName,
+        options,
+        error,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Decrement reference count for a room. Releases on last reference after a delay.
+   */
+  removeReference(roomName: string, options?: RoomOptions): void {
+    this._logger.trace('RoomReferenceManager.removeReference();');
+    const key = createRoomKey(roomName, options);
+    const existing = this._refCounts.get(key);
+
+    if (!existing) {
+      this._logger.debug('RoomReferenceManager.removeReference(); no existing reference found', {
+        roomName,
+        options,
+      });
+      return;
+    }
+
+    existing.count--;
+    this._logger.debug('RoomReferenceManager.removeReference(); decremented ref count', {
+      roomName,
+      options,
+      count: existing.count,
+    });
+
+    if (existing.count <= 0) {
+      // Schedule release after a delay to allow for abort
+      this._logger.debug('RoomReferenceManager.removeReference(); scheduling delayed release', {
+        roomName,
+        options,
+        delayMs: this._releaseDelayMs,
+      });
+
+      existing.pendingRelease = setTimeout(() => {
+        // Double-check that the entry still exists and should be released
+        const currentEntry = this._refCounts.get(key);
+        if (currentEntry && currentEntry.count <= 0) {
+          this._refCounts.delete(key);
+          this._logger.debug('RoomReferenceManager.removeReference(); executing delayed release', {
+            roomName,
+            options,
+          });
+
+          // Create a promise for the release operation and track it
+          const releasePromise = this._client.rooms
+            .release(roomName)
+            .catch((error: unknown) => {
+              this._logger.debug('RoomReferenceManager.removeReference(); release failed', {
+                roomName,
+                options,
+                error,
+              });
+            })
+            .finally(() => {
+              // Remove the pending release tracking when done
+              this._pendingReleases.delete(roomName);
+            });
+
+          // Track the pending release by room name
+          this._pendingReleases.set(roomName, releasePromise);
+        }
+      }, this._releaseDelayMs);
+    }
+  }
+
+  getReferenceCount(roomName: string, options?: RoomOptions): number {
+    this._logger.trace('RoomReferenceManager.getReferenceCount();');
+    const key = createRoomKey(roomName, options);
+    return this._refCounts.get(key)?.count ?? 0;
+  }
+}

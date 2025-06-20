@@ -159,7 +159,9 @@ it('is deleted', () => {
   const secondSerial = '01672531200000-124@abcdefghij';
 
 ### Error Testing
+
 Test error cases explicitly:
+
 ```typescript
 it('should throw an error if different messages', () => {
   // Arrange
@@ -168,6 +170,23 @@ it('should throw an error if different messages', () => {
 
   // Act & Assert
   expect(() => message.with(event)).toThrowErrorInfo({
+    code: 40000,
+    statusCode: 400,
+    message: 'cannot apply event for a different message',
+  });
+});
+```
+
+If handling promises, it's the same principle but a different method:
+
+```ts
+it('should throw an error if different messages', async () => {
+  // Arrange
+  const message = // ... setup message
+  const event = // ... setup event
+
+  // Act & Assert
+  await expect(() => message.with(event)).rejects.toBeErrorInfo({
     code: 40000,
     statusCode: 400,
     message: 'cannot apply event for a different message',
