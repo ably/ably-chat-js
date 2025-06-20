@@ -1,5 +1,5 @@
 // imported for docs linking
-import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { RoomOptions } from '../../core/room-options.js';
 import { ChatRoomContext, ChatRoomContextType } from '../contexts/chat-room-context.js';
@@ -37,12 +37,6 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({ name: roomNa
   const clientLogger = useLogger();
   const logger = useMemo(() => clientLogger.withContext({ roomName }), [clientLogger, roomName]);
   const roomReferenceManager = useRoomReferenceManager();
-  const optionsRef = useRef(options);
-
-  useEffect(() => {
-    optionsRef.current = options;
-    logger.debug(`ChatRoomProvider(); updating options`, { options: optionsRef.current });
-  }, [logger, options]);
 
   logger.debug(`ChatRoomProvider();`, { options });
 
@@ -62,18 +56,18 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({ name: roomNa
     let unmounted = false;
 
     // Add reference and get the room
-    const roomPromise = roomReferenceManager.addReference(roomName, optionsRef.current);
+    const roomPromise = roomReferenceManager.addReference(roomName, options);
 
     // Update the context value with the new room promise
     setValue((prev: ChatRoomContextType) => {
       // If the room id and options haven't changed, then we don't need to do anything
-      if (prev.client === client && prev.roomName === roomName && prev.options === optionsRef.current) {
-        logger.debug(`ChatRoomProvider(); no change in room id or options`, { options: optionsRef.current });
+      if (prev.client === client && prev.roomName === roomName && prev.options === options) {
+        logger.debug(`ChatRoomProvider(); no change in room id or options`, { options });
         return prev;
       }
 
-      logger.debug(`ChatRoomProvider(); updating value`, { options: optionsRef.current });
-      return { room: roomPromise, roomName, options: optionsRef.current, client };
+      logger.debug(`ChatRoomProvider(); updating value`, { options });
+      return { room: roomPromise, roomName, options, client };
     });
 
     // Handle the room promise resolution
@@ -93,9 +87,9 @@ export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({ name: roomNa
       logger.debug(`ChatRoomProvider(); cleaning up lifecycle useEffect`);
 
       // Remove reference - this will handle release if it's the last reference
-      roomReferenceManager.removeReference(roomName, optionsRef.current);
+      roomReferenceManager.removeReference(roomName, options);
     };
-  }, [roomName, optionsRef, logger, client, roomReferenceManager]);
+  }, [roomName, options, logger, client, roomReferenceManager]);
 
   return <ChatRoomContext.Provider value={value}>{children}</ChatRoomContext.Provider>;
 };
