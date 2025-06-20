@@ -1,5 +1,4 @@
 import { cleanup, configure, render } from '@testing-library/react';
-import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Message } from '../../../src/core/message.ts';
@@ -216,13 +215,35 @@ describe('ChatRoomProvider', () => {
     const newOptions = { occupancy: { enableEvents: false } };
     
     const statusMap = new Map<number, RoomStatus>();
+    const messagesMap = new Map<number, Message[]>();
+    const messageSent = new Map<number, boolean>();
 
-    // Component to monitor room status
+    // Component to monitor room status and subscribe to messages
     const RoomStatusMonitor = ({ id }: { id: number }) => {
-      console.log('ROOM STATUS MONITOR', id);
+      const {send} = useMessages({
+        listener: (message: ChatMessageEvent) => {
+          if (!messagesMap.has(id)) {
+            messagesMap.set(id, []);
+          }
+          
+          messagesMap.get(id)?.push(message.message);
+        },
+      });
+
       const { status } = useRoomStatus({onRoomStatusChange(change) {
-          console.log('STATUS CHANGE', id, change);
           statusMap.set(id, change.current);
+
+          // On the first render, where we're actually attached, send a message
+          if (!messageSent.has(id) && change.current === RoomStatus.Attached) {
+            messageSent.set(id, true);
+            send({ text: `Hello from test ${id.toString()}` })
+            .then(() => {
+              console.log('Message sent');
+            })
+            .catch(() => {
+              console.error('Failed to send message');
+            });
+          }
       },});
 
       return <div data-testid={`room-status-${id.toString()}`}>{status}</div>;
@@ -245,6 +266,15 @@ describe('ChatRoomProvider', () => {
       { timeout: 2000 },
     );
 
+    // Check that the message was received
+    await vi.waitFor(
+      () => {
+        expect(messagesMap.get(1)?.length).toBe(1);
+        expect(messagesMap.get(1)?.[0]).toMatchObject({ text: `Hello from test 1` });
+      },
+      { timeout: 2000 },
+    );
+
     // Re-render with new options
     rerender(
       <ChatClientProvider client={chatClient}>
@@ -262,8 +292,20 @@ describe('ChatRoomProvider', () => {
       { timeout: 2000 },
     );
 
+    // Check that the message was received
+    await vi.waitFor(
+      () => {
+        expect(messagesMap.get(2)?.length).toBe(1);
+        expect(messagesMap.get(2)?.[0]).toMatchObject({ text: `Hello from test 2` });
+      },
+      { timeout: 2000 },
+    );
+
+    // For good measure, check that the first hook hasn't received any additional messages
+    expect(messagesMap.get(1)?.length).toBe(1);
+
     // Check that the room options are the new options
-    const room = await chatClient.rooms.get(roomName);
-    expect(room.options).toMatchObject(newOptions);
+    const room = await chatClient.rooms.get(roomName, newOptions);
+    expect(room.options()).toMatchObject(newOptions);
   });
 });

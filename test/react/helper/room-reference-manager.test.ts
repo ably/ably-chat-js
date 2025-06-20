@@ -89,7 +89,7 @@ describe('RoomReferenceManager', () => {
     expect(manager.getReferenceCount(roomName2, options2)).toBe(1);
   });
 
-  it('should handle same room name with different options as separate references', async () => {
+  it('should handle same room name with different options by releasing old room', async () => {
     const client = newChatClient();
     const logger = (client as unknown as { logger: Logger }).logger;
     const manager = new RoomReferenceManager(client, logger);
@@ -98,36 +98,110 @@ describe('RoomReferenceManager', () => {
     const options1 = { occupancy: { enableEvents: true } };
     const options2 = { occupancy: { enableEvents: false } };
 
-    // Mock rooms for different options
-    const mockRoom1 = await client.rooms.get(roomName, options1);
-    const mockRoom2 = await client.rooms.get(roomName, options2);
-    const mockRoom3 = await client.rooms.get(roomName); // No options
-    vi.spyOn(mockRoom1, 'attach').mockResolvedValue();
-    vi.spyOn(mockRoom2, 'attach').mockResolvedValue();
-    vi.spyOn(mockRoom3, 'attach').mockResolvedValue();
+    // Mock release method to actually remove the room from the client's internal map
+    vi.spyOn(client.rooms, 'release').mockImplementation((name: string) => {
+      // Remove the room from the client's internal rooms map to simulate real behavior
+      const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
+      roomsInternal.delete(name);
+      return Promise.resolve();
+    });
 
-    // Add references with different options
+    // First, add a reference with options1
     const room1 = await manager.addReference(roomName, options1);
-    const room2 = await manager.addReference(roomName, options2);
-    const room3 = await manager.addReference(roomName); // No options
-
-    // Should be different room instances
-    expect(room1).toBe(mockRoom1);
-    expect(room2).toBe(mockRoom2);
-    expect(room3).toBe(mockRoom3);
-    expect(room1).not.toBe(room2);
-    expect(room1).not.toBe(room3);
-    expect(room2).not.toBe(room3);
-
-    // Should have separate reference counts
     expect(manager.getReferenceCount(roomName, options1)).toBe(1);
-    expect(manager.getReferenceCount(roomName, options2)).toBe(1);
-    expect(manager.getReferenceCount(roomName)).toBe(1);
 
-    // Each should have been attached once
-    expect(mockRoom1.attach).toHaveBeenCalledTimes(1);
-    expect(mockRoom2.attach).toHaveBeenCalledTimes(1);
-    expect(mockRoom3.attach).toHaveBeenCalledTimes(1);
+    // Now try to add a reference with different options
+    // This should release the old room and create a new one
+    const room2 = await manager.addReference(roomName, options2);
+
+    // Should get different room instances
+    expect(room1).not.toBe(room2);
+
+    // Old room should have been released
+    await vi.waitFor(() => {
+      expect(client.rooms.release).toHaveBeenCalledWith(roomName);
+    });
+
+    // New room should have reference count of 1
+    expect(manager.getReferenceCount(roomName, options2)).toBe(1);
+    // Old room should have reference count of 0
+    expect(manager.getReferenceCount(roomName, options1)).toBe(0);
+  });
+
+  it('should handle adding reference with no options after room with options', async () => {
+    const client = newChatClient();
+    const logger = (client as unknown as { logger: Logger }).logger;
+    const manager = new RoomReferenceManager(client, logger);
+    const roomName = randomRoomName();
+
+    const options1 = { occupancy: { enableEvents: true } };
+
+    // Mock release method to actually remove the room from the client's internal map
+    vi.spyOn(client.rooms, 'release').mockImplementation((name: string) => {
+      // Remove the room from the client's internal rooms map to simulate real behavior
+      const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
+      roomsInternal.delete(name);
+      return Promise.resolve();
+    });
+
+    // First, add a reference with options
+    const room1 = await manager.addReference(roomName, options1);
+    expect(manager.getReferenceCount(roomName, options1)).toBe(1);
+
+    // Now add a reference with no options
+    const room2 = await manager.addReference(roomName);
+
+    // Should get different room instances
+    expect(room1).not.toBe(room2);
+
+    // Old room should have been released
+    await vi.waitFor(() => {
+      expect(client.rooms.release).toHaveBeenCalledWith(roomName);
+    });
+
+    // New room should have reference count of 1
+    expect(manager.getReferenceCount(roomName)).toBe(1);
+    // Old room should have reference count of 0
+    expect(manager.getReferenceCount(roomName, options1)).toBe(0);
+  });
+
+  it('should handle options change with multiple references', async () => {
+    const client = newChatClient();
+    const logger = (client as unknown as { logger: Logger }).logger;
+    const manager = new RoomReferenceManager(client, logger);
+    const roomName = randomRoomName();
+
+    const options1 = { occupancy: { enableEvents: true } };
+    const options2 = { occupancy: { enableEvents: false } };
+
+    // Mock release method to actually remove the room from the client's internal map
+    vi.spyOn(client.rooms, 'release').mockImplementation((name: string) => {
+      // Remove the room from the client's internal rooms map to simulate real behavior
+      const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
+      roomsInternal.delete(name);
+      return Promise.resolve();
+    });
+
+    // Add multiple references with options1
+    await manager.addReference(roomName, options1);
+    await manager.addReference(roomName, options1);
+    expect(manager.getReferenceCount(roomName, options1)).toBe(2);
+
+    // Now try to add a reference with different options
+    const room2 = await manager.addReference(roomName, options2);
+
+    // Should get a room instance
+    expect(room2).toBeDefined();
+
+    // Old room should have been released (all references should be cleared)
+    await vi.waitFor(() => {
+      expect(client.rooms.release).toHaveBeenCalledWith(roomName);
+    });
+
+    // New room should have reference count of 1
+    expect(manager.getReferenceCount(roomName, options2)).toBe(1);
+    // Old room should have reference count of 0 (all references cleared)
+    expect(manager.getReferenceCount(roomName, options1)).toBe(0);
   });
 
   it('should treat same room name with different options as separate references', () => {
@@ -277,5 +351,70 @@ describe('RoomReferenceManager', () => {
 
     // The error should be caught and not propagated
     expect(manager.getReferenceCount(roomName)).toBe(0);
+  });
+
+  it('should wait for pending release to complete before adding new reference', async () => {
+    const client = newChatClient();
+    const logger = (client as unknown as { logger: Logger }).logger;
+    const manager = new RoomReferenceManager(client, logger);
+    const roomName = randomRoomName();
+
+    // Create a controlled promise to simulate delayed release
+    let controlledReleaseResolve: (() => void) | undefined;
+    const controlledDelayPromise = new Promise<void>((resolve) => {
+      controlledReleaseResolve = resolve;
+    });
+
+    // Mock client.rooms.release to wait for our controlled delay
+    vi.spyOn(client.rooms, 'release').mockImplementation(async (name: string) => {
+      // Simulate the client's internal room removal
+      const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
+      roomsInternal.delete(name);
+
+      // Wait for the controlled delay
+      await controlledDelayPromise;
+      return;
+    });
+
+    // First, add a reference with some options
+    const options1 = { occupancy: { enableEvents: true } };
+    await manager.addReference(roomName, options1);
+    expect(manager.getReferenceCount(roomName, options1)).toBe(1);
+
+    // Remove the reference to trigger a delayed release
+    manager.removeReference(roomName, options1);
+    expect(manager.getReferenceCount(roomName, options1)).toBe(0);
+
+    // Wait a bit for the delayed release to be scheduled
+    await new Promise((resolve) => setTimeout(resolve, 150)); // Wait longer than the 100ms delay
+
+    // Now try to add a reference with different options
+    // This should wait for the pending release to complete
+    const options2 = { occupancy: { enableEvents: false } };
+    const addReferencePromise = manager.addReference(roomName, options2);
+
+    // Verify the promise hasn't resolved yet (should be waiting for release)
+    let promiseResolved = false;
+    void addReferencePromise.then(() => {
+      promiseResolved = true;
+    });
+
+    // Give it a moment - it should still be waiting
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(promiseResolved).toBe(false);
+
+    // Now release the controlled delay to allow the release to complete
+    if (controlledReleaseResolve) {
+      controlledReleaseResolve();
+    }
+
+    // The addReference should now complete
+    const room = await addReferencePromise;
+    expect(room).toBeDefined();
+    expect(promiseResolved).toBe(true);
+
+    // Verify final reference counts
+    expect(manager.getReferenceCount(roomName, options2)).toBe(1);
+    expect(manager.getReferenceCount(roomName, options1)).toBe(0);
   });
 });
