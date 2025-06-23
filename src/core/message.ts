@@ -1,4 +1,5 @@
 import * as Ably from 'ably';
+import cloneDeep from 'lodash.clonedeep';
 
 import {
   ChatMessageAction,
@@ -437,9 +438,9 @@ export class DefaultMessage implements Message {
       }
 
       const newReactions: MessageReactions = {
-        unique: structuredClone(event.summary.unique),
-        distinct: structuredClone(event.summary.distinct),
-        multiple: structuredClone(event.summary.multiple),
+        unique: cloneDeep(event.summary.unique),
+        distinct: cloneDeep(event.summary.distinct),
+        multiple: cloneDeep(event.summary.multiple),
       };
 
       return DefaultMessage._clone(this, { reactions: newReactions });
@@ -478,14 +479,14 @@ export class DefaultMessage implements Message {
       serial: replace?.serial ?? source.serial,
       clientId: replace?.clientId ?? source.clientId,
       text: replace?.text ?? source.text,
-      metadata: replace?.metadata ?? structuredClone(source.metadata),
-      headers: replace?.headers ?? structuredClone(source.headers),
+      metadata: replace?.metadata ?? cloneDeep(source.metadata),
+      headers: replace?.headers ?? cloneDeep(source.headers),
       action: replace?.action ?? source.action,
       version: replace?.version ?? source.version,
       createdAt: replace?.createdAt ?? source.createdAt,
       timestamp: replace?.timestamp ?? source.timestamp,
-      reactions: replace?.reactions ?? structuredClone(source.reactions),
-      operation: replace?.operation ?? structuredClone(source.operation),
+      reactions: replace?.reactions ?? cloneDeep(source.reactions),
+      operation: replace?.operation ?? cloneDeep(source.operation),
     });
   }
 
