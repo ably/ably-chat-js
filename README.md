@@ -1,8 +1,9 @@
 
 ![Ably Chat Header](images/JavaScriptChatSDK-github.png)
 
-![License](https://badgen.net/github/license/3scale/saas-operator)
-![npm version](https://img.shields.io/npm/v/@ably/chat.svg?style=flat)
+[![License](https://badgen.net/github/license/3scale/saas-operator)](https://github.com/3scale/saas-operator/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@ably/chat.svg?style=flat)](https://www.npmjs.com/package/@ably/chat)
+
 
 # Ably Chat JavaScript, TypeScript and React SDK
 
@@ -21,7 +22,7 @@ Everything you need to get started with Ably:
 
 ---
 
-## Supported Platforms
+## Supported platforms
 
 Ably aims to support a wide range of platforms. If you experience any compatibility issues, open an issue in the repository or contact [Ably support](https://ably.com/support).
 
