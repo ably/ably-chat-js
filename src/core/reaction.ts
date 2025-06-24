@@ -16,9 +16,9 @@ export type ReactionMetadata = Metadata;
  */
 export interface Reaction {
   /**
-   * The type of the reaction, for example "like" or "love".
+   * The name of the reaction, for example "like" or "love".
    */
-  readonly type: string;
+  readonly name: string;
 
   /**
    * Metadata of the reaction. If no metadata was set this is an empty object.
@@ -51,7 +51,7 @@ export interface Reaction {
  */
 export class DefaultReaction implements Reaction {
   constructor(
-    public readonly type: string,
+    public readonly name: string,
     public readonly clientId: string,
     public readonly createdAt: Date,
     public readonly isSelf: boolean,

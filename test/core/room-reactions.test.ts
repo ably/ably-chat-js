@@ -65,7 +65,7 @@ describe('Reactions', () => {
                 clientId: 'yoda',
                 isSelf: false,
                 createdAt: new Date(publishTimestamp),
-                type: 'like',
+                name: 'like',
               }),
             );
           } catch (error: unknown) {
@@ -97,7 +97,7 @@ describe('Reactions', () => {
                 clientId: 'd.vader',
                 isSelf: true,
                 createdAt: new Date(publishTimestamp),
-                type: 'hate',
+                name: 'hate',
               }),
             );
           } catch (error: unknown) {
@@ -156,7 +156,7 @@ describe('Reactions', () => {
         clientId: 'yoda',
         isSelf: false,
         createdAt: new Date(publishTimestamp),
-        type: 'like',
+        name: 'like',
       }),
     );
   });
@@ -167,7 +167,7 @@ describe('Reactions', () => {
 
     const received: string[] = [];
     const listener = (event: { reaction: Reaction }) => {
-      received.push(event.reaction.type);
+      received.push(event.reaction.name);
     };
     const subscription1 = room.reactions.subscribe(listener);
     const subscription2 = room.reactions.subscribe(listener);
@@ -250,7 +250,7 @@ describe('Reactions', () => {
                   clientId: 'd.vader',
                   isSelf: true,
                   createdAt: context.publishTimestamp,
-                  type: 'love',
+                  name: 'love',
                   headers: {},
                   metadata: {},
                 },
@@ -301,7 +301,7 @@ describe('Reactions', () => {
                   clientId: 'd.vader',
                   isSelf: true,
                   createdAt: context.publishTimestamp,
-                  type: 'love',
+                  name: 'love',
                   headers: {
                     action: 'strike back',
                     number: 1980,
