@@ -21,7 +21,7 @@ export const ReactionInput: FC<ReactionInputProps> = ({ reactions, onSend, disab
       onClick={(e) => {
         e.preventDefault();
         if (!disabled) {
-          onSend({ type: reaction });
+          onSend({ name: reaction });
         }
       }}
       href="#"

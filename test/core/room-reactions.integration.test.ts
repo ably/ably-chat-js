@@ -69,8 +69,8 @@ describe('room-level reactions integration test', () => {
     await room.attach();
 
     // Send reactions
-    for (const type of expectedReactions) {
-      await room.reactions.send({ type });
+    for (const name of expectedReactions) {
+      await room.reactions.send({ name });
     }
 
     await waitForReactions(reactions, expectedReactions);
