@@ -9,7 +9,7 @@ import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
- * Params for sending a room-level reactions. Only `type` is mandatory.
+ * Params for sending a room-level reactions. Only `name` is mandatory.
  */
 export interface SendReactionParams {
   /**
@@ -68,8 +68,8 @@ export interface RoomReactions {
    *
    * This method accepts parameters for a room-level reaction. It accepts an object
    *
-   * @param params an object containing {type, headers, metadata} for the room
-   * reaction to be sent. Type is required, metadata and headers are optional.
+   * @param params an object containing {name, headers, metadata} for the room
+   * reaction to be sent. Name is required, metadata and headers are optional.
    * @throws If the `Connection` is not in the `Connected` state.
    * @returns The returned promise resolves when the reaction was sent. Note
    * that it is possible to receive your own reaction via the reactions
@@ -91,7 +91,7 @@ interface RoomReactionEventsMap {
 }
 
 interface ReactionPayload {
-  type: string;
+  name: string;
   metadata?: RoomReactionMetadata;
 }
 
@@ -147,7 +147,7 @@ export class DefaultRoomReactions implements RoomReactions {
     }
 
     const payload: ReactionPayload = {
-      type: name,
+      name: name,
       metadata: metadata ?? {},
     };
 
