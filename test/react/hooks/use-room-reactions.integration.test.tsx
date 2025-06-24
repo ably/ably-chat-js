@@ -62,7 +62,7 @@ describe('useRoomReactions', () => {
     await waitForArrayLength(reactions, 1);
 
     // check the reaction was received
-    expect(reactions.find((reaction) => reaction.type === 'like')).toBeTruthy();
+    expect(reactions.find((reaction) => reaction.name === 'like')).toBeTruthy();
   });
 
   it('should receive room reactions', async () => {
@@ -115,6 +115,6 @@ describe('useRoomReactions', () => {
     await waitForArrayLength(reactions, 1);
 
     // check the reaction was received
-    expect(reactions.find((reaction) => reaction.type === 'love')).toBeTruthy();
+    expect(reactions.find((reaction) => reaction.name === 'love')).toBeTruthy();
   });
 });

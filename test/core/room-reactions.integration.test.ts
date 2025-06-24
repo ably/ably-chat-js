@@ -62,7 +62,7 @@ describe('room-level reactions integration test', () => {
 
     room.reactions.subscribe((event: RoomReactionEvent) => {
       expect(event.type).toBe(RoomReactionEventType.Reaction);
-      reactions.push(event.reaction.type);
+      reactions.push(event.reaction.name);
     });
 
     // Attach the room

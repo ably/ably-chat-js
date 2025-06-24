@@ -53,7 +53,7 @@ describe('parseReaction', () => {
     const result = parseReaction(message);
 
     expect(result).toBeInstanceOf(DefaultReaction);
-    expect(result.type).toBe('like');
+    expect(result.name).toBe('like');
     expect(result.clientId).toBe('client1');
     expect(result.createdAt).toEqual(new Date(1234567890));
     expect(result.isSelf).toBe(false);

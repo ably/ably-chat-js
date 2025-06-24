@@ -114,7 +114,7 @@ describe('useRoomReactions', () => {
 
     // verify that subscribe was called with the mock listener on mount by triggering a reaction event
     const reaction = {
-      type: 'like',
+      name: 'like',
       user: { id: 'user1' },
       metadata: { test: 'data' },
       headers: {},
