@@ -29,7 +29,7 @@ interface MessagePayload {
 }
 
 // Parse a realtime message to a chat message
-export function parseMessage(inboundMessage: Ably.InboundMessage): Message {
+export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
   const message = inboundMessage as MessagePayload;
 
   if (!message.data) {
