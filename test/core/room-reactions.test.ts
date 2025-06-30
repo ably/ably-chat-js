@@ -78,7 +78,7 @@ describe('Reactions', () => {
           clientId: 'yoda',
           name: 'roomReaction',
           data: {
-            type: 'like',
+            name: 'like',
           },
           timestamp: publishTimestamp,
         });
@@ -110,7 +110,7 @@ describe('Reactions', () => {
           clientId: 'd.vader',
           name: 'roomReaction',
           data: {
-            type: 'hate',
+            name: 'hate',
           },
           timestamp: publishTimestamp,
         });
@@ -131,7 +131,7 @@ describe('Reactions', () => {
       clientId: 'yoda',
       name: 'roomReaction',
       data: {
-        type: 'like',
+        name: 'like',
       },
       timestamp: publishTimestamp,
     });
@@ -144,7 +144,7 @@ describe('Reactions', () => {
       clientId: 'yoda2',
       name: 'roomReaction',
       data: {
-        type: 'like',
+        name: 'like',
       },
       timestamp: publishTimestamp,
     });
@@ -177,7 +177,7 @@ describe('Reactions', () => {
       clientId: 'yoda',
       name: 'roomReaction',
       data: {
-        type: 'like',
+        name: 'like',
       },
       timestamp: publishTimestamp,
     });
@@ -190,7 +190,7 @@ describe('Reactions', () => {
       clientId: 'yoda',
       name: 'roomReaction',
       data: {
-        type: 'love',
+        name: 'love',
       },
       timestamp: publishTimestamp,
     });
@@ -261,7 +261,7 @@ describe('Reactions', () => {
             expect(publishSpy).toHaveBeenCalledWith({
               name: 'roomReaction',
               data: {
-                type: 'love',
+                name: 'love',
                 metadata: {},
               },
               extras: {
@@ -275,7 +275,7 @@ describe('Reactions', () => {
           done();
         });
 
-        void room.reactions.send({ type: 'love' });
+        void room.reactions.send({ name: 'love' });
       }));
 
     // CHA-ER3f
@@ -285,7 +285,7 @@ describe('Reactions', () => {
       // Mock connection status to be disconnected
       vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
 
-      await expect(room.reactions.send({ type: 'love' })).rejects.toBeErrorInfoWithCode(40000);
+      await expect(room.reactions.send({ name: 'love' })).rejects.toBeErrorInfoWithCode(40000);
     });
 
     it<TestContext>('should be able to send a reaction and receive a reaction with metadata and headers', (context) =>
@@ -323,7 +323,7 @@ describe('Reactions', () => {
         });
 
         void room.reactions.send({
-          type: 'love',
+          name: 'love',
           metadata: { side: 'empire', bla: { abc: true, xyz: 3.14 } },
           headers: { action: 'strike back', number: 1980 },
         });

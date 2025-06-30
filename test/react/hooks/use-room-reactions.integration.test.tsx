@@ -42,7 +42,7 @@ describe('useRoomReactions', () => {
       // should send a reaction when mounted and the room is attached
       useEffect(() => {
         if (roomStatus !== RoomStatus.Attached) return;
-        void send({ type: 'like' });
+        void send({ name: 'like' });
       }, [send, roomStatus]);
 
       return null;
@@ -110,7 +110,7 @@ describe('useRoomReactions', () => {
     );
 
     // send a reaction from the second room
-    await roomTwo.reactions.send({ type: 'love' });
+    await roomTwo.reactions.send({ name: 'love' });
 
     await waitForArrayLength(reactions, 1);
 

@@ -9,16 +9,16 @@ import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
- * Params for sending a room-level reactions. Only `type` is mandatory.
+ * Params for sending a room-level reactions. Only `name` is mandatory.
  */
 export interface SendReactionParams {
   /**
-   * The type of the reaction, for example an emoji or a short string such as
+   * The name of the reaction, for example an emoji or a short string such as
    * "like".
    *
    * It is the only mandatory parameter to send a room-level reaction.
    */
-  type: string;
+  name: string;
 
   /**
    * Optional metadata of the reaction.
@@ -68,8 +68,8 @@ export interface RoomReactions {
    *
    * This method accepts parameters for a room-level reaction. It accepts an object
    *
-   * @param params an object containing {type, headers, metadata} for the room
-   * reaction to be sent. Type is required, metadata and headers are optional.
+   * @param params an object containing {name, headers, metadata} for the room
+   * reaction to be sent. Name is required, metadata and headers are optional.
    * @throws If the `Connection` is not in the `Connected` state.
    * @returns The returned promise resolves when the reaction was sent. Note
    * that it is possible to receive your own reaction via the reactions
@@ -91,7 +91,7 @@ interface RoomReactionEventsMap {
 }
 
 interface ReactionPayload {
-  type: string;
+  name: string;
   metadata?: ReactionMetadata;
 }
 
@@ -135,10 +135,10 @@ export class DefaultRoomReactions implements RoomReactions {
   send(params: SendReactionParams): Promise<void> {
     this._logger.trace('RoomReactions.send();', params);
 
-    const { type, metadata, headers } = params;
+    const { name, metadata, headers } = params;
 
-    if (!type) {
-      return Promise.reject(new Ably.ErrorInfo('unable to send reaction; type not set and it is required', 40001, 400));
+    if (!name) {
+      return Promise.reject(new Ably.ErrorInfo('unable to send reaction; name not set and it is required', 40001, 400));
     }
 
     // CHA-ER3f
@@ -147,7 +147,7 @@ export class DefaultRoomReactions implements RoomReactions {
     }
 
     const payload: ReactionPayload = {
-      type: type,
+      name: name,
       metadata: metadata ?? {},
     };
 
