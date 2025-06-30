@@ -13,12 +13,12 @@ import EventEmitter, { wrap } from './utils/event-emitter.js';
  */
 export interface SendReactionParams {
   /**
-   * The type of the reaction, for example an emoji or a short string such as
+   * The name of the reaction, for example an emoji or a short string such as
    * "like".
    *
    * It is the only mandatory parameter to send a room-level reaction.
    */
-  type: string;
+  name: string;
 
   /**
    * Optional metadata of the reaction.
@@ -135,10 +135,10 @@ export class DefaultRoomReactions implements RoomReactions {
   send(params: SendReactionParams): Promise<void> {
     this._logger.trace('RoomReactions.send();', params);
 
-    const { type, metadata, headers } = params;
+    const { name, metadata, headers } = params;
 
-    if (!type) {
-      return Promise.reject(new Ably.ErrorInfo('unable to send reaction; type not set and it is required', 40001, 400));
+    if (!name) {
+      return Promise.reject(new Ably.ErrorInfo('unable to send reaction; name not set and it is required', 40001, 400));
     }
 
     // CHA-ER3f
@@ -147,7 +147,7 @@ export class DefaultRoomReactions implements RoomReactions {
     }
 
     const payload: ReactionPayload = {
-      type: type,
+      type: name,
       metadata: metadata ?? {},
     };
 

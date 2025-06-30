@@ -79,11 +79,11 @@ describe('useRoomReactions', () => {
 
     // call the send method with a 'like' reaction
     await act(async () => {
-      await result.current.send({ type: 'like' });
+      await result.current.send({ name: 'like' });
     });
 
     // verify that the send method was called with the correct arguments
-    expect(sendSpy).toHaveBeenCalledWith({ type: 'like' });
+    expect(sendSpy).toHaveBeenCalledWith({ name: 'like' });
   });
 
   it('should correctly subscribe and unsubscribe to reactions', async () => {
