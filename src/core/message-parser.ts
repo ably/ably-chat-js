@@ -40,7 +40,8 @@ export function parseMessage(inboundMessage: Ably.InboundMessage): Message {
     throw new Ably.ErrorInfo(`received incoming message without clientId`, 50000, 500);
   }
 
-  if (message.data.text === undefined) {
+  // For delete actions with empty data, text is allowed to be undefined
+  if (message.data.text === undefined && message.action !== ChatMessageAction.MessageDelete) {
     throw new Ably.ErrorInfo(`received incoming message without text`, 50000, 500);
   }
 
@@ -77,7 +78,7 @@ export function parseMessage(inboundMessage: Ably.InboundMessage): Message {
   return new DefaultMessage({
     serial: message.serial,
     clientId: message.clientId,
-    text: message.data.text,
+    text: message.data.text ?? '', // Use empty string if text is undefined (for soft deletes)
     metadata: message.data.metadata ?? {},
     headers: message.extras.headers ?? {},
     action: message.action as ChatMessageAction,

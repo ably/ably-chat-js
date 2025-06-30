@@ -45,6 +45,20 @@ describe('parseMessage', () => {
       expectedError: 'received incoming message without text',
     },
     {
+      description: 'message.data.text is undefined for update action',
+      message: {
+        data: {},
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: {},
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        action: ChatMessageAction.MessageUpdate,
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      },
+      expectedError: 'received incoming message without text',
+    },
+    {
       description: 'message.extras is undefined',
       message: {
         data: { text: 'hello' },
@@ -212,6 +226,49 @@ describe('parseMessage', () => {
     expect(result.createdAt).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
+    expect(result.deletedAt).toEqual(new Date(1728402074206));
+    expect(result.deletedBy).toBe('client2');
+    expect(result.version).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
+    expect(result.operation).toEqual({
+      clientId: 'client2',
+      description: 'delete message',
+      metadata: { 'custom-warning': 'this is a warning' },
+    });
+
+    // update related fields should be undefined
+    expect(result.updatedAt).toBeUndefined();
+    expect(result.updatedBy).toBeUndefined();
+  });
+
+  it('should return a DefaultMessage instance for a soft deleted message with empty data', () => {
+    const message = {
+      id: 'message-id',
+      data: {}, // Empty data object for soft delete
+      clientId: 'client1',
+      createdAt: 1728402074206,
+      extras: {
+        headers: {},
+      },
+      action: ChatMessageAction.MessageDelete,
+      serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      timestamp: 1728402074206,
+      version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      operation: {
+        clientId: 'client2',
+        description: 'delete message',
+        metadata: { 'custom-warning': 'this is a warning' },
+      },
+    } as Ably.InboundMessage;
+
+    const result = parseMessage(message);
+
+    expect(result).toBeInstanceOf(DefaultMessage);
+    expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
+    expect(result.clientId).toBe('client1');
+    expect(result.text).toBe(''); // Should be empty string for soft delete
+    expect(result.createdAt).toEqual(new Date(1728402074206));
+    expect(result.metadata).toEqual({}); // Should be empty object
+    expect(result.headers).toEqual({}); // Should be empty object
     expect(result.deletedAt).toEqual(new Date(1728402074206));
     expect(result.deletedBy).toBe('client2');
     expect(result.version).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
