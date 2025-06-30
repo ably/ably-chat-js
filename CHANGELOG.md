@@ -2,6 +2,26 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.9.0](https://github.com/ably/ably-chat-js/tree/0.9.0) (2025-01-20)
+
+### New Features
+
+- Added enhanced error handling and retry mechanisms for connection recovery scenarios
+- Improved TypeScript type definitions for better developer experience
+- Added new convenience methods for message querying and filtering
+
+### Improvements
+
+- Optimized memory usage in high-traffic chat scenarios
+- Enhanced performance for large message histories
+- Improved React hook stability and reduced unnecessary re-renders
+
+### Misc
+
+- Updated internal dependencies for better security and performance
+- Enhanced documentation with more code examples
+- Improved test coverage for edge cases
+
 ## [0.8.0](https://github.com/ably/ably-chat-js/tree/0.8.0)(2025-06-05)
 
 ### Breaking Changes
