@@ -13,7 +13,9 @@ describe('parseMessage', () => {
         clientId: 'client1',
         timestamp: 1728402074206,
         createdAt: 1728402074206,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageAction.MessageCreate,
       },
@@ -25,7 +27,9 @@ describe('parseMessage', () => {
         data: { text: 'hello' },
         timestamp: 1728402074206,
         createdAt: 1728402074206,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageAction.MessageCreate,
       },
@@ -38,16 +42,31 @@ describe('parseMessage', () => {
         clientId: 'client1',
         timestamp: 1728402074206,
         createdAt: 1728402074206,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without text',
     },
     {
-      description: 'message.extras is undefined',
+      description: 'message.data.metadata is undefined',
       message: {
         data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: {
+          headers: {},
+        },
+      },
+      expectedError: 'received incoming message without metadata',
+    },
+    {
+      description: 'message.extras is undefined',
+      message: {
+        data: { text: 'hello', metadata: {} },
         clientId: 'client1',
         timestamp: 1728402074206,
         createdAt: 1728402074206,
@@ -57,13 +76,25 @@ describe('parseMessage', () => {
       expectedError: 'received incoming message without extras',
     },
     {
-      description: 'message.serial is undefined',
+      description: 'message.extras.headers is undefined',
       message: {
-        data: { text: 'hello' },
+        data: { text: 'hello', metadata: {} },
         clientId: 'client1',
         timestamp: 1728402074206,
         createdAt: 1728402074206,
         extras: {},
+      },
+    },
+    {
+      description: 'message.serial is undefined',
+      message: {
+        data: { text: 'hello', metadata: {} },
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: {
+          headers: {},
+        },
         action: ChatMessageAction.MessageCreate,
         version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
       },
@@ -73,11 +104,13 @@ describe('parseMessage', () => {
       description: 'message.version is undefined',
       message: {
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        data: { text: 'hello' },
+        data: { text: 'hello', metadata: {} },
         clientId: 'client1',
         timestamp: 1728402074206,
         createdAt: 1728402074206,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedError: 'received incoming message without version',
@@ -85,11 +118,13 @@ describe('parseMessage', () => {
     {
       description: 'message.action is unhandled',
       message: {
-        data: { text: 'hello' },
+        data: { text: 'hello', metadata: {} },
         clientId: 'client1',
         timestamp: 1728402074206,
         createdAt: 1728402074206,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: 'unhandled.action',
@@ -208,10 +243,93 @@ describe('parseMessage', () => {
     expect(result).toBeInstanceOf(DefaultMessage);
     expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.clientId).toBe('client1');
-    expect(result.text).toBe('hello');
+    expect(result.text).toBe(''); // Empty string for all delete messages
     expect(result.createdAt).toEqual(new Date(1728402074206));
-    expect(result.metadata).toEqual({ key: 'value' });
-    expect(result.headers).toEqual({ headerKey: 'headerValue' });
+    expect(result.metadata).toEqual({}); // Empty object for all delete messages
+    expect(result.headers).toEqual({}); // Empty object for all delete messages
+    expect(result.deletedAt).toEqual(new Date(1728402074206));
+    expect(result.deletedBy).toBe('client2');
+    expect(result.version).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
+    expect(result.operation).toEqual({
+      clientId: 'client2',
+      description: 'delete message',
+      metadata: { 'custom-warning': 'this is a warning' },
+    });
+
+    // update related fields should be undefined
+    expect(result.updatedAt).toBeUndefined();
+    expect(result.updatedBy).toBeUndefined();
+  });
+
+  it('should return a DefaultMessage instance with empty text/metadata/headers for any deleted message', () => {
+    const message = {
+      id: 'message-id',
+      data: {},
+      clientId: 'client1',
+      createdAt: 1728402074206,
+      action: ChatMessageAction.MessageDelete,
+      serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      timestamp: 1728402074206,
+      version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      operation: {
+        clientId: 'client2',
+        description: 'delete message',
+        metadata: { 'custom-warning': 'this is a warning' },
+      },
+      extras: {},
+    } as Ably.InboundMessage;
+
+    const result = parseMessage(message);
+
+    expect(result).toBeInstanceOf(DefaultMessage);
+    expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
+    expect(result.clientId).toBe('client1');
+    expect(result.text).toBe(''); // Empty string for all delete messages
+    expect(result.createdAt).toEqual(new Date(1728402074206));
+    expect(result.metadata).toEqual({}); // Empty object for all delete messages
+    expect(result.headers).toEqual({}); // Empty object for all delete messages
+    expect(result.deletedAt).toEqual(new Date(1728402074206));
+    expect(result.deletedBy).toBe('client2');
+    expect(result.version).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
+    expect(result.operation).toEqual({
+      clientId: 'client2',
+      description: 'delete message',
+      metadata: { 'custom-warning': 'this is a warning' },
+    });
+
+    // update related fields should be undefined
+    expect(result.updatedAt).toBeUndefined();
+    expect(result.updatedBy).toBeUndefined();
+  });
+
+  it('should return a DefaultMessage instance for a deleted message with empty data', () => {
+    const message = {
+      id: 'message-id',
+      data: {}, // Empty data for delete messages
+      clientId: 'client1',
+      createdAt: 1728402074206,
+      // extras can be omitted for delete messages
+      action: ChatMessageAction.MessageDelete,
+      serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      timestamp: 1728402074206,
+      version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      operation: {
+        clientId: 'client2',
+        description: 'delete message',
+        metadata: { 'custom-warning': 'this is a warning' },
+      },
+      extras: {},
+    } as Ably.InboundMessage;
+
+    const result = parseMessage(message);
+
+    expect(result).toBeInstanceOf(DefaultMessage);
+    expect(result.serial).toBe('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');
+    expect(result.clientId).toBe('client1');
+    expect(result.text).toBe(''); // Empty string for all delete messages
+    expect(result.createdAt).toEqual(new Date(1728402074206));
+    expect(result.metadata).toEqual({}); // Empty object for all delete messages
+    expect(result.headers).toEqual({}); // Empty object for all delete messages
     expect(result.deletedAt).toEqual(new Date(1728402074206));
     expect(result.deletedBy).toBe('client2');
     expect(result.version).toEqual('01728402074206-000@cbfkKvEYgBhDaZ38195418:0');

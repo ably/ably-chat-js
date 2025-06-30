@@ -399,11 +399,14 @@ describe('Messages', () => {
           name: 'chat.message',
           data: {
             text: 'this message has been deleted',
+            metadata: {},
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageDelete,
           version: '01672531200000-123@abcdefghij',
-          extras: {},
+          extras: {
+            headers: {},
+          },
           timestamp: publishTimestamp,
           createdAt: publishTimestamp,
           operation: { clientId: 'yoda' },
@@ -413,11 +416,14 @@ describe('Messages', () => {
           name: 'chat.message',
           data: {
             text: 'some updated text',
+            metadata: {},
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageUpdate,
           version: '01672531200000-123@abcdefghij',
-          extras: {},
+          extras: {
+            headers: {},
+          },
           timestamp: publishTimestamp,
           createdAt: publishTimestamp,
           operation: { clientId: 'yoda' },
@@ -427,11 +433,14 @@ describe('Messages', () => {
           name: 'chat.message',
           data: {
             text: 'may the fourth be with you',
+            metadata: {},
           },
           version: '01672531200000-123@abcdefghij',
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageCreate,
-          extras: {},
+          extras: {
+            headers: {},
+          },
           timestamp: publishTimestamp,
           createdAt: publishTimestamp,
         });
@@ -469,11 +478,14 @@ describe('Messages', () => {
         name: 'chat.message',
         data: {
           text: 'may the fourth be with you',
+          metadata: {},
         },
         serial: '01672531200000-123@abcdefghij',
         version: '01672531200000-123@abcdefghij',
         action: ChatMessageAction.MessageCreate,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         timestamp: publishTimestamp,
         createdAt: publishTimestamp,
       });
@@ -482,10 +494,13 @@ describe('Messages', () => {
         name: 'chat.message',
         data: {
           text: 'I have the high ground now',
+          metadata: {},
         },
         serial: '01672531200000-123@abcdefghij',
         action: ChatMessageAction.MessageUpdate,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         timestamp: updateTimestamp,
         createdAt: publishTimestamp,
         version: '01672531200000-123@abcdefghij:0',
@@ -498,10 +513,13 @@ describe('Messages', () => {
         name: 'chat.message',
         data: {
           text: 'I have the high ground now',
+          metadata: {},
         },
         serial: '01672531200000-123@abcdefghij',
         action: ChatMessageAction.MessageDelete,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         timestamp: deletionTimestamp,
         createdAt: publishTimestamp,
         version: '01672531200000-123@abcdefghij:0',
@@ -528,11 +546,14 @@ describe('Messages', () => {
         name: 'chat.message',
         data: {
           text: 'may the fourth be with you',
+          metadata: {},
         },
         serial: '01672535500000-123@abcdefghij',
         version: '01672535500000-123@abcdefghij',
         action: ChatMessageAction.MessageCreate,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         timestamp: publishTimestamp,
         createdAt: publishTimestamp,
       });
@@ -541,10 +562,13 @@ describe('Messages', () => {
         name: 'chat.message',
         data: {
           text: 'I have the high ground now',
+          metadata: {},
         },
         serial: '01672535500000-123@abcdefghij',
         action: ChatMessageAction.MessageUpdate,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         timestamp: updateTimestamp,
         createdAt: publishTimestamp,
         version: '01672535600000-123@abcdefghij:0',
@@ -557,10 +581,13 @@ describe('Messages', () => {
         name: 'chat.message',
         data: {
           text: 'I have the high ground now',
+          metadata: {},
         },
         serial: '01672535500000-123@abcdefghij',
         action: ChatMessageAction.MessageDelete,
-        extras: {},
+        extras: {
+          headers: {},
+        },
         timestamp: deletionTimestamp,
         createdAt: publishTimestamp,
         version: '01672535700000-123@abcdefghij:0',
@@ -591,11 +618,14 @@ describe('Messages', () => {
           name: 'chat.message',
           data: {
             text: 'may the fourth be with you',
+            metadata: {},
           },
           serial: serial,
           version: serial,
           action: ChatMessageAction.MessageCreate,
-          extras: {},
+          extras: {
+            headers: {},
+          },
           timestamp: publishTimestamp,
           createdAt: publishTimestamp,
         });
@@ -626,10 +656,13 @@ describe('Messages', () => {
           name: 'message.foo',
           data: {
             text: 'may the fourth be with you',
+            metadata: {},
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageCreate,
-          extras: {},
+          extras: {
+            headers: {},
+          },
           timestamp: Date.now(),
           createdAt: Date.now(),
         },
@@ -641,10 +674,13 @@ describe('Messages', () => {
           name: 'message.foo',
           data: {
             text: 'may the fourth be with you',
+            metadata: {},
           },
           serial: '01672531200000-123@abcdefghij',
           action: 'message.unknown',
-          extras: {},
+          extras: {
+            headers: {},
+          },
           timestamp: Date.now(),
           createdAt: Date.now(),
         },
@@ -656,7 +692,9 @@ describe('Messages', () => {
           name: 'chat.message',
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageCreate,
-          extras: {},
+          extras: {
+            headers: {},
+          },
           timestamp: Date.now(),
           createdAt: Date.now(),
         },
@@ -669,7 +707,9 @@ describe('Messages', () => {
           data: {},
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageCreate,
-          extras: {},
+          extras: {
+            headers: {},
+          },
           timestamp: Date.now(),
           createdAt: Date.now(),
         },
@@ -680,10 +720,13 @@ describe('Messages', () => {
           name: 'chat.message',
           data: {
             text: 'may the fourth be with you',
+            metadata: {},
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageCreate,
-          extras: {},
+          extras: {
+            headers: {},
+          },
           timestamp: Date.now(),
           createdAt: Date.now(),
         },
@@ -695,6 +738,7 @@ describe('Messages', () => {
           clientId: 'yoda2',
           data: {
             text: 'may the fourth be with you',
+            metadata: {},
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageCreate,
@@ -710,6 +754,10 @@ describe('Messages', () => {
           name: 'chat.message',
           data: {
             text: 'may the fourth be with you',
+            metadata: {},
+          },
+          extras: {
+            headers: {},
           },
           action: ChatMessageAction.MessageCreate,
           timestamp: Date.now(),
