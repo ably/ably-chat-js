@@ -2,6 +2,50 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 0.8.x to 0.9.x
+
+### Reaction API Changes
+
+**Expected Impact: Medium**
+
+The `type` property has been renamed to `name` throughout the reactions API for consistency.
+
+#### Reaction Interface
+
+The `type` property in the `Reaction` interface has been renamed to `name`.
+
+**Before**
+
+```ts
+room.reactions.subscribe((event) => {
+  console.log(event.reaction.type); // "like", "love", etc.
+});
+```
+
+**After**
+
+```ts
+room.reactions.subscribe((event) => {
+  console.log(event.reaction.name); // "like", "love", etc.
+});
+```
+
+#### Room Reactions
+
+The `type` property in `SendReactionParams` has been renamed to `name`.
+
+**Before**
+
+```ts
+await room.reactions.send({ type: 'like' });
+```
+
+**After**
+
+```ts
+await room.reactions.send({ name: 'like' });
+```
+
 ## 0.7.x to 0.8.x
 
 ### Room ID Rename

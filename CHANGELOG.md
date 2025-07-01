@@ -2,6 +2,23 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.9.0](https://github.com/ably/ably-chat-js/tree/0.9.0) (2025-06-30)
+
+### Breaking Changes
+
+This release contains breaking API changes. Please see `UPGRADING.md` for full guidance on upgrading from version 0.8.0.
+
+- **Reaction Interface**: Renamed `type` to `name` in the `Reaction` interface for consistency. [#574](https://github.com/ably/ably-chat-js/pull/574)
+- **Room Reactions**: Renamed `type` to `name` in `SendReactionParams` for sending room reactions. [#577](https://github.com/ably/ably-chat-js/pull/577)
+
+### Fixes
+
+- Fixed React Native/Expo compatibility by replacing `structuredClone` with lodash `cloneDeep`. [#573](https://github.com/ably/ably-chat-js/pull/573)
+
+### Misc
+
+- Improved README with better structure, shields, and documentation. [#557](https://github.com/ably/ably-chat-js/pull/557)
+
 ## [0.8.0](https://github.com/ably/ably-chat-js/tree/0.8.0)(2025-06-05)
 
 ### Breaking Changes
