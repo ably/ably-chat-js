@@ -568,7 +568,7 @@ export class DefaultMessages implements Messages {
     // Set the subscription point to a promise that resolves when the channel attaches or with the latest message
     const resolvedSubscriptionStart = this._resolveSubscriptionStart();
 
-    // Add a handler for unhandled rejections incase the room is released before the subscription point is resolved
+    // Add a handler for unhandled rejections in case the room is released before the subscription point is resolved
     resolvedSubscriptionStart.catch(() => {
       this._logger.debug('Messages.subscribe(); subscription point was not resolved before the room was released');
     });
