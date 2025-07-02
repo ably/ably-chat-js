@@ -111,7 +111,7 @@ export type LogHandler = (message: string, level: LogLevel, context?: LogContext
  * @param level The log level of the message.
  * @param context - The context of the log message as key-value pairs.
  */
-const consoleLogger = (message: string, level: LogLevel, context?: LogContext) => {
+export const consoleLogger = (message: string, level: LogLevel, context?: LogContext) => {
   const contextString = context ? `, context: ${JSON.stringify(context)}` : '';
   const formattedMessage = `[${new Date().toISOString()}] ${level.valueOf().toUpperCase()} ably-chat: ${message}${contextString}`;
 
