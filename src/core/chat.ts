@@ -115,12 +115,24 @@ export class ChatClient {
   }
 
   /**
-   * Sets the agent string for the client.
+   * Adds additional agent information to the client.
+   * This is used internally to add a specific agent with a version.
    * @param agent - The agent to add.
+   * @param version - The version of the agent, defaults to the current client version.
    * @internal
    */
-  private _addAgent(agent: string): void {
+  public addAgentWithVersion(agent:string, version:string): void {
+    this._addAgent(agent, version);
+    this._logger.trace(`Added agent ${agent} with version ${version}`);
+  }
+  /**
+   * Sets the agent string for the client.
+   * @param agent - The agent to add.
+   * @param version - The version of the agent, defaults to the current client version.
+   * @internal
+   */
+  private _addAgent(agent: string, version?:string): void {
     const realtime = this._realtime as RealtimeWithOptions;
-    realtime.options.agents = { ...(realtime.options.agents ?? realtime.options.agents), [agent]: VERSION };
+    realtime.options.agents = { ...(realtime.options.agents ?? realtime.options.agents), [agent]: version ?? VERSION };
   }
 }

@@ -43,6 +43,15 @@ describe('Chat', () => {
     });
   });
 
+  it('should add an agent/version pair', () => {
+    const chat = newChatClient(testClientOptions());
+    chat.addAgentWithVersion('test-agent', '1.0.0');
+    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({
+      'test-agent': '1.0.0',
+      'chat-js': VERSION,
+    });
+  });
+
   it('should set react channel agents', async () => {
     const chat = newChatClient(testClientOptions());
     chat.addReactAgent();
