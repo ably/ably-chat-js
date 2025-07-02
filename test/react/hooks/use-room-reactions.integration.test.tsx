@@ -101,7 +101,6 @@ describe('useRoomReactions', () => {
     render(<TestProvider />);
 
     // wait for the room to be attached
-    chatClientOne.logger.info('got here');
     await waitFor(
       () => {
         expect(currentRoomStatus).toBe(RoomStatus.Attached);

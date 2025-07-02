@@ -26,7 +26,7 @@ const createMockChatClient = (currentStatus: ConnectionStatus, error?: Ably.Erro
   };
 };
 
-let mockChatClient = createMockChatClient(ConnectionStatus.Initialized);
+let mockChatClient: object;
 
 const publishStatusChange = (statusChange: ConnectionStatusChange) => {
   for (const callback of mockCallbacks) {

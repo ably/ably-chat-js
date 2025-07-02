@@ -1,6 +1,6 @@
 import { act, cleanup, render } from '@testing-library/react';
 import React, { StrictMode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../../src/core/chat.js';
 import { Room } from '../../../src/core/room.js';
@@ -11,27 +11,34 @@ import { makeTestLogger } from '../../helper/logger.js';
 
 vi.mock('ably');
 
-describe('ChatRoomProvider', () => {
-  const mockRoom = {
-    attach: vi.fn(() => Promise.resolve()),
-    detach: vi.fn(() => Promise.resolve()),
-  } as unknown as Room;
+interface TestContext {
+  mockRoom: Room;
+  mockChatClient: ChatClient;
+}
 
-  const mockChatClient = {
-    rooms: {
-      get: vi.fn(() => Promise.resolve(mockRoom)),
-      release: vi.fn(() => new Promise((resolve) => setTimeout(resolve, 50))), // Make release take some time
-    },
-    logger: makeTestLogger(),
-    addReactAgent: vi.fn(() => {}),
-  } as unknown as ChatClient;
+describe('ChatRoomProvider', () => {
+  beforeEach<TestContext>((context) => {
+    context.mockRoom = {
+      attach: vi.fn(() => Promise.resolve()),
+      detach: vi.fn(() => Promise.resolve()),
+    } as unknown as Room;
+
+    context.mockChatClient = {
+      rooms: {
+        get: vi.fn(() => Promise.resolve(context.mockRoom)),
+        release: vi.fn(() => new Promise((resolve) => setTimeout(resolve, 50))), // Make release take some time
+      },
+      logger: makeTestLogger(),
+      addReactAgent: vi.fn(() => {}),
+    } as unknown as ChatClient;
+  });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
   describe('room release behavior', () => {
-    it('should abort previous release when mounting with same room and options', () => {
+    it<TestContext>('should abort previous release when mounting with same room and options', (context) => {
       // Create a stable options ref
       const options = {};
 
@@ -39,7 +46,7 @@ describe('ChatRoomProvider', () => {
       const TestComponent = () => {
         return (
           <StrictMode>
-            <ChatClientProvider client={mockChatClient}>
+            <ChatClientProvider client={context.mockChatClient}>
               <ChatRoomProvider
                 name="test-room"
                 options={options}
@@ -55,15 +62,15 @@ describe('ChatRoomProvider', () => {
       render(<TestComponent />, { reactStrictMode: true });
 
       // The release should have been aborted, so release should not have been called
-      expect(mockChatClient.rooms.release).not.toHaveBeenCalled();
+      expect(context.mockChatClient.rooms.release).not.toHaveBeenCalled();
 
       // Cleanup
       cleanup();
     });
 
-    it('should proceed with release when not remounting', async () => {
+    it<TestContext>('should proceed with release when not remounting', async (context) => {
       const { unmount } = render(
-        <ChatClientProvider client={mockChatClient}>
+        <ChatClientProvider client={context.mockChatClient}>
           <ChatRoomProvider name="test-room">
             <div>Test Content</div>
           </ChatRoomProvider>
@@ -84,15 +91,15 @@ describe('ChatRoomProvider', () => {
       });
 
       // The release should have been called
-      expect(mockChatClient.rooms.release).toHaveBeenCalledWith('test-room');
+      expect(context.mockChatClient.rooms.release).toHaveBeenCalledWith('test-room');
     });
 
-    it('should not abort release when mounting with different options', async () => {
+    it<TestContext>('should not abort release when mounting with different options', async (context) => {
       // Create a component that we can show/hide and change options
       const TestComponent = ({ show, options }: { show: boolean; options?: RoomOptions }) => {
         if (!show) return null;
         return (
-          <ChatClientProvider client={mockChatClient}>
+          <ChatClientProvider client={context.mockChatClient}>
             <ChatRoomProvider
               name="test-room"
               options={options}
@@ -130,7 +137,7 @@ describe('ChatRoomProvider', () => {
       });
 
       // The release should have proceeded since options changed
-      expect(mockChatClient.rooms.release).toHaveBeenCalledWith('test-room');
+      expect(context.mockChatClient.rooms.release).toHaveBeenCalledWith('test-room');
     });
   });
 });
