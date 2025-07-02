@@ -7,11 +7,13 @@ import {
   DeleteMessageReactionParams as APIDeleteMessageReactionParams,
 } from './chat-api.js';
 import {
+  AnnotationTypeToReactionType,
   ChatMessageAction,
   MessageReactionEventType,
   MessageReactionRawEvent,
   MessageReactionSummaryEvent,
   MessageReactionType,
+  ReactionAnnotationType,
 } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomOptions, MessageOptions } from './room-options.js';
@@ -149,21 +151,22 @@ export class DefaultMessageReactions implements MessagesReactions {
       return;
     }
 
-    // unknown ref type
-    if (!Object.values(MessageReactionType).includes(event.type as MessageReactionType)) {
+    const reactionType = AnnotationTypeToReactionType[event.type];
+
+    // unknown reaction type, meaning we've received an unknown annotation type
+    if (!reactionType) {
       this._logger.debug('DefaultMessageReactions._processAnnotationEvent(); received event with unknown type', {
         event,
       });
       return;
     }
-    const reactionType = event.type as MessageReactionType;
 
-    const typeMap: Record<string, MessageReactionEventType.Create | MessageReactionEventType.Delete> = {
+    const eventTypeMap: Record<string, MessageReactionEventType.Create | MessageReactionEventType.Delete> = {
       'annotation.create': MessageReactionEventType.Create,
       'annotation.delete': MessageReactionEventType.Delete,
     };
 
-    const eventType = typeMap[event.action];
+    const eventType = eventTypeMap[event.action];
     if (!eventType) {
       // unknown action
       this._logger.warn('DefaultMessageReactions._processAnnotationEvent(); received event with unknown action', {
@@ -221,9 +224,9 @@ export class DefaultMessageReactions implements MessagesReactions {
       return;
     }
 
-    const unique = (event.summary[MessageReactionType.Unique] ?? {}) as unknown as Ably.SummaryUniqueValues;
-    const distinct = (event.summary[MessageReactionType.Distinct] ?? {}) as unknown as Ably.SummaryDistinctValues;
-    const multiple = (event.summary[MessageReactionType.Multiple] ?? {}) as Ably.SummaryMultipleValues;
+    const unique = (event.summary[ReactionAnnotationType.Unique] ?? {}) as unknown as Ably.SummaryUniqueValues;
+    const distinct = (event.summary[ReactionAnnotationType.Distinct] ?? {}) as unknown as Ably.SummaryDistinctValues;
+    const multiple = (event.summary[ReactionAnnotationType.Multiple] ?? {}) as Ably.SummaryMultipleValues;
 
     this._emitter.emit(MessageReactionEventType.Summary, {
       type: MessageReactionEventType.Summary,
