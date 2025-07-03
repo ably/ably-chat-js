@@ -34,14 +34,20 @@ export interface ChatClientProviderProps {
  */
 export const ChatClientProvider = ({ children, client }: ChatClientProviderProps) => {
   const context = React.useContext(ChatClientContext);
+
   const value: ChatClientContextValue = React.useMemo(() => {
-    client.addReactAgent();
+    (client as unknown as { addReactAgent(): void }).addReactAgent();
+
     const uiKitVersion = globalThis.__ABLY_CHAT_REACT_UI_COMPONENTS_VERSION__;
     if (typeof uiKitVersion === 'string') {
-      client.addAgentWithVersion('chat-ui-kit', uiKitVersion);
+      (
+        client as unknown as {
+          addAgentWithVersion(agent: string, version: string): void;
+        }
+      ).addAgentWithVersion('chat-ui-kit', uiKitVersion);
     }
 
-    return { ...context, [DEFAULT_CHAT_CLIENT_ID]: { client } };
+    return { ...context, [DEFAULT_CHAT_CLIENT_ID]: { client: client } };
   }, [client, context]);
 
   return <ChatClientContext.Provider value={value}>{children}</ChatClientContext.Provider>;

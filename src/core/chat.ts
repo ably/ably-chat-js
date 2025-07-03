@@ -121,7 +121,7 @@ export class ChatClient {
    * @param version - The version of the agent, defaults to the current client version.
    * @internal
    */
-  public addAgentWithVersion(agent:string, version:string): void {
+  public addAgentWithVersion(agent: string, version: string): void {
     this._addAgent(agent, version);
     this._logger.trace(`Added agent ${agent} with version ${version}`);
   }
@@ -131,7 +131,7 @@ export class ChatClient {
    * @param version - The version of the agent, defaults to the current client version.
    * @internal
    */
-  private _addAgent(agent: string, version?:string): void {
+  private _addAgent(agent: string, version?: string): void {
     const realtime = this._realtime as RealtimeWithOptions;
     realtime.options.agents = { ...(realtime.options.agents ?? realtime.options.agents), [agent]: version ?? VERSION };
   }
