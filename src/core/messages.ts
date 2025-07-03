@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { ChatApi, MessageOperationResponse } from './chat-api.js';
+import { ChatApi } from './chat-api.js';
 import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType, RealtimeMessageName } from './events.js';
 import { Logger } from './logger.js';
 import {
@@ -14,6 +14,7 @@ import {
 import { parseMessage } from './message-parser.js';
 import { DefaultMessageReactions, MessagesReactions } from './messages-reactions.js';
 import { PaginatedResult } from './query.js';
+import { messageFromRest } from './rest-types.js';
 import { MessageOptions } from './room-options.js';
 import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
@@ -530,7 +531,7 @@ export class DefaultMessages implements Messages {
     this._logger.debug('Messages.delete(); serial', { serial });
     const response = await this._chatApi.deleteMessage(this._roomName, serial, params);
 
-    return this._updateResponseToMessage(response);
+    return messageFromRest(response.message);
   }
 
   /**
@@ -551,7 +552,7 @@ export class DefaultMessages implements Messages {
     });
 
     this._logger.debug('Messages.update(); message update successfully', { updateParams });
-    return this._updateResponseToMessage(response);
+    return messageFromRest(response.message);
   }
 
   /**
@@ -615,23 +616,5 @@ export class DefaultMessages implements Messages {
     } catch (error: unknown) {
       this._logger.error(`failed to parse incoming message;`, { channelEventMessage, error: error as Ably.ErrorInfo });
     }
-  }
-
-  private _updateResponseToMessage(response: MessageOperationResponse): DefaultMessage {
-    const { message } = response;
-
-    return new DefaultMessage({
-      serial: message.serial,
-      clientId: message.clientId,
-      text: message.text,
-      metadata: message.metadata,
-      headers: message.headers,
-      action: message.action,
-      version: message.version,
-      createdAt: new Date(message.createdAt),
-      timestamp: new Date(message.timestamp),
-      reactions: message.reactions,
-      operation: response.message.operation,
-    });
   }
 }

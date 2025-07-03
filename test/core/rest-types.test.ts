@@ -9,7 +9,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Hello, world!',
       clientId: 'client123',
       action: 'message.create',
@@ -39,7 +38,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Hello with metadata',
       clientId: 'client123',
       action: 'message.create',
@@ -84,7 +82,6 @@ describe('messageFromRest', () => {
       const restMessage: RestMessage = {
         serial: '01672531200000-123@abcdefghij',
         version: '01672531200000-123@abcdefghij:0',
-        roomId: 'room123',
         text: 'Test message',
         clientId: 'client123',
         action,
@@ -103,7 +100,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Updated message',
       clientId: 'client123',
       action: 'message.update',
@@ -135,7 +131,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Message with reactions',
       clientId: 'client123',
       action: 'message.create',
@@ -177,7 +172,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Message with distinct reactions',
       clientId: 'client123',
       action: 'message.create',
@@ -211,7 +205,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Message with multiple reactions',
       clientId: 'client123',
       action: 'message.create',
@@ -253,7 +246,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Message with all reactions',
       clientId: 'client123',
       action: 'message.create',
@@ -315,7 +307,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Message with partial reactions',
       clientId: 'client123',
       action: 'message.create',
@@ -350,7 +341,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Message without reactions',
       clientId: 'client123',
       action: 'message.create',
@@ -369,7 +359,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Test message',
       clientId: 'client123',
       action: 'message.create',
@@ -395,7 +384,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Message with empty reactions',
       clientId: 'client123',
       action: 'message.create',
@@ -415,7 +403,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Message with complex metadata',
       clientId: 'client123',
       action: 'message.create',
@@ -468,7 +455,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Message with zero timestamps',
       clientId: 'client123',
       action: 'message.create',
@@ -488,7 +474,6 @@ describe('messageFromRest', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
       version: '01672531200000-123@abcdefghij:0',
-      roomId: 'room123',
       text: 'Test message',
       clientId: 'client123',
       action: 'message.unknown' as RestMessage['action'],
