@@ -113,6 +113,14 @@ export interface MessagesReactions {
 }
 
 /**
+ * Maps Ably PubSub annotation action to message reaction event type.
+ */
+const eventTypeMap: Record<string, MessageReactionEventType.Create | MessageReactionEventType.Delete> = {
+  'annotation.create': MessageReactionEventType.Create,
+  'annotation.delete': MessageReactionEventType.Delete,
+};
+
+/**
  * @inheritDoc
  */
 export class DefaultMessageReactions implements MessagesReactions {
@@ -160,11 +168,6 @@ export class DefaultMessageReactions implements MessagesReactions {
       });
       return;
     }
-
-    const eventTypeMap: Record<string, MessageReactionEventType.Create | MessageReactionEventType.Delete> = {
-      'annotation.create': MessageReactionEventType.Create,
-      'annotation.delete': MessageReactionEventType.Delete,
-    };
 
     const eventType = eventTypeMap[event.action];
     if (!eventType) {
