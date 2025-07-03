@@ -35,15 +35,13 @@ export interface ChatClientProviderProps {
 export const ChatClientProvider = ({ children, client }: ChatClientProviderProps) => {
   const context = React.useContext(ChatClientContext);
   const value: ChatClientContextValue = React.useMemo(() => {
-    // Set the internal useReact option to true to enable React-specific agent.
-    (client as unknown as { addReactAgent(): void }).addReactAgent();
-
-    const uiKitVersion = (globalThis as Record<string, unknown>).__ABLY_CHAT_REACT_UI_COMPONENTS_VERSION__;
-    if (typeof uiKitVersion === 'string'){
-      (client as unknown as { addAgentWithVersion(agent: string, version:string): void }).addAgentWithVersion('chat-ui-kit', uiKitVersion);
+    client.addReactAgent();
+    const uiKitVersion = globalThis.__ABLY_CHAT_REACT_UI_COMPONENTS_VERSION__;
+    if (typeof uiKitVersion === 'string') {
+      client.addAgentWithVersion('chat-ui-kit', uiKitVersion);
     }
 
-    return { ...context, [DEFAULT_CHAT_CLIENT_ID]: { client: client } };
+    return { ...context, [DEFAULT_CHAT_CLIENT_ID]: { client } };
   }, [client, context]);
 
   return <ChatClientContext.Provider value={value}>{children}</ChatClientContext.Provider>;
