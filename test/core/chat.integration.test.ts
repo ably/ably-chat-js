@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { ConnectionStatus } from '../../src/core/connection.ts';
@@ -29,6 +29,24 @@ const waitForConnectionStatus = (chat: ChatClient, state: ConnectionStatus) => {
 };
 
 describe('Chat', () => {
+  let connectSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    const chat = newChatClient(testClientOptions());
+    // Spy on the connectWs method to check if the agent string is sent
+    const cm = (
+      chat.realtime as unknown as {
+        connection: { connectionManager: { connectWs: (...args: unknown[]) => void } };
+      }
+    ).connection.connectionManager;
+
+    connectSpy = vi.spyOn(cm, 'connectWs');
+  });
+
+  afterEach(() => {
+    connectSpy.mockRestore();
+  });
+
   it('should set the agent string on client instantiation', () => {
     const chat = newChatClient(testClientOptions());
     expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({ 'chat-js': VERSION });
@@ -51,6 +69,16 @@ describe('Chat', () => {
       'chat-js': VERSION,
     });
   });
+
+  it('should send agent string with room attach', async () => {
+    const chat = newChatClient(testClientOptions());
+    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({ 'chat-js': VERSION });
+    const room = await getRandomRoom(chat);
+    await room.attach();
+
+    const params = connectSpy.mock.calls[0]?.[0] as { options: { agents: Record<string, string> } };
+    expect(params.options.agents).toEqual({ 'chat-js': VERSION });
+  }, 20000);
 
   it('should set react channel agents', async () => {
     const chat = newChatClient(testClientOptions());
