@@ -1,38 +1,38 @@
 import * as Ably from 'ably';
 
-import { DefaultReaction, Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
+import { DefaultRoomReaction, RoomReaction, RoomReactionHeaders, RoomReactionMetadata } from './room-reaction.js';
 
 interface ReactionPayload {
   data?: {
     type: unknown;
-    metadata?: ReactionMetadata;
+    metadata?: RoomReactionMetadata;
   };
   clientId?: string;
   timestamp: number;
   extras?: {
-    headers?: ReactionHeaders;
+    headers?: RoomReactionHeaders;
   };
 }
 
-export function parseReaction(message: Ably.InboundMessage, clientId?: string): Reaction {
+export function parseRoomReaction(message: Ably.InboundMessage, clientId?: string): RoomReaction {
   const reactionCreatedMessage = message as ReactionPayload;
   if (!reactionCreatedMessage.data) {
-    throw new Ably.ErrorInfo(`received incoming message without data`, 50000, 500);
+    throw new Ably.ErrorInfo(`received incoming room reaction message without data`, 50000, 500);
   }
 
   if (!reactionCreatedMessage.data.type || typeof reactionCreatedMessage.data.type !== 'string') {
-    throw new Ably.ErrorInfo('invalid reaction message with no type', 50000, 500);
+    throw new Ably.ErrorInfo('invalid room reaction message with no type', 50000, 500);
   }
 
   if (!reactionCreatedMessage.clientId) {
-    throw new Ably.ErrorInfo(`received incoming message without clientId`, 50000, 500);
+    throw new Ably.ErrorInfo(`received incoming room reaction message without clientId`, 50000, 500);
   }
 
   if (!reactionCreatedMessage.timestamp) {
-    throw new Ably.ErrorInfo(`received incoming message without timestamp`, 50000, 500);
+    throw new Ably.ErrorInfo(`received incoming room reaction message without timestamp`, 50000, 500);
   }
 
-  return new DefaultReaction(
+  return new DefaultRoomReaction(
     reactionCreatedMessage.data.type,
     reactionCreatedMessage.clientId,
     new Date(reactionCreatedMessage.timestamp),

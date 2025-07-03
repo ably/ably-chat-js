@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { Message } from './message.js';
-import { Reaction } from './reaction.js';
+import { RoomReaction } from './room-reaction.js';
 
 /**
  * All chat message events.
@@ -165,7 +165,7 @@ export interface RoomReactionEvent {
   /**
    * The reaction that was received.
    */
-  readonly reaction: Reaction;
+  readonly reaction: RoomReaction;
 }
 
 /**

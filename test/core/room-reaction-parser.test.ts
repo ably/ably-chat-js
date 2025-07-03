@@ -1,40 +1,40 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
-import { DefaultReaction } from '../../src/core/reaction.js';
-import { parseReaction } from '../../src/core/reaction-parser.js';
+import { DefaultRoomReaction } from '../../src/core/room-reaction.js';
+import { parseRoomReaction } from '../../src/core/room-reaction-parser.js';
 
-describe('parseReaction', () => {
+describe('parseRoomReaction', () => {
   describe.each([
     {
       description: 'message.data is undefined',
       message: {} as Ably.InboundMessage,
-      expectedError: 'received incoming message without data',
+      expectedError: 'received incoming room reaction message without data',
     },
     {
       description: 'message.data.type is undefined',
       message: { data: {}, clientId: 'client1', timestamp: 1234567890 },
-      expectedError: 'invalid reaction message with no type',
+      expectedError: 'invalid room reaction message with no type',
     },
     {
       description: 'message.data.type is not a string',
       message: { data: { type: 123 }, clientId: 'client1', timestamp: 1234567890 },
-      expectedError: 'invalid reaction message with no type',
+      expectedError: 'invalid room reaction message with no type',
     },
     {
       description: 'message.clientId is undefined',
       message: { data: { type: 'like' }, timestamp: 1234567890 },
-      expectedError: 'received incoming message without clientId',
+      expectedError: 'received incoming room reaction message without clientId',
     },
     {
       description: 'message.timestamp is undefined',
       message: { data: { type: 'like' }, clientId: 'client1' },
-      expectedError: 'received incoming message without timestamp',
+      expectedError: 'received incoming room reaction message without timestamp',
     },
   ])('should throw an error', ({ description, message, expectedError }) => {
     it(`should throw the error if ${description}`, () => {
       expect(() => {
-        parseReaction(message as Ably.InboundMessage);
+        parseRoomReaction(message as Ably.InboundMessage);
       }).toThrowErrorInfo({
         code: 50000,
         message: expectedError,
@@ -50,9 +50,9 @@ describe('parseReaction', () => {
       extras: { headers: { headerKey: 'headerValue' } },
     } as Ably.InboundMessage;
 
-    const result = parseReaction(message);
+    const result = parseRoomReaction(message);
 
-    expect(result).toBeInstanceOf(DefaultReaction);
+    expect(result).toBeInstanceOf(DefaultRoomReaction);
     expect(result.name).toBe('like');
     expect(result.clientId).toBe('client1');
     expect(result.createdAt).toEqual(new Date(1234567890));
@@ -68,7 +68,7 @@ describe('parseReaction', () => {
       timestamp: 1234567890,
     } as Ably.InboundMessage;
 
-    const result = parseReaction(message, 'client1');
+    const result = parseRoomReaction(message, 'client1');
 
     expect(result.isSelf).toBe(true);
   });
