@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { MessageReactionType } from '../../src/core/events.ts';
 import { normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 
 describe('normalizeRoomOptions', () => {
@@ -17,7 +18,7 @@ describe('normalizeRoomOptions', () => {
         enableEvents: true,
       },
       messages: {
-        defaultMessageReactionType: 'reaction:distinct.v1',
+        defaultMessageReactionType: MessageReactionType.Distinct,
         rawMessageReactions: false,
       },
       isReactClient: false,
@@ -97,7 +98,7 @@ describe('normalizeRoomOptions', () => {
         enableEvents: false,
       },
       messages: {
-        defaultMessageReactionType: 'reaction:distinct.v1',
+        defaultMessageReactionType: MessageReactionType.Distinct,
         rawMessageReactions: false,
       },
       isReactClient: false,

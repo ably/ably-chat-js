@@ -194,7 +194,7 @@ export enum MessageReactionType {
    *
    * This is similar to reactions on iMessage, Facebook Messenger or WhatsApp.
    */
-  Unique = 'reaction:unique.v1',
+  Unique = 'unique',
 
   /**
    * Allows for at most one reaction of each type per client per message. It is
@@ -204,7 +204,7 @@ export enum MessageReactionType {
    *
    * This is similar to reactions on Slack.
    */
-  Distinct = 'reaction:distinct.v1',
+  Distinct = 'distinct',
 
   /**
    * Allows any number of reactions, including repeats, and they are counted in
@@ -213,8 +213,28 @@ export enum MessageReactionType {
    *
    * This is similar to the clap feature on Medium or how room reactions work.
    */
+  Multiple = 'multiple',
+}
+
+/**
+ * Enum representing the different annotation types used for message reactions.
+ */
+export enum ReactionAnnotationType {
+  Unique = 'reaction:unique.v1',
+  Distinct = 'reaction:distinct.v1',
   Multiple = 'reaction:multiple.v1',
 }
+
+/**
+ * Maps Ably PubSub annotation types to Ably Chat message reaction types.
+ *
+ * The key type is string because we use it to lookup by PubSub event.type, which is a string.
+ */
+export const AnnotationTypeToReactionType: Record<string, MessageReactionType> = {
+  [ReactionAnnotationType.Unique]: MessageReactionType.Unique,
+  [ReactionAnnotationType.Distinct]: MessageReactionType.Distinct,
+  [ReactionAnnotationType.Multiple]: MessageReactionType.Multiple,
+} as const;
 
 /**
  * Enum representing different message reaction events in the chat system.

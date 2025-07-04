@@ -7,6 +7,7 @@ import {
   MessageReactionEventType,
   MessageReactionRawEvent,
   MessageReactionType,
+  ReactionAnnotationType,
 } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import {
@@ -192,7 +193,7 @@ describe('MessagesReactions', () => {
           action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
-            [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
+            [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
           },
         });
 
@@ -203,7 +204,7 @@ describe('MessagesReactions', () => {
           action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
-            [MessageReactionType.Distinct]: { '🥦': { total: 1, clientIds: ['user2'] } },
+            [ReactionAnnotationType.Distinct]: { '🥦': { total: 1, clientIds: ['user2'] } },
           },
         });
 
@@ -214,7 +215,7 @@ describe('MessagesReactions', () => {
           action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
           summary: {
-            [MessageReactionType.Multiple]: { '🍌': { clientIds: { user1: 10 }, total: 10, totalUnidentified: 0 } },
+            [ReactionAnnotationType.Multiple]: { '🍌': { clientIds: { user1: 10 }, total: 10, totalUnidentified: 0 } },
           },
         });
 
@@ -263,7 +264,7 @@ describe('MessagesReactions', () => {
         refSerial: '01672531200000-123@xyzdefghij',
         action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
-        summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+        summary: { [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
       });
 
       expect(c1).toEqual(1);
@@ -277,7 +278,7 @@ describe('MessagesReactions', () => {
         refSerial: '01672531200000-123@xyzdefghij',
         action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
-        summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+        summary: { [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
       });
 
       expect(c1).toEqual(2);
@@ -435,7 +436,7 @@ describe('MessagesReactions', () => {
         context.emulateBackendAnnotation({
           serial: '01672531200000-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
-          type: MessageReactionType.Unique,
+          type: ReactionAnnotationType.Unique,
           clientId: 'u1',
           name: '🥦',
           action: 'annotation.create',
@@ -445,7 +446,7 @@ describe('MessagesReactions', () => {
         context.emulateBackendAnnotation({
           serial: '01672531200002-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
-          type: MessageReactionType.Unique,
+          type: ReactionAnnotationType.Unique,
           clientId: 'u1',
           action: 'annotation.delete',
           timestamp: publishTimestamp,
@@ -454,7 +455,7 @@ describe('MessagesReactions', () => {
         context.emulateBackendAnnotation({
           serial: '01672531200003-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
-          type: MessageReactionType.Distinct,
+          type: ReactionAnnotationType.Distinct,
           name: '🚀',
           clientId: 'u1',
           action: 'annotation.create',
@@ -464,7 +465,7 @@ describe('MessagesReactions', () => {
         context.emulateBackendAnnotation({
           serial: '01672531200004-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
-          type: MessageReactionType.Multiple,
+          type: ReactionAnnotationType.Multiple,
           name: '🔥',
           count: 10,
           encoding: 'json',
@@ -476,7 +477,7 @@ describe('MessagesReactions', () => {
         context.emulateBackendAnnotation({
           serial: '01672531200005-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
-          type: MessageReactionType.Multiple,
+          type: ReactionAnnotationType.Multiple,
           name: '👍',
           encoding: 'json',
           clientId: 'u1',
@@ -487,7 +488,7 @@ describe('MessagesReactions', () => {
         context.emulateBackendAnnotation({
           serial: '01672531200006-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
-          type: MessageReactionType.Multiple,
+          type: ReactionAnnotationType.Multiple,
           name: '🍌',
           encoding: 'json',
           clientId: 'u1',
@@ -519,7 +520,7 @@ describe('MessagesReactions', () => {
       context.emulateBackendAnnotation({
         serial: '01672531200003-123@abcdefghij',
         messageSerial: '01672531200000-123@xyzdefghij',
-        type: MessageReactionType.Distinct,
+        type: ReactionAnnotationType.Distinct,
         name: '🚀',
         clientId: 'u1',
         action: 'annotation.create',
@@ -533,7 +534,7 @@ describe('MessagesReactions', () => {
       context.emulateBackendAnnotation({
         serial: '01672531200003-123@abcdefghij',
         messageSerial: '01672531200000-123@xyzdefghij',
-        type: MessageReactionType.Distinct,
+        type: ReactionAnnotationType.Distinct,
         name: '🚀',
         clientId: 'u1',
         action: 'annotation.create',
@@ -550,7 +551,7 @@ describe('MessagesReactions', () => {
       context.emulateBackendAnnotation({
         serial: '01672531200003-123@abcdefghij',
         messageSerial: '01672531200000-123@xyzdefghij',
-        type: MessageReactionType.Distinct,
+        type: ReactionAnnotationType.Distinct,
         name: '🚀',
         clientId: 'u1',
         action: 'annotation.create',
@@ -567,7 +568,7 @@ describe('MessagesReactions', () => {
       context.emulateBackendAnnotation({
         serial: '01672531200003-123@abcdefghij',
         messageSerial: '01672531200000-123@xyzdefghij',
-        type: MessageReactionType.Distinct,
+        type: ReactionAnnotationType.Distinct,
         name: '🚀',
         clientId: 'u1',
         action: 'annotation.create',
