@@ -1,8 +1,7 @@
 
 ![Ably Chat Header](images/JavaScriptChatSDK-github.png)
-
-[![License](https://badgen.net/github/license/3scale/saas-operator)](https://github.com/3scale/saas-operator/blob/main/LICENSE)
 [![npm version](https://img.shields.io/npm/v/@ably/chat.svg?style=flat)](https://www.npmjs.com/package/@ably/chat)
+[![License](https://img.shields.io/github/license/ably/ably-chat-js.svg)](https://github.com/ably/ably-chat-js/blob/main/LICENSE)
 
 
 # Ably Chat JavaScript, TypeScript and React SDK
@@ -18,6 +17,7 @@ Everything you need to get started with Ably:
 * [About Ably Chat.](https://ably.com/docs/chat)
 * [Getting started with Ably Chat in JavaScript.](https://ably.com/docs/chat/getting-started/javascript)
 * [Getting started with Ably Chat in React.](https://ably.com/docs/chat/getting-started/react)
+* [SDK and usage docs in JavaScript.](https://ably.com/docs/chat/setup?lang=javascript)
 * Play with the [livestream chat demo.](https://ably-livestream-chat-demo.vercel.app/)
 
 ---
@@ -55,6 +55,6 @@ Read the [CONTRIBUTING.md](./CONTRIBUTING.md) guidelines to contribute to Ably o
 
 ---
 
-## Support, Feedback, and Troubleshooting
+## Support, feedback, and troubleshooting
 
 For help or technical support, visit Ably's [support page](https://ably.com/support). You can also view the [community reported Github issues](https://github.com/ably/ably-chat-js/issues) or raise one yourself.
