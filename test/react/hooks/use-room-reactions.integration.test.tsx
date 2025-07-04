@@ -2,7 +2,7 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Reaction } from '../../../src/core/reaction.ts';
+import { RoomReaction } from '../../../src/core/room-reaction.ts';
 import { RoomReactionListener } from '../../../src/core/room-reactions.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
 import { useRoomReactions } from '../../../src/react/hooks/use-room-reactions.ts';
@@ -28,7 +28,7 @@ describe('useRoomReactions', () => {
     await roomTwo.attach();
 
     // store the received reactions
-    const reactions: Reaction[] = [];
+    const reactions: RoomReaction[] = [];
 
     // subscribe to the reactions
     roomTwo.reactions.subscribe((event) => {
@@ -76,7 +76,7 @@ describe('useRoomReactions', () => {
     await roomTwo.attach();
 
     // store the received reactions
-    const reactions: Reaction[] = [];
+    const reactions: RoomReaction[] = [];
 
     let currentRoomStatus: RoomStatus;
 

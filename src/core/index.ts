@@ -64,9 +64,9 @@ export type { Occupancy, OccupancyData, OccupancyListener } from './occupancy.js
 export type { OperationMetadata } from './operation-metadata.js';
 export type { Presence, PresenceData, PresenceEvent, PresenceListener, PresenceMember } from './presence.js';
 export type { PaginatedResult } from './query.js';
-export type { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
 export type { Room } from './room.js';
 export type { MessageOptions, OccupancyOptions, PresenceOptions, RoomOptions, TypingOptions } from './room-options.js';
+export type { RoomReaction, RoomReactionHeaders, RoomReactionMetadata } from './room-reaction.js';
 export type { RoomReactionListener, RoomReactions, SendReactionParams } from './room-reactions.js';
 export type { RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';

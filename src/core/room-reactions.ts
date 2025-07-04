@@ -2,9 +2,9 @@ import * as Ably from 'ably';
 
 import { RoomReactionEvent, RoomReactionEventType, RoomReactionRealtimeEventType } from './events.js';
 import { Logger } from './logger.js';
-import { Reaction, ReactionHeaders, ReactionMetadata } from './reaction.js';
-import { parseReaction } from './reaction-parser.js';
 import { messageToEphemeral } from './realtime.js';
+import { RoomReaction, RoomReactionHeaders, RoomReactionMetadata } from './room-reaction.js';
+import { parseRoomReaction } from './room-reaction-parser.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
@@ -31,7 +31,7 @@ export interface SendReactionParams {
    * validation. When reading the metadata treat it like user input.
    *
    */
-  metadata?: ReactionMetadata;
+  metadata?: RoomReactionMetadata;
 
   /**
    * Optional headers of the room reaction.
@@ -47,7 +47,7 @@ export interface SendReactionParams {
    * input.
    *
    */
-  headers?: ReactionHeaders;
+  headers?: RoomReactionHeaders;
 }
 
 /**
@@ -92,7 +92,7 @@ interface RoomReactionEventsMap {
 
 interface ReactionPayload {
   type: string;
-  metadata?: ReactionMetadata;
+  metadata?: RoomReactionMetadata;
 }
 
 /**
@@ -191,9 +191,9 @@ export class DefaultRoomReactions implements RoomReactions {
     });
   };
 
-  private _parseNewReaction(inbound: Ably.InboundMessage, clientId: string): Reaction | undefined {
+  private _parseNewReaction(inbound: Ably.InboundMessage, clientId: string): RoomReaction | undefined {
     try {
-      return parseReaction(inbound, clientId);
+      return parseRoomReaction(inbound, clientId);
     } catch (error: unknown) {
       this._logger.error(`failed to parse incoming reaction;`, {
         inbound,

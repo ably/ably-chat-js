@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { ConnectionStatus } from '../../src/core/connection.ts';
 import { RoomReactionEventType } from '../../src/core/events.ts';
-import { Reaction } from '../../src/core/reaction.ts';
 import { Room } from '../../src/core/room.ts';
+import { RoomReaction } from '../../src/core/room-reaction.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';
@@ -121,7 +121,7 @@ describe('Reactions', () => {
     const publishTimestamp = Date.now();
     const { room } = context;
 
-    const receivedReactions: Reaction[] = [];
+    const receivedReactions: RoomReaction[] = [];
     const { unsubscribe } = room.reactions.subscribe((event) => {
       receivedReactions.push(event.reaction);
     });
@@ -166,7 +166,7 @@ describe('Reactions', () => {
     const { room } = context;
 
     const received: string[] = [];
-    const listener = (event: { reaction: Reaction }) => {
+    const listener = (event: { reaction: RoomReaction }) => {
       received.push(event.reaction.name);
     };
     const subscription1 = room.reactions.subscribe(listener);

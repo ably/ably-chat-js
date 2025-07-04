@@ -4,17 +4,17 @@ import { Metadata } from './metadata.js';
 /**
  * {@link Headers} type for chat messages.
  */
-export type ReactionHeaders = Headers;
+export type RoomReactionHeaders = Headers;
 
 /**
  * {@link Metadata} type for chat messages.
  */
-export type ReactionMetadata = Metadata;
+export type RoomReactionMetadata = Metadata;
 
 /**
  * Represents a room-level reaction.
  */
-export interface Reaction {
+export interface RoomReaction {
   /**
    * The name of the reaction, for example "like" or "love".
    */
@@ -23,12 +23,12 @@ export interface Reaction {
   /**
    * Metadata of the reaction. If no metadata was set this is an empty object.
    */
-  readonly metadata: ReactionMetadata;
+  readonly metadata: RoomReactionMetadata;
 
   /**
    * Headers of the reaction. If no headers were set this is an empty object.
    */
-  readonly headers: ReactionHeaders;
+  readonly headers: RoomReactionHeaders;
 
   /**
    * The timestamp at which the reaction was sent.
@@ -47,16 +47,16 @@ export interface Reaction {
 }
 
 /**
- * An implementation of the Reaction interface for room-level reactions.
+ * An implementation of the RoomReaction interface for room-level reactions.
  */
-export class DefaultReaction implements Reaction {
+export class DefaultRoomReaction implements RoomReaction {
   constructor(
     public readonly name: string,
     public readonly clientId: string,
     public readonly createdAt: Date,
     public readonly isSelf: boolean,
-    public readonly metadata: ReactionMetadata,
-    public readonly headers: ReactionHeaders,
+    public readonly metadata: RoomReactionMetadata,
+    public readonly headers: RoomReactionHeaders,
   ) {
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);
