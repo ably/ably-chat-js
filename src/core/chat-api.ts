@@ -1,8 +1,7 @@
 import * as Ably from 'ably';
 
-import { ChatMessageAction } from './events.js';
 import { Logger } from './logger.js';
-import { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata, MessageReactions } from './message.js';
+import { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { OrderBy } from './messages.js';
 import { OccupancyData } from './occupancy.js';
 import { PaginatedResult } from './query.js';
@@ -59,23 +58,7 @@ export interface MessageOperationResponse {
   /**
    * The message that was created or updated.
    */
-  message: {
-    serial: string;
-    clientId: string;
-    text: string;
-    metadata: MessageMetadata;
-    headers: MessageHeaders;
-    action: ChatMessageAction;
-    version: string;
-    createdAt: number;
-    timestamp: number;
-    reactions: MessageReactions;
-    operation: {
-      clientId: string;
-      description?: string;
-      metadata?: MessageOperationMetadata;
-    };
-  };
+  message: RestMessage;
 }
 
 type UpdateMessageResponse = MessageOperationResponse;

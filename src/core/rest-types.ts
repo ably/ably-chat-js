@@ -32,7 +32,6 @@ export interface RestChatMessageReactions {
 export interface RestMessage {
   serial: string;
   version: string;
-  roomId: string;
   text: string;
   clientId: string;
   action: 'message.create' | 'message.update' | 'message.delete';

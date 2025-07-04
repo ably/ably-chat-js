@@ -192,7 +192,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       // Check that the deletion was received
       expect(deletions).toEqual([
         expect.objectContaining({
-          text: 'Hello there!',
+          text: '', // Delete messages have empty text
           clientId: chat.clientId,
           serial: deletedMessage1.serial,
           timestamp: deletedMessage1.deletedAt,
@@ -254,7 +254,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       // Check that the deletion was received
       expect(deletions).toEqual([
         expect.objectContaining({
-          text: 'Hello there!',
+          text: '', // Delete messages have empty text
           clientId: chat.clientId,
           serial: deletedMessage1.serial,
           timestamp: deletedMessage1.deletedAt,
@@ -319,7 +319,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       // Check that the deletion was received
       expect(deletions).toEqual([
         expect.objectContaining({
-          text: 'Hello there!',
+          text: '', // Delete messages have empty text
           clientId: chat.clientId,
           serial: deletedMessage1.serial,
           timestamp: deletedMessage1.deletedAt,
@@ -343,7 +343,9 @@ describe('messages integration', { timeout: 10000 }, () => {
 
       expect(updatedMessage1).toEqual(
         expect.objectContaining({
-          text: 'Hello there!',
+          text: '', // Delete messages have empty text
+          headers: {},
+          metadata: {},
           clientId: chat.clientId,
           serial: message1.serial,
           version: deletedMessage1.version,
@@ -642,7 +644,9 @@ describe('messages integration', { timeout: 10000 }, () => {
 
       expect(history.items).toEqual([
         expect.objectContaining({
-          text: 'Hello there!',
+          text: '', // Delete messages have empty text
+          headers: {},
+          metadata: {},
           clientId: chat.clientId,
           serial: deletedMessage1.serial,
           createdAt: message1.timestamp,
