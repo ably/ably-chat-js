@@ -204,7 +204,7 @@ describe('useMessages', () => {
     });
     // call both methods and ensure they call the underlying messages methods
     await act(async () => {
-      await result.current.send({ text: 'test message' });
+      await result.current.sendMessage({ text: 'test message' });
       await result.current.history({ limit: 10 });
       await result.current.deleteMessage(message, {
         description: 'deleted',

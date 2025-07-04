@@ -37,12 +37,12 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Messages.send} method.
    */
-  readonly send: Messages['send'];
+  readonly sendMessage: Messages['send'];
 
   /**
    * A shortcut to the {@link Messages.update} method.
    */
-  readonly update: Messages['update'];
+  readonly updateMessage: Messages['update'];
 
   /**
    * A shortcut to the {@link Messages.history} method.
@@ -135,7 +135,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   const rawReactionsListenerRef = useEventListenerRef(params?.rawReactionsListener);
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
-  const send = useCallback(
+  const sendMessage = useCallback(
     (params: SendMessageParams) => context.room.then((room) => room.messages.send(params)),
     [context],
   );
@@ -148,7 +148,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     (options: QueryOptions) => context.room.then((room) => room.messages.history(options)),
     [context],
   );
-  const update = useCallback(
+  const updateMessage = useCallback(
     (serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails) =>
       context.room.then((room) => room.messages.update(serial, updateParams, details)),
     [context],
@@ -264,8 +264,8 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     connectionError,
     roomStatus,
     roomError,
-    send,
-    update,
+    sendMessage,
+    updateMessage,
     history,
     deleteMessage,
     sendReaction,
