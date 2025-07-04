@@ -15,7 +15,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const chatClient = useChatClient();
   const clientId = chatClient.clientId;
 
-  const { historyBeforeSubscribe, deleteMessage, update, sendReaction, deleteReaction } = useMessages({
+  const { historyBeforeSubscribe, deleteMessage, updateMessage, sendReaction, deleteReaction } = useMessages({
     listener: (event: ChatMessageEvent) => {
       const message = event.message;
       switch (event.type) {
@@ -135,7 +135,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
       if (!newText) {
         return;
       }
-      update(
+      updateMessage(
         message,
         message.copy({
           text: newText,
@@ -150,7 +150,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
           console.warn('Failed to update message', error);
         });
     },
-    [update],
+    [updateMessage],
   );
 
   const onDeleteMessage = useCallback(
