@@ -137,6 +137,132 @@ describe('parseMessage', () => {
     });
   });
 
+  describe.each([
+    {
+      description: 'message.data is null',
+      message: {
+        data: null,
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: {},
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        action: ChatMessageAction.MessageCreate,
+      },
+      expectedDefaults: { text: '', metadata: {} },
+    },
+    {
+      description: 'message.data is a string',
+      message: {
+        data: 'invalid-data',
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: {},
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        action: ChatMessageAction.MessageCreate,
+      },
+      expectedDefaults: { text: '', metadata: {} },
+    },
+    {
+      description: 'message.data is a number',
+      message: {
+        data: 123,
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: {},
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        action: ChatMessageAction.MessageCreate,
+      },
+      expectedDefaults: { text: '', metadata: {} },
+    },
+    {
+      description: 'message.data is a boolean',
+      message: {
+        data: true,
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: {},
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        action: ChatMessageAction.MessageCreate,
+      },
+      expectedDefaults: { text: '', metadata: {} },
+    },
+    {
+      description: 'message.extras is null',
+      message: {
+        data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: null,
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        action: ChatMessageAction.MessageCreate,
+      },
+      expectedDefaults: { headers: {} },
+    },
+    {
+      description: 'message.extras is a string',
+      message: {
+        data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: 'invalid-extras',
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        action: ChatMessageAction.MessageCreate,
+      },
+      expectedDefaults: { headers: {} },
+    },
+    {
+      description: 'message.extras is a number',
+      message: {
+        data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: 456,
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        action: ChatMessageAction.MessageCreate,
+      },
+      expectedDefaults: { headers: {} },
+    },
+    {
+      description: 'message.extras is a boolean',
+      message: {
+        data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: false,
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        action: ChatMessageAction.MessageCreate,
+      },
+      expectedDefaults: { headers: {} },
+    },
+  ])('should handle non-object values', ({ description, message, expectedDefaults }) => {
+    it(`should use empty objects when ${description}`, () => {
+      const result = parseMessage(message as Ably.InboundMessage);
+
+      expect(result).toBeInstanceOf(DefaultMessage);
+
+      // Check specific default values based on what's missing
+      for (const [key, value] of Object.entries(expectedDefaults)) {
+        expect(result[key as keyof typeof result]).toEqual(value);
+      }
+    });
+  });
+
   it('should use current time as default when createdAt is undefined', () => {
     const message = {
       data: { text: 'hello' },

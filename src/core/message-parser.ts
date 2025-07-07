@@ -33,8 +33,8 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
   const message = inboundMessage as MessagePayload;
 
   // Provide default values for all fields
-  const data = message.data || {};
-  const extras = message.extras || {};
+  const data = message.data && typeof message.data === 'object' ? message.data : {};
+  const extras = message.extras && typeof message.extras === 'object' ? message.extras : {};
   const clientId = message.clientId || '';
   const text = data.text || '';
   const serial = message.serial || '';
