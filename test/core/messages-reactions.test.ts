@@ -587,10 +587,20 @@ describe('MessagesReactions', () => {
           serial: '01672531200003-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
           type: 'reaction:unknown.v1',
-          data: '🚀',
+          name: '🚀',
           clientId: 'u1',
           action: 'annotation.create',
-          timestamp: Date.now(),
+          timestamp: new Date(1),
+        },
+        {
+          type: MessageReactionEventType.Create as MessageReactionEventType.Create | MessageReactionEventType.Delete,
+          timestamp: new Date(1),
+          reaction: {
+            messageSerial: '01672531200000-123@xyzdefghij',
+            name: '🚀',
+            clientId: 'u1',
+            type: MessageReactionType.Distinct,
+          },
         },
       ],
       [
@@ -599,46 +609,83 @@ describe('MessagesReactions', () => {
           serial: '01672531200003-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
           type: MessageReactionType.Distinct,
-          data: '🚀',
+          name: '🚀',
           clientId: 'u1',
           action: 'annotation.bla',
-          timestamp: Date.now(),
+          timestamp: new Date(1),
+        },
+        {
+          type: MessageReactionEventType.Create as MessageReactionEventType.Create | MessageReactionEventType.Delete,
+          timestamp: new Date(1),
+          reaction: {
+            messageSerial: '01672531200000-123@xyzdefghij',
+            name: '🚀',
+            clientId: 'u1',
+            type: MessageReactionType.Distinct,
+          },
         },
       ],
       [
-        'no data',
+        'no name',
         {
           serial: '01672531200003-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
           type: MessageReactionType.Distinct,
           clientId: 'u1',
           action: 'annotation.create',
-          timestamp: Date.now(),
+          timestamp: new Date(1),
+        },
+        {
+          type: MessageReactionEventType.Create as MessageReactionEventType.Create | MessageReactionEventType.Delete,
+          timestamp: new Date(1),
+          reaction: {
+            messageSerial: '01672531200000-123@xyzdefghij',
+            name: '',
+            clientId: 'u1',
+            type: MessageReactionType.Distinct,
+          },
         },
       ],
       [
-        'no messageSerial',
+        'empty messageSerial',
         {
           serial: '01672531200003-123@abcdefghij',
+          messageSerial: '',
           type: MessageReactionType.Distinct,
-          data: '🚀',
+          name: '🚀',
           clientId: 'u1',
           action: 'annotation.create',
-          timestamp: Date.now(),
+          timestamp: new Date(1),
+        },
+        {
+          type: MessageReactionEventType.Create as MessageReactionEventType.Create | MessageReactionEventType.Delete,
+          timestamp: new Date(1),
+          reaction: {
+            messageSerial: '',
+            name: '🚀',
+            clientId: 'u1',
+            type: MessageReactionType.Distinct,
+          },
         },
       ],
-    ])('invalid incoming raw reactions', (name: string, inboundMessage: unknown) => {
-      it<TestContext>('should handle invalid inbound raw reaction: ' + name, (context) => {
-        const room = context.room;
-        let listenerCalled = false;
-        room.messages.reactions.subscribeRaw(() => {
-          listenerCalled = true;
-        });
+    ])(
+      'invalid incoming raw reactions',
+      (name: string, inboundMessage: unknown, expectedEvent: MessageReactionRawEvent) => {
+        it<TestContext>('should handle invalid inbound raw reaction: ' + name, (context) => {
+          const room = context.room;
+          let receivedEvent: MessageReactionRawEvent | undefined;
+          room.messages.reactions.subscribeRaw((event) => {
+            receivedEvent = event;
+          });
 
-        context.emulateBackendAnnotation(inboundMessage as Ably.Annotation);
-        expect(listenerCalled).toBe(false);
-      });
-    });
+          context.emulateBackendAnnotation(inboundMessage as Ably.Annotation);
+          expect(receivedEvent).toBeDefined();
+          if (receivedEvent) {
+            expect(receivedEvent).toMatchObject(expectedEvent);
+          }
+        });
+      },
+    );
 
     it<TestContext>('should throw error when subscribing to raw reactions if not enabled', (context) => {
       const room = makeRandomRoom({
