@@ -17,9 +17,10 @@ describe('parseMessage', () => {
           headers: {},
         },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageAction.MessageCreate,
       },
-      expectedError: 'received incoming message without data',
+      expectedDefaults: { text: '', metadata: {} },
     },
     {
       description: 'message.clientId is undefined',
@@ -31,9 +32,10 @@ describe('parseMessage', () => {
           headers: {},
         },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageAction.MessageCreate,
       },
-      expectedError: 'received incoming message without clientId',
+      expectedDefaults: { clientId: '' },
     },
     {
       description: 'message.data.text is undefined',
@@ -46,9 +48,10 @@ describe('parseMessage', () => {
           headers: {},
         },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: ChatMessageAction.MessageCreate,
       },
-      expectedError: 'received incoming message without text',
+      expectedDefaults: { text: '' },
     },
     {
       description: 'message.data.metadata is undefined',
@@ -60,8 +63,11 @@ describe('parseMessage', () => {
         extras: {
           headers: {},
         },
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        action: ChatMessageAction.MessageCreate,
       },
-      expectedError: 'received incoming message without metadata',
+      expectedDefaults: { metadata: {} },
     },
     {
       description: 'message.extras is undefined',
@@ -71,49 +77,10 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         createdAt: 1728402074206,
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        action: ChatMessageAction.MessageCreate,
-      },
-      expectedError: 'received incoming message without extras',
-    },
-    {
-      description: 'message.extras.headers is undefined',
-      message: {
-        data: { text: 'hello', metadata: {} },
-        clientId: 'client1',
-        timestamp: 1728402074206,
-        createdAt: 1728402074206,
-        extras: {},
-      },
-    },
-    {
-      description: 'message.serial is undefined',
-      message: {
-        data: { text: 'hello', metadata: {} },
-        clientId: 'client1',
-        timestamp: 1728402074206,
-        createdAt: 1728402074206,
-        extras: {
-          headers: {},
-        },
-        action: ChatMessageAction.MessageCreate,
         version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-      },
-      expectedError: 'received incoming message without serial',
-    },
-    {
-      description: 'message.version is undefined',
-      message: {
-        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        data: { text: 'hello', metadata: {} },
-        clientId: 'client1',
-        timestamp: 1728402074206,
-        createdAt: 1728402074206,
-        extras: {
-          headers: {},
-        },
         action: ChatMessageAction.MessageCreate,
       },
-      expectedError: 'received incoming message without version',
+      expectedDefaults: { headers: {} },
     },
     {
       description: 'message.action is unhandled',
@@ -129,17 +96,77 @@ describe('parseMessage', () => {
         version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         action: 'unhandled.action',
       },
-      expectedError: 'received incoming message with unhandled action; unhandled.action',
+      expectedDefaults: { action: ChatMessageAction.MessageCreate },
     },
-  ])('should throw an error ', ({ description, message, expectedError }) => {
-    it(`should throw an error if ${description}`, () => {
-      expect(() => {
-        parseMessage(message as Ably.InboundMessage);
-      }).toThrowErrorInfo({
-        code: 50000,
-        message: expectedError,
-      });
+    {
+      description: 'message.serial is undefined',
+      message: {
+        data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: {},
+        action: ChatMessageAction.MessageCreate,
+        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      },
+      expectedDefaults: { serial: '' },
+    },
+    {
+      description: 'message.version is undefined',
+      message: {
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        data: { text: 'hello' },
+        clientId: 'client1',
+        timestamp: 1728402074206,
+        createdAt: 1728402074206,
+        extras: {},
+        action: ChatMessageAction.MessageCreate,
+      },
+      expectedDefaults: { version: '' },
+    },
+  ])('should use default values ', ({ description, message, expectedDefaults }) => {
+    it(`should use default values if ${description}`, () => {
+      const result = parseMessage(message as Ably.InboundMessage);
+
+      expect(result).toBeInstanceOf(DefaultMessage);
+
+      // Check specific default values based on what's missing
+      for (const [key, value] of Object.entries(expectedDefaults)) {
+        expect(result[key as keyof typeof result]).toEqual(value);
+      }
     });
+  });
+
+  it('should use current time as default when createdAt is undefined', () => {
+    const message = {
+      data: { text: 'hello' },
+      clientId: 'client1',
+      timestamp: 1728402074206,
+      extras: {},
+      serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      action: ChatMessageAction.MessageCreate,
+    };
+
+    const result = parseMessage(message as Ably.InboundMessage);
+    expect(result).toBeInstanceOf(DefaultMessage);
+    expect(result.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('should use current time as default when timestamp is undefined', () => {
+    const message = {
+      data: { text: 'hello' },
+      clientId: 'client1',
+      createdAt: 1728402074206,
+      extras: {},
+      serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      action: ChatMessageAction.MessageCreate,
+    };
+
+    const result = parseMessage(message as Ably.InboundMessage);
+    expect(result).toBeInstanceOf(DefaultMessage);
+    expect(result.timestamp).toBeInstanceOf(Date);
   });
 
   it('should return a DefaultMessage instance for a valid new message', () => {
@@ -221,11 +248,11 @@ describe('parseMessage', () => {
   it('should return a DefaultMessage instance for a valid deleted message', () => {
     const message = {
       id: 'message-id',
-      data: { text: 'hello', metadata: { key: 'value' } },
+      data: { text: '', metadata: {} },
       clientId: 'client1',
       createdAt: 1728402074206,
       extras: {
-        headers: { headerKey: 'headerValue' },
+        headers: {},
       },
       action: ChatMessageAction.MessageDelete,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',

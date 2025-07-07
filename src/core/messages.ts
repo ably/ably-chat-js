@@ -599,22 +599,7 @@ export class DefaultMessages implements Messages {
       return;
     }
     // Send the message to the listeners
-    const message = this._parseNewMessage(channelEventMessage);
-    if (!message) {
-      return;
-    }
-
+    const message = parseMessage(channelEventMessage);
     this._emitter.emit(event, { type: event, message: message });
-  }
-
-  /**
-   * Validate the realtime message and convert it to a chat message.
-   */
-  private _parseNewMessage(channelEventMessage: Ably.InboundMessage): Message | undefined {
-    try {
-      return parseMessage(channelEventMessage);
-    } catch (error: unknown) {
-      this._logger.error(`failed to parse incoming message;`, { channelEventMessage, error: error as Ably.ErrorInfo });
-    }
   }
 }
