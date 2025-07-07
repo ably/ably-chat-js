@@ -3,7 +3,7 @@ import * as Ably from 'ably';
 import { Logger } from './logger.js';
 import { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { OrderBy } from './messages.js';
-import { OccupancyData } from './occupancy.js';
+import { OccupancyData } from './occupancy-parser.js';
 import { PaginatedResult } from './query.js';
 import { messageFromRest, RestMessage } from './rest-types.js';
 

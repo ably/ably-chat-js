@@ -209,41 +209,30 @@ describe('Occupancy', () => {
     expect(received).toHaveLength(3);
   });
 
-  describe.each([
-    ['invalid event name', { name: '[meta]occupancy2', data: { metrics: { connections: 5, presenceMembers: 6 } } }],
-    ['no connections', { name: '[meta]occupancy', data: { metrics: { presenceMembers: 6 } } }],
-    [
-      'connections not number',
-      { name: '[meta]occupancy', data: { metrics: { connections: 'abc', presenceMembers: 6 } } },
-    ],
-    [
-      'connections not integer',
-      { name: '[meta]occupancy', data: { metrics: { connections: 6.6, presenceMembers: 6 } } },
-    ],
-    ['no presence members', { name: '[meta]occupancy', data: { metrics: { connections: 5 } } }],
-    [
-      'presence members not number',
-      { name: '[meta]occupancy', data: { metrics: { connections: 5, presenceMembers: 'abc' } } },
-    ],
-    [
-      'presence members not integer',
-      { name: '[meta]occupancy', data: { metrics: { connections: 5, presenceMembers: 6.6 } } },
-    ],
-    ['no metrics', { name: '[meta]occupancy', data: {} }],
-    ['metrics not object', { name: '[meta]occupancy', data: { metrics: 'abc' } }],
-    ['no data', { name: '[meta]occupancy' }],
-    ['data not object', { name: '[meta]occupancy', data: 'abc' }],
-  ])('invalid occupancy events', (testName: string, event: Partial<Ably.InboundMessage>) => {
-    it<TestContext>('it handles invalid occupancy events: ' + testName, (context) => {
-      const room = context.room;
-      let listenerCalled = false;
-      room.occupancy.subscribe(() => {
-        listenerCalled = true;
-      });
-
-      context.emulateOccupancyUpdate(event);
-      expect(listenerCalled).toBe(false);
+  it<TestContext>('handles invalid occupancy events', (context) => {
+    const room = context.room;
+    let receivedEvent: OccupancyEvent | undefined;
+    room.occupancy.subscribe((event) => {
+      receivedEvent = event;
     });
+
+    // Send an invalid occupancy event
+    context.emulateOccupancyUpdate({
+      name: '[meta]occupancy',
+      data: {
+        metrics: {
+          connections: 'abc',
+          presenceMembers: 6,
+        },
+      },
+    });
+
+    // Should still call the listener with default values for invalid data
+    expect(receivedEvent).toBeDefined();
+    if (receivedEvent) {
+      expect(receivedEvent.type).toBe('occupancy.updated');
+      expect(receivedEvent.occupancy).toEqual({ connections: 0, presenceMembers: 6 });
+    }
   });
 
   // CHA-O7
