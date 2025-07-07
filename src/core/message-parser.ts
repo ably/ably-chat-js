@@ -39,6 +39,8 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
   const text = data.text || '';
   const serial = message.serial || '';
   const version = message.version || '';
+  const metadata = data.metadata || {};
+  const headers = extras.headers || {};
 
   // Use current time as default for missing timestamps
   const currentTime = Date.now();
@@ -54,8 +56,8 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
     serial,
     clientId,
     text,
-    metadata: data.metadata || {},
-    headers: extras.headers || {},
+    metadata,
+    headers,
     action,
     version,
     createdAt,
