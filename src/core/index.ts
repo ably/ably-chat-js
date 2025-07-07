@@ -60,7 +60,8 @@ export type {
   MessagesReactions,
 } from './messages-reactions.js';
 export type { Metadata } from './metadata.js';
-export type { Occupancy, OccupancyData, OccupancyListener } from './occupancy.js';
+export type { Occupancy, OccupancyListener } from './occupancy.js';
+export type { OccupancyData } from './occupancy-parser.js';
 export type { OperationMetadata } from './operation-metadata.js';
 export type { Presence, PresenceData, PresenceEvent, PresenceListener, PresenceMember } from './presence.js';
 export type { PaginatedResult } from './query.js';

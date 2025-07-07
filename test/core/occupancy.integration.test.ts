@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { OccupancyEvent, OccupancyEventType } from '../../src/core/events.ts';
-import { OccupancyData } from '../../src/core/occupancy.ts';
+import { OccupancyData } from '../../src/core/occupancy-parser.ts';
 import { Room } from '../../src/core/room.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForExpectedInbandOccupancy } from '../helper/common.ts';
