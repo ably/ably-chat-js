@@ -3,7 +3,7 @@ import * as Ably from 'ably';
 import { RoomReactionEvent, RoomReactionEventType, RoomReactionRealtimeEventType } from './events.js';
 import { Logger } from './logger.js';
 import { messageToEphemeral } from './realtime.js';
-import { RoomReaction, RoomReactionHeaders, RoomReactionMetadata } from './room-reaction.js';
+import { RoomReactionHeaders, RoomReactionMetadata } from './room-reaction.js';
 import { parseRoomReaction } from './room-reaction-parser.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
@@ -180,25 +180,10 @@ export class DefaultRoomReactions implements RoomReactions {
 
   // parses reactions from realtime channel into Reaction objects and forwards them to the EventEmitter
   private _forwarder = (inbound: Ably.InboundMessage) => {
-    const reaction = this._parseNewReaction(inbound, this._clientId);
-    if (!reaction) {
-      // ignore non-reactions
-      return;
-    }
+    const reaction = parseRoomReaction(inbound, this._clientId);
     this._emitter.emit(RoomReactionEventType.Reaction, {
       type: RoomReactionEventType.Reaction,
       reaction,
     });
   };
-
-  private _parseNewReaction(inbound: Ably.InboundMessage, clientId: string): RoomReaction | undefined {
-    try {
-      return parseRoomReaction(inbound, clientId);
-    } catch (error: unknown) {
-      this._logger.error(`failed to parse incoming reaction;`, {
-        inbound,
-        error: error as Ably.ErrorInfo,
-      });
-    }
-  }
 }

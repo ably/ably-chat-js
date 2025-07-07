@@ -211,27 +211,58 @@ describe('Reactions', () => {
   });
 
   describe.each([
-    ['empty client id', { clientId: '', name: 'roomReaction', data: { type: 'like' }, timestamp: 123 }],
-    ['no client id', { name: 'roomReaction', data: { type: 'like' }, timestamp: 123 }],
-    ['empty type', { clientId: 'abc', name: 'roomReaction', data: { type: '' }, timestamp: 123 }],
-    ['no type', { clientId: 'abc', name: 'roomReaction', data: {}, timestamp: 123 }],
-    ['no data', { clientId: 'abc', name: 'roomReaction', timestamp: 123 }],
-  ])('invalid incoming reactions: %s', (description: string, inbound: object) => {
-    test<TestContext>(
-      'does not process invalid incoming reaction: ' + description,
-      (context) =>
-        new Promise<void>((done, reject) => {
-          const { room } = context;
+    [
+      'empty client id',
+      { clientId: '', name: 'roomReaction', data: { type: 'like' }, timestamp: 123 },
+      { expectedClientId: '', expectedType: 'like' },
+    ],
+    [
+      'no client id',
+      { name: 'roomReaction', data: { type: 'like' }, timestamp: 123 },
+      { expectedClientId: '', expectedType: 'like' },
+    ],
+    [
+      'empty type',
+      { clientId: 'abc', name: 'roomReaction', data: { type: '' }, timestamp: 123 },
+      { expectedClientId: 'abc', expectedType: '' },
+    ],
+    [
+      'no type',
+      { clientId: 'abc', name: 'roomReaction', data: {}, timestamp: 123 },
+      { expectedClientId: 'abc', expectedType: '' },
+    ],
+    [
+      'no data',
+      { clientId: 'abc', name: 'roomReaction', timestamp: 123 },
+      { expectedClientId: 'abc', expectedType: '' },
+    ],
+  ])(
+    'reactions with missing fields: %s',
+    (description: string, inbound: object, expected: { expectedClientId: string; expectedType: string }) => {
+      test<TestContext>(
+        'processes reaction with defaults for: ' + description,
+        (context) =>
+          new Promise<void>((done, reject) => {
+            const { room } = context;
 
-          room.reactions.subscribe(() => {
-            reject(new Error('Should not have received a reaction'));
-          });
+            room.reactions.subscribe((event) => {
+              try {
+                expect(event.reaction.clientId).toBe(expected.expectedClientId);
+                expect(event.reaction.name).toBe(expected.expectedType);
+                expect(event.reaction.createdAt).toBeInstanceOf(Date);
+                expect(event.reaction.metadata).toEqual({});
+                expect(event.reaction.headers).toEqual({});
+                done();
+              } catch (error) {
+                reject(error as Error);
+              }
+            });
 
-          context.emulateBackendPublish(inbound);
-          done();
-        }),
-    );
-  });
+            context.emulateBackendPublish(inbound);
+          }),
+      );
+    },
+  );
 
   describe('sending a reaction', () => {
     it<TestContext>('should be able to send a reaction and see it back on the realtime channel', (context) =>

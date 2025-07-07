@@ -9,36 +9,44 @@ describe('parseRoomReaction', () => {
     {
       description: 'message.data is undefined',
       message: {} as Ably.InboundMessage,
-      expectedError: 'received incoming room reaction message without data',
+      expectedName: '',
+      expectedClientId: '',
     },
     {
       description: 'message.data.name is undefined',
       message: { data: {}, clientId: 'client1', timestamp: 1234567890 },
-      expectedError: 'invalid room reaction message with no name',
+      expectedName: '',
+      expectedClientId: 'client1',
     },
     {
       description: 'message.data.name is not a string',
       message: { data: { name: 123 }, clientId: 'client1', timestamp: 1234567890 },
-      expectedError: 'invalid room reaction message with no name',
+      expectedName: '',
+      expectedClientId: 'client1',
     },
     {
       description: 'message.clientId is undefined',
       message: { data: { name: 'like' }, timestamp: 1234567890 },
-      expectedError: 'received incoming room reaction message without clientId',
+      expectedName: 'like',
+      expectedClientId: '',
     },
     {
       description: 'message.timestamp is undefined',
       message: { data: { name: 'like' }, clientId: 'client1' },
-      expectedError: 'received incoming room reaction message without timestamp',
+      expectedName: 'like',
+      expectedClientId: 'client1',
     },
-  ])('should throw an error', ({ description, message, expectedError }) => {
-    it(`should throw the error if ${description}`, () => {
-      expect(() => {
-        parseRoomReaction(message as Ably.InboundMessage);
-      }).toThrowErrorInfo({
-        code: 50000,
-        message: expectedError,
-      });
+  ])('should handle missing fields with defaults', ({ description, message, expectedName, expectedClientId }) => {
+    it(`should handle case where ${description}`, () => {
+      const result = parseRoomReaction(message as Ably.InboundMessage);
+
+      expect(result).toBeInstanceOf(DefaultRoomReaction);
+      expect(result.name).toBe(expectedName);
+      expect(result.clientId).toBe(expectedClientId);
+      expect(result.createdAt).toBeInstanceOf(Date);
+      expect(result.isSelf).toBe(false);
+      expect(result.metadata).toEqual({});
+      expect(result.headers).toEqual({});
     });
   });
 
