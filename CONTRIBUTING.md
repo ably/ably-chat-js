@@ -19,7 +19,7 @@
       - The second number represents a minor release, which lets users know new functionality or features have been added.
       - The third number represents a patch release, which represents bug-fixes and may be used when no action should be required from users.
    2. The commit should update `package.json` and `package-lock.json`. Running `npm install` after changing `package.json` will update `package-lock.json`.
-   3. Also run `npm install` in the `demo/` folder to update the dependency version there.
+   3. Delete the `node_modules` in the `demo/` folder and then run `npm install` to update the dependency version there.
    4. The commit should also update `version.ts` to set the agent headers.
    5. Update the `CHANGELOG.md` with any customer-affecting changes since the last release.
    6. Update the README.md for any references to the new version.
