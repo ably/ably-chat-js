@@ -4,7 +4,7 @@ import { DefaultRoomReaction, RoomReaction, RoomReactionHeaders, RoomReactionMet
 
 interface ReactionPayload {
   data?: {
-    type: unknown;
+    name?: string;
     metadata?: RoomReactionMetadata;
   };
   clientId?: string;
@@ -20,8 +20,8 @@ export function parseRoomReaction(message: Ably.InboundMessage, clientId?: strin
     throw new Ably.ErrorInfo(`received incoming room reaction message without data`, 50000, 500);
   }
 
-  if (!reactionCreatedMessage.data.type || typeof reactionCreatedMessage.data.type !== 'string') {
-    throw new Ably.ErrorInfo('invalid room reaction message with no type', 50000, 500);
+  if (!reactionCreatedMessage.data.name || typeof reactionCreatedMessage.data.name !== 'string') {
+    throw new Ably.ErrorInfo('invalid room reaction message with no name', 50000, 500);
   }
 
   if (!reactionCreatedMessage.clientId) {
@@ -33,7 +33,7 @@ export function parseRoomReaction(message: Ably.InboundMessage, clientId?: strin
   }
 
   return new DefaultRoomReaction(
-    reactionCreatedMessage.data.type,
+    reactionCreatedMessage.data.name,
     reactionCreatedMessage.clientId,
     new Date(reactionCreatedMessage.timestamp),
     clientId ? clientId === reactionCreatedMessage.clientId : false,

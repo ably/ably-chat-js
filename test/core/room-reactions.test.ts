@@ -78,7 +78,7 @@ describe('Reactions', () => {
           clientId: 'yoda',
           name: 'roomReaction',
           data: {
-            type: 'like',
+            name: 'like',
           },
           timestamp: publishTimestamp,
         });
@@ -110,7 +110,7 @@ describe('Reactions', () => {
           clientId: 'd.vader',
           name: 'roomReaction',
           data: {
-            type: 'hate',
+            name: 'hate',
           },
           timestamp: publishTimestamp,
         });
@@ -131,7 +131,7 @@ describe('Reactions', () => {
       clientId: 'yoda',
       name: 'roomReaction',
       data: {
-        type: 'like',
+        name: 'like',
       },
       timestamp: publishTimestamp,
     });
@@ -144,7 +144,7 @@ describe('Reactions', () => {
       clientId: 'yoda2',
       name: 'roomReaction',
       data: {
-        type: 'like',
+        name: 'like',
       },
       timestamp: publishTimestamp,
     });
@@ -177,7 +177,7 @@ describe('Reactions', () => {
       clientId: 'yoda',
       name: 'roomReaction',
       data: {
-        type: 'like',
+        name: 'like',
       },
       timestamp: publishTimestamp,
     });
@@ -190,7 +190,7 @@ describe('Reactions', () => {
       clientId: 'yoda',
       name: 'roomReaction',
       data: {
-        type: 'love',
+        name: 'love',
       },
       timestamp: publishTimestamp,
     });
@@ -261,7 +261,7 @@ describe('Reactions', () => {
             expect(publishSpy).toHaveBeenCalledWith({
               name: 'roomReaction',
               data: {
-                type: 'love',
+                name: 'love',
                 metadata: {},
               },
               extras: {

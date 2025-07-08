@@ -12,23 +12,23 @@ describe('parseRoomReaction', () => {
       expectedError: 'received incoming room reaction message without data',
     },
     {
-      description: 'message.data.type is undefined',
+      description: 'message.data.name is undefined',
       message: { data: {}, clientId: 'client1', timestamp: 1234567890 },
-      expectedError: 'invalid room reaction message with no type',
+      expectedError: 'invalid room reaction message with no name',
     },
     {
-      description: 'message.data.type is not a string',
-      message: { data: { type: 123 }, clientId: 'client1', timestamp: 1234567890 },
-      expectedError: 'invalid room reaction message with no type',
+      description: 'message.data.name is not a string',
+      message: { data: { name: 123 }, clientId: 'client1', timestamp: 1234567890 },
+      expectedError: 'invalid room reaction message with no name',
     },
     {
       description: 'message.clientId is undefined',
-      message: { data: { type: 'like' }, timestamp: 1234567890 },
+      message: { data: { name: 'like' }, timestamp: 1234567890 },
       expectedError: 'received incoming room reaction message without clientId',
     },
     {
       description: 'message.timestamp is undefined',
-      message: { data: { type: 'like' }, clientId: 'client1' },
+      message: { data: { name: 'like' }, clientId: 'client1' },
       expectedError: 'received incoming room reaction message without timestamp',
     },
   ])('should throw an error', ({ description, message, expectedError }) => {
@@ -44,7 +44,7 @@ describe('parseRoomReaction', () => {
 
   it('should return a DefaultReaction instance for a valid message', () => {
     const message = {
-      data: { type: 'like', metadata: { key: 'value' } },
+      data: { name: 'like', metadata: { key: 'value' } },
       clientId: 'client1',
       timestamp: 1234567890,
       extras: { headers: { headerKey: 'headerValue' } },
@@ -63,7 +63,7 @@ describe('parseRoomReaction', () => {
 
   it('should set isFromCurrentUser to true if clientId matches', () => {
     const message = {
-      data: { type: 'like' },
+      data: { name: 'like' },
       clientId: 'client1',
       timestamp: 1234567890,
     } as Ably.InboundMessage;
