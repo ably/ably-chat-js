@@ -2,6 +2,49 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 0.9.x to 0.10.x
+
+### Room Reaction Interface Rename
+
+**Expected Impact: Medium**
+
+The `Reaction` interface and related types have been renamed to `RoomReaction` to disambiguate against message reactions. The property `type` has been renamed to `name`.
+
+#### Affected Types
+
+The following types have been renamed:
+
+- `Reaction` → `RoomReaction`
+- `ReactionHeaders` → `RoomReactionHeaders`
+- `ReactionMetadata` → `RoomReactionMetadata`
+- `ReactionEvent` → `RoomReactionEvent`
+- `ReactionEventType` → `RoomReactionEventType`
+- `ReactionListener` → `RoomReactionListener`
+
+#### Code Changes Required
+
+**Before**
+
+```ts
+import { Reaction, ReactionEvent, ReactionListener } from '@ably/chat';
+
+room.reactions.subscribe((event: ReactionEvent) => {
+  const reaction: Reaction = event.reaction;
+  console.log(reaction.type); // "like", "love", etc.
+});
+```
+
+**After**
+
+```ts
+import { RoomReaction, RoomReactionEvent, RoomReactionListener } from '@ably/chat';
+
+room.reactions.subscribe((event: RoomReactionEvent) => {
+  const reaction: RoomReaction = event.reaction;
+  console.log(reaction.name); // "like", "love", etc.
+});
+```
+
 ## 0.8.x to 0.9.x
 
 ### Reaction API Changes
@@ -154,7 +197,7 @@ All of the data that you originally had accessible by the old event versions is 
 
 We have removed the `unsubscribeAll()` and `offAll()` methods from the SDK. This is to avoid situations where all listeners are accidentally removed.
 
-### Occupancy and Typing Methods Renames
+### Occupancy and Typing Methods Renames
 
 The method `current` has been added to Occupancy to provide the latest occupancy values received in realtime
 
@@ -174,7 +217,6 @@ This is to avoid messages being queued, which is in contrast to their ephemeral 
 **Expected Impact: Low**
 
 `messages.reactions.add()` has been renamed to `send()`
-
 
 ## 0.6.x to 0.7.x
 
@@ -343,7 +385,7 @@ Before:
 ```ts
 const messagesEndpoint = 'https://realtime.ably.io/chat/v2/rooms/${roomId}/messages'
 const occupancyEndpoint = 'https://realtime.ably.io/chat/v2/rooms/${roomId}/occupancy'
-````
+```
 
 After:
 ```ts
@@ -397,7 +439,7 @@ The type `MessageEventPayload` has been renamed to `MessageEvent`. Please update
 
 The `@ably/chat/react` and `@ably/chat/react-native` packages have been removed. All React imports are in the base `@ably/chat` package.
 
-#### React
+#### React
 
 Before:
 
@@ -412,7 +454,7 @@ After:
 import { Message, useMessages } from '@ably/chat';
 ```
 
-#### React Native
+#### React Native
 
 Before:
 
@@ -437,13 +479,13 @@ These have been renamed for greater clarity. The key changes are that the `RoomS
 
 | Action                                                   | Before                                               | After                                             |
 | -------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------- |
-| Get the “current” status of a room                       | `room.status.current`                                | `room.status`                                     |
-| Get the “current” error related to the room status       | `room.status.error`                                  | `room.error`                                      |
+| Get the "current" status of a room                       | `room.status.current`                                | `room.status`                                     |
+| Get the "current" error related to the room status       | `room.status.error`                                  | `room.error`                                      |
 | Subscribe to room status updates                         | `room.status.onChange`                               | `room.onStatusChange`                             |
 | Remove all room status subscribers                       | `room.status.offAll`                                 | `room.offAllStatusChange`                         |
 | Compare the room status to some value                    | `roomStatus === RoomLifecycle.Attached`              | `roomStatus === RoomStatus.Attached`              |
-| Get the “current” connection status                      | `chat.connection.status.current`                     | `chat.connection.status`                          |
-| Get the “current” error related to the connection status | `chat.connection.status.error`                       | `chat.connection.error`                           |
+| Get the "current" connection status                      | `chat.connection.status.current`                     | `chat.connection.status`                          |
+| Get the "current" error related to the connection status | `chat.connection.status.error`                       | `chat.connection.error`                           |
 | Subscribe to connection status updates                   | `chat.connection.status.onChange`                    | `chat.connection.onStatusChange`                  |
 | Remove all connection status subscribers                 | `chat.connection.status.offAll`                      | `chat.connection.offAllStatusChange`              |
 | Compare the connection status to some value              | `connectionStatus === ConnectionLifecycle.Connected` | `connectionStatus === ConnectionStatus.Connected` |
