@@ -4,6 +4,13 @@ This guide provides detailed instructions on how to upgrade between major versio
 
 ## 0.9.x to 0.10.x
 
+### Room Reaction Wire Protocol
+
+**Expected Impact: Medium**
+
+The room reactions wire protocol has been updated to reflect the change below. If you are using multiple SDKs (e.g. Mobile, Web), please ensure you update them at the same time
+to avoid compatibility issues.
+
 ### Room Reaction Interface Rename
 
 **Expected Impact: Medium**

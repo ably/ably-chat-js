@@ -9,6 +9,7 @@ This contains only the most important and/or user-facing changes; for a full cha
 This release contains breaking API changes. Please see `UPGRADING.md` for full guidance on upgrading from version 0.9.0.
 
 - **Room Reaction Interface**: Renamed `Reaction` to `RoomReaction` to disambiguate against message reactions. [#594](https://github.com/ably/ably-chat-js/pull/594)
+- **Room Reaction Wire Protocol**: Changed `type` to `name` in the Room Reactions wire protocol. [#575](https://github.com/ably/ably-chat-js/pull/575)
 
 ### Fixes
 
