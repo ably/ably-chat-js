@@ -28,6 +28,7 @@
 4. Tag a release using [Github releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release). The version needs to match the one from the commit. Use the "Generate release notes" button to
    add changelog notes and update as required.
 5. Ensure that the NPM Publish and CDN Deploy actions have run successfully.
+6. Update [`@ably/cli`](https://github.com/ably/cli). This SDK is used to power Chat interactions on the Ably CLI, so please update the Chat SDK version for that repo if necessary (e.g. new features, bug fixes).
 
 ## Running The Test Suite
 
