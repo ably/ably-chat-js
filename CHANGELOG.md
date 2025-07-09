@@ -2,6 +2,25 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.10.0](https://github.com/ably/ably-chat-js/tree/0.10.0) (2025-01-08)
+
+### Breaking Changes
+
+This release contains breaking API changes. Please see `UPGRADING.md` for full guidance on upgrading from version 0.9.0.
+
+- **Room Reaction Interface**: Renamed `Reaction` to `RoomReaction` to disambiguate against message reactions. [#594](https://github.com/ably/ably-chat-js/pull/594)
+- **Room Reaction Wire Protocol**: Changed `type` to `name` in the Room Reactions wire protocol. [#575](https://github.com/ably/ably-chat-js/pull/575)
+
+### Fixes
+
+- **Deleted Messages**: Improved message parsing to handle delete actions with empty values correctly. [#583](https://github.com/ably/ably-chat-js/pull/583)
+- **Room Reactions**: Send reaction type (short-form) instead of annotation type (long-form) to chat HTTP endpoints for improved performance. [#593](https://github.com/ably/ably-chat-js/pull/593)
+
+### Misc
+
+- Improved logging on failed tests for better debugging. [#591](https://github.com/ably/ably-chat-js/pull/591)
+- Documentation link corrections. [#596](https://github.com/ably/ably-chat-js/pull/596)
+
 ## [0.9.0](https://github.com/ably/ably-chat-js/tree/0.9.0) (2025-06-30)
 
 ### Breaking Changes
