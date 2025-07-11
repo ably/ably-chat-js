@@ -213,21 +213,21 @@ describe('Reactions', () => {
   describe.each([
     [
       'empty client id',
-      { clientId: '', name: 'roomReaction', data: { type: 'like' }, timestamp: 123 },
+      { clientId: '', name: 'roomReaction', data: { name: 'like' }, timestamp: 123 },
       { expectedClientId: '', expectedType: 'like' },
     ],
     [
       'no client id',
-      { name: 'roomReaction', data: { type: 'like' }, timestamp: 123 },
+      { name: 'roomReaction', data: { name: 'like' }, timestamp: 123 },
       { expectedClientId: '', expectedType: 'like' },
     ],
     [
-      'empty type',
-      { clientId: 'abc', name: 'roomReaction', data: { type: '' }, timestamp: 123 },
+      'empty name',
+      { clientId: 'abc', name: 'roomReaction', data: { name: '' }, timestamp: 123 },
       { expectedClientId: 'abc', expectedType: '' },
     ],
     [
-      'no type',
+      'no name',
       { clientId: 'abc', name: 'roomReaction', data: {}, timestamp: 123 },
       { expectedClientId: 'abc', expectedType: '' },
     ],
