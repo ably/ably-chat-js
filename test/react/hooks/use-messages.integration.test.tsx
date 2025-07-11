@@ -39,11 +39,11 @@ describe('useMessages', () => {
     roomTwo.messages.subscribe((message) => messagesRoomTwo.push(message.message));
 
     const TestComponent = () => {
-      const { send, roomStatus } = useMessages();
+      const { sendMessage, roomStatus } = useMessages();
 
       useEffect(() => {
         if (roomStatus === RoomStatus.Attached) {
-          void send({ text: 'hello world' });
+          void sendMessage({ text: 'hello world' });
         }
       }, [roomStatus]);
 
@@ -84,11 +84,11 @@ describe('useMessages', () => {
     });
 
     const TestComponent = () => {
-      const { send, deleteMessage, roomStatus } = useMessages();
+      const { sendMessage, deleteMessage, roomStatus } = useMessages();
 
       useEffect(() => {
         if (roomStatus === RoomStatus.Attached) {
-          void send({ text: 'hello world' }).then((message) => {
+          void sendMessage({ text: 'hello world' }).then((message) => {
             void deleteMessage(message, {
               description: 'deleted',
               metadata: { reason: 'test' },
@@ -135,12 +135,12 @@ describe('useMessages', () => {
     });
 
     const TestComponent = () => {
-      const { send, update, roomStatus } = useMessages();
+      const { sendMessage, updateMessage, roomStatus } = useMessages();
 
       useEffect(() => {
         if (roomStatus === RoomStatus.Attached) {
-          void send({ text: 'hello world' }).then((message) => {
-            void update(
+          void sendMessage({ text: 'hello world' }).then((message) => {
+            void updateMessage(
               message.serial,
               message.copy({
                 text: 'hello universe',
@@ -541,11 +541,11 @@ describe('useMessages', () => {
     let sentMessage: Message | undefined;
 
     const TestComponent = () => {
-      const { send, sendReaction, roomStatus } = useMessages();
+      const { sendMessage, sendReaction, roomStatus } = useMessages();
 
       useEffect(() => {
         if (roomStatus === RoomStatus.Attached) {
-          void send({ text: 'hello world' }).then(async (message) => {
+          void sendMessage({ text: 'hello world' }).then(async (message) => {
             sentMessage = message;
 
             // Wait for 1 second
@@ -593,11 +593,11 @@ describe('useMessages', () => {
     let sentMessage: Message | undefined;
 
     const TestComponent = () => {
-      const { send, sendReaction, deleteReaction, roomStatus } = useMessages();
+      const { sendMessage, sendReaction, deleteReaction, roomStatus } = useMessages();
 
       useEffect(() => {
         if (roomStatus === RoomStatus.Attached) {
-          void send({ text: 'hello world' }).then(async (message) => {
+          void sendMessage({ text: 'hello world' }).then(async (message) => {
             sentMessage = message;
 
             // Wait for 1 second

@@ -29,7 +29,7 @@ export interface UseRoomReactionsResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link RoomReactions.send} method.
    */
-  readonly send: RoomReactions['send'];
+  readonly sendRoomReaction: RoomReactions['send'];
 
   /**
    * Provides access to the underlying {@link RoomReactions} instance of the room.
@@ -92,7 +92,7 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
     ).unmount();
   }, [context, listenerRef, logger]);
 
-  const send = useCallback(
+  const sendRoomReaction = useCallback(
     (params: SendReactionParams) => context.room.then((room) => room.reactions.send(params)),
     [context],
   );
@@ -103,6 +103,6 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
     connectionError,
     roomStatus,
     roomError,
-    send,
+    sendRoomReaction,
   };
 };

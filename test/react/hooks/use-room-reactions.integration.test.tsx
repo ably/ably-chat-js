@@ -37,13 +37,13 @@ describe('useRoomReactions', () => {
 
     // the test component should send a reaction
     const TestComponent = () => {
-      const { send, roomStatus } = useRoomReactions();
+      const { sendRoomReaction, roomStatus } = useRoomReactions();
 
       // should send a reaction when mounted and the room is attached
       useEffect(() => {
         if (roomStatus !== RoomStatus.Attached) return;
-        void send({ name: 'like' });
-      }, [send, roomStatus]);
+        void sendRoomReaction({ name: 'like' });
+      }, [sendRoomReaction, roomStatus]);
 
       return null;
     };

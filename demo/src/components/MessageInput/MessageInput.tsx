@@ -7,7 +7,7 @@ import { SettingsModal } from '../SettingsModal';
 interface MessageInputProps {}
 
 export const MessageInput: FC<MessageInputProps> = ({}) => {
-  const { send } = useMessages();
+  const { sendMessage } = useMessages();
   const { keystroke, stop } = useTyping();
   const { currentStatus } = useChatConnection();
   const [shouldDisable, setShouldDisable] = useState(true);
@@ -54,7 +54,7 @@ export const MessageInput: FC<MessageInputProps> = ({}) => {
     }
 
     // send the message and reset the input field
-    send({ text: messageInputRef.current.value })
+    sendMessage({ text: messageInputRef.current.value })
       .then(() => {
         if (messageInputRef.current) {
           messageInputRef.current.value = '';

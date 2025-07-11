@@ -79,7 +79,7 @@ describe('useRoomReactions', () => {
 
     // call the send method with a 'like' reaction
     await act(async () => {
-      await result.current.send({ name: 'like' });
+      await result.current.sendRoomReaction({ name: 'like' });
     });
 
     // verify that the send method was called with the correct arguments
