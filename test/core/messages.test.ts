@@ -648,133 +648,33 @@ describe('Messages', () => {
       expect(received).toEqual(['a', 'a', 'b']);
     });
 
-    describe.each([
-      [
-        'unknown event name',
-        {
-          clientId: 'yoda2',
-          name: 'message.foo',
-          data: {
-            text: 'may the fourth be with you',
-            metadata: {},
-          },
-          serial: '01672531200000-123@abcdefghij',
-          action: ChatMessageAction.MessageCreate,
-          extras: {
-            headers: {},
-          },
-          timestamp: Date.now(),
-          createdAt: Date.now(),
-        },
-      ],
-      [
-        'unknown action name',
-        {
-          clientId: 'yoda2',
-          name: 'message.foo',
-          data: {
-            text: 'may the fourth be with you',
-            metadata: {},
-          },
-          serial: '01672531200000-123@abcdefghij',
-          action: 'message.unknown',
-          extras: {
-            headers: {},
-          },
-          timestamp: Date.now(),
-          createdAt: Date.now(),
-        },
-      ],
-      [
-        'no data',
-        {
-          clientId: 'yoda2',
-          name: 'chat.message',
-          serial: '01672531200000-123@abcdefghij',
-          action: ChatMessageAction.MessageCreate,
-          extras: {
-            headers: {},
-          },
-          timestamp: Date.now(),
-          createdAt: Date.now(),
-        },
-      ],
-      [
-        'no text',
-        {
-          clientId: 'yoda2',
-          name: 'chat.message',
-          data: {},
-          serial: '01672531200000-123@abcdefghij',
-          action: ChatMessageAction.MessageCreate,
-          extras: {
-            headers: {},
-          },
-          timestamp: Date.now(),
-          createdAt: Date.now(),
-        },
-      ],
-      [
-        'no client id',
-        {
-          name: 'chat.message',
-          data: {
-            text: 'may the fourth be with you',
-            metadata: {},
-          },
-          serial: '01672531200000-123@abcdefghij',
-          action: ChatMessageAction.MessageCreate,
-          extras: {
-            headers: {},
-          },
-          timestamp: Date.now(),
-          createdAt: Date.now(),
-        },
-      ],
-      [
-        'no extras',
-        {
-          name: 'chat.message',
-          clientId: 'yoda2',
-          data: {
-            text: 'may the fourth be with you',
-            metadata: {},
-          },
-          serial: '01672531200000-123@abcdefghij',
-          action: ChatMessageAction.MessageCreate,
-          timestamp: Date.now(),
-          createdAt: Date.now(),
-        },
-      ],
+    it<TestContext>('should use default values for missing fields in incoming messages', (context) => {
+      const room = context.room;
+      let receivedMessage: Message | undefined;
 
-      [
-        'no serial',
-        {
-          clientId: 'yoda2',
-          name: 'chat.message',
-          data: {
-            text: 'may the fourth be with you',
-            metadata: {},
-          },
-          extras: {
-            headers: {},
-          },
-          action: ChatMessageAction.MessageCreate,
-          timestamp: Date.now(),
-          createdAt: Date.now(),
-        },
-      ],
-    ])('invalid incoming messages', (name: string, inboundMessage: unknown) => {
-      it<TestContext>('should handle invalid inbound messages: ' + name, (context) => {
-        const room = context.room;
-        let listenerCalled = false;
-        room.messages.subscribe(() => {
-          listenerCalled = true;
-        });
-
-        context.emulateBackendPublish(inboundMessage as Ably.InboundMessage);
-        expect(listenerCalled).toBe(false);
+      room.messages.subscribe((messageEvent) => {
+        receivedMessage = messageEvent.message;
       });
+
+      const inboundMessage = {
+        name: 'chat.message',
+        data: {
+          text: 'may the fourth be with you',
+        },
+        action: ChatMessageAction.MessageCreate,
+        timestamp: Date.now(),
+        createdAt: Date.now(),
+      };
+
+      context.emulateBackendPublish(inboundMessage as Ably.InboundMessage);
+
+      expect(receivedMessage).toBeDefined();
+      expect(receivedMessage?.clientId).toBe('');
+      expect(receivedMessage?.serial).toBe('');
+      expect(receivedMessage?.version).toBe('');
+      expect(receivedMessage?.text).toBe('may the fourth be with you');
+      expect(receivedMessage?.metadata).toEqual({});
+      expect(receivedMessage?.headers).toEqual({});
     });
   });
 
