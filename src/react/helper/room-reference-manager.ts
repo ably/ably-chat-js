@@ -15,7 +15,7 @@ interface RoomRefCountEntry {
   roomName: string;
   options?: RoomOptions;
   resolvedRoom?: Room;
-  pendingRelease?: NodeJS.Timeout; // Timer for delayed release
+  pendingRelease?: ReturnType<typeof setTimeout>;
 }
 
 /**
