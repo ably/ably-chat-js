@@ -19,11 +19,32 @@ interface RoomRefCountEntry {
 }
 
 /**
- * Creates a unique key for a room based on name and options.
+ * Recursively sorts object keys to ensure consistent serialization.
  */
-function createRoomKey(roomName: string, options?: RoomOptions): string {
-  return JSON.stringify({ roomName, options });
-}
+const normalizeForSerialization = (obj: unknown): unknown => {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => normalizeForSerialization(item));
+  }
+
+  const sortedObj: Record<string, unknown> = {};
+  const keys = Object.keys(obj as Record<string, unknown>).sort();
+  for (const key of keys) {
+    sortedObj[key] = normalizeForSerialization((obj as Record<string, unknown>)[key]);
+  }
+  return sortedObj;
+};
+
+/**
+ * Creates a unique key for a room based on name and options.
+ * Ensures that objects with the same properties but different key order produce the same key.
+ */
+const createRoomKey = (roomName: string, options?: RoomOptions): string => {
+  return JSON.stringify(normalizeForSerialization({ roomName, options }));
+};
 
 /**
  * Reference counting manager for rooms within a ChatClientProvider.
