@@ -4,12 +4,12 @@ import { SendReactionParams } from '@ably/chat';
 interface ReactionInputProps {
   reactions: string[];
 
-  onSend(params: SendReactionParams): void;
+  onSendRoomReaction(params: SendReactionParams): void;
 
   disabled: boolean;
 }
 
-export const ReactionInput: FC<ReactionInputProps> = ({ reactions, onSend, disabled = false }) => {
+export const ReactionInput: FC<ReactionInputProps> = ({ reactions, onSendRoomReaction, disabled = false }) => {
   // set default reactions if empty or not set
   if (!reactions || reactions.length === 0) {
     reactions = ['👍', '❤️', '💥', '🚀', '👎', '💔'];
@@ -21,7 +21,7 @@ export const ReactionInput: FC<ReactionInputProps> = ({ reactions, onSend, disab
       onClick={(e) => {
         e.preventDefault();
         if (!disabled) {
-          onSend({ name: reaction });
+          onSendRoomReaction({ name: reaction });
         }
       }}
       href="#"

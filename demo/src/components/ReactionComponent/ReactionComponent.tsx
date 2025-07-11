@@ -10,7 +10,7 @@ export const ReactionComponent: FC<ReactionComponentProps> = () => {
   const { currentStatus } = useChatConnection();
   const [roomReactions, setRoomReactions] = useState<RoomReaction[]>([]);
   const { roomName } = useRoom();
-  const { send: sendReaction } = useRoomReactions({
+  const { sendRoomReaction } = useRoomReactions({
     listener: (event: RoomReactionEvent) => {
       setRoomReactions([...roomReactions, event.reaction]);
     },
@@ -33,7 +33,7 @@ export const ReactionComponent: FC<ReactionComponentProps> = () => {
       <div>
         <ReactionInput
           reactions={[]}
-          onSend={sendReaction}
+          onSendRoomReaction={sendRoomReaction}
           disabled={!isConnected}
         ></ReactionInput>
       </div>
