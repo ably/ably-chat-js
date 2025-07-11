@@ -93,7 +93,7 @@ describe('useTyping', () => {
     // verify that subscribe was called with the mock listener on mount by triggering an event
     const typingEvent: TypingSetEvent = {
       type: TypingSetEventType.SetChanged,
-      change: { clientId: 'someClientId', type: TypingEventType.Stop },
+      change: { clientId: 'someClientId', type: TypingEventType.Stopped },
       currentlyTyping: new Set<string>(),
     };
     for (const listener of mockTyping.listeners) {
@@ -170,7 +170,7 @@ describe('useTyping', () => {
       if (subscribedListener) {
         subscribedListener({
           type: TypingSetEventType.SetChanged,
-          change: { clientId: 'user2', type: TypingEventType.Start },
+          change: { clientId: 'user2', type: TypingEventType.Started },
           currentlyTyping: testSet,
         });
       }
