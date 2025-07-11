@@ -234,7 +234,7 @@ describe('ChatRoomProvider', () => {
 
     // Component to monitor room status and subscribe to messages
     const RoomStatusMonitor = ({ id }: { id: number }) => {
-      const { send } = useMessages({
+      const { sendMessage } = useMessages({
         listener: (message: ChatMessageEvent) => {
           if (!messagesMap.has(id)) {
             messagesMap.set(id, []);
@@ -251,7 +251,7 @@ describe('ChatRoomProvider', () => {
           // On the first render, where we're actually attached, send a message
           if (!messageSent.has(id) && change.current === RoomStatus.Attached) {
             messageSent.set(id, true);
-            send({ text: `Hello from test ${id.toString()}` })
+            sendMessage({ text: `Hello from test ${id.toString()}` })
               .then(() => {
                 console.log('Message sent');
               })
