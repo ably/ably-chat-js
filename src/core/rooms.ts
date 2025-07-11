@@ -117,7 +117,7 @@ export class DefaultRooms implements Rooms {
         return Promise.reject(new Ably.ErrorInfo('room already exists with different options', 40000, 400));
       }
 
-      this._logger.debug('Rooms.get(); returning existing room', { roomName: name, nonce: existing.nonce });
+      this._logger.debug('Rooms.get(); returning existing room', { roomName: name, nonce: existing.nonce, options });
       return existing.promise;
     }
 
