@@ -132,6 +132,32 @@ export class ChatClient {
     this._addAgent(agent, version);
     this._logger.trace(`Added agent ${agent} with version ${version}`);
   }
+
+  /**
+   * Disposes of the ChatClient instance, cleaning up any resources and rendering it unusable.
+   * This method will throw an error if there are any rooms currently in the rooms map.
+   *
+   * @throws An ErrorInfo with code 40000 if the Rooms instance has any rooms in its map.
+   */
+  dispose(): void {
+    this._logger.trace('ChatClient.dispose();');
+
+    // Check if there are any rooms in the rooms map
+    if (this._rooms.hasRooms()) {
+      const error = new Ably.ErrorInfo(
+        'cannot dispose client; rooms still exist, please release all rooms before disposing',
+        40000,
+        400,
+      );
+      this._logger.error('ChatClient.dispose(); cannot dispose with existing rooms', { error });
+      throw error;
+    }
+
+    // Dispose of the connection instance
+    this._connection.dispose();
+    this._logger.debug('ChatClient.dispose(); client disposed successfully');
+  }
+
   /**
    * Sets the agent string for the client.
    * @param agent - The agent to add.

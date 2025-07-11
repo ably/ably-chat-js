@@ -267,4 +267,13 @@ export class DefaultRooms implements Rooms {
     this._logger.trace('Rooms.useReact();');
     this._isReact = true;
   }
+
+  /**
+   * Checks if there are any rooms currently in the rooms map.
+   * @internal
+   * @returns true if there are rooms in the map, false otherwise.
+   */
+  hasRooms(): boolean {
+    return this._rooms.size > 0;
+  }
 }
