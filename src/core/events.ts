@@ -84,12 +84,12 @@ export enum TypingEventType {
   /**
    * Event triggered when a user is typing.
    */
-  Start = 'typing.started',
+  Started = 'typing.started',
 
   /**
    * Event triggered when a user stops typing.
    */
-  Stop = 'typing.stopped',
+  Stopped = 'typing.stopped',
 }
 
 /**

@@ -129,12 +129,12 @@ describe('Typing', () => {
       await waitForTypingEvent(events, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId1]),
-        change: { clientId: clientId1, type: TypingEventType.Start },
+        change: { clientId: clientId1, type: TypingEventType.Started },
       });
       await waitForTypingEvent(events, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId1, clientId2]),
-        change: { clientId: clientId2, type: TypingEventType.Start },
+        change: { clientId: clientId2, type: TypingEventType.Started },
       });
       // Get the currently typing client ids
       const currentlyTypingClientIds = context.chatRoom.typing.current();
@@ -149,7 +149,7 @@ describe('Typing', () => {
       await waitForTypingEvent(events, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId2]),
-        change: { clientId: clientId1, type: TypingEventType.Stop },
+        change: { clientId: clientId1, type: TypingEventType.Stopped },
       });
       // Get the currently typing client ids
       const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.current();
