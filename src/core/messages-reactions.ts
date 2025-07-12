@@ -16,6 +16,7 @@ import {
   ReactionAnnotationType,
 } from './events.js';
 import { Logger } from './logger.js';
+import { subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions, MessageOptions } from './room-options.js';
 import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
@@ -144,19 +145,13 @@ export class DefaultMessageReactions implements MessagesReactions {
   ) {
     // Create bound listeners
     const messageEventListener = this._processMessageEvent.bind(this);
-    void _channel.subscribe(messageEventListener);
 
-    // Store unsubscribe function that captures the listener
-    this._unsubscribeMessageEvents = () => {
-      _channel.unsubscribe(messageEventListener);
-    };
+    // Use subscription helper to create cleanup function
+    this._unsubscribeMessageEvents = subscribe(_channel, messageEventListener);
 
     if (this._options?.rawMessageReactions) {
       const annotationEventListener = this._processAnnotationEvent.bind(this);
-      void _channel.annotations.subscribe(annotationEventListener);
-      this._unsubscribeAnnotationEvents = () => {
-        _channel.annotations.unsubscribe(annotationEventListener);
-      };
+      this._unsubscribeAnnotationEvents = subscribe(_channel.annotations, annotationEventListener);
     }
     this._defaultType = this._options?.defaultMessageReactionType ?? MessageReactionType.Distinct;
   }

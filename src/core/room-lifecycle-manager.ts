@@ -6,6 +6,7 @@ import { DiscontinuityListener } from './discontinuity.js';
 import { ErrorCode } from './errors.js';
 import { RoomEventType } from './events.js';
 import { Logger } from './logger.js';
+import { on } from './realtime-subscriptions.js';
 import { InternalRoomLifecycle, RoomStatus } from './room-status.js';
 import { StatusSubscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
@@ -55,52 +56,11 @@ export class RoomLifecycleManager {
     const discontinuityOnAttachedListener = this._discontinuityOnAttachedListener.bind(this);
     const discontinuityOnUpdateListener = this._discontinuityOnUpdateListener.bind(this);
 
-    // Store unsubscribe functions that capture the listeners
-    this._unsubscribeChannelStateListener = () => {
-      const channel = this._channelManager.get();
-      channel.off(channelStateListener);
-    };
-    this._offDiscontinuityAttached = () => {
-      const channel = this._channelManager.get();
-      channel.off('attached', discontinuityOnAttachedListener);
-    };
-    this._offDiscontinuityUpdate = () => {
-      const channel = this._channelManager.get();
-      channel.off('update', discontinuityOnUpdateListener);
-    };
-
-    // Start monitoring channel state changes
-    this._startMonitoringChannelState(channelStateListener);
-    this._startMonitoringDiscontinuity(discontinuityOnAttachedListener, discontinuityOnUpdateListener);
-  }
-
-  /**
-   * Sets up monitoring of channel state changes to keep room status in sync.
-   * If an operation is in progress (attach/detach/release), state changes are ignored.
-   */
-  private _startMonitoringChannelState(listener: (stateChange: Ably.ChannelStateChange) => void): void {
+    // Use subscription helpers to create cleanup functions
     const channel = this._channelManager.get();
-
-    // CHA-RL11a
-    channel.on(listener);
-  }
-
-  /**
-   * Sets up monitoring for channel discontinuities.
-   * A discontinuity exists when an attached or update event comes from the channel with resume=false.
-   * The first time we attach, or if we attach after an explicit detach call are not considered discontinuities.
-   */
-  private _startMonitoringDiscontinuity(
-    attachedListener: (stateChange: Ably.ChannelStateChange) => void,
-    updateListener: (stateChange: Ably.ChannelStateChange) => void,
-  ): void {
-    const channel = this._channelManager.get();
-
-    // CHA-RL12a, CHA-RL12b
-    channel.on('attached', attachedListener);
-
-    // CHA-RL12a, CHA-RL12b
-    channel.on('update', updateListener);
+    this._unsubscribeChannelStateListener = on(channel, channelStateListener);
+    this._offDiscontinuityAttached = on(channel, 'attached', discontinuityOnAttachedListener);
+    this._offDiscontinuityUpdate = on(channel, 'update', discontinuityOnUpdateListener);
   }
 
   /**
