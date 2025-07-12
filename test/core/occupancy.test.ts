@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { OccupancyEvent } from '../../src/core/events.ts';
+import { DefaultOccupancy } from '../../src/core/occupancy.ts';
 import { Room } from '../../src/core/room.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -292,6 +293,85 @@ describe('Occupancy', () => {
         connections: 7,
         presenceMembers: 4,
       });
+    });
+  });
+
+  describe('dispose', () => {
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', (context) => {
+      const { room } = context;
+      const channel = room.channel;
+      const occupancy = room.occupancy as DefaultOccupancy;
+
+      // Mock channel unsubscribe to verify cleanup calls
+      const unsubscribeSpy = vi.spyOn(channel, 'unsubscribe');
+
+      // Dispose should clean up listeners and subscriptions
+      expect(() => {
+        occupancy.dispose();
+      }).not.toThrow();
+
+      // Verify that channel unsubscribe was called
+      expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it<TestContext>('should remove user-level listeners and occupancy event subscriptions', (context) => {
+      const occupancy = context.room.occupancy as DefaultOccupancy;
+
+      // Subscribe to add listeners
+      const listener1 = vi.fn();
+      const listener2 = vi.fn();
+      context.room.occupancy.subscribe(listener1);
+      context.room.occupancy.subscribe(listener2);
+
+      // Emulate an occupancy update and check the listeners were called
+      context.emulateOccupancyUpdate({
+        name: '[meta]occupancy',
+        data: {
+          metrics: { connections: 5, presenceMembers: 3 },
+        },
+      });
+
+      // Verify that the listeners were called
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+
+      // Reset the listeners
+      listener1.mockClear();
+      listener2.mockClear();
+
+      // Dispose should clean up listeners and subscriptions
+      expect(() => {
+        occupancy.dispose();
+      }).not.toThrow();
+
+      // Emulate an occupancy update and check the listeners were not called
+      context.emulateOccupancyUpdate({
+        name: '[meta]occupancy',
+        data: {
+          metrics: { connections: 5, presenceMembers: 3 },
+        },
+      });
+
+      // Verify that the listeners were not called
+      expect(listener1).not.toHaveBeenCalled();
+      expect(listener2).not.toHaveBeenCalled();
+
+      // Verify that user-provided listeners were unsubscribed
+      expect(occupancy.hasListeners()).toBe(false);
+
+      // Cleanup should not fail on multiple calls
+      expect(() => {
+        occupancy.dispose();
+      }).not.toThrow();
+    });
+
+    it<TestContext>('should handle dispose when no listeners are registered', (context) => {
+      const occupancy = context.room.occupancy as DefaultOccupancy;
+
+      // Should not throw when called with no listeners
+      expect(() => {
+        occupancy.dispose();
+      }).not.toThrow();
     });
   });
 });
