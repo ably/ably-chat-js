@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ReactNode } from 'react';
 
-import { ChatClient } from '../../core/chat.js';
+import { ChatClient } from '../../core/chat-client.js';
 import { ChatClientContext, ChatClientContextValue } from '../contexts/chat-client-context.js';
 
 /**

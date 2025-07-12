@@ -1,7 +1,7 @@
 // imported for docs linking
 import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
-import { ChatClient } from '../../core/chat.js';
+import { ChatClient } from '../../core/chat-client.js';
 import { Logger } from '../../core/logger.js';
 import { Room } from '../../core/room.js';
 import { RoomOptions } from '../../core/room-options.js';
