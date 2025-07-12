@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat.ts';
+import { ChatClient } from '../../src/core/chat-client.ts';
 import { ConnectionStatus } from '../../src/core/connection.ts';
 import { LogLevel } from '../../src/core/logger.ts';
 import { RealtimeWithOptions } from '../../src/core/realtime-extensions.ts';

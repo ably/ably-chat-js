@@ -2,7 +2,7 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatClient } from '../../../src/core/chat.ts';
+import { ChatClient } from '../../../src/core/chat-client.ts';
 import {
   ChatMessageAction,
   ChatMessageEventType,

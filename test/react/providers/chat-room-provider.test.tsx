@@ -2,7 +2,7 @@ import { act, cleanup, render } from '@testing-library/react';
 import React, { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatClient } from '../../../src/core/chat.js';
+import { ChatClient } from '../../../src/core/chat-client.js';
 import { Room } from '../../../src/core/room.js';
 import { RoomOptions } from '../../../src/core/room-options.js';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.js';

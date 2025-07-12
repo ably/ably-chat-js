@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat.ts';
+import { ChatClient } from '../../src/core/chat-client.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ReactNode, useRef } from 'react';
 
-import { ChatClient } from '../../core/chat.js';
+import { ChatClient } from '../../core/chat-client.js';
 import { Logger } from '../../core/logger.js';
 import { ChatClientContext } from '../contexts/chat-client-context.js';
 import { RoomReferenceManager } from '../helper/room-reference-manager.js';

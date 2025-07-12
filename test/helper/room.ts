@@ -1,8 +1,8 @@
 import * as Ably from 'ably';
 import { vi } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ChatClient } from '../../src/core/chat-client.ts';
 import { ErrorCode } from '../../src/core/errors.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';

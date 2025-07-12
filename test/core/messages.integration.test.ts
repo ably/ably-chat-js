@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat.ts';
+import { ChatClient } from '../../src/core/chat-client.ts';
 import { ChatMessageAction, ChatMessageEventType } from '../../src/core/events.ts';
 import { Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';

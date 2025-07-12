@@ -1,6 +1,6 @@
 import * as Ably from 'ably';
 
-import { ChatClient } from '../../src/core/chat.ts';
+import { ChatClient } from '../../src/core/chat-client.ts';
 import { ChatClientOptions, normalizeClientOptions } from '../../src/core/config.js';
 import { testLoggingLevel, testLogHandler } from './logger.js';
 import { ablyRealtimeClientWithToken } from './realtime-client.js';
