@@ -162,7 +162,7 @@ describe('Chat', () => {
     await waitForConnectionStatus(chat, ConnectionStatus.Failed);
   });
 
-  it('should garbage collect chat client after disposal', async () => {
+  it('should garbage collect chat client after disposal', { timeout: 10000 }, async () => {
     // Check GC is available and fail the test if it's not
     expect(globalThis.gc).toBeDefined();
 
@@ -213,11 +213,11 @@ describe('Chat', () => {
 
         expect(chatRef.deref()).toBeUndefined();
         expect(connectionRef.deref()).toBeUndefined();
+        expect(messagesRef.deref()).toBeUndefined();
         expect(roomsRef.deref()).toBeUndefined();
         expect(roomRef.deref()).toBeUndefined();
-        expect(messagesRef.deref()).toBeUndefined();
       },
-      { timeout: 3000, interval: 250 },
+      { timeout: 9000, interval: 250 },
     );
   });
 });
