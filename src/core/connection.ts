@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
+import { on } from './realtime-subscriptions.js';
 import { StatusSubscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
@@ -142,12 +143,8 @@ export class DefaultConnection implements Connection {
       this._applyStatusChange(stateChange);
     };
 
-    // Listen for changes to the connection status
-    const connection = ably.connection;
-    connection.on(connectionListener);
-    this._clearAblyConnectionListener = () => {
-      connection.off(connectionListener);
-    };
+    // Use subscription helper to create cleanup function
+    this._clearAblyConnectionListener = on(ably.connection, connectionListener);
   }
 
   /**
