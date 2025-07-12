@@ -5,7 +5,7 @@ import { PresenceEventType } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * Interface for PresenceEventsMap
@@ -373,8 +373,7 @@ export class DefaultPresence implements Presence {
    * @returns true if there are listeners, false otherwise.
    */
   hasListeners(): boolean {
-    const numListeners = this._emitter.listeners()?.length;
-    return numListeners ? numListeners > 0 : false;
+    return emitterHasListeners(this._emitter);
   }
 
   private _assertChannelState(): void {
