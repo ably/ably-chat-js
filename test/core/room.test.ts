@@ -247,6 +247,45 @@ describe('Room', () => {
       // The room lifecycle manager should have been released only once
       expect(lifecycleManager.release).toHaveBeenCalledTimes(1);
     });
+
+    it<TestContext>('should dispose all components during release', async (context) => {
+      const room = context.getRoom() as DefaultRoom;
+
+      // Setup spies on dispose methods
+      const mockLifecycleManagerDispose = vi
+        .spyOn(room.lifecycleManager as unknown as { dispose(): void }, 'dispose')
+        .mockImplementation(() => {});
+      const mockMessagesDispose = vi
+        .spyOn(room.messages as unknown as { dispose(): void }, 'dispose')
+        .mockImplementation(() => {});
+      const mockPresenceDispose = vi
+        .spyOn(room.presence as unknown as { dispose(): void }, 'dispose')
+        .mockImplementation(() => {});
+      const mockOccupancyDispose = vi
+        .spyOn(room.occupancy as unknown as { dispose(): void }, 'dispose')
+        .mockImplementation(() => {});
+      const mockRoomReactionsDispose = vi
+        .spyOn(room.reactions as unknown as { dispose(): void }, 'dispose')
+        .mockImplementation(() => {});
+      const mockTypingDispose = vi
+        .spyOn(room.typing as unknown as { dispose(): void }, 'dispose')
+        .mockImplementation(() => {});
+      const mockRoomStatusDispose = vi
+        .spyOn(room.lifecycle as unknown as { dispose(): void }, 'dispose')
+        .mockImplementation(() => {});
+
+      // Release the room
+      await room.release();
+
+      // Verify all dispose methods were called
+      expect(mockLifecycleManagerDispose).toHaveBeenCalledTimes(1);
+      expect(mockMessagesDispose).toHaveBeenCalledTimes(1);
+      expect(mockPresenceDispose).toHaveBeenCalledTimes(1);
+      expect(mockOccupancyDispose).toHaveBeenCalledTimes(1);
+      expect(mockRoomReactionsDispose).toHaveBeenCalledTimes(1);
+      expect(mockTypingDispose).toHaveBeenCalledTimes(1);
+      expect(mockRoomStatusDispose).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('discontinuity handling', () => {

@@ -9,6 +9,7 @@ import {
   MessageReactionType,
   ReactionAnnotationType,
 } from '../../src/core/events.ts';
+import { DefaultMessageReactions } from '../../src/core/messages-reactions.ts';
 import { Room } from '../../src/core/room.ts';
 import {
   channelAnnotationEventEmitter,
@@ -328,7 +329,11 @@ describe('MessagesReactions', () => {
       context.room = makeRandomRoom({
         chatApi: context.chatApi,
         realtime: context.realtime,
-        options: { messages: { rawMessageReactions: true } },
+        options: {
+          messages: {
+            rawMessageReactions: true,
+          },
+        },
       });
       const channel = context.room.channel;
       context.emulateBackendPublish = channelEventEmitter(channel);
@@ -691,6 +696,130 @@ describe('MessagesReactions', () => {
       expect(() => {
         room.messages.reactions.subscribeRaw(() => {});
       }).toThrowErrorInfo({ code: 40001, message: 'Raw message reactions are not enabled', statusCode: 400 });
+    });
+  });
+
+  describe('dispose', () => {
+    beforeEach<TestContext>((context) => {
+      context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
+      context.chatApi = new ChatApi(context.realtime, makeTestLogger());
+      context.room = makeRandomRoom({
+        chatApi: context.chatApi,
+        realtime: context.realtime,
+        options: { messages: { rawMessageReactions: true } },
+      });
+      const channel = context.room.channel;
+      context.emulateBackendPublish = channelEventEmitter(channel);
+      context.emulateBackendStateChange = channelStateEventEmitter(channel);
+      context.emulateBackendAnnotation = channelAnnotationEventEmitter(channel);
+    });
+
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', (context) => {
+      const { room } = context;
+      const channel = room.channel;
+      const reactions = room.messages.reactions as unknown as DefaultMessageReactions;
+
+      // Mock channel methods
+      const mockUnsubscribe = vi.spyOn(channel, 'unsubscribe').mockImplementation(() => {});
+      const mockAnnotationsUnsubscribe = vi.spyOn(channel.annotations, 'unsubscribe').mockImplementation(() => {});
+
+      // Dispose should clean up listeners and not throw
+      expect(() => {
+        reactions.dispose();
+      }).not.toThrow();
+
+      // Assert - verify the listeners were unsubscribed
+      expect(mockUnsubscribe).toHaveBeenCalledTimes(1); // Summary listener
+      expect(mockAnnotationsUnsubscribe).toHaveBeenCalledTimes(1); // Raw listener
+
+      // Verify that user-provided listeners were unsubscribed
+      expect(reactions.hasListeners()).toBe(false);
+    });
+
+    it<TestContext>('should remove user-level listeners from emitter', (context) => {
+      const reactions = context.room.messages.reactions as DefaultMessageReactions;
+
+      // Subscribe to add listeners
+      const listener1 = vi.fn();
+      const listener2 = vi.fn();
+      reactions.subscribe(listener1);
+      reactions.subscribeRaw(listener2);
+
+      // Emulate a reaction
+      context.emulateBackendAnnotation({
+        serial: '01672531200003-123@abcdefghij',
+        messageSerial: '01672531200000-123@xyzdefghij',
+        type: ReactionAnnotationType.Distinct,
+        name: '🚀',
+        action: 'annotation.create',
+        timestamp: Date.now(),
+      });
+
+      // Emulate a summary update
+
+      context.emulateBackendPublish({
+        name: 'chat.message',
+        serial: '01672531200000-123@xyzdefghij',
+        version: '01672531200000-123@abcdefghij',
+        action: ChatMessageAction.MessageAnnotationSummary,
+        timestamp: Date.now(),
+        summary: {
+          [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
+        },
+      });
+
+      // Verify that the listeners were called
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+
+      // Reset the listeners
+      listener1.mockClear();
+      listener2.mockClear();
+
+      // Dispose should clean up listeners and not throw
+      expect(() => {
+        reactions.dispose();
+      }).not.toThrow();
+
+      // Call EmulateBackendAnnotation to trigger a reaction
+      context.emulateBackendAnnotation({
+        serial: '01672531200003-123@abcdefghij',
+        messageSerial: '01672531200000-123@xyzdefghij',
+        type: ReactionAnnotationType.Distinct,
+        name: '🚀',
+        action: 'annotation.create',
+        timestamp: Date.now(),
+      });
+
+      // Emulate a summary update
+      context.emulateBackendPublish({
+        name: 'chat.message',
+        serial: '01672531200000-123@xyzdefghij',
+        version: '01672531200000-123@abcdefghij',
+        action: ChatMessageAction.MessageAnnotationSummary,
+        timestamp: Date.now(),
+      });
+
+      // Verify that the listeners were not called
+      expect(listener1).not.toHaveBeenCalled();
+      expect(listener2).not.toHaveBeenCalled();
+
+      // Verify that user-provided listeners were unsubscribed
+      expect(reactions.hasListeners()).toBe(false);
+
+      // Cleanup should not fail on multiple calls
+      expect(() => {
+        reactions.dispose();
+      }).not.toThrow();
+    });
+
+    it<TestContext>('should handle dispose when no listeners are registered', (context) => {
+      const reactions = context.room.messages.reactions as unknown as { dispose(): void };
+
+      // Should not throw when called with no listeners
+      expect(() => {
+        reactions.dispose();
+      }).not.toThrow();
     });
   });
 });

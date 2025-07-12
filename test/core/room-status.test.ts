@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { DefaultRoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -62,4 +62,48 @@ describe('room status', () => {
       expect(eventCount).toEqual(3);
       done();
     }));
+
+  describe('dispose', () => {
+    it('should dispose and remove all listeners', () => {
+      const status = new DefaultRoomLifecycle(makeTestLogger());
+
+      // Add some listeners
+      const listener1 = vi.fn();
+      const listener2 = vi.fn();
+
+      status.onChange(listener1);
+      status.onChange(listener2);
+
+      // Verify listeners work before dispose
+      status.setStatus({ status: RoomStatus.Attached, error: baseError });
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+
+      // Act - dispose
+      const statusWithHasListeners = status as unknown as { dispose(): void; hasListeners(): boolean };
+      statusWithHasListeners.dispose();
+
+      // Assert - verify listeners no longer work after dispose
+      listener1.mockClear();
+      listener2.mockClear();
+
+      status.setStatus({ status: RoomStatus.Detached });
+      expect(listener1).not.toHaveBeenCalled();
+      expect(listener2).not.toHaveBeenCalled();
+
+      // Verify that user-provided listeners were unsubscribed
+      expect(statusWithHasListeners.hasListeners()).toBe(false);
+    });
+
+    it('should not fail when disposing multiple times', () => {
+      const status = new DefaultRoomLifecycle(makeTestLogger());
+
+      // Act & Assert - should not throw
+      expect(() => {
+        (status as unknown as { dispose(): void }).dispose();
+        (status as unknown as { dispose(): void }).dispose();
+        (status as unknown as { dispose(): void }).dispose();
+      }).not.toThrow();
+    });
+  });
 });

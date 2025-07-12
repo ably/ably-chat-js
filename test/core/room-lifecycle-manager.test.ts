@@ -18,6 +18,7 @@ interface TestContext {
     attach: () => Promise<Ably.ChannelStateChange | null>;
     detach?: () => Promise<Ably.ChannelStateChange | null>;
     on?: (event: string | string[], handler: (stateChange: Ably.ChannelStateChange) => void) => void;
+    off?: (event?: string | string[], handler?: (stateChange: Ably.ChannelStateChange) => void) => void;
     _stateChangeHandlers: Map<Ably.ChannelEvent, ((stateChange: Ably.ChannelStateChange) => void)[]>;
     _stateChangeHandlersForAll: ((stateChange: Ably.ChannelStateChange) => void)[];
     invokeStateChange: (stateChange: Ably.ChannelStateChange, isUpdate?: boolean) => void;
@@ -78,6 +79,7 @@ describe('RoomLifecycleManager', () => {
             }
           },
         ),
+      off: vi.fn(),
     };
 
     context.channelManager = {
@@ -863,6 +865,79 @@ describe('RoomLifecycleManager', () => {
       );
 
       expect(handler).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('dispose', () => {
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', (context) => {
+      const { roomLifeCycleManager, mockChannel } = context;
+      const channel = mockChannel;
+
+      // Act - dispose room lifecycle manager
+      roomLifeCycleManager.dispose();
+
+      // Assert - verify channel.off is called to remove listeners
+      expect(channel.off).toHaveBeenCalledTimes(3);
+      expect(channel.off).toHaveBeenCalledWith(expect.any(Function)); // General state change listener
+      expect(channel.off).toHaveBeenCalledWith('attached', expect.any(Function)); // Discontinuity attached listener
+      expect(channel.off).toHaveBeenCalledWith('update', expect.any(Function)); // Discontinuity update listener
+    });
+
+    it<TestContext>('should dispose and remove channel listeners', ({ roomLifeCycleManager, mockChannel }) => {
+      // Force that we've attached once
+      roomLifeCycleManager.testForceHasAttachedOnce(true);
+
+      // Add a discontinuity listener to verify it gets cleaned up
+      const handler = vi.fn();
+      roomLifeCycleManager.onDiscontinuity(handler);
+
+      // Emulate a discontinuity event
+      mockChannel.invokeStateChange(
+        {
+          current: 'attached',
+          previous: 'attached',
+          resumed: false,
+        },
+        true,
+      );
+
+      // Verify that the discontinuity listener was called
+      expect(handler).toHaveBeenCalledTimes(1);
+
+      // Reset the listener
+      handler.mockClear();
+
+      // Arrange - verify listeners are set up
+      expect(mockChannel.on).toHaveBeenCalledTimes(3); // One for general state changes, two for discontinuity
+
+      // Act
+      roomLifeCycleManager.dispose();
+
+      // Emulate a discontinuity event
+      mockChannel.invokeStateChange(
+        {
+          current: 'attached',
+          previous: 'attaching',
+          resumed: false,
+        },
+        true,
+      );
+
+      // Verify that the discontinuity listener was not called
+      expect(handler).not.toHaveBeenCalled();
+
+      // Assert - verify that user-provided listeners were unsubscribed
+      const managerWithHasListeners = roomLifeCycleManager as RoomLifecycleManager & { hasListeners(): boolean };
+      expect(managerWithHasListeners.hasListeners()).toBe(false);
+    });
+
+    it<TestContext>('should not fail when disposing multiple times', ({ roomLifeCycleManager }) => {
+      // Act & Assert - should not throw
+      expect(() => {
+        roomLifeCycleManager.dispose();
+        roomLifeCycleManager.dispose();
+        roomLifeCycleManager.dispose();
+      }).not.toThrow();
     });
   });
 });

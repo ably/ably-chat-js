@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatApi, HistoryQueryParams } from '../../src/core/chat-api.ts';
 import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType } from '../../src/core/events.ts';
 import { emptyMessageReactions, Message } from '../../src/core/message.ts';
-import { OrderBy } from '../../src/core/messages.ts';
+import { DefaultMessages, OrderBy } from '../../src/core/messages.ts';
 import { Room } from '../../src/core/room.ts';
 import {
   channelEventEmitter,
@@ -1102,6 +1102,120 @@ describe('Messages', () => {
 
       // Run a history query for the listener and check the chat api call is made with the previous attach serial
       await expect(historyBeforeSubscribe({ limit: 50 })).resolves.toBeTruthy();
+    });
+  });
+
+  describe('dispose', () => {
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', (context) => {
+      const { room } = context;
+      const channel = room.channel;
+      const messages = room.messages as unknown as DefaultMessages;
+
+      // Mock channel methods
+      const mockUnsubscribe = vi.spyOn(channel, 'unsubscribe').mockImplementation(() => {});
+      const mockChannelOff = vi.spyOn(channel, 'off').mockImplementation(() => {});
+
+      // Act - dispose messages
+      messages.dispose();
+
+      // Assert - verify the listeners were unsubscribed
+      expect(mockUnsubscribe).toHaveBeenCalledTimes(2); // Messages events, plus one from reactions
+      expect(mockChannelOff).toHaveBeenCalledTimes(2); // Attached and update listeners
+    });
+
+    it<TestContext>('should dispose and clean up all listeners and subscriptions', (context) => {
+      const { room } = context;
+      const messages = room.messages as unknown as DefaultMessages;
+
+      // Add some listeners to verify cleanup
+      const listener1 = vi.fn();
+      const listener2 = vi.fn();
+
+      room.messages.subscribe(listener1);
+      room.messages.subscribe(listener2);
+
+      // Emulate a message event and check the listener was called
+      context.emulateBackendPublish({
+        clientId: 'yoda',
+        name: 'chat.message',
+        data: {
+          text: 'this message has been deleted',
+          metadata: {},
+        },
+        serial: '01672531200000-123@abcdefghij',
+        action: ChatMessageAction.MessageDelete,
+        version: '01672531200000-123@abcdefghij',
+        extras: {
+          headers: {},
+        },
+        timestamp: Date.now(),
+        createdAt: Date.now(),
+        operation: { clientId: 'yoda' },
+      });
+
+      // Verify that the listeners were called
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+
+      // Reset the listeners
+      listener1.mockClear();
+      listener2.mockClear();
+
+      // Act - dispose messages
+      messages.dispose();
+
+      // Assert - verify the listeners were unsubscribed
+      expect(messages.hasListeners()).toBe(false);
+
+      // Generate a message event and check the listener was not called
+      context.emulateBackendPublish({
+        clientId: 'yoda',
+        name: 'chat.message',
+        data: {
+          text: 'this message has been deleted',
+          metadata: {},
+        },
+        serial: '01672531200000-123@abcdefghij',
+        action: ChatMessageAction.MessageDelete,
+        version: '01672531200000-123@abcdefghij',
+        extras: {
+          headers: {},
+        },
+        timestamp: Date.now(),
+        createdAt: Date.now(),
+        operation: { clientId: 'yoda' },
+      });
+
+      // Verify that the listeners were not called
+      expect(listener1).not.toHaveBeenCalled();
+      expect(listener2).not.toHaveBeenCalled();
+    });
+
+    it<TestContext>('should dispose message reactions when disposing messages', (context) => {
+      const { room } = context;
+      const messages = room.messages as unknown as DefaultMessages;
+
+      // Mock the reactions dispose method
+      const mockReactionsDispose = vi
+        .spyOn(room.messages.reactions as unknown as { dispose(): void }, 'dispose')
+        .mockImplementation(() => {});
+
+      // Act - dispose messages
+      messages.dispose();
+
+      // Assert - verify reactions dispose was called
+      expect(mockReactionsDispose).toHaveBeenCalledTimes(1);
+    });
+
+    it<TestContext>('should not fail when disposing multiple times', (context) => {
+      const { room } = context;
+      const messages = room.messages as unknown as DefaultMessages;
+
+      // Act & Assert - should not throw
+      expect(() => {
+        messages.dispose();
+        messages.dispose();
+      }).not.toThrow();
     });
   });
 });

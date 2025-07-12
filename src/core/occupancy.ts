@@ -62,6 +62,7 @@ export class DefaultOccupancy implements Occupancy {
   private readonly _emitter = new EventEmitter<OccupancyEventsMap>();
   private readonly _roomOptions: InternalRoomOptions;
   private _latestOccupancyData?: OccupancyData;
+  private readonly _unsubscribeOccupancyEvents: () => void;
 
   /**
    * Constructs a new `DefaultOccupancy` instance.
@@ -84,15 +85,18 @@ export class DefaultOccupancy implements Occupancy {
     this._logger = logger;
     this._roomOptions = roomOptions;
 
-    this._applyChannelSubscriptions();
-  }
+    // Create bound listener
+    const occupancyEventsListener = this._internalOccupancyListener.bind(this);
 
-  /**
-   * Sets up channel subscriptions for occupancy.
-   */
-  private _applyChannelSubscriptions(): void {
-    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.subscribe([RealtimeMetaEventType.Occupancy], this._internalOccupancyListener.bind(this));
+    if (this._roomOptions.occupancy.enableEvents) {
+      this._logger.debug('DefaultOccupancy(); subscribing to occupancy events');
+      void this._channel.subscribe([RealtimeMetaEventType.Occupancy], occupancyEventsListener);
+    }
+
+    // Store unsubscribe function that captures the listener
+    this._unsubscribeOccupancyEvents = () => {
+      this._channel.unsubscribe(occupancyEventsListener);
+    };
   }
 
   /**
@@ -178,5 +182,33 @@ export class DefaultOccupancy implements Occupancy {
 
       return { ...options, params: { ...options.params, occupancy: 'metrics' } };
     };
+  }
+
+  /**
+   * Disposes of the occupancy instance, removing all listeners and subscriptions.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   *
+   * @internal
+   */
+  dispose(): void {
+    this._logger.trace('DefaultOccupancy.dispose();');
+
+    // Remove occupancy event subscriptions using stored unsubscribe function
+    this._unsubscribeOccupancyEvents();
+
+    // Remove user-level listeners
+    this._emitter.off();
+
+    this._logger.debug('DefaultOccupancy.dispose(); disposed successfully');
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    const numListeners = this._emitter.listeners()?.length;
+    return numListeners ? numListeners > 0 : false;
   }
 }

@@ -200,4 +200,30 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
     this._internalEmitter.emit(change.current, change);
     this._emitter.emit(change.current, change);
   }
+
+  /**
+   * Disposes of the room lifecycle instance, removing all listeners.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   *
+   * @internal
+   */
+  dispose(): void {
+    this._logger.trace('DefaultRoomLifecycle.dispose();');
+
+    // Remove all user-level listeners from both emitters
+    this._emitter.off();
+    this._internalEmitter.off();
+
+    this._logger.debug('DefaultRoomLifecycle.dispose(); disposed successfully');
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    const numListeners = this._emitter.listeners()?.length;
+    return numListeners ? numListeners > 0 : false;
+  }
 }

@@ -317,8 +317,10 @@ export class DefaultMessages implements Messages {
   >;
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<MessageEventsMap>();
-
-  public readonly reactions: MessagesReactions;
+  private readonly _unsubscribeMessageEvents: () => void;
+  private readonly _offChannelAttached: () => void;
+  private readonly _offChannelUpdate: () => void;
+  private readonly _reactions: DefaultMessageReactions;
 
   /**
    * Constructs a new `DefaultMessages` instance.
@@ -345,29 +347,57 @@ export class DefaultMessages implements Messages {
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
 
-    this.reactions = new DefaultMessageReactions(this._logger, options, this._chatApi, this._roomName, this._channel);
-    this._applyChannelSubscriptions();
+    this._reactions = new DefaultMessageReactions(this._logger, options, this._chatApi, this._roomName, this._channel);
+
+    // Create bound listeners
+    const messageEventsListener = this._processEvent.bind(this);
+    const channelAttachedListener = (stateChange: Ably.ChannelStateChange) => {
+      this._handleAttach(stateChange.resumed);
+    };
+    const channelUpdateListener = (stateChange: Ably.ChannelStateChange) => {
+      if (stateChange.current === 'attached' && stateChange.previous === 'attached') {
+        this._handleAttach(stateChange.resumed);
+      }
+    };
+
+    // Store unsubscribe functions that capture the listeners
+    this._unsubscribeMessageEvents = () => {
+      this._channel.unsubscribe(messageEventsListener);
+    };
+    this._offChannelAttached = () => {
+      this._channel.off(channelAttachedListener);
+    };
+    this._offChannelUpdate = () => {
+      this._channel.off(channelUpdateListener);
+    };
+
+    this._applyChannelSubscriptions(messageEventsListener, channelAttachedListener, channelUpdateListener);
   }
 
   /**
    * Sets up channel subscriptions for messages.
    */
-  private _applyChannelSubscriptions(): void {
+  private _applyChannelSubscriptions(
+    messageEventsListener: (channelEventMessage: Ably.InboundMessage) => void,
+    channelAttachedListener: (stateChange: Ably.ChannelStateChange) => void,
+    channelUpdateListener: (stateChange: Ably.ChannelStateChange) => void,
+  ): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.subscribe([RealtimeMessageName.ChatMessage], this._processEvent.bind(this));
+    void this._channel.subscribe([RealtimeMessageName.ChatMessage], messageEventsListener);
 
     // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
     // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
-    this._channel.on('attached', (message) => {
-      this._handleAttach(message.resumed);
-    });
+    this._channel.on('attached', channelAttachedListener);
 
     // Handles the case where an update message is received from a channel after a detach and reattach.
-    this._channel.on('update', (message) => {
-      if (message.current === 'attached' && message.previous === 'attached') {
-        this._handleAttach(message.resumed);
-      }
-    });
+    this._channel.on('update', channelUpdateListener);
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  get reactions(): MessagesReactions {
+    return this._reactions;
   }
 
   /**
@@ -610,5 +640,43 @@ export class DefaultMessages implements Messages {
     // Send the message to the listeners
     const message = parseMessage(channelEventMessage);
     this._emitter.emit(event, { type: event, message: message });
+  }
+
+  /**
+   * Disposes of the messages instance, removing all listeners and subscriptions.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   *
+   * @internal
+   */
+  dispose(): void {
+    this._logger.trace('DefaultMessages.dispose();');
+
+    // Remove all user-level listeners from the emitter
+    this._emitter.off();
+
+    // Clear all subscription points
+    this._listenerSubscriptionPoints.clear();
+
+    // Unsubscribe from channel events using stored unsubscribe functions
+    this._unsubscribeMessageEvents();
+
+    // Remove specific channel state listeners using stored unsubscribe functions
+    this._offChannelAttached();
+    this._offChannelUpdate();
+
+    // Dispose of the reactions instance
+    this._reactions.dispose();
+
+    this._logger.debug('DefaultMessages.dispose(); disposed successfully');
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    const numListeners = this._emitter.listeners()?.length;
+    return numListeners ? numListeners > 0 : false;
   }
 }

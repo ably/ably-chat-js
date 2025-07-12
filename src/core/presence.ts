@@ -184,6 +184,7 @@ export class DefaultPresence implements Presence {
   private _presenceState: PresenceState = {
     present: false,
   };
+  private readonly _unsubscribePresenceEvents: () => void;
 
   /**
    * Constructs a new `DefaultPresence` instance.
@@ -199,15 +200,11 @@ export class DefaultPresence implements Presence {
     this._logger = logger;
     this._options = options;
 
-    this._applyChannelSubscriptions();
-  }
+    // Create bound listener
+    const presenceEventsListener = this.subscribeToEvents.bind(this);
 
-  /**
-   * Sets up channel subscriptions for presence.
-   */
-  private _applyChannelSubscriptions(): void {
-    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.presence.subscribe(this.subscribeToEvents.bind(this));
+    // Subscribe to presence events on the channel
+    void this._channel.presence.subscribe(presenceEventsListener);
 
     // Listen for channel state changes to handle presence auto-reentry failures
     this._channel.on('update', (stateChange: Ably.ChannelStateChange) => {
@@ -217,6 +214,10 @@ export class DefaultPresence implements Presence {
         this._emitPresenceStateChange(false, stateChange.reason);
       }
     });
+    // Store unsubscribe function that captures the listener
+    this._unsubscribePresenceEvents = () => {
+      this._channel.presence.unsubscribe(presenceEventsListener);
+    };
   }
 
   /**
@@ -361,6 +362,34 @@ export class DefaultPresence implements Presence {
       }
       return options;
     };
+  }
+
+  /**
+   * Disposes of the presence instance, removing all listeners and subscriptions.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   *
+   * @internal
+   */
+  dispose(): void {
+    this._logger.trace('DefaultPresence.dispose();');
+
+    // Remove all user-level listeners from the emitter
+    this._emitter.off();
+
+    // Unsubscribe from presence events using stored unsubscribe function
+    this._unsubscribePresenceEvents();
+
+    this._logger.debug('DefaultPresence.dispose(); disposed successfully');
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    const numListeners = this._emitter.listeners()?.length;
+    return numListeners ? numListeners > 0 : false;
   }
 
   /**
