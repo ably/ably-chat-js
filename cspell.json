@@ -17,7 +17,8 @@
     "clonedeep",
     "timeserial",
     "rgba",
-    "retryable"
+    "retryable",
+    "onable"
   ],
   // This will ignore anything that's formatted like a lexicographically ordered timeserial
   "ignoreRegExpList": ["/\\d{14}-\\d{3}@.*/"],
