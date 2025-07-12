@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
 import { StatusSubscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * The different states that a room can be in throughout its lifecycle.
@@ -220,7 +220,6 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
    * @returns true if there are listeners, false otherwise.
    */
   hasListeners(): boolean {
-    const numListeners = this._emitter.listeners()?.length;
-    return numListeners ? numListeners > 0 : false;
+    return emitterHasListeners(this._emitter);
   }
 }

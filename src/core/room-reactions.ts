@@ -6,7 +6,7 @@ import { messageToEphemeral } from './realtime.js';
 import { RoomReactionHeaders, RoomReactionMetadata } from './room-reaction.js';
 import { parseRoomReaction } from './room-reaction-parser.js';
 import { Subscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * Params for sending a room-level reactions. Only `name` is mandatory.
@@ -206,7 +206,6 @@ export class DefaultRoomReactions implements RoomReactions {
    * @returns true if there are listeners, false otherwise.
    */
   hasListeners(): boolean {
-    const numListeners = this._emitter.listeners()?.length;
-    return numListeners ? numListeners > 0 : false;
+    return emitterHasListeners(this._emitter);
   }
 }
