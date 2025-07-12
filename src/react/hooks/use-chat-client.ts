@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import React from 'react';
 
-import { ChatClient } from '../../core/chat.js';
+import { ChatClient } from '../../core/chat-client.js';
 import { ChatClientContext } from '../contexts/chat-client-context.js';
 import { DEFAULT_CHAT_CLIENT_ID } from '../providers/chat-client-provider.js';
 
