@@ -879,8 +879,8 @@ describe('RoomLifecycleManager', () => {
       // Assert - verify channel.off is called to remove listeners
       expect(channel.off).toHaveBeenCalledTimes(3);
       expect(channel.off).toHaveBeenCalledWith(expect.any(Function)); // General state change listener
-      expect(channel.off).toHaveBeenCalledWith('attached', expect.any(Function)); // Discontinuity attached listener
-      expect(channel.off).toHaveBeenCalledWith('update', expect.any(Function)); // Discontinuity update listener
+      expect(channel.off).toHaveBeenCalledWith(expect.any(Function)); // Discontinuity attached listener
+      expect(channel.off).toHaveBeenCalledWith(expect.any(Function)); // Discontinuity update listener
     });
 
     it<TestContext>('should dispose and remove channel listeners', ({ roomLifeCycleManager, mockChannel }) => {

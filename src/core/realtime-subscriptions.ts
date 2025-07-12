@@ -66,7 +66,7 @@ export function on<T>(
   if ((Array.isArray(arg2) || typeof arg2 === 'string') && arg3) {
     emitter.on(arg2, arg3);
     return () => {
-      emitter.off(arg3);
+      emitter.off(arg2, arg3);
     };
   } else if (typeof arg2 === 'function') {
     emitter.on(arg2);
