@@ -37,6 +37,9 @@ export class RoomLifecycleManager {
   private _hasAttachedOnce: boolean; // CHA-RL13
   private _isExplicitlyDetached: boolean; // CHA-RL14
   private readonly _mutex: Mutex; // CHA-RL7
+  private readonly _unsubscribeChannelStateListener: () => void;
+  private readonly _offDiscontinuityAttached: () => void;
+  private readonly _offDiscontinuityUpdate: () => void;
 
   constructor(channelManager: ChannelManager, roomLifecycle: InternalRoomLifecycle, logger: Logger) {
     this._channelManager = channelManager;
@@ -47,42 +50,39 @@ export class RoomLifecycleManager {
     this._isExplicitlyDetached = false; // CHA-RL14
     this._mutex = new Mutex(); // CHA-RL7
 
+    // Create bound listeners
+    const channelStateListener = this._channelStateListener.bind(this);
+    const discontinuityOnAttachedListener = this._discontinuityOnAttachedListener.bind(this);
+    const discontinuityOnUpdateListener = this._discontinuityOnUpdateListener.bind(this);
+
+    // Store unsubscribe functions that capture the listeners
+    this._unsubscribeChannelStateListener = () => {
+      const channel = this._channelManager.get();
+      channel.off(channelStateListener);
+    };
+    this._offDiscontinuityAttached = () => {
+      const channel = this._channelManager.get();
+      channel.off('attached', discontinuityOnAttachedListener);
+    };
+    this._offDiscontinuityUpdate = () => {
+      const channel = this._channelManager.get();
+      channel.off('update', discontinuityOnUpdateListener);
+    };
+
     // Start monitoring channel state changes
-    this._startMonitoringChannelState();
-    this._startMonitoringDiscontinuity();
+    this._startMonitoringChannelState(channelStateListener);
+    this._startMonitoringDiscontinuity(discontinuityOnAttachedListener, discontinuityOnUpdateListener);
   }
 
   /**
    * Sets up monitoring of channel state changes to keep room status in sync.
    * If an operation is in progress (attach/detach/release), state changes are ignored.
    */
-  private _startMonitoringChannelState(): void {
+  private _startMonitoringChannelState(listener: (stateChange: Ably.ChannelStateChange) => void): void {
     const channel = this._channelManager.get();
 
     // CHA-RL11a
-    channel.on((stateChange: Ably.ChannelStateChange) => {
-      this._logger.debug('RoomLifecycleManager.channel state changed', {
-        oldState: stateChange.previous,
-        newState: stateChange.current,
-        reason: stateChange.reason,
-        resumed: stateChange.resumed,
-      });
-
-      // CHA-RL11b
-      if (this._operationInProgress()) {
-        this._logger.debug(
-          'RoomLifecycleManager._startMonitoringChannelState(); ignoring channel state change - operation in progress',
-          {
-            status: this._roomLifecycle.status,
-          },
-        );
-        return;
-      }
-
-      // CHA-RL11c
-      const newStatus = this._mapChannelStateToRoomStatus(stateChange.current);
-      this._setStatus(newStatus, stateChange.reason);
-    });
+    channel.on(listener);
   }
 
   /**
@@ -90,48 +90,17 @@ export class RoomLifecycleManager {
    * A discontinuity exists when an attached or update event comes from the channel with resume=false.
    * The first time we attach, or if we attach after an explicit detach call are not considered discontinuities.
    */
-  private _startMonitoringDiscontinuity(): void {
+  private _startMonitoringDiscontinuity(
+    attachedListener: (stateChange: Ably.ChannelStateChange) => void,
+    updateListener: (stateChange: Ably.ChannelStateChange) => void,
+  ): void {
     const channel = this._channelManager.get();
 
     // CHA-RL12a, CHA-RL12b
-    channel.on('attached', (stateChange: Ably.ChannelStateChange) => {
-      if (!stateChange.resumed && this._hasAttachedOnce && !this._isExplicitlyDetached) {
-        const error = new Ably.ErrorInfo(
-          'discontinuity detected',
-          ErrorCode.RoomDiscontinuity,
-          stateChange.reason?.statusCode ?? 0,
-          stateChange.reason,
-        );
-
-        this._logger.warn('RoomLifecycleManager._startMonitoringDiscontinuity(); discontinuity detected', {
-          error,
-        });
-        this._eventEmitter.emit(RoomEventType.Discontinuity, error);
-      }
-    });
+    channel.on('attached', attachedListener);
 
     // CHA-RL12a, CHA-RL12b
-    channel.on('update', (stateChange: Ably.ChannelStateChange) => {
-      if (
-        !stateChange.resumed &&
-        this._hasAttachedOnce &&
-        !this._isExplicitlyDetached &&
-        stateChange.current === 'attached' &&
-        stateChange.previous === 'attached'
-      ) {
-        const error = new Ably.ErrorInfo(
-          'discontinuity detected',
-          ErrorCode.RoomDiscontinuity,
-          stateChange.reason?.statusCode ?? 0,
-          stateChange.reason,
-        );
-
-        this._logger.warn('RoomLifecycleManager._startMonitoringDiscontinuity(); discontinuity detected', {
-          error,
-        });
-        this._eventEmitter.emit(RoomEventType.Discontinuity, error);
-      }
-    });
+    channel.on('update', updateListener);
   }
 
   /**
@@ -340,8 +309,99 @@ export class RoomLifecycleManager {
     }
   }
 
-  private _roomStatusIs(status: RoomStatus) {
+  /**
+   * Returns the current room status
+   */
+  private _roomStatusIs(status: RoomStatus): boolean {
     return this._roomLifecycle.status === status;
+  }
+
+  /**
+   * Disposes of the room lifecycle manager, removing all listeners and subscriptions.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   *
+   * @internal
+   */
+  dispose(): void {
+    // Clean up channel listeners using stored unsubscribe functions
+    this._unsubscribeChannelStateListener();
+    this._offDiscontinuityAttached();
+    this._offDiscontinuityUpdate();
+
+    // Clean up user-level listeners
+    this._eventEmitter.off();
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    const numListeners = this._eventEmitter.listeners()?.length;
+    return numListeners ? numListeners > 0 : false;
+  }
+
+  private _channelStateListener(stateChange: Ably.ChannelStateChange): void {
+    this._logger.debug('RoomLifecycleManager.channel state changed', {
+      oldState: stateChange.previous,
+      newState: stateChange.current,
+      reason: stateChange.reason,
+      resumed: stateChange.resumed,
+    });
+
+    // CHA-RL11b
+    if (this._operationInProgress()) {
+      this._logger.debug(
+        'RoomLifecycleManager._startMonitoringChannelState(); ignoring channel state change - operation in progress',
+        {
+          status: this._roomLifecycle.status,
+        },
+      );
+      return;
+    }
+
+    // CHA-RL11c
+    const newStatus = this._mapChannelStateToRoomStatus(stateChange.current);
+    this._setStatus(newStatus, stateChange.reason);
+  }
+
+  private _discontinuityOnAttachedListener(stateChange: Ably.ChannelStateChange): void {
+    if (!stateChange.resumed && this._hasAttachedOnce && !this._isExplicitlyDetached) {
+      const error = new Ably.ErrorInfo(
+        'discontinuity detected',
+        ErrorCode.RoomDiscontinuity,
+        stateChange.reason?.statusCode ?? 0,
+        stateChange.reason,
+      );
+
+      this._logger.warn('RoomLifecycleManager._startMonitoringDiscontinuity(); discontinuity detected', {
+        error,
+      });
+      this._eventEmitter.emit(RoomEventType.Discontinuity, error);
+    }
+  }
+
+  private _discontinuityOnUpdateListener(stateChange: Ably.ChannelStateChange): void {
+    if (
+      !stateChange.resumed &&
+      this._hasAttachedOnce &&
+      !this._isExplicitlyDetached &&
+      stateChange.current === 'attached' &&
+      stateChange.previous === 'attached'
+    ) {
+      const error = new Ably.ErrorInfo(
+        'discontinuity detected',
+        ErrorCode.RoomDiscontinuity,
+        stateChange.reason?.statusCode ?? 0,
+        stateChange.reason,
+      );
+
+      this._logger.warn('RoomLifecycleManager._startMonitoringDiscontinuity(); discontinuity detected', {
+        error,
+      });
+      this._eventEmitter.emit(RoomEventType.Discontinuity, error);
+    }
   }
 
   private async _channelDetachLoop(channel: Ably.RealtimeChannel) {
@@ -390,6 +450,7 @@ export class RoomLifecycleManager {
   }
 
   testForceHasAttachedOnce(firstAttach: boolean) {
+    this._logger.trace('RoomLifecycleManager.testForceHasAttachedOnce();', { firstAttach });
     this._hasAttachedOnce = firstAttach;
   }
 }

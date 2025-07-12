@@ -6,6 +6,7 @@ import { ConnectionStatus } from '../../src/core/connection.ts';
 import { RoomReactionEventType } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomReaction } from '../../src/core/room-reaction.ts';
+import { DefaultRoomReactions } from '../../src/core/room-reactions.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';
@@ -359,5 +360,86 @@ describe('Reactions', () => {
           headers: { action: 'strike back', number: 1980 },
         });
       }));
+  });
+
+  describe('dispose', () => {
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', (context) => {
+      const { room } = context;
+      const channel = room.channel;
+      const reactions = room.reactions as DefaultRoomReactions;
+
+      // Mock channel methods
+      const mockUnsubscribe = vi.spyOn(channel, 'unsubscribe').mockImplementation(() => {});
+
+      // Act - dispose reactions
+      reactions.dispose();
+
+      // Assert - verify the listeners were unsubscribed
+      expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it<TestContext>('should remove user-level listeners and channel event subscriptions', (context) => {
+      const roomReactions = context.room.reactions as DefaultRoomReactions;
+
+      // Subscribe to add listeners
+      const listener1 = vi.fn();
+      const listener2 = vi.fn();
+      context.room.reactions.subscribe(listener1);
+      context.room.reactions.subscribe(listener2);
+
+      // Emulate a reaction
+      context.emulateBackendPublish({
+        clientId: 'yoda',
+        name: 'roomReaction',
+        data: {
+          name: 'like',
+        },
+        timestamp: Date.now(),
+      });
+
+      // Verify that the listeners were called
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+
+      // Reset the listeners
+      listener1.mockClear();
+      listener2.mockClear();
+
+      // Dispose should clean up listeners and subscriptions
+      expect(() => {
+        roomReactions.dispose();
+      }).not.toThrow();
+
+      // Emulate a reaction
+      context.emulateBackendPublish({
+        clientId: 'yoda',
+        name: 'roomReaction',
+        data: {
+          name: 'like',
+        },
+        timestamp: Date.now(),
+      });
+
+      // Verify that the listeners were not called
+      expect(listener1).not.toHaveBeenCalled();
+      expect(listener2).not.toHaveBeenCalled();
+
+      // Verify that user-provided listeners were unsubscribed
+      expect(roomReactions.hasListeners()).toBe(false);
+
+      // Cleanup should not fail on multiple calls
+      expect(() => {
+        roomReactions.dispose();
+      }).not.toThrow();
+    });
+
+    it<TestContext>('should handle dispose when no listeners are registered', (context) => {
+      const roomReactions = context.room.reactions as unknown as { dispose(): void };
+
+      // Should not throw when called with no listeners
+      expect(() => {
+        roomReactions.dispose();
+      }).not.toThrow();
+    });
   });
 });
