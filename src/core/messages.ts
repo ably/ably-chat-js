@@ -14,7 +14,7 @@ import {
 import { parseMessage } from './message-parser.js';
 import { DefaultMessageReactions, MessagesReactions } from './messages-reactions.js';
 import { PaginatedResult } from './query.js';
-import { on, subscribe } from './realtime-subscriptions.js';
+import { on, once, subscribe } from './realtime-subscriptions.js';
 import { messageFromRest } from './rest-types.js';
 import { MessageOptions } from './room-options.js';
 import { Serial, serialToString } from './serial.js';
@@ -316,6 +316,8 @@ export class DefaultMessages implements Messages {
       fromSerial: string;
     }>
   >;
+  private readonly _pendingPromiseRejecters = new Set<(error: Error) => void>();
+  private readonly _pendingAttachListeners = new Set<() => void>();
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<MessageEventsMap>();
   private readonly _unsubscribeMessageEvents: () => void;
@@ -460,6 +462,13 @@ export class DefaultMessages implements Messages {
   private async _subscribeAtChannelAttach(): Promise<{ fromSerial: string }> {
     const channelWithProperties = this._getChannelProperties();
     return new Promise((resolve, reject) => {
+      // Store the reject function so we can call it during disposal
+      this._pendingPromiseRejecters.add(reject);
+
+      const cleanup = () => {
+        this._pendingPromiseRejecters.delete(reject);
+      };
+
       // Check if the state is now attached
       if (channelWithProperties.state === 'attached') {
         // Get the attachSerial from the channel properties
@@ -467,6 +476,8 @@ export class DefaultMessages implements Messages {
         this._logger.debug('Messages._subscribeAtChannelAttach(); channel is attached already, using attachSerial', {
           attachSerial: channelWithProperties.properties.attachSerial,
         });
+        cleanup();
+
         if (channelWithProperties.properties.attachSerial) {
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
@@ -475,14 +486,18 @@ export class DefaultMessages implements Messages {
             new Ably.ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error,
           );
         }
+        return;
       }
 
-      channelWithProperties.once('attached', () => {
+      const offAttachedListener = once(channelWithProperties, 'attached', () => {
         // Get the attachSerial from the channel properties
         // AttachSerial should always be defined at this point, but we check just in case
         this._logger.debug('Messages._subscribeAtChannelAttach(); channel is now attached, using attachSerial', {
           attachSerial: channelWithProperties.properties.attachSerial,
         });
+        cleanup();
+        this._pendingAttachListeners.delete(offAttachedListener);
+
         if (channelWithProperties.properties.attachSerial) {
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
@@ -492,6 +507,8 @@ export class DefaultMessages implements Messages {
           );
         }
       });
+
+      this._pendingAttachListeners.add(offAttachedListener);
     });
   }
 
@@ -628,8 +645,25 @@ export class DefaultMessages implements Messages {
     // Remove all user-level listeners from the emitter
     this._emitter.off();
 
+    // Reject all pending subscription point promises to break circular references
+    const disposalError = new Ably.ErrorInfo('room has been disposed', 40000, 400) as unknown as Error;
+    for (const rejectFn of this._pendingPromiseRejecters) {
+      try {
+        rejectFn(disposalError);
+      } catch {
+        // Ignore errors from already resolved/rejected promises
+      }
+    }
+    this._pendingPromiseRejecters.clear();
+
     // Clear all subscription points
     this._listenerSubscriptionPoints.clear();
+
+    // Remove all pending attach listeners
+    for (const offAttachedListener of this._pendingAttachListeners) {
+      offAttachedListener();
+    }
+    this._pendingAttachListeners.clear();
 
     // Unsubscribe from channel events using stored unsubscribe functions
     this._unsubscribeMessageEvents();

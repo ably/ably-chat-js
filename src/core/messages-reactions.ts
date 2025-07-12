@@ -143,15 +143,11 @@ export class DefaultMessageReactions implements MessagesReactions {
     private readonly _roomName: string,
     private readonly _channel: Ably.RealtimeChannel,
   ) {
-    // Create bound listeners
-    const messageEventListener = this._processMessageEvent.bind(this);
-
     // Use subscription helper to create cleanup function
-    this._unsubscribeMessageEvents = subscribe(_channel, messageEventListener);
+    this._unsubscribeMessageEvents = subscribe(_channel, this._processMessageEvent.bind(this));
 
     if (this._options?.rawMessageReactions) {
-      const annotationEventListener = this._processAnnotationEvent.bind(this);
-      this._unsubscribeAnnotationEvents = subscribe(_channel.annotations, annotationEventListener);
+      this._unsubscribeAnnotationEvents = subscribe(_channel.annotations, this._processAnnotationEvent.bind(this));
     }
     this._defaultType = this._options?.defaultMessageReactionType ?? MessageReactionType.Distinct;
   }
