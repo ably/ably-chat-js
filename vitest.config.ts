@@ -39,5 +39,11 @@ export default defineConfig({
         },
       },
     ],
+    // Turn on GC control so we can test garbage collection
+    poolOptions: {
+      forks: {
+        execArgv: ['--expose-gc'],
+      },
+    },
   },
 });
