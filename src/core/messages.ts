@@ -317,6 +317,7 @@ export class DefaultMessages implements Messages {
       fromSerial: string;
     }>
   >;
+  private readonly _pendingPromiseRejecters = new Set<(error: Error) => void>();
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<MessageEventsMap>();
   private readonly _unsubscribeMessageEvents: () => void;
@@ -461,6 +462,13 @@ export class DefaultMessages implements Messages {
   private async _subscribeAtChannelAttach(): Promise<{ fromSerial: string }> {
     const channelWithProperties = this._getChannelProperties();
     return new Promise((resolve, reject) => {
+      // Store the reject function so we can call it during disposal
+      this._pendingPromiseRejecters.add(reject);
+
+      const cleanup = () => {
+        this._pendingPromiseRejecters.delete(reject);
+      };
+
       // Check if the state is now attached
       if (channelWithProperties.state === 'attached') {
         // Get the attachSerial from the channel properties
@@ -469,9 +477,11 @@ export class DefaultMessages implements Messages {
           attachSerial: channelWithProperties.properties.attachSerial,
         });
         if (channelWithProperties.properties.attachSerial) {
+          cleanup();
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
           this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
+          cleanup();
           reject(
             new Ably.ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error,
           );
@@ -486,9 +496,11 @@ export class DefaultMessages implements Messages {
           attachSerial: channelWithProperties.properties.attachSerial,
         });
         if (channelWithProperties.properties.attachSerial) {
+          cleanup();
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
           this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
+          cleanup();
           reject(
             new Ably.ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error,
           );
@@ -629,6 +641,17 @@ export class DefaultMessages implements Messages {
 
     // Remove all user-level listeners from the emitter
     this._emitter.off();
+
+    // Reject all pending subscription point promises to break circular references
+    const disposalError = new Ably.ErrorInfo('room has been disposed', 40000, 400) as unknown as Error;
+    for (const rejectFn of this._pendingPromiseRejecters) {
+      try {
+        rejectFn(disposalError);
+      } catch {
+        // Ignore errors from already resolved/rejected promises
+      }
+    }
+    this._pendingPromiseRejecters.clear();
 
     // Clear all subscription points
     this._listenerSubscriptionPoints.clear();
