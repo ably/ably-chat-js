@@ -148,7 +148,6 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
   private _status: RoomStatus = RoomStatus.Initialized;
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
-  private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
   private readonly _emitter = new EventEmitter<RoomStatusEventsMap>();
 
   /**
@@ -197,7 +196,6 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
     this._status = change.current;
     this._error = change.error;
     this._logger.info(`room status changed`, { ...change });
-    this._internalEmitter.emit(change.current, change);
     this._emitter.emit(change.current, change);
   }
 
@@ -210,9 +208,8 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
   dispose(): void {
     this._logger.trace('DefaultRoomLifecycle.dispose();');
 
-    // Remove all user-level listeners from both emitters
+    // Remove all user-level listeners
     this._emitter.off();
-    this._internalEmitter.off();
 
     this._logger.debug('DefaultRoomLifecycle.dispose(); disposed successfully');
   }
