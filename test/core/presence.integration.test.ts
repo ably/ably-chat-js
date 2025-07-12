@@ -4,7 +4,7 @@ import * as Ably from 'ably';
 import { PresenceAction, Realtime } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat.ts';
+import { ChatClient } from '../../src/core/chat-client.ts';
 import { PresenceEventType } from '../../src/core/events.ts';
 import { PresenceData, PresenceEvent } from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
