@@ -5,6 +5,7 @@ import { ChatClient } from '../../src/core/chat.ts';
 import { ConnectionStatus } from '../../src/core/connection.ts';
 import { LogLevel } from '../../src/core/logger.ts';
 import { RealtimeWithOptions } from '../../src/core/realtime-extensions.ts';
+import { Room } from '../../src/core/room.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING_REACT, VERSION } from '../../src/core/version.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { testClientOptions } from '../helper/options.ts';
@@ -159,5 +160,64 @@ describe('Chat', () => {
 
     // Wait for the connection to fail
     await waitForConnectionStatus(chat, ConnectionStatus.Failed);
+  });
+
+  it('should garbage collect chat client after disposal', async () => {
+    // Check GC is available and fail the test if it's not
+    expect(globalThis.gc).toBeDefined();
+
+    // Create a chat client
+    let chat: ChatClient | undefined = newChatClient();
+
+    // Create a room and attach it (as requested)
+    let room: Room | undefined = await getRandomRoom(chat);
+    await room.attach();
+
+    // Add mock listeners to the chat clients connection
+    const connectionListener = vi.fn();
+    chat.connection.onStatusChange(connectionListener);
+
+    // Add mock listeners to the room to ensure it's properly used
+    const messagesListener = vi.fn();
+    room.messages.subscribe(messagesListener);
+
+    // Create weak references to the chat client and its key components
+    const chatRef = new WeakRef(chat);
+    const connectionRef = new WeakRef(chat.connection);
+    const roomsRef = new WeakRef(chat.rooms);
+    const roomRef = new WeakRef(room);
+    const messagesRef = new WeakRef(room.messages);
+
+    // Verify all references are initially alive
+    expect(chatRef.deref()).toBeDefined();
+    expect(connectionRef.deref()).toBeDefined();
+    expect(roomsRef.deref()).toBeDefined();
+    expect(roomRef.deref()).toBeDefined();
+
+    // Release the room first (required before disposing the chat client)
+    await chat.rooms.release(room.name);
+
+    // Set room to undefined to remove our strong reference
+    room = undefined;
+
+    // Dispose of the chat client
+    chat.dispose();
+
+    // Set chat to undefined to remove our strong reference
+    chat = undefined;
+
+    // Wait for the chat client and its components to be garbage collected
+    await vi.waitFor(
+      () => {
+        globalThis.gc?.();
+
+        expect(chatRef.deref()).toBeUndefined();
+        expect(connectionRef.deref()).toBeUndefined();
+        expect(roomsRef.deref()).toBeUndefined();
+        expect(roomRef.deref()).toBeUndefined();
+        expect(messagesRef.deref()).toBeUndefined();
+      },
+      { timeout: 3000, interval: 250 },
+    );
   });
 });
