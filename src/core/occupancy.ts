@@ -4,6 +4,7 @@ import { ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import { OccupancyEvent, OccupancyEventType, RealtimeMetaEventType } from './events.js';
 import { Logger } from './logger.js';
+import { subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
@@ -105,15 +106,19 @@ export class DefaultOccupancy implements Occupancy {
     // Create bound listener
     const occupancyEventsListener = this._internalOccupancyListener.bind(this);
 
+    // Use subscription helper to create cleanup function
     if (this._roomOptions.occupancy.enableEvents) {
       this._logger.debug('DefaultOccupancy(); subscribing to occupancy events');
-      void this._channel.subscribe([RealtimeMetaEventType.Occupancy], occupancyEventsListener);
+      this._unsubscribeOccupancyEvents = subscribe(
+        this._channel,
+        [RealtimeMetaEventType.Occupancy],
+        occupancyEventsListener,
+      );
+    } else {
+      this._unsubscribeOccupancyEvents = () => {
+        // No-op function when events are not enabled
+      };
     }
-
-    // Store unsubscribe function that captures the listener
-    this._unsubscribeOccupancyEvents = () => {
-      this._channel.unsubscribe(occupancyEventsListener);
-    };
   }
 
   /**
