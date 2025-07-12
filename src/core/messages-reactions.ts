@@ -132,6 +132,8 @@ export class DefaultMessageReactions implements MessagesReactions {
   }>();
 
   private readonly _defaultType: MessageReactionType;
+  private readonly _unsubscribeMessageEvents: () => void;
+  private readonly _unsubscribeAnnotationEvents?: () => void;
 
   constructor(
     private readonly _logger: Logger,
@@ -140,9 +142,21 @@ export class DefaultMessageReactions implements MessagesReactions {
     private readonly _roomName: string,
     private readonly _channel: Ably.RealtimeChannel,
   ) {
-    void _channel.subscribe(this._processMessageEvent.bind(this));
+    // Create bound listeners
+    const messageEventListener = this._processMessageEvent.bind(this);
+    void _channel.subscribe(messageEventListener);
+
+    // Store unsubscribe function that captures the listener
+    this._unsubscribeMessageEvents = () => {
+      _channel.unsubscribe(messageEventListener);
+    };
+
     if (this._options?.rawMessageReactions) {
-      void _channel.annotations.subscribe(this._processAnnotationEvent.bind(this));
+      const annotationEventListener = this._processAnnotationEvent.bind(this);
+      void _channel.annotations.subscribe(annotationEventListener);
+      this._unsubscribeAnnotationEvents = () => {
+        _channel.annotations.unsubscribe(annotationEventListener);
+      };
     }
     this._defaultType = this._options?.defaultMessageReactionType ?? MessageReactionType.Distinct;
   }
@@ -306,5 +320,36 @@ export class DefaultMessageReactions implements MessagesReactions {
       }
       return options;
     };
+  }
+
+  /**
+   * Disposes of the message reactions instance, removing all listeners and subscriptions.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   *
+   * @internal
+   */
+  dispose(): void {
+    this._logger.trace('DefaultMessageReactions.dispose();');
+
+    // Remove all user-level listeners from the emitter
+    this._emitter.off();
+
+    // Unsubscribe from channel events using stored unsubscribe functions
+    this._unsubscribeMessageEvents();
+
+    // Unsubscribe from annotations if they were enabled
+    this._unsubscribeAnnotationEvents?.();
+
+    this._logger.debug('DefaultMessageReactions.dispose(); disposed successfully');
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    const numListeners = this._emitter.listeners()?.length;
+    return numListeners ? numListeners > 0 : false;
   }
 }

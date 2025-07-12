@@ -101,6 +101,7 @@ export class DefaultRoomReactions implements RoomReactions {
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<RoomReactionEventsMap>();
+  private readonly _unsubscribeRoomReactionEvents: () => void;
 
   /**
    * Constructs a new `DefaultRoomReactions` instance.
@@ -115,15 +116,16 @@ export class DefaultRoomReactions implements RoomReactions {
     this._clientId = clientId;
     this._logger = logger;
 
-    this._applyChannelSubscriptions();
-  }
+    // Create bound listener
+    const roomReactionEventsListener = this._forwarder.bind(this);
 
-  /**
-   * Sets up channel subscriptions for room reactions.
-   */
-  private _applyChannelSubscriptions(): void {
-    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.subscribe([RoomReactionRealtimeEventType.Reaction], this._forwarder.bind(this));
+    // Subscribe to room reaction events on the channel
+    void this._channel.subscribe([RoomReactionRealtimeEventType.Reaction], roomReactionEventsListener);
+
+    // Store unsubscribe function that captures the listener
+    this._unsubscribeRoomReactionEvents = () => {
+      this._channel.unsubscribe(roomReactionEventsListener);
+    };
   }
 
   /**
@@ -183,4 +185,28 @@ export class DefaultRoomReactions implements RoomReactions {
       reaction,
     });
   };
+
+  /**
+   * Disposes of the room reactions instance, removing all listeners and subscriptions.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   *
+   * @internal
+   */
+  dispose(): void {
+    // Remove room reaction event subscriptions using stored unsubscribe function
+    this._unsubscribeRoomReactionEvents();
+
+    // Remove user-level listeners
+    this._emitter.off();
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    const numListeners = this._emitter.listeners()?.length;
+    return numListeners ? numListeners > 0 : false;
+  }
 }
