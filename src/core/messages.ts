@@ -476,6 +476,7 @@ export class DefaultMessages implements Messages {
             new Ably.ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error,
           );
         }
+        return;
       }
 
       channelWithProperties.once('attached', () => {
