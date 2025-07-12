@@ -213,7 +213,7 @@ describe('Chat', () => {
 
         expect(chatRef.deref()).toBeUndefined();
         expect(connectionRef.deref()).toBeUndefined();
-        //expect(messagesRef.deref()).toBeUndefined();
+        expect(messagesRef.deref()).toBeUndefined();
         expect(roomsRef.deref()).toBeUndefined();
         expect(roomRef.deref()).toBeUndefined();
       },
