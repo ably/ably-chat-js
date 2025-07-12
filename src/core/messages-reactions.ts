@@ -19,7 +19,7 @@ import { Logger } from './logger.js';
 import { InternalRoomOptions, MessageOptions } from './room-options.js';
 import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * A listener for summary message reaction events.
@@ -349,7 +349,6 @@ export class DefaultMessageReactions implements MessagesReactions {
    * @returns true if there are listeners, false otherwise.
    */
   hasListeners(): boolean {
-    const numListeners = this._emitter.listeners()?.length;
-    return numListeners ? numListeners > 0 : false;
+    return emitterHasListeners(this._emitter);
   }
 }

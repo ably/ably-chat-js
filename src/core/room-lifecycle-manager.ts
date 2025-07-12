@@ -8,7 +8,7 @@ import { RoomEventType } from './events.js';
 import { Logger } from './logger.js';
 import { InternalRoomLifecycle, RoomStatus } from './room-status.js';
 import { StatusSubscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * Events that can be emitted by the RoomLifecycleManager
@@ -338,8 +338,7 @@ export class RoomLifecycleManager {
    * @returns true if there are listeners, false otherwise.
    */
   hasListeners(): boolean {
-    const numListeners = this._eventEmitter.listeners()?.length;
-    return numListeners ? numListeners > 0 : false;
+    return emitterHasListeners(this._eventEmitter);
   }
 
   private _channelStateListener(stateChange: Ably.ChannelStateChange): void {

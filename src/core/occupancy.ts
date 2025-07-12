@@ -7,7 +7,7 @@ import { Logger } from './logger.js';
 import { OccupancyData, parseOccupancyMessage } from './occupancy-parser.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * This interface is used to interact with occupancy in a chat room: subscribing to occupancy updates and
@@ -208,7 +208,6 @@ export class DefaultOccupancy implements Occupancy {
    * @returns true if there are listeners, false otherwise.
    */
   hasListeners(): boolean {
-    const numListeners = this._emitter.listeners()?.length;
-    return numListeners ? numListeners > 0 : false;
+    return emitterHasListeners(this._emitter);
   }
 }

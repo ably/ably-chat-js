@@ -18,7 +18,7 @@ import { messageFromRest } from './rest-types.js';
 import { MessageOptions } from './room-options.js';
 import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * Event names and their respective payloads emitted by the messages feature.
@@ -676,7 +676,6 @@ export class DefaultMessages implements Messages {
    * @returns true if there are listeners, false otherwise.
    */
   hasListeners(): boolean {
-    const numListeners = this._emitter.listeners()?.length;
-    return numListeners ? numListeners > 0 : false;
+    return emitterHasListeners(this._emitter);
   }
 }
