@@ -152,7 +152,7 @@ describe('Room', () => {
         expect(typingRef.deref()).toBeUndefined();
         expect(reactionsRef.deref()).toBeUndefined();
         expect(occupancyRef.deref()).toBeUndefined();
-        //expect(messagesRef.deref()).toBeUndefined();
+        expect(messagesRef.deref()).toBeUndefined();
       },
       { timeout: 9000, interval: 250 },
     );
