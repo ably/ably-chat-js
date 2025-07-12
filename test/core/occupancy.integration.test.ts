@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat.ts';
+import { ChatClient } from '../../src/core/chat-client.ts';
 import { OccupancyEvent, OccupancyEventType } from '../../src/core/events.ts';
 import { OccupancyData } from '../../src/core/occupancy-parser.ts';
 import { Room } from '../../src/core/room.ts';
