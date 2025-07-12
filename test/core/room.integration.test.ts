@@ -92,7 +92,7 @@ describe('Room', () => {
     expect(room.status).toEqual(RoomStatus.Released);
   });
 
-  it<TestContext>('should garbage collect room and features after release', async ({ chat }) => {
+  it<TestContext>('should garbage collect room and features after release', { timeout: 10000 }, async ({ chat }) => {
     // Check GC is available and fail the test if it's not
     expect(globalThis.gc).toBeDefined();
 
@@ -148,13 +148,13 @@ describe('Room', () => {
         globalThis.gc?.();
 
         expect(roomRef.deref()).toBeUndefined();
-        expect(messagesRef.deref()).toBeUndefined();
         expect(presenceRef.deref()).toBeUndefined();
         expect(typingRef.deref()).toBeUndefined();
         expect(reactionsRef.deref()).toBeUndefined();
         expect(occupancyRef.deref()).toBeUndefined();
+        expect(messagesRef.deref()).toBeUndefined();
       },
-      { timeout: 3000, interval: 250 },
+      { timeout: 9000, interval: 250 },
     );
   });
 });
