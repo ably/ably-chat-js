@@ -3,6 +3,7 @@ import * as Ably from 'ably';
 import { RoomReactionEvent, RoomReactionEventType, RoomReactionRealtimeEventType } from './events.js';
 import { Logger } from './logger.js';
 import { messageToEphemeral } from './realtime.js';
+import { subscribe } from './realtime-subscriptions.js';
 import { RoomReactionHeaders, RoomReactionMetadata } from './room-reaction.js';
 import { parseRoomReaction } from './room-reaction-parser.js';
 import { Subscription } from './subscription.js';
@@ -119,13 +120,12 @@ export class DefaultRoomReactions implements RoomReactions {
     // Create bound listener
     const roomReactionEventsListener = this._forwarder.bind(this);
 
-    // Subscribe to room reaction events on the channel
-    void this._channel.subscribe([RoomReactionRealtimeEventType.Reaction], roomReactionEventsListener);
-
-    // Store unsubscribe function that captures the listener
-    this._unsubscribeRoomReactionEvents = () => {
-      this._channel.unsubscribe(roomReactionEventsListener);
-    };
+    // Use subscription helper to create cleanup function
+    this._unsubscribeRoomReactionEvents = subscribe(
+      this._channel,
+      [RoomReactionRealtimeEventType.Reaction],
+      roomReactionEventsListener,
+    );
   }
 
   /**

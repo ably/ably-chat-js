@@ -3,6 +3,7 @@ import * as Ably from 'ably';
 import { ChannelOptionsMerger } from './channel-manager.js';
 import { PresenceEventType } from './events.js';
 import { Logger } from './logger.js';
+import { subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
@@ -203,9 +204,6 @@ export class DefaultPresence implements Presence {
     // Create bound listener
     const presenceEventsListener = this.subscribeToEvents.bind(this);
 
-    // Subscribe to presence events on the channel
-    void this._channel.presence.subscribe(presenceEventsListener);
-
     // Listen for channel state changes to handle presence auto-reentry failures
     this._channel.on('update', (stateChange: Ably.ChannelStateChange) => {
       if (stateChange.reason?.code === 91004) {
@@ -214,10 +212,9 @@ export class DefaultPresence implements Presence {
         this._emitPresenceStateChange(false, stateChange.reason);
       }
     });
-    // Store unsubscribe function that captures the listener
-    this._unsubscribePresenceEvents = () => {
-      this._channel.presence.unsubscribe(presenceEventsListener);
-    };
+
+    // Use subscription helper to create cleanup function
+    this._unsubscribePresenceEvents = subscribe(this._channel.presence, presenceEventsListener);
   }
 
   /**

@@ -14,6 +14,7 @@ import {
 import { parseMessage } from './message-parser.js';
 import { DefaultMessageReactions, MessagesReactions } from './messages-reactions.js';
 import { PaginatedResult } from './query.js';
+import { on, subscribe } from './realtime-subscriptions.js';
 import { messageFromRest } from './rest-types.js';
 import { MessageOptions } from './room-options.js';
 import { Serial, serialToString } from './serial.js';
@@ -360,37 +361,10 @@ export class DefaultMessages implements Messages {
       }
     };
 
-    // Store unsubscribe functions that capture the listeners
-    this._unsubscribeMessageEvents = () => {
-      this._channel.unsubscribe(messageEventsListener);
-    };
-    this._offChannelAttached = () => {
-      this._channel.off(channelAttachedListener);
-    };
-    this._offChannelUpdate = () => {
-      this._channel.off(channelUpdateListener);
-    };
-
-    this._applyChannelSubscriptions(messageEventsListener, channelAttachedListener, channelUpdateListener);
-  }
-
-  /**
-   * Sets up channel subscriptions for messages.
-   */
-  private _applyChannelSubscriptions(
-    messageEventsListener: (channelEventMessage: Ably.InboundMessage) => void,
-    channelAttachedListener: (stateChange: Ably.ChannelStateChange) => void,
-    channelUpdateListener: (stateChange: Ably.ChannelStateChange) => void,
-  ): void {
-    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.subscribe([RealtimeMessageName.ChatMessage], messageEventsListener);
-
-    // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
-    // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
-    this._channel.on('attached', channelAttachedListener);
-
-    // Handles the case where an update message is received from a channel after a detach and reattach.
-    this._channel.on('update', channelUpdateListener);
+    // Use subscription helpers to create cleanup functions
+    this._unsubscribeMessageEvents = subscribe(this._channel, [RealtimeMessageName.ChatMessage], messageEventsListener);
+    this._offChannelAttached = on(this._channel, 'attached', channelAttachedListener);
+    this._offChannelUpdate = on(this._channel, 'update', channelUpdateListener);
   }
 
   /**
