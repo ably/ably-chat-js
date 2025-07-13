@@ -9,6 +9,7 @@ import { RoomReaction } from '../../src/core/room-reaction.ts';
 import { DefaultRoomReactions } from '../../src/core/room-reactions.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
+import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
@@ -363,19 +364,19 @@ describe('Reactions', () => {
   });
 
   describe('dispose', () => {
-    it<TestContext>('should dispose and clean up all realtime channel subscriptions', (context) => {
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', async (context) => {
       const { room } = context;
       const channel = room.channel;
       const reactions = room.reactions as DefaultRoomReactions;
 
       // Mock channel methods
-      const mockUnsubscribe = vi.spyOn(channel, 'unsubscribe').mockImplementation(() => {});
+      vi.spyOn(channel, 'unsubscribe').mockImplementation(() => {});
 
       // Act - dispose reactions
       reactions.dispose();
 
       // Assert - verify the listeners were unsubscribed
-      expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
+      await waitForUnsubscribeTimes(channel, 1);
     });
 
     it<TestContext>('should remove user-level listeners and channel event subscriptions', (context) => {
