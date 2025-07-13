@@ -16,6 +16,16 @@ interface Onable<T> {
   on(events: string[] | string, callback: (data: T) => void): void;
 
   /**
+   * Subscribe to all events, once.
+   */
+  once(callback: (data: T) => void): void;
+
+  /**
+   * Subscribe to specific events, once.
+   */
+  once(events: string[] | string, callback: (data: T) => void): void;
+
+  /**
    * Unsubscribe from events with a callback.
    * @param callback The callback function to remove from the subscription.
    */
@@ -75,6 +85,28 @@ export function on<T>(
     };
   } else {
     throw new TypeError('Invalid arguments passed to on()');
+  }
+}
+
+export function once<T>(emitter: Onable<T>, callback: (data: T) => void): () => void;
+export function once<T>(emitter: Onable<T>, events: string | string[], callback: (data: T) => void): () => void;
+export function once<T>(
+  emitter: Onable<T>,
+  arg2: ((data: T) => void) | string | string[],
+  arg3?: (data: T) => void,
+): () => void {
+  if ((Array.isArray(arg2) || typeof arg2 === 'string') && arg3) {
+    emitter.once(arg2, arg3);
+    return () => {
+      emitter.off(arg3);
+    };
+  } else if (typeof arg2 === 'function') {
+    emitter.once(arg2);
+    return () => {
+      emitter.off(arg2);
+    };
+  } else {
+    throw new TypeError('Invalid arguments passed to once()');
   }
 }
 
