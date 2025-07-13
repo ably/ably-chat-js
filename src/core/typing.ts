@@ -357,6 +357,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     }
     this._clearAllTypingStates();
     this._unsubscribeTypingEvents();
+    this.off();
     this._mutex.release();
   }
 
