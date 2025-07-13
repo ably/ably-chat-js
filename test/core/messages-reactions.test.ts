@@ -19,6 +19,7 @@ import {
   ChannelStateEventEmitterReturnType,
 } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
+import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
@@ -714,14 +715,14 @@ describe('MessagesReactions', () => {
       context.emulateBackendAnnotation = channelAnnotationEventEmitter(channel);
     });
 
-    it<TestContext>('should dispose and clean up all realtime channel subscriptions', (context) => {
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', async (context) => {
       const { room } = context;
       const channel = room.channel;
       const reactions = room.messages.reactions as unknown as DefaultMessageReactions;
 
       // Mock channel methods
-      const mockUnsubscribe = vi.spyOn(channel, 'unsubscribe').mockImplementation(() => {});
-      const mockAnnotationsUnsubscribe = vi.spyOn(channel.annotations, 'unsubscribe').mockImplementation(() => {});
+      vi.spyOn(channel, 'unsubscribe').mockImplementation(() => {});
+      vi.spyOn(channel.annotations, 'unsubscribe').mockImplementation(() => {});
 
       // Dispose should clean up listeners and not throw
       expect(() => {
@@ -729,8 +730,8 @@ describe('MessagesReactions', () => {
       }).not.toThrow();
 
       // Assert - verify the listeners were unsubscribed
-      expect(mockUnsubscribe).toHaveBeenCalledTimes(1); // Summary listener
-      expect(mockAnnotationsUnsubscribe).toHaveBeenCalledTimes(1); // Raw listener
+      await waitForUnsubscribeTimes(channel, 1); // Summary listener
+      await waitForUnsubscribeTimes(channel.annotations, 1); // Raw listener
 
       // Verify that user-provided listeners were unsubscribed
       expect(reactions.hasListeners()).toBe(false);

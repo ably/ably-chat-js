@@ -7,6 +7,7 @@ import { DefaultOccupancy } from '../../src/core/occupancy.ts';
 import { Room } from '../../src/core/room.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
+import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
@@ -297,13 +298,13 @@ describe('Occupancy', () => {
   });
 
   describe('dispose', () => {
-    it<TestContext>('should dispose and clean up all realtime channel subscriptions', (context) => {
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', async (context) => {
       const { room } = context;
       const channel = room.channel;
       const occupancy = room.occupancy as DefaultOccupancy;
 
       // Mock channel unsubscribe to verify cleanup calls
-      const unsubscribeSpy = vi.spyOn(channel, 'unsubscribe');
+      vi.spyOn(channel, 'unsubscribe');
 
       // Dispose should clean up listeners and subscriptions
       expect(() => {
@@ -311,7 +312,7 @@ describe('Occupancy', () => {
       }).not.toThrow();
 
       // Verify that channel unsubscribe was called
-      expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+      await waitForUnsubscribeTimes(channel, 1);
     });
 
     it<TestContext>('should remove user-level listeners and occupancy event subscriptions', (context) => {

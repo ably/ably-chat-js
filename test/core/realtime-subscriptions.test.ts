@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { on, once, subscribe } from '../../src/core/realtime-subscriptions.ts';
+import { waitForUnsubscribe } from '../helper/realtime-subscriptions.ts';
 
 // Create a mock object that matches the Onable interface
 interface MockEmitter<T> {
@@ -13,8 +14,8 @@ interface MockEmitter<T> {
 
 // Create a mock object that matches the Subscribable interface
 interface MockSubscribable<T> {
-  subscribe(callback: (data: T) => void): void;
-  subscribe(events: string[] | string, callback: (data: T) => void): void;
+  subscribe(callback: (data: T) => void): Promise<void>;
+  subscribe(events: string[] | string, callback: (data: T) => void): Promise<void>;
   unsubscribe(callback: (data: T) => void): void;
 }
 
@@ -505,13 +506,13 @@ describe('realtime-subscriptions', () => {
     beforeEach<SubscribableTestContext>((context) => {
       // Create a mock subscribable that implements the Subscribable interface
       context.mockSubscribable = {
-        subscribe: vi.fn(),
+        subscribe: vi.fn().mockResolvedValue(void 0),
         unsubscribe: vi.fn(),
       };
       context.mockCallback = vi.fn();
     });
 
-    it<SubscribableTestContext>('should call subscribe method on the subscribable with the provided callback', (context) => {
+    it<SubscribableTestContext>('should call subscribe method on the subscribable with the provided callback', async (context) => {
       const { mockSubscribable, mockCallback } = context;
 
       // Call the subscribe function
@@ -524,10 +525,10 @@ describe('realtime-subscriptions', () => {
       cleanup();
 
       // Verify that the subscribable's unsubscribe method was called with the callback
-      expect(mockSubscribable.unsubscribe).toHaveBeenCalledWith(mockCallback);
+      await waitForUnsubscribe(mockSubscribable, mockCallback);
     });
 
-    it<SubscribableTestContext>('should call subscribe method with single event string and callback', (context) => {
+    it<SubscribableTestContext>('should call subscribe method with single event string and callback', async (context) => {
       const { mockSubscribable, mockCallback } = context;
       const eventName = 'test-event';
 
@@ -541,10 +542,10 @@ describe('realtime-subscriptions', () => {
       cleanup();
 
       // Verify that the subscribable's unsubscribe method was called with the callback
-      expect(mockSubscribable.unsubscribe).toHaveBeenCalledWith(mockCallback);
+      await waitForUnsubscribe(mockSubscribable, mockCallback);
     });
 
-    it<SubscribableTestContext>('should call subscribe method with multiple events array and callback', (context) => {
+    it<SubscribableTestContext>('should call subscribe method with multiple events array and callback', async (context) => {
       const { mockSubscribable, mockCallback } = context;
       const events = ['event1', 'event2', 'event3'];
 
@@ -558,10 +559,10 @@ describe('realtime-subscriptions', () => {
       cleanup();
 
       // Verify that the subscribable's unsubscribe method was called with the callback
-      expect(mockSubscribable.unsubscribe).toHaveBeenCalledWith(mockCallback);
+      await waitForUnsubscribe(mockSubscribable, mockCallback);
     });
 
-    it<SubscribableTestContext>('should work with typed callbacks', (context) => {
+    it<SubscribableTestContext>('should work with typed callbacks', async (context) => {
       const { mockSubscribable } = context;
 
       // Create a typed callback
@@ -579,10 +580,10 @@ describe('realtime-subscriptions', () => {
       cleanup();
 
       // Verify that the subscribable's unsubscribe method was called with the typed callback
-      expect(mockSubscribable.unsubscribe).toHaveBeenCalledWith(typedCallback);
+      await waitForUnsubscribe(mockSubscribable, typedCallback);
     });
 
-    it<SubscribableTestContext>('should handle multiple subscriptions independently', (context) => {
+    it<SubscribableTestContext>('should handle multiple subscriptions independently', async (context) => {
       const { mockSubscribable } = context;
 
       // Create multiple callbacks
@@ -602,7 +603,7 @@ describe('realtime-subscriptions', () => {
       cleanup1();
 
       // Verify only the first callback was unsubscribed
-      expect(mockSubscribable.unsubscribe).toHaveBeenCalledWith(callback1);
+      await waitForUnsubscribe(mockSubscribable, callback1);
       expect(mockSubscribable.unsubscribe).not.toHaveBeenCalledWith(callback2);
       expect(mockSubscribable.unsubscribe).toHaveBeenCalledTimes(1);
 
@@ -610,7 +611,7 @@ describe('realtime-subscriptions', () => {
       cleanup2();
 
       // Verify the second callback was unsubscribed
-      expect(mockSubscribable.unsubscribe).toHaveBeenCalledWith(callback2);
+      await waitForUnsubscribe(mockSubscribable, callback2);
       expect(mockSubscribable.unsubscribe).toHaveBeenCalledTimes(2);
     });
 
@@ -632,7 +633,7 @@ describe('realtime-subscriptions', () => {
       }).toThrow(TypeError);
     });
 
-    it<SubscribableTestContext>('should handle multiple subscriptions with different event patterns', (context) => {
+    it<SubscribableTestContext>('should handle multiple subscriptions with different event patterns', async (context) => {
       const { mockSubscribable } = context;
 
       // Create callbacks for different subscription patterns
@@ -657,9 +658,9 @@ describe('realtime-subscriptions', () => {
       cleanup3();
 
       // Verify all callbacks were unsubscribed
-      expect(mockSubscribable.unsubscribe).toHaveBeenCalledWith(allEventsCallback);
-      expect(mockSubscribable.unsubscribe).toHaveBeenCalledWith(singleEventCallback);
-      expect(mockSubscribable.unsubscribe).toHaveBeenCalledWith(multiEventCallback);
+      await waitForUnsubscribe(mockSubscribable, allEventsCallback);
+      await waitForUnsubscribe(mockSubscribable, singleEventCallback);
+      await waitForUnsubscribe(mockSubscribable, multiEventCallback);
       expect(mockSubscribable.unsubscribe).toHaveBeenCalledTimes(3);
     });
   });

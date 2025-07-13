@@ -220,4 +220,114 @@ describe('Chat', () => {
       { timeout: 9000, interval: 250 },
     );
   });
+
+  it('should garbage collect chat client after disposal without attaching', { timeout: 10000 }, async () => {
+    // Check GC is available and fail the test if it's not
+    expect(globalThis.gc).toBeDefined();
+
+    // Create a chat client
+    let chat: ChatClient | undefined = newChatClient();
+
+    // Create a room and attach it (as requested)
+    let room: Room | undefined = await getRandomRoom(chat);
+
+    // Add mock listeners to the chat clients connection
+    const connectionListener = vi.fn();
+    chat.connection.onStatusChange(connectionListener);
+
+    // Add mock listeners to the room to ensure it's properly used
+    const messagesListener = vi.fn();
+    room.messages.subscribe(messagesListener);
+
+    // Create weak references to the chat client and its key components
+    const chatRef = new WeakRef(chat);
+    const connectionRef = new WeakRef(chat.connection);
+    const roomsRef = new WeakRef(chat.rooms);
+    const roomRef = new WeakRef(room);
+    const messagesRef = new WeakRef(room.messages);
+
+    // Verify all references are initially alive
+    expect(chatRef.deref()).toBeDefined();
+    expect(connectionRef.deref()).toBeDefined();
+    expect(roomsRef.deref()).toBeDefined();
+    expect(roomRef.deref()).toBeDefined();
+
+    // Release the room first (required before disposing the chat client)
+    await chat.rooms.release(room.name);
+
+    // Set room to undefined to remove our strong reference
+    room = undefined;
+
+    // Dispose of the chat client
+    chat.dispose();
+
+    // Set chat to undefined to remove our strong reference
+    chat = undefined;
+
+    // Wait for the chat client and its components to be garbage collected
+    await vi.waitFor(
+      async () => {
+        globalThis.gc?.();
+
+        // Wait 100ms
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Force GC again, to ensure reclamation
+        globalThis.gc?.();
+
+        expect(chatRef.deref()).toBeUndefined();
+        expect(connectionRef.deref()).toBeUndefined();
+        expect(messagesRef.deref()).toBeUndefined();
+        expect(roomsRef.deref()).toBeUndefined();
+        expect(roomRef.deref()).toBeUndefined();
+      },
+      { timeout: 9000, interval: 250 },
+    );
+  });
+
+  it('should garbage collect chat client after disposal without creating a room', { timeout: 10000 }, async () => {
+    // Check GC is available and fail the test if it's not
+    expect(globalThis.gc).toBeDefined();
+
+    // Create a chat client
+    let chat: ChatClient | undefined = newChatClient();
+
+    // Add mock listeners to the chat clients connection
+    const connectionListener = vi.fn();
+    chat.connection.onStatusChange(connectionListener);
+
+    // Create weak references to the chat client and its key components
+    const chatRef = new WeakRef(chat);
+    const connectionRef = new WeakRef(chat.connection);
+    const roomsRef = new WeakRef(chat.rooms);
+
+    // Verify all references are initially alive
+    expect(chatRef.deref()).toBeDefined();
+    expect(connectionRef.deref()).toBeDefined();
+    expect(roomsRef.deref()).toBeDefined();
+
+    // Dispose of the chat client
+    chat.dispose();
+
+    // Set chat to undefined to remove our strong reference
+    chat = undefined;
+
+    // Wait for the chat client and its components to be garbage collected
+    await vi.waitFor(
+      async () => {
+        globalThis.gc?.();
+
+        // Wait 100ms
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Force GC again, to ensure reclamation (and avoid the deref causing any strong references)
+        globalThis.gc?.();
+
+        expect(chatRef.deref()).toBeUndefined();
+        expect(connectionRef.deref()).toBeUndefined();
+        expect(roomsRef.deref()).toBeUndefined();
+      },
+      { timeout: 9000, interval: 250 },
+    );
+  });
 });

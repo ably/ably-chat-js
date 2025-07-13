@@ -14,6 +14,7 @@ import {
   ChannelStateEventEmitterReturnType,
 } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
+import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
@@ -1106,20 +1107,20 @@ describe('Messages', () => {
   });
 
   describe('dispose', () => {
-    it<TestContext>('should dispose and clean up all realtime channel subscriptions', (context) => {
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', async (context) => {
       const { room } = context;
       const channel = room.channel;
       const messages = room.messages as unknown as DefaultMessages;
 
       // Mock channel methods
-      const mockUnsubscribe = vi.spyOn(channel, 'unsubscribe').mockImplementation(() => {});
+      vi.spyOn(channel, 'unsubscribe').mockImplementation(() => {});
       const mockChannelOff = vi.spyOn(channel, 'off').mockImplementation(() => {});
 
       // Act - dispose messages
       messages.dispose();
 
       // Assert - verify the listeners were unsubscribed
-      expect(mockUnsubscribe).toHaveBeenCalledTimes(2); // Messages events, plus one from reactions
+      await waitForUnsubscribeTimes(channel, 2); // Messages events, plus one from reactions
       expect(mockChannelOff).toHaveBeenCalledTimes(2); // Attached and update listeners
     });
 

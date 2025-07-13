@@ -482,6 +482,7 @@ export class DefaultMessages implements Messages {
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
           this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
+          cleanup();
           reject(
             new Ably.ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error,
           );

@@ -102,7 +102,6 @@ describe('Room', () => {
         enableEvents: true,
       },
     });
-    await room.attach();
 
     // Add mock listeners for all the room features and events
     const listener1 = vi.fn();
@@ -136,6 +135,9 @@ describe('Room', () => {
     expect(reactionsRef.deref()).toBeDefined();
     expect(occupancyRef.deref()).toBeDefined();
 
+    // Attach the room
+    await room.attach();
+
     // Release the room
     await chat.rooms.release(room.name);
 
@@ -157,4 +159,79 @@ describe('Room', () => {
       { timeout: 9000, interval: 250 },
     );
   });
+
+  it<TestContext>(
+    'should garbage collect room and features after release without attaching',
+    { timeout: 10000 },
+    async ({ chat }) => {
+      // Check GC is available and fail the test if it's not
+      expect(globalThis.gc).toBeDefined();
+
+      // Create a room and attach it
+      let room: Room | undefined = await getRandomRoom(chat, {
+        occupancy: {
+          enableEvents: true,
+        },
+      });
+
+      // Add mock listeners for all the room features and events
+      const listener1 = vi.fn();
+      const listener2 = vi.fn();
+      const listener3 = vi.fn();
+      const listener4 = vi.fn();
+      const listener5 = vi.fn();
+      const listener6 = vi.fn();
+      const listener7 = vi.fn();
+      room.messages.subscribe(listener1);
+      room.presence.subscribe(listener2);
+      room.typing.subscribe(listener3);
+      room.reactions.subscribe(listener4);
+      room.occupancy.subscribe(listener5);
+      room.onStatusChange(listener6);
+      room.onDiscontinuity(listener7);
+
+      // Create weak references to the room and all its features
+      const roomRef = new WeakRef(room);
+      const messagesRef = new WeakRef(room.messages);
+      const presenceRef = new WeakRef(room.presence);
+      const typingRef = new WeakRef(room.typing);
+      const reactionsRef = new WeakRef(room.reactions);
+      const occupancyRef = new WeakRef(room.occupancy);
+
+      // Verify all references are initially alive
+      expect(roomRef.deref()).toBeDefined();
+      expect(messagesRef.deref()).toBeDefined();
+      expect(presenceRef.deref()).toBeDefined();
+      expect(typingRef.deref()).toBeDefined();
+      expect(reactionsRef.deref()).toBeDefined();
+      expect(occupancyRef.deref()).toBeDefined();
+
+      // Release the room - we will not attach to it.
+      await chat.rooms.release(room.name);
+
+      // Set room to undefined to remove our strong reference
+      room = undefined;
+
+      // Wait for the room and features to be garbage collected
+      await vi.waitFor(
+        async () => {
+          globalThis.gc?.();
+
+          // Wait 100ms
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
+          // Force GC again, to ensure reclamation and prevent the deref from causing any strong references
+          globalThis.gc?.();
+
+          expect(occupancyRef.deref()).toBeUndefined();
+          expect(reactionsRef.deref()).toBeUndefined();
+          expect(messagesRef.deref()).toBeUndefined();
+          expect(typingRef.deref()).toBeUndefined();
+          expect(presenceRef.deref()).toBeUndefined();
+          expect(roomRef.deref()).toBeUndefined();
+        },
+        { timeout: 9000, interval: 250 },
+      );
+    },
+  );
 });

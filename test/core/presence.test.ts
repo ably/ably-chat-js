@@ -15,6 +15,7 @@ import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { Subscription } from '../../src/core/subscription.ts';
 import { makeTestLogger } from '../helper/logger.ts';
+import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
@@ -445,19 +446,19 @@ describe('Presence', () => {
   });
 
   describe('DefaultPresence.dispose', () => {
-    it<TestContext>('should dispose and clean up all realtime channel subscriptions', (context) => {
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', async (context) => {
       const { room } = context;
       const channel = room.channel;
       const presence = room.presence as DefaultPresence;
 
       // Mock channel methods
-      const mockPresenceUnsubscribe = vi.spyOn(channel.presence, 'unsubscribe').mockImplementation(() => {});
+      vi.spyOn(channel.presence, 'unsubscribe').mockImplementation(() => {});
 
       // Act - dispose presence
       presence.dispose();
 
       // Assert - verify the listeners were unsubscribed
-      expect(mockPresenceUnsubscribe).toHaveBeenCalledTimes(1);
+      await waitForUnsubscribeTimes(channel.presence, 1);
     });
 
     it<TestContext>('should remove user-level listeners and presence event subscriptions', (context) => {
