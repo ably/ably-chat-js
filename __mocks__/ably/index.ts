@@ -58,8 +58,11 @@ function createMockChannel(name: string) {
     annotations: createMockAnnotations(),
     subscribe: async (...args: any[]) => {
       mock.subscriptions.on(...args);
+      return Promise.resolve();
     },
-    unsubscribe: methodReturningVoidPromise,
+    unsubscribe: async (...args: any[]) => {
+      mock.subscriptions.off(...args);
+    },
     on: (...args: any[]) => {
       mock.attachmentStateEmitter.on(...args);
     },

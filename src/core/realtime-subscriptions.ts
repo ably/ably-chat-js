@@ -40,14 +40,14 @@ export interface Subscribable<T> {
    * Subscribe to events with a callback.
    * @param callback The callback function to be called when events occur.
    */
-  subscribe(callback: (data: T) => void): void;
+  subscribe(callback: (data: T) => void): Promise<unknown>;
 
   /**
    * Subscribe to specific events, with a callback.
    * @param events The events to subscribe to.
    * @param callback The callback function to be called when events occur.
    */
-  subscribe(events: string[] | string, callback: (data: T) => void): void;
+  subscribe(events: string[] | string, callback: (data: T) => void): Promise<unknown>;
 
   /**
    * Unsubscribe from events with a callback.
@@ -132,14 +132,26 @@ export function subscribe<T>(
   arg3?: (data: T) => void,
 ): () => void {
   if ((Array.isArray(arg2) || typeof arg2 === 'string') && arg3) {
-    emitter.subscribe(arg2, arg3);
+    const subscribePromise = emitter.subscribe(arg2, arg3);
     return () => {
-      emitter.unsubscribe(arg3);
+      subscribePromise
+        .then(() => {
+          emitter.unsubscribe(arg3);
+        })
+        .catch((error: unknown) => {
+          console.error('Error subscribing to events:', error);
+        });
     };
   } else if (typeof arg2 === 'function') {
-    emitter.subscribe(arg2);
+    const subscribePromise = emitter.subscribe(arg2);
     return () => {
-      emitter.unsubscribe(arg2);
+      subscribePromise
+        .then(() => {
+          emitter.unsubscribe(arg2);
+        })
+        .catch((error: unknown) => {
+          console.error('Error subscribing to events:', error);
+        });
     };
   } else {
     throw new TypeError('Invalid arguments passed to subscribe()');
