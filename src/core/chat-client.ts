@@ -143,7 +143,7 @@ export class ChatClient {
     this._logger.trace('ChatClient.dispose();');
 
     // Check if there are any rooms in the rooms map
-    if (this._rooms.hasRooms()) {
+    if (this._rooms.count > 0) {
       const error = new Ably.ErrorInfo(
         'cannot dispose client; rooms still exist, please release all rooms before disposing',
         40000,
