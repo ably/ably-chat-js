@@ -27,14 +27,14 @@ interface TestContext {
 const TEST_HEARTBEAT_THROTTLE_MS = 200;
 
 const startMessage: Ably.Message = {
-  name: TypingEventType.Start,
+  name: TypingEventType.Started,
   extras: {
     ephemeral: true,
   },
 };
 
 const stopMessage: Ably.Message = {
-  name: TypingEventType.Stop,
+  name: TypingEventType.Stopped,
   extras: {
     ephemeral: true,
   },
@@ -82,7 +82,7 @@ describe('Typing', () => {
 
     // Emulate a typing event
     context.emulateBackendPublish({
-      name: TypingEventType.Start,
+      name: TypingEventType.Started,
       clientId: 'some',
     });
 
@@ -413,7 +413,7 @@ describe('Typing', () => {
 
       // Emulate a typing event
       context.emulateBackendPublish({
-        name: TypingEventType.Start,
+        name: TypingEventType.Started,
         clientId: 'otherClient',
       });
 
@@ -425,7 +425,7 @@ describe('Typing', () => {
         type: TypingSetEventType.SetChanged,
         change: {
           clientId: 'otherClient',
-          type: TypingEventType.Start,
+          type: TypingEventType.Started,
         },
         currentlyTyping: new Set(['otherClient']),
       });
@@ -435,7 +435,7 @@ describe('Typing', () => {
 
       // Emulate another typing event for anotherClient
       context.emulateBackendPublish({
-        name: TypingEventType.Start,
+        name: TypingEventType.Started,
         clientId: 'anotherClient',
       });
 
@@ -458,7 +458,7 @@ describe('Typing', () => {
       [
         'no client id',
         {
-          name: TypingEventType.Start,
+          name: TypingEventType.Started,
           connectionId: '',
           id: '',
           encoding: '',
@@ -470,7 +470,7 @@ describe('Typing', () => {
       [
         'empty client id',
         {
-          name: TypingEventType.Start,
+          name: TypingEventType.Started,
           clientId: '',
           connectionId: '',
           id: '',
@@ -525,7 +525,7 @@ describe('Typing', () => {
 
       // Emulate a typing event
       context.emulateBackendPublish({
-        name: TypingEventType.Start,
+        name: TypingEventType.Started,
         clientId: 'otherClient',
       });
 
@@ -536,7 +536,7 @@ describe('Typing', () => {
         type: TypingSetEventType.SetChanged,
         change: {
           clientId: 'otherClient',
-          type: TypingEventType.Start,
+          type: TypingEventType.Started,
         },
         currentlyTyping: new Set(['otherClient']),
       });
@@ -562,7 +562,7 @@ describe('Typing', () => {
 
       // Emulate a typing event
       context.emulateBackendPublish({
-        name: TypingEventType.Start,
+        name: TypingEventType.Started,
         clientId: 'otherClient',
       });
 
@@ -573,7 +573,7 @@ describe('Typing', () => {
         type: TypingSetEventType.SetChanged,
         change: {
           clientId: 'otherClient',
-          type: TypingEventType.Start,
+          type: TypingEventType.Started,
         },
         currentlyTyping: new Set(['otherClient']),
       });
@@ -585,7 +585,7 @@ describe('Typing', () => {
 
       // Now send another typing event
       context.emulateBackendPublish({
-        name: TypingEventType.Start,
+        name: TypingEventType.Started,
         clientId: 'otherClient',
       });
 
@@ -612,7 +612,7 @@ describe('Typing', () => {
 
       // Emulate a typing event
       context.emulateBackendPublish({
-        name: TypingEventType.Start,
+        name: TypingEventType.Started,
         clientId: 'otherClient',
       });
 
@@ -623,7 +623,7 @@ describe('Typing', () => {
         type: TypingSetEventType.SetChanged,
         change: {
           clientId: 'otherClient',
-          type: TypingEventType.Start,
+          type: TypingEventType.Started,
         },
         currentlyTyping: new Set(['otherClient']),
       });
@@ -643,7 +643,7 @@ describe('Typing', () => {
         type: TypingSetEventType.SetChanged,
         change: {
           clientId: 'otherClient',
-          type: TypingEventType.Stop,
+          type: TypingEventType.Stopped,
         },
         currentlyTyping: new Set(),
       });
@@ -661,7 +661,7 @@ describe('Typing', () => {
 
       // Emulate a typing event
       context.emulateBackendPublish({
-        name: TypingEventType.Start,
+        name: TypingEventType.Started,
         clientId: 'otherClient',
       });
 
@@ -672,7 +672,7 @@ describe('Typing', () => {
         type: TypingSetEventType.SetChanged,
         change: {
           clientId: 'otherClient',
-          type: TypingEventType.Start,
+          type: TypingEventType.Started,
         },
         currentlyTyping: new Set(['otherClient']),
       });
@@ -684,7 +684,7 @@ describe('Typing', () => {
 
       // Emulate a typing stop event
       context.emulateBackendPublish({
-        name: TypingEventType.Stop,
+        name: TypingEventType.Stopped,
         clientId: 'otherClient',
       });
 
@@ -695,7 +695,7 @@ describe('Typing', () => {
         type: TypingSetEventType.SetChanged,
         change: {
           clientId: 'otherClient',
-          type: TypingEventType.Stop,
+          type: TypingEventType.Stopped,
         },
         currentlyTyping: new Set(),
       });
@@ -716,7 +716,7 @@ describe('Typing', () => {
 
       // Emulate a typing stop event
       context.emulateBackendPublish({
-        name: TypingEventType.Stop,
+        name: TypingEventType.Stopped,
         clientId: 'otherClient',
       });
 
@@ -744,15 +744,15 @@ describe('Typing', () => {
       const subscription2 = room.typing.subscribe(listener);
 
       // Both subscriptions should trigger the listener
-      emulateTypingEvent('user1', TypingEventType.Start);
+      emulateTypingEvent('user1', TypingEventType.Started);
       await waitForArrayLength(received, 2);
 
       // Unsubscribe first subscription
       subscription1.unsubscribe();
 
       // One subscription should still trigger the listener
-      emulateTypingEvent('user2', TypingEventType.Start);
-      emulateTypingEvent('user2', TypingEventType.Start);
+      emulateTypingEvent('user2', TypingEventType.Started);
+      emulateTypingEvent('user2', TypingEventType.Started);
       await waitForArrayLength(received, 3);
 
       // Unsubscribe second subscription
@@ -775,7 +775,7 @@ describe('Typing', () => {
 
       // Add a typing user to the state
       context.emulateBackendPublish({
-        name: TypingEventType.Start,
+        name: TypingEventType.Started,
         clientId: 'user1',
       });
       expect(defaultTyping._currentlyTyping.get('user1')).toBeDefined();
