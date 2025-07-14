@@ -50,6 +50,12 @@ export interface Rooms {
    * @returns ChatClientOptions
    */
   get clientOptions(): ChatClientOptions;
+
+  /**
+   * Get the number of rooms currently in the rooms map.
+   * @returns The number of rooms currently in the rooms map.
+   */
+  get count(): number;
 }
 
 /**
@@ -269,11 +275,9 @@ export class DefaultRooms implements Rooms {
   }
 
   /**
-   * Checks if there are any rooms currently in the rooms map.
-   * @internal
-   * @returns true if there are rooms in the map, false otherwise.
+   * @inheritDoc
    */
-  hasRooms(): boolean {
-    return this._rooms.size > 0;
+  get count(): number {
+    return this._rooms.size;
   }
 }
