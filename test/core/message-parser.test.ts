@@ -70,6 +70,13 @@ describe('parseMessage', () => {
       expectedDefaults: { metadata: {} },
     },
     {
+      description: 'message.data.metadata is not an object',
+      message: {
+        data: { text: 'hello', metadata: 'not an object' },
+      },
+      expectedDefaults: { metadata: {} },
+    },
+    {
       description: 'message.extras is undefined',
       message: {
         data: { text: 'hello', metadata: {} },

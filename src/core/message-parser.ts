@@ -39,7 +39,7 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
   const text = data.text || '';
   const serial = message.serial || '';
   const version = message.version || '';
-  const metadata = data.metadata || {};
+  const metadata = data.metadata && typeof data.metadata === 'object' ? data.metadata : {};
   const headers = extras.headers || {};
 
   // Use current time as default for missing timestamps
