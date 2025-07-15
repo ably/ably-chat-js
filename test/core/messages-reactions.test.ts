@@ -582,55 +582,11 @@ describe('MessagesReactions', () => {
 
     describe.each([
       [
-        'unknown annotation type',
-        {
-          serial: '01672531200003-123@abcdefghij',
-          messageSerial: '01672531200000-123@xyzdefghij',
-          type: 'reaction:unknown.v1',
-          name: '🚀',
-          clientId: 'u1',
-          action: 'annotation.create',
-          timestamp: new Date(1),
-        },
-        {
-          type: MessageReactionEventType.Create as MessageReactionEventType.Create | MessageReactionEventType.Delete,
-          timestamp: new Date(1),
-          reaction: {
-            messageSerial: '01672531200000-123@xyzdefghij',
-            name: '🚀',
-            clientId: 'u1',
-            type: MessageReactionType.Distinct,
-          },
-        },
-      ],
-      [
-        'unknown action',
-        {
-          serial: '01672531200003-123@abcdefghij',
-          messageSerial: '01672531200000-123@xyzdefghij',
-          type: MessageReactionType.Distinct,
-          name: '🚀',
-          clientId: 'u1',
-          action: 'annotation.bla',
-          timestamp: new Date(1),
-        },
-        {
-          type: MessageReactionEventType.Create as MessageReactionEventType.Create | MessageReactionEventType.Delete,
-          timestamp: new Date(1),
-          reaction: {
-            messageSerial: '01672531200000-123@xyzdefghij',
-            name: '🚀',
-            clientId: 'u1',
-            type: MessageReactionType.Distinct,
-          },
-        },
-      ],
-      [
         'no name',
         {
           serial: '01672531200003-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
-          type: MessageReactionType.Distinct,
+          type: ReactionAnnotationType.Distinct,
           clientId: 'u1',
           action: 'annotation.create',
           timestamp: new Date(1),
@@ -651,7 +607,7 @@ describe('MessagesReactions', () => {
         {
           serial: '01672531200003-123@abcdefghij',
           messageSerial: '',
-          type: MessageReactionType.Distinct,
+          type: ReactionAnnotationType.Distinct,
           name: '🚀',
           clientId: 'u1',
           action: 'annotation.create',
@@ -686,6 +642,44 @@ describe('MessagesReactions', () => {
         });
       },
     );
+
+    it<TestContext>('should ignore unknown reaction types', (context) => {
+      const room = context.room;
+      let receivedEvent: MessageReactionRawEvent | undefined;
+      room.messages.reactions.subscribeRaw((event) => {
+        receivedEvent = event;
+      });
+
+      context.emulateBackendAnnotation({
+        serial: '01672531200003-123@abcdefghij',
+        messageSerial: '01672531200000-123@xyzdefghij',
+        type: 'not a real reaction type',
+        name: '🚀',
+        clientId: 'u1',
+        action: 'annotation.create',
+      });
+
+      expect(receivedEvent).toBeUndefined();
+    });
+
+    it<TestContext>('should ignore unknown reaction events', (context) => {
+      const room = context.room;
+      let receivedEvent: MessageReactionRawEvent | undefined;
+      room.messages.reactions.subscribeRaw((event) => {
+        receivedEvent = event;
+      });
+
+      context.emulateBackendAnnotation({
+        serial: '01672531200003-123@abcdefghij',
+        messageSerial: '01672531200000-123@xyzdefghij',
+        type: ReactionAnnotationType.Distinct,
+        name: '🚀',
+        clientId: 'u1',
+        action: 'not a real action' as unknown as Ably.AnnotationAction,
+      });
+
+      expect(receivedEvent).toBeUndefined();
+    });
 
     it<TestContext>('should throw error when subscribing to raw reactions if not enabled', (context) => {
       const room = makeRandomRoom({

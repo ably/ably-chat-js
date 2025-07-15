@@ -149,12 +149,21 @@ export class DefaultMessageReactions implements MessagesReactions {
   private _processAnnotationEvent(event: Ably.Annotation) {
     this._logger.trace('MessagesReactions._processAnnotationEvent();', { event });
 
-    // Assume the type is distinct if it's not a valid reaction type
-    const reactionType = AnnotationTypeToReactionType[event.type] ?? MessageReactionType.Distinct;
+    // If we don't know the reaction type, ignore it
+    const reactionType = AnnotationTypeToReactionType[event.type];
+    if (!reactionType) {
+      this._logger.info('MessagesReactions._processAnnotationEvent(); ignoring unknown reaction type', { event });
+      return;
+    }
 
-    const eventType = eventTypeMap[event.action] ?? MessageReactionEventType.Create;
+    // If we don't know the event type, ignore it
+    const eventType = eventTypeMap[event.action];
+    if (!eventType) {
+      this._logger.info('MessagesReactions._processAnnotationEvent(); ignoring unknown reaction event type', { event });
+      return;
+    }
+
     const name = event.name ?? '';
-
     const reactionEvent: MessageReactionRawEvent = {
       type: eventType,
       timestamp: new Date(event.timestamp),
@@ -182,6 +191,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (event.action !== ChatMessageAction.MessageAnnotationSummary) {
       return;
     }
+
     if (!event.summary) {
       // This means the summary is now empty, which is valid.
       // Happens when there are no reactions such as after deleting the last reaction.

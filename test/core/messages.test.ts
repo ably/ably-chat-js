@@ -676,6 +676,29 @@ describe('Messages', () => {
       expect(receivedMessage?.metadata).toEqual({});
       expect(receivedMessage?.headers).toEqual({});
     });
+
+    it<TestContext>('should ignore unknown message actions', (context) => {
+      const room = context.room;
+      let receivedMessageCount = 0;
+
+      room.messages.subscribe(() => {
+        receivedMessageCount++;
+      });
+
+      const inboundMessage = {
+        name: 'chat.message',
+        data: {
+          text: 'may the fourth be with you',
+        },
+        action: 'this is not the action you are looking for',
+        timestamp: Date.now(),
+        createdAt: Date.now(),
+      };
+
+      context.emulateBackendPublish(inboundMessage as Ably.InboundMessage);
+
+      expect(receivedMessageCount).toBe(0);
+    });
   });
 
   describe('historyBeforeSubscribe', () => {
