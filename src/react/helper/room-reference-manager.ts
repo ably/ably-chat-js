@@ -15,11 +15,12 @@ interface RoomRefCountEntry {
   roomName: string;
   options?: RoomOptions;
   resolvedRoom?: Room;
+  resolutionError?: Ably.ErrorInfo;
   pendingRelease?: ReturnType<typeof setTimeout>;
 }
 
 /**
- * Normalises an array item by sorting the keys of the object and recursively sorting the items in the array.
+ * Normalizes an array item by sorting the keys of the object and recursively sorting the items in the array.
  */
 const normalizeArrayItem = (item: unknown): unknown => {
   if (item === null || typeof item !== 'object') {
@@ -133,7 +134,18 @@ export class RoomReferenceManager {
       // If the room hasn't resolved yet, wait for it
       // This shouldn't happen in normal circumstances since we await the room
       // creation below, but it's a safety net
-      throw new Error('Room reference exists but room is not resolved - this should not happen');
+      // We'll run a promise that checks every 100ms to see if the room has resolved
+      return new Promise((resolve, reject) => {
+        const interval = setInterval(() => {
+          if (existing.resolvedRoom) {
+            clearInterval(interval);
+            resolve(existing.resolvedRoom);
+          } else if (existing.resolutionError) {
+            clearInterval(interval);
+            reject(existing.resolutionError);
+          }
+        }, 100);
+      });
     }
 
     // Check if there's a pending release for this room name (regardless of options)
@@ -252,8 +264,9 @@ export class RoomReferenceManager {
       });
 
       return room;
-    } catch (error) {
-      // If room creation failed, clean up the entry
+    } catch (error: unknown) {
+      // If room creation failed, clean up the entry, but also set the resolution error
+      entry.resolutionError = error as Ably.ErrorInfo;
       this._refCounts.delete(key);
       this._logger.error('RoomReferenceManager.addReference(); error creating room', {
         roomName,

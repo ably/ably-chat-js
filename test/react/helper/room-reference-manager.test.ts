@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Logger } from '../../../src/core/logger.js';
+import { Room } from '../../../src/core/room.js';
 import { RoomReferenceManager } from '../../../src/react/helper/room-reference-manager.js';
 import { newChatClient } from '../../helper/chat.js';
 import { randomRoomName } from '../../helper/identifier.js';
@@ -11,7 +11,7 @@ vi.mock('ably');
 describe('RoomReferenceManager', () => {
   it('should create a manager with the correct client', () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
 
     expect(manager.client).toBe(client);
@@ -19,7 +19,7 @@ describe('RoomReferenceManager', () => {
 
   it('should return 0 reference count for non-existent room', () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -28,7 +28,7 @@ describe('RoomReferenceManager', () => {
 
   it('should add first reference and attach room', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -45,7 +45,7 @@ describe('RoomReferenceManager', () => {
 
   it('should increment reference count for existing room', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -66,7 +66,7 @@ describe('RoomReferenceManager', () => {
 
   it('should handle different options as different rooms', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName1 = randomRoomName();
     const roomName2 = randomRoomName();
@@ -91,7 +91,7 @@ describe('RoomReferenceManager', () => {
 
   it('should handle same room name with different options by releasing old room', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -127,7 +127,7 @@ describe('RoomReferenceManager', () => {
 
   it('should handle adding reference with no options after room with options', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -162,7 +162,7 @@ describe('RoomReferenceManager', () => {
 
   it('should handle options change with multiple references', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -199,7 +199,7 @@ describe('RoomReferenceManager', () => {
 
   it('should generate same key for options with same values but different property order', () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -232,7 +232,7 @@ describe('RoomReferenceManager', () => {
 
   it('should generate same key for options with same values but different property order including arrays', () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -268,7 +268,7 @@ describe('RoomReferenceManager', () => {
 
   it('should treat same room name with different options as separate references', () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -283,7 +283,7 @@ describe('RoomReferenceManager', () => {
 
   it('should remove reference and not release when count > 0', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -305,7 +305,7 @@ describe('RoomReferenceManager', () => {
 
   it('should schedule delayed release when count reaches 0', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -331,7 +331,7 @@ describe('RoomReferenceManager', () => {
 
   it('should abort pending release when reference is added again', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -361,7 +361,7 @@ describe('RoomReferenceManager', () => {
 
   it('should handle removeReference with no existing reference', () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -375,7 +375,7 @@ describe('RoomReferenceManager', () => {
 
   it('should handle room attach failure gracefully', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -392,7 +392,7 @@ describe('RoomReferenceManager', () => {
 
   it('should handle room release failure gracefully', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -417,7 +417,7 @@ describe('RoomReferenceManager', () => {
 
   it('should wait for pending release to complete before adding new reference', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -482,7 +482,7 @@ describe('RoomReferenceManager', () => {
 
   it('should allow different options when room is scheduled for release', async () => {
     const client = newChatClient();
-    const logger = (client as unknown as { logger: Logger }).logger;
+    const logger = client.logger;
     const manager = new RoomReferenceManager(client, logger);
     const roomName = randomRoomName();
 
@@ -519,5 +519,116 @@ describe('RoomReferenceManager', () => {
     expect(manager.getReferenceCount(roomName, options2)).toBe(1);
     // Old room should have reference count of 0
     expect(manager.getReferenceCount(roomName, options1)).toBe(0);
+  });
+
+  it('should handle concurrent addReference calls when room creation is delayed - success case', async () => {
+    const client = newChatClient();
+    const logger = client.logger;
+    const manager = new RoomReferenceManager(client, logger);
+    const roomName = randomRoomName();
+
+    // Create a controlled promise to simulate delayed room creation
+    let resolveRoomCreation: ((room: Room) => void) | undefined;
+    const delayedRoomPromise = new Promise<Room>((resolve) => {
+      resolveRoomCreation = resolve;
+    });
+
+    // Mock client.rooms.get to return a delayed promise
+    const mockRoom = await client.rooms.get(roomName);
+    vi.spyOn(mockRoom, 'attach').mockResolvedValue();
+    vi.spyOn(client.rooms, 'get').mockReturnValue(delayedRoomPromise);
+
+    // Start the first addReference call (won't resolve immediately)
+    const firstAddPromise = manager.addReference(roomName);
+
+    // Start the second addReference call immediately (should wait for first to resolve)
+    const secondAddPromise = manager.addReference(roomName);
+
+    // Both promises should not have resolved yet
+    let firstResolved = false;
+    let secondResolved = false;
+    void firstAddPromise.then(() => {
+      firstResolved = true;
+    });
+    void secondAddPromise.then(() => {
+      secondResolved = true;
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(firstResolved).toBe(false);
+    expect(secondResolved).toBe(false);
+
+    // Now resolve the room creation
+    if (resolveRoomCreation) {
+      resolveRoomCreation(mockRoom);
+    }
+
+    // Both calls should now resolve with the same room
+    const [room1, room2] = await Promise.all([firstAddPromise, secondAddPromise]);
+    expect(room1).toBe(mockRoom);
+    expect(room2).toBe(mockRoom);
+    expect(room1).toBe(room2);
+
+    // Reference count should be 2 (both calls incremented it)
+    expect(manager.getReferenceCount(roomName)).toBe(2);
+
+    // Room should have been attached only once
+    expect(mockRoom.attach).toHaveBeenCalledTimes(1);
+
+    // client.rooms.get should have been called only once
+    expect(client.rooms.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('should handle concurrent addReference calls when room creation is delayed - error case', async () => {
+    const client = newChatClient();
+    const logger = client.logger;
+    const manager = new RoomReferenceManager(client, logger);
+    const roomName = randomRoomName();
+
+    // Create a controlled promise to simulate delayed room creation failure
+    let rejectRoomCreation: ((error: Ably.ErrorInfo) => void) | undefined;
+    const delayedRoomPromise = new Promise<Room>((_, reject) => {
+      rejectRoomCreation = reject;
+    });
+
+    // Mock client.rooms.get to return a delayed promise that will reject
+    vi.spyOn(client.rooms, 'get').mockReturnValue(delayedRoomPromise);
+
+    // Start the first addReference call (won't resolve immediately)
+    const firstAddPromise = manager.addReference(roomName);
+
+    // Start the second addReference call immediately (should wait for first to resolve)
+    const secondAddPromise = manager.addReference(roomName);
+
+    // Both promises should not have resolved yet
+    let firstResolved = false;
+    let secondResolved = false;
+
+    void firstAddPromise.catch(() => {
+      firstResolved = true;
+    });
+    void secondAddPromise.catch(() => {
+      secondResolved = true;
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(firstResolved).toBe(false);
+    expect(secondResolved).toBe(false);
+
+    // Now reject the room creation
+    const testError = new Ably.ErrorInfo('Room creation failed', 50000, 500);
+    if (rejectRoomCreation) {
+      rejectRoomCreation(testError);
+    }
+
+    // Both calls should now reject with the same error
+    await expect(firstAddPromise).rejects.toBe(testError);
+    await expect(secondAddPromise).rejects.toBe(testError);
+
+    // Reference count should be 0 (entry should have been cleaned up)
+    expect(manager.getReferenceCount(roomName)).toBe(0);
+
+    // client.rooms.get should have been called only once
+    expect(client.rooms.get).toHaveBeenCalledTimes(1);
   });
 });
