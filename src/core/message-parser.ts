@@ -32,74 +32,36 @@ interface MessagePayload {
 export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
   const message = inboundMessage as MessagePayload;
 
-  if (!message.data) {
-    throw new Ably.ErrorInfo(`received incoming message without data`, 50000, 500);
-  }
+  // Provide default values for all fields
+  const data = message.data && typeof message.data === 'object' ? message.data : {};
+  const extras = message.extras && typeof message.extras === 'object' ? message.extras : {};
+  const clientId = message.clientId || '';
+  const text = data.text || '';
+  const serial = message.serial || '';
+  const version = message.version || '';
+  const metadata = data.metadata && typeof data.metadata === 'object' ? data.metadata : {};
+  const headers = extras.headers || {};
 
-  if (!message.clientId) {
-    throw new Ably.ErrorInfo(`received incoming message without clientId`, 50000, 500);
-  }
+  // Use current time as default for missing timestamps
+  const currentTime = Date.now();
+  const createdAt = new Date(message.createdAt || currentTime);
+  const timestamp = new Date(message.timestamp || currentTime);
 
-  if (!message.extras) {
-    throw new Ably.ErrorInfo(`received incoming message without extras`, 50000, 500);
-  }
-
-  // For non-delete messages, text is required
-  if (message.action !== ChatMessageAction.MessageDelete && message.data.text === undefined) {
-    throw new Ably.ErrorInfo(`received incoming message without text`, 50000, 500);
-  }
-
-  // For non-delete messages, extras.headers is required
-  if (message.action !== ChatMessageAction.MessageDelete && !message.extras.headers) {
-    throw new Ably.ErrorInfo(`received incoming message without headers`, 50000, 500);
-  }
-
-  // For non-delete messages, metadata is required
-  if (message.action !== ChatMessageAction.MessageDelete && !message.data.metadata) {
-    throw new Ably.ErrorInfo(`received incoming message without metadata`, 50000, 500);
-  }
-
-  if (!message.serial) {
-    throw new Ably.ErrorInfo(`received incoming message without serial`, 50000, 500);
-  }
-
-  if (!message.version) {
-    throw new Ably.ErrorInfo(`received incoming message without version`, 50000, 500);
-  }
-
-  if (!message.createdAt) {
-    throw new Ably.ErrorInfo(`received incoming message without createdAt`, 50000, 500);
-  }
-
-  if (!message.timestamp) {
-    throw new Ably.ErrorInfo(`received incoming message without timestamp`, 50000, 500);
-  }
-
-  switch (message.action) {
-    case ChatMessageAction.MessageCreate:
-    case ChatMessageAction.MessageUpdate:
-    case ChatMessageAction.MessageDelete: {
-      break;
-    }
-    default: {
-      throw new Ably.ErrorInfo(`received incoming message with unhandled action; ${message.action}`, 50000, 500);
-    }
-  }
-
-  // If it's a deleted message, we'll set message.data to an empty object and message.extras to an empty object
-  const data = message.action === ChatMessageAction.MessageDelete ? {} : message.data;
-  const extras = message.action === ChatMessageAction.MessageDelete ? {} : message.extras;
+  // Convert the action to a ChatMessageAction enum, defaulting to MessageCreate if the action is not found.
+  const action = Object.values(ChatMessageAction).includes(message.action as ChatMessageAction)
+    ? (message.action as ChatMessageAction)
+    : ChatMessageAction.MessageCreate;
 
   return new DefaultMessage({
-    serial: message.serial,
-    clientId: message.clientId,
-    text: data.text ?? '',
-    metadata: data.metadata ?? {},
-    headers: extras.headers ?? {},
-    action: message.action as ChatMessageAction,
-    version: message.version,
-    createdAt: new Date(message.createdAt),
-    timestamp: new Date(message.timestamp),
+    serial,
+    clientId,
+    text,
+    metadata,
+    headers,
+    action,
+    version,
+    createdAt,
+    timestamp,
     reactions: emptyMessageReactions(),
     operation: message.operation as Operation,
   });

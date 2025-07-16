@@ -4,6 +4,7 @@ import { ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
 import { OccupancyEvent, OccupancyEventType, RealtimeMetaEventType } from './events.js';
 import { Logger } from './logger.js';
+import { OccupancyData, parseOccupancyMessage } from './occupancy-parser.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
@@ -41,21 +42,6 @@ export interface Occupancy {
    * @throws {Ably.ErrorInfo} If occupancy events are not enabled for this room.
    */
   current(): OccupancyData | undefined;
-}
-
-/**
- * Represents the occupancy data of a chat room.
- */
-export interface OccupancyData {
-  /**
-   * The number of connections to the chat room.
-   */
-  connections: number;
-
-  /**
-   * The number of presence members in the chat room - members who have entered presence.
-   */
-  presenceMembers: number;
 }
 
 /**
@@ -171,62 +157,8 @@ export class DefaultOccupancy implements Occupancy {
    */
   private _internalOccupancyListener(message: Ably.InboundMessage): void {
     this._logger.trace('Occupancy._internalOccupancyListener();', message);
-    if (typeof message.data !== 'object') {
-      this._logger.error(
-        'Occupancy._internalOccupancyListener(); invalid occupancy event received; data is not an object',
-        message,
-      );
-      return;
-    }
 
-    const { metrics } = message.data as { metrics?: { connections?: number; presenceMembers?: number } };
-
-    if (metrics === undefined) {
-      this._logger.error(
-        'Occupancy._internalOccupancyListener(); invalid occupancy event received; metrics is missing',
-        message,
-      );
-      return;
-    }
-
-    const { connections, presenceMembers } = metrics;
-
-    if (connections === undefined) {
-      this._logger.error(
-        'Occupancy._internalOccupancyListener(); invalid occupancy event received; connections is missing',
-        message,
-      );
-      return;
-    }
-
-    if (!Number.isInteger(connections)) {
-      this._logger.error(
-        'Occupancy._internalOccupancyListener(); invalid occupancy event received; connections is not a number',
-        message,
-      );
-      return;
-    }
-
-    if (presenceMembers === undefined) {
-      this._logger.error(
-        'Occupancy._internalOccupancyListener(); invalid occupancy event received; presenceMembers is missing',
-        message,
-      );
-      return;
-    }
-
-    if (!Number.isInteger(presenceMembers)) {
-      this._logger.error(
-        'Occupancy._internalOccupancyListener(); invalid occupancy event received; presenceMembers is not a number',
-        message,
-      );
-      return;
-    }
-
-    this._latestOccupancyData = {
-      connections: connections,
-      presenceMembers: presenceMembers,
-    };
+    this._latestOccupancyData = parseOccupancyMessage(message);
 
     this._emitter.emit(OccupancyEventType.Updated, {
       type: OccupancyEventType.Updated,

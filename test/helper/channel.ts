@@ -67,10 +67,6 @@ export const channelAnnotationEventEmitter = (
   };
 
   return (arg: Partial<Ably.Annotation>) => {
-    if (!arg.action) {
-      throw new Error('annotation action is required');
-    }
-
-    channelWithEmitter.annotations.subscriptions.emit(arg.action, arg);
+    channelWithEmitter.annotations.subscriptions.emit(arg.action ?? 'unknown', arg);
   };
 };

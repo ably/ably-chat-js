@@ -16,28 +16,25 @@ interface ReactionPayload {
 
 export function parseRoomReaction(message: Ably.InboundMessage, clientId?: string): RoomReaction {
   const reactionCreatedMessage = message as ReactionPayload;
-  if (!reactionCreatedMessage.data) {
-    throw new Ably.ErrorInfo(`received incoming room reaction message without data`, 50000, 500);
-  }
 
-  if (!reactionCreatedMessage.data.name || typeof reactionCreatedMessage.data.name !== 'string') {
-    throw new Ably.ErrorInfo('invalid room reaction message with no name', 50000, 500);
-  }
+  // Use empty string if type is missing or invalid
+  const name =
+    reactionCreatedMessage.data?.name && typeof reactionCreatedMessage.data.name === 'string'
+      ? reactionCreatedMessage.data.name
+      : '';
 
-  if (!reactionCreatedMessage.clientId) {
-    throw new Ably.ErrorInfo(`received incoming room reaction message without clientId`, 50000, 500);
-  }
+  // Use empty string if clientId is missing
+  const messageClientId = reactionCreatedMessage.clientId ?? '';
 
-  if (!reactionCreatedMessage.timestamp) {
-    throw new Ably.ErrorInfo(`received incoming room reaction message without timestamp`, 50000, 500);
-  }
+  // Use current time if timestamp is missing
+  const timestamp = reactionCreatedMessage.timestamp ? new Date(reactionCreatedMessage.timestamp) : new Date();
 
   return new DefaultRoomReaction(
-    reactionCreatedMessage.data.name,
-    reactionCreatedMessage.clientId,
-    new Date(reactionCreatedMessage.timestamp),
-    clientId ? clientId === reactionCreatedMessage.clientId : false,
-    reactionCreatedMessage.data.metadata ?? {},
+    name,
+    messageClientId,
+    timestamp,
+    clientId ? clientId === messageClientId : false,
+    reactionCreatedMessage.data?.metadata ?? {},
     reactionCreatedMessage.extras?.headers ?? {},
   );
 }

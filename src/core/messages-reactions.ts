@@ -149,45 +149,21 @@ export class DefaultMessageReactions implements MessagesReactions {
   private _processAnnotationEvent(event: Ably.Annotation) {
     this._logger.trace('MessagesReactions._processAnnotationEvent();', { event });
 
-    if (!event.messageSerial) {
-      this._logger.warn(
-        'DefaultMessageReactions._processAnnotationEvent(); received event with missing messageSerial',
-        {
-          event,
-        },
-      );
-      return;
-    }
-
+    // If we don't know the reaction type, ignore it
     const reactionType = AnnotationTypeToReactionType[event.type];
-
-    // unknown reaction type, meaning we've received an unknown annotation type
     if (!reactionType) {
-      this._logger.debug('DefaultMessageReactions._processAnnotationEvent(); received event with unknown type', {
-        event,
-      });
+      this._logger.info('MessagesReactions._processAnnotationEvent(); ignoring unknown reaction type', { event });
       return;
     }
 
+    // If we don't know the event type, ignore it
     const eventType = eventTypeMap[event.action];
     if (!eventType) {
-      // unknown action
-      this._logger.warn('DefaultMessageReactions._processAnnotationEvent(); received event with unknown action', {
-        event,
-      });
+      this._logger.info('MessagesReactions._processAnnotationEvent(); ignoring unknown reaction event type', { event });
       return;
     }
 
-    let name = event.name;
-    if (!name) {
-      if (eventType === MessageReactionEventType.Delete && reactionType === MessageReactionType.Unique) {
-        // deletes of type unique are allowed to have no data
-        name = '';
-      } else {
-        return;
-      }
-    }
-
+    const name = event.name ?? '';
     const reactionEvent: MessageReactionRawEvent = {
       type: eventType,
       timestamp: new Date(event.timestamp),
@@ -198,11 +174,13 @@ export class DefaultMessageReactions implements MessagesReactions {
         clientId: event.clientId ?? '',
       },
     };
+
     if (event.count) {
       reactionEvent.reaction.count = event.count;
     } else if (eventType === MessageReactionEventType.Create && reactionType === MessageReactionType.Multiple) {
       reactionEvent.reaction.count = 1; // count defaults to 1 for multiple if not set
     }
+
     this._emitter.emit(eventType, reactionEvent);
   }
 
@@ -213,18 +191,11 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (event.action !== ChatMessageAction.MessageAnnotationSummary) {
       return;
     }
+
     if (!event.summary) {
       // This means the summary is now empty, which is valid.
       // Happens when there are no reactions such as after deleting the last reaction.
       event.summary = {};
-    }
-
-    // they must have a serial
-    if (!event.serial) {
-      this._logger.warn('DefaultMessageReactions._processMessageEvent(); received summary without serial', {
-        event,
-      });
-      return;
     }
 
     const unique = (event.summary[ReactionAnnotationType.Unique] ?? {}) as unknown as Ably.SummaryUniqueValues;

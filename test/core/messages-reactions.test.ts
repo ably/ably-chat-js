@@ -582,62 +582,103 @@ describe('MessagesReactions', () => {
 
     describe.each([
       [
-        'unknown annotation type',
+        'no name',
         {
           serial: '01672531200003-123@abcdefghij',
           messageSerial: '01672531200000-123@xyzdefghij',
-          type: 'reaction:unknown.v1',
-          data: '🚀',
+          type: ReactionAnnotationType.Distinct,
           clientId: 'u1',
           action: 'annotation.create',
-          timestamp: Date.now(),
+          timestamp: new Date(1),
+        },
+        {
+          type: MessageReactionEventType.Create as MessageReactionEventType.Create | MessageReactionEventType.Delete,
+          timestamp: new Date(1),
+          reaction: {
+            messageSerial: '01672531200000-123@xyzdefghij',
+            name: '',
+            clientId: 'u1',
+            type: MessageReactionType.Distinct,
+          },
         },
       ],
       [
-        'unknown action',
+        'empty messageSerial',
         {
           serial: '01672531200003-123@abcdefghij',
-          messageSerial: '01672531200000-123@xyzdefghij',
-          type: MessageReactionType.Distinct,
-          data: '🚀',
-          clientId: 'u1',
-          action: 'annotation.bla',
-          timestamp: Date.now(),
-        },
-      ],
-      [
-        'no data',
-        {
-          serial: '01672531200003-123@abcdefghij',
-          messageSerial: '01672531200000-123@xyzdefghij',
-          type: MessageReactionType.Distinct,
+          messageSerial: '',
+          type: ReactionAnnotationType.Distinct,
+          name: '🚀',
           clientId: 'u1',
           action: 'annotation.create',
-          timestamp: Date.now(),
+          timestamp: new Date(1),
         },
-      ],
-      [
-        'no messageSerial',
         {
-          serial: '01672531200003-123@abcdefghij',
-          type: MessageReactionType.Distinct,
-          data: '🚀',
-          clientId: 'u1',
-          action: 'annotation.create',
-          timestamp: Date.now(),
+          type: MessageReactionEventType.Create as MessageReactionEventType.Create | MessageReactionEventType.Delete,
+          timestamp: new Date(1),
+          reaction: {
+            messageSerial: '',
+            name: '🚀',
+            clientId: 'u1',
+            type: MessageReactionType.Distinct,
+          },
         },
       ],
-    ])('invalid incoming raw reactions', (name: string, inboundMessage: unknown) => {
-      it<TestContext>('should handle invalid inbound raw reaction: ' + name, (context) => {
-        const room = context.room;
-        let listenerCalled = false;
-        room.messages.reactions.subscribeRaw(() => {
-          listenerCalled = true;
-        });
+    ])(
+      'invalid incoming raw reactions',
+      (name: string, inboundMessage: unknown, expectedEvent: MessageReactionRawEvent) => {
+        it<TestContext>('should handle invalid inbound raw reaction: ' + name, (context) => {
+          const room = context.room;
+          let receivedEvent: MessageReactionRawEvent | undefined;
+          room.messages.reactions.subscribeRaw((event) => {
+            receivedEvent = event;
+          });
 
-        context.emulateBackendAnnotation(inboundMessage as Ably.Annotation);
-        expect(listenerCalled).toBe(false);
+          context.emulateBackendAnnotation(inboundMessage as Ably.Annotation);
+          expect(receivedEvent).toBeDefined();
+          if (receivedEvent) {
+            expect(receivedEvent).toMatchObject(expectedEvent);
+          }
+        });
+      },
+    );
+
+    it<TestContext>('should ignore unknown reaction types', (context) => {
+      const room = context.room;
+      let receivedEvent: MessageReactionRawEvent | undefined;
+      room.messages.reactions.subscribeRaw((event) => {
+        receivedEvent = event;
       });
+
+      context.emulateBackendAnnotation({
+        serial: '01672531200003-123@abcdefghij',
+        messageSerial: '01672531200000-123@xyzdefghij',
+        type: 'not a real reaction type',
+        name: '🚀',
+        clientId: 'u1',
+        action: 'annotation.create',
+      });
+
+      expect(receivedEvent).toBeUndefined();
+    });
+
+    it<TestContext>('should ignore unknown reaction events', (context) => {
+      const room = context.room;
+      let receivedEvent: MessageReactionRawEvent | undefined;
+      room.messages.reactions.subscribeRaw((event) => {
+        receivedEvent = event;
+      });
+
+      context.emulateBackendAnnotation({
+        serial: '01672531200003-123@abcdefghij',
+        messageSerial: '01672531200000-123@xyzdefghij',
+        type: ReactionAnnotationType.Distinct,
+        name: '🚀',
+        clientId: 'u1',
+        action: 'not a real action' as unknown as Ably.AnnotationAction,
+      });
+
+      expect(receivedEvent).toBeUndefined();
     });
 
     it<TestContext>('should throw error when subscribing to raw reactions if not enabled', (context) => {
