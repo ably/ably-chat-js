@@ -19,22 +19,49 @@ interface RoomRefCountEntry {
 }
 
 /**
- * Recursively sorts object keys to ensure consistent serialization.
+ * Normalises an array item by sorting the keys of the object and recursively sorting the items in the array.
  */
-const normalizeForSerialization = (obj: unknown): unknown => {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
+const normalizeArrayItem = (item: unknown): unknown => {
+  if (item === null || typeof item !== 'object') {
+    return item;
   }
-
-  if (Array.isArray(obj)) {
-    // If its an array, sort the items
-    return obj.sort().map((item) => normalizeForSerialization(item));
+  if (Array.isArray(item)) {
+    return item.sort().map((nestedItem) => normalizeArrayItem(nestedItem));
   }
-
+  // For objects in arrays, sort keys
   const sortedObj: Record<string, unknown> = {};
-  const keys = Object.keys(obj as Record<string, unknown>).sort();
-  for (const key of keys) {
-    sortedObj[key] = normalizeForSerialization((obj as Record<string, unknown>)[key]);
+  const keys = Object.keys(item as Record<string, unknown>).sort();
+  for (const objKey of keys) {
+    sortedObj[objKey] = normalizeArrayItem((item as Record<string, unknown>)[objKey]);
+  }
+  return sortedObj;
+};
+
+/**
+ * Replacer function for JSON.stringify that normalizes values to ensure consistent serialization.
+ * Recursively sorts object keys and array items for deterministic output.
+ */
+const roomKeyReplacer = (key: string, value: unknown): unknown => {
+  // Handle undefined values consistently
+  if (value === undefined) {
+    return undefined;
+  }
+
+  // Handle null or non-object values
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+
+  // Handle arrays - sort the items and recursively normalize
+  if (Array.isArray(value)) {
+    return value.sort().map((item) => normalizeArrayItem(item));
+  }
+
+  // Handle objects - sort the keys
+  const sortedObj: Record<string, unknown> = {};
+  const keys = Object.keys(value as Record<string, unknown>).sort();
+  for (const objKey of keys) {
+    sortedObj[objKey] = (value as Record<string, unknown>)[objKey];
   }
   return sortedObj;
 };
@@ -44,7 +71,7 @@ const normalizeForSerialization = (obj: unknown): unknown => {
  * Ensures that objects with the same properties but different key order produce the same key.
  */
 const createRoomKey = (roomName: string, options?: RoomOptions): string => {
-  return JSON.stringify(normalizeForSerialization({ roomName, options }));
+  return JSON.stringify({ roomName, options }, roomKeyReplacer);
 };
 
 /**
