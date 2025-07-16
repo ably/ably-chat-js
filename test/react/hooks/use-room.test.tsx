@@ -48,11 +48,7 @@ describe('useRoom', () => {
     const roomName = randomRoomName();
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
-        <ChatRoomProvider
-          name={roomName}
-          attach={false}
-          release={false}
-        >
+        <ChatRoomProvider name={roomName}>
           <TestComponent
             callback={(response) => {
               latestResponse = response;
@@ -67,7 +63,7 @@ describe('useRoom', () => {
     });
     expect(latestResponse?.attach).toBeTruthy();
     expect(latestResponse?.detach).toBeTruthy();
-    expect(latestResponse?.roomStatus).toBe(RoomStatus.Initialized);
+    expect(latestResponse?.roomStatus).toBe(RoomStatus.Attached);
   });
 
   it('should return working shortcuts for attach and detach functions', async () => {
@@ -76,11 +72,7 @@ describe('useRoom', () => {
     const roomName = randomRoomName();
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
-        <ChatRoomProvider
-          name={roomName}
-          attach={false}
-          release={false}
-        >
+        <ChatRoomProvider name={roomName}>
           <TestComponent
             callback={(response) => {
               if (!response.room) return;
@@ -116,11 +108,7 @@ describe('useRoom', () => {
 
     const TestProvider = ({ room1 = true, room2 = true }) => {
       const component1 = (
-        <ChatRoomProvider
-          name={roomName}
-          attach={false}
-          release={false}
-        >
+        <ChatRoomProvider name={roomName}>
           <TestComponent
             callback={() => {
               called1 += 1;
@@ -130,11 +118,7 @@ describe('useRoom', () => {
       );
 
       const component2 = (
-        <ChatRoomProvider
-          name={roomName}
-          attach={true}
-          release={true}
-        >
+        <ChatRoomProvider name={roomName}>
           <TestComponent
             callback={() => {
               called2 += 1;
@@ -158,7 +142,7 @@ describe('useRoom', () => {
       />,
     );
 
-    // On the first render, the room attach should have been called once by the second component
+    // On the first render, the room attach should have been called once (first reference)
     expect(called1).toBe(1);
     expect(called2).toBe(1);
     await vi.waitFor(() => {
@@ -168,7 +152,7 @@ describe('useRoom', () => {
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
     // On this rerender, the first component is unmounted, but the second remains mounted
-    // As the first component does not do attach or release, the room should not register any changes
+    // The room should not be released as there's still one reference
     r.rerender(
       <TestProvider
         room1={false}
@@ -184,7 +168,7 @@ describe('useRoom', () => {
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
     // We bring back component 1, and both components are mounted
-    // Again, because component 1 does not do attach or release, the room should not register any changes
+    // The room should still be attached (no change in attach count)
     r.rerender(
       <TestProvider
         room1={true}
@@ -216,7 +200,7 @@ describe('useRoom', () => {
     expect(chatClient.rooms.release).toHaveBeenCalledTimes(0);
 
     // We unmount both components
-    // As component 2 does attach and release, the room should be released
+    // The room should be released as this is the last reference
     r.rerender(
       <TestProvider
         room1={false}

@@ -1,8 +1,11 @@
 import * as React from 'react';
-import { ReactNode } from 'react';
+import { ReactNode, useRef } from 'react';
 
 import { ChatClient } from '../../core/chat.js';
-import { ChatClientContext, ChatClientContextValue } from '../contexts/chat-client-context.js';
+import { Logger } from '../../core/logger.js';
+import { ChatClientContext } from '../contexts/chat-client-context.js';
+import { RoomReferenceManager } from '../helper/room-reference-manager.js';
+import { ExtendedChatClientContextValue, ROOM_REFERENCE_MANAGER_KEY } from '../hooks/use-room-reference-manager.js';
 
 /**
  * The default identifier for the {@link ChatClientContext}.
@@ -34,10 +37,19 @@ export interface ChatClientProviderProps {
  */
 export const ChatClientProvider = ({ children, client }: ChatClientProviderProps) => {
   const context = React.useContext(ChatClientContext);
+  const roomReferenceManagerRef = useRef<RoomReferenceManager | undefined>(undefined);
 
-  const value: ChatClientContextValue = React.useMemo(() => {
+  const value: ExtendedChatClientContextValue = React.useMemo(() => {
+    // Set the internal useReact option to true to enable React-specific agent.
     (client as unknown as { addReactAgent(): void }).addReactAgent();
 
+    // Create or update the room reference manager
+    if (!roomReferenceManagerRef.current || roomReferenceManagerRef.current.client !== client) {
+      const clientLogger = (client as unknown as { logger: Logger }).logger;
+      roomReferenceManagerRef.current = new RoomReferenceManager(client, clientLogger);
+    }
+
+    // Add the agent for the UI kit
     const uiKitVersion = globalThis.__ABLY_CHAT_REACT_UI_COMPONENTS_VERSION__;
     if (typeof uiKitVersion === 'string') {
       (
@@ -47,7 +59,11 @@ export const ChatClientProvider = ({ children, client }: ChatClientProviderProps
       ).addAgentWithVersion('chat-ui-kit', uiKitVersion);
     }
 
-    return { ...context, [DEFAULT_CHAT_CLIENT_ID]: { client: client } };
+    return {
+      ...context,
+      [DEFAULT_CHAT_CLIENT_ID]: { client: client },
+      [ROOM_REFERENCE_MANAGER_KEY]: roomReferenceManagerRef.current,
+    };
   }, [client, context]);
 
   return <ChatClientContext.Provider value={value}>{children}</ChatClientContext.Provider>;
