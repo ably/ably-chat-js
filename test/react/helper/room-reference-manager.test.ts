@@ -230,6 +230,42 @@ describe('RoomReferenceManager', () => {
     expect(manager.getReferenceCount(roomName, options2)).toBe(1);
   });
 
+  it('should generate same key for options with same values but different property order including arrays', () => {
+    const client = newChatClient();
+    const logger = (client as unknown as { logger: Logger }).logger;
+    const manager = new RoomReferenceManager(client, logger);
+    const roomName = randomRoomName();
+
+    // These two options objects have the same values but properties in different order
+    const options1 = {
+      occupancy: { enableEvents: true },
+      typing: { heartbeatThrottleMs: 5000 },
+      presence: { enableEvents: false },
+      messages: { rawMessageReactions: true },
+      foo: [1, 2],
+    };
+
+    const options2 = {
+      messages: { rawMessageReactions: true },
+      presence: { enableEvents: false },
+      occupancy: { enableEvents: true },
+      typing: { heartbeatThrottleMs: 5000 },
+      foo: [2, 1],
+    };
+
+    // Both should be treated as the same room
+    expect(manager.getReferenceCount(roomName, options1)).toBe(0);
+    expect(manager.getReferenceCount(roomName, options2)).toBe(0);
+
+    // After adding a reference with options1, getting count with options2 should be the same
+    void manager.addReference(roomName, options1);
+    void manager.addReference(roomName, options2);
+
+    // These should both return 1 since the options are semantically identical
+    expect(manager.getReferenceCount(roomName, options1)).toBe(2);
+    expect(manager.getReferenceCount(roomName, options2)).toBe(2);
+  });
+
   it('should treat same room name with different options as separate references', () => {
     const client = newChatClient();
     const logger = (client as unknown as { logger: Logger }).logger;

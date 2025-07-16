@@ -27,7 +27,8 @@ const normalizeForSerialization = (obj: unknown): unknown => {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map((item) => normalizeForSerialization(item));
+    // If its an array, sort the items
+    return obj.sort().map((item) => normalizeForSerialization(item));
   }
 
   const sortedObj: Record<string, unknown> = {};
