@@ -1,12 +1,10 @@
-// Import necessary modules and dependencies
-import { PresenceMember } from '@ably/chat';
 import * as Ably from 'ably';
 import { PresenceAction, Realtime } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { PresenceEventType } from '../../src/core/events.ts';
-import { PresenceData, PresenceEvent } from '../../src/core/presence.ts';
+import { PresenceData, PresenceEvent, PresenceMember } from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForExpectedPresenceEvent } from '../helper/common.ts';
