@@ -1,5 +1,6 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
+import { ChannelEvent } from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.ts';
@@ -71,8 +72,8 @@ describe('usePresence', () => {
 
     // check that the presence instance and metrics are correctly provided
     await waitForEventualHookValue(result, mockRoom.presence, (value) => value.presence);
-    expect(result.current.isPresent).toBe(true);
-    expect(result.current.error).toBeUndefined();
+    expect(result.current.presenceState.isPresent).toBe(true);
+    expect(result.current.presenceState.error).toBeUndefined();
 
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomStatus.Attached);
@@ -91,11 +92,11 @@ describe('usePresence', () => {
       expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
     });
 
-    await waitFor(() => result.current.isPresent);
+    await waitFor(() => result.current.presenceState.isPresent);
 
     // check the initial state of the presence instance
     expect(result.current.presence).toBe(mockRoom.presence);
-    expect(result.current.isPresent).toBe(true);
+    expect(result.current.presenceState.isPresent).toBe(true);
 
     // change the mock room instance
     updateMockRoom(makeRandomRoom());
@@ -109,8 +110,8 @@ describe('usePresence', () => {
     await waitFor(() => {
       expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
     });
-    await waitFor(() => result.current.isPresent);
-    expect(result.current.isPresent).toBe(true);
+    await waitFor(() => result.current.presenceState.isPresent);
+    expect(result.current.presenceState.isPresent).toBe(true);
 
     // check that the presence instance is updated
     expect(result.current.presence).toBe(mockRoom.presence);
@@ -128,7 +129,7 @@ describe('usePresence', () => {
       }),
     );
 
-    await waitFor(() => result.current.isPresent, { timeout: 500 });
+    await waitFor(() => result.current.presenceState.isPresent, { timeout: 500 });
 
     // verify that the update method was called
     expect(enterSpy).toHaveBeenCalledWith({ test: 'enter' });
@@ -154,7 +155,7 @@ describe('usePresence', () => {
     // verify that the update method was called
     expect(updateSpy).toHaveBeenCalled();
 
-    expect(result.current.isPresent).toBe(true);
+    expect(result.current.presenceState.isPresent).toBe(true);
   });
 
   it('should correctly return any error that occurs', async () => {
@@ -173,7 +174,7 @@ describe('usePresence', () => {
     // wait for the error to be set from the useEffect
     await waitFor(
       () => {
-        expect(result.current.error).toBeErrorInfo({ message: 'enter error' });
+        expect(result.current.presenceState.error).toBeErrorInfo({ message: 'enter error' });
       },
       { timeout: 3000 },
     );
@@ -242,5 +243,69 @@ describe('usePresence', () => {
     unmount();
 
     expect(mockOff).toHaveBeenCalled();
+  });
+
+  it('should update presenceState when a channel state change with 91004 error occurs', async () => {
+    vi.spyOn(mockRoom.presence, 'enter').mockResolvedValue();
+
+    // Spy on the channel's on method to capture the listener
+    let channelStatusChangeListener: ((statusChange: Ably.ChannelStateChange) => void) | undefined;
+    vi.spyOn(mockRoom.channel, 'on').mockImplementation(function (
+      eventOrCallback: string | ((stateChange: Ably.ChannelStateChange) => void),
+      listener?: (statusChange: Ably.ChannelStateChange) => void,
+    ) {
+      if (typeof eventOrCallback !== 'string' || !listener) {
+        expect.fail('Expected the first argument to be a string event name and the second to be a listener function');
+      }
+      channelStatusChangeListener = listener;
+      mockRoom.channel.on(eventOrCallback as ChannelEvent, listener);
+      return mockRoom.channel;
+    });
+
+    const { result } = renderHook(() => usePresence());
+
+    await waitFor(() => {
+      expect(mockRoom.channel.on).toHaveBeenCalledWith('update', expect.any(Function));
+      expect(channelStatusChangeListener).toBeDefined();
+    });
+
+    // Ensure we are initially present
+    await waitFor(
+      () => {
+        expect(result.current.presenceState.isPresent).toBe(true);
+      },
+      { timeout: 1000 },
+    );
+
+    // Simulate a state change with auto retry failure (91004 error)
+    const errorInfo = new Ably.ErrorInfo('presence error', 91004, 400);
+    const channelStateChange: Ably.ChannelStateChange = {
+      current: 'attached',
+      previous: 'attached',
+      reason: errorInfo,
+      resumed: false,
+    };
+
+    // Directly call the captured listener with the channel state change
+    act(() => {
+      if (channelStatusChangeListener) {
+        channelStatusChangeListener(channelStateChange);
+      } else {
+        expect.fail('Channel status change listener was not defined');
+      }
+    });
+
+    // Verify that presenceState is updated correctly
+    await waitFor(
+      () => {
+        expect(result.current.presenceState.isPresent).toBe(false);
+        expect(result.current.presenceState.error).toBeErrorInfo({
+          message: 'presence error',
+          statusCode: 400,
+          code: 91004,
+        });
+      },
+      { timeout: 1000 },
+    );
   });
 });
