@@ -38,13 +38,16 @@ export interface PresenceEvent {
 }
 
 /**
- * Type for PresenceMember
+ * Type for PresenceMember.
+ *
+ * Presence members are unique based on their `connectionId` and `clientId`. It is possible for
+ * multiple users to have the same `clientId` if they are connected to the room from different devices.
  */
-export interface PresenceMember {
+export type PresenceMember = Omit<Ably.PresenceMessage, 'id' | 'action' | 'timestamp'> & {
   /**
-   * The clientId of the presence member.
+   * The timestamp of when the last change in state occurred for this presence member.
    */
-  clientId: string;
+  updatedAt: Date;
 
   /**
    * The data associated with the presence member.
@@ -55,12 +58,7 @@ export interface PresenceMember {
    * The extras associated with the presence member.
    */
   extras: unknown;
-
-  /**
-   * The timestamp of when the last change in state occurred for this presence member.
-   */
-  updatedAt: number;
-}
+};
 
 /**
  * Type for PresenceListener
@@ -183,13 +181,7 @@ export class DefaultPresence implements Presence {
     const userOnPresence = await this._channel.presence.get(params);
 
     // ably-js never emits the 'absent' event, so we can safely ignore it here.
-    return userOnPresence.map((user) => ({
-      clientId: user.clientId,
-      data: user.data as PresenceData,
-      updatedAt: user.timestamp,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      extras: user.extras,
-    }));
+    return userOnPresence.map((user) => this._realtimeMemberToPresenceMember(user));
   }
 
   /**
@@ -285,12 +277,7 @@ export class DefaultPresence implements Presence {
   subscribeToEvents = (member: Ably.PresenceMessage) => {
     this._emitter.emit(member.action as PresenceEventType, {
       type: member.action as PresenceEventType,
-      member: {
-        clientId: member.clientId,
-        data: member.data as PresenceData,
-        extras: member.extras,
-        updatedAt: member.timestamp,
-      },
+      member: this._realtimeMemberToPresenceMember(member),
     });
   };
 
@@ -311,6 +298,19 @@ export class DefaultPresence implements Presence {
         options.modes.push('PRESENCE_SUBSCRIBE');
       }
       return options;
+    };
+  }
+
+  /**
+   * Converts an Ably presence message to a presence member.
+   * @param member The Ably presence message to convert.
+   * @returns The presence member.
+   */
+  private _realtimeMemberToPresenceMember(member: Ably.PresenceMessage): PresenceMember {
+    return {
+      ...member,
+      data: member.data as PresenceData,
+      updatedAt: new Date(member.timestamp),
     };
   }
 
