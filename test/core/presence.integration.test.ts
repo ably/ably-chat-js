@@ -1,12 +1,10 @@
-// Import necessary modules and dependencies
-import { PresenceMember } from '@ably/chat';
 import * as Ably from 'ably';
 import { PresenceAction, Realtime } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat.ts';
 import { PresenceEventType } from '../../src/core/events.ts';
-import { PresenceData, PresenceEvent } from '../../src/core/presence.ts';
+import { PresenceData, PresenceEvent, PresenceMember } from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { waitForExpectedPresenceEvent } from '../helper/common.ts';
@@ -94,8 +92,8 @@ describe('UserPresence', { timeout: 30000 }, () => {
     await context.chatRoom.presence.get({ waitForSync: true });
   });
 
-  // Test for successful entering with clientId and custom user data
-  it<TestContext>('successfully enter presence with clientId and custom user data', async (context) => {
+  // Test for successful entering with clientId and data
+  it<TestContext>('successfully enter presence with clientId and data', async (context) => {
     const messageChannel = context.chatRoom.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(
@@ -106,32 +104,32 @@ describe('UserPresence', { timeout: 30000 }, () => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
         );
-        expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
-          userCustomData: { customKeyOne: 1 },
+        expect(member.data, 'data should be equal to supplied user data').toEqual({
+          customKeyOne: 1,
         });
       },
     );
 
-    // Enter with custom user data
+    // Enter with data
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
     // Wait for the enter event to be received
     await enterEventPromise;
   });
 
-  // Test for successful sending of presence update with clientId and custom user data
-  it<TestContext>('should successfully send presence update with clientId and custom user data', async (context) => {
+  // Test for successful sending of presence update with clientId and data
+  it<TestContext>('should successfully send presence update with clientId and data', async (context) => {
     const messageChannel = context.chatRoom.channel;
     const messageChannelName = messageChannel.name;
     const enterEventPromise = waitForEvent(context.realtime, 'update', messageChannelName, (member) => {
       expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(context.defaultTestClientId);
-      expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
-        userCustomData: { customKeyOne: 1 },
+      expect(member.data, 'data should be equal to supplied user data').toEqual({
+        customKeyOne: 1,
       });
     });
 
-    // Enter with custom user data
+    // Enter with data
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
-    // Send presence update with custom user data
+    // Send presence update with data
     await context.chatRoom.presence.update({ customKeyOne: 1 });
     // Wait for the update event to be received
     await enterEventPromise;
@@ -149,14 +147,14 @@ describe('UserPresence', { timeout: 30000 }, () => {
         expect(member.clientId, 'client id should be equal to defaultTestClientId').toEqual(
           context.defaultTestClientId,
         );
-        expect(member.data, 'data should be equal to supplied userCustomData').toEqual({
-          userCustomData: { customKeyOne: 1 },
+        expect(member.data, 'data should be equal to supplied user data').toEqual({
+          customKeyOne: 1,
         });
       },
     );
-    // Enter with custom user data
+    // Enter with data
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
-    // Leave with custom user data
+    // Leave with data
     await context.chatRoom.presence.leave({ customKeyOne: 1 });
     // Wait for the leave event to be received
     await enterEventPromise;
@@ -173,7 +171,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
     // Data payload to check if the custom data is fetched correctly
     const testData: PresenceData = {
-      userCustomData: { customKeyOne: 1 },
+      customKeyOne: 1,
     };
 
     // Enter presence for each client
@@ -327,7 +325,7 @@ describe('UserPresence', { timeout: 30000 }, () => {
   });
 
   it<TestContext>('should successfully handle multiple data types', async (context) => {
-    // Subscribe to leave events
+    // Subscribe to presence events
     const presenceEvents: PresenceEvent[] = [];
     context.chatRoom.presence.subscribe((event) => {
       presenceEvents.push(event);
@@ -344,16 +342,16 @@ describe('UserPresence', { timeout: 30000 }, () => {
       { clientId: context.chat.clientId, type: PresenceEventType.Update, data: 'string' },
       presenceEvents,
     );
-    // Update with number
-    await context.chatRoom.presence.update(1);
+    // Update with number (wrapped in object as Ably doesn't support primitive numbers)
+    await context.chatRoom.presence.update({ value: 1 });
     await waitForExpectedPresenceEvent(
-      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: 1 },
+      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: { value: 1 } },
       presenceEvents,
     );
-    // Update with boolean
-    await context.chatRoom.presence.update(true);
+    // Update with boolean (wrapped in object as Ably doesn't support primitive booleans)
+    await context.chatRoom.presence.update({ flag: true });
     await waitForExpectedPresenceEvent(
-      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: true },
+      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: { flag: true } },
       presenceEvents,
     );
     // Update with object
