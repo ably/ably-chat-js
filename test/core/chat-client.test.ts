@@ -19,55 +19,59 @@ describe('ChatClient', () => {
   });
 
   describe('dispose', () => {
-    it<TestContext>('should return ErrorInfo if rooms exist in the map', async (context) => {
+    it<TestContext>('should dispose successfully and release all rooms automatically', async (context) => {
       // Get a room to add it to the rooms map
       const roomName = randomRoomName();
       await context.chat.rooms.get(roomName);
 
-      // Attempt to dispose
-      expect(() => {
-        context.chat.dispose();
-      }).toThrowErrorInfo({
-        code: 40000,
-        message: 'cannot dispose client; rooms still exist, please release all rooms before disposing',
-        statusCode: 400,
-      });
+      // Verify room exists
+      expect(context.chat.rooms.count).toBe(1);
+
+      // Mock the connection dispose method
+      const mockConnectionDispose = vi.spyOn(context.chat.connection, 'dispose');
+
+      // Dispose should succeed and release rooms automatically
+      await context.chat.dispose();
+
+      // Should have called connection dispose
+      expect(mockConnectionDispose).toHaveBeenCalledTimes(1);
+
+      // Rooms should be released
+      expect(context.chat.rooms.count).toBe(0);
     });
 
-    it<TestContext>('should dispose successfully when no rooms exist', (context) => {
+    it<TestContext>('should dispose successfully when no rooms exist', async (context) => {
       // Mock the connection dispose method
       const mockConnectionDispose = vi.spyOn(context.chat.connection, 'dispose');
 
       // Attempt to dispose
-      context.chat.dispose();
+      await context.chat.dispose();
 
       // Should have called connection dispose
       expect(mockConnectionDispose).toHaveBeenCalledTimes(1);
     });
 
-    it<TestContext>('should dispose successfully after all rooms are released', async (context) => {
-      // Get a room to add it to the rooms map
-      const roomName = randomRoomName();
-      await context.chat.rooms.get(roomName);
+    it<TestContext>('should dispose successfully with multiple rooms', async (context) => {
+      // Get multiple rooms to add them to the rooms map
+      const roomName1 = randomRoomName();
+      const roomName2 = randomRoomName();
+      await context.chat.rooms.get(roomName1);
+      await context.chat.rooms.get(roomName2);
 
-      // Verify dispose fails with rooms present
-      expect(() => {
-        context.chat.dispose();
-      }).toThrowErrorInfo({
-        code: 40000,
-        message: 'cannot dispose client; rooms still exist, please release all rooms before disposing',
-        statusCode: 400,
-      });
-
-      // Release the room
-      await context.chat.rooms.release(roomName);
+      // Verify rooms exist
+      expect(context.chat.rooms.count).toBe(2);
 
       // Mock the connection dispose method
       const mockConnectionDispose = vi.spyOn(context.chat.connection, 'dispose');
 
-      // Now dispose should succeed
-      context.chat.dispose();
+      // Dispose should succeed and release all rooms automatically
+      await context.chat.dispose();
+
+      // Should have called connection dispose
       expect(mockConnectionDispose).toHaveBeenCalledTimes(1);
+
+      // All rooms should be released
+      expect(context.chat.rooms.count).toBe(0);
     });
   });
 });
