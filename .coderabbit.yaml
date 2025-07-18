@@ -27,7 +27,7 @@ reviews:
   labeling_instructions: []
   path_filters: []
   path_instructions:
-    - path: "**/*.ts, **/*.tsx"
+    - path: "**/*.{ts,tsx}"
       instructions: |
         If there are any changes to the public-facing API, add a review comment: "Public API changes detected. Please update the documentation and the Ably CLI."
   abort_on_close: true
