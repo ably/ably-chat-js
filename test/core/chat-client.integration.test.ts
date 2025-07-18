@@ -202,7 +202,7 @@ describe('Chat', () => {
     room = undefined;
 
     // Dispose of the chat client
-    chat.dispose();
+    await chat.dispose();
 
     // Set chat to undefined to remove our strong reference
     chat = undefined;
@@ -260,7 +260,7 @@ describe('Chat', () => {
     room = undefined;
 
     // Dispose of the chat client
-    chat.dispose();
+    await chat.dispose();
 
     // Set chat to undefined to remove our strong reference
     chat = undefined;
@@ -308,7 +308,7 @@ describe('Chat', () => {
     expect(roomsRef.deref()).toBeDefined();
 
     // Dispose of the chat client
-    chat.dispose();
+    await chat.dispose();
 
     // Set chat to undefined to remove our strong reference
     chat = undefined;
