@@ -2,9 +2,9 @@ import * as Ably from 'ably';
 
 import { ChannelOptionsMerger } from './channel-manager.js';
 import {
-  AddMessageReactionParams as APIAddMessageReactionParams,
   ChatApi,
   DeleteMessageReactionParams as APIDeleteMessageReactionParams,
+  SendMessageReactionParams as APISendMessageReactionParams,
 } from './chat-api.js';
 import {
   AnnotationTypeToReactionType,
@@ -35,11 +35,11 @@ export type MessageReactionListener = (event: MessageReactionSummaryEvent) => vo
 export type MessageRawReactionListener = (event: MessageReactionRawEvent) => void;
 
 /**
- * Parameters for adding a message reaction.
+ * Parameters for sending a message reaction.
  */
-export interface AddMessageReactionParams {
+export interface SendMessageReactionParams {
   /**
-   * The reaction name to add; ie. the emoji.
+   * The reaction name to send; ie. the emoji.
    */
   name: string;
 
@@ -75,16 +75,16 @@ export interface DeleteMessageReactionParams {
 }
 
 /**
- * Add, delete, and subscribe to message reactions.
+ * Send, delete, and subscribe to message reactions.
  */
 export interface MessagesReactions {
   /**
-   * Add a message reactions
-   * @param messageSerial The serial of the message to react to
-   * @param params Describe the reaction to add.
-   * @returns A promise that resolves when the reaction is added.
+   * Send a message reaction.
+   * @param messageSerial The serial of the message to react to.
+   * @param params Describe the reaction to send.
+   * @returns A promise that resolves when the reaction is sent.
    */
-  send(messageSerial: Serial, params: AddMessageReactionParams): Promise<void>;
+  send(messageSerial: Serial, params: SendMessageReactionParams): Promise<void>;
 
   /**
    * Delete a message reaction
@@ -216,8 +216,8 @@ export class DefaultMessageReactions implements MessagesReactions {
   /**
    * @inheritDoc
    */
-  send(messageSerial: Serial, params: AddMessageReactionParams): Promise<void> {
-    this._logger.trace('MessagesReactions.add();', { messageSerial, params });
+  send(messageSerial: Serial, params: SendMessageReactionParams): Promise<void> {
+    this._logger.trace('MessagesReactions.send();', { messageSerial, params });
     const serial = serialToString(messageSerial);
 
     let { type, count } = params;
@@ -227,11 +227,11 @@ export class DefaultMessageReactions implements MessagesReactions {
     if (type === MessageReactionType.Multiple && !count) {
       count = 1;
     }
-    const apiParams: APIAddMessageReactionParams = { type, name: params.name };
+    const apiParams: APISendMessageReactionParams = { type, name: params.name };
     if (count) {
       apiParams.count = count;
     }
-    return this._api.addMessageReaction(this._roomName, serial, apiParams);
+    return this._api.sendMessageReaction(this._roomName, serial, apiParams);
   }
 
   /**

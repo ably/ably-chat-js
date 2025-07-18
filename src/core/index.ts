@@ -53,11 +53,11 @@ export type {
 } from './messages.js';
 export { OrderBy } from './messages.js';
 export type {
-  AddMessageReactionParams,
   DeleteMessageReactionParams,
   MessageRawReactionListener,
   MessageReactionListener,
   MessagesReactions,
+  SendMessageReactionParams,
 } from './messages-reactions.js';
 export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyListener } from './occupancy.js';

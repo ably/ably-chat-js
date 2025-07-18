@@ -12,10 +12,10 @@ import {
   UpdateMessageParams,
 } from '../../core/messages.js';
 import type {
-  AddMessageReactionParams,
   DeleteMessageReactionParams,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   MessagesReactions,
+  SendMessageReactionParams,
 } from '../../core/messages-reactions.js'; // imported for typedoc links
 import { MessageRawReactionListener, MessageReactionListener } from '../../core/messages-reactions.js';
 import { Serial } from '../../core/serial.js';
@@ -155,7 +155,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   );
 
   const sendReaction: Messages['reactions']['send'] = useCallback(
-    (serial: Serial, params: AddMessageReactionParams) =>
+    (serial: Serial, params: SendMessageReactionParams) =>
       context.room.then((room) => room.messages.reactions.send(serial, params)),
     [context],
   );

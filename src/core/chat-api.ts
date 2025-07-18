@@ -92,9 +92,9 @@ interface DeleteMessageParams {
 }
 
 /**
- * Parameters for adding a message reaction.
+ * Parameters for sending a message reaction.
  */
-export interface AddMessageReactionParams {
+export interface SendMessageReactionParams {
   /**
    * The type of reaction, must be one of {@link MessageReactionType}.
    */
@@ -235,7 +235,7 @@ export class ChatApi {
     );
   }
 
-  addMessageReaction(roomName: string, serial: string, data: AddMessageReactionParams): Promise<void> {
+  sendMessageReaction(roomName: string, serial: string, data: SendMessageReactionParams): Promise<void> {
     const encodedSerial = encodeURIComponent(serial);
     roomName = encodeURIComponent(roomName);
     return this._makeAuthorizedRequest(`/chat/v3/rooms/${roomName}/messages/${encodedSerial}/reactions`, 'POST', data);

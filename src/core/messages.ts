@@ -297,7 +297,7 @@ export interface Messages {
   update(serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
-   * Add, delete, and subscribe to message reactions.
+   * Send, delete, and subscribe to message reactions.
    */
   reactions: MessagesReactions;
 }
