@@ -102,6 +102,7 @@ export class DefaultRooms implements Rooms {
   private readonly _releasing = new Map<string, Promise<void>>();
   private readonly _logger: Logger;
   private _isReact = false;
+  private _disposed = false;
 
   /**
    * Constructs a new Rooms instance.
@@ -121,6 +122,13 @@ export class DefaultRooms implements Rooms {
    */
   get(name: string, options?: RoomOptions): Promise<Room> {
     this._logger.trace('Rooms.get();', { roomName: name });
+
+    // Check if the rooms instance has been disposed
+    if (this._disposed) {
+      return Promise.reject(
+        new Ably.ErrorInfo('cannot get room, rooms instance has been disposed', ErrorCode.RoomIsReleased, 400),
+      );
+    }
 
     const existing = this._rooms.get(name);
     if (existing) {
@@ -264,6 +272,9 @@ export class DefaultRooms implements Rooms {
    */
   dispose(): Promise<void> {
     this._logger.trace('Rooms.dispose();');
+
+    // Mark this instance as disposed
+    this._disposed = true;
 
     // Get all room names currently in the map
     const roomNames = [...this._rooms.keys()];
