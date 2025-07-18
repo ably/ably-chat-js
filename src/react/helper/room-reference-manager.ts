@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { dequal } from 'dequal';
 
-import { ChatClient } from '../../core/chat.js';
+import { ChatClient } from '../../core/chat-client.js';
 import { ErrorCode } from '../../core/errors.js';
 import { Logger } from '../../core/logger.js';
 import { Room } from '../../core/room.js';

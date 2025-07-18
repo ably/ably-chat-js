@@ -135,23 +135,13 @@ export class ChatClient {
 
   /**
    * Disposes of the ChatClient instance, cleaning up any resources and rendering it unusable.
-   * This method will throw an error if there are any rooms currently in the rooms map.
-   *
-   * @throws An ErrorInfo with code 40000 if the Rooms instance has any rooms in its map.
+   * This method will release all rooms before disposing of the client.
    */
-  dispose(): void {
+  async dispose(): Promise<void> {
     this._logger.trace('ChatClient.dispose();');
 
-    // Check if there are any rooms in the rooms map
-    if (this._rooms.count > 0) {
-      const error = new Ably.ErrorInfo(
-        'cannot dispose client; rooms still exist, please release all rooms before disposing',
-        40000,
-        400,
-      );
-      this._logger.error('ChatClient.dispose(); cannot dispose with existing rooms', { error });
-      throw error;
-    }
+    // Release all rooms before disposing
+    await this._rooms.dispose();
 
     // Dispose of the connection instance
     this._connection.dispose();

@@ -97,4 +97,121 @@ describe('Rooms', () => {
       }),
     );
   });
+
+  describe('dispose', () => {
+    it('disposes successfully when no rooms exist', async () => {
+      const chat = newChatClient({ logLevel: LogLevel.Silent });
+      await expect(chat.rooms.dispose()).resolves.toBeUndefined();
+      expect(chat.rooms.count).toBe(0);
+    });
+
+    it('disposes a single room', async () => {
+      const chat = newChatClient({ logLevel: LogLevel.Silent });
+      const room = await chat.rooms.get('test-room');
+
+      expect(chat.rooms.count).toBe(1);
+
+      await chat.rooms.dispose();
+
+      expect(chat.rooms.count).toBe(0);
+      expect(room.status).toBe(RoomStatus.Released);
+    });
+
+    it('disposes multiple rooms', async () => {
+      const chat = newChatClient({ logLevel: LogLevel.Silent });
+      const room1 = await chat.rooms.get('test-room-1');
+      const room2 = await chat.rooms.get('test-room-2');
+      const room3 = await chat.rooms.get('test-room-3');
+
+      expect(chat.rooms.count).toBe(3);
+
+      await chat.rooms.dispose();
+
+      expect(chat.rooms.count).toBe(0);
+      expect(room1.status).toBe(RoomStatus.Released);
+      expect(room2.status).toBe(RoomStatus.Released);
+      expect(room3.status).toBe(RoomStatus.Released);
+    });
+
+    it('disposes attached rooms', async () => {
+      const chat = newChatClient({ logLevel: LogLevel.Silent });
+      const room1 = await chat.rooms.get('test-room-attached-1');
+      const room2 = await chat.rooms.get('test-room-attached-2');
+
+      // Attach the rooms
+      await room1.attach();
+      await room2.attach();
+
+      expect(room1.status).toBe(RoomStatus.Attached);
+      expect(room2.status).toBe(RoomStatus.Attached);
+      expect(chat.rooms.count).toBe(2);
+
+      await chat.rooms.dispose();
+
+      expect(chat.rooms.count).toBe(0);
+      expect(room1.status).toBe(RoomStatus.Released);
+      expect(room2.status).toBe(RoomStatus.Released);
+    });
+
+    it('disposes failed rooms', async () => {
+      const chat = newChatClient({ logLevel: LogLevel.Silent });
+      const room = await chat.rooms.get('test-failed-room');
+
+      // Attach the room first
+      await room.attach();
+      expect(room.status).toBe(RoomStatus.Attached);
+
+      // Fail the room
+      const channelFailable = room.channel as Ably.RealtimeChannel & {
+        notifyState(state: 'failed'): void;
+      };
+      channelFailable.notifyState('failed');
+
+      // Wait for room to enter failed state
+      await waitForRoomStatus(room, RoomStatus.Failed);
+      expect(room.status).toBe(RoomStatus.Failed);
+      expect(chat.rooms.count).toBe(1);
+
+      await chat.rooms.dispose();
+
+      expect(chat.rooms.count).toBe(0);
+      expect(room.status).toBe(RoomStatus.Released);
+    });
+
+    it('disposes rooms with mixed states', async () => {
+      const chat = newChatClient({ logLevel: LogLevel.Silent });
+      const initializedRoom = await chat.rooms.get('test-initialized');
+      const attachedRoom = await chat.rooms.get('test-attached');
+
+      // Attach one room, leave the other initialized
+      await attachedRoom.attach();
+
+      expect(initializedRoom.status).toBe(RoomStatus.Initialized);
+      expect(attachedRoom.status).toBe(RoomStatus.Attached);
+      expect(chat.rooms.count).toBe(2);
+
+      await chat.rooms.dispose();
+
+      expect(chat.rooms.count).toBe(0);
+      expect(initializedRoom.status).toBe(RoomStatus.Released);
+      expect(attachedRoom.status).toBe(RoomStatus.Released);
+    });
+
+    it('allows creating new rooms after dispose', async () => {
+      const chat = newChatClient({ logLevel: LogLevel.Silent });
+
+      // Create and dispose rooms
+      await chat.rooms.get('test-room-1');
+      await chat.rooms.get('test-room-2');
+      expect(chat.rooms.count).toBe(2);
+
+      await chat.rooms.dispose();
+      expect(chat.rooms.count).toBe(0);
+
+      // Should be able to create new rooms after dispose
+      const newRoom = await chat.rooms.get('test-room-new');
+      expect(chat.rooms.count).toBe(1);
+      expect(newRoom.status).toBe(RoomStatus.Initialized);
+    });
+  });
 });

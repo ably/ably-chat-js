@@ -46,6 +46,14 @@ export interface Rooms {
   release(name: string): Promise<void>;
 
   /**
+   * Disposes all rooms that are currently in the rooms map.
+   * This method releases all rooms concurrently and clears the rooms map.
+   *
+   * @returns A promise that resolves when all rooms have been released.
+   */
+  dispose(): Promise<void>;
+
+  /**
    * Get the client options used to create the Chat instance.
    * @returns ChatClientOptions
    */
@@ -246,6 +254,33 @@ export class DefaultRooms implements Rooms {
     this._releasing.set(name, releasePromise);
 
     return releasePromise;
+  }
+
+  /**
+   * Disposes all rooms that are currently in the rooms map.
+   * This method releases all rooms concurrently and clears the rooms map.
+   * @internal
+   * @returns A promise that resolves when all rooms have been released.
+   */
+  dispose(): Promise<void> {
+    this._logger.trace('Rooms.dispose();');
+
+    // Get all room names currently in the map
+    const roomNames = [...this._rooms.keys()];
+
+    if (roomNames.length === 0) {
+      this._logger.debug('Rooms.dispose(); no rooms to release');
+      return Promise.resolve();
+    }
+
+    // Release all rooms concurrently
+    const releasePromises = roomNames.map((roomName) => this.release(roomName));
+
+    this._logger.debug('Rooms.dispose(); releasing rooms', { roomCount: roomNames.length, roomNames });
+
+    return Promise.all(releasePromises).then(() => {
+      this._logger.debug('Rooms.dispose(); all rooms released successfully');
+    });
   }
 
   /**
