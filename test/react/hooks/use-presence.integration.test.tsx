@@ -39,17 +39,17 @@ describe('usePresence', () => {
       enterWithData: PresenceData;
       leaveWithData: PresenceData;
     }) => {
-      const { update, isPresent } = usePresence({ enterWithData, leaveWithData });
+      const { update, presenceState } = usePresence({ enterWithData, leaveWithData });
 
       // the effect should send a presence update
       useEffect(() => {
         // wait till we have entered presence
-        if (!isPresent) return;
+        if (!presenceState.isPresent) return;
         // send a presence update event
         setTimeout(() => void update('test update'), 500);
-      }, [isPresent, update]);
+      }, [presenceState.isPresent, update]);
 
-      isPresentState = isPresent;
+      isPresentState = presenceState.isPresent;
 
       return null;
     };
