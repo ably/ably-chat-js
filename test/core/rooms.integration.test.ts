@@ -209,7 +209,7 @@ describe('Rooms', () => {
       expect(chat.rooms.count).toBe(0);
 
       // Should not be able to create new rooms after dispose
-      await expect(chat.rooms.get('test-room-new')).rejects.toBeErrorInfoWithCode(102103);
+      await expect(chat.rooms.get('test-room-new')).rejects.toBeErrorInfoWithCode(40000);
     });
 
     it('should fail when trying to get rooms after dispose', async () => {
@@ -219,16 +219,16 @@ describe('Rooms', () => {
 
       // Any attempt to get a room should fail
       await expect(chat.rooms.get('any-room')).rejects.toBeErrorInfo({
-        code: 102103,
+        code: 40000,
         statusCode: 400,
         message: 'cannot get room, rooms instance has been disposed',
       });
 
       // Multiple calls should all fail
-      await expect(chat.rooms.get('another-room')).rejects.toBeErrorInfoWithCode(102103);
+      await expect(chat.rooms.get('another-room')).rejects.toBeErrorInfoWithCode(40000);
       await expect(
         chat.rooms.get('yet-another-room', { typing: { heartbeatThrottleMs: 1000 } }),
-      ).rejects.toBeErrorInfoWithCode(102103);
+      ).rejects.toBeErrorInfoWithCode(40000);
     });
   });
 });
