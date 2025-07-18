@@ -197,7 +197,7 @@ describe('Rooms', () => {
       expect(attachedRoom.status).toBe(RoomStatus.Released);
     });
 
-    it('allows creating new rooms after dispose', async () => {
+    it('should prevent creating new rooms after dispose', async () => {
       const chat = newChatClient({ logLevel: LogLevel.Silent });
 
       // Create and dispose rooms
@@ -208,10 +208,27 @@ describe('Rooms', () => {
       await chat.rooms.dispose();
       expect(chat.rooms.count).toBe(0);
 
-      // Should be able to create new rooms after dispose
-      const newRoom = await chat.rooms.get('test-room-new');
-      expect(chat.rooms.count).toBe(1);
-      expect(newRoom.status).toBe(RoomStatus.Initialized);
+      // Should not be able to create new rooms after dispose
+      await expect(chat.rooms.get('test-room-new')).rejects.toBeErrorInfoWithCode(102103);
+    });
+
+    it('should fail when trying to get rooms after dispose', async () => {
+      const chat = newChatClient({ logLevel: LogLevel.Silent });
+
+      await chat.rooms.dispose();
+
+      // Any attempt to get a room should fail
+      await expect(chat.rooms.get('any-room')).rejects.toBeErrorInfo({
+        code: 102103,
+        statusCode: 400,
+        message: 'cannot get room, rooms instance has been disposed',
+      });
+
+      // Multiple calls should all fail
+      await expect(chat.rooms.get('another-room')).rejects.toBeErrorInfoWithCode(102103);
+      await expect(
+        chat.rooms.get('yet-another-room', { typing: { heartbeatThrottleMs: 1000 } }),
+      ).rejects.toBeErrorInfoWithCode(102103);
     });
   });
 });
