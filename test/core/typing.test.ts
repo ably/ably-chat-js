@@ -1,8 +1,8 @@
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat.ts';
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ChatClient } from '../../src/core/chat-client.ts';
 import { ConnectionStatus } from '../../src/core/connection.ts';
 import { TypingEventType, TypingSetEvent, TypingSetEventType } from '../../src/core/events.ts';
 import { Logger } from '../../src/core/logger.ts';

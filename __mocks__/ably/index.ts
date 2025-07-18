@@ -58,8 +58,11 @@ function createMockChannel(name: string) {
     annotations: createMockAnnotations(),
     subscribe: async (...args: any[]) => {
       mock.subscriptions.on(...args);
+      return Promise.resolve();
     },
-    unsubscribe: methodReturningVoidPromise,
+    unsubscribe: async (...args: any[]) => {
+      mock.subscriptions.off(...args);
+    },
     on: (...args: any[]) => {
       mock.attachmentStateEmitter.on(...args);
     },
@@ -88,11 +91,19 @@ function createMockChannel(name: string) {
 }
 
 function createMockConnection() {
-  return {
+  const mock = {
     state: 'connected',
     errorReason: new Ably.ErrorInfo('error', 500, 50000),
-    on: methodReturningVoid,
+    on: (...args: any[]) => {
+      mock.eventEmitter.on(...args);
+    },
+    off: (...args: any[]) => {
+      mock.eventEmitter.off(...args);
+    },
+    eventEmitter: createMockEmitter(),
+    listeners: [],
   };
+  return mock;
 }
 
 class MockRealtime {

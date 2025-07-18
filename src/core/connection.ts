@@ -1,8 +1,9 @@
 import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
+import { on } from './realtime-subscriptions.js';
 import { StatusSubscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * The different states that the connection can be in through its lifecycle.
@@ -91,6 +92,12 @@ export interface Connection {
    * @returns An object that can be used to unregister the listener.
    */
   onStatusChange(listener: ConnectionStatusListener): StatusSubscription;
+
+  /**
+   * Disposes of the connection instance, cleaning up any registered listeners.
+   * This method should be called when the connection is no longer needed.
+   */
+  dispose(): void;
 }
 
 type ConnectionEventsMap = Record<ConnectionStatus, ConnectionStatusChange>;
@@ -102,9 +109,9 @@ type ConnectionEventsMap = Record<ConnectionStatus, ConnectionStatusChange>;
 export class DefaultConnection implements Connection {
   private _status: ConnectionStatus = ConnectionStatus.Initialized;
   private _error?: Ably.ErrorInfo;
-  private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
   private _emitter = new EventEmitter<ConnectionEventsMap>();
+  private readonly _clearAblyConnectionListener: () => void;
 
   /**
    * Constructs a new `DefaultConnection` instance.
@@ -119,9 +126,8 @@ export class DefaultConnection implements Connection {
     this._status = this._mapAblyStatusToChat(ably.connection.state);
     this._error = ably.connection.errorReason;
 
-    // Listen for changes to the connection status
-    this._connection = ably.connection;
-    this._connection.on((change: Ably.ConnectionStateChange) => {
+    // Store the listener function so we can dispose of it later
+    const connectionListener = (change: Ably.ConnectionStateChange) => {
       const chatState = this._mapAblyStatusToChat(change.current);
       if (chatState === this._status) {
         return;
@@ -135,7 +141,10 @@ export class DefaultConnection implements Connection {
       };
 
       this._applyStatusChange(stateChange);
-    });
+    };
+
+    // Use subscription helper to create cleanup function
+    this._clearAblyConnectionListener = on(ably.connection, connectionListener);
   }
 
   /**
@@ -164,6 +173,26 @@ export class DefaultConnection implements Connection {
         this._emitter.off(wrapped);
       },
     };
+  }
+
+  /**
+   * @inheritdoc
+   */
+  dispose(): void {
+    this._logger.trace('DefaultConnection.dispose();');
+    // Remove the connection state listener from the Ably connection
+    this._clearAblyConnectionListener();
+    // Clear all listeners from the internal emitter
+    this._emitter.off();
+  }
+
+  /**
+   * Checks if there are any listeners registered on the connection.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    return emitterHasListeners(this._emitter);
   }
 
   private _applyStatusChange(change: ConnectionStatusChange): void {
