@@ -47,31 +47,31 @@ describe('MessagesReactions', () => {
       const { chatApi } = context;
       const timestamp = Date.now();
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
-      vi.spyOn(chatApi, 'addMessageReaction').mockResolvedValue();
+      vi.spyOn(chatApi, 'sendMessageReaction').mockResolvedValue();
 
       const msg = { serial: serial };
 
       await context.room.messages.reactions.send(msg, { type: MessageReactionType.Unique, name: '🥕' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
+      expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Unique,
         name: '🥕',
       });
 
       await context.room.messages.reactions.send(msg, { type: MessageReactionType.Distinct, name: '🥕' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
+      expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '🥕',
       });
 
       await context.room.messages.reactions.send(msg, { type: MessageReactionType.Multiple, name: '🥕' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
+      expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
         count: 1,
       });
 
       await context.room.messages.reactions.send(msg, { type: MessageReactionType.Multiple, name: '🥕', count: 10 });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
+      expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
         count: 10,
@@ -79,7 +79,7 @@ describe('MessagesReactions', () => {
 
       // default is distinct for AllFeaturesEnabled
       await context.room.messages.reactions.send(msg, { name: '👻' });
-      expect(chatApi.addMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
+      expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '👻',
       });
