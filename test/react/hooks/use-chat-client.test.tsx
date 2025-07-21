@@ -59,7 +59,7 @@ describe('useChatClient', () => {
           callback={(client) => {
             expect(client).toBe(chatClient);
             const agents = (client.realtime as RealtimeWithOptions).options.agents;
-            expect(agents).toEqual({ 'chat-js': VERSION, 'chat-react': VERSION, 'chat-ui-kit': '1.0.0' });
+            expect(agents).toEqual({ 'chat-js': VERSION, 'chat-react': VERSION, 'chat-react-ui-components': '1.0.0' });
           }}
         />
       </ChatClientProvider>
