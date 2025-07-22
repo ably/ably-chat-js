@@ -234,6 +234,14 @@ export interface Messages {
   history(options: QueryOptions): Promise<PaginatedResult<Message>>;
 
   /**
+   * Get a message by its serial.
+   *
+   * @param serial The serial of the message to get.
+   * @returns A promise that resolves with the message.
+   */
+  get(serial: Serial): Promise<Message>;
+
+  /**
    * Send a message in the chat room.
    *
    * This method uses the Ably Chat API endpoint for sending messages.
@@ -496,6 +504,14 @@ export class DefaultMessages implements Messages {
   async history(options: QueryOptions): Promise<PaginatedResult<Message>> {
     this._logger.trace('Messages.query();');
     return this._chatApi.history(this._roomName, options);
+  }
+
+  /**
+   * @inheritdoc Messages
+   */
+  get(serial: Serial): Promise<Message> {
+    this._logger.trace('Messages.get();', { serial });
+    return this._chatApi.getMessage(this._roomName, serialToString(serial));
   }
 
   /**
