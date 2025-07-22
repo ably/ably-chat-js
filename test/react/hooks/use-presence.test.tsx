@@ -117,7 +117,7 @@ describe('usePresence', () => {
     expect(result.current.presence).toBe(mockRoom.presence);
   });
 
-  it('should correctly enter presence on render and leave on unmount', async () => {
+  it('should correctly enter presence on render and leave on unmount when autoEnter is true (default)', async () => {
     // spy on the update method of the presence instance
     const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
     const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
@@ -131,7 +131,7 @@ describe('usePresence', () => {
 
     await waitFor(() => result.current.userPresenceState.isPresent, { timeout: 500 });
 
-    // verify that the update method was called
+    // verify that the enter method was called
     expect(enterSpy).toHaveBeenCalledWith({ test: 'enter' });
 
     // unmount the hook
@@ -139,6 +139,45 @@ describe('usePresence', () => {
 
     // verify that the leave method was called
     expect(leaveSpy).toHaveBeenCalledWith({ test: 'leave' });
+  });
+
+  it('should not automatically enter presence on render or leave on unmount when autoEnter is false', async () => {
+    // spy on the enter and leave methods of the presence instance
+    const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+    const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
+
+    const { result, unmount } = renderHook(() =>
+      usePresence({
+        autoEnter: false,
+        enterWithData: { test: 'enter' },
+        leaveWithData: { test: 'leave' },
+      }),
+    );
+
+    // Wait a bit to ensure any async operations would have completed
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Verify that the enter method was NOT called automatically
+    expect(enterSpy).not.toHaveBeenCalled();
+    expect(result.current.userPresenceState.isPresent).toBe(false);
+
+    // Manually enter presence
+    await act(async () => {
+      await result.current.enter({ test: 'manual-enter' });
+    });
+
+    // Verify that the enter method was called with the manual data
+    expect(enterSpy).toHaveBeenCalledExactlyOnceWith({ test: 'manual-enter' });
+    expect(result.current.userPresenceState.isPresent).toBe(true);
+
+    // Reset the spy to check unmount behavior
+    enterSpy.mockReset();
+
+    // unmount the hook
+    unmount();
+
+    // verify that the leave method was NOT called automatically
+    expect(leaveSpy).not.toHaveBeenCalled();
   });
 
   it('should correctly call the update method', async () => {
@@ -156,6 +195,45 @@ describe('usePresence', () => {
     expect(updateSpy).toHaveBeenCalled();
 
     expect(result.current.userPresenceState.isPresent).toBe(true);
+  });
+
+  it('should correctly call the enter method', async () => {
+    // spy on the enter method of the presence instance
+    const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+
+    const { result } = renderHook(() => usePresence({ autoEnter: false }));
+
+    // call the enter method
+    await act(async () => {
+      await result.current.enter({ test: 'data' });
+    });
+
+    // verify that the enter method was called
+    expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+
+    expect(result.current.userPresenceState.isPresent).toBe(true);
+  });
+
+  it('should correctly call the leave method', async () => {
+    // spy on the leave method of the presence instance
+    const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
+
+    const { result } = renderHook(() => usePresence({ autoEnter: false }));
+
+    // First enter presence
+    await act(async () => {
+      await result.current.enter({ test: 'data' });
+    });
+
+    // Then call the leave method
+    await act(async () => {
+      await result.current.leave({ test: 'leave-data' });
+    });
+
+    // verify that the leave method was called
+    expect(leaveSpy).toHaveBeenCalledWith({ test: 'leave-data' });
+
+    expect(result.current.userPresenceState.isPresent).toBe(false);
   });
 
   it('should correctly return any error that occurs', async () => {

@@ -29,6 +29,12 @@ export interface UsePresenceParams extends StatusParams {
    * The data to leave the room with. Any JSON serializable data can be provided.
    */
   leaveWithData?: PresenceData;
+
+  /**
+   * Controls whether to automatically enter presence on mount and leave on unmount.
+   * @default true
+   */
+  autoEnter?: boolean;
 }
 
 export interface UsePresenceResponse extends ChatStatusResponse {
@@ -36,6 +42,16 @@ export interface UsePresenceResponse extends ChatStatusResponse {
    * A shortcut to the {@link Presence.update} method.
    */
   readonly update: Presence['update'];
+
+  /**
+   * A shortcut to the {@link Presence.enter} method.
+   */
+  readonly enter: Presence['enter'];
+
+  /**
+   * A shortcut to the {@link Presence.leave} method.
+   */
+  readonly leave: Presence['leave'];
 
   /**
    * Provides access to the underlying {@link Presence} instance of the room.
@@ -52,7 +68,8 @@ export interface UsePresenceResponse extends ChatStatusResponse {
     isPresent: boolean;
 
     /**
-     * Indicates if an error occurred while trying to enter (on mount) or leave presence (on unmount).
+     * Indicates if an error occurred while trying to enter or leave presence.
+     * This could also occur if the presence re-entry after a network issue fails.
      */
     error?: Ably.ErrorInfo;
   };
@@ -136,8 +153,16 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     roomStatusAndConnectionStatusRef.current = { roomStatus, connectionStatus };
   }, [roomStatus, connectionStatus]);
 
-  // enter the room when the hook is mounted
+  // enter the room when the hook is mounted if autoEnter is true (default)
   useEffect(() => {
+    // Check if autoEnter is enabled (default to true if not specified)
+    const shouldAutoEnter = dataRef.current?.autoEnter !== false;
+
+    if (!shouldAutoEnter) {
+      logger.debug('usePresence(); skipping auto enter due to autoEnter=false');
+      return;
+    }
+
     logger.debug('usePresence(); entering room');
     return wrapRoomPromise(
       context.room,
@@ -173,6 +198,14 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
           });
 
         return () => {
+          // Check if autoEnter is still enabled when unmounting
+          const shouldAutoLeave = dataRef.current?.autoEnter !== false;
+
+          if (!shouldAutoLeave) {
+            logger.debug('usePresence(); skipping auto leave due to autoEnter=false');
+            return;
+          }
+
           const canLeavePresence =
             room.status === RoomStatus.Attached &&
             !INACTIVE_CONNECTION_STATES.has(roomStatusAndConnectionStatusRef.current.connectionStatus);
@@ -237,6 +270,34 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     [context],
   );
 
+  const enter = useCallback(
+    (data?: PresenceData) =>
+      context.room.then((room: Room) => {
+        return room.presence.enter(data).then(() => {
+          setUserPresenceState({
+            isPresent: true,
+            error: undefined,
+          });
+        });
+      }),
+
+    [context],
+  );
+
+  const leave = useCallback(
+    (data?: PresenceData) =>
+      context.room.then((room: Room) => {
+        return room.presence.leave(data).then(() => {
+          setUserPresenceState({
+            isPresent: false,
+            error: undefined,
+          });
+        });
+      }),
+
+    [context],
+  );
+
   return {
     presence: useEventualRoomProperty((room) => room.presence),
     connectionStatus,
@@ -244,6 +305,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     roomStatus,
     roomError,
     update,
+    enter,
+    leave,
     userPresenceState,
   };
 };
