@@ -7,7 +7,7 @@ import { OccupancyData } from './occupancy-parser.js';
 import { PaginatedResult } from './query.js';
 import { messageFromRest, RestMessage } from './rest-types.js';
 
-export interface GetMessagesQueryParams {
+export interface HistoryQueryParams {
   start?: number;
   end?: number;
   orderBy?: OrderBy;
@@ -26,7 +26,7 @@ export interface GetMessagesQueryParams {
  * In the REST API, we currently use the `direction` query parameter to specify the order of messages instead
  * of orderBy. So define this type for conversion purposes.
  */
-type ApiGetMessagesQueryParams = Omit<GetMessagesQueryParams, 'orderBy'> & {
+type ApiHistoryQueryParams = Omit<HistoryQueryParams, 'orderBy'> & {
   direction?: 'forwards' | 'backwards';
 };
 
@@ -142,11 +142,11 @@ export class ChatApi {
     this._logger = logger;
   }
 
-  async getMessages(roomName: string, params: GetMessagesQueryParams): Promise<PaginatedResult<Message>> {
+  async history(roomName: string, params: HistoryQueryParams): Promise<PaginatedResult<Message>> {
     roomName = encodeURIComponent(roomName);
 
     // convert the params into internal format
-    const apiParams: ApiGetMessagesQueryParams = { ...params };
+    const apiParams: ApiHistoryQueryParams = { ...params };
     if (params.orderBy) {
       switch (params.orderBy) {
         case OrderBy.NewestFirst: {
