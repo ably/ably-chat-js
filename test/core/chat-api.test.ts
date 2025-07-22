@@ -64,7 +64,7 @@ describe('config', () => {
       }) as Promise<Ably.HttpPaginatedResponse>,
     );
 
-    await expect(chatApi.getMessages('test', {})).rejects.toBeErrorInfo({
+    await expect(chatApi.history('test', {})).rejects.toBeErrorInfo({
       message: 'test',
       code: 40000,
       statusCode: 400,
@@ -78,7 +78,7 @@ describe('config', () => {
     vi.spyOn(realtime, 'request');
 
     // @ts-expect-error Testing invalid OrderBy
-    await expect(chatApi.getMessages('test', { orderBy: 'foo' })).rejects.toBeErrorInfo({
+    await expect(chatApi.history('test', { orderBy: 'foo' })).rejects.toBeErrorInfo({
       message: 'invalid orderBy value: foo',
       code: 40000,
       statusCode: 400,

@@ -397,7 +397,7 @@ export class DefaultMessages implements Messages {
     const subscriptionPointParams = await subscriptionPoint;
 
     // Query messages from the subscription point to the start of the time window
-    return this._chatApi.getMessages(this._roomName, {
+    return this._chatApi.history(this._roomName, {
       ...params,
       orderBy: OrderBy.NewestFirst,
       ...subscriptionPointParams,
@@ -495,7 +495,7 @@ export class DefaultMessages implements Messages {
    */
   async history(options: QueryOptions): Promise<PaginatedResult<Message>> {
     this._logger.trace('Messages.query();');
-    return this._chatApi.getMessages(this._roomName, options);
+    return this._chatApi.history(this._roomName, options);
   }
 
   /**
