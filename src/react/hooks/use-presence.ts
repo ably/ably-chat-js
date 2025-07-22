@@ -1,7 +1,8 @@
-import { ChannelStateChange, type ErrorInfo } from 'ably';
+import * as Ably from 'ably';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ConnectionStatus } from '../../core/connection.js';
+import { ErrorCode } from '../../core/errors.js';
 import { Presence, PresenceData } from '../../core/presence.js';
 import { Room } from '../../core/room.js';
 import { RoomStatus } from '../../core/room-status.js';
@@ -44,7 +45,7 @@ export interface UsePresenceResponse extends ChatStatusResponse {
   /**
    * The current presence state of this client.
    */
-  readonly presenceState: {
+  readonly userPresenceState: {
     /**
      * Indicates whether the user is present in the room.
      */
@@ -53,7 +54,7 @@ export interface UsePresenceResponse extends ChatStatusResponse {
     /**
      * Indicates if an error occurred while trying to enter (on mount) or leave presence (on unmount).
      */
-    error?: ErrorInfo;
+    error?: Ably.ErrorInfo;
   };
 }
 
@@ -66,7 +67,9 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.S
  * A hook that provides access to the {@link Presence} instance in the room.
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
  * On calling, the hook will `enter` the room with the provided data and `leave` the room when the component unmounts.
- * The {@link UsePresenceResponse.presenceState} can be used to determine if the user is currently present in the room, and if any errors occurred while trying to enter or leave presence.
+ * The {@link UsePresenceResponse.userPresenceState} can be used to determine if the user is currently present in the room, and if any errors occurred while trying to enter or leave presence.
+ * Presence automatically attempts to re-enter the room after a network issue, but if it fails, it will emit an error with code `91004`.
+ * You will need to remount the component to re-attempt entering presence again.
  *
  *
  * @param params - Allows the registering of optional callbacks.
@@ -82,9 +85,9 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   const logger = useRoomLogger();
   logger.trace('usePresence();', { params });
 
-  const [presenceState, setPresenceState] = useState<{
+  const [userPresenceState, setUserPresenceState] = useState<{
     isPresent: boolean;
-    error?: ErrorInfo;
+    error?: Ably.ErrorInfo;
   }>({
     isPresent: false,
     error: undefined,
@@ -103,12 +106,12 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   }, [params]);
 
   useEffect(() => {
-    const onChannelStatusChange = (statusChange: ChannelStateChange) => {
+    const onChannelStatusChange = (statusChange: Ably.ChannelStateChange) => {
       logger.debug('usePresence(); channel status change', { statusChange });
-      if (statusChange.reason?.code === 91004) {
+      if (statusChange.reason?.code === ErrorCode.PresenceAutoReentryFailed) {
         // After some network issue, presence will attempt to re-enter the room. This can fail, if so, it will
         // emit a 91004 error code.
-        setPresenceState({
+        setUserPresenceState({
           isPresent: false,
           error: statusChange.reason,
         });
@@ -155,7 +158,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
           .then(() => {
             logger.debug('usePresence(); entered room');
             // Successfully entered the room, set isPresent and clear any error
-            setPresenceState({
+            setUserPresenceState({
               isPresent: true,
               error: undefined,
             });
@@ -163,9 +166,9 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
           .catch((error: unknown) => {
             logger.error('usePresence(); error entering room', { error });
             // Failed to enter the room, set isPresent to false and store the error
-            setPresenceState({
+            setUserPresenceState({
               isPresent: false,
-              error: error as ErrorInfo,
+              error: error as Ably.ErrorInfo,
             });
           });
 
@@ -184,16 +187,16 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
               .leave(dataRef.current?.leaveWithData)
               .then(() => {
                 logger.debug('usePresence(); left room');
-                setPresenceState({
+                setUserPresenceState({
                   isPresent: false,
                   error: undefined,
                 });
               })
               .catch((error: unknown) => {
                 logger.error('usePresence(); error leaving room', { error });
-                setPresenceState((prevState) => ({
+                setUserPresenceState((prevState) => ({
                   ...prevState,
-                  error: error as ErrorInfo,
+                  error: error as Ably.ErrorInfo,
                 }));
               });
           }
@@ -224,7 +227,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     (data?: PresenceData) =>
       context.room.then((room: Room) => {
         return room.presence.update(data).then(() => {
-          setPresenceState({
+          setUserPresenceState({
             isPresent: true,
             error: undefined,
           });
@@ -241,6 +244,6 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     roomStatus,
     roomError,
     update,
-    presenceState,
+    userPresenceState,
   };
 };
