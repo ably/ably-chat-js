@@ -109,7 +109,9 @@ describe('usePresenceListener', () => {
         clientId: 'client1',
         data: undefined,
         extras: undefined,
-        updatedAt: Date.now(),
+        updatedAt: new Date(),
+        connectionId: 'connection1',
+        encoding: 'json',
       },
     };
     for (const listener of presenceListeners) {
@@ -150,13 +152,17 @@ describe('usePresenceListener', () => {
         clientId: 'client1',
         data: undefined,
         extras: undefined,
-        updatedAt: Date.now(),
+        updatedAt: new Date(),
+        connectionId: 'connection1',
+        encoding: 'json',
       },
       {
         clientId: 'client2',
         data: undefined,
         extras: undefined,
-        updatedAt: Date.now(),
+        updatedAt: new Date(),
+        connectionId: 'connection1',
+        encoding: 'json',
       },
     ];
 
@@ -247,7 +253,9 @@ describe('usePresenceListener', () => {
         clientId: 'client1',
         data: undefined,
         extras: undefined,
-        updatedAt: Date.now(),
+        updatedAt: new Date(),
+        connectionId: 'connection1',
+        encoding: 'json',
       },
     };
 
@@ -308,7 +316,9 @@ describe('usePresenceListener', () => {
             clientId: 'client1',
             data: undefined,
             extras: undefined,
-            updatedAt: Date.now(),
+            updatedAt: new Date(),
+            connectionId: 'connection1',
+            encoding: 'json',
           },
         ]);
       }
@@ -321,7 +331,9 @@ describe('usePresenceListener', () => {
         clientId: 'client1',
         data: undefined,
         extras: undefined,
-        updatedAt: Date.now(),
+        updatedAt: new Date(),
+        connectionId: 'connection1',
+        encoding: 'json',
       },
     });
 
@@ -377,7 +389,9 @@ describe('usePresenceListener', () => {
         clientId: 'client1',
         data: undefined,
         extras: undefined,
-        updatedAt: Date.now(),
+        updatedAt: new Date(),
+        connectionId: 'connection1',
+        encoding: 'json',
       },
     ];
 
@@ -386,7 +400,9 @@ describe('usePresenceListener', () => {
         clientId: 'client2',
         data: undefined,
         extras: undefined,
-        updatedAt: Date.now(),
+        updatedAt: new Date(),
+        connectionId: 'connection1',
+        encoding: 'json',
       },
     ];
 
@@ -417,7 +433,9 @@ describe('usePresenceListener', () => {
         clientId: 'client1',
         data: undefined,
         extras: undefined,
-        updatedAt: Date.now(),
+        updatedAt: new Date(),
+        connectionId: 'connection1',
+        encoding: 'json',
       },
     });
 
@@ -433,7 +451,9 @@ describe('usePresenceListener', () => {
         clientId: 'client2',
         data: undefined,
         extras: undefined,
-        updatedAt: Date.now(),
+        updatedAt: new Date(),
+        connectionId: 'connection1',
+        encoding: 'json',
       },
     });
 
