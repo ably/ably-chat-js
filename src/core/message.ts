@@ -495,10 +495,8 @@ export class DefaultMessage implements Message {
   }
 }
 
-export function emptyMessageReactions(): MessageReactions {
-  return {
-    unique: {},
-    distinct: {},
-    multiple: {},
-  };
-}
+export const emptyMessageReactions = (): MessageReactions => ({
+  unique: {},
+  distinct: {},
+  multiple: {},
+});

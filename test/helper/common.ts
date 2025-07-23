@@ -4,11 +4,11 @@ import { expect, vi } from 'vitest';
 import { OccupancyEvent, PresenceEventType } from '../../src/core/events.ts';
 import { PresenceEvent } from '../../src/core/presence.ts';
 
-export function waitForExpectedInbandOccupancy(
+export const waitForExpectedInbandOccupancy = (
   occupancyEvents: OccupancyEvent[],
   expectedOccupancy: OccupancyEvent,
   timeoutMs: number,
-): Promise<void> {
+): Promise<void> => {
   return vi.waitFor(
     () => {
       const occupancy = occupancyEvents.find(
@@ -21,7 +21,7 @@ export function waitForExpectedInbandOccupancy(
     },
     { timeout: timeoutMs, interval: 1000 },
   );
-}
+};
 
 export const waitForArrayLength = async (array: unknown[], expectedCount: number, timeoutMs = 3000): Promise<void> => {
   await vi.waitFor(

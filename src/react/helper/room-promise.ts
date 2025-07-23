@@ -138,6 +138,10 @@ class DefaultRoomPromise implements RoomPromise {
  * @param logger The logger to use for logging.
  * @returns A RoomPromise instance that can be used to clean up resources.
  */
-export function wrapRoomPromise(room: Promise<Room>, onResolve: RoomResolutionCallback, logger: Logger): RoomPromise {
+export const wrapRoomPromise = (
+  room: Promise<Room>,
+  onResolve: RoomResolutionCallback,
+  logger: Logger,
+): RoomPromise => {
   return new DefaultRoomPromise(room, onResolve, logger);
-}
+};

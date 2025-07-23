@@ -245,7 +245,7 @@ describe('ChatRoomProvider', () => {
       });
 
       const { status } = useRoomStatus({
-        onRoomStatusChange(change) {
+        onRoomStatusChange: (change) => {
           statusMap.set(id, change.current);
 
           // On the first render, where we're actually attached, send a message

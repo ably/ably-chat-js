@@ -33,7 +33,7 @@ interface OccupancyPayload {
  * @param message The Ably message containing occupancy data
  * @returns Parsed occupancy data with fallback values for invalid fields
  */
-export function parseOccupancyMessage(message: Ably.InboundMessage): OccupancyData {
+export const parseOccupancyMessage = (message: Ably.InboundMessage): OccupancyData => {
   const payload = message as OccupancyPayload;
   let connections = 0;
   let presenceMembers = 0;
@@ -61,4 +61,4 @@ export function parseOccupancyMessage(message: Ably.InboundMessage): OccupancyDa
   }
 
   return { connections, presenceMembers };
-}
+};

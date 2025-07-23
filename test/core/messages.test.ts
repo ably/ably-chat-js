@@ -743,9 +743,7 @@ describe('Messages', () => {
       // Set the serial of the channel attach
       channel.properties.attachSerial = testAttachSerial;
 
-      vi.spyOn(channel, 'whenState').mockImplementation(function () {
-        return Promise.resolve(null);
-      });
+      vi.spyOn(channel, 'whenState').mockImplementation(() => Promise.resolve(null));
 
       // Subscribe to the messages
       const { historyBeforeSubscribe } = room.messages.subscribe(() => {});

@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import js from '@eslint/js';
 import { FlatCompat } from '@eslint/eslintrc';
+import preferArrowFunctions from 'eslint-plugin-prefer-arrow-functions';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -64,6 +65,7 @@ export default [
       import: fixupPluginRules(_import),
       'simple-import-sort': simpleImportSort,
       pluginCompat: fixupPluginRules(pluginCompat),
+      'prefer-arrow-functions': fixupPluginRules(preferArrowFunctions),
     },
 
     languageOptions: {
@@ -98,6 +100,19 @@ export default [
       'unicorn/filename-case': 'error',
       'node/no-missing-import': 'off',
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
+
+      'prefer-arrow-functions/prefer-arrow-functions': [
+        'error',
+        {
+          allowedNames: [],
+          allowNamedFunctions: false,
+          allowObjectProperties: false,
+          classPropertiesAllowed: false,
+          disallowPrototype: false,
+          returnStyle: 'unchanged',
+          singleReturnOnly: false,
+        },
+      ],
 
       '@typescript-eslint/naming-convention': [
         'error',
