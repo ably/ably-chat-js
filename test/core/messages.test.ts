@@ -38,16 +38,14 @@ interface MockPaginatedResult {
   isLast(): boolean;
 }
 
-const mockPaginatedResultWithItems = (items: Message[]): MockPaginatedResult => {
-  return {
-    items,
-    first: () => Promise.resolve(mockPaginatedResultWithItems(items)),
-    next: () => Promise.resolve(null),
-    current: () => Promise.resolve(mockPaginatedResultWithItems(items)),
-    hasNext: () => false,
-    isLast: () => true,
-  };
-};
+const mockPaginatedResultWithItems = (items: Message[]): MockPaginatedResult => ({
+  items,
+  first: () => Promise.resolve(mockPaginatedResultWithItems(items)),
+  next: () => Promise.resolve(null),
+  current: () => Promise.resolve(mockPaginatedResultWithItems(items)),
+  hasNext: () => false,
+  isLast: () => true,
+});
 
 vi.mock('ably');
 
@@ -931,9 +929,7 @@ describe('Messages', () => {
         };
       };
 
-      vi.spyOn(channel, 'whenState').mockImplementation(() => {
-        return Promise.resolve(null);
-      });
+      vi.spyOn(channel, 'whenState').mockImplementation(() => Promise.resolve(null));
 
       // Set the serials for the channel
       channel.properties.channelSerial = firstChannelSerial;
@@ -1020,9 +1016,7 @@ describe('Messages', () => {
       };
 
       // Mock the whenState to resolve immediately
-      vi.spyOn(channel, 'whenState').mockImplementation(() => {
-        return Promise.resolve(null);
-      });
+      vi.spyOn(channel, 'whenState').mockImplementation(() => Promise.resolve(null));
 
       // Set the serials for the channel
       channel.properties.channelSerial = firstChannelSerial;

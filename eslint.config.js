@@ -100,6 +100,7 @@ export default [
       'unicorn/filename-case': 'error',
       'node/no-missing-import': 'off',
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      'arrow-body-style': ['error', 'as-needed'],
 
       'prefer-arrow-functions/prefer-arrow-functions': [
         'error',

@@ -14,18 +14,15 @@ import { makeTestLogger } from './logger.ts';
 import { ablyRealtimeClient } from './realtime-client.ts';
 
 // Wait 3 seconds for the room to reach the expected status
-export const waitForRoomStatus = async (room: Room, expected: RoomStatus) => {
-  return vi.waitUntil(() => room.status === expected, 3000);
-};
+export const waitForRoomStatus = async (room: Room, expected: RoomStatus) =>
+  vi.waitUntil(() => room.status === expected, 3000);
 
-export const waitForRoomLifecycleStatus = async (lifecycle: RoomLifecycle, expected: RoomStatus) => {
-  return vi.waitUntil(() => lifecycle.status === expected, 3000);
-};
+export const waitForRoomLifecycleStatus = async (lifecycle: RoomLifecycle, expected: RoomStatus) =>
+  vi.waitUntil(() => lifecycle.status === expected, 3000);
 
 // Wait 3 seconds for the room error to reach an expected code
-export const waitForRoomError = async (status: RoomLifecycle, expected: ErrorCode) => {
-  return vi.waitUntil(() => status.error?.code === expected, 3000);
-};
+export const waitForRoomError = async (status: RoomLifecycle, expected: ErrorCode) =>
+  vi.waitUntil(() => status.error?.code === expected, 3000);
 
 // Gets a random room with default options from the chat client
 export const getRandomRoom = async (chat: ChatClient, options?: RoomOptions): Promise<Room> =>

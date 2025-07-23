@@ -445,12 +445,12 @@ describe('RoomLifecycleManager', () => {
       // Arrange
       let shouldAttach = false;
       let attachCalled = false;
-      mockChannel.attach = vi.fn().mockImplementation(() => {
-        return vi.waitFor(() => {
+      mockChannel.attach = vi.fn().mockImplementation(() =>
+        vi.waitFor(() => {
           attachCalled = true;
           expect(shouldAttach).toBeTruthy();
-        });
-      });
+        }),
+      );
       void roomLifeCycleManager.attach();
 
       // Wait for attachCalled
@@ -488,12 +488,12 @@ describe('RoomLifecycleManager', () => {
       // Arrange
       let shouldDetach = false;
       let detachCalled = false;
-      mockChannel.detach = vi.fn().mockImplementation(() => {
-        return vi.waitFor(() => {
+      mockChannel.detach = vi.fn().mockImplementation(() =>
+        vi.waitFor(() => {
           detachCalled = true;
           expect(shouldDetach).toBeTruthy();
-        });
-      });
+        }),
+      );
       void roomLifeCycleManager.detach();
 
       // Wait for detachCalled
@@ -532,12 +532,12 @@ describe('RoomLifecycleManager', () => {
       roomStatus.setStatus({ status: RoomStatus.Attached });
       let shouldDetach = false;
       let detachCalled = false;
-      mockChannel.detach = vi.fn().mockImplementation(() => {
-        return vi.waitFor(() => {
+      mockChannel.detach = vi.fn().mockImplementation(() =>
+        vi.waitFor(() => {
           detachCalled = true;
           expect(shouldDetach).toBeTruthy();
-        });
-      });
+        }),
+      );
       void roomLifeCycleManager.release();
 
       // Wait for releaseCalled

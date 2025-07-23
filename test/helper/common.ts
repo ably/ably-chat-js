@@ -8,8 +8,8 @@ export const waitForExpectedInbandOccupancy = (
   occupancyEvents: OccupancyEvent[],
   expectedOccupancy: OccupancyEvent,
   timeoutMs: number,
-): Promise<void> => {
-  return vi.waitFor(
+): Promise<void> =>
+  vi.waitFor(
     () => {
       const occupancy = occupancyEvents.find(
         (occupancy) =>
@@ -21,7 +21,6 @@ export const waitForExpectedInbandOccupancy = (
     },
     { timeout: timeoutMs, interval: 1000 },
   );
-};
 
 export const waitForArrayLength = async (array: unknown[], expectedCount: number, timeoutMs = 3000): Promise<void> => {
   await vi.waitFor(
@@ -35,8 +34,8 @@ export const waitForArrayLength = async (array: unknown[], expectedCount: number
 export const waitForExpectedPresenceEvent = (
   event: { clientId: string; data: unknown; type: PresenceEventType },
   presenceEvents: PresenceEvent[],
-): Promise<void> => {
-  return vi.waitFor(
+): Promise<void> =>
+  vi.waitFor(
     () => {
       const matchingEvent = presenceEvents.find(
         (presenceEvent) =>
@@ -56,4 +55,3 @@ export const waitForExpectedPresenceEvent = (
     },
     { timeout: 20000, interval: 100 },
   );
-};

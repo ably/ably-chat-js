@@ -87,32 +87,34 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
   }, [context, onDiscontinuityRef, logger]);
 
   // subscribe to occupancy events internally, to update the state metrics
-  useEffect(() => {
-    return wrapRoomPromise(
-      context.room,
-      (room) => {
-        logger.debug('useOccupancy(); applying internal listener');
-        // Set the initial metrics from current(), or 0 if not available
-        const currentOccupancy = room.occupancy.current();
-        setOccupancyMetrics({
-          connections: currentOccupancy?.connections ?? 0,
-          presenceMembers: currentOccupancy?.presenceMembers ?? 0,
-        });
-
-        const { unsubscribe } = room.occupancy.subscribe((occupancyEvent) => {
+  useEffect(
+    () =>
+      wrapRoomPromise(
+        context.room,
+        (room) => {
+          logger.debug('useOccupancy(); applying internal listener');
+          // Set the initial metrics from current(), or 0 if not available
+          const currentOccupancy = room.occupancy.current();
           setOccupancyMetrics({
-            connections: occupancyEvent.occupancy.connections,
-            presenceMembers: occupancyEvent.occupancy.presenceMembers,
+            connections: currentOccupancy?.connections ?? 0,
+            presenceMembers: currentOccupancy?.presenceMembers ?? 0,
           });
-        });
-        return () => {
-          logger.debug('useOccupancy(); cleaning up internal listener');
-          unsubscribe();
-        };
-      },
-      logger,
-    ).unmount();
-  }, [context, logger]);
+
+          const { unsubscribe } = room.occupancy.subscribe((occupancyEvent) => {
+            setOccupancyMetrics({
+              connections: occupancyEvent.occupancy.connections,
+              presenceMembers: occupancyEvent.occupancy.presenceMembers,
+            });
+          });
+          return () => {
+            logger.debug('useOccupancy(); cleaning up internal listener');
+            unsubscribe();
+          };
+        },
+        logger,
+      ).unmount(),
+    [context, logger],
+  );
 
   // if provided, subscribes the user provided listener to occupancy events
   useEffect(() => {

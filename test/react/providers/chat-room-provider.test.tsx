@@ -43,20 +43,18 @@ describe('ChatRoomProvider', () => {
       const options = {};
 
       // Create a component that we can show/hide
-      const TestComponent = () => {
-        return (
-          <StrictMode>
-            <ChatClientProvider client={context.mockChatClient}>
-              <ChatRoomProvider
-                name="test-room"
-                options={options}
-              >
-                <div>Test Content</div>
-              </ChatRoomProvider>
-            </ChatClientProvider>
-          </StrictMode>
-        );
-      };
+      const TestComponent = () => (
+        <StrictMode>
+          <ChatClientProvider client={context.mockChatClient}>
+            <ChatRoomProvider
+              name="test-room"
+              options={options}
+            >
+              <div>Test Content</div>
+            </ChatRoomProvider>
+          </ChatClientProvider>
+        </StrictMode>
+      );
 
       // Initial render
       render(<TestComponent />, { reactStrictMode: true });

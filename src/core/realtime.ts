@@ -8,15 +8,13 @@ import * as Ably from 'ably';
  * @param data Optional data to send with the event.
  * @returns An Ably message.
  */
-export const ephemeralMessage = (name: string, data?: unknown): Ably.Message => {
-  return {
-    name: name,
-    data: data,
-    extras: {
-      ephemeral: true,
-    },
-  };
-};
+export const ephemeralMessage = (name: string, data?: unknown): Ably.Message => ({
+  name: name,
+  data: data,
+  extras: {
+    ephemeral: true,
+  },
+});
 
 /**
  * Takes an existing Ably message and converts it to an ephemeral message by adding

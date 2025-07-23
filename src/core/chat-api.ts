@@ -178,10 +178,10 @@ export class ChatApi {
 
     // Recursively map the next paginated data
     paginatedResult.next = () =>
-      data.next().then((nextData) => {
+      data.next().then((nextData) =>
         // eslint-disable-next-line unicorn/no-null
-        return nextData ? this._recursivePaginateMessages(nextData) : null;
-      });
+        nextData ? this._recursivePaginateMessages(nextData) : null,
+      );
 
     paginatedResult.first = () => data.first().then((firstData) => this._recursivePaginateMessages(firstData));
 

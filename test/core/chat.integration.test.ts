@@ -11,8 +11,8 @@ import { testClientOptions } from '../helper/options.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { getRandomRoom } from '../helper/room.ts';
 
-const waitForConnectionStatus = (chat: ChatClient, state: ConnectionStatus) => {
-  return new Promise<void>((resolve, reject) => {
+const waitForConnectionStatus = (chat: ChatClient, state: ConnectionStatus) =>
+  new Promise<void>((resolve, reject) => {
     const { off } = chat.connection.onStatusChange((change) => {
       if (change.current === state) {
         off();
@@ -26,7 +26,6 @@ const waitForConnectionStatus = (chat: ChatClient, state: ConnectionStatus) => {
       reject(new Error(`Connection state ${state} not reached`));
     }, 5000);
   });
-};
 
 describe('Chat', () => {
   let connectSpy: ReturnType<typeof vi.spyOn>;

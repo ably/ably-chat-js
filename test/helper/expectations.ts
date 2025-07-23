@@ -1,9 +1,7 @@
 import * as Ably from 'ably';
 import { expect } from 'vitest';
 
-const extractExpectedKeys = (expected: unknown): Set<string> => {
-  return new Set(Object.keys(expected as Ably.ErrorInfo));
-};
+const extractExpectedKeys = (expected: unknown): Set<string> => new Set(Object.keys(expected as Ably.ErrorInfo));
 
 const actualErrorInfo = (received: unknown, expected: unknown): Record<string, unknown> => {
   const commonKeys = extractExpectedKeys(expected);
@@ -53,22 +51,18 @@ export const toBeErrorInfo = (received: unknown, expected: ErrorInfoCompareType)
 
   return {
     pass: causeMatch && codeMatch && statusCodeMatch && messageMatch,
-    message: () => {
-      return `Expected matching ErrorInfo`;
-    },
+    message: () => `Expected matching ErrorInfo`,
     expected: expected,
     actual: actualErrorInfo(received, expected),
   };
 };
 
-const toBeErrorInfoWithCode = (received: unknown, expected: number) => {
-  return {
-    pass: received instanceof Ably.ErrorInfo && received.code === expected,
-    message: () => `Expected ErrorInfo with matching code`,
-    expected: expected,
-    actual: (received as Ably.ErrorInfo).code,
-  };
-};
+const toBeErrorInfoWithCode = (received: unknown, expected: number) => ({
+  pass: received instanceof Ably.ErrorInfo && received.code === expected,
+  message: () => `Expected ErrorInfo with matching code`,
+  expected: expected,
+  actual: (received as Ably.ErrorInfo).code,
+});
 
 expect.extend({
   toBeErrorInfo,
