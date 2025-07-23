@@ -56,7 +56,7 @@ export const ChatClientProvider = ({ children, client }: ChatClientProviderProps
         client as unknown as {
           addAgentWithVersion(agent: string, version: string): void;
         }
-      ).addAgentWithVersion('chat-ui-kit', uiKitVersion);
+      ).addAgentWithVersion('chat-react-ui-components', uiKitVersion);
     }
 
     return {
