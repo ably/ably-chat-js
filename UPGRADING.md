@@ -17,7 +17,7 @@ The `send()` and `update()` methods returned by the `useMessages` React hook hav
 **Before**
 
 ```ts
-import { useMessages } from '@ably/chat/react`
+import { useMessages } from '@ably/chat/react';
 
 const { send, update } = useMessages();
 ```
@@ -25,7 +25,7 @@ const { send, update } = useMessages();
 **After**
 
 ```ts
-import { useMessages } from '@ably/chat/react`
+import { useMessages } from '@ably/chat/react';
 
 const { sendMessage, updateMessage } = useMessages();
 ```
@@ -37,7 +37,7 @@ The `send()` method in the `useRoomReactions` React hook has been renamed to avo
 **Before**
 
 ```ts
-import { useMessages } from '@ably/chat/react`
+import { useRoomReactions } from '@ably/chat/react';
 
 const { send } = useRoomReactions();
 ```
@@ -45,7 +45,7 @@ const { send } = useRoomReactions();
 **After**
 
 ```ts
-import { useMessages } from '@ably/chat/react`
+import { useRoomReactions } from '@ably/chat/react';
 
 const { sendRoomReactions } = useRoomReactions();
 ```
