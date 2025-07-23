@@ -2,6 +2,23 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.11.0](https://github.com/ably/ably-chat-js/tree/0.11.0) (2025-01-23)
+
+### Breaking Changes
+
+This release contains breaking API changes. Please see `UPGRADING.md` for full guidance on upgrading from version 0.10.0.
+
+- **useMessages Helpers Rename**: Renamed `send()` to `sendMessage()`, `send()` to `sendRoomReaction()` and `update()` to `updateMessage()` in the `useMessages` hook for clarity. [#595](https://github.com/ably/ably-chat-js/pull/595)
+- **useRoomReactions Helpers Rename**: Renamed `send()` to `sendRoomReaction()` in the `useRoomReactions` hook for clarity. [#595](https://github.com/ably/ably-chat-js/pull/595)
+- **Message Reactions Method Rename**: Renamed `add()` to `send()` in the Message Reactions interface. [#603](https://github.com/ably/ably-chat-js/pull/603)
+- **Typing Event Enum**: Renamed `TypingEventType` values to match to `Started` and `Stopped`. [#599](https://github.com/ably/ably-chat-js/pull/599)
+- **Presence Data Structure**: Updated presence member structure to include `connectionId` and changed `updatedAt` to use Date type. [#600](https://github.com/ably/ably-chat-js/pull/600)
+
+### Improvements
+
+- **React Room Management**: Improved room management in React via reference counting for better resource management. [#572](https://github.com/ably/ably-chat-js/pull/572)
+- **Logging**: Added random identifier to chat client logging context for better debugging. [#609](https://github.com/ably/ably-chat-js/pull/609)
+
 ## [0.10.0](https://github.com/ably/ably-chat-js/tree/0.10.0) (2025-01-08)
 
 ### Breaking Changes
