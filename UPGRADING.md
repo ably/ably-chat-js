@@ -32,7 +32,7 @@ const { sendMessage, updateMessage } = useMessages();
 
 #### useRoomReactions Hook
 
-The `send()` method in the `useRoomReactions` React hook has been renamed to avoid ambiguity and clashes with `useMessages` if being used in the same component.
+The `send()` method in the `useRoomReactions` React hook has been renamed to `sendRoomReaction()` to avoid ambiguity and clashes with `useMessages` when both hooks are used in the same component.
 
 **Before**
 
