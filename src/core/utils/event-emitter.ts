@@ -89,6 +89,10 @@ export const wrap = <Args extends unknown[], Return>(fn: (...args: Args) => Retu
 
 /**
  * Checks if an EventEmitter has any listeners registered.
+ * This is reliant on the internal structure of ably-js's EventEmitter type, but we control that so it's
+ * safe to use.
+ *
+ * @internal
  * @param emitter The EventEmitter instance to check
  * @returns true if the emitter has listeners, false otherwise
  */

@@ -196,6 +196,8 @@ export class DefaultRoomReactions implements RoomReactions {
    * @internal
    */
   dispose(): void {
+    this._logger.trace('DefaultRoomReactions.dispose();');
+
     // Remove room reaction event subscriptions using stored unsubscribe function
     this._unsubscribeRoomReactionEvents();
 

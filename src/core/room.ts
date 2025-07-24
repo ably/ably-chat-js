@@ -206,6 +206,8 @@ export class DefaultRoom implements Room {
     // Setup a finalization function to clean up resources
     let finalized = false;
     this._finalizer = async () => {
+      this._logger.trace('Room.finalizer();');
+
       // Cycle the channels in the feature and release them from the realtime client
       if (finalized) {
         this._logger.debug('Room.finalizer(); already finalized');

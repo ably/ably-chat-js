@@ -281,6 +281,8 @@ export class RoomLifecycleManager {
    * @internal
    */
   dispose(): void {
+    this._logger.trace('RoomLifecycleManager.dispose();');
+
     // Clean up channel listeners using stored unsubscribe functions
     this._unsubscribeChannelStateListener();
     this._offDiscontinuityAttached();
