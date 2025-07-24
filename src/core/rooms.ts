@@ -226,7 +226,7 @@ export class DefaultRooms implements Rooms {
       throw new Ably.ErrorInfo('room already exists with different options', 40000, 400);
     }
 
-    this._logger.debug('Rooms.get(); returning existing room', {
+    this._logger.debug('Rooms._handleExistingRoom(); returning existing room', {
       roomName: name,
       nonce: existingRoom.nonce,
       options,
@@ -247,7 +247,7 @@ export class DefaultRooms implements Rooms {
     };
 
     this._rooms.set(name, entry);
-    this._logger.debug('Rooms.get(); returning new room', { roomName: name, nonce: room.nonce });
+    this._logger.debug('Rooms._createNewRoom(); returning new room', { roomName: name, nonce: room.nonce });
     return room; // No need to await Promise.resolve(room)
   }
 
@@ -271,7 +271,9 @@ export class DefaultRooms implements Rooms {
       abort: abortController,
     });
 
-    this._logger.debug('Rooms.get(); creating new promise dependent on previous release', { roomName: name });
+    this._logger.debug('Rooms._waitForReleaseAndCreateRoom(); creating new promise dependent on previous release', {
+      roomName: name,
+    });
     return await roomPromise;
   }
 
@@ -288,7 +290,7 @@ export class DefaultRooms implements Rooms {
   ): Promise<DefaultRoom> {
     return new Promise<DefaultRoom>((resolve, reject) => {
       const abortListener = () => {
-        this._logger.debug('Rooms.get(); aborted before init', { roomName: name });
+        this._logger.debug('Rooms._createAbortableRoomPromise(); aborted before init', { roomName: name });
         reject(
           new Ably.ErrorInfo(
             'room released before get operation could complete',
@@ -303,11 +305,13 @@ export class DefaultRooms implements Rooms {
       ongoingRelease
         .then(() => {
           if (abortController.signal.aborted) {
-            this._logger.debug('Rooms.get(); aborted before releasing promise resolved', { roomName: name });
+            this._logger.debug('Rooms._createAbortableRoomPromise(); aborted before releasing promise resolved', {
+              roomName: name,
+            });
             return;
           }
 
-          this._logger.debug('Rooms.get(); releasing finished', { roomName: name });
+          this._logger.debug('Rooms._createAbortableRoomPromise(); releasing finished', { roomName: name });
           const room = this._makeRoom(name, nonce, options);
           abortController.signal.removeEventListener('abort', abortListener);
           resolve(room);
@@ -325,12 +329,14 @@ export class DefaultRooms implements Rooms {
    */
   private async _handleNonExistentRoomRelease(name: string, ongoingRelease?: Promise<void>): Promise<void> {
     if (ongoingRelease) {
-      this._logger.debug('Rooms.release(); waiting for previous release call', { roomName: name });
+      this._logger.debug('Rooms._handleNonExistentRoomRelease(); waiting for previous release call', {
+        roomName: name,
+      });
       await ongoingRelease;
       return;
     }
 
-    this._logger.debug('Rooms.release(); room does not exist', { roomName: name });
+    this._logger.debug('Rooms._handleNonExistentRoomRelease(); room does not exist', { roomName: name });
   }
 
   /**
@@ -343,7 +349,7 @@ export class DefaultRooms implements Rooms {
     ongoingRelease: Promise<void>,
   ): Promise<void> {
     if (existingRoom.abort) {
-      this._logger.debug('Rooms.release(); aborting get call', {
+      this._logger.debug('Rooms._handleConcurrentRelease(); aborting get call', {
         roomName: name,
         existingNonce: existingRoom.nonce,
       });
@@ -364,7 +370,7 @@ export class DefaultRooms implements Rooms {
     const releasePromise = this._executeRoomRelease(name, existingRoom);
     this._releasing.set(name, releasePromise);
 
-    this._logger.debug('Rooms.release(); creating new release promise', {
+    this._logger.debug('Rooms._performRoomRelease(); creating new release promise', {
       roomName: name,
       nonce: existingRoom.nonce,
     });
@@ -378,9 +384,9 @@ export class DefaultRooms implements Rooms {
    */
   private async _executeRoomRelease(name: string, existingRoom: RoomMapEntry): Promise<void> {
     const room = await existingRoom.promise;
-    this._logger.debug('Rooms.release(); releasing room', { roomName: name, nonce: existingRoom.nonce });
+    this._logger.debug('Rooms._executeRoomRelease(); releasing room', { roomName: name, nonce: existingRoom.nonce });
     await room.release();
-    this._logger.debug('Rooms.release(); room released', { roomName: name, nonce: existingRoom.nonce });
+    this._logger.debug('Rooms._executeRoomRelease(); room released', { roomName: name, nonce: existingRoom.nonce });
     this._releasing.delete(name);
   }
 

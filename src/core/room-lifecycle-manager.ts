@@ -300,7 +300,7 @@ export class RoomLifecycleManager {
   }
 
   private _channelStateListener(stateChange: Ably.ChannelStateChange): void {
-    this._logger.debug('RoomLifecycleManager.channel state changed', {
+    this._logger.debug('RoomLifecycleManager._channelStateListener state changed', {
       oldState: stateChange.previous,
       newState: stateChange.current,
       reason: stateChange.reason,
@@ -310,7 +310,7 @@ export class RoomLifecycleManager {
     // CHA-RL11b
     if (this._operationInProgress()) {
       this._logger.debug(
-        'RoomLifecycleManager._startMonitoringChannelState(); ignoring channel state change - operation in progress',
+        'RoomLifecycleManager._channelStateListener(); ignoring channel state change - operation in progress',
         {
           status: this._roomLifecycle.status,
         },
@@ -332,7 +332,7 @@ export class RoomLifecycleManager {
         stateChange.reason,
       );
 
-      this._logger.warn('RoomLifecycleManager._startMonitoringDiscontinuity(); discontinuity detected', {
+      this._logger.warn('RoomLifecycleManager._discontinuityOnAttachedListener(); discontinuity detected', {
         error,
       });
       this._eventEmitter.emit(RoomEventType.Discontinuity, error);
@@ -354,7 +354,7 @@ export class RoomLifecycleManager {
         stateChange.reason,
       );
 
-      this._logger.warn('RoomLifecycleManager._startMonitoringDiscontinuity(); discontinuity detected', {
+      this._logger.warn('RoomLifecycleManager._discontinuityOnUpdateListener(); discontinuity detected', {
         error,
       });
       this._eventEmitter.emit(RoomEventType.Discontinuity, error);
