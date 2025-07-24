@@ -2,6 +2,133 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 0.10.x to 0.11.x
+
+### Method Renames
+
+**Expected Impact: High**
+
+Several methods have been renamed for clarity and consistency.
+
+#### useMessages Hook
+
+The `send()` and `update()` methods returned by the `useMessages` React hook have been renamed for clarity and consistency.
+
+**Before**
+
+```ts
+import { useMessages } from '@ably/chat/react';
+
+const { send, update } = useMessages();
+```
+
+**After**
+
+```ts
+import { useMessages } from '@ably/chat/react';
+
+const { sendMessage, updateMessage } = useMessages();
+```
+
+#### useRoomReactions Hook
+
+The `send()` method in the `useRoomReactions` React hook has been renamed to `sendRoomReaction()` to avoid ambiguity and clashes with `useMessages` when both hooks are used in the same component.
+
+**Before**
+
+```ts
+import { useRoomReactions } from '@ably/chat/react';
+
+const { send } = useRoomReactions();
+```
+
+**After**
+
+```ts
+import { useRoomReactions } from '@ably/chat/react';
+
+const { sendRoomReactions } = useRoomReactions();
+```
+
+### Typing Event Enum Values
+
+**Expected Impact: Medium**
+
+The `TypingEventType` enum values have been renamed.
+
+**Before**
+
+```ts
+import { TypingEventType } from '@ably/chat';
+
+TypingEventType.Start
+TypingEventType.Stop
+```
+
+**After**
+
+```ts
+import { TypingEventType } from '@ably/chat';
+
+TypingEventType.Started
+TypingEventType.Stopped
+```
+
+### Presence Data Structure Changes
+
+**Expected Impact: High**
+
+The presence member structure has been updated:
+
+**Before**
+
+```ts
+interface PresenceMember {
+  clientId: string;
+  data?: any;
+  updatedAt: number; // timestamp
+  // other fields...
+}
+```
+
+**After**
+
+```ts
+interface PresenceMember {
+  clientId: string;
+  connectionId: string; // New field
+  data?: any;
+  updatedAt: Date; // Now uses Date type instead of number
+  // other fields...
+}
+```
+
+#### Code Changes Required
+
+If you were accessing presence member data:
+
+**Before**
+
+```ts
+room.presence.subscribe((event) => {
+  const member = event.member;
+  const timestamp = member.updatedAt; // number
+  console.log('Updated at:', new Date(timestamp));
+});
+```
+
+**After**
+
+```ts
+room.presence.subscribe((event) => {
+  const member = event.member;
+  const date = member.updatedAt; // Date
+  const connectionId = member.connectionId; // New field available
+  console.log('Updated at:', date);
+  console.log('Connection ID:', connectionId);
+});
+```
+
 ## 0.9.x to 0.10.x
 
 ### Room Reaction Wire Protocol
