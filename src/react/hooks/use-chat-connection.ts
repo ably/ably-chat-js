@@ -44,7 +44,6 @@ export interface UseChatConnectionResponse {
 
 /**
  * A hook that provides the current connection status and error, and allows the user to listen to connection status changes.
- *
  * @param options - The options for the hook
  * @returns The current connection status and error, as well as the {@link Connection} instance.
  */

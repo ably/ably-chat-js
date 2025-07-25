@@ -12,21 +12,21 @@ type Callback<CallbackArguments extends unknown[]> = (...args: CallbackArguments
  * For example, doing this:
  *
  * ```jsx
- *   export function MySubscription() {
- *     useHookWithListener(() => {})
+ * export function MySubscription() {
+ * useHookWithListener(() => {})
  *
- *     return <div>My Subscription</div>
- *   }
+ * return <div>My Subscription</div>
+ * }
  * ```
  *
  * Where the `useHookWithListener` hook is defined as:
  *
  * ```jsx
- *  export function useHookWithListener(listener) {
- *    const listenerRef = useEventListenerRef(listener);
- *    useEffect(() => {
- *      // Use the listenerRef
- *    }, [listenerRef]);
+ * export function useHookWithListener(listener) {
+ * const listenerRef = useEventListenerRef(listener);
+ * useEffect(() => {
+ * // Use the listenerRef
+ * }, [listenerRef]);
  * }
  * ```
  *
@@ -35,7 +35,6 @@ type Callback<CallbackArguments extends unknown[]> = (...args: CallbackArguments
  *
  * We allow for the callback to be undefined, as callbacks in the majority of our hooks are optional. In this instance we return undefined,
  * so that subscriptions will be unwound by the useEffect hook that's using them.
- *
  * @internal
  * @template Arguments - The type of arguments accepted by the callback function.
  * @param callback - The callback function to be stored in the reference.

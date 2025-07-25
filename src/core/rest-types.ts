@@ -45,7 +45,6 @@ export interface RestMessage {
 
 /**
  * Converts a message object from its REST representation to the standard message object in the SDK.
- *
  * @param message The message to convert from REST.
  * @returns The converted message.
  */

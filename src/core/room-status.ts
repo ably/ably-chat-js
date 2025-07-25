@@ -117,7 +117,6 @@ export interface RoomLifecycle {
 export interface InternalRoomLifecycle extends RoomLifecycle {
   /**
    * Sets the status of the room.
-   *
    * @param params The new status of the room.
    */
   setStatus(params: NewRoomStatus): void;

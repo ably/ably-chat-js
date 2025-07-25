@@ -106,7 +106,6 @@ export type LogHandler = (message: string, level: LogLevel, context?: LogContext
 
 /**
  * A simple console logger that logs messages to the console.
- *
  * @param message The message to log.
  * @param level The log level of the message.
  * @param context - The context of the log message as key-value pairs.

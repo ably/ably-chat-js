@@ -52,7 +52,6 @@ export interface SendReactionParams {
 
 /**
  * The listener function type for room-level reactions.
- *
  * @param event The reaction event that was received.
  */
 export type RoomReactionListener = (event: RoomReactionEvent) => void;
@@ -67,7 +66,6 @@ export interface RoomReactions {
    * Send a reaction to the room including some metadata.
    *
    * This method accepts parameters for a room-level reaction. It accepts an object
-   *
    * @param params an object containing {name, headers, metadata} for the room
    * reaction to be sent. Name is required, metadata and headers are optional.
    * @throws If the `Connection` is not in the `Connected` state.
@@ -79,7 +77,6 @@ export interface RoomReactions {
 
   /**
    * Subscribe to receive room-level reactions.
-   *
    * @param listener The listener function to be called when a reaction is received.
    * @returns A response object that allows you to control the subscription.
    */
@@ -130,7 +127,7 @@ export class DefaultRoomReactions implements RoomReactions {
   }
 
   /**
-   * @inheritDoc Reactions
+   * @inheritDoc
    */
   send(params: SendReactionParams): Promise<void> {
     this._logger.trace('RoomReactions.send();', params);
@@ -163,7 +160,7 @@ export class DefaultRoomReactions implements RoomReactions {
   }
 
   /**
-   * @inheritDoc Reactions
+   * @inheritDoc
    */
   subscribe(listener: RoomReactionListener): Subscription {
     this._logger.trace(`RoomReactions.subscribe();`);
