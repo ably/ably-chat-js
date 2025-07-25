@@ -242,13 +242,11 @@ describe('useRoom', () => {
       called = true;
     };
 
-    const WithClient = ({ children }: { children: React.ReactNode }) => {
-      return (
-        <ChatClientProvider client={chatClient}>
-          <ChatRoomProvider name={roomName}>{children}</ChatRoomProvider>
-        </ChatClientProvider>
-      );
-    };
+    const WithClient = ({ children }: { children: React.ReactNode }) => (
+      <ChatClientProvider client={chatClient}>
+        <ChatRoomProvider name={roomName}>{children}</ChatRoomProvider>
+      </ChatClientProvider>
+    );
 
     renderHook(
       () =>
@@ -287,13 +285,11 @@ describe('useRoom', () => {
       };
     });
 
-    const WithClient = ({ children }: { children: React.ReactNode }) => {
-      return (
-        <ChatClientProvider client={chatClient}>
-          <ChatRoomProvider name={roomName}>{children}</ChatRoomProvider>
-        </ChatClientProvider>
-      );
-    };
+    const WithClient = ({ children }: { children: React.ReactNode }) => (
+      <ChatClientProvider client={chatClient}>
+        <ChatRoomProvider name={roomName}>{children}</ChatRoomProvider>
+      </ChatClientProvider>
+    );
 
     const { result } = renderHook(() => useRoom(), { wrapper: WithClient });
 

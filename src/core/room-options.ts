@@ -209,40 +209,30 @@ const validateTypingOptions = (options: InternalTypingOptions): void => {
   }
 };
 
-const normalizeTypingOptions = (options: RoomOptions | undefined): InternalTypingOptions => {
-  return {
-    ...DefaultRoomOptions.typing,
-    ...options?.typing,
-  };
-};
+const normalizeTypingOptions = (options: RoomOptions | undefined): InternalTypingOptions => ({
+  ...DefaultRoomOptions.typing,
+  ...options?.typing,
+});
 
-const normalizeOccupancyOptions = (options: RoomOptions | undefined): InternalOccupancyOptions => {
-  return {
-    ...DefaultRoomOptions.occupancy,
-    ...options?.occupancy,
-  };
-};
+const normalizeOccupancyOptions = (options: RoomOptions | undefined): InternalOccupancyOptions => ({
+  ...DefaultRoomOptions.occupancy,
+  ...options?.occupancy,
+});
 
-const normalizePresenceOptions = (options: RoomOptions | undefined): InternalPresenceOptions => {
-  return {
-    ...DefaultRoomOptions.presence,
-    ...options?.presence,
-  };
-};
+const normalizePresenceOptions = (options: RoomOptions | undefined): InternalPresenceOptions => ({
+  ...DefaultRoomOptions.presence,
+  ...options?.presence,
+});
 
-const normalizeMessageOptions = (options: RoomOptions | undefined): InternalMessageOptions => {
-  return {
-    ...DefaultRoomOptions.messages,
-    ...options?.messages,
-  };
-};
+const normalizeMessageOptions = (options: RoomOptions | undefined): InternalMessageOptions => ({
+  ...DefaultRoomOptions.messages,
+  ...options?.messages,
+});
 
-export const normalizeRoomOptions = (options: RoomOptions | undefined, react: boolean): InternalRoomOptions => {
-  return {
-    typing: normalizeTypingOptions(options),
-    occupancy: normalizeOccupancyOptions(options),
-    presence: normalizePresenceOptions(options),
-    messages: normalizeMessageOptions(options),
-    isReactClient: react,
-  };
-};
+export const normalizeRoomOptions = (options: RoomOptions | undefined, react: boolean): InternalRoomOptions => ({
+  typing: normalizeTypingOptions(options),
+  occupancy: normalizeOccupancyOptions(options),
+  presence: normalizePresenceOptions(options),
+  messages: normalizeMessageOptions(options),
+  isReactClient: react,
+});

@@ -8,23 +8,21 @@ import { makeTestLogger } from '../../helper/logger.ts';
 
 let mockCallbacks: ConnectionStatusListener[] = [];
 
-const createMockChatClient = (currentStatus: ConnectionStatus, error?: Ably.ErrorInfo) => {
-  return {
-    connection: {
-      status: currentStatus,
-      error: error,
-      onStatusChange: (callback: ConnectionStatusListener) => {
-        mockCallbacks.push(callback);
-        return {
-          off: () => {
-            mockCallbacks = mockCallbacks.filter((cb) => cb !== callback);
-          },
-        };
-      },
+const createMockChatClient = (currentStatus: ConnectionStatus, error?: Ably.ErrorInfo) => ({
+  connection: {
+    status: currentStatus,
+    error: error,
+    onStatusChange: (callback: ConnectionStatusListener) => {
+      mockCallbacks.push(callback);
+      return {
+        off: () => {
+          mockCallbacks = mockCallbacks.filter((cb) => cb !== callback);
+        },
+      };
     },
-    logger: makeTestLogger(),
-  };
-};
+  },
+  logger: makeTestLogger(),
+});
 
 let mockChatClient: object;
 
@@ -35,11 +33,9 @@ const publishStatusChange = (statusChange: ConnectionStatusChange) => {
 };
 
 // Mock the useChatClient hook
-vi.mock('../../../src/react/hooks/use-chat-client.ts', () => {
-  return {
-    useChatClient: () => mockChatClient,
-  };
-});
+vi.mock('../../../src/react/hooks/use-chat-client.ts', () => ({
+  useChatClient: () => mockChatClient,
+}));
 
 describe('useChatConnection', () => {
   beforeEach(() => {

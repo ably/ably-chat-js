@@ -11,8 +11,8 @@ interface TestContext {
   chat: ChatClient;
 }
 
-const waitForReactions = (foundTypes: string[], expectedTypes: string[]) => {
-  return new Promise<void>((resolve, reject) => {
+const waitForReactions = (foundTypes: string[], expectedTypes: string[]) =>
+  new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       if (foundTypes.length === expectedTypes.length) {
         clearInterval(interval);
@@ -36,7 +36,6 @@ const waitForReactions = (foundTypes: string[], expectedTypes: string[]) => {
       reject(new Error('Timed out waiting for reactions'));
     }, 3000);
   });
-};
 
 describe('room-level reactions integration test', () => {
   beforeEach<TestContext>((context) => {

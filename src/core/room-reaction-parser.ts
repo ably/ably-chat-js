@@ -14,7 +14,7 @@ interface ReactionPayload {
   };
 }
 
-export function parseRoomReaction(message: Ably.InboundMessage, clientId?: string): RoomReaction {
+export const parseRoomReaction = (message: Ably.InboundMessage, clientId?: string): RoomReaction => {
   const reactionCreatedMessage = message as ReactionPayload;
 
   // Use empty string if type is missing or invalid
@@ -37,4 +37,4 @@ export function parseRoomReaction(message: Ably.InboundMessage, clientId?: strin
     reactionCreatedMessage.data?.metadata ?? {},
     reactionCreatedMessage.extras?.headers ?? {},
   );
-}
+};

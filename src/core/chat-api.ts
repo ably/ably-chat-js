@@ -173,25 +173,22 @@ export class ChatApi {
   }
 
   private _recursivePaginateMessages(data: PaginatedResult<RestMessage>): PaginatedResult<Message> {
-    const paginatedResult: PaginatedResult<Message> = {} as PaginatedResult<Message>;
-    paginatedResult.items = data.items.map((payload) => messageFromRest(payload));
+    const result: PaginatedResult<Message> = {} as PaginatedResult<Message>;
+    result.items = data.items.map((payload) => messageFromRest(payload));
 
     // Recursively map the next paginated data
-    paginatedResult.next = () =>
-      data.next().then((nextData) => {
-        // eslint-disable-next-line unicorn/no-null
-        return nextData ? this._recursivePaginateMessages(nextData) : null;
-      });
+    // eslint-disable-next-line unicorn/no-null
+    result.next = () => data.next().then((nextData) => (nextData ? this._recursivePaginateMessages(nextData) : null));
 
-    paginatedResult.first = () => data.first().then((firstData) => this._recursivePaginateMessages(firstData));
+    result.first = () => data.first().then((firstData) => this._recursivePaginateMessages(firstData));
 
-    paginatedResult.current = () => data.current().then((currentData) => this._recursivePaginateMessages(currentData));
+    result.current = () => data.current().then((currentData) => this._recursivePaginateMessages(currentData));
 
-    paginatedResult.hasNext = () => data.hasNext();
+    result.hasNext = () => data.hasNext();
 
-    paginatedResult.isLast = () => data.isLast();
+    result.isLast = () => data.isLast();
 
-    return { ...data, ...paginatedResult };
+    return { ...data, ...result };
   }
 
   deleteMessage(roomName: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {

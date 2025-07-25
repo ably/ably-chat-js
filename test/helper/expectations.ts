@@ -1,9 +1,7 @@
 import * as Ably from 'ably';
 import { expect } from 'vitest';
 
-const extractExpectedKeys = (expected: unknown): Set<string> => {
-  return new Set(Object.keys(expected as Ably.ErrorInfo));
-};
+const extractExpectedKeys = (expected: unknown): Set<string> => new Set(Object.keys(expected as Ably.ErrorInfo));
 
 const actualErrorInfo = (received: unknown, expected: unknown): Record<string, unknown> => {
   const commonKeys = extractExpectedKeys(expected);
@@ -53,26 +51,22 @@ export const toBeErrorInfo = (received: unknown, expected: ErrorInfoCompareType)
 
   return {
     pass: causeMatch && codeMatch && statusCodeMatch && messageMatch,
-    message: () => {
-      return `Expected matching ErrorInfo`;
-    },
+    message: () => `Expected matching ErrorInfo`,
     expected: expected,
     actual: actualErrorInfo(received, expected),
   };
 };
 
-const toBeErrorInfoWithCode = (received: unknown, expected: number) => {
-  return {
-    pass: received instanceof Ably.ErrorInfo && received.code === expected,
-    message: () => `Expected ErrorInfo with matching code`,
-    expected: expected,
-    actual: (received as Ably.ErrorInfo).code,
-  };
-};
+const toBeErrorInfoWithCode = (received: unknown, expected: number) => ({
+  pass: received instanceof Ably.ErrorInfo && received.code === expected,
+  message: () => `Expected ErrorInfo with matching code`,
+  expected: expected,
+  actual: (received as Ably.ErrorInfo).code,
+});
 
 expect.extend({
   toBeErrorInfo,
-  toThrowErrorInfo(received: () => unknown, expected: ErrorInfoCompareType) {
+  toThrowErrorInfo: (received: () => unknown, expected: ErrorInfoCompareType) => {
     try {
       received();
     } catch (error: unknown) {
@@ -85,7 +79,7 @@ expect.extend({
     };
   },
   toBeErrorInfoWithCode,
-  toThrowErrorInfoWithCode(received: () => unknown, expected: number) {
+  toThrowErrorInfoWithCode: (received: () => unknown, expected: number) => {
     try {
       received();
     } catch (error: unknown) {
@@ -97,18 +91,14 @@ expect.extend({
       message: () => `Expected ErrorInfo to be thrown`,
     };
   },
-  toBeErrorInfoWithCauseCode(received: unknown, expected: number) {
-    return {
-      pass:
-        received instanceof Ably.ErrorInfo &&
-        received.cause instanceof Ably.ErrorInfo &&
-        received.cause.code === expected,
-      message: () => `Expected ErrorInfo with matching cause status code`,
-      expected: expected,
-      actual:
-        received instanceof Ably.ErrorInfo && received.cause instanceof Ably.ErrorInfo
-          ? received.cause.code
-          : undefined,
-    };
-  },
+  toBeErrorInfoWithCauseCode: (received: unknown, expected: number) => ({
+    pass:
+      received instanceof Ably.ErrorInfo &&
+      received.cause instanceof Ably.ErrorInfo &&
+      received.cause.code === expected,
+    message: () => `Expected ErrorInfo with matching cause status code`,
+    expected: expected,
+    actual:
+      received instanceof Ably.ErrorInfo && received.cause instanceof Ably.ErrorInfo ? received.cause.code : undefined,
+  }),
 });

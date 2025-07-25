@@ -173,12 +173,12 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   // memoize the methods to avoid re-renders and ensure the same instance is used
   const update = useCallback(
     (data?: PresenceData) =>
-      context.room.then((room: Room) => {
-        return room.presence.update(data).then(() => {
+      context.room.then((room: Room) =>
+        room.presence.update(data).then(() => {
           setIsPresent(true);
           setError(undefined);
-        });
-      }),
+        }),
+      ),
 
     [context],
   );

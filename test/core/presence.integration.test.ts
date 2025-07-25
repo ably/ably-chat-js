@@ -20,8 +20,8 @@ interface TestContext {
 }
 
 // Wait a maximum of 10 seconds to assert that a presence event has not been received
-const assertNoPresenceEvent = async (events: PresenceEvent[], type: PresenceEventType, clientId: string) => {
-  return new Promise<void>((resolve, reject) => {
+const assertNoPresenceEvent = async (events: PresenceEvent[], type: PresenceEventType, clientId: string) =>
+  new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       for (const event of events) {
         if (event.type === type && event.member.clientId === clientId) {
@@ -38,7 +38,6 @@ const assertNoPresenceEvent = async (events: PresenceEvent[], type: PresenceEven
       resolve();
     }, 10000);
   });
-};
 
 // Helper function to wait for an event and run an expectation function on the received message
 // Wait a maximum of 3 seconds for the event to be received
@@ -67,15 +66,14 @@ const waitForEvent = async (
 
 // Helper function to wait for presence list to match the expectation
 // Wait a maximum of 5 seconds for the presence list to match
-const waitForPresenceList = async (room: Room, expectationFn: (presenceList: PresenceMember[]) => void) => {
-  return vi.waitFor(
+const waitForPresenceList = async (room: Room, expectationFn: (presenceList: PresenceMember[]) => void) =>
+  vi.waitFor(
     async () => {
       const fetchedPresence = await room.presence.get();
       expectationFn(fetchedPresence);
     },
     { timeout: 5000 },
   );
-};
 
 describe('UserPresence', { timeout: 30000 }, () => {
   // Setup before each test, create a new Ably Realtime client and a new Room

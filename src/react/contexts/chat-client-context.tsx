@@ -53,13 +53,13 @@ export type ChatClientContextValue = Record<string, ChatClientContextProviderPro
  * @return {React.Context<ChatClientContextValue>} Global context for {@link ChatClient}.
  *
  */
-function getChatContext(): React.Context<ChatClientContextValue> {
+const getChatContext = (): React.Context<ChatClientContextValue> => {
   let context = globalObjectForContext[contextKey];
 
   context ??= globalObjectForContext[contextKey] = React.createContext<ChatClientContextValue>({});
 
   return context;
-}
+};
 
 /**
  * Global context for {@link ChatClientProvider}.

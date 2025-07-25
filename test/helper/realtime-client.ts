@@ -27,9 +27,7 @@ const baseOptions = (options?: Ably.ClientOptions): Ably.ClientOptions => {
 
 // Create a realtime client with the given options, or Sandbox defaults if not specified,
 // and return it.
-const ablyRealtimeClient = (options?: Ably.ClientOptions): Ably.Realtime => {
-  return new Ably.Realtime(baseOptions(options));
-};
+const ablyRealtimeClient = (options?: Ably.ClientOptions): Ably.Realtime => new Ably.Realtime(baseOptions(options));
 
 // At the moment, chat doesn't support keys for authentication, so create a client that uses tokens
 const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtime => {

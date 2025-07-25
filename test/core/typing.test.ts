@@ -98,9 +98,9 @@ describe('Typing', () => {
     // Mock implementation for `publish` to simulate delay in the call on the first invocation
     const publishSpy = vi
       .spyOn(realtimeChannel, 'publish')
-      .mockImplementationOnce(() => {
-        return new Promise((resolve) => setTimeout(resolve, 300)); // Simulate 300ms delay in publish
-      })
+      .mockImplementationOnce(
+        () => new Promise((resolve) => setTimeout(resolve, 300)), // Simulate 300ms delay in publish
+      )
       .mockImplementationOnce(() => Promise.resolve());
 
     // Needed to allow typing calls to proceed
@@ -221,9 +221,9 @@ describe('Typing', () => {
       // Mock implementation for `publish` to simulate 1s delay on the first keystroke call
       const publishSpy = vi
         .spyOn(realtimeChannel, 'publish')
-        .mockImplementationOnce(() => {
-          return new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate 1s delay
-        })
+        .mockImplementationOnce(
+          () => new Promise((resolve) => setTimeout(resolve, 1000)), // Simulate 1s delay
+        )
         .mockImplementation(() => Promise.resolve()); // All subsequent calls resolve immediately
 
       // Needed to allow typing calls to proceed
@@ -332,9 +332,9 @@ describe('Typing', () => {
       // Mock implementation for `publish` to simulate 1s delay on the first keystroke call
       const publishSpy = vi
         .spyOn(realtimeChannel, 'publish')
-        .mockImplementationOnce(() => {
-          return new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate 1s delay on first keystroke
-        })
+        .mockImplementationOnce(
+          () => new Promise((resolve) => setTimeout(resolve, 1000)), // Simulate 1s delay on first keystroke
+        )
         .mockImplementation(() => Promise.resolve()); // All subsequent calls resolve immediately
 
       // Needed to allow typing calls to proceed
@@ -804,9 +804,9 @@ describe('Typing', () => {
       // Mock implementation for `publish` to simulate 1s delay on the keystroke call
       const publishSpy = vi
         .spyOn(realtimeChannel, 'publish')
-        .mockImplementationOnce(() => {
-          return new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate 2s delay
-        })
+        .mockImplementationOnce(
+          () => new Promise((resolve) => setTimeout(resolve, 2000)), // Simulate 2s delay
+        )
         .mockImplementation(() => Promise.resolve()); // All subsequent calls resolve immediately
 
       // Needed to allow typing calls to proceed

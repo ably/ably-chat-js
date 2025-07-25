@@ -88,7 +88,7 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
 
   // subscribe to occupancy events internally, to update the state metrics
   useEffect(() => {
-    return wrapRoomPromise(
+    const roomPromise = wrapRoomPromise(
       context.room,
       (room) => {
         logger.debug('useOccupancy(); applying internal listener');
@@ -111,7 +111,9 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
         };
       },
       logger,
-    ).unmount();
+    );
+
+    return roomPromise.unmount();
   }, [context, logger]);
 
   // if provided, subscribes the user provided listener to occupancy events

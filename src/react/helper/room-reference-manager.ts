@@ -71,9 +71,8 @@ const roomKeyReplacer = (key: string, value: unknown): unknown => {
  * Creates a unique key for a room based on name and options.
  * Ensures that objects with the same properties but different key order produce the same key.
  */
-const createRoomKey = (roomName: string, options?: RoomOptions): string => {
-  return JSON.stringify({ roomName, options }, roomKeyReplacer);
-};
+const createRoomKey = (roomName: string, options?: RoomOptions): string =>
+  JSON.stringify({ roomName, options }, roomKeyReplacer);
 
 /**
  * Reference counting manager for rooms within a ChatClientProvider.

@@ -143,9 +143,7 @@ describe('usePresenceListener', () => {
 
   it('should set the initial present clients on mount', async () => {
     // spy on the subscribe method of the presence instance
-    vi.spyOn(mockRoom.presence, 'subscribe').mockImplementation(() => {
-      return { unsubscribe: vi.fn() };
-    });
+    vi.spyOn(mockRoom.presence, 'subscribe').mockImplementation(() => ({ unsubscribe: vi.fn() }));
 
     const testPresenceMembers: PresenceMember[] = [
       {
@@ -292,9 +290,7 @@ describe('usePresenceListener', () => {
     const { result } = renderHook(() => usePresenceListener());
 
     // wait for the hook to subscribe the listener
-    await waitFor(() => {
-      return subscribedListener !== undefined;
-    });
+    await waitFor(() => subscribedListener !== undefined);
 
     // wait until the
 
@@ -370,9 +366,7 @@ describe('usePresenceListener', () => {
     const { result, rerender } = renderHook(() => usePresenceListener());
 
     // wait for the hook to subscribe the listener
-    await waitFor(() => {
-      return subscribedListener !== undefined;
-    });
+    await waitFor(() => subscribedListener !== undefined);
 
     if (!subscribedListener) {
       expect.fail('subscribedListener is undefined');

@@ -83,6 +83,7 @@ export default EventEmitter;
  * @param fn The function to wrap
  * @returns A new function with the same signature as the input function
  */
-export const wrap = <Args extends unknown[], Return>(fn: (...args: Args) => Return): ((...args: Args) => Return) => {
-  return (...args: Args) => fn(...args);
-};
+export const wrap =
+  <Args extends unknown[], Return>(fn: (...args: Args) => Return): ((...args: Args) => Return) =>
+  (...args: Args) =>
+    fn(...args);

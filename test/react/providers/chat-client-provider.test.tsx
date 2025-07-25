@@ -14,9 +14,7 @@ describe('useChatClient', () => {
 
   it('should create a provider without error', () => {
     const chatClient = newChatClient();
-    const TestComponent = () => {
-      return <div />;
-    };
+    const TestComponent = () => <div />;
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
         <TestComponent />

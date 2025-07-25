@@ -24,20 +24,16 @@ describe('ChatRoomProvider', () => {
   // This check ensures that a chat room is valid when being used in strict mode
   it('should attach the room in strict mode', async () => {
     const chatClient = newChatClient();
-    const TestComponent = () => {
-      return <div />;
-    };
+    const TestComponent = () => <div />;
     const roomName = randomRoomName();
 
-    const TestProvider = () => {
-      return (
-        <ChatClientProvider client={chatClient}>
-          <ChatRoomProvider name={roomName}>
-            <TestComponent />
-          </ChatRoomProvider>
-        </ChatClientProvider>
-      );
-    };
+    const TestProvider = () => (
+      <ChatClientProvider client={chatClient}>
+        <ChatRoomProvider name={roomName}>
+          <TestComponent />
+        </ChatRoomProvider>
+      </ChatClientProvider>
+    );
     render(<TestProvider />);
 
     const room = await chatClient.rooms.get(roomName);
@@ -94,22 +90,20 @@ describe('ChatRoomProvider', () => {
     const roomName = randomRoomName();
 
     // Component that can be conditionally rendered
-    const TestComponent = ({ show1, show2 }: { show1: boolean; show2: boolean }) => {
-      return (
-        <ChatClientProvider client={chatClient}>
-          {show1 && (
-            <ChatRoomProvider name={roomName}>
-              <div>Provider 1</div>
-            </ChatRoomProvider>
-          )}
-          {show2 && (
-            <ChatRoomProvider name={roomName}>
-              <div>Provider 2</div>
-            </ChatRoomProvider>
-          )}
-        </ChatClientProvider>
-      );
-    };
+    const TestComponent = ({ show1, show2 }: { show1: boolean; show2: boolean }) => (
+      <ChatClientProvider client={chatClient}>
+        {show1 && (
+          <ChatRoomProvider name={roomName}>
+            <div>Provider 1</div>
+          </ChatRoomProvider>
+        )}
+        {show2 && (
+          <ChatRoomProvider name={roomName}>
+            <div>Provider 2</div>
+          </ChatRoomProvider>
+        )}
+      </ChatClientProvider>
+    );
 
     // Render both providers
     const { rerender } = render(
@@ -245,7 +239,7 @@ describe('ChatRoomProvider', () => {
       });
 
       const { status } = useRoomStatus({
-        onRoomStatusChange(change) {
+        onRoomStatusChange: (change) => {
           statusMap.set(id, change.current);
 
           // On the first render, where we're actually attached, send a message

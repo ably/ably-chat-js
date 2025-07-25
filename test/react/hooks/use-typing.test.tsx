@@ -182,9 +182,7 @@ describe('useTyping', () => {
 
   it('should set the initial currently typing clients on mount', async () => {
     // spy on the subscribe method of the typing instance
-    vi.spyOn(mockRoom.typing, 'subscribe').mockImplementation(() => {
-      return { unsubscribe: vi.fn() };
-    });
+    vi.spyOn(mockRoom.typing, 'subscribe').mockImplementation(() => ({ unsubscribe: vi.fn() }));
 
     const testSet = new Set<string>(['user1', 'user2']);
     // spy on the get method of the typing instance, return an initial set

@@ -24,9 +24,9 @@ describe('useRoomReferenceManager', () => {
   it('should return the room reference manager when used within ChatClientProvider', () => {
     const chatClient = newChatClient();
 
-    const WithProvider = ({ children }: { children: React.ReactNode }) => {
-      return <ChatClientProvider client={chatClient}>{children}</ChatClientProvider>;
-    };
+    const WithProvider = ({ children }: { children: React.ReactNode }) => (
+      <ChatClientProvider client={chatClient}>{children}</ChatClientProvider>
+    );
 
     const { result } = renderHook(() => useRoomReferenceManager(), {
       wrapper: WithProvider,
@@ -39,9 +39,9 @@ describe('useRoomReferenceManager', () => {
   it('should return the same manager instance across multiple calls', () => {
     const chatClient = newChatClient();
 
-    const WithProvider = ({ children }: { children: React.ReactNode }) => {
-      return <ChatClientProvider client={chatClient}>{children}</ChatClientProvider>;
-    };
+    const WithProvider = ({ children }: { children: React.ReactNode }) => (
+      <ChatClientProvider client={chatClient}>{children}</ChatClientProvider>
+    );
 
     const { result, rerender } = renderHook(() => useRoomReferenceManager(), {
       wrapper: WithProvider,
@@ -62,9 +62,9 @@ describe('useRoomReferenceManager', () => {
 
     let currentClient = chatClient1;
 
-    const WithProvider = ({ children }: { children: React.ReactNode }) => {
-      return <ChatClientProvider client={currentClient}>{children}</ChatClientProvider>;
-    };
+    const WithProvider = ({ children }: { children: React.ReactNode }) => (
+      <ChatClientProvider client={currentClient}>{children}</ChatClientProvider>
+    );
 
     const { result, rerender } = renderHook(() => useRoomReferenceManager(), {
       wrapper: WithProvider,
