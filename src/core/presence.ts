@@ -75,41 +75,41 @@ export type PresenceListener = (event: PresenceEvent) => void;
 export interface Presence {
   /**
    * Method to get list of the current online users and returns the latest presence messages associated to it.
-   * @param {Ably.RealtimePresenceParams} params - Parameters that control how the presence set is retrieved.
+   * @param params - Parameters that control how the presence set is retrieved.
    * @throws If the room is not in the `attached` or `attaching` state.
-   * @returns {Promise<PresenceMessage[]>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
+   * @returns or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]>;
 
   /**
    * Method to check if user with supplied clientId is online
-   * @param {string} clientId - The client ID to check if it is present in the room.
+   * @param clientId - The client ID to check if it is present in the room.
    * @throws If the room is not in the `attached` or `attaching` state.
-   * @returns {Promise<{boolean}>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
+   * @returns or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   isUserPresent(clientId: string): Promise<boolean>;
 
   /**
    * Method to join room presence, will emit an enter event to all subscribers. Repeat calls will trigger more enter events.
-   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @param data - The users data, a JSON serializable object that will be sent to all subscribers.
    * @throws If the room is not in the `attached` or `attaching` state.
-   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
+   * @returns or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   enter(data?: PresenceData): Promise<void>;
 
   /**
    * Method to update room presence, will emit an update event to all subscribers. If the user is not present, it will be treated as a join event.
-   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @param data - The users data, a JSON serializable object that will be sent to all subscribers.
    * @throws If the room is not in the `attached` or `attaching` state.
-   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
+   * @returns or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   update(data?: PresenceData): Promise<void>;
 
   /**
    * Method to leave room presence, will emit a leave event to all subscribers. If the user is not present, it will be treated as a no-op.
-   * @param {PresenceData} data - The users data, a JSON serializable object that will be sent to all subscribers.
+   * @param data - The users data, a JSON serializable object that will be sent to all subscribers.
    * @throws If the room is not in the `attached` or `attaching` state.
-   * @returns {Promise<void>} or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
+   * @returns or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
    */
   leave(data?: PresenceData): Promise<void>;
 
@@ -118,7 +118,6 @@ export interface Presence {
    *
    * Note: This requires presence events to be enabled via the `enableEvents` option in
    * the {@link PresenceOptions} provided to the room. If this is not enabled, an error will be thrown.
-   *
    * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
    * @param listener listener to subscribe
    * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
@@ -130,7 +129,6 @@ export interface Presence {
    *
    * Note: This requires presence events to be enabled via the `enableEvents` option in
    * the {@link PresenceOptions} provided to the room. If this is not enabled, an error will be thrown.
-   *
    * @param listener listener to subscribe
    * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
@@ -271,8 +269,6 @@ export class DefaultPresence implements Presence {
   /**
    * Method to handle and emit presence events
    * @param member - PresenceMessage ably-js object
-   * @returns void - Emits a transformed event to all subscribers, or upon failure,
-   * the promise will be rejected with an {@link ErrorInfo} object which explains the error.
    */
   subscribeToEvents = (member: Ably.PresenceMessage) => {
     this._emitter.emit(member.action as PresenceEventType, {
@@ -283,7 +279,6 @@ export class DefaultPresence implements Presence {
 
   /**
    * Merges the channel options for the room with the ones required for presence.
-   *
    * @param roomOptions The room options to merge for.
    * @returns A function that merges the channel options for the room with the ones required for presence.
    */

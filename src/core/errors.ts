@@ -49,7 +49,6 @@ export enum ErrorCode {
 
 /**
  * Returns true if the {@link Ably.ErrorInfo} code matches the provided ErrorCode value.
- *
  * @param errorInfo The error info to check.
  * @param error The error code to compare against.
  * @returns true if the error code matches, false otherwise.

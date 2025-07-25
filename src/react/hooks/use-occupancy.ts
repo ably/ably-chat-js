@@ -46,7 +46,6 @@ export interface UseOccupancyResponse extends ChatStatusResponse {
 /**
  * A hook that provides access to the {@link Occupancy} instance of the room.
  * It will use the instance belonging to the nearest {@link ChatRoomProvider} in the component tree.
- *
  * @param params - Allows the registering of optional callbacks.
  * @returns UseOccupancyResponse
  */

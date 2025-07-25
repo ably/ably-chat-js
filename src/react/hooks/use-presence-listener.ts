@@ -68,7 +68,6 @@ export interface UsePresenceListenerResponse extends ChatStatusResponse {
  * A hook that provides access to the {@link Presence} instance in the room and the current presence state.
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
  * On calling, the hook will subscribe to the presence state of the room and update the state accordingly.
- *
  * @param params - Allows the registering of optional callbacks.
  * @returns UsePresenceResponse - An object containing the {@link Presence} instance and the current presence state.
  */

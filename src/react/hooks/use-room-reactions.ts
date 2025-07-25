@@ -40,7 +40,6 @@ export interface UseRoomReactionsResponse extends ChatStatusResponse {
 /**
  * A hook that provides access to the {@link RoomReactions} instance in the room.
  * It will use the instance belonging to the nearest {@link ChatRoomProvider} in the component tree.
- *
  * @param params - Allows the registering of optional callbacks.
  * @returns UseRoomReactionsResponse
  */

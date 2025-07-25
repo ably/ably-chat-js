@@ -60,7 +60,6 @@ export interface UseTypingResponse extends ChatStatusResponse {
 /**
  * A hook that provides access to the {@link Typing} instance in the room.
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
- *
  * @param params - Allows the registering of optional callbacks.
  * @returns UseTypingResponse - An object containing the {@link Typing} instance and methods to interact with it.
  */

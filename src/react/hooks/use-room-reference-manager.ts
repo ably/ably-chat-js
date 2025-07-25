@@ -16,7 +16,6 @@ export interface ExtendedChatClientContextValue extends ChatClientContextValue {
 
 /**
  * Hook to access the room reference manager from the current ChatClientProvider.
- *
  * @returns The room reference manager instance
  * @throws ErrorInfo if used outside of a ChatClientProvider
  */

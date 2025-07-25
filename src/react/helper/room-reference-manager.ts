@@ -21,6 +21,8 @@ interface RoomRefCountEntry {
 
 /**
  * Normalizes an array item by sorting the keys of the object and recursively sorting the items in the array.
+ * @param item The item to normalize.
+ * @returns The normalized item.
  */
 const normalizeArrayItem = (item: unknown): unknown => {
   if (item === null || typeof item !== 'object') {
@@ -41,6 +43,9 @@ const normalizeArrayItem = (item: unknown): unknown => {
 /**
  * Replacer function for JSON.stringify that normalizes values to ensure consistent serialization.
  * Recursively sorts object keys and array items for deterministic output.
+ * @param key The key being processed.
+ * @param value The value being processed.
+ * @returns The normalized value.
  */
 const roomKeyReplacer = (key: string, value: unknown): unknown => {
   // Handle undefined values consistently
@@ -70,6 +75,9 @@ const roomKeyReplacer = (key: string, value: unknown): unknown => {
 /**
  * Creates a unique key for a room based on name and options.
  * Ensures that objects with the same properties but different key order produce the same key.
+ * @param roomName The name of the room.
+ * @param options The room options.
+ * @returns A unique string key for the room.
  */
 const createRoomKey = (roomName: string, options?: RoomOptions): string =>
   JSON.stringify({ roomName, options }, roomKeyReplacer);
@@ -92,6 +100,7 @@ export class RoomReferenceManager {
 
   /**
    * Get the client this manager is associated with.
+   * @returns The chat client.
    */
   get client(): ChatClient {
     return this._client;
@@ -99,6 +108,9 @@ export class RoomReferenceManager {
 
   /**
    * Increment reference count for a room. Attaches on first reference.
+   * @param roomName The name of the room.
+   * @param options The room options.
+   * @returns A promise that resolves to the room instance.
    */
   async addReference(roomName: string, options?: RoomOptions): Promise<Room> {
     this._logger.trace('RoomReferenceManager.addReference();');
@@ -278,6 +290,8 @@ export class RoomReferenceManager {
 
   /**
    * Decrement reference count for a room. Releases on last reference after a delay.
+   * @param roomName The name of the room.
+   * @param options The room options.
    */
   removeReference(roomName: string, options?: RoomOptions): void {
     this._logger.trace('RoomReferenceManager.removeReference();');

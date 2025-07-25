@@ -52,7 +52,7 @@ export interface SendMessageReactionParams {
   /**
    * The count of the reaction for type {@link MessageReactionType.Multiple}.
    * Defaults to 1 if not set. Not supported for other reaction types.
-   * @default 1
+   * @defaultValue 1
    */
   count?: number;
 }
@@ -104,8 +104,9 @@ export interface MessagesReactions {
 
   /**
    * Subscribe to individual reaction events.
-   * @remarks If you only need to keep track of reaction counts and clients, use
-   *  {@link subscribe} instead.
+   *
+   * If you only need to keep track of reaction counts and clients, use
+   * {@link subscribe} instead.
    * @param listener The listener to call when a message reaction event is received.
    * @returns A subscription object that should be used to unsubscribe.
    */
@@ -290,7 +291,6 @@ export class DefaultMessageReactions implements MessagesReactions {
 
   /**
    * Merges the channel options to add support for message reactions.
-   *
    * @param roomOptions The room options to merge for.
    * @returns A function that merges the channel options for the room with the ones required for presence.
    */

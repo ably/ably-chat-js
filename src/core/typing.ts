@@ -17,7 +17,6 @@ import EventEmitter, { wrap } from './utils/event-emitter.js';
 export interface Typing {
   /**
    * Subscribe a given listener to all typing events from users in the chat room.
-   *
    * @param listener A listener to be called when the typing state of a user in the room changes.
    * @returns A response object that allows you to control the subscription to typing events.
    */
@@ -37,12 +36,11 @@ export interface Typing {
    *
    * Calls to `keystroke()` and `stop()` are serialized and will always resolve in the correct order.
    * - For example, if multiple `keystroke()` calls are made in quick succession before the first `keystroke()` call has
-   *   sent a `typing.started` event to the server, followed by one `stop()` call, the `stop()` call will execute
-   *   as soon as the first `keystroke()` call completes.
-   *   All intermediate `keystroke()` calls will be treated as no-ops.
+   * sent a `typing.started` event to the server, followed by one `stop()` call, the `stop()` call will execute
+   * as soon as the first `keystroke()` call completes.
+   * All intermediate `keystroke()` calls will be treated as no-ops.
    * - The most recent operation (`keystroke()` or `stop()`) will always determine the final state, ensuring operations
-   *   resolve to a consistent and correct state.
-   *
+   * resolve to a consistent and correct state.
    * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
    * @throws If the `Connection` is not in the `Connected` state.
    * @throws If the operation fails to send the event to the server.
@@ -56,12 +54,11 @@ export interface Typing {
    *
    * Calls to `keystroke()` and `stop()` are serialized and will always resolve in the correct order.
    * - For example, if multiple `keystroke()` calls are made in quick succession before the first `keystroke()` call has
-   *   sent a `typing.started` event to the server, followed by one `stop()` call, the `stop()` call will execute
-   *   as soon as the first `keystroke()` call completes.
-   *   All intermediate `keystroke()` calls will be treated as no-ops.
+   * sent a `typing.started` event to the server, followed by one `stop()` call, the `stop()` call will execute
+   * as soon as the first `keystroke()` call completes.
+   * All intermediate `keystroke()` calls will be treated as no-ops.
    * - The most recent operation (`keystroke()` or `stop()`) will always determine the final state, ensuring operations
-   *   resolve to a consistent and correct state.
-   *
+   * resolve to a consistent and correct state.
    * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
    * @throws If the `Connection` is not in the `Connected` state.
    * @throws If the operation fails to send the event to the server.
@@ -155,7 +152,6 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * Clears all typing states.
    * This includes clearing all timeouts and the currently typing map.
-   * @private
    */
   private _clearAllTypingStates(): void {
     this._logger.debug(`DefaultTyping._clearAllTypingStates(); clearing all typing states`);
@@ -165,7 +161,6 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
   /**
    * Clears the heartbeat timer.
-   * @private
    */
   private _clearHeartbeatTimer(): void {
     this._logger.trace(`DefaultTyping._clearHeartbeatTimer(); clearing heartbeat timer`);
@@ -177,7 +172,6 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
   /**
    * Clears the currently typing store and removes all timeouts for associated clients.
-   * @private
    */
   private _clearCurrentlyTyping(): void {
     this._logger.trace('DefaultTyping._clearCurrentlyTyping(); clearing current store and timeouts');
@@ -191,7 +185,6 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
   /**
    * CHA-T16
-   *
    * @inheritDoc
    */
   current(): Set<string> {
@@ -389,7 +382,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * Starts a new inactivity timer for the client.
    * This timer will expire after the configured timeout,
    * which is the sum of the heartbeat interval and the inactivity timeout.
-   * @param clientId
+   * @param clientId The client ID for which to start the timer.
+   * @returns The timeout ID for the new timer.
    */
   private _startNewClientInactivityTimer(clientId: string): ReturnType<typeof setTimeout> {
     this._logger.trace(`DefaultTyping._startNewClientInactivityTimer(); starting new inactivity timer`, {
@@ -424,7 +418,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
   /**
    * Handles logic for TypingEventType.Started, including starting a new timeout or resetting an existing one.
-   * @param clientId
+   * @param clientId The client ID that started typing.
    */
   private _handleTypingStart(clientId: string): void {
     this._logger.debug(`DefaultTyping._handleTypingStart();`, { clientId });
@@ -460,8 +454,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
   /**
    * Handles logic for TypingEventType.Stopped, including clearing the timeout for the client.
-   * @param clientId
-   * @private
+   * @param clientId The client ID that stopped typing.
    */
   private _handleTypingStop(clientId: string): void {
     const existingTimeout = this._currentlyTyping.get(clientId);
@@ -491,6 +484,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
   /**
    * Subscribe to internal events. This listens to events and converts them into typing updates, with validation.
+   * @param inbound The inbound message containing typing event data.
    */
   private _internalSubscribeToEvents = (inbound: Ably.InboundMessage): void => {
     const { name, clientId } = inbound;

@@ -13,8 +13,7 @@ const contextKey = Symbol.for('__ABLY_CHAT_CLIENT_CONTEXT__');
 /**
  * Extends GlobalThis interface with chat context.
  * The {@link ChatClientContext} is created once and stored in the global state to ensure a single context instance.
- *
- * @property {React.Context<ChatClientContextValue> | undefined} contextKey Ably Chat client context.
+ * contextKey Ably Chat client context.
  */
 interface GlobalThis {
   [contextKey]?: React.Context<ChatClientContextValue>;
@@ -49,9 +48,7 @@ export type ChatClientContextValue = Record<string, ChatClientContextProviderPro
  * Returns a {@link ChatClientContext}.
  * Retrieve the context from the global object if initialized,
  * else, initialize and store the context in the global object.
- *
- * @return {React.Context<ChatClientContextValue>} Global context for {@link ChatClient}.
- *
+ * @returns Global context for {@link ChatClient}.
  */
 const getChatContext = (): React.Context<ChatClientContextValue> => {
   let context = globalObjectForContext[contextKey];
@@ -64,7 +61,5 @@ const getChatContext = (): React.Context<ChatClientContextValue> => {
 /**
  * Global context for {@link ChatClientProvider}.
  * Access point for {@link ChatClient} context in the application.
- *
- * @type {React.Context<ChatClientContextValue>}
  */
 export const ChatClientContext: React.Context<ChatClientContextValue> = getChatContext();

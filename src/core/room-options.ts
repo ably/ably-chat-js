@@ -54,7 +54,6 @@ export interface MessageOptions {
    *
    * Note reaction summaries (aggregates) are always available regardless of
    * this setting.
-   *
    * @defaultValue false
    */
   rawMessageReactions?: boolean;
@@ -64,7 +63,6 @@ export interface MessageOptions {
    *
    * Any message reaction type can be sent regardless of this setting by specifying the `type` parameter
    * in the {@link MessagesReactions.send} method.
-   *
    * @defaultValue {@link MessageReactionType.Distinct}
    */
   defaultMessageReactionType?: MessageReactionType;
@@ -95,7 +93,6 @@ export interface OccupancyOptions {
    *
    * Note that enabling this feature will increase the number of messages received by the client as additional
    * messages will be sent by the server to indicate occupancy changes.
-   *
    * @defaultValue false
    */
   enableEvents?: boolean;
@@ -109,7 +106,6 @@ export interface PresenceOptions {
    * Whether or not the client should receive presence events from the server. This setting
    * can be disabled if you are using presence in your Chat Room, but this particular client does not
    * need to receive the messages.
-   *
    * @defaultValue true
    */
   enableEvents?: boolean;
@@ -192,7 +188,6 @@ export interface InternalRoomOptions {
 
 /**
  * Creates an {@link ErrorInfo} for invalid room configuration.
- *
  * @param reason The reason for the invalid room configuration.
  * @returns An ErrorInfo.
  */

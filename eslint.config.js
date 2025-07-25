@@ -26,6 +26,7 @@ const compat = new FlatCompat({
 
 export default [
   unicorn.configs.recommended,
+  jsdoc.configs['flat/recommended-typescript'],
   {
     ignores: [
       'demo/**',

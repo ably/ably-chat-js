@@ -7,7 +7,6 @@ import { useChatClient } from './use-chat-client.js';
  * A hook that provides access to the {@link Logger} instance of the {@link ChatClient}.
  * It will use the instance belonging to the {@link ChatClient} in the nearest {@link ChatClientProvider} in the component tree.
  * @internal
- *
  * @returns Logger - The logger instance.
  */
 export const useLogger = (): Logger => {
@@ -18,7 +17,6 @@ export const useLogger = (): Logger => {
 /**
  * A hook that returns a logger with the room context pre-applied.
  * @internal
- *
  * @returns Logger - The logger instance.
  */
 export const useRoomLogger = (): Logger => {

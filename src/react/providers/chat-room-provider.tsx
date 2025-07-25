@@ -32,8 +32,13 @@ export interface ChatRoomProviderProps {
  *
  * The provider automatically manages room attachment and release based on reference counting.
  * The first provider for a room will attach it, and the last provider to unmount will release it.
+ * @param props The props object for the ChatRoomProvider.
+ * @param props.name The name of the room.
+ * @param props.options The room options.
+ * @param props.children The child components to render.
+ * @returns The ChatRoomProvider component.
  */
-export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({ name: roomName, options, children }) => {
+export const ChatRoomProvider = ({ name: roomName, options, children }: ChatRoomProviderProps): React.ReactElement => {
   const client = useChatClient();
   const clientLogger = useLogger();
   const logger = useMemo(() => clientLogger.withContext({ roomName }), [clientLogger, roomName]);

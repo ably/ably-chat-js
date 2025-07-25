@@ -21,7 +21,6 @@ export interface Occupancy {
    *
    * Note: This requires occupancy events to be enabled via the `enableEvents` option in
    * the {@link OccupancyOptions} options provided to the room. If this is not enabled, an error will be thrown.
-   *
    * @param listener A listener to be called when the occupancy of the room changes.
    * @returns A subscription object that can be used to unsubscribe the listener.
    * @throws {Ably.ErrorInfo} If occupancy events are not enabled for this room.
@@ -30,14 +29,12 @@ export interface Occupancy {
 
   /**
    * Get the current occupancy of the chat room.
-   *
    * @returns A promise that resolves to the current occupancy of the chat room.
    */
   get(): Promise<OccupancyData>;
 
   /**
    * Get the latest occupancy data received from realtime events.
-   *
    * @returns The latest occupancy data, or undefined if no realtime events have been received yet.
    * @throws {Ably.ErrorInfo} If occupancy events are not enabled for this room.
    */
@@ -99,7 +96,7 @@ export class DefaultOccupancy implements Occupancy {
   }
 
   /**
-   * @inheritdoc Occupancy
+   * @inheritdoc
    */
   subscribe(listener: OccupancyListener): Subscription {
     this._logger.trace('Occupancy.subscribe();');
@@ -124,7 +121,7 @@ export class DefaultOccupancy implements Occupancy {
   }
 
   /**
-   * @inheritdoc Occupancy
+   * @inheritdoc
    */
   async get(): Promise<OccupancyData> {
     this._logger.trace('Occupancy.get();');
@@ -132,7 +129,7 @@ export class DefaultOccupancy implements Occupancy {
   }
 
   /**
-   * @inheritdoc Occupancy
+   * @inheritdoc
    */
   current(): OccupancyData | undefined {
     this._logger.trace('Occupancy.current();');
@@ -154,6 +151,7 @@ export class DefaultOccupancy implements Occupancy {
   /**
    * An internal listener that listens for occupancy events from the underlying channel and translates them into
    * occupancy events for the public API.
+   * @param message The inbound message containing occupancy data.
    */
   private _internalOccupancyListener(message: Ably.InboundMessage): void {
     this._logger.trace('Occupancy._internalOccupancyListener();', message);
@@ -168,7 +166,7 @@ export class DefaultOccupancy implements Occupancy {
 
   /**
    * Merges the channel options for the room with the ones required for occupancy.
-   *
+   * @param roomOptions The internal room options.
    * @returns A function that merges the channel options for the room with the ones required for occupancy.
    */
   static channelOptionMerger(roomOptions: InternalRoomOptions): ChannelOptionsMerger {

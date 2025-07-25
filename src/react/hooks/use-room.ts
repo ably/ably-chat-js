@@ -56,9 +56,8 @@ export interface UseRoomResponse extends ChatStatusResponse {
 
 /**
  * A hook that provides access to the current room.
- *
  * @param params Register optional callbacks, see {@link UseRoomParams}.
- * @returns {@link UseRoomResponse}
+ * @returns An object containing room data and status information.
  */
 export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
   const context = useRoomContext('useRoom');
