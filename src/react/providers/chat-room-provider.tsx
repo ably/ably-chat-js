@@ -38,7 +38,7 @@ export interface ChatRoomProviderProps {
  * @param props.children The child components to render.
  * @returns The ChatRoomProvider component.
  */
-export const ChatRoomProvider: React.FC<ChatRoomProviderProps> = ({ name: roomName, options, children }) => {
+export const ChatRoomProvider = ({ name: roomName, options, children }: ChatRoomProviderProps): React.ReactElement => {
   const client = useChatClient();
   const clientLogger = useLogger();
   const logger = useMemo(() => clientLogger.withContext({ roomName }), [clientLogger, roomName]);
