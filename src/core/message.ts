@@ -175,9 +175,8 @@ export interface Message {
    * version of the same message, as the two may be different messages entirely.
    *
    * ```ts
-   *  !message.isNewerVersionOf(other) !== message.isOlderVersionOf(other)
+   * !message.isNewerVersionOf(other) !== message.isOlderVersionOf(other)
    * ```
-   *
    * @param message The message to compare against.
    * @returns true if the two messages are the same message (isSameAs returns true) and this message is a newer version.
    */
@@ -231,7 +230,6 @@ export interface Message {
    * Creates a new message instance with the event applied.
    *
    * NOTE: This method will not replace the message reactions if the event is of type `Message`.
-   *
    * @param event The event to be applied to the returned message.
    * @throws {@link ErrorInfo} if the event is for a different message.
    * @throws {@link ErrorInfo} if the event is a {@link ChatMessageEventType.Created}.
@@ -242,9 +240,8 @@ export interface Message {
 
   /**
    * Creates a copy of the message with fields replaced per the parameters.
-   *
    * @param params The parameters to replace in the message.
-   * @return The message copy.
+   * @returns The message copy.
    */
   copy(params?: MessageCopyParams): Message;
 }
@@ -453,7 +450,6 @@ export class DefaultMessage implements Message {
   /**
    * Get the latest message version, based on the event.
    * If "this" is the latest version, return "this", otherwise clone the message and apply the reactions.
-   *
    * @param message The message to get the latest version of
    * @returns The latest message version
    */
@@ -495,6 +491,10 @@ export class DefaultMessage implements Message {
   }
 }
 
+/**
+ * Creates an empty MessageReactions object with empty unique and distinct reaction collections.
+ * @returns An empty MessageReactions object.
+ */
 export const emptyMessageReactions = (): MessageReactions => ({
   unique: {},
   distinct: {},

@@ -24,7 +24,6 @@ export type Serial =
 
 /**
  * Convert a type that may contain a serial into a string.
- *
  * @param serial - The serial to convert.
  * @returns The serial as a string.
  */

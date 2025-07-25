@@ -35,7 +35,6 @@ export interface UseRoomStatusParams {
 
 /**
  * A hook that returns the current status of the room, and listens for changes to the room status.
- *
  * @internal
  * @param params An optional user-provided listener for room status changes.
  * @returns The current status of the room, and an error if the room is in an errored state.

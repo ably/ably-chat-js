@@ -4,6 +4,13 @@ import { expect, vi } from 'vitest';
 import { OccupancyEvent, PresenceEventType } from '../../src/core/events.ts';
 import { PresenceEvent } from '../../src/core/presence.ts';
 
+/**
+ * Waits for an expected occupancy event to appear in the provided occupancy events array.
+ * @param occupancyEvents The array of occupancy events to search through.
+ * @param expectedOccupancy The expected occupancy event to wait for.
+ * @param timeoutMs The timeout in milliseconds to wait for the event.
+ * @returns A promise that resolves when the expected occupancy is found.
+ */
 export const waitForExpectedInbandOccupancy = (
   occupancyEvents: OccupancyEvent[],
   expectedOccupancy: OccupancyEvent,

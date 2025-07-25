@@ -238,7 +238,6 @@ export const AnnotationTypeToReactionType: Record<string, MessageReactionType> =
 
 /**
  * Enum representing different message reaction events in the chat system.
- * @enum {string}
  */
 export enum MessageReactionEventType {
   /**
