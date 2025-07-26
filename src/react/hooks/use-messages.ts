@@ -40,6 +40,11 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly sendMessage: Messages['send'];
 
   /**
+   * A shortcut to the {@link Messages.get} method.
+   */
+  readonly getMessage: Messages['get'];
+
+  /**
    * A shortcut to the {@link Messages.update} method.
    */
   readonly updateMessage: Messages['update'];
@@ -139,15 +144,20 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     (params: SendMessageParams) => context.room.then((room) => room.messages.send(params)),
     [context],
   );
+
+  const getMessage = useCallback((serial: Serial) => context.room.then((room) => room.messages.get(serial)), [context]);
+
   const deleteMessage = useCallback(
     (serial: Serial, deleteMessageParams?: DeleteMessageParams) =>
       context.room.then((room) => room.messages.delete(serial, deleteMessageParams)),
     [context],
   );
+
   const history = useCallback(
     (options: QueryOptions) => context.room.then((room) => room.messages.history(options)),
     [context],
   );
+
   const updateMessage = useCallback(
     (serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails) =>
       context.room.then((room) => room.messages.update(serial, updateParams, details)),
@@ -265,6 +275,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     roomStatus,
     roomError,
     sendMessage,
+    getMessage,
     updateMessage,
     history,
     deleteMessage,

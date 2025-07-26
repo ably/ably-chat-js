@@ -191,6 +191,16 @@ export class ChatApi {
     return { ...data, ...result };
   }
 
+  async getMessage(roomName: string, serial: string): Promise<Message> {
+    const encodedSerial = encodeURIComponent(serial);
+    roomName = encodeURIComponent(roomName);
+    const restMessage = await this._makeAuthorizedRequest<RestMessage>(
+      `/chat/v3/rooms/${roomName}/messages/${encodedSerial}`,
+      'GET',
+    );
+    return messageFromRest(restMessage);
+  }
+
   deleteMessage(roomName: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
     const body: { description?: string; metadata?: MessageOperationMetadata } = {
       description: params?.description,
