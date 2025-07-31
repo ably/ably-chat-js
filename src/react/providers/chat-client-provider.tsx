@@ -33,7 +33,7 @@ export interface ChatClientProviderProps {
  * @param props - The props for the {@link ChatClientProvider} component.
  * @param props.children The child components to render.
  * @param props.client The chat client instance to provide in context.
- * @returns component.
+ * @returns A React element that provides the chat client context to its children.
  */
 export const ChatClientProvider = ({ children, client }: ChatClientProviderProps) => {
   const context = React.useContext(ChatClientContext);
