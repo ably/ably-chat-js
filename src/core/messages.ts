@@ -230,7 +230,6 @@ export interface Messages {
 
   /**
    * Get a message by its serial.
-   *
    * @param serial The serial of the message to get.
    * @returns A promise that resolves with the message.
    */
@@ -371,7 +370,7 @@ export class DefaultMessages implements Messages {
   }
 
   /**
-   * @inheritdoc Messages
+   * @inheritdoc
    */
   get reactions(): MessagesReactions {
     return this._reactions;
@@ -531,7 +530,7 @@ export class DefaultMessages implements Messages {
   }
 
   /**
-   * @inheritdoc Messages
+   * @inheritdoc
    */
   async send(params: SendMessageParams): Promise<Message> {
     this._logger.trace('Messages.send();', { params });
@@ -638,7 +637,6 @@ export class DefaultMessages implements Messages {
   /**
    * Disposes of the messages instance, removing all listeners and subscriptions.
    * This method should be called when the room is being released to ensure proper cleanup.
-   *
    * @internal
    */
   dispose(): void {

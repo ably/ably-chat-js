@@ -271,6 +271,8 @@ export class RoomLifecycleManager {
 
   /**
    * Returns the current room status
+   * @param status The room status to check against.
+   * @returns true if the room status matches, false otherwise.
    */
   private _roomStatusIs(status: RoomStatus): boolean {
     return this._roomLifecycle.status === status;
@@ -279,7 +281,6 @@ export class RoomLifecycleManager {
   /**
    * Disposes of the room lifecycle manager, removing all listeners and subscriptions.
    * This method should be called when the room is being released to ensure proper cleanup.
-   *
    * @internal
    */
   dispose(): void {

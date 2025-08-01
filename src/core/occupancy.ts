@@ -192,7 +192,6 @@ export class DefaultOccupancy implements Occupancy {
   /**
    * Disposes of the occupancy instance, removing all listeners and subscriptions.
    * This method should be called when the room is being released to ensure proper cleanup.
-   *
    * @internal
    */
   dispose(): void {

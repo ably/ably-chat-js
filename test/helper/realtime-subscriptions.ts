@@ -8,7 +8,8 @@ import { Subscribable } from '../../src/core/realtime-subscriptions.ts';
  * @param callback The callback to wait for.
  * @returns A promise that resolves when the unsubscribe method is called with the given callback.
  */
-export const waitForUnsubscribe = (subscribable: Subscribable<unknown>, callback: unknown): Promise<void> => vi.waitFor(() => {
+export const waitForUnsubscribe = (subscribable: Subscribable<unknown>, callback: unknown): Promise<void> =>
+  vi.waitFor(() => {
     expect(subscribable.unsubscribe).toHaveBeenCalledWith(callback);
   });
 
@@ -18,6 +19,7 @@ export const waitForUnsubscribe = (subscribable: Subscribable<unknown>, callback
  * @param times The number of times to wait for.
  * @returns A promise that resolves when the unsubscribe method is called the given number of times.
  */
-export const waitForUnsubscribeTimes = (subscribable: Subscribable<unknown>, times: number): Promise<void> => vi.waitFor(() => {
+export const waitForUnsubscribeTimes = (subscribable: Subscribable<unknown>, times: number): Promise<void> =>
+  vi.waitFor(() => {
     expect(subscribable.unsubscribe).toHaveBeenCalledTimes(times);
   });
