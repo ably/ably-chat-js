@@ -401,10 +401,9 @@ export class DefaultPresence implements Presence {
   }
 
   /**
+   * @param listener The listener to subscribe to presence state changes.
+   * @returns A subscription that can be used to unsubscribe from presence state changes.
    * @internal
-   * Subscribe to presence state changes
-   * @param listener The listener to call when the presence state changes
-   * @returns A subscription that can be used to unsubscribe
    */
   onPresenceStateChange(listener: PresenceStateChangeListener): Subscription {
     this._logger.trace('Presence.onPresenceStateChange()');
