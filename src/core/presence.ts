@@ -8,6 +8,42 @@ import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
+ * The state of presence in a room
+ */
+export interface PresenceState {
+  /**
+   * Whether the current user is present in the room
+   */
+  readonly present: boolean;
+}
+
+/**
+ * A presence state change event
+ */
+export interface PresenceStateChange {
+  /**
+   * The presence state before this change
+   */
+  readonly previous: PresenceState;
+
+  /**
+   * The presence state after this change
+   */
+  readonly current: PresenceState;
+
+  /**
+   * Any error that occurred during this state change
+   * This will be set if there was an error fetching presence data or performing presence operations
+   */
+  readonly error?: Ably.ErrorInfo;
+}
+
+/**
+ * Listener for presence state changes
+ */
+export type PresenceStateChangeListener = (change: PresenceStateChange) => void;
+
+/**
  * Interface for PresenceEventsMap
  */
 interface PresenceEventsMap {
@@ -143,7 +179,11 @@ export class DefaultPresence implements Presence {
   private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<PresenceEventsMap>();
+  private readonly _stateEmitter = new EventEmitter<{ 'presence.state.change': PresenceStateChange }>();
   private readonly _options: InternalRoomOptions;
+  private _presenceState: PresenceState = {
+    present: false,
+  };
 
   /**
    * Constructs a new `DefaultPresence` instance.
@@ -168,6 +208,15 @@ export class DefaultPresence implements Presence {
   private _applyChannelSubscriptions(): void {
     // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
     void this._channel.presence.subscribe(this.subscribeToEvents.bind(this));
+
+    // Listen for channel state changes to handle presence auto-reentry failures
+    this._channel.on('update', (stateChange: Ably.ChannelStateChange) => {
+      if (stateChange.reason?.code === 91004) {
+        // PresenceAutoReentryFailed
+        this._logger.debug('Presence auto-reentry failed', { reason: stateChange.reason });
+        this._emitPresenceStateChange(false, stateChange.reason);
+      }
+    });
   }
 
   /**
@@ -198,7 +247,13 @@ export class DefaultPresence implements Presence {
   async enter(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.enter()`, { data });
     this._assertChannelState();
-    return this._channel.presence.enterClient(this._clientId, data);
+    try {
+      await this._channel.presence.enterClient(this._clientId, data);
+      this._emitPresenceStateChange(true);
+    } catch (error) {
+      this._emitPresenceStateChange(false, error as Ably.ErrorInfo);
+      throw error;
+    }
   }
 
   /**
@@ -207,7 +262,13 @@ export class DefaultPresence implements Presence {
   async update(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.update()`, { data });
     this._assertChannelState();
-    return this._channel.presence.updateClient(this._clientId, data);
+    try {
+      await this._channel.presence.updateClient(this._clientId, data);
+      this._emitPresenceStateChange(true);
+    } catch (error) {
+      this._emitPresenceStateChange(false, error as Ably.ErrorInfo);
+      throw error;
+    }
   }
 
   /**
@@ -216,7 +277,13 @@ export class DefaultPresence implements Presence {
   async leave(data?: PresenceData): Promise<void> {
     this._logger.trace(`Presence.leave()`, { data });
     this._assertChannelState();
-    return this._channel.presence.leaveClient(this._clientId, data);
+    try {
+      await this._channel.presence.leaveClient(this._clientId, data);
+      this._emitPresenceStateChange(false);
+    } catch (error) {
+      this._emitPresenceStateChange(false, error as Ably.ErrorInfo);
+      throw error;
+    }
   }
 
   /**
@@ -314,5 +381,40 @@ export class DefaultPresence implements Presence {
       this._logger.error('could not perform presence operation; room is not attached');
       throw new Ably.ErrorInfo('could not perform presence operation; room is not attached', 40000, 400);
     }
+  }
+
+  /**
+   * Private method to emit the presence state change event.
+   * @param present - Whether the user is present
+   * @param error - Optional error information
+   */
+  private _emitPresenceStateChange(present: boolean, error?: Ably.ErrorInfo): void {
+    this._logger.trace('Presence._emitPresenceStateChange()', { present, error });
+    const previous: PresenceState = { ...this._presenceState };
+    this._presenceState = { present };
+    const stateChange: PresenceStateChange = {
+      previous,
+      current: this._presenceState,
+      error,
+    };
+    this._stateEmitter.emit('presence.state.change', stateChange);
+  }
+
+  /**
+   * @internal
+   * Subscribe to presence state changes
+   * @param listener The listener to call when the presence state changes
+   * @returns A subscription that can be used to unsubscribe
+   */
+  onPresenceStateChange(listener: PresenceStateChangeListener): Subscription {
+    this._logger.trace('Presence.onPresenceStateChange()');
+    const wrapped = wrap(listener);
+    this._stateEmitter.on('presence.state.change', wrapped);
+    return {
+      unsubscribe: () => {
+        this._logger.trace('Presence.unsubscribeFromPresenceStateChanges()');
+        this._stateEmitter.off(wrapped);
+      },
+    };
   }
 }
