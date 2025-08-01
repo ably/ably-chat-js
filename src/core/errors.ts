@@ -20,6 +20,11 @@ export enum ErrorCode {
   MessageRejectedByModeration = 42213,
 
   /**
+   * Could not re-enter presence automatically after a room re-attach occurred.
+   */
+  PresenceAutoReentryFailed = 91004,
+
+  /**
    * The room has experienced a discontinuity.
    */
   RoomDiscontinuity = 102100,

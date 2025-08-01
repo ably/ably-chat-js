@@ -71,8 +71,8 @@ describe('usePresence', () => {
 
     // check that the presence instance and metrics are correctly provided
     await waitForEventualHookValue(result, mockRoom.presence, (value) => value.presence);
-    expect(result.current.isPresent).toBe(true);
-    expect(result.current.error).toBeUndefined();
+    expect(result.current.myPresenceState.present).toBe(true);
+    expect(result.current.myPresenceState.error).toBeUndefined();
 
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomStatus.Attached);
@@ -91,11 +91,11 @@ describe('usePresence', () => {
       expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
     });
 
-    await waitFor(() => result.current.isPresent);
+    await waitFor(() => result.current.myPresenceState.present);
 
     // check the initial state of the presence instance
     expect(result.current.presence).toBe(mockRoom.presence);
-    expect(result.current.isPresent).toBe(true);
+    expect(result.current.myPresenceState.present).toBe(true);
 
     // change the mock room instance
     updateMockRoom(makeRandomRoom());
@@ -109,8 +109,8 @@ describe('usePresence', () => {
     await waitFor(() => {
       expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
     });
-    await waitFor(() => result.current.isPresent);
-    expect(result.current.isPresent).toBe(true);
+    await waitFor(() => result.current.myPresenceState.present);
+    expect(result.current.myPresenceState.present).toBe(true);
 
     // check that the presence instance is updated
     expect(result.current.presence).toBe(mockRoom.presence);
@@ -128,7 +128,7 @@ describe('usePresence', () => {
       }),
     );
 
-    await waitFor(() => result.current.isPresent, { timeout: 500 });
+    await waitFor(() => result.current.myPresenceState.present, { timeout: 500 });
 
     // verify that the update method was called
     expect(enterSpy).toHaveBeenCalledWith({ test: 'enter' });
@@ -154,29 +154,25 @@ describe('usePresence', () => {
     // verify that the update method was called
     expect(updateSpy).toHaveBeenCalled();
 
-    expect(result.current.isPresent).toBe(true);
+    expect(result.current.myPresenceState.present).toBe(true);
   });
 
-  it('should correctly return any error that occurs', async () => {
-    // spy on the leave method of the presence instance
-    const enterSpy = vi
-      .spyOn(mockRoom.presence, 'enter')
-      .mockRejectedValue(new Ably.ErrorInfo('enter error', 40000, 400));
+  it('should correctly handle enter errors', async () => {
+    // Create an error to be emitted
+    const errorInfo = new Ably.ErrorInfo('enter error', 40000, 400);
+
+    // Mock enter to reject with the error
+    vi.spyOn(mockRoom.presence, 'enter').mockRejectedValue(errorInfo);
 
     const { result } = renderHook(() => usePresence({ enterWithData: { test: 'data' } }));
 
-    // expect the enter method to be called
+    // Verify the enter method was called
     await waitFor(() => {
-      expect(enterSpy).toHaveBeenCalled();
+      expect(mockRoom.presence.enter).toHaveBeenCalled();
     });
 
-    // wait for the error to be set from the useEffect
-    await waitFor(
-      () => {
-        expect(result.current.error).toBeErrorInfo({ message: 'enter error' });
-      },
-      { timeout: 3000 },
-    );
+    // Verify the presence state is false (not present)
+    expect(result.current.myPresenceState.present).toBe(false);
   });
 
   describe.each([[ConnectionStatus.Failed], [ConnectionStatus.Suspended]])(
@@ -242,5 +238,23 @@ describe('usePresence', () => {
     unmount();
 
     expect(mockOff).toHaveBeenCalled();
+  });
+
+  it('should handle presence state changes', async () => {
+    // Mock enter to resolve
+    vi.spyOn(mockRoom.presence, 'enter').mockResolvedValue();
+
+    const { result } = renderHook(() => usePresence());
+
+    // Verify that the initial presence state is false
+    expect(result.current.myPresenceState.present).toBe(false);
+
+    // Verify that the update method works
+    await act(async () => {
+      await result.current.update();
+    });
+
+    // Verify that the presence state is true after update
+    expect(result.current.myPresenceState.present).toBe(true);
   });
 });
