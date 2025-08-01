@@ -5,7 +5,7 @@ import { useChatClient, usePresence, usePresenceListener } from '@ably/chat/reac
 interface UserListComponentProps {}
 
 export const UserPresenceComponent: FC<UserListComponentProps> = () => {
-  const { userPresenceState } = usePresence({ enterWithData: { status: '💻 Online' } });
+  const { myPresenceState } = usePresence({ enterWithData: { status: '💻 Online' } });
   const { presenceData } = usePresenceListener({
     listener: (event: unknown) => {
       console.log('Presence data changed', { event });
@@ -32,12 +32,12 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
       </div>
     );
   };
-  if (userPresenceState.error) {
+  if (myPresenceState.error) {
     return (
       <div className="flex-1 flex-col flex flex-nowrap items-start gap-4 overflow-x-auto">
         <div className="flex items-center gap-2 text-red-600">
           <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
-          <span>Error: {userPresenceState.error.message}</span>
+          <span>Error: {myPresenceState.error.message}</span>
         </div>
       </div>
     );
@@ -45,7 +45,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
 
   return (
     <div className="flex-1 flex-col flex flex-nowrap items-start gap-4 overflow-x-auto">
-      {userPresenceState.isPresent && presenceData.map((member, idx) => renderPresentMember(member, idx))}
+      {myPresenceState.present && presenceData.map((member, idx) => renderPresentMember(member, idx))}
     </div>
   );
 };
