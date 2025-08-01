@@ -370,7 +370,7 @@ export class DefaultMessages implements Messages {
   }
 
   /**
-   * @inheritdoc Messages
+   * @inheritdoc
    */
   get reactions(): MessagesReactions {
     return this._reactions;
@@ -637,7 +637,6 @@ export class DefaultMessages implements Messages {
   /**
    * Disposes of the messages instance, removing all listeners and subscriptions.
    * This method should be called when the room is being released to ensure proper cleanup.
-   *
    * @internal
    */
   dispose(): void {

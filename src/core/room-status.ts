@@ -202,7 +202,6 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
   /**
    * Disposes of the room lifecycle instance, removing all listeners.
    * This method should be called when the room is being released to ensure proper cleanup.
-   *
    * @internal
    */
   dispose(): void {

@@ -364,7 +364,6 @@ export class DefaultPresence implements Presence {
   /**
    * Disposes of the presence instance, removing all listeners and subscriptions.
    * This method should be called when the room is being released to ensure proper cleanup.
-   *
    * @internal
    */
   dispose(): void {

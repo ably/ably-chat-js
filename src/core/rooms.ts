@@ -48,7 +48,6 @@ export interface Rooms {
   /**
    * Disposes all rooms that are currently in the rooms map.
    * This method releases all rooms concurrently and clears the rooms map.
-   *
    * @returns A promise that resolves when all rooms have been released.
    */
   dispose(): Promise<void>;
@@ -206,7 +205,6 @@ export class DefaultRooms implements Rooms {
 
   /**
    * Ensures the rooms instance has not been disposed.
-   * @private
    */
   private _ensureNotDisposed(): void {
     if (this._disposed) {
@@ -216,7 +214,10 @@ export class DefaultRooms implements Rooms {
 
   /**
    * Handles the case where a room already exists.
-   * @private
+   * @param existingRoom The existing room entry in the map.
+   * @param name The unique identifier of the room.
+   * @param options The options for the room.
+   * @returns A promise that resolves to the existing room.
    */
   private async _handleExistingRoom(existingRoom: RoomMapEntry, name: string, options?: RoomOptions): Promise<Room> {
     if (!dequal(existingRoom.options, options)) {
@@ -233,7 +234,10 @@ export class DefaultRooms implements Rooms {
 
   /**
    * Creates a new room when no existing room or ongoing release exists.
-   * @private
+   * @param name The unique identifier of the room.
+   * @param nonce A random, internal identifier useful for debugging and logging.
+   * @param options The options for the room.
+   * @returns A new room object.
    */
   private _createNewRoom(name: string, nonce: string, options?: RoomOptions): Room {
     const room = this._makeRoom(name, nonce, options);
@@ -250,7 +254,11 @@ export class DefaultRooms implements Rooms {
 
   /**
    * Waits for an ongoing release to complete, then creates a new room.
-   * @private
+   * @param name The unique identifier of the room.
+   * @param nonce A random, internal identifier useful for debugging and logging.
+   * @param options The options for the room.
+   * @param ongoingRelease The promise of an ongoing release operation.
+   * @returns A promise that resolves to a room.
    */
   private async _waitForReleaseAndCreateRoom(
     name: string,
@@ -274,7 +282,12 @@ export class DefaultRooms implements Rooms {
 
   /**
    * Creates a promise that can be aborted if the room is released before completion.
-   * @private
+   * @param name The unique identifier of the room.
+   * @param nonce A random, internal identifier useful for debugging and logging.
+   * @param options The options for the room.
+   * @param ongoingRelease A promise that resolves when the previous release operation is complete.
+   * @param abortController An AbortController to manage the abort signal.
+   * @returns A promise that resolves to a new room or rejects if the operation is aborted.
    */
   private _createAbortableRoomPromise(
     name: string,
@@ -318,7 +331,9 @@ export class DefaultRooms implements Rooms {
 
   /**
    * Handles release when no room exists.
-   * @private
+   * @param name The unique identifier of the room.
+   * @param ongoingRelease An ongoing release promise, if any.
+   * @returns A promise that resolves when the release operation is complete.
    */
   private async _handleNonExistentRoomRelease(name: string, ongoingRelease?: Promise<void>): Promise<void> {
     if (ongoingRelease) {
@@ -332,7 +347,9 @@ export class DefaultRooms implements Rooms {
 
   /**
    * Handles release when there's already a release in progress.
-   * @private
+   * @param name The unique identifier of the room.
+   * @param existingRoom The existing room entry in the map.
+   * @param ongoingRelease The promise of an ongoing release operation.
    */
   private async _handleConcurrentRelease(
     name: string,
@@ -353,7 +370,8 @@ export class DefaultRooms implements Rooms {
 
   /**
    * Performs the actual room release operation.
-   * @private
+   * @param name The unique identifier of the room.
+   * @param existingRoom The existing room entry in the map.
    */
   private async _performRoomRelease(name: string, existingRoom: RoomMapEntry): Promise<void> {
     this._rooms.delete(name);
@@ -371,7 +389,8 @@ export class DefaultRooms implements Rooms {
 
   /**
    * Executes the room release and cleanup.
-   * @private
+   * @param name The unique identifier of the room.
+   * @param existingRoom The existing room entry in the map.
    */
   private async _executeRoomRelease(name: string, existingRoom: RoomMapEntry): Promise<void> {
     const room = await existingRoom.promise;
