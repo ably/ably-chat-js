@@ -108,8 +108,6 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     dataRef.current = params;
   }, [params]);
 
-  // We don't need to listen for channel status changes anymore as presence state is managed by presence.ts
-
   useEffect(() => {
     // Update the ref when roomStatus changes
     roomStatusAndConnectionStatusRef.current = { roomStatus, connectionStatus };
