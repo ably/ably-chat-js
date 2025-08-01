@@ -14,6 +14,12 @@ interface ReactionPayload {
   };
 }
 
+/**
+ * Parses a room reaction from an inbound message.
+ * @param message The inbound message containing the reaction data.
+ * @param clientId The client ID of the user.
+ * @returns The parsed room reaction.
+ */
 export const parseRoomReaction = (message: Ably.InboundMessage, clientId?: string): RoomReaction => {
   const reactionCreatedMessage = message as ReactionPayload;
 

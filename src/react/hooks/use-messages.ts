@@ -85,9 +85,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * before the listener was re-attached.
    *
    * This is removed when the component unmounts or when the previously provided listener is removed.
-   *
    * @param options - The query options to use when fetching the previous messages.
-   *
    * @defaultValue - This will be undefined if no listener is provided in the {@link UseMessagesParams}.
    */
   readonly historyBeforeSubscribe?: MessageSubscriptionResponse['historyBeforeSubscribe'];
@@ -119,7 +117,6 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
  * If a listener is provided, it will subscribe to new messages in the room,
  * and will also set the {@link UseMessagesResponse.historyBeforeSubscribe}.
- *
  * @param params - Allows the registering of optional callbacks.
  * @returns UsePresenceResponse - An object containing the {@link Messages} instance and methods to interact with it.
  */

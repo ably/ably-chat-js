@@ -25,7 +25,6 @@ export interface Rooms {
    *
    * If a call to `get` is made, followed by a subsequent call to `release` before the promise resolves, then the
    * promise will reject with an error.
-   *
    * @param name The unique identifier of the room.
    * @param options The options for the room.
    * @throws {@link ErrorInfo} if a room with the same name but different options already exists.
@@ -42,7 +41,6 @@ export interface Rooms {
    * you must call {@link Rooms.get}.
    *
    * Calling this function will abort any in-progress `get` calls for the same room.
-   *
    * @param name The unique identifier of the room.
    */
   release(name: string): Promise<void>;
@@ -93,7 +91,6 @@ export class DefaultRooms implements Rooms {
 
   /**
    * Constructs a new Rooms instance.
-   *
    * @param realtime An instance of the Ably Realtime client.
    * @param clientOptions The client options from the chat instance.
    * @param logger An instance of the Logger.
@@ -247,11 +244,9 @@ export class DefaultRooms implements Rooms {
 
   /**
    * makes a new room object
-   *
    * @param name The unique identifier of the room.
    * @param nonce A random, internal identifier useful for debugging and logging.
    * @param options The options for the room.
-   *
    * @returns DefaultRoom A new room object.
    */
   private _makeRoom(name: string, nonce: string, options: RoomOptions | undefined): DefaultRoom {

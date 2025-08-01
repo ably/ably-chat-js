@@ -51,7 +51,6 @@ class DefaultRoomPromise implements RoomPromise {
 
   /**
    * Creates a new DefaultRoomPromise and starts the resolution of the promise.
-   *
    * @param room  The promise that resolves to a Room instance.
    * @param onResolve  The callback that is called when the promise resolves to a Room instance.
    * @param logger  The logger to use for logging.
@@ -68,7 +67,6 @@ class DefaultRoomPromise implements RoomPromise {
   /**
    * Wait for the room promise to resolve, then execute the onResolve callback, storing its response as an unmount function.
    * If the component is unmounted before the promise resolves, then this will do nothing.
-   *
    * @param promise The promise that resolves to a Room instance.
    * @returns A promise that we simply resolve when it's done.
    */
@@ -96,12 +94,11 @@ class DefaultRoomPromise implements RoomPromise {
    * Example usage:
    *
    * ```ts
-   *  useEffect(() => {
-   *    const roomPromise = wrapRoomPromise(...);
-   *    return roomPromise.unmount();
-   *  }, []);
+   * useEffect(() => {
+   * const roomPromise = wrapRoomPromise(...);
+   * return roomPromise.unmount();
+   * }, []);
    * ```
-   *
    * @returns A function that should be called when the component is unmounted.
    */
   unmount() {
@@ -126,12 +123,11 @@ class DefaultRoomPromise implements RoomPromise {
  * Example usage:
  *
  * ```ts
- *  useEffect(() => {
- *    const roomPromise = wrapRoomPromise(...);
- *    return roomPromise.unmount();
- *  }, []);
+ * useEffect(() => {
+ * const roomPromise = wrapRoomPromise(...);
+ * return roomPromise.unmount();
+ * }, []);
  * ```
- *
  * @internal
  * @param room The promise that resolves to a Room instance.
  * @param onResolve The callback that is called when the promise resolves to a Room instance.

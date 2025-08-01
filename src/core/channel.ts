@@ -1,6 +1,5 @@
 /**
  * Gets the single main channel for the chat room.
- *
  * @param roomName The room name.
  * @returns  The channel name.
  */

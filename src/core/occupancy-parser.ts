@@ -29,7 +29,6 @@ interface OccupancyPayload {
 
 /**
  * Parses occupancy data from an Ably message, using fallback values of 0 for invalid data.
- *
  * @param message The Ably message containing occupancy data
  * @returns Parsed occupancy data with fallback values for invalid fields
  */

@@ -55,7 +55,6 @@ export class RoomLifecycleManager {
   /**
    * Sets up monitoring of channel state changes to keep room status in sync.
    * If an operation is in progress (attach/detach/release), state changes are ignored.
-   * @private
    */
   private _startMonitoringChannelState(): void {
     const channel = this._channelManager.get();
@@ -90,7 +89,6 @@ export class RoomLifecycleManager {
    * Sets up monitoring for channel discontinuities.
    * A discontinuity exists when an attached or update event comes from the channel with resume=false.
    * The first time we attach, or if we attach after an explicit detach call are not considered discontinuities.
-   * @private
    */
   private _startMonitoringDiscontinuity(): void {
     const channel = this._channelManager.get();
@@ -296,6 +294,8 @@ export class RoomLifecycleManager {
 
   /**
    * Maps an Ably channel state to a room status
+   * @param channelState The Ably channel state to map.
+   * @returns The corresponding room status.
    */
   private _mapChannelStateToRoomStatus(channelState: Ably.ChannelState): RoomStatus {
     switch (channelState) {
@@ -383,7 +383,7 @@ export class RoomLifecycleManager {
 
   /**
    * Returns whether there is currently an operation (attach/detach/release) in progress
-   * @private
+   * @returns True if an operation is in progress, false otherwise.
    */
   private _operationInProgress(): boolean {
     return this._mutex.isLocked();

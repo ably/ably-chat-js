@@ -16,7 +16,6 @@ export interface HistoryQueryParams {
    * Serial indicating the starting point for message retrieval.
    * This serial is specific to the region of the channel the client is connected to. Messages published within
    * the same region of the channel are guaranteed to be received in increasing serial order.
-   *
    * @defaultValue undefined (not used if not specified)
    */
   fromSerial?: string;
@@ -108,7 +107,7 @@ export interface SendMessageReactionParams {
   /**
    * The count of the reaction for type {@link MessageReactionType.Multiple}.
    * Defaults to 1 if not set. Not supported for other reaction types.
-   * @default 1
+   * @defaultValue 1
    */
   count?: number;
 }

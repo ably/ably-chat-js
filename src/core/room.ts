@@ -22,49 +22,42 @@ import { DefaultTyping, Typing } from './typing.js';
 export interface Room {
   /**
    * The unique identifier of the room.
-   *
    * @returns The room name.
    */
   get name(): string;
 
   /**
    * Allows you to send, subscribe-to and query messages in the room.
-   *
    * @returns The messages instance for the room.
    */
   get messages(): Messages;
 
   /**
    * Allows you to subscribe to presence events in the room.
-   *
    * @returns The presence instance for the room.
    */
   get presence(): Presence;
 
   /**
    * Allows you to interact with room-level reactions.
-   *
    * @returns The room reactions instance for the room.
    */
   get reactions(): RoomReactions;
 
   /**
    * Allows you to interact with typing events in the room.
-   *
    * @returns The typing instance for the room.
    */
   get typing(): Typing;
 
   /**
    * Allows you to interact with occupancy metrics for the room.
-   *
    * @returns The occupancy instance for the room.
    */
   get occupancy(): Occupancy;
 
   /**
    * The current status of the room.
-   *
    * @returns The current status.
    */
   get status(): RoomStatus;
@@ -90,21 +83,18 @@ export interface Room {
    *
    * If the room enters the suspended state, then the call to attach will reject with the {@link ErrorInfo} that caused the suspension. However,
    * the room will automatically retry attaching after a delay.
-   *
    * @returns A promise that resolves when the room is attached.
    */
   attach(): Promise<void>;
 
   /**
    * Detaches from the room to stop receiving events in realtime.
-   *
    * @returns A promise that resolves when the room is detached.
    */
   detach(): Promise<void>;
 
   /**
    * Returns the room options.
-   *
    * @returns A copy of the options used to create the room.
    */
   options(): RoomOptions;
@@ -112,7 +102,6 @@ export interface Room {
   /**
    * Registers a handler that will be called whenever a discontinuity is detected in the room's connection.
    * A discontinuity occurs when the room's connection is interrupted and cannot be resumed from its previous state.
-   *
    * @param handler The function to call when a discontinuity is detected.
    * @returns An object that can be used to unregister the handler.
    */
@@ -147,14 +136,12 @@ export class DefaultRoom implements Room {
 
   /**
    * Constructs a new Room instance.
-   *
    * @param name The unique identifier of the room.
    * @param nonce A random identifier for the room instance, useful in debugging and logging.
    * @param options The options for the room.
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
    * @param logger An instance of the Logger.
-   * @param connection An instance of the Connection.
    */
   constructor(
     name: string,
@@ -224,10 +211,10 @@ export class DefaultRoom implements Room {
 
   /**
    * Gets the channel manager for the room, which handles merging channel options together and creating channels.
-   *
    * @param options The room options.
    * @param realtime  An instance of the Ably Realtime client.
    * @param logger An instance of the Logger.
+   * @returns The channel manager instance.
    */
   private _getChannelManager(options: InternalRoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
     const manager = new ChannelManager(this._name, realtime, logger, options.isReactClient);
@@ -239,77 +226,77 @@ export class DefaultRoom implements Room {
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   get name(): string {
     return this._name;
   }
 
   /**
-   * @inheritDoc Room
+   * @inheritDoc
    */
   options(): RoomOptions {
     return cloneDeep(this._options);
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   get messages(): Messages {
     return this._messages;
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   get presence(): Presence {
     return this._presence;
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   get reactions(): RoomReactions {
     return this._reactions;
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   get typing(): Typing {
     return this._typing;
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   get occupancy(): Occupancy {
     return this._occupancy;
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   get status(): RoomStatus {
     return this._lifecycle.status;
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   get error(): Ably.ErrorInfo | undefined {
     return this._lifecycle.error;
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   onStatusChange(listener: RoomStatusListener): StatusSubscription {
     return this._lifecycle.onChange(listener);
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   async attach() {
     this._logger.trace('Room.attach();');
@@ -317,7 +304,7 @@ export class DefaultRoom implements Room {
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   async detach(): Promise<void> {
     this._logger.trace('Room.detach();');
@@ -327,6 +314,7 @@ export class DefaultRoom implements Room {
   /**
    * Releases resources associated with the room.
    * We guarantee that this does not throw an error.
+   * @returns A promise that resolves when the room is released.
    */
   release(): Promise<void> {
     this._logger.trace('Room.release();');
@@ -335,7 +323,6 @@ export class DefaultRoom implements Room {
 
   /**
    * A random identifier for the room instance, useful in debugging and logging.
-   *
    * @returns The nonce.
    */
   get nonce(): string {
@@ -344,8 +331,7 @@ export class DefaultRoom implements Room {
 
   /**
    * @internal
-   *
-   * Returns the rooms lifecycle.
+   * @returns The internal room lifecycle.
    */
   get lifecycle(): InternalRoomLifecycle {
     return this._lifecycle;
@@ -353,13 +339,14 @@ export class DefaultRoom implements Room {
 
   /**
    * @internal
+   * @returns The room lifecycle manager.
    */
   get lifecycleManager(): RoomLifecycleManager {
     return this._lifecycleManager;
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   onDiscontinuity(handler: DiscontinuityListener): StatusSubscription {
     this._logger.trace('Room.onDiscontinuity();');
@@ -367,7 +354,7 @@ export class DefaultRoom implements Room {
   }
 
   /**
-   * @inheritdoc Room
+   * @inheritdoc
    */
   get channel(): Ably.RealtimeChannel {
     return this._channelManager.get();

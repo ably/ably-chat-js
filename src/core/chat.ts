@@ -63,7 +63,6 @@ export class ChatClient {
 
   /**
    * Returns the rooms object, which provides access to chat rooms.
-   *
    * @returns The rooms object.
    */
   get rooms(): Rooms {
@@ -73,7 +72,6 @@ export class ChatClient {
   /**
    * Returns the underlying connection to Ably, which can be used to monitor the client's
    * connection to Ably servers.
-   *
    * @returns The connection object.
    */
   get connection(): Connection {
@@ -82,7 +80,6 @@ export class ChatClient {
 
   /**
    * Returns the clientId of the current client.
-   *
    * @returns The clientId.
    */
   get clientId(): string {

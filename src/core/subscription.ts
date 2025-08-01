@@ -2,8 +2,6 @@
  * Represents a subscription that can be unsubscribed from.
  * This interface provides a way to clean up and remove subscriptions when they
  * are no longer needed.
- *
- * @interface
  * @example
  * ```typescript
  * const s = someService.subscribe();
@@ -23,8 +21,6 @@ export interface Subscription {
 /**
  * Represents a subscription to status change events that can be unsubscribed from. This
  * interface provides a way to clean up and remove subscriptions when they are no longer needed.
- *
- * @interface
  * @example
  * ```typescript
  * const s = someService.onStatusChange();
