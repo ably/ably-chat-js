@@ -115,6 +115,31 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     roomStatusAndConnectionStatusRef.current = { roomStatus, connectionStatus };
   }, [roomStatus, connectionStatus]);
 
+  // Subscribe to presence state changes
+  useEffect(() => {
+    logger.debug('usePresence(); subscribing to presence state changes');
+    return wrapRoomPromise(
+      context.room,
+      (room: Room) => {
+        // Subscribe to presence state changes
+        const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange(
+          (stateChange: PresenceStateChange) => {
+            logger.debug('usePresence(); presence state changed', { stateChange });
+            setMyPresenceState({
+              ...stateChange.current,
+              error: stateChange.error,
+            });
+          },
+        );
+        return () => {
+          logger.debug('usePresence(); unsubscribing from presence state changes');
+          subscription.unsubscribe();
+        };
+      },
+      logger,
+    ).unmount();
+  }, [context, logger]);
+
   // enter the room when the hook is mounted
   useEffect(() => {
     logger.debug('usePresence(); entering room');
@@ -184,32 +209,6 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
       logger,
     ).unmount();
   }, [context, onDiscontinuityRef, logger]);
-
-  // Subscribe to presence state changes
-  useEffect(() => {
-    logger.debug('usePresence(); subscribing to presence state changes');
-    return wrapRoomPromise(
-      context.room,
-      (room: Room) => {
-        // Subscribe to presence state changes
-        const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange(
-          (stateChange: PresenceStateChange) => {
-            logger.debug('usePresence(); presence state changed', { stateChange });
-            setMyPresenceState({
-              ...stateChange.current,
-              error: stateChange.error,
-            });
-          },
-        );
-
-        return () => {
-          logger.debug('usePresence(); unsubscribing from presence state changes');
-          subscription.unsubscribe();
-        };
-      },
-      logger,
-    ).unmount();
-  }, [context, logger]);
 
   // memoize the methods to avoid re-renders and ensure the same instance is used
   const update = useCallback(
