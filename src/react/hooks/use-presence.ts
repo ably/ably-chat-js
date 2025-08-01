@@ -58,6 +58,11 @@ export interface UsePresenceResponse extends ChatStatusResponse {
   };
 }
 
+// Internal interface for presence with state change subscription
+interface PresenceWithStateChangeListener extends Presence {
+  onPresenceStateChange(listener: PresenceStateChangeListener): Subscription;
+}
+
 /**
  * A set of connection states that are considered inactive and where presence operations should not be attempted.
  */
@@ -69,7 +74,7 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.S
  * On calling, the hook will `enter` the room with the provided data and `leave` the room when the component unmounts.
  * The {@link UsePresenceResponse.myPresenceState} can be used to determine if the user is currently present in the room, and if any errors occurred while trying to enter or leave presence.
  * Presence automatically attempts to re-enter the room after a network issue, but if it fails, it will emit an error with code `91004`.
- * You will need to remount the component to re-attempt entering presence again.
+ * You will need to remount the component, or call the {@link Presence.update} method exposed by this hook, to re-attempt entering presence again.
  * @param params - Allows the registering of optional callbacks.
  * @returns UsePresenceResponse - An object containing the {@link Presence} instance and methods to interact with it.
  */
@@ -187,17 +192,15 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
       context.room,
       (room: Room) => {
         // Subscribe to presence state changes
-        const subscription = (
-          room.presence as Presence & {
-            onPresenceStateChange: (listener: PresenceStateChangeListener) => Subscription;
-          }
-        ).onPresenceStateChange((stateChange: PresenceStateChange) => {
-          logger.debug('usePresence(); presence state changed', { stateChange });
-          setMyPresenceState({
-            ...stateChange.current,
-            error: stateChange.error,
-          });
-        });
+        const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange(
+          (stateChange: PresenceStateChange) => {
+            logger.debug('usePresence(); presence state changed', { stateChange });
+            setMyPresenceState({
+              ...stateChange.current,
+              error: stateChange.error,
+            });
+          },
+        );
 
         return () => {
           logger.debug('usePresence(); unsubscribing from presence state changes');
