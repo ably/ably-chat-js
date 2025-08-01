@@ -202,8 +202,20 @@ export class DefaultRoom implements Room {
       // Release via the lifecycle manager
       await this._lifecycleManager.release();
 
-      // Dispose of all remaining resources only once we have fully released the room
+      // Dispose of the lifecycle manager, removing all user-registered listeners from emitters
+      // and any listeners that have been registered to the realtime instance
+      this._lifecycleManager.dispose();
+
+      // Dispose of all features, removing any listeners that have been subscribed to the realtime instance
+      // and also removing any user-level listeners from the emitters
+      this._messages.dispose();
+      this._presence.dispose();
+      this._reactions.dispose();
+      this._occupancy.dispose();
       await this._typing.dispose();
+
+      // Dispose of the RoomStatus instance
+      this._lifecycle.dispose();
 
       finalized = true;
     };

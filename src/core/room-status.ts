@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 
 import { Logger } from './logger.js';
 import { StatusSubscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * The different states that a room can be in throughout its lifecycle.
@@ -148,7 +148,6 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
   private _status: RoomStatus = RoomStatus.Initialized;
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;
-  private readonly _internalEmitter = new EventEmitter<RoomStatusEventsMap>();
   private readonly _emitter = new EventEmitter<RoomStatusEventsMap>();
 
   /**
@@ -197,7 +196,29 @@ export class DefaultRoomLifecycle implements InternalRoomLifecycle {
     this._status = change.current;
     this._error = change.error;
     this._logger.info(`room status changed`, { ...change });
-    this._internalEmitter.emit(change.current, change);
     this._emitter.emit(change.current, change);
+  }
+
+  /**
+   * Disposes of the room lifecycle instance, removing all listeners.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   * @internal
+   */
+  dispose(): void {
+    this._logger.trace('DefaultRoomLifecycle.dispose();');
+
+    // Remove all user-level listeners
+    this._emitter.off();
+
+    this._logger.debug('DefaultRoomLifecycle.dispose(); disposed successfully');
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    return emitterHasListeners(this._emitter);
   }
 }

@@ -87,3 +87,25 @@ export const wrap =
   <Args extends unknown[], Return>(fn: (...args: Args) => Return): ((...args: Args) => Return) =>
   (...args: Args) =>
     fn(...args);
+
+/**
+ * Checks if an EventEmitter has any listeners registered.
+ * @param emitter The EventEmitter instance to check
+ * @returns true if the emitter has listeners, false otherwise
+ */
+export const emitterHasListeners = <EventsMap>(emitter: EventEmitter<EventsMap>): boolean => {
+  const destructured = emitter as unknown as {
+    events: Record<string, unknown[]>;
+    any: unknown[];
+    eventsOnce: Record<string, unknown[]>;
+    anyOnce: unknown[];
+  };
+
+  const numListeners =
+    Object.values(destructured.events).flat().length +
+    destructured.any.length +
+    Object.values(destructured.eventsOnce).flat().length +
+    destructured.anyOnce.length;
+
+  return numListeners ? numListeners > 0 : false;
+};
