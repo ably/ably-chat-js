@@ -189,7 +189,6 @@ export class DefaultRoomReactions implements RoomReactions {
   /**
    * Disposes of the room reactions instance, removing all listeners and subscriptions.
    * This method should be called when the room is being released to ensure proper cleanup.
-   *
    * @internal
    */
   dispose(): void {

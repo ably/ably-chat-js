@@ -61,13 +61,28 @@ export interface Subscribable<T> {
  *
  * Overload 1: Subscribe to all events.
  * Overload 2: Subscribe to specific events (string or string[]).
- *
  * @param emitter The event emitter object that has `on` and `off` methods.
  * @param callback The callback function to be called when events occur.
  * @returns A cleanup function that when called will unsubscribe the callback.
  */
 export function on<T>(emitter: Onable<T>, callback: (data: T) => void): () => void;
 export function on<T>(emitter: Onable<T>, events: string | string[], callback: (data: T) => void): () => void;
+
+/**
+ * @param emitter The event emitter object that has `on` and `off` methods.
+ * @param arg2 Either a callback function (for subscribing to all events) or event names (string or string[]) to subscribe to specific events.
+ * @param arg3 The callback function to be called when events occur (only used when arg2 is event names).
+ * @returns A cleanup function that when called will unsubscribe the callback.
+ * @throws {TypeError} If the arguments passed are invalid.
+ * @example
+ * ```typescript
+ * // Subscribe to all events
+ * const cleanup = on(emitter, (data) => console.log(data));
+ * // Subscribe to specific events
+ * const cleanup = on(emitter, 'eventName', (data) => console.log(data));
+ * const cleanup = on(emitter, ['event1', 'event2'], (data) => console.log(data));
+ * ```
+ */
 export function on<T>(
   emitter: Onable<T>,
   arg2: ((data: T) => void) | string | string[],
@@ -88,8 +103,31 @@ export function on<T>(
   }
 }
 
+/**
+ * Subscribe to events on an emitter and return a cleanup function.
+ *
+ * Overload 1: Subscribe to all events once.
+ * Overload 2: Subscribe to specific events (string or string[]) once.
+ * @param emitter The event emitter object that has `once` and `off` methods.
+ * @param callback The callback function to be called when events occur.
+ * @returns A cleanup function that when called will unsubscribe the callback.
+ * @example
+ * ```typescript
+ * // Subscribe to all events once
+ * const cleanup = once(emitter, (data) => console.log(data));
+ * // Subscribe to specific events once
+ * const cleanup = once(emitter, 'eventName', (data) => console.log(data));
+ * const cleanup = once(emitter, ['event1', 'event2'], (data) => console.log(data));
+ * ```
+ */
 export function once<T>(emitter: Onable<T>, callback: (data: T) => void): () => void;
 export function once<T>(emitter: Onable<T>, events: string | string[], callback: (data: T) => void): () => void;
+/**
+ * @param emitter The event emitter object that has `once` and `off` methods.
+ * @param arg2 Either a callback function (for subscribing to all events) or event names (string or string[]) to subscribe to specific events.
+ * @param arg3 The callback function to be called when events occur (only used when arg2 is event names).
+ * @returns A cleanup function that when called will unsubscribe the callback.
+ */
 export function once<T>(
   emitter: Onable<T>,
   arg2: ((data: T) => void) | string | string[],
@@ -115,10 +153,18 @@ export function once<T>(
  *
  * Overload 1: Subscribe to all events.
  * Overload 2: Subscribe to specific events (string or string[]).
- *
  * @param emitter The event emitter object that has `subscribe` and `unsubscribe` methods.
- * @param callback The callback function to be called when events occur.
+ * @param callback The callback function to be called when events occur (only used when first parameter is event names).
  * @returns A cleanup function that when called will unsubscribe the callback.
+ * @example
+ * ```typescript
+ * // Subscribe to all events
+ * const unsubscribe = subscribe(emitter, (data) => console.log(data));
+ *
+ * // Subscribe to specific events
+ * const unsubscribe = subscribe(emitter, 'eventName', (data) => console.log(data));
+ * const unsubscribe = subscribe(emitter, ['event1', 'event2'], (data) => console.log(data));
+ * ```
  */
 export function subscribe<T>(emitter: Subscribable<T>, callback: (data: T) => void): () => void;
 export function subscribe<T>(
@@ -126,6 +172,14 @@ export function subscribe<T>(
   events: string | string[],
   callback: (data: T) => void,
 ): () => void;
+/**
+ * Subscribe to events on an emitter and return a cleanup function.
+ * This is the implementation function that handles both overloads.
+ * @param emitter The event emitter object that has `subscribe` and `unsubscribe` methods.
+ * @param arg2 Either a callback function (for subscribing to all events) or event names (string or string[]) to subscribe to specific events.
+ * @param arg3 The callback function to be called when events occur (only used when arg2 is event names).
+ * @returns A cleanup function that when called will unsubscribe the callback.
+ */
 export function subscribe<T>(
   emitter: Subscribable<T>,
   arg2: ((data: T) => void) | string | string[],
