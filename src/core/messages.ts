@@ -229,7 +229,6 @@ export interface Messages {
 
   /**
    * Get a message by its serial.
-   *
    * @param serial The serial of the message to get.
    * @returns A promise that resolves with the message.
    */
@@ -509,7 +508,7 @@ export class DefaultMessages implements Messages {
   }
 
   /**
-   * @inheritdoc Messages
+   * @inheritdoc
    */
   async send(params: SendMessageParams): Promise<Message> {
     this._logger.trace('Messages.send();', { params });
