@@ -2,7 +2,7 @@ import { cleanup, render } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatClient } from '../../../src/core/chat.ts';
+import { ChatClient } from '../../../src/core/chat-client.ts';
 import { RealtimeWithOptions } from '../../../src/core/realtime-extensions.ts';
 import { VERSION } from '../../../src/core/version.ts';
 import { useChatClient } from '../../../src/react/hooks/use-chat-client.ts';

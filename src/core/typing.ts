@@ -4,6 +4,7 @@ import { E_CANCELED, Mutex } from 'async-mutex';
 import { TypingEventType, TypingSetEvent, TypingSetEventType } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
+import { subscribe } from './realtime-subscriptions.js';
 import { InternalTypingOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
@@ -107,6 +108,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   // Mutex for controlling `keystroke` and `stop` operations
   private readonly _mutex = new Mutex();
 
+  // Cleanup function for the channel subscription
+  private readonly _unsubscribeTypingEvents: () => void;
+
   /**
    * Constructs a new `DefaultTyping` instance.
    * @param options The options for typing in the room.
@@ -134,16 +138,9 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     this._currentlyTyping = new Map<string, TypingTimerHandle>();
     this._logger = logger;
 
-    this._applyChannelSubscriptions();
-  }
-
-  /**
-   * Sets up channel subscriptions for typing indicators.
-   */
-  private _applyChannelSubscriptions(): void {
-    // CHA-T8
-    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.subscribe(
+    // Use subscription helper to create cleanup function
+    this._unsubscribeTypingEvents = subscribe(
+      this._channel,
       [TypingEventType.Started, TypingEventType.Stopped],
       this._internalSubscribeToEvents.bind(this),
     );
@@ -359,6 +356,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       }
     }
     this._clearAllTypingStates();
+    this._unsubscribeTypingEvents();
+    this.off();
     this._mutex.release();
   }
 
