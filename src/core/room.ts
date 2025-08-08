@@ -325,7 +325,6 @@ export class DefaultRoom implements Room {
 
   /**
    * Releases resources associated with the room.
-   * We guarantee that this does not throw an error.
    * @returns A promise that resolves when the room is released.
    */
   release(): Promise<void> {
