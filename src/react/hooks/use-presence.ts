@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ConnectionStatus } from '../../core/connection.js';
 import { Presence, PresenceData, PresenceStateChange, PresenceStateChangeListener } from '../../core/presence.js';
@@ -29,6 +29,12 @@ export interface UsePresenceParams extends StatusParams {
    * The data to leave the room with. Any JSON serializable data can be provided.
    */
   leaveWithData?: PresenceData;
+
+  /**
+   * Controls whether the hook should automatically enter the room on mount and leave on unmount.
+   * Defaults to true if not provided.
+   */
+  autoEnterLeave?: boolean;
 }
 
 export interface UsePresenceResponse extends ChatStatusResponse {
@@ -36,6 +42,18 @@ export interface UsePresenceResponse extends ChatStatusResponse {
    * A shortcut to the {@link Presence.update} method.
    */
   readonly update: Presence['update'];
+
+  /**
+   * A shortcut to the {@link Presence.enter} method. This is useful to manually control entering presence when `autoEnterLeave` is false,
+   * or to re-enter presence after a persistent error that the SDK could not recover from.
+   */
+  readonly enter: Presence['enter'];
+
+  /**
+   * A shortcut to the {@link Presence.leave} method. This is useful to manually control leaving presence when autoEnterLeave is false,
+   * or to leave presence before unmounting the component.
+   */
+  readonly leave: Presence['leave'];
 
   /**
    * Provides access to the underlying {@link Presence} instance of the room.
@@ -88,6 +106,9 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   const logger = useRoomLogger();
   logger.trace('usePresence();', { params });
 
+  // Default to true for autoEnterLeave if not provided
+  const shouldAutoEnterLeave = useMemo(() => params?.autoEnterLeave !== false, [params?.autoEnterLeave]);
+
   const [myPresenceState, setMyPresenceState] = useState<{
     present: boolean;
     error?: Ably.ErrorInfo;
@@ -138,8 +159,15 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     ).unmount();
   }, [context, logger]);
 
-  // enter the room when the hook is mounted
+  // enter the room when the hook is mounted (if autoEnterLeave is enabled)
   useEffect(() => {
+    if (!shouldAutoEnterLeave) {
+      logger.debug('usePresence(); auto enter/leave disabled');
+      return () => {
+        // no-op
+      };
+    }
+
     logger.debug('usePresence(); entering room');
     return wrapRoomPromise(
       context.room,
@@ -190,7 +218,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
       },
       logger,
     ).unmount();
-  }, [context, connectionStatus, roomStatus, logger]);
+  }, [context, connectionStatus, roomStatus, logger, shouldAutoEnterLeave]);
 
   // if provided, subscribes the user provided onDiscontinuity listener
   useEffect(() => {
@@ -211,9 +239,19 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   // memoize the methods to avoid re-renders and ensure the same instance is used
   const update = useCallback(
     (data?: PresenceData) => context.room.then((room: Room) => room.presence.update(data)),
-
     [context],
   );
+
+  const enter = useCallback(
+    (data?: PresenceData) => context.room.then((room: Room) => room.presence.enter(data)),
+    [context],
+  );
+
+  const leave = useCallback(
+    (data?: PresenceData) => context.room.then((room: Room) => room.presence.leave(data)),
+    [context],
+  );
+
   return {
     presence: useEventualRoomProperty((room) => room.presence),
     connectionStatus,
@@ -221,6 +259,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     roomStatus,
     roomError,
     update,
+    enter,
+    leave,
     myPresenceState,
   };
 };
