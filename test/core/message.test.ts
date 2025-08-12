@@ -15,8 +15,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: firstSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: firstSerial,
+        timestamp: new Date(1672531200000),
+        clientId: 'clientId',
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -28,8 +33,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: secondSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: secondSerial,
+        timestamp: new Date(1672531200000),
+        clientId: 'clientId',
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -48,8 +58,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: firstSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: firstSerial,
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -61,8 +76,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: secondSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: secondSerial,
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -81,8 +101,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: firstSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: firstSerial,
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -94,8 +119,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: secondSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: secondSerial,
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -114,8 +144,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: firstSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: firstSerial,
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -127,8 +162,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: secondSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: secondSerial,
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -147,8 +187,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: firstSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: firstSerial,
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -160,8 +205,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: secondSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: secondSerial,
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -180,8 +230,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: firstSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: firstSerial,
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -193,8 +248,13 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: secondSerial,
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: secondSerial,
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
     });
@@ -212,13 +272,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageDelete,
-        version: '01672531300000-123@abcdefghij:0',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531300000),
-        reactions: emptyMessageReactions(),
-        operation: {
+        version: {
+          serial: '01672531300000-123@abcdefghij:0',
+          timestamp: new Date(1672531300000),
           clientId: 'clientId2',
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: new Date(1672531200000),
+        reactions: emptyMessageReactions(),
       });
       expect(firstMessage.isDeleted).toBe(true);
       expect(firstMessage.deletedBy).toBe('clientId2');
@@ -233,11 +295,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: '01672531200000-123@abcdefghij:0',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531300000),
+        version: {
+          serial: '01672531200000-123@abcdefghij:0',
+          timestamp: new Date(1672531300000),
+          clientId: 'clientId2',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'clientId2' },
       });
       expect(firstMessage.isUpdated).toBe(true);
       expect(firstMessage.updatedBy).toBe('clientId2');
@@ -257,8 +323,13 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: firstVersion,
-        createdAt: new Date(1672531200000),
+        version: {
+          serial: firstVersion,
+          timestamp: new Date(1672531200000),
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
+        },
         timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
       });
@@ -270,8 +341,13 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: secondVersion,
-        createdAt: new Date(1672531200000),
+        version: {
+          serial: secondVersion,
+          timestamp: new Date(1672531200000),
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
+        },
         timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
       });
@@ -336,9 +412,14 @@ describe('ChatMessage', () => {
           metadata: {},
           headers: {},
           action: ChatMessageAction.MessageUpdate,
-          version: firstVersion,
-          createdAt: new Date(1672531200000),
-          timestamp: new Date(1672531200001),
+          version: {
+            serial: firstVersion,
+            timestamp: new Date(1672531200001),
+            clientId: 'clientId',
+            description: undefined,
+            metadata: undefined,
+          },
+          timestamp: new Date(1672531200000),
           reactions: emptyMessageReactions(),
         });
 
@@ -349,9 +430,14 @@ describe('ChatMessage', () => {
           metadata: {},
           headers: {},
           action: ChatMessageAction.MessageUpdate,
-          version: secondVersion,
-          createdAt: new Date(1672531200000),
-          timestamp: new Date(1672531200001),
+          version: {
+            serial: secondVersion,
+            timestamp: new Date(1672531200001),
+            clientId: 'clientId',
+            description: undefined,
+            metadata: undefined,
+          },
+          timestamp: new Date(1672531200000),
           reactions: emptyMessageReactions(),
         });
         expected(firstMessage, secondMessage);
@@ -367,11 +453,15 @@ describe('ChatMessage', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: '01672531200100-123@abcdefghij',
-      createdAt: new Date(1672531200000),
+      version: {
+        serial: '01672531200100-123@abcdefghij',
+        timestamp: new Date(1672531200000),
+        clientId: undefined,
+        description: undefined,
+        metadata: undefined,
+      },
       timestamp: new Date(1672531200000),
       reactions: emptyMessageReactions(),
-      operation: undefined,
     });
 
     it('should throw an error if different messages', () => {
@@ -383,11 +473,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: '01672531200500-123@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531200500),
+        version: {
+          serial: '01672531200500-123@abcdefghij',
+          timestamp: new Date(1672531200500),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const event: ChatMessageEvent = {
@@ -410,11 +504,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageCreate,
-        version: '01672531200500-123@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531200500),
+        version: {
+          serial: '01672531200500-123@abcdefghij',
+          timestamp: new Date(1672531200500),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const event: ChatMessageEvent = {
@@ -437,11 +535,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: '01672531209999-123@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531209999),
+        version: {
+          serial: '01672531209999-123@abcdefghij',
+          timestamp: new Date(1672531209999),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const event: ChatMessageEvent = {
@@ -462,11 +564,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageDelete,
-        version: '01672531209999-123@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531209999),
+        version: {
+          serial: '01672531209999-123@abcdefghij',
+          timestamp: new Date(1672531209999),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const event: ChatMessageEvent = {
@@ -487,10 +593,14 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: '01672531200000-123@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531209999),
-        operation: { clientId: 'luke' },
+        version: {
+          serial: '01672531200000-123@abcdefghij',
+          timestamp: new Date(1672531209999),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
       });
 
@@ -512,10 +622,8 @@ describe('ChatMessage', () => {
         headers: {},
         action: ChatMessageAction.MessageUpdate,
         version: message.version,
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531209999),
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const event: ChatMessageEvent = {
@@ -535,11 +643,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: '01672531209999-123@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531209999),
+        version: {
+          serial: '01672531209999-123@abcdefghij',
+          timestamp: new Date(1672531209999),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const message2 = new DefaultMessage({
@@ -549,11 +661,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: '01672531209999-124@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531209999),
+        version: {
+          serial: '01672531209999-124@abcdefghij',
+          timestamp: new Date(1672531209999),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const newMessage = message.with(message2);
@@ -569,11 +685,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: '01672531209999-123@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531209999),
+        version: {
+          serial: '01672531209999-123@abcdefghij',
+          timestamp: new Date(1672531209999),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const message2 = new DefaultMessage({
@@ -583,11 +703,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: '01672531209999-124@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531209999),
+        version: {
+          serial: '01672531209999-124@abcdefghij',
+          timestamp: new Date(1672531209999),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const newMessage = message.with(message2);
@@ -603,11 +727,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: '01672531209999-123@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531209999),
+        version: {
+          serial: '01672531209999-123@abcdefghij',
+          timestamp: new Date(1672531209999),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const message2 = new DefaultMessage({
@@ -617,11 +745,15 @@ describe('ChatMessage', () => {
         metadata: {},
         headers: {},
         action: ChatMessageAction.MessageUpdate,
-        version: '01672531209999-123@abcdefghij',
-        createdAt: new Date(1672531200000),
-        timestamp: new Date(1672531209999),
+        version: {
+          serial: '01672531209999-123@abcdefghij',
+          timestamp: new Date(1672531209999),
+          clientId: 'luke',
+          description: undefined,
+          metadata: undefined,
+        },
+        timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
-        operation: { clientId: 'luke' },
       });
 
       const newMessage = message.with(message2);
@@ -638,8 +770,13 @@ describe('ChatMessage', () => {
         metadata: { key: 'value' },
         headers: { headerKey: 'headerValue' },
         action: ChatMessageAction.MessageCreate,
-        version: 'version1',
-        createdAt: new Date(1672531200000),
+        version: {
+          serial: 'version1',
+          timestamp: new Date(1672531200000),
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
+        },
         timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
       });
@@ -655,8 +792,7 @@ describe('ChatMessage', () => {
       expect(copiedMessage.serial).toBe(originalMessage.serial);
       expect(copiedMessage.clientId).toBe(originalMessage.clientId);
       expect(copiedMessage.action).toBe(originalMessage.action);
-      expect(copiedMessage.version).toBe(originalMessage.version);
-      expect(copiedMessage.createdAt).toEqual(originalMessage.createdAt);
+      expect(copiedMessage.version).toEqual(originalMessage.version);
       expect(copiedMessage.timestamp).toEqual(originalMessage.timestamp);
     });
 
@@ -668,8 +804,13 @@ describe('ChatMessage', () => {
         metadata: { key: 'value' },
         headers: { headerKey: 'headerValue' },
         action: ChatMessageAction.MessageCreate,
-        version: 'version1',
-        createdAt: new Date(1672531200000),
+        version: {
+          serial: 'version1',
+          timestamp: new Date(1672531200000),
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
+        },
         timestamp: new Date(1672531200000),
         reactions: {
           unique: {
@@ -684,7 +825,6 @@ describe('ChatMessage', () => {
             '🚀': { total: 1, clientIds: { a: 1 }, totalUnidentified: 0 },
           },
         },
-        operation: { clientId: 'luke' },
       });
 
       const copiedMessage = originalMessage.copy();
@@ -700,15 +840,11 @@ describe('ChatMessage', () => {
       expect(copiedMessage.serial).toBe(originalMessage.serial);
       expect(copiedMessage.clientId).toBe(originalMessage.clientId);
       expect(copiedMessage.action).toBe(originalMessage.action);
-      expect(copiedMessage.version).toBe(originalMessage.version);
-      expect(copiedMessage.createdAt).toEqual(originalMessage.createdAt);
+      expect(copiedMessage.version).toEqual(originalMessage.version);
       expect(copiedMessage.timestamp).toEqual(originalMessage.timestamp);
 
       expect(copiedMessage.reactions).toEqual(originalMessage.reactions); // must be equal
       expect(copiedMessage.reactions).not.toBe(originalMessage.reactions); // but not same object
-
-      expect(copiedMessage.operation).toEqual(originalMessage.operation); // must be equal
-      expect(copiedMessage.operation).not.toBe(originalMessage.operation); // but not same object
     });
 
     it('ensures deep copy of metadata and headers', () => {
@@ -726,8 +862,13 @@ describe('ChatMessage', () => {
           headerKey: 'headerValue',
         },
         action: ChatMessageAction.MessageCreate,
-        version: 'version1',
-        createdAt: new Date(1672531200000),
+        version: {
+          serial: 'version1',
+          timestamp: new Date(1672531200000),
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
+        },
         timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
       });
@@ -761,8 +902,13 @@ describe('ChatMessage', () => {
         },
         headers: { headerKey: 'headerValue' },
         action: ChatMessageAction.MessageCreate,
-        version: 'version1',
-        createdAt: new Date(1672531200000),
+        version: {
+          serial: 'version1',
+          timestamp: new Date(1672531200000),
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
+        },
         timestamp: new Date(1672531200000),
         reactions: emptyMessageReactions(),
       });
