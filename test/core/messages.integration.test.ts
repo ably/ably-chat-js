@@ -169,12 +169,11 @@ describe('messages integration', { timeout: 10000 }, () => {
       expect(deletedMessage1.version).not.toEqual(message1.version);
       expect(deletedMessage1.action).toEqual(ChatMessageAction.MessageDelete);
       expect(deletedMessage1.deletedAt).toBeDefined();
-      expect(deletedMessage1.deletedAt).toEqual(deletedMessage1.timestamp);
+      expect(deletedMessage1.deletedAt).toEqual(deletedMessage1.version.timestamp);
       expect(deletedMessage1.deletedBy).toBeDefined();
-      expect(deletedMessage1.operation?.clientId).toBeDefined();
-      expect(deletedMessage1.deletedBy).toEqual(deletedMessage1.operation?.clientId);
-      expect(deletedMessage1.operation?.description).toEqual('Deleted message');
-      expect(deletedMessage1.operation?.metadata).toEqual({ key: 'value' });
+      expect(deletedMessage1.deletedBy).toEqual(deletedMessage1.version.clientId);
+      expect(deletedMessage1.version.description).toEqual('Deleted message');
+      expect(deletedMessage1.version.metadata).toEqual({ key: 'value' });
 
       // Wait up to 5 seconds for the promises to resolve
       await waitForArrayLength(messages, 1);
@@ -195,13 +194,11 @@ describe('messages integration', { timeout: 10000 }, () => {
           text: '', // Delete messages have empty text
           clientId: chat.clientId,
           serial: deletedMessage1.serial,
-          timestamp: deletedMessage1.deletedAt,
+          timestamp: deletedMessage1.timestamp,
           action: ChatMessageAction.MessageDelete,
           version: deletedMessage1.version,
         }),
       ]);
-
-      expect(deletions[0]?.operation?.clientId).toEqual(chat.clientId);
     });
 
     it<TestContext>('should be able to delete a message using just the serial string', async (context) => {
@@ -257,13 +254,13 @@ describe('messages integration', { timeout: 10000 }, () => {
           text: '', // Delete messages have empty text
           clientId: chat.clientId,
           serial: deletedMessage1.serial,
-          timestamp: deletedMessage1.deletedAt,
+          timestamp: deletedMessage1.timestamp,
           action: ChatMessageAction.MessageDelete,
           version: deletedMessage1.version,
         }),
       ]);
 
-      expect(deletions[0]?.operation?.clientId).toEqual(chat.clientId);
+      expect(deletions[0]?.version.clientId).toEqual(chat.clientId);
     });
 
     it<TestContext>('should be able to delete a message using an object with serial', async (context) => {
@@ -322,13 +319,13 @@ describe('messages integration', { timeout: 10000 }, () => {
           text: '', // Delete messages have empty text
           clientId: chat.clientId,
           serial: deletedMessage1.serial,
-          timestamp: deletedMessage1.deletedAt,
+          timestamp: deletedMessage1.timestamp,
           action: ChatMessageAction.MessageDelete,
           version: deletedMessage1.version,
         }),
       ]);
 
-      expect(deletions[0]?.operation?.clientId).toEqual(chat.clientId);
+      expect(deletions[0]?.version.clientId).toEqual(chat.clientId);
     });
 
     it<TestContext>('should be able to delete a message using with()', async (context) => {
@@ -349,10 +346,6 @@ describe('messages integration', { timeout: 10000 }, () => {
           clientId: chat.clientId,
           serial: message1.serial,
           version: deletedMessage1.version,
-          operation: {
-            description: 'Deleted message',
-            clientId: chat.clientId,
-          },
         }),
       );
     });
@@ -395,11 +388,11 @@ describe('messages integration', { timeout: 10000 }, () => {
 
       expect(updated1.text).toBe('bananas');
       expect(updated1.serial).toBe(message1.serial);
-      expect(updated1.createdAt.getTime()).toBe(message1.createdAt.getTime());
+      expect(updated1.timestamp.getTime()).toBe(message1.timestamp.getTime());
       expect(updated1.updatedAt).toBeDefined();
       expect(updated1.updatedBy).toBe(chat.clientId);
-      expect(updated1.operation?.description).toEqual('updated message');
-      expect(updated1.operation?.metadata).toEqual({ key: 'value' });
+      expect(updated1.version.description).toEqual('updated message');
+      expect(updated1.version.metadata).toEqual({ key: 'value' });
 
       // Wait up to 5 seconds for the promises to resolve
       await waitForArrayLength(messages, 1);
@@ -424,7 +417,7 @@ describe('messages integration', { timeout: 10000 }, () => {
           updatedBy: chat.clientId,
           action: ChatMessageAction.MessageUpdate,
           version: updated1.version,
-          createdAt: message1.createdAt,
+          timestamp: message1.timestamp,
         }),
       ]);
     });
@@ -486,7 +479,7 @@ describe('messages integration', { timeout: 10000 }, () => {
           updatedBy: chat.clientId,
           action: ChatMessageAction.MessageUpdate,
           version: updated1.version,
-          createdAt: message1.createdAt,
+          timestamp: message1.timestamp,
         }),
       ]);
     });
@@ -551,7 +544,7 @@ describe('messages integration', { timeout: 10000 }, () => {
           updatedBy: chat.clientId,
           action: ChatMessageAction.MessageUpdate,
           version: updated1.version,
-          createdAt: message1.createdAt,
+          timestamp: message1.timestamp,
         }),
       ]);
     });
@@ -583,7 +576,7 @@ describe('messages integration', { timeout: 10000 }, () => {
           updatedBy: chat.clientId,
           action: ChatMessageAction.MessageUpdate,
           version: updated1.version,
-          createdAt: message1.createdAt,
+          timestamp: message1.timestamp,
           metadata: { key: 'value' },
         }),
       );
@@ -649,8 +642,14 @@ describe('messages integration', { timeout: 10000 }, () => {
           metadata: {},
           clientId: chat.clientId,
           serial: deletedMessage1.serial,
-          createdAt: message1.timestamp,
-          timestamp: deletedMessage1.deletedAt,
+          timestamp: message1.timestamp,
+          version: {
+            serial: deletedMessage1.version.serial,
+            timestamp: deletedMessage1.deletedAt,
+            clientId: deletedMessage1.deletedBy,
+            description: 'Deleted message',
+            metadata: deletedMessage1.version.metadata,
+          },
           action: ChatMessageAction.MessageDelete,
         }),
       ]);
@@ -660,7 +659,10 @@ describe('messages integration', { timeout: 10000 }, () => {
       expect(history.items[0]?.isDeleted).toBe(true);
       expect(history.items[0]?.deletedAt).toEqual(deletedMessage1.deletedAt);
       expect(history.items[0]?.deletedBy).toEqual(deletedMessage1.deletedBy);
-      expect(history.items[0]?.operation?.description).toEqual('Deleted message');
+      expect(history.items[0]?.version.serial).toEqual(deletedMessage1.version.serial);
+      expect(history.items[0]?.version.timestamp).toEqual(deletedMessage1.deletedAt);
+      expect(history.items[0]?.version.clientId).toEqual(deletedMessage1.deletedBy);
+      expect(history.items[0]?.version.description).toEqual('Deleted message');
 
       // We shouldn't have a "next" link in the response
       expect(history.hasNext()).toBe(false);
@@ -688,8 +690,13 @@ describe('messages integration', { timeout: 10000 }, () => {
           text: 'Hello test!',
           clientId: chat.clientId,
           serial: updatedMessage1.serial,
-          createdAt: message1.createdAt,
-          timestamp: updatedMessage1.updatedAt,
+          timestamp: message1.timestamp,
+          version: {
+            serial: updatedMessage1.version.serial,
+            timestamp: updatedMessage1.updatedAt,
+            clientId: updatedMessage1.updatedBy,
+            description: updatedMessage1.version.description,
+          },
           action: ChatMessageAction.MessageUpdate,
         }),
       ]);
@@ -699,7 +706,6 @@ describe('messages integration', { timeout: 10000 }, () => {
       expect(history.items[0]?.isDeleted).toBe(false);
       expect(history.items[0]?.updatedAt).toEqual(updatedMessage1.updatedAt);
       expect(history.items[0]?.updatedBy).toEqual(updatedMessage1.updatedBy);
-      expect(history.items[0]?.operation?.description).toEqual('updated message');
 
       // We shouldn't have a "next" link in the response
       expect(history.hasNext()).toBe(false);

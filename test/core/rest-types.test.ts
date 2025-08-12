@@ -8,13 +8,15 @@ describe('messageFromRest', () => {
   it('should convert a basic REST message to a Message', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Hello, world!',
       clientId: 'client123',
       action: 'message.create',
       metadata: {},
       headers: {},
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
     };
 
@@ -22,22 +24,23 @@ describe('messageFromRest', () => {
 
     expect(result).toBeInstanceOf(DefaultMessage);
     expect(result.serial).toBe('01672531200000-123@abcdefghij');
-    expect(result.version).toBe('01672531200000-123@abcdefghij:0');
+    expect(result.version.serial).toBe('01672531200000-123@abcdefghij:0');
     expect(result.text).toBe('Hello, world!');
     expect(result.clientId).toBe('client123');
     expect(result.action).toBe(ChatMessageAction.MessageCreate);
     expect(result.metadata).toEqual({});
     expect(result.headers).toEqual({});
-    expect(result.createdAt).toEqual(new Date(1672531200000));
     expect(result.timestamp).toEqual(new Date(1672531300000));
     expect(result.reactions).toEqual(emptyMessageReactions());
-    expect(result.operation).toBeUndefined();
   });
 
   it('should handle message with metadata and headers', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Hello with metadata',
       clientId: 'client123',
       action: 'message.create',
@@ -52,7 +55,6 @@ describe('messageFromRest', () => {
         'x-custom-header': 'custom-value',
         authorization: 'bearer-token',
       },
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
     };
 
@@ -81,13 +83,15 @@ describe('messageFromRest', () => {
     for (const { action, expected } of testCases) {
       const restMessage: RestMessage = {
         serial: '01672531200000-123@abcdefghij',
-        version: '01672531200000-123@abcdefghij:0',
+        version: {
+          serial: '01672531200000-123@abcdefghij:0',
+          timestamp: 1672531300000,
+        },
         text: 'Test message',
         clientId: 'client123',
         action,
         metadata: {},
         headers: {},
-        createdAt: 1672531200000,
         timestamp: 1672531300000,
       };
 
@@ -99,44 +103,45 @@ describe('messageFromRest', () => {
   it('should handle message with operation', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
-      text: 'Updated message',
-      clientId: 'client123',
-      action: 'message.update',
-      metadata: {},
-      headers: {},
-      createdAt: 1672531200000,
-      timestamp: 1672531300000,
-      operation: {
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
         clientId: 'client456',
         description: 'Message updated by admin',
         metadata: {
           reason: 'typo correction',
         },
       },
+      text: 'Updated message',
+      clientId: 'client123',
+      action: 'message.update',
+      metadata: {},
+      headers: {},
+      timestamp: 1672531300000,
     };
 
     const result = messageFromRest(restMessage);
 
-    expect(result.operation).toEqual({
-      clientId: 'client456',
-      description: 'Message updated by admin',
-      metadata: {
-        reason: 'typo correction',
-      },
+    // Check that version info contains operation data
+    expect(result.version.clientId).toBe('client456');
+    expect(result.version.description).toBe('Message updated by admin');
+    expect(result.version.metadata).toEqual({
+      reason: 'typo correction',
     });
   });
 
   it('should handle message with unique reactions', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Message with reactions',
       clientId: 'client123',
       action: 'message.create',
       metadata: {},
       headers: {},
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
       reactions: {
         unique: {
@@ -171,13 +176,15 @@ describe('messageFromRest', () => {
   it('should handle message with distinct reactions', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Message with distinct reactions',
       clientId: 'client123',
       action: 'message.create',
       metadata: {},
       headers: {},
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
       reactions: {
         distinct: {
@@ -204,13 +211,15 @@ describe('messageFromRest', () => {
   it('should handle message with multiple reactions', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Message with multiple reactions',
       clientId: 'client123',
       action: 'message.create',
       metadata: {},
       headers: {},
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
       reactions: {
         multiple: {
@@ -245,13 +254,15 @@ describe('messageFromRest', () => {
   it('should handle message with all reaction types', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Message with all reactions',
       clientId: 'client123',
       action: 'message.create',
       metadata: {},
       headers: {},
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
       reactions: {
         unique: {
@@ -306,13 +317,15 @@ describe('messageFromRest', () => {
   it('should handle message with missing reaction types using fallback', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Message with partial reactions',
       clientId: 'client123',
       action: 'message.create',
       metadata: {},
       headers: {},
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
       reactions: {
         unique: {
@@ -340,13 +353,15 @@ describe('messageFromRest', () => {
   it('should handle message with no reactions field', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Message without reactions',
       clientId: 'client123',
       action: 'message.create',
       metadata: {},
       headers: {},
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
     };
 
@@ -358,13 +373,15 @@ describe('messageFromRest', () => {
   it('should preserve all other RestMessage fields in the spread', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Test message',
       clientId: 'client123',
       action: 'message.create',
       metadata: { key: 'value' },
       headers: { header: 'value' },
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
     };
 
@@ -372,24 +389,25 @@ describe('messageFromRest', () => {
 
     // Verify that properties are correctly mapped through the spread operator
     expect(result.serial).toBe(restMessage.serial);
-    expect(result.version).toBe(restMessage.version);
+    expect(result.version.serial).toBe(restMessage.version.serial);
     expect(result.text).toBe(restMessage.text);
     expect(result.clientId).toBe(restMessage.clientId);
     expect(result.action).toBe(ChatMessageAction.MessageCreate);
-    expect(result.createdAt).toEqual(new Date(restMessage.createdAt));
     expect(result.timestamp).toEqual(new Date(restMessage.timestamp));
   });
 
   it('should handle message with empty reactions object', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Message with empty reactions',
       clientId: 'client123',
       action: 'message.create',
       metadata: {},
       headers: {},
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
       reactions: {},
     };
@@ -402,7 +420,10 @@ describe('messageFromRest', () => {
   it('should handle complex metadata with nested objects and arrays', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Message with complex metadata',
       clientId: 'client123',
       action: 'message.create',
@@ -425,7 +446,6 @@ describe('messageFromRest', () => {
         },
       },
       headers: {},
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
     };
 
@@ -454,32 +474,36 @@ describe('messageFromRest', () => {
   it('should handle zero timestamps correctly', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 0,
+      },
       text: 'Message with zero timestamps',
       clientId: 'client123',
       action: 'message.create',
       metadata: {},
       headers: {},
-      createdAt: 0,
       timestamp: 0,
     };
 
     const result = messageFromRest(restMessage);
 
-    expect(result.createdAt).toEqual(new Date(0));
     expect(result.timestamp).toEqual(new Date(0));
+    expect(result.version.timestamp).toEqual(new Date(0));
   });
 
   it('should default to message.create for unknown action', () => {
     const restMessage: RestMessage = {
       serial: '01672531200000-123@abcdefghij',
-      version: '01672531200000-123@abcdefghij:0',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
       text: 'Test message',
       clientId: 'client123',
       action: 'message.unknown' as RestMessage['action'],
       metadata: {},
       headers: {},
-      createdAt: 1672531200000,
       timestamp: 1672531300000,
     };
 

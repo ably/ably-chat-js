@@ -1,14 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatMessageAction } from './events.js';
-import {
-  DefaultMessage,
-  emptyMessageReactions,
-  Message,
-  MessageHeaders,
-  MessageMetadata,
-  Operation,
-} from './message.js';
+import { DefaultMessage, emptyMessageReactions, Message, MessageHeaders, MessageMetadata } from './message.js';
 
 interface MessagePayload {
   data?: {
@@ -38,19 +31,28 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
   const clientId = message.clientId || '';
   const text = data.text || '';
   const serial = message.serial || '';
-  const version = message.version || '';
+  const versionSerial = message.version || '';
   const metadata = data.metadata && typeof data.metadata === 'object' ? data.metadata : {};
   const headers = extras.headers || {};
 
   // Use current time as default for missing timestamps
   const currentTime = Date.now();
-  const createdAt = new Date(message.createdAt || currentTime);
-  const timestamp = new Date(message.timestamp || currentTime);
+  const timestamp = new Date(message.createdAt || currentTime);
+  const versionTimestamp = new Date(message.timestamp || currentTime);
 
   // Convert the action to a ChatMessageAction enum, defaulting to MessageCreate if the action is not found.
   const action = Object.values(ChatMessageAction).includes(message.action as ChatMessageAction)
     ? (message.action as ChatMessageAction)
     : ChatMessageAction.MessageCreate;
+
+  // Create version information
+  const version = {
+    serial: versionSerial,
+    timestamp: versionTimestamp,
+    clientId: message.operation?.clientId,
+    description: message.operation?.description,
+    metadata: message.operation?.metadata,
+  };
 
   return new DefaultMessage({
     serial,
@@ -60,9 +62,7 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
     headers,
     action,
     version,
-    createdAt,
     timestamp,
     reactions: emptyMessageReactions(),
-    operation: message.operation as Operation,
   });
 };
