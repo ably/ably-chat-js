@@ -3,9 +3,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { PresenceEventType } from '../../src/core/events.ts';
-import { DefaultPresence, PresenceData, PresenceEvent } from '../../src/core/presence.ts';
+import {
+  DefaultPresence,
+  Presence,
+  PresenceData,
+  PresenceEvent,
+  PresenceStateChange,
+  PresenceStateChangeListener,
+} from '../../src/core/presence.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
+import { Subscription } from '../../src/core/subscription.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
@@ -13,8 +21,13 @@ interface TestContext {
   realtime: Ably.Realtime;
   chatApi: ChatApi;
   room: Room;
+  presence: PresenceWithStateChangeListener;
   makeRoom: (options?: RoomOptions) => Room;
   currentChannelOptions: Ably.ChannelOptions;
+}
+
+interface PresenceWithStateChangeListener extends Presence {
+  onPresenceStateChange: (listener: PresenceStateChangeListener) => Subscription;
 }
 
 vi.mock('ably');
@@ -183,6 +196,251 @@ describe('Presence', () => {
         code: 40000,
         message: 'could not perform presence operation; room is not attached',
       });
+    });
+  });
+
+  describe<TestContext>('onPresenceStateChange', () => {
+    it<TestContext>('should emit state change event when enter succeeds', async (context) => {
+      const { room } = context;
+      const stateChanges: PresenceStateChange[] = [];
+
+      // Mock the channel state to be attached
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+
+      // Mock the enterClient method to resolve
+      vi.spyOn(room.channel.presence, 'enterClient').mockResolvedValue();
+
+      // Subscribe to state changes
+      const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
+        stateChanges.push(change);
+      });
+
+      // Call enter
+      await room.presence.enter({ foo: 'bar' });
+
+      // Verify state change event was emitted
+      expect(stateChanges).toHaveLength(1);
+      expect(stateChanges[0]?.previous.present).toBe(false);
+      expect(stateChanges[0]?.current.present).toBe(true);
+      expect(stateChanges[0]?.error).toBeUndefined();
+
+      // Clean up
+      subscription.unsubscribe();
+    });
+
+    it<TestContext>('should emit state change event with error when enter fails', async (context) => {
+      const { room } = context;
+      const stateChanges: PresenceStateChange[] = [];
+      const error = new Ably.ErrorInfo('enter error', 40000, 400);
+
+      // Mock the channel state to be attached
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+
+      // Mock the enterClient method to reject
+      vi.spyOn(room.channel.presence, 'enterClient').mockRejectedValue(error);
+
+      // Subscribe to state changes
+      const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
+        stateChanges.push(change);
+      });
+
+      // Call enter and expect it to reject
+      await expect(room.presence.enter({ foo: 'bar' })).rejects.toBeErrorInfo({
+        code: 40000,
+        message: 'enter error',
+      });
+
+      // Verify state change event was emitted with error
+      expect(stateChanges).toHaveLength(1);
+      expect(stateChanges[0]?.previous.present).toBe(false);
+      expect(stateChanges[0]?.current.present).toBe(false);
+      expect(stateChanges[0]?.error).toBeErrorInfo({
+        code: 40000,
+        message: 'enter error',
+      });
+
+      // Clean up
+      subscription.unsubscribe();
+    });
+
+    it<TestContext>('should emit state change event when update succeeds', async (context) => {
+      const { room } = context;
+      const stateChanges: PresenceStateChange[] = [];
+
+      // Mock the channel state to be attached
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+
+      // Mock the updateClient method to resolve
+      vi.spyOn(room.channel.presence, 'updateClient').mockResolvedValue();
+
+      // Subscribe to state changes
+      const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
+        stateChanges.push(change);
+      });
+
+      // Call update
+      await room.presence.update({ foo: 'bar' });
+
+      // Verify state change event was emitted
+      expect(stateChanges).toHaveLength(1);
+      expect(stateChanges[0]?.previous.present).toBe(false);
+      expect(stateChanges[0]?.current.present).toBe(true);
+      expect(stateChanges[0]?.error).toBeUndefined();
+
+      // Clean up
+      subscription.unsubscribe();
+    });
+
+    it<TestContext>('should emit state change event with error when update fails', async (context) => {
+      const { room } = context;
+      const stateChanges: PresenceStateChange[] = [];
+      const error = new Ably.ErrorInfo('update error', 40000, 400);
+
+      // Mock the channel state to be attached
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+
+      // Mock the updateClient method to reject
+      vi.spyOn(room.channel.presence, 'updateClient').mockRejectedValue(error);
+
+      // Subscribe to state changes
+      const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
+        stateChanges.push(change);
+      });
+
+      // Call update and expect it to reject
+      await expect(room.presence.update({ foo: 'bar' })).rejects.toBeErrorInfo({
+        code: 40000,
+        message: 'update error',
+      });
+
+      // Verify state change event was emitted with error
+      expect(stateChanges).toHaveLength(1);
+      expect(stateChanges[0]?.previous.present).toBe(false);
+      expect(stateChanges[0]?.current.present).toBe(false);
+      expect(stateChanges[0]?.error).toBeErrorInfo({
+        code: 40000,
+        message: 'update error',
+      });
+
+      // Clean up
+      subscription.unsubscribe();
+    });
+
+    it<TestContext>('should emit state change event when leave succeeds', async (context) => {
+      const { room } = context;
+      const stateChanges: PresenceStateChange[] = [];
+
+      // Mock the channel state to be attached
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+
+      // First set the state to present
+      vi.spyOn(room.channel.presence, 'enterClient').mockResolvedValue();
+      await room.presence.enter({ foo: 'bar' });
+
+      // Clear any existing state changes
+      stateChanges.length = 0;
+
+      // Mock the leaveClient method to resolve
+      vi.spyOn(room.channel.presence, 'leaveClient').mockResolvedValue();
+
+      // Subscribe to state changes
+      const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
+        stateChanges.push(change);
+      });
+
+      // Call leave
+      await room.presence.leave();
+
+      // Verify state change event was emitted
+      expect(stateChanges).toHaveLength(1);
+      expect(stateChanges[0]?.previous.present).toBe(true);
+      expect(stateChanges[0]?.current.present).toBe(false);
+      expect(stateChanges[0]?.error).toBeUndefined();
+
+      // Clean up
+      subscription.unsubscribe();
+    });
+
+    it<TestContext>('should emit state change event with error when leave fails', async (context) => {
+      const { room } = context;
+      const stateChanges: PresenceStateChange[] = [];
+      const error = new Ably.ErrorInfo('leave error', 40000, 400);
+
+      // Mock the channel state to be attached
+      vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
+
+      // First set the state to present
+      vi.spyOn(room.channel.presence, 'enterClient').mockResolvedValue();
+      await room.presence.enter({ foo: 'bar' });
+
+      // Clear any existing state changes
+      stateChanges.length = 0;
+
+      // Mock the leaveClient method to reject
+      vi.spyOn(room.channel.presence, 'leaveClient').mockRejectedValue(error);
+
+      // Subscribe to state changes
+      const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
+        stateChanges.push(change);
+      });
+
+      // Call leave and expect it to reject
+      await expect(room.presence.leave()).rejects.toBeErrorInfo({
+        code: 40000,
+        message: 'leave error',
+      });
+
+      // Verify state change event was emitted with error
+      expect(stateChanges).toHaveLength(1);
+      expect(stateChanges[0]?.previous.present).toBe(true);
+      expect(stateChanges[0]?.current.present).toBe(false);
+      expect(stateChanges[0]?.error).toBeErrorInfo({
+        code: 40000,
+        message: 'leave error',
+      });
+
+      // Clean up
+      subscription.unsubscribe();
+    });
+
+    it<TestContext>('should update presenceState when a channel state change with 91004 error occurs', (context) => {
+      const { room } = context;
+      const stateChanges: PresenceStateChange[] = [];
+
+      // Subscribe to state changes in presence
+      const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
+        stateChanges.push(change);
+      });
+
+      // mock the channel emit method to simulate a channel state change
+      const emit = (
+        room.channel as unknown as {
+          emit: (event: string, arg: unknown) => void;
+        }
+      ).emit;
+
+      // Simulate a state change with auto retry failure (91004 error)
+      const error = new Ably.ErrorInfo('Presence auto-reentry failed', 91004, 400);
+      const channelStateChange: Ably.ChannelStateChange = {
+        current: 'attached',
+        previous: 'attached',
+        reason: error,
+        resumed: false,
+      };
+
+      emit('update', channelStateChange);
+
+      // Verify state change event was emitted with error
+      expect(stateChanges).toHaveLength(1);
+      expect(stateChanges[0]?.previous.present).toBe(false);
+      expect(stateChanges[0]?.current.present).toBe(false);
+      expect(stateChanges[0]?.error).toBeErrorInfo({
+        code: 91004,
+        message: 'Presence auto-reentry failed',
+      });
+
+      // Clean up
+      subscription.unsubscribe();
     });
   });
 });
