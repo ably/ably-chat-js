@@ -538,16 +538,20 @@ export class DefaultMessages implements Messages {
     const { text, metadata, headers } = params;
 
     const response = await this._chatApi.sendMessage(this._roomName, { text, headers, metadata });
+    // We apply the timestamp to both the message and the version, since they are the same for a newly created message.
+    const timestamp = new Date(response.message.timestamp);
     return new DefaultMessage({
-      serial: response.serial,
+      serial: response.message.serial,
       clientId: this._clientId,
       text: text,
       metadata: metadata ?? {},
       headers: headers ?? {},
       action: ChatMessageAction.MessageCreate,
-      version: response.serial,
-      createdAt: new Date(response.createdAt),
-      timestamp: new Date(response.createdAt), // timestamp is the same as createdAt for new messages
+      version: {
+        serial: response.message.serial,
+        timestamp,
+      },
+      timestamp,
       reactions: emptyMessageReactions(),
     });
   }
