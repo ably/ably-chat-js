@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
+import { DefaultRoom } from '../../src/core/room.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { ErrorCode } from '../../src/index.ts';
 import { randomRoomName } from '../helper/identifier.ts';
@@ -144,6 +145,83 @@ describe('rooms', () => {
       const roomName = randomRoomName();
       const releasePromise = context.rooms.release(roomName);
       await expect(releasePromise).resolves.toBeUndefined();
+    });
+  });
+
+  describe('dispose', () => {
+    it<TestContext>('waits for all rooms to be released including those already being released', async (context) => {
+      const roomName1 = randomRoomName();
+      const roomName2 = randomRoomName();
+
+      const room1 = await context.rooms.get(roomName1);
+      const room2 = await context.rooms.get(roomName2);
+
+      expect(room1).toBeDefined();
+      expect(room2).toBeDefined();
+
+      let room1ReleaseResolver: (() => void) | undefined;
+      const room1ReleasePromise = new Promise<void>((resolve) => {
+        room1ReleaseResolver = resolve;
+      });
+
+      vi.spyOn(room1 as DefaultRoom, 'release').mockImplementation(() => room1ReleasePromise);
+
+      // Start releasing room1 but don't await it so we create an in-flight release
+      const manualReleasePromise = context.rooms.release(roomName1);
+
+      // Ensure the release has started but not completed
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Track when dispose completes
+      let disposeCompleted = false;
+      const disposePromise = context.rooms.dispose().then(() => {
+        disposeCompleted = true;
+      });
+
+      // Give dispose a chance to try to complete
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // At this point, dispose should NOT have completed because room1 is still releasing
+      expect(disposeCompleted).toBe(false);
+
+      // Now complete the room1 release
+      if (!room1ReleaseResolver) {
+        expect.fail('room1ReleaseResolver should be defined');
+      }
+
+      room1ReleaseResolver();
+
+      // Wait for dispose to complete
+      await disposePromise;
+
+      // Verify that dispose waited for the in-flight release
+      expect(disposeCompleted).toBe(true);
+
+      // Now check that the room1 release promise resolved
+      await expect(manualReleasePromise).resolves.toBeUndefined();
+    });
+
+    it<TestContext>('disposes all rooms when no releases are in flight', async (context) => {
+      const roomName1 = randomRoomName();
+      const roomName2 = randomRoomName();
+
+      // Create two rooms
+      await context.rooms.get(roomName1);
+      await context.rooms.get(roomName2);
+
+      expect(context.rooms.count).toBe(2);
+
+      await context.rooms.dispose();
+
+      expect(context.rooms.count).toBe(0);
+    });
+
+    it<TestContext>('handles dispose when no rooms exist', async (context) => {
+      expect(context.rooms.count).toBe(0);
+
+      await expect(context.rooms.dispose()).resolves.toBeUndefined();
+
+      expect(context.rooms.count).toBe(0);
     });
   });
 

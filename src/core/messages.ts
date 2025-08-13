@@ -14,11 +14,12 @@ import {
 import { parseMessage } from './message-parser.js';
 import { DefaultMessageReactions, MessagesReactions } from './messages-reactions.js';
 import { PaginatedResult } from './query.js';
+import { on, once, subscribe } from './realtime-subscriptions.js';
 import { messageFromRest } from './rest-types.js';
 import { MessageOptions } from './room-options.js';
 import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * Event names and their respective payloads emitted by the messages feature.
@@ -315,10 +316,14 @@ export class DefaultMessages implements Messages {
       fromSerial: string;
     }>
   >;
+  private readonly _pendingPromiseRejecters = new Set<(error: Error) => void>();
+  private readonly _pendingAttachListeners = new Set<() => void>();
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<MessageEventsMap>();
-
-  public readonly reactions: MessagesReactions;
+  private readonly _unsubscribeMessageEvents: () => void;
+  private readonly _offChannelAttached: () => void;
+  private readonly _offChannelUpdate: () => void;
+  private readonly _reactions: DefaultMessageReactions;
 
   /**
    * Constructs a new `DefaultMessages` instance.
@@ -345,29 +350,30 @@ export class DefaultMessages implements Messages {
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
 
-    this.reactions = new DefaultMessageReactions(this._logger, options, this._chatApi, this._roomName, this._channel);
-    this._applyChannelSubscriptions();
+    this._reactions = new DefaultMessageReactions(this._logger, options, this._chatApi, this._roomName, this._channel);
+
+    // Create bound listeners
+    const messageEventsListener = this._processEvent.bind(this);
+    const channelAttachedListener = (stateChange: Ably.ChannelStateChange) => {
+      this._handleAttach(stateChange.resumed);
+    };
+    const channelUpdateListener = (stateChange: Ably.ChannelStateChange) => {
+      if (stateChange.current === 'attached' && stateChange.previous === 'attached') {
+        this._handleAttach(stateChange.resumed);
+      }
+    };
+
+    // Use subscription helpers to create cleanup functions
+    this._unsubscribeMessageEvents = subscribe(this._channel, [RealtimeMessageName.ChatMessage], messageEventsListener);
+    this._offChannelAttached = on(this._channel, 'attached', channelAttachedListener);
+    this._offChannelUpdate = on(this._channel, 'update', channelUpdateListener);
   }
 
   /**
-   * Sets up channel subscriptions for messages.
+   * @inheritdoc
    */
-  private _applyChannelSubscriptions(): void {
-    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.subscribe([RealtimeMessageName.ChatMessage], this._processEvent.bind(this));
-
-    // Handles the case where channel attaches and resume state is false. This can happen when the channel is first attached,
-    // or when the channel is reattached after a detach. In both cases, we reset the subscription points for all listeners.
-    this._channel.on('attached', (message) => {
-      this._handleAttach(message.resumed);
-    });
-
-    // Handles the case where an update message is received from a channel after a detach and reattach.
-    this._channel.on('update', (message) => {
-      if (message.current === 'attached' && message.previous === 'attached') {
-        this._handleAttach(message.resumed);
-      }
-    });
+  get reactions(): MessagesReactions {
+    return this._reactions;
   }
 
   /**
@@ -456,6 +462,13 @@ export class DefaultMessages implements Messages {
   private async _subscribeAtChannelAttach(): Promise<{ fromSerial: string }> {
     const channelWithProperties = this._getChannelProperties();
     return new Promise((resolve, reject) => {
+      // Store the reject function so we can call it during disposal
+      this._pendingPromiseRejecters.add(reject);
+
+      const cleanup = () => {
+        this._pendingPromiseRejecters.delete(reject);
+      };
+
       // Check if the state is now attached
       if (channelWithProperties.state === 'attached') {
         // Get the attachSerial from the channel properties
@@ -463,22 +476,29 @@ export class DefaultMessages implements Messages {
         this._logger.debug('Messages._subscribeAtChannelAttach(); channel is attached already, using attachSerial', {
           attachSerial: channelWithProperties.properties.attachSerial,
         });
+        cleanup();
+
         if (channelWithProperties.properties.attachSerial) {
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
           this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
+          cleanup();
           reject(
             new Ably.ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error,
           );
         }
+        return;
       }
 
-      channelWithProperties.once('attached', () => {
+      const offAttachedListener = once(channelWithProperties, 'attached', () => {
         // Get the attachSerial from the channel properties
         // AttachSerial should always be defined at this point, but we check just in case
         this._logger.debug('Messages._subscribeAtChannelAttach(); channel is now attached, using attachSerial', {
           attachSerial: channelWithProperties.properties.attachSerial,
         });
+        cleanup();
+        this._pendingAttachListeners.delete(offAttachedListener);
+
         if (channelWithProperties.properties.attachSerial) {
           resolve({ fromSerial: channelWithProperties.properties.attachSerial });
         } else {
@@ -488,6 +508,8 @@ export class DefaultMessages implements Messages {
           );
         }
       });
+
+      this._pendingAttachListeners.add(offAttachedListener);
     });
   }
 
@@ -610,5 +632,58 @@ export class DefaultMessages implements Messages {
     // Send the message to the listeners
     const message = parseMessage(channelEventMessage);
     this._emitter.emit(event, { type: event, message: message });
+  }
+
+  /**
+   * Disposes of the messages instance, removing all listeners and subscriptions.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   * @internal
+   */
+  dispose(): void {
+    this._logger.trace('DefaultMessages.dispose();');
+
+    // Remove all user-level listeners from the emitter
+    this._emitter.off();
+
+    // Reject all pending subscription point promises to break circular references
+    const disposalError = new Ably.ErrorInfo('room has been disposed', 40000, 400) as unknown as Error;
+    for (const rejectFn of this._pendingPromiseRejecters) {
+      try {
+        rejectFn(disposalError);
+      } catch {
+        // Ignore errors from already resolved/rejected promises
+      }
+    }
+    this._pendingPromiseRejecters.clear();
+
+    // Clear all subscription points
+    this._listenerSubscriptionPoints.clear();
+
+    // Remove all pending attach listeners
+    for (const offAttachedListener of this._pendingAttachListeners) {
+      offAttachedListener();
+    }
+    this._pendingAttachListeners.clear();
+
+    // Unsubscribe from channel events using stored unsubscribe functions
+    this._unsubscribeMessageEvents();
+
+    // Remove specific channel state listeners using stored unsubscribe functions
+    this._offChannelAttached();
+    this._offChannelUpdate();
+
+    // Dispose of the reactions instance
+    this._reactions.dispose();
+
+    this._logger.debug('DefaultMessages.dispose(); disposed successfully');
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    return emitterHasListeners(this._emitter);
   }
 }

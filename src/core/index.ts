@@ -2,7 +2,7 @@
  * @module chat-js
  */
 
-export { ChatClient } from './chat.js';
+export { ChatClient } from './chat-client.js';
 export type { ChatClientOptions } from './config.js';
 export type { Connection, ConnectionStatusChange, ConnectionStatusListener } from './connection.js';
 export { ConnectionStatus } from './connection.js';

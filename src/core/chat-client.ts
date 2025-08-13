@@ -132,6 +132,22 @@ export class ChatClient {
     this._addAgent(agent, version);
     this._logger.trace(`Added agent ${agent} with version ${version}`);
   }
+
+  /**
+   * Disposes of the ChatClient instance, cleaning up any resources and rendering it unusable.
+   * This method will release all rooms before disposing of the client.
+   */
+  async dispose(): Promise<void> {
+    this._logger.trace('ChatClient.dispose();');
+
+    // Release all rooms before disposing
+    await this._rooms.dispose();
+
+    // Dispose of the connection instance
+    this._connection.dispose();
+    this._logger.debug('ChatClient.dispose(); client disposed successfully');
+  }
+
   /**
    * Sets the agent string for the client.
    * @param agent - The agent to add.

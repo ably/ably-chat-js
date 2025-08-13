@@ -205,4 +205,30 @@ describe('connection', () => {
         }));
     },
   );
+
+  describe('dispose', () => {
+    it<TestContext>('should dispose connection and remove listeners', (context) => {
+      const connection = new DefaultConnection(context.realtime, makeTestLogger());
+      const mockConnectionOff = vi.spyOn(context.realtime.connection, 'off');
+
+      // Add a listener to verify it's cleaned up
+      let listenerCallCount = 0;
+      connection.onStatusChange(() => {
+        listenerCallCount++;
+      });
+
+      // Dispose the connection
+      connection.dispose();
+
+      // Verify the connection listener was removed
+      expect(mockConnectionOff).toHaveBeenCalledTimes(1);
+
+      // Emit a state change and verify listeners are no longer called
+      context.emulateStateChange({ current: 'connected', previous: 'disconnected' });
+      expect(listenerCallCount).toBe(0);
+
+      // Verify the connection has no listeners
+      expect(connection.hasListeners()).toBe(false);
+    });
+  });
 });

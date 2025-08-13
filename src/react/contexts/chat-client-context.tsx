@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ChatClient } from '../../core/chat.js';
+import { ChatClient } from '../../core/chat-client.js';
 
 /**
  * The Context key to handle global context for the {@link ChatClient}.

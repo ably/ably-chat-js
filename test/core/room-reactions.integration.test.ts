@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat.js';
+import { ChatClient } from '../../src/core/chat-client.js';
 import { RoomReactionEvent, RoomReactionEventType } from '../../src/core/events.js';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.js';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.js';

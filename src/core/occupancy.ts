@@ -5,9 +5,10 @@ import { ChatApi } from './chat-api.js';
 import { OccupancyEvent, OccupancyEventType, RealtimeMetaEventType } from './events.js';
 import { Logger } from './logger.js';
 import { OccupancyData, parseOccupancyMessage } from './occupancy-parser.js';
+import { subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * This interface is used to interact with occupancy in a chat room: subscribing to occupancy updates and
@@ -62,6 +63,7 @@ export class DefaultOccupancy implements Occupancy {
   private readonly _emitter = new EventEmitter<OccupancyEventsMap>();
   private readonly _roomOptions: InternalRoomOptions;
   private _latestOccupancyData?: OccupancyData;
+  private readonly _unsubscribeOccupancyEvents: () => void;
 
   /**
    * Constructs a new `DefaultOccupancy` instance.
@@ -84,15 +86,22 @@ export class DefaultOccupancy implements Occupancy {
     this._logger = logger;
     this._roomOptions = roomOptions;
 
-    this._applyChannelSubscriptions();
-  }
+    // Create bound listener
+    const occupancyEventsListener = this._internalOccupancyListener.bind(this);
 
-  /**
-   * Sets up channel subscriptions for occupancy.
-   */
-  private _applyChannelSubscriptions(): void {
-    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.subscribe([RealtimeMetaEventType.Occupancy], this._internalOccupancyListener.bind(this));
+    // Use subscription helper to create cleanup function
+    if (this._roomOptions.occupancy.enableEvents) {
+      this._logger.debug('DefaultOccupancy(); subscribing to occupancy events');
+      this._unsubscribeOccupancyEvents = subscribe(
+        this._channel,
+        [RealtimeMetaEventType.Occupancy],
+        occupancyEventsListener,
+      );
+    } else {
+      this._unsubscribeOccupancyEvents = () => {
+        // No-op function when events are not enabled
+      };
+    }
   }
 
   /**
@@ -178,5 +187,31 @@ export class DefaultOccupancy implements Occupancy {
 
       return { ...options, params: { ...options.params, occupancy: 'metrics' } };
     };
+  }
+
+  /**
+   * Disposes of the occupancy instance, removing all listeners and subscriptions.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   * @internal
+   */
+  dispose(): void {
+    this._logger.trace('DefaultOccupancy.dispose();');
+
+    // Remove occupancy event subscriptions using stored unsubscribe function
+    this._unsubscribeOccupancyEvents();
+
+    // Remove user-level listeners
+    this._emitter.off();
+
+    this._logger.debug('DefaultOccupancy.dispose(); disposed successfully');
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    return emitterHasListeners(this._emitter);
   }
 }

@@ -3,9 +3,10 @@ import * as Ably from 'ably';
 import { ChannelOptionsMerger } from './channel-manager.js';
 import { PresenceEventType } from './events.js';
 import { Logger } from './logger.js';
+import { on, subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
-import EventEmitter, { wrap } from './utils/event-emitter.js';
+import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
 /**
  * The state of presence in a room
@@ -184,6 +185,8 @@ export class DefaultPresence implements Presence {
   private _presenceState: PresenceState = {
     present: false,
   };
+  private readonly _unsubscribePresenceEvents: () => void;
+  private readonly _offChannelUpdate: () => void;
 
   /**
    * Constructs a new `DefaultPresence` instance.
@@ -199,24 +202,20 @@ export class DefaultPresence implements Presence {
     this._logger = logger;
     this._options = options;
 
-    this._applyChannelSubscriptions();
-  }
+    // Create bound listener
+    const presenceEventsListener = this.subscribeToEvents.bind(this);
 
-  /**
-   * Sets up channel subscriptions for presence.
-   */
-  private _applyChannelSubscriptions(): void {
-    // attachOnSubscribe is set to false in the default channel options, so this call cannot fail
-    void this._channel.presence.subscribe(this.subscribeToEvents.bind(this));
-
-    // Listen for channel state changes to handle presence auto-reentry failures
-    this._channel.on('update', (stateChange: Ably.ChannelStateChange) => {
+    const channelUpdateListener = (stateChange: Ably.ChannelStateChange) => {
       if (stateChange.reason?.code === 91004) {
         // PresenceAutoReentryFailed
         this._logger.debug('Presence auto-reentry failed', { reason: stateChange.reason });
         this._emitPresenceStateChange(false, stateChange.reason);
       }
-    });
+    };
+
+    this._offChannelUpdate = on(this._channel, 'update', channelUpdateListener);
+    // Use subscription helper to create cleanup function
+    this._unsubscribePresenceEvents = subscribe(this._channel.presence, presenceEventsListener);
   }
 
   /**
@@ -361,6 +360,35 @@ export class DefaultPresence implements Presence {
       }
       return options;
     };
+  }
+
+  /**
+   * Disposes of the presence instance, removing all listeners and subscriptions.
+   * This method should be called when the room is being released to ensure proper cleanup.
+   * @internal
+   */
+  dispose(): void {
+    this._logger.trace('DefaultPresence.dispose();');
+
+    // Remove all user-level listeners from the emitter
+    this._emitter.off();
+
+    // Unsubscribe from presence events using stored unsubscribe function
+    this._unsubscribePresenceEvents();
+
+    // Remove the channel update listener
+    this._offChannelUpdate();
+
+    this._logger.debug('DefaultPresence.dispose(); disposed successfully');
+  }
+
+  /**
+   * Checks if there are any listeners registered by users.
+   * @internal
+   * @returns true if there are listeners, false otherwise.
+   */
+  hasListeners(): boolean {
+    return emitterHasListeners(this._emitter);
   }
 
   /**

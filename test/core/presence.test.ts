@@ -15,6 +15,7 @@ import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { Subscription } from '../../src/core/subscription.ts';
 import { makeTestLogger } from '../helper/logger.ts';
+import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
@@ -441,6 +442,89 @@ describe('Presence', () => {
 
       // Clean up
       subscription.unsubscribe();
+    });
+  });
+
+  describe('DefaultPresence.dispose', () => {
+    it<TestContext>('should dispose and clean up all realtime channel subscriptions', async (context) => {
+      const { room } = context;
+      const channel = room.channel;
+      const presence = room.presence as DefaultPresence;
+
+      // Mock channel methods
+      vi.spyOn(channel.presence, 'unsubscribe').mockImplementation(() => {});
+
+      // Act - dispose presence
+      presence.dispose();
+
+      // Assert - verify the listeners were unsubscribed
+      await waitForUnsubscribeTimes(channel.presence, 1);
+    });
+
+    it<TestContext>('should remove user-level listeners and presence event subscriptions', (context) => {
+      const presence = context.room.presence as DefaultPresence;
+
+      const emulatePresenceEvent = (clientId: string, type: PresenceEventType, data?: PresenceData) => {
+        const presenceMessage: Ably.PresenceMessage = {
+          action: type,
+          clientId,
+          timestamp: Date.now(),
+          data: data ? { userCustomData: data } : undefined,
+          connectionId: 'connection-id',
+          encoding: '',
+          id: 'message-id',
+          extras: null,
+        };
+
+        // Call the subscribeToEvents handler directly
+        presence.subscribeToEvents(presenceMessage);
+      };
+
+      // Subscribe to add listeners
+      const listener1 = vi.fn();
+      const listener2 = vi.fn();
+      context.room.presence.subscribe(listener1);
+      context.room.presence.subscribe(listener2);
+
+      // Emulate a presence event and check the listeners were called
+      emulatePresenceEvent('user1', PresenceEventType.Enter, { foo: 'bar' });
+
+      // Verify that the listeners were called
+      expect(listener1).toHaveBeenCalledTimes(1);
+      expect(listener2).toHaveBeenCalledTimes(1);
+
+      // Reset the listeners
+      listener1.mockClear();
+      listener2.mockClear();
+
+      // Dispose should clean up listeners and subscriptions
+      expect(() => {
+        presence.dispose();
+      }).not.toThrow();
+
+      // Emulate a presence event and check the listeners were not called
+      emulatePresenceEvent('user1', PresenceEventType.Enter, { foo: 'bar' });
+
+      // Verify that the listeners were not called
+      expect(listener1).not.toHaveBeenCalled();
+      expect(listener2).not.toHaveBeenCalled();
+
+      // Verify that user-provided listeners were unsubscribed
+      expect(presence.hasListeners()).toBe(false);
+
+      // Cleanup should not fail on multiple calls
+      expect(() => {
+        presence.dispose();
+      }).not.toThrow();
+    });
+
+    it<TestContext>('should handle dispose when no listeners are registered', (context) => {
+      const presence = context.room.presence as DefaultPresence;
+
+      // Should not throw when called with no listeners
+      expect(() => {
+        presence.dispose();
+      }).not.toThrow();
     });
   });
 });
