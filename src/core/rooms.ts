@@ -160,8 +160,9 @@ export class DefaultRooms implements Rooms {
   }
 
   /**
-   * Disposes all rooms that are currently in the rooms map.
-   * This method releases all rooms concurrently and clears the rooms map.
+   * Disposes all rooms that are currently in the rooms map and waits for any ongoing release operations to complete.
+   * This method releases all rooms concurrently, waits for any in-flight releases to finish, and clears the rooms map.
+   * After this method resolves, all rooms will have been fully released and cleaned up.
    * @internal
    * @returns A promise that resolves when all rooms have been released.
    */
@@ -182,9 +183,14 @@ export class DefaultRooms implements Rooms {
     // Release all rooms concurrently
     const releasePromises = roomNames.map((roomName) => this.release(roomName));
 
+    // Ensure we wait for all ongoing releases too, since we guarantee that all rooms are released after this call
+    // resolves.
+    const inFlight = [...this._releasing.values()];
+    const all = [...releasePromises, ...inFlight];
+
     this._logger.debug('Rooms.dispose(); releasing rooms', { roomCount: roomNames.length, roomNames });
 
-    await Promise.all(releasePromises);
+    await Promise.all(all);
     this._logger.debug('Rooms.dispose(); all rooms released successfully');
   }
 

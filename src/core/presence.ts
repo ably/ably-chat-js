@@ -211,7 +211,7 @@ export class DefaultPresence implements Presence {
         this._logger.debug('Presence auto-reentry failed', { reason: stateChange.reason });
         this._emitPresenceStateChange(false, stateChange.reason);
       }
-    }
+    };
 
     this._offChannelUpdate = on(this._channel, 'update', channelUpdateListener);
     // Use subscription helper to create cleanup function
@@ -377,7 +377,7 @@ export class DefaultPresence implements Presence {
     this._unsubscribePresenceEvents();
 
     // Remove the channel update listener
-    this._offChannelUpdate()
+    this._offChannelUpdate();
 
     this._logger.debug('DefaultPresence.dispose(); disposed successfully');
   }
