@@ -3,7 +3,7 @@ import * as Ably from 'ably';
 import { ChannelOptionsMerger } from './channel-manager.js';
 import { PresenceEventType } from './events.js';
 import { Logger } from './logger.js';
-import { subscribe } from './realtime-subscriptions.js';
+import { on, subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
@@ -186,6 +186,7 @@ export class DefaultPresence implements Presence {
     present: false,
   };
   private readonly _unsubscribePresenceEvents: () => void;
+  private readonly _offChannelUpdate: () => void;
 
   /**
    * Constructs a new `DefaultPresence` instance.
@@ -204,15 +205,15 @@ export class DefaultPresence implements Presence {
     // Create bound listener
     const presenceEventsListener = this.subscribeToEvents.bind(this);
 
-    // Listen for channel state changes to handle presence auto-reentry failures
-    this._channel.on('update', (stateChange: Ably.ChannelStateChange) => {
+    const channelUpdateListener = (stateChange: Ably.ChannelStateChange) => {
       if (stateChange.reason?.code === 91004) {
         // PresenceAutoReentryFailed
         this._logger.debug('Presence auto-reentry failed', { reason: stateChange.reason });
         this._emitPresenceStateChange(false, stateChange.reason);
       }
-    });
+    }
 
+    this._offChannelUpdate = on(this._channel, 'update', channelUpdateListener);
     // Use subscription helper to create cleanup function
     this._unsubscribePresenceEvents = subscribe(this._channel.presence, presenceEventsListener);
   }
@@ -374,6 +375,9 @@ export class DefaultPresence implements Presence {
 
     // Unsubscribe from presence events using stored unsubscribe function
     this._unsubscribePresenceEvents();
+
+    // Remove the channel update listener
+    this._offChannelUpdate()
 
     this._logger.debug('DefaultPresence.dispose(); disposed successfully');
   }
