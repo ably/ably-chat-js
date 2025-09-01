@@ -66,10 +66,8 @@ describe('Messages', () => {
       const timestamp = Date.now();
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        message: {
-          serial: serial,
-          timestamp: timestamp,
-        },
+        serial: serial,
+        timestamp: timestamp,
       });
 
       const messagePromise = context.room.messages.send({ text: 'hello there' });
@@ -91,10 +89,8 @@ describe('Messages', () => {
       const timestamp = Date.now();
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        message: {
-          serial: serial,
-          timestamp: timestamp,
-        },
+        serial: serial,
+        timestamp: timestamp,
       });
 
       const room = makeRandomRoom({ chatApi, realtime });
@@ -130,31 +126,27 @@ describe('Messages', () => {
       const sendTimestamp = Date.now();
       const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        message: {
-          serial: sendSerial,
-          timestamp: sendTimestamp,
-        },
+        serial: sendSerial,
+        timestamp: sendTimestamp,
       });
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
-        message: {
-          serial: sendSerial,
+        serial: sendSerial,
+        clientId: 'clientId',
+        text: 'hello there',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageDelete,
+        version: {
+          serial: '01672531200001-123@abcdefghij:0',
+          timestamp: deleteTimestamp,
           clientId: 'clientId',
-          text: 'hello there',
-          metadata: {},
-          headers: {},
-          action: ChatMessageAction.MessageDelete,
-          version: {
-            serial: '01672531200001-123@abcdefghij:0',
-            timestamp: deleteTimestamp,
-            clientId: 'clientId',
-            description: undefined,
-            metadata: undefined,
-          },
-          timestamp: sendTimestamp,
-          reactions: emptyMessageReactions(),
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: sendTimestamp,
+        reactions: emptyMessageReactions(),
       });
 
       const message1 = await context.room.messages.send({ text: 'hello there' });
@@ -176,31 +168,27 @@ describe('Messages', () => {
       const sendTimestamp = Date.now();
       const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        message: {
-          serial: sendSerial,
-          timestamp: sendTimestamp,
-        },
+        serial: sendSerial,
+        timestamp: sendTimestamp,
       });
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
-        message: {
-          serial: sendSerial,
+        serial: sendSerial,
+        clientId: 'clientId',
+        text: 'hello there',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageDelete,
+        version: {
+          serial: '01672531200001-123@abcdefghij:0',
+          timestamp: deleteTimestamp,
           clientId: 'clientId',
-          text: 'hello there',
-          metadata: {},
-          headers: {},
-          action: ChatMessageAction.MessageDelete,
-          version: {
-            serial: '01672531200001-123@abcdefghij:0',
-            timestamp: deleteTimestamp,
-            clientId: 'clientId',
-            description: undefined,
-            metadata: undefined,
-          },
-          timestamp: sendTimestamp,
-          reactions: emptyMessageReactions(),
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: sendTimestamp,
+        reactions: emptyMessageReactions(),
       });
 
       const message = await room.messages.send({ text: 'hello there' });
@@ -223,31 +211,27 @@ describe('Messages', () => {
       const sendTimestamp = Date.now();
       const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        message: {
-          serial: sendSerial,
-          timestamp: sendTimestamp,
-        },
+        serial: sendSerial,
+        timestamp: sendTimestamp,
       });
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
-        message: {
-          serial: sendSerial,
+        serial: sendSerial,
+        clientId: 'clientId',
+        text: 'hello there',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageDelete,
+        version: {
+          serial: '01672531200001-123@abcdefghij:0',
+          timestamp: deleteTimestamp,
           clientId: 'clientId',
-          text: 'hello there',
-          metadata: {},
-          headers: {},
-          action: ChatMessageAction.MessageDelete,
-          version: {
-            serial: '01672531200001-123@abcdefghij:0',
-            timestamp: deleteTimestamp,
-            clientId: 'clientId',
-            description: undefined,
-            metadata: undefined,
-          },
-          timestamp: sendTimestamp,
-          reactions: emptyMessageReactions(),
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: sendTimestamp,
+        reactions: emptyMessageReactions(),
       });
 
       const message = await room.messages.send({ text: 'hello there' });
@@ -280,31 +264,27 @@ describe('Messages', () => {
       const sendTimestamp = Date.now();
       const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        message: {
-          serial: sendSerial,
-          timestamp: sendTimestamp,
-        },
+        serial: sendSerial,
+        timestamp: sendTimestamp,
       });
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'updateMessage').mockResolvedValue({
-        message: {
-          serial: sendSerial,
+        serial: sendSerial,
+        clientId: 'clientId',
+        text: 'hello there',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageDelete,
+        version: {
+          serial: '01672531200001-123@abcdefghij:0',
+          timestamp: deleteTimestamp,
           clientId: 'clientId',
-          text: 'hello there',
-          metadata: {},
-          headers: {},
-          action: ChatMessageAction.MessageDelete,
-          version: {
-            serial: '01672531200001-123@abcdefghij:0',
-            timestamp: deleteTimestamp,
-            clientId: 'clientId',
-            description: undefined,
-            metadata: undefined,
-          },
-          timestamp: sendTimestamp,
-          reactions: emptyMessageReactions(),
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: sendTimestamp,
+        reactions: emptyMessageReactions(),
       });
 
       const message = await room.messages.send({ text: 'hello there' });
@@ -331,31 +311,27 @@ describe('Messages', () => {
       const sendTimestamp = Date.now();
       const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
-        message: {
-          serial: sendSerial,
-          timestamp: sendTimestamp,
-        },
+        serial: sendSerial,
+        timestamp: sendTimestamp,
       });
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'updateMessage').mockResolvedValue({
-        message: {
-          serial: sendSerial,
+        serial: sendSerial,
+        clientId: 'clientId',
+        text: 'hello there',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageDelete,
+        version: {
+          serial: '01672531200001-123@abcdefghij:0',
+          timestamp: deleteTimestamp,
           clientId: 'clientId',
-          text: 'hello there',
-          metadata: {},
-          headers: {},
-          action: ChatMessageAction.MessageDelete,
-          version: {
-            serial: '01672531200001-123@abcdefghij:0',
-            timestamp: deleteTimestamp,
-            clientId: 'clientId',
-            description: undefined,
-            metadata: undefined,
-          },
-          timestamp: sendTimestamp,
-          reactions: emptyMessageReactions(),
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: sendTimestamp,
+        reactions: emptyMessageReactions(),
       });
 
       const message = await room.messages.send({ text: 'hello there' });
