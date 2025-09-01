@@ -30,15 +30,10 @@ type ApiHistoryQueryParams = Omit<HistoryQueryParams, 'orderBy'> & {
 };
 
 export interface CreateMessageResponse {
-  /**
-   * The message that was created.
-   */
-  message: {
-    /** The serial of the message */
-    serial: string;
-    /** The timestamp of the message */
-    timestamp: number;
-  };
+  /** The serial of the message */
+  serial: string;
+  /** The timestamp of the message */
+  timestamp: number;
 }
 
 interface SendMessageParams {
@@ -47,19 +42,9 @@ interface SendMessageParams {
   headers?: MessageHeaders;
 }
 
-/**
- * Represents the response for deleting or updating a message.
- */
-export interface MessageOperationResponse {
-  /**
-   * The message that was created or updated.
-   */
-  message: RestMessage;
-}
+type UpdateMessageResponse = RestMessage;
 
-type UpdateMessageResponse = MessageOperationResponse;
-
-type DeleteMessageResponse = MessageOperationResponse;
+type DeleteMessageResponse = RestMessage;
 
 interface UpdateMessageParams {
   /**

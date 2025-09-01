@@ -39,7 +39,7 @@ export type {
   MessageMetadata,
   MessageOperationMetadata,
   MessageReactions,
-  Operation,
+  Version,
 } from './message.js';
 export type {
   DeleteMessageParams,
