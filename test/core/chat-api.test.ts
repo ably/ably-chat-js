@@ -87,3 +87,47 @@ describe('config', () => {
     expect(realtime.request).not.toHaveBeenCalled();
   });
 });
+
+describe('getClientReactions', () => {
+  it('adds forClientId param when clientId is provided', async () => {
+    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const chatApi = new ChatApi(realtime, makeTestLogger());
+    const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(
+      Promise.resolve({
+        success: true,
+        items: [{}],
+      }) as Promise<Ably.HttpPaginatedResponse>,
+    );
+
+    await chatApi.getClientReactions('room123', 'msg-serial-123', 'client123');
+
+    expect(requestSpy).toHaveBeenCalledWith(
+      'GET',
+      '/chat/v3/rooms/room123/messages/msg-serial-123/client-reactions',
+      3,
+      { forClientId: 'client123' },
+      undefined,
+    );
+  });
+
+  it('does not add forClientId param when clientId is not provided', async () => {
+    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const chatApi = new ChatApi(realtime, makeTestLogger());
+    const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(
+      Promise.resolve({
+        success: true,
+        items: [{}],
+      }) as Promise<Ably.HttpPaginatedResponse>,
+    );
+
+    await chatApi.getClientReactions('room123', 'msg-serial-123');
+
+    expect(requestSpy).toHaveBeenCalledWith(
+      'GET',
+      '/chat/v3/rooms/room123/messages/msg-serial-123/client-reactions',
+      3,
+      {},
+      undefined,
+    );
+  });
+});

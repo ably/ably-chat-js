@@ -258,6 +258,18 @@ export class ChatApi {
     );
   }
 
+  getClientReactions(roomName: string, serial: string, clientId?: string): Promise<Message['reactions']> {
+    const encodedSerial = encodeURIComponent(serial);
+    roomName = encodeURIComponent(roomName);
+    const params = clientId ? { forClientId: clientId } : {};
+    return this._makeAuthorizedRequest<Message['reactions']>(
+      `/chat/v3/rooms/${roomName}/messages/${encodedSerial}/client-reactions`,
+      'GET',
+      undefined,
+      params,
+    );
+  }
+
   getOccupancy(roomName: string): Promise<OccupancyData> {
     roomName = encodeURIComponent(roomName);
     return this._makeAuthorizedRequest<OccupancyData>(`/chat/v3/rooms/${roomName}/occupancy`, 'GET');

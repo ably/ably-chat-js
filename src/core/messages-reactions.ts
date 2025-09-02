@@ -16,6 +16,7 @@ import {
   ReactionAnnotationType,
 } from './events.js';
 import { Logger } from './logger.js';
+import { Message } from './message.js';
 import { subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions, MessageOptions } from './room-options.js';
 import { Serial, serialToString } from './serial.js';
@@ -112,6 +113,34 @@ export interface MessagesReactions {
    * @returns A subscription object that should be used to unsubscribe.
    */
   subscribeRaw(listener: MessageRawReactionListener): Subscription;
+
+  /**
+   * Get the reaction count for a message for a particular client.
+   * @param messageSerial The serial of the message to remove the reaction from.
+   * @param clientId The client to fetch the reaction summary for (leave unset for current client).
+   * @returns A clipped reaction summary containing only the requested clientId.
+   * @example
+   * ```typescript
+   * // Subscribe to reaction summaries and check for specific client reactions
+   * room.messages.reactions.subscribe(async (event) => {
+   *   // For brevity of example, we check unique 👍 (normally iterate for all relevant reactions)
+   *   const uniqueLikes = event.summary.unique['👍'];
+   *   if (uniqueLikes && uniqueLikes.clipped && !uniqueLikes.clientIds.includes(myClientId)) {
+   *     // summary is clipped and doesn't include myClientId, so we need to fetch a clientSummary
+   *     const clientReactions = await room.messages.reactions.clientReactions(
+   *       event.summary.messageSerial,
+   *       myClientId
+   *     );
+   *     if (clientReactions.unique && clientReactions.unique['👍']) {
+   *       // client has reacted with 👍
+   *       event.summary.unique['👍'].clientIds.push(myClientId);
+   *     }
+   *   }
+   *   // from here, process the summary as usual
+   * });
+   * ```
+   */
+  clientReactions(messageSerial: Serial, clientId?: string): Promise<Message['reactions']>;
 }
 
 /**
@@ -311,6 +340,12 @@ export class DefaultMessageReactions implements MessagesReactions {
       }
       return options;
     };
+  }
+
+  clientReactions(messageSerial: Serial, clientId?: string): Promise<Message['reactions']> {
+    this._logger.trace('MessagesReactions.clientReactions();', { messageSerial, clientId });
+    const serial = serialToString(messageSerial);
+    return this._api.getClientReactions(this._roomName, serial, clientId);
   }
 
   /**
