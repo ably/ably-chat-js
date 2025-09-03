@@ -23,7 +23,7 @@ export type MessageHeaders = Headers;
 export type MessageMetadata = Metadata;
 
 /**
- * {@link OperationMetadata} type for a chat messages {@link Operation}.
+ * {@link OperationMetadata} type for a chat message. Contains information about an update or deletion operation.
  */
 export type MessageOperationMetadata = OperationMetadata;
 

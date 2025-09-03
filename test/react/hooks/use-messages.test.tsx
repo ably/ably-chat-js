@@ -120,9 +120,11 @@ describe('useMessages', () => {
         text: 'test message',
         serial: '123',
         clientId: '123',
-        createdAt: new Date(),
         action: ChatMessageAction.MessageCreate,
-        version: '123',
+        version: {
+          serial: '123',
+          timestamp: new Date(),
+        },
         isUpdated: false,
         isDeleted: false,
         deletedBy: undefined,
@@ -199,8 +201,7 @@ describe('useMessages', () => {
       metadata: {},
       headers: {},
       action: ChatMessageAction.MessageCreate,
-      version: '01719948956834-000@108TeGZDQBderu97202638',
-      createdAt: new Date(1719948956834),
+      version: { serial: '01719948956834-000@108TeGZDQBderu97202638', timestamp: new Date(1719948956834) },
       timestamp: new Date(1719948956834),
       reactions: emptyMessageReactions(),
     });
