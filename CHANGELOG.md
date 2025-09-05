@@ -2,6 +2,18 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.12.0](https://github.com/ably/ably-chat-js/tree/0.12.0) (2025-09-08)
+
+### New Features
+
+- **Single Message Fetching**: Added `messages.get(serial)` method to fetch a single message by its serial identifier, available in both core SDK and React `useMessages` hook. [#607](https://github.com/ably/ably-chat-js/pull/607)
+- **usePresence Manual Control**: Added `autoEnterLeave` parameter to the `usePresence` React hook for optional control over automatic presence entry/exit, with exposed manual `enter` and `leave` methods for fine-grained control. [#621](https://github.com/ably/ably-chat-js/pull/621)
+- **Resource Disposal Methods**: Added async `dispose()` method to the chat client for improved resource cleanup and automatic room release management. [#601](https://github.com/ably/ably-chat-js/pull/601)
+
+### Fixes
+
+- **Presence Re-entry Handling**: Fixed handling of presence auto re-entry failures to ensure accurate `isPresent` state in React hooks and prevent race conditions. [#602](https://github.com/ably/ably-chat-js/pull/602)
+
 ## [0.11.0](https://github.com/ably/ably-chat-js/tree/0.11.0) (2025-01-23)
 
 ### Breaking Changes
