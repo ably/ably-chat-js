@@ -2,6 +2,10 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 0.11.x to 0.12.x
+
+No breaking changes. See [CHANGELOG.md](./CHANGELOG.md) for list of improvements.
+
 ## 0.10.x to 0.11.x
 
 ### Method Renames
