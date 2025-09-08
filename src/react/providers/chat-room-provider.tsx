@@ -18,8 +18,25 @@ export interface ChatRoomProviderProps {
   /**
    * Overriding options to use when creating the room.
    *
-   * NOTE: This value is not memoized by the provider. It must be memoized in your component to prevent
-   * re-renders of a parent component from causing the room to be recreated.
+   * **Important**: The `options` should be memoized to prevent unnecessary room recreations. Passing a new object reference
+   * on each render will cause the room to be released and recreated.
+   * @example
+   * ```tsx
+   * const MyRoomComponent = () => {
+   *   const [typing, setTyping] = useState(true);
+   *
+   *   const roomOptions = useMemo(() => ({
+   *     typing: { timeoutMs: 5000 },
+   *     reactions: { enabled: true }
+   *   }), []); // Stable reference - options don't change
+   *
+   *   return (
+   *     <ChatRoomProvider name="my-room" options={roomOptions}>
+   *       <MyChat />
+   *     </ChatRoomProvider>
+   *   );
+   * };
+   * ```
    */
   options?: RoomOptions;
 
@@ -32,6 +49,26 @@ export interface ChatRoomProviderProps {
  *
  * The provider automatically manages room attachment and release based on reference counting.
  * The first provider for a room will attach it, and the last provider to unmount will release it.
+ *
+ * **Important**: The `props.options` should be memoized to prevent unnecessary room recreations. Passing a new object reference
+ * on each render will cause the room to be released and recreated.
+ * @example
+ * ```tsx
+ * const MyRoomComponent = () => {
+ *   const [typing, setTyping] = useState(true);
+ *
+ *   const roomOptions = useMemo(() => ({
+ *     typing: { timeoutMs: 5000 },
+ *     reactions: { enabled: true }
+ *   }), []); // Stable reference - options don't change
+ *
+ *   return (
+ *     <ChatRoomProvider name="my-room" options={roomOptions}>
+ *       <MyChat />
+ *     </ChatRoomProvider>
+ *   );
+ * };
+ * ```
  * @param props The props object for the ChatRoomProvider.
  * @param props.name The name of the room.
  * @param props.options The room options.

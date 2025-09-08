@@ -30,6 +30,27 @@ export interface ChatClientProviderProps {
 /**
  * Returns a React component that provides a {@link ChatClient} in a React context to the component subtree.
  * Updates the context value when the client prop changes.
+ *
+ * **Important**: The `client` should be memoized to prevent unnecessary context updates. Ideally, the {@link ChatClient}
+ * and its underlying Ably.Realtime client should be created outside of React components to avoid duplicate connections.
+ * @example
+ * ```tsx
+ * import * as Ably from 'ably';
+ * import { ChatClient } from '@ably/chat';
+ * import { ChatClientProvider } from '@ably/chat/react';
+ *
+ * // Create client outside React to avoid recreating on re-renders
+ * const realtime = new Ably.Realtime({ key: 'your-api-key', clientId: 'user-123' });
+ * const chatClient = new ChatClient(realtime);
+ *
+ * const App = () => {
+ *   return (
+ *     <ChatClientProvider client={chatClient}>
+ *       <MyChatApp />
+ *     </ChatClientProvider>
+ *   );
+ * };
+ * ```
  * @param props - The props for the {@link ChatClientProvider} component.
  * @param props.children The child components to render.
  * @param props.client The chat client instance to provide in context.
