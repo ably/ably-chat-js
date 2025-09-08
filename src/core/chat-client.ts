@@ -44,6 +44,29 @@ export class ChatClient {
 
   /**
    * Constructor for Chat
+   *
+   * **Important**: The Ably Realtime client must have a clientId set. This can be done by configuring
+   * token-based authentication that returns a token with a clientId, or by setting
+   * the clientId directly in the Realtime client options.
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * // Preferred in production: Use auth URL that returns a token with clientId
+   * const realtime = new Ably.Realtime({
+   *   authUrl: '/api/ably-auth', // Your server endpoint that returns an Ably token with clientId
+   *   authMethod: 'POST'
+   * });
+   * const chatClient = new ChatClient(realtime);
+   *
+   * // Alternative for development and server-side operations: Set clientId directly (requires API key)
+   * const realtime = new Ably.Realtime({
+   *   key: 'your-ably-api-key',
+   *   clientId: 'user-123'
+   * });
+   * const chatClient = new ChatClient(realtime);
+   * ```
    * @param realtime - The Ably Realtime client.
    * @param clientOptions - The client options.
    */
