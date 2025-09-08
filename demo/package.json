@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@ably/chat": "file:..",
-    "ably": "^2.10.1",
+    "ably": "^2.12.0",
     "clsx": "^2.1.1",
     "nanoid": "^5.1.3",
     "react": "^18.3.1",
@@ -31,9 +31,9 @@
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
-    "netlify-cli": "^23.1.2",
+    "netlify-cli": "^23.5.1",
     "typescript": "^5.8.2",
-    "@tailwindcss/vite": "^4.1.8",
+    "@tailwindcss/vite": "^4.1.13",
     "tailwindcss": "^4.1.3",
     "postcss": "^8.5.4",
     "vite": "^6.2.1"
