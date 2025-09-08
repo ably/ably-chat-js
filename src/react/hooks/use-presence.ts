@@ -94,20 +94,21 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.S
  * Presence automatically attempts to re-enter the room after a network issue, but if it fails, it will emit an error with code `91004`.
  * You will need to remount the component, or call the {@link Presence.update} method exposed by this hook, to re-attempt entering presence again.
  *
- * **Important**: The `enterWithData` and `leaveWithData` should be memoized to prevent unnecessary re-renders. Passing new object references
+ * **Important**: The `params` object should be memoized to prevent unnecessary re-renders. Passing a new object reference
  * on each render will cause the hook's internal effects to re-run, potentially generating unnecessary messages to Ably and increasing costs.
  * @example
  * ```tsx
  * const MyComponent = () => {
  *   const [userData, setUserData] = useState({ status: 'online' });
- *   const leaveWithData = useMemo(() => ({ reason: 'user_left' }), []);
  *
- *   const { presence, myPresenceState, update } = usePresence({
- *     enterWithData: userData, // useState value is already stable
- *     leaveWithData, // useMemo needed since object is created inline
+ *   const params = useMemo(() => ({
+ *     enterWithData: userData,
+ *     leaveWithData: { reason: 'user_left' },
  *     onConnectionStatusChange: (change) => console.log('Connection:', change.current),
  *     onDiscontinuity: (error) => console.error('Discontinuity:', error)
- *   });
+ *   }), [userData]);
+ *
+ *   const { presence, myPresenceState, update } = usePresence(params);
  *
  *   return <div>Present: {myPresenceState.present}</div>;
  * };
