@@ -402,6 +402,235 @@ describe('usePresence', () => {
 
       expect(leaveSpy).toHaveBeenCalledWith({ manual: 'goodbye' });
     });
+
+    it('should re-enter presence automatically after transitioning from detached', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+
+      const { rerender } = renderHook((props: UsePresenceParams) => usePresence(props), {
+        initialProps: {
+          initialData: { test: 'data' },
+          autoEnterLeave: true,
+        },
+      });
+
+      // Wait for initial auto-enter
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+
+      enterSpy.mockClear();
+
+      // Simulate room transitioning to detached
+      mockCurrentRoomStatus = RoomStatus.Detached;
+      (mockRoom as unknown as { _lifecycle: InternalRoomLifecycle })._lifecycle.setStatus({
+        status: RoomStatus.Detached,
+      });
+
+      // Do a re-render
+      rerender();
+
+      // Simulate room transitioning back to attached
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      (mockRoom as unknown as { _lifecycle: InternalRoomLifecycle })._lifecycle.setStatus({
+        status: RoomStatus.Attached,
+      });
+
+      // Re-render again
+      rerender();
+
+      // Should re-enter presence automatically
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+    });
+
+    it('should not re-enter presence automatically after transitioning from detached if presence has been explicitly left', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
+
+      const { result, rerender } = renderHook(() =>
+        usePresence({
+          initialData: { test: 'data' },
+          autoEnterLeave: true,
+        }),
+      );
+
+      // Wait for initial auto-enter
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+
+      enterSpy.mockClear();
+
+      // Explicitly leave presence
+      await act(async () => {
+        await result.current.leave();
+      });
+
+      await vi.waitFor(
+        () => {
+          expect(leaveSpy).toHaveBeenCalledWith(undefined);
+        },
+        {
+          timeout: 1000,
+        },
+      );
+
+      // Simulate room transitioning to detached
+      mockCurrentRoomStatus = RoomStatus.Detached;
+      (mockRoom as unknown as { _lifecycle: InternalRoomLifecycle })._lifecycle.setStatus({
+        status: RoomStatus.Detached,
+      });
+
+      // Do a re-render
+      rerender();
+
+      // Simulate room transitioning back to attached
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      (mockRoom as unknown as { _lifecycle: InternalRoomLifecycle })._lifecycle.setStatus({
+        status: RoomStatus.Attached,
+      });
+
+      // Do a re-render
+      rerender();
+
+      // Should NOT re-enter presence since it was explicitly left
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(enterSpy).not.toHaveBeenCalled();
+    });
+
+    it('should re-enter presence automatically after explicit enter call followed by detached->attached transition', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
+
+      const { result, rerender } = renderHook(() =>
+        usePresence({
+          initialData: { test: 'data' },
+          autoEnterLeave: true,
+        }),
+      );
+
+      // Wait for initial auto-enter
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+
+      // Explicitly leave presence first
+      await act(async () => {
+        await result.current.leave();
+      });
+
+      await vi.waitFor(
+        () => {
+          expect(leaveSpy).toHaveBeenCalledWith(undefined);
+        },
+        {
+          timeout: 1000,
+        },
+      );
+
+      enterSpy.mockClear();
+
+      // Explicitly enter presence (this should reset hasExplicitlyLeftRef to false)
+      await act(async () => {
+        await result.current.enter({ explicit: 'enter' });
+      });
+
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ explicit: 'enter' });
+      });
+
+      enterSpy.mockClear();
+
+      // Simulate room transitioning to detached
+      mockCurrentRoomStatus = RoomStatus.Detached;
+      (mockRoom as unknown as { _lifecycle: InternalRoomLifecycle })._lifecycle.setStatus({
+        status: RoomStatus.Detached,
+      });
+
+      // Do a re-render
+      rerender();
+
+      // Simulate room transitioning back to attached
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      (mockRoom as unknown as { _lifecycle: InternalRoomLifecycle })._lifecycle.setStatus({
+        status: RoomStatus.Attached,
+      });
+
+      // Do a re-render
+      rerender();
+
+      // Should re-enter presence automatically since explicit enter was called after leave
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ explicit: 'enter' });
+      });
+    });
+
+    it('should re-enter presence automatically after explicit update call followed by detached->attached transition', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+      const updateSpy = vi.spyOn(mockRoom.presence, 'update');
+      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
+
+      const { result, rerender } = renderHook(() =>
+        usePresence({
+          initialData: { test: 'data' },
+          autoEnterLeave: true,
+        }),
+      );
+
+      // Wait for initial auto-enter
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+
+      // Explicitly leave presence first
+      await act(async () => {
+        await result.current.leave();
+      });
+
+      await vi.waitFor(
+        () => {
+          expect(leaveSpy).toHaveBeenCalledWith(undefined);
+        },
+        {
+          timeout: 1000,
+        },
+      );
+
+      enterSpy.mockClear();
+
+      // Explicitly update presence (this should reset hasExplicitlyLeftRef to false)
+      await act(async () => {
+        await result.current.update({ explicit: 'update' });
+      });
+
+      await waitFor(() => {
+        expect(updateSpy).toHaveBeenCalledWith({ explicit: 'update' });
+      });
+
+      // Simulate room transitioning to detached
+      mockCurrentRoomStatus = RoomStatus.Detached;
+      (mockRoom as unknown as { _lifecycle: InternalRoomLifecycle })._lifecycle.setStatus({
+        status: RoomStatus.Detached,
+      });
+
+      // Do a re-render
+      rerender();
+
+      // Simulate room transitioning back to attached
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      (mockRoom as unknown as { _lifecycle: InternalRoomLifecycle })._lifecycle.setStatus({
+        status: RoomStatus.Attached,
+      });
+
+      // Do a re-render
+      rerender();
+
+      // Should re-enter presence automatically since explicit update was called after leave
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ explicit: 'update' });
+      });
+    });
   });
 
   describe('data tracking and persistence', () => {
