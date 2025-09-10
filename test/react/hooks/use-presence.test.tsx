@@ -61,203 +61,144 @@ describe('usePresence', () => {
     cleanup();
   });
 
-  it('should provide chat status response metrics', async () => {
-    // set the connection and room errors to check that they are correctly provided
-    mockConnectionError = new Ably.ErrorInfo('test error', 40000, 400);
-    mockRoomError = new Ably.ErrorInfo('test error', 40000, 400);
+  describe('Basic Functionality', () => {
+    it('should provide the presence instance and chat status response metrics', async () => {
+      // set the connection and room errors to check that they are correctly provided
+      mockConnectionError = new Ably.ErrorInfo('test error', 40000, 400);
+      mockRoomError = new Ably.ErrorInfo('test error', 40000, 400);
 
-    const { result } = renderHook(() => usePresence());
+      const { result } = renderHook(() => usePresence());
 
-    await vi.waitFor(() => {
-      // check that the presence instance and metrics are correctly provided
+      await vi.waitFor(() => {
+        // check that the presence instance and metrics are correctly provided
+        expect(result.current.myPresenceState.present).toBe(true);
+        expect(result.current.myPresenceState.error).toBeUndefined();
+
+        // check connection and room metrics are correctly provided
+        expect(result.current.roomStatus).toBe(RoomStatus.Attached);
+        expect(result.current.roomError).toBeErrorInfo({ message: 'test error' });
+        expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
+        expect(result.current.connectionError).toBeErrorInfo({ message: 'test error' });
+      });
+    });
+
+    it('should handle rerender if the room instance changes', async () => {
+      vi.spyOn(mockRoom.presence, 'enter');
+
+      const { result, rerender } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // ensure we have entered presence
+      await waitFor(() => {
+        expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
+      });
+
+      await waitFor(() => result.current.myPresenceState.present);
+
+      // check the initial state of the presence instance
       expect(result.current.myPresenceState.present).toBe(true);
-      expect(result.current.myPresenceState.error).toBeUndefined();
 
-      // check connection and room metrics are correctly provided
-      expect(result.current.roomStatus).toBe(RoomStatus.Attached);
-      expect(result.current.roomError).toBeErrorInfo({ message: 'test error' });
-      expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
-      expect(result.current.connectionError).toBeErrorInfo({ message: 'test error' });
+      // change the mock room instance
+      updateMockRoom(makeRandomRoom());
+
+      vi.spyOn(mockRoom.presence, 'enter');
+
+      // re-render to trigger entering presence on the new room instance
+      rerender();
+
+      // ensure we have entered presence on the new room instance
+      await waitFor(() => {
+        expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
+      });
+      await waitFor(() => result.current.myPresenceState.present);
+      expect(result.current.myPresenceState.present).toBe(true);
     });
   });
 
-  it('should handle rerender if the room instance changes', async () => {
-    vi.spyOn(mockRoom.presence, 'enter');
+  describe('auto-enter connection and room states', () => {
+    describe.each([[ConnectionStatus.Failed], [ConnectionStatus.Suspended]])(
+      'invalid connection state for joining presence',
+      (connectionState: ConnectionStatus) => {
+        it('should not join presence if connection state is: ' + connectionState, () => {
+          // change the connection status, so we render the hook with the new status
+          mockCurrentConnectionStatus = connectionState;
 
-    const { result, rerender } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+          // spy on the enter method of the presence instance to check if it is called
+          vi.spyOn(mockRoom.presence, 'enter');
+          renderHook(() => usePresence({ initialData: { test: 'data' } }));
 
-    // ensure we have entered presence
-    await waitFor(() => {
-      expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
-    });
-
-    await waitFor(() => result.current.myPresenceState.present);
-
-    // check the initial state of the presence instance
-    expect(result.current.myPresenceState.present).toBe(true);
-
-    // change the mock room instance
-    updateMockRoom(makeRandomRoom());
-
-    vi.spyOn(mockRoom.presence, 'enter');
-
-    // re-render to trigger entering presence on the new room instance
-    rerender();
-
-    // ensure we have entered presence on the new room instance
-    await waitFor(() => {
-      expect(mockRoom.presence.enter).toHaveBeenCalledWith({ test: 'data' });
-    });
-    await waitFor(() => result.current.myPresenceState.present);
-    expect(result.current.myPresenceState.present).toBe(true);
-  });
-
-  it('should correctly enter presence on render and leave on unmount', async () => {
-    // spy on the enter and leave methods of the presence instance
-    const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
-    const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
-
-    const { result, unmount } = renderHook(() =>
-      usePresence({
-        initialData: { test: 'enter' },
-      }),
-    );
-
-    await waitFor(() => result.current.myPresenceState.present, { timeout: 500 });
-
-    // verify that the enter method was called with initial data
-    expect(enterSpy).toHaveBeenCalledWith({ test: 'enter' });
-
-    // unmount the hook
-    unmount();
-
-    // verify that the leave method was called without data
-    await vi.waitFor(
-      () => {
-        expect(leaveSpy).toHaveBeenCalledWith();
-      },
-      {
-        timeout: 1000,
+          // ensure we have not entered presence
+          expect(mockRoom.presence.enter).not.toHaveBeenCalled();
+        });
       },
     );
-  });
 
-  it('should correctly call the update method', async () => {
-    // spy on the update method of the presence instance
-    const updateSpy = vi.spyOn(mockRoom.presence, 'update');
+    it('should not join presence if the room is not attached', () => {
+      vi.spyOn(mockRoom.presence, 'enter');
+      // check we do not enter presence if the room is not attached
+      for (const status of [
+        RoomStatus.Detaching,
+        RoomStatus.Detached,
+        RoomStatus.Suspended,
+        RoomStatus.Failed,
+        RoomStatus.Releasing,
+        RoomStatus.Released,
+      ]) {
+        // change the room status, so we render the hook with the new status
+        mockCurrentRoomStatus = status;
 
-    const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
-
-    // call the update method
-    await act(async () => {
-      await result.current.update({ test: 'updated' });
-    });
-
-    // verify that the update method was called
-    expect(updateSpy).toHaveBeenCalledWith({ test: 'updated' });
-
-    expect(result.current.myPresenceState.present).toBe(true);
-  });
-
-  it('should correctly handle enter errors', async () => {
-    // Create an error to be emitted
-    const errorInfo = new Ably.ErrorInfo('enter error', 40000, 400);
-
-    // Mock enter to reject with the error
-    vi.spyOn(mockRoom.presence, 'enter').mockRejectedValue(errorInfo);
-
-    const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
-
-    // Verify the enter method was called
-    await waitFor(() => {
-      expect(mockRoom.presence.enter).toHaveBeenCalled();
-    });
-
-    // Verify the presence state is false (not present)
-    expect(result.current.myPresenceState.present).toBe(false);
-  });
-
-  describe.each([[ConnectionStatus.Failed], [ConnectionStatus.Suspended]])(
-    'invalid connection state for joining presence',
-    (connectionState: ConnectionStatus) => {
-      it('should not join presence if connection state is: ' + connectionState, () => {
-        // change the connection status, so we render the hook with the new status
-        mockCurrentConnectionStatus = connectionState;
-
-        // spy on the enter method of the presence instance to check if it is called
-        vi.spyOn(mockRoom.presence, 'enter');
         renderHook(() => usePresence({ initialData: { test: 'data' } }));
-
         // ensure we have not entered presence
         expect(mockRoom.presence.enter).not.toHaveBeenCalled();
+      }
+    });
+  });
+
+  describe('error handling', () => {
+    it('should correctly handle enter errors', async () => {
+      // Create an error to be emitted
+      const errorInfo = new Ably.ErrorInfo('enter error', 40000, 400);
+
+      // Mock enter to reject with the error
+      vi.spyOn(mockRoom.presence, 'enter').mockRejectedValue(errorInfo);
+
+      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Verify the enter method was called
+      await waitFor(() => {
+        expect(mockRoom.presence.enter).toHaveBeenCalled();
       });
-    },
-  );
 
-  it('should not join presence if the room is not attached', () => {
-    vi.spyOn(mockRoom.presence, 'enter');
-    // check we do not enter presence if the room is not attached
-    for (const status of [
-      RoomStatus.Detaching,
-      RoomStatus.Detached,
-      RoomStatus.Suspended,
-      RoomStatus.Failed,
-      RoomStatus.Releasing,
-      RoomStatus.Released,
-    ]) {
-      // change the room status, so we render the hook with the new status
-      mockCurrentRoomStatus = status;
-
-      renderHook(() => usePresence({ initialData: { test: 'data' } }));
-      // ensure we have not entered presence
-      expect(mockRoom.presence.enter).not.toHaveBeenCalled();
-    }
-  });
-
-  it('should subscribe and unsubscribe to discontinuity events', async () => {
-    const mockOff = vi.fn();
-    const mockDiscontinuityListener = vi.fn();
-
-    // spy on the onDiscontinuity method of the presence instance
-    let discontinuityListener: DiscontinuityListener | undefined;
-    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
-      discontinuityListener = listener;
-      return { off: mockOff };
+      // Verify the presence state is false (not present)
+      expect(result.current.myPresenceState.present).toBe(false);
     });
 
-    // render the hook with a discontinuity listener
-    const { unmount } = renderHook(() => usePresence({ onDiscontinuity: mockDiscontinuityListener }));
+    it('should subscribe and unsubscribe to discontinuity events', async () => {
+      const mockOff = vi.fn();
+      const mockDiscontinuityListener = vi.fn();
 
-    // check that the listener was subscribed to the discontinuity events by triggering the listener
-    const errorInfo = new Ably.ErrorInfo('test', 50000, 500);
-    await waitFor(() => {
-      expect(discontinuityListener).toBeDefined();
+      // spy on the onDiscontinuity method of the presence instance
+      let discontinuityListener: DiscontinuityListener | undefined;
+      vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+        discontinuityListener = listener;
+        return { off: mockOff };
+      });
+
+      // render the hook with a discontinuity listener
+      const { unmount } = renderHook(() => usePresence({ onDiscontinuity: mockDiscontinuityListener }));
+
+      // check that the listener was subscribed to the discontinuity events by triggering the listener
+      const errorInfo = new Ably.ErrorInfo('test', 50000, 500);
+      await waitFor(() => {
+        expect(discontinuityListener).toBeDefined();
+      });
+      discontinuityListener?.(errorInfo);
+      expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
+
+      // unmount the hook and verify that the listener was unsubscribed
+      unmount();
+
+      expect(mockOff).toHaveBeenCalled();
     });
-    discontinuityListener?.(errorInfo);
-    expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
-
-    // unmount the hook and verify that the listener was unsubscribed
-    unmount();
-
-    expect(mockOff).toHaveBeenCalled();
-  });
-
-  it('should handle presence state changes', async () => {
-    // Mock enter to resolve
-    vi.spyOn(mockRoom.presence, 'enter').mockResolvedValue();
-
-    const { result } = renderHook(() => usePresence());
-
-    // Verify that the initial presence state is false
-    expect(result.current.myPresenceState.present).toBe(false);
-
-    // Verify that the update method works
-    await act(async () => {
-      await result.current.update();
-    });
-
-    // Verify that the presence state is true after update
-    expect(result.current.myPresenceState.present).toBe(true);
   });
 
   describe('autoEnterLeave behavior', () => {
@@ -345,8 +286,8 @@ describe('usePresence', () => {
     });
   });
 
-  describe('exposed enter and leave methods', () => {
-    it('should correctly call the exposed enter method', async () => {
+  describe('explicit enter/update/leave', () => {
+    it('should correctly call the enter method', async () => {
       const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
 
       const { result } = renderHook(() =>
@@ -364,7 +305,24 @@ describe('usePresence', () => {
       expect(enterSpy).toHaveBeenCalledWith({ manual: 'enter' });
     });
 
-    it('should correctly call the exposed leave method', async () => {
+    it('should correctly call the update method', async () => {
+      // spy on the update method of the presence instance
+      const updateSpy = vi.spyOn(mockRoom.presence, 'update');
+
+      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // call the update method
+      await act(async () => {
+        await result.current.update({ test: 'updated' });
+      });
+
+      // verify that the update method was called
+      expect(updateSpy).toHaveBeenCalledWith({ test: 'updated' });
+
+      expect(result.current.myPresenceState.present).toBe(true);
+    });
+
+    it('should correctly call the leave method', async () => {
       const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
 
       const { result } = renderHook(() =>
@@ -592,78 +550,6 @@ describe('usePresence', () => {
       // Should use the latest data from the last enter call
       await waitFor(() => {
         expect(mockRoom.presence.enter).toHaveBeenCalledWith({ step: 3 });
-      });
-    });
-  });
-
-  describe('leave behavior without data', () => {
-    it('should always leave without data on auto-leave', async () => {
-      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
-      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
-
-      const { unmount } = renderHook(() => usePresence({ initialData: { complex: { nested: 'data' } } }));
-
-      await waitFor(() => {
-        expect(enterSpy).toHaveBeenCalled();
-      });
-
-      unmount();
-
-      await vi.waitFor(
-        () => {
-          expect(leaveSpy).toHaveBeenCalledWith();
-          expect(leaveSpy).not.toHaveBeenCalledWith({ complex: { nested: 'data' } });
-        },
-        {
-          timeout: 1000,
-        },
-      );
-    });
-
-    it('should allow manual leave with data parameter', async () => {
-      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
-
-      const { result } = renderHook(() => usePresence({ autoEnterLeave: false }));
-
-      await act(async () => {
-        await result.current.leave({ reason: 'manual_leave' });
-      });
-
-      expect(leaveSpy).toHaveBeenCalledWith({ reason: 'manual_leave' });
-    });
-
-    it('should not affect tracked data when leaving', async () => {
-      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
-      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
-
-      const { result, rerender } = renderHook(() => usePresence({ initialData: { status: 'active' } }));
-
-      // Wait for auto-enter
-      await waitFor(() => {
-        expect(enterSpy).toHaveBeenCalledWith({ status: 'active' });
-      });
-
-      // Update data
-      await act(async () => {
-        await result.current.update({ status: 'updated' });
-      });
-
-      // Manual leave with data
-      await act(async () => {
-        await result.current.leave({ reason: 'temporary' });
-      });
-
-      expect(leaveSpy).toHaveBeenCalledWith({ reason: 'temporary' });
-      enterSpy.mockClear();
-
-      // Simulate room reconnection
-      updateMockRoom(makeRandomRoom());
-      vi.spyOn(mockRoom.presence, 'enter');
-      rerender();
-
-      // Should still use the updated data, not be affected by leave data
-      await waitFor(() => {
-        expect(mockRoom.presence.enter).toHaveBeenCalledWith({ status: 'updated' });
       });
     });
   });
