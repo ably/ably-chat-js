@@ -20,15 +20,37 @@ import { useChatConnection } from './use-chat-connection.js';
  */
 export interface UsePresenceParams extends StatusParams {
   /**
-   * The initial data to enter the room with. Any JSON serializable data can be provided.
-   * This data is used for the first auto-enter only. Subsequent values are ignored
-   * and should be supplied via calls to enter and update.
+   * The initial data to enter the room with when auto-entering (autoEnterLeave=true). Any JSON serializable data can be provided.
+   * This data is only used for the initial auto-enter when the component mounts. Changes to this value
+   * after the first render are ignored. To update presence data after the initial enter, use the
+   * `update` or `enter` methods returned by the hook.
+   * @example
+   * ```tsx
+   * // This will cause the hook to auto-enter presence with the provided data
+   * // autoEnterLeave is implicitly true
+   * const { presence, update } = usePresence({
+   *   initialData: { status: 'online', lastSeen: Date.now() }
+   * });
+   *
+   * // Subsequent data updates must be done via calls to enter/update
+   * await update({status: 'away'});
+   * ```
+   * @defaultValue undefined
    */
   initialData?: PresenceData;
 
   /**
-   * Controls whether the hook should automatically enter the room on mount and leave on unmount.
+   * Controls whether the hook should automatically enter presence when the component mounts and the room
+   * becomes attached, and automatically leave presence when the component unmounts.
+   *
+   * Also controls whether the hook will automatically re-enter presence if the room is detached and then re-attached.
+   *
+   * **Important** If {@link UsePresenceResponse.leave} is called, then the hook will NOT auto-enter. To re-enable
+   * auto-enter behavior, you must call {@link UsePresenceResponse.enter} or {@link UsePresenceResponse.update}.
+   * When set to false, you have full manual control over entering and leaving presence.
+   *
    * Defaults to true if not provided.
+   * @defaultValue true
    */
   autoEnterLeave?: boolean;
 }
@@ -36,18 +58,78 @@ export interface UsePresenceParams extends StatusParams {
 export interface UsePresenceResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Presence.update} method.
+   *
+   *  This is a stable reference and will not be changed between renders for the same room.
+   *
+   * **Important** When called, if {@link UsePresenceParams.autoEnterLeave} is set to true, the hook will attempt to
+   * auto-enter presence automatically when conditions are met.
    */
   readonly update: Presence['update'];
 
   /**
-   * A shortcut to the {@link Presence.enter} method. This is useful to manually control entering presence when `autoEnterLeave` is false,
-   * or to re-enter presence after a persistent error that the SDK could not recover from.
+   * A shortcut to the {@link Presence.enter} method, which can be used to manually enter presence when
+   * `autoEnterLeave` is false, or to explicitly re-enter presence with new data.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   *
+   * **Important** When called, if {@link UsePresenceParams.autoEnterLeave} is set to true, the hook will attempt to
+   * auto-enter presence automatically when conditions are met.
+   * @example
+   * ```tsx
+   * // Manual control over presence with conditional logic
+   * const { enter, leave } = usePresence({ autoEnterLeave: false });
+   *
+   * useEffect(() => {
+   *   if (effectCondition) {
+   *     enter({ status: 'active' });
+   *   }
+   *
+   *   return () => {
+   *     if (effectCondition) {
+   *       leave();
+   *     }
+   *   };
+   * }, [effectCondition, enter, leave]);
+   * ```
    */
   readonly enter: Presence['enter'];
 
   /**
-   * A shortcut to the {@link Presence.leave} method. This is useful to manually control leaving presence when autoEnterLeave is false,
-   * or to leave presence before unmounting the component.
+   * A shortcut to the {@link Presence.leave} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   *
+   * **Important** When called, this will prevent the hook from automatically re-entering presence, even when `autoEnterLeave` is true.
+   *
+   * This is useful for manually controlling when presence is left.
+   * @example
+   * ```tsx
+   * // Manual control over presence with conditional logic
+   * const { enter, leave } = usePresence({ autoEnterLeave: false });
+   *
+   * useEffect(() => {
+   *   if (effectCondition) {
+   *     enter({ status: 'active' });
+   *   }
+   *
+   *   return () => {
+   *     if (effectCondition) {
+   *       leave();
+   *     }
+   *   };
+   * }, [effectCondition, enter, leave]);
+   * ```
+   * @example
+   * ```tsx
+   * // Enter presence automatically with some initial data
+   * const { leave, enter } = usePresence({ initialData: { status: 'online' } });
+   *
+   * // Leave presence explicitly, disabling auto re-entry
+   * await leave();
+   *
+   * // Re-enter presence again, re-enabling auto-entry if selected in the hook
+   * await enter({ status: 'online again' })
+   * ```
    */
   readonly leave: Presence['leave'];
 
@@ -61,7 +143,7 @@ export interface UsePresenceResponse extends ChatStatusResponse {
     present: boolean;
 
     /**
-     * Indicates if an error occurred while trying to enter (on mount) or leave presence (on unmount).
+     * Indicates if an error occurred while trying to enter or leave presence.
      */
     error?: Ably.ErrorInfo;
   };
@@ -80,30 +162,102 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.S
 /**
  * A hook that provides access to the {@link Presence} instance in the room.
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
- * On calling, the hook will `enter` the room with the provided data and `leave` the room when the component unmounts.
- * The {@link UsePresenceResponse.myPresenceState} can be used to determine if the user is currently present in the room, and if any errors occurred while trying to enter or leave presence.
- * Presence automatically attempts to re-enter the room after a network issue, but if it fails, it will emit an error with code `91004`.
- * You will need to remount the component, or call the {@link Presence.update} method exposed by this hook, to re-attempt entering presence again.
  *
- * **Important**: The `params` object should be memoized to prevent unnecessary re-renders. Passing a new object reference
- * on each render will cause the hook's internal effects to re-run, potentially generating unnecessary messages to Ably and increasing costs.
+ * By default (when `autoEnterLeave` is true or not provided), the hook will automatically `enter` the room
+ * when the component mounts and the room is attached, and `leave` when the component unmounts. The hook will
+ * also automatically re-enter presence after room detachment/reattachment cycles.
+ *
+ * When `autoEnterLeave` is false, you have full manual control over entering and leaving presence using the
+ * returned `enter` and `leave` methods.
+ *
+ * The {@link UsePresenceResponse.myPresenceState} can be used to determine if the user is currently present
+ * in the room, and if any errors occurred while trying to enter or leave presence.
  * @example
  * ```tsx
+ * // Example hook usage with auto-entry of presence on mount and auto-leave on unmount
  * const MyComponent = () => {
- *   const [userData, setUserData] = useState({ status: 'online' });
- *
- *   const params = useMemo(() => ({
- *     initialData: userData,
+ *   const { presence, myPresenceState, update } = usePresence({
+ *     initialData: { status: 'online' },
  *     onConnectionStatusChange: (change) => console.log('Connection:', change.current),
  *     onDiscontinuity: (error) => console.error('Discontinuity:', error)
- *   }), [userData]);
- *
- *   const { presence, myPresenceState, update } = usePresence(params);
+ *   });
  *
  *   return <div>Present: {myPresenceState.present}</div>;
  * };
  * ```
- * @param params - Allows the registering of optional callbacks.
+ * @example
+ * ```tsx
+ * // Example with full manual control (no auto-enter/leave)
+ * const ManualPresenceComponent = () => {
+ *   const { enter, leave, update, myPresenceState } = usePresence({
+ *     autoEnterLeave: false,
+ *     initialData: { status: 'available' }
+ *   });
+ *
+ *   const handleJoin = () => enter({ status: 'online' });
+ *   const handleLeave = () => leave();
+ *   const handleUpdateStatus = () => update({ status: 'busy' });
+ *
+ *   return (
+ *     <div>
+ *       <button onClick={handleJoin}>Join</button>
+ *       <button onClick={handleLeave}>Leave</button>
+ *       <button onClick={handleUpdateStatus}>Update Status</button>
+ *       <div>Present: {myPresenceState.present}</div>
+ *     </div>
+ *   );
+ * };
+ * ```
+ * @example
+ * ```tsx
+ * // Example with auto-enter but taking manual control via leave
+ * const MixedControlComponent = () => {
+ *   const { leave, update, myPresenceState } = usePresence({
+ *     initialData: { status: 'online' }
+ *   });
+ *
+ *   const handleGoOffline = () => {
+ *     // Calling leave() prevents auto re-entry until enter() or update() is called
+ *     leave({ status: 'offline' });
+ *   };
+ *
+ *   const handleUpdatePresence = () => {
+ *     // Calling update() re-enables auto-enter behavior
+ *     update({ status: 'back online' });
+ *   };
+ *
+ *   return (
+ *     <div>
+ *       <button onClick={handleGoOffline}>Go Offline</button>
+ *       <button onClick={handleUpdatePresence}>Update Presence</button>
+ *       <div>Present: {myPresenceState.present}</div>
+ *     </div>
+ *   );
+ * };
+ * ```
+ * @example
+ * ```tsx
+ * // Example with manual mount/unmount behavior using enter/leave explicitly
+ * const ManualMountComponent = () => {
+ *   const { enter, leave, myPresenceState } = usePresence({
+ *     autoEnterLeave: false,
+ *     initialData: { status: 'ready' }
+ *   });
+ *
+ *   // Manual mount behavior - enter presence when component mounts
+ *   useEffect(() => {
+ *     enter({ status: 'active' });
+ *
+ *     // Manual unmount behavior - leave presence when component unmounts
+ *     return () => {
+ *       leave({ status: 'disconnecting' });
+ *     };
+ *   }, [enter, leave]);
+ *
+ *   return <div>Present: {myPresenceState.present}</div>;
+ * };
+ * ```
+ * @param params - Configuration options for the hook behavior and optional callbacks.
  * @returns UsePresenceResponse - An object containing the {@link Presence} instance and methods to interact with it.
  */
 export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => {
