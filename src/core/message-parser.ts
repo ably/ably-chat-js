@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatMessageAction } from './events.js';
-import { DefaultMessage, emptyMessageReactions, Message, MessageHeaders, MessageMetadata } from './message.js';
+import { DefaultMessage, emptyMessageReactions, Message, MessageHeaders, MessageMetadata, Version } from './message.js';
 
 interface MessagePayload {
   data?: {
@@ -15,10 +15,9 @@ interface MessagePayload {
   };
 
   serial: string;
-  createdAt: number;
-  version: string;
   action: Ably.MessageAction;
-  operation?: Ably.Operation;
+  version: Ably.MessageVersion;
+  annotations: Ably.MessageAnnotations;
 }
 
 // Parse a realtime message to a chat message
@@ -31,28 +30,28 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
   const clientId = message.clientId || '';
   const text = data.text || '';
   const serial = message.serial || '';
-  const versionSerial = message.version || '';
   const metadata = data.metadata && typeof data.metadata === 'object' ? data.metadata : {};
   const headers = extras.headers || {};
 
+  // Create the version - only converting the timestamp if it's actually defined.
+  const versionTimestamp = message.version.timestamp === undefined ? undefined : new Date(message.version.timestamp);
+  const version = (
+    versionTimestamp
+      ? {
+          ...message.version,
+          timestamp: versionTimestamp,
+        }
+      : message.version
+  ) as Version;
+
   // Use current time as default for missing timestamps
   const currentTime = Date.now();
-  const timestamp = new Date(message.createdAt || currentTime);
-  const versionTimestamp = new Date(message.timestamp || currentTime);
+  const timestamp = new Date(message.timestamp || currentTime);
 
   // Convert the action to a ChatMessageAction enum, defaulting to MessageCreate if the action is not found.
   const action = Object.values(ChatMessageAction).includes(message.action as ChatMessageAction)
     ? (message.action as ChatMessageAction)
     : ChatMessageAction.MessageCreate;
-
-  // Create version information
-  const version = {
-    serial: versionSerial,
-    timestamp: versionTimestamp,
-    clientId: message.operation?.clientId,
-    description: message.operation?.description,
-    metadata: message.operation?.metadata,
-  };
 
   return new DefaultMessage({
     serial,

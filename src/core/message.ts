@@ -34,12 +34,12 @@ export interface Version {
   /**
    * A unique identifier for the latest version of this message.
    */
-  serial: string;
+  serial?: string;
 
   /**
    * The timestamp at which this version was updated, deleted, or created.
    */
-  timestamp: Date;
+  timestamp?: Date;
 
   /**
    * The optional clientId of the user who performed the update or deletion.
@@ -56,6 +56,11 @@ export interface Version {
    */
   metadata?: MessageOperationMetadata;
 }
+
+/**
+ * A helper for versions that we know have a serial.
+ */
+type VersionWithSerial = Required<Pick<Version, 'serial'>>;
 
 /**
  * Represents a single message in a chat room.
@@ -372,27 +377,35 @@ export class DefaultMessage implements Message {
   }
 
   isOlderVersionOf(message: Message): boolean {
-    if (!this.equal(message)) {
-      return false;
-    }
-
-    return this.version.serial < message.version.serial;
+    return this._compareVersions(
+      this,
+      message,
+      (first: VersionWithSerial, second: VersionWithSerial) => first.serial < second.serial,
+    );
   }
 
   isNewerVersionOf(message: Message): boolean {
-    if (!this.equal(message)) {
-      return false;
-    }
-
-    return this.version.serial > message.version.serial;
+    return this._compareVersions(
+      this,
+      message,
+      (first: VersionWithSerial, second: VersionWithSerial) => first.serial > second.serial,
+    );
   }
 
   isSameVersionAs(message: Message): boolean {
-    if (!this.equal(message)) {
-      return false;
-    }
+    return this._compareVersions(
+      this,
+      message,
+      (first: VersionWithSerial, second: VersionWithSerial) => first.serial === second.serial,
+    );
+  }
 
-    return this.version.serial === message.version.serial;
+  _isNewerOrSameVersionOf(message: Message): boolean {
+    return this._compareVersions(
+      this,
+      message,
+      (first: VersionWithSerial, second: VersionWithSerial) => first.serial >= second.serial,
+    );
   }
 
   before(message: Message): boolean {
@@ -441,6 +454,25 @@ export class DefaultMessage implements Message {
     return this._getLatestMessageVersion(event.message);
   }
 
+  private _compareVersions(
+    first: Message,
+    second: Message,
+    comparator: (first: VersionWithSerial, second: VersionWithSerial) => boolean,
+  ): boolean {
+    // If our serials aren't the same, not same message and cannot compare1
+    if (!first.equal(second)) {
+      return false;
+    }
+
+    // If one our version serials isn't set, cannot compare
+    if (first.version.serial === undefined || second.version.serial === undefined) {
+      return false;
+    }
+
+    // Use the comparator to determine the comparison
+    return comparator(first.version as VersionWithSerial, second.version as VersionWithSerial);
+  }
+
   /**
    * Get the latest message version, based on the event.
    * If "this" is the latest version, return "this", otherwise clone the message and apply the reactions.
@@ -454,7 +486,7 @@ export class DefaultMessage implements Message {
     }
 
     // event is older, keep this instead
-    if (this.version.serial >= message.version.serial) {
+    if (this._isNewerOrSameVersionOf(message)) {
       return this;
     }
 

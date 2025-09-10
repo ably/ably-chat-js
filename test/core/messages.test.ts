@@ -385,7 +385,7 @@ describe('Messages', () => {
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageDelete,
-          version: '01672531200000-123@abcdefghij',
+          version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
           extras: {
             headers: {},
           },
@@ -400,7 +400,7 @@ describe('Messages', () => {
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageUpdate,
-          version: '01672531200000-123@abcdefghij',
+          version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
           extras: {
             headers: {},
           },
@@ -413,7 +413,7 @@ describe('Messages', () => {
             text: 'may the fourth be with you',
             metadata: {},
           },
-          version: '01672531200000-123@abcdefghij',
+          version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageCreate,
           extras: {
@@ -458,7 +458,7 @@ describe('Messages', () => {
           metadata: {},
         },
         serial: '01672531200000-123@abcdefghij',
-        version: '01672531200000-123@abcdefghij',
+        version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
         action: ChatMessageAction.MessageCreate,
         extras: {
           headers: {},
@@ -478,7 +478,7 @@ describe('Messages', () => {
           headers: {},
         },
         timestamp: updateTimestamp,
-        version: '01672531200000-123@abcdefghij:0',
+        version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
       });
       context.emulateBackendPublish({
         clientId: 'yoda',
@@ -493,7 +493,7 @@ describe('Messages', () => {
           headers: {},
         },
         timestamp: deletionTimestamp,
-        version: '01672531200000-123@abcdefghij:0',
+        version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
       });
 
       expect(receivedMessages).toHaveLength(1);
@@ -517,7 +517,7 @@ describe('Messages', () => {
           metadata: {},
         },
         serial: '01672535500000-123@abcdefghij',
-        version: '01672535500000-123@abcdefghij',
+        version: { serial: '01672535500000-123@abcdefghij:0', timestamp: 1672535500000 },
         action: ChatMessageAction.MessageCreate,
         extras: {
           headers: {},
@@ -537,7 +537,7 @@ describe('Messages', () => {
           headers: {},
         },
         timestamp: updateTimestamp,
-        version: '01672535600000-123@abcdefghij:0',
+        version: { serial: '01672535600000-123@abcdefghij:0', timestamp: 1672535600000 },
       });
       context.emulateBackendPublish({
         clientId: 'yoda',
@@ -552,7 +552,7 @@ describe('Messages', () => {
           headers: {},
         },
         timestamp: deletionTimestamp,
-        version: '01672535700000-123@abcdefghij:0',
+        version: { serial: '01672535700000-123@abcdefghij:0', timestamp: 1672535700000 },
       });
 
       // We should not have received anything new
@@ -580,7 +580,7 @@ describe('Messages', () => {
             metadata: {},
           },
           serial: serial,
-          version: serial,
+          version: { serial: serial, timestamp: 0 },
           action: ChatMessageAction.MessageCreate,
           extras: {
             headers: {},
@@ -621,6 +621,8 @@ describe('Messages', () => {
         },
         action: ChatMessageAction.MessageCreate,
         timestamp: Date.now(),
+        version: {},
+        annotations: {},
       };
 
       context.emulateBackendPublish(inboundMessage as Ably.InboundMessage);
@@ -628,7 +630,12 @@ describe('Messages', () => {
       expect(receivedMessage).toBeDefined();
       expect(receivedMessage?.clientId).toBe('');
       expect(receivedMessage?.serial).toBe('');
-      expect(receivedMessage?.version.serial).toBe('');
+      expect(receivedMessage?.version).toEqual({});
+      expect(receivedMessage?.reactions).toEqual({
+        distinct: {},
+        unique: {},
+        multiple: {},
+      });
       expect(receivedMessage?.text).toBe('may the fourth be with you');
       expect(receivedMessage?.metadata).toEqual({});
       expect(receivedMessage?.headers).toEqual({});
@@ -1102,13 +1109,11 @@ describe('Messages', () => {
         },
         serial: '01672531200000-123@abcdefghij',
         action: ChatMessageAction.MessageDelete,
-        version: '01672531200000-123@abcdefghij',
+        version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000, clientId: 'yoda' },
         extras: {
           headers: {},
         },
         timestamp: Date.now(),
-        createdAt: Date.now(),
-        operation: { clientId: 'yoda' },
       });
 
       // Verify that the listeners were called
@@ -1135,13 +1140,11 @@ describe('Messages', () => {
         },
         serial: '01672531200000-123@abcdefghij',
         action: ChatMessageAction.MessageDelete,
-        version: '01672531200000-123@abcdefghij',
+        version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000, clientId: 'yoda' },
         extras: {
           headers: {},
         },
         timestamp: Date.now(),
-        createdAt: Date.now(),
-        operation: { clientId: 'yoda' },
       });
 
       // Verify that the listeners were not called
