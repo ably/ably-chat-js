@@ -103,6 +103,9 @@ export default [
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
       'arrow-body-style': ['error', 'as-needed'],
 
+      // Off, as we currently support Chrome 109
+      'unicorn/no-array-sort': 'off',
+
       'prefer-arrow-functions/prefer-arrow-functions': [
         'error',
         {
