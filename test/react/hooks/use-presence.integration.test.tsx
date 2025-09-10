@@ -32,14 +32,8 @@ describe('usePresence', () => {
 
     let isPresentState = false;
 
-    const TestComponent = ({
-      enterWithData,
-      leaveWithData,
-    }: {
-      enterWithData: PresenceData;
-      leaveWithData: PresenceData;
-    }) => {
-      const { update, myPresenceState } = usePresence({ enterWithData, leaveWithData });
+    const TestComponent = ({ initialData }: { initialData: PresenceData }) => {
+      const { update, myPresenceState } = usePresence({ initialData });
 
       // the effect should send a presence update
       useEffect(() => {
@@ -61,10 +55,7 @@ describe('usePresence', () => {
 
     const { unmount, rerender } = render(
       <Providers>
-        <TestComponent
-          enterWithData={'test enter'}
-          leaveWithData={'test leave'}
-        />
+        <TestComponent initialData={'test enter'} />
       </Providers>,
     );
 
@@ -89,8 +80,9 @@ describe('usePresence', () => {
     rerender(<Providers></Providers>);
 
     // expect a presence leave event from the test component to be received by the second room
+    // it will have the data of whatever was in the presence set at the time
     await waitForExpectedPresenceEvent(
-      { clientId: chatClientOne.clientId, type: PresenceEventType.Leave, data: 'test leave' },
+      { clientId: chatClientOne.clientId, type: PresenceEventType.Leave, data: 'test update' },
       presenceEventsRoomTwo,
     );
 
