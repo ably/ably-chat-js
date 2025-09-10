@@ -142,6 +142,9 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   // Track the latest presence data - set initialData once on first render, then updated by manual calls
   const latestDataRef = useRef<PresenceData>(params?.initialData);
 
+  // Track if leave() has been explicitly called - prevents auto re-enter
+  const hasExplicitlyLeftRef = useRef<boolean>(false);
+
   useEffect(() => {
     // Update the ref when roomStatus changes
     roomStatusAndConnectionStatusRef.current = { roomStatus, connectionStatus };
@@ -190,8 +193,13 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
           room.status === RoomStatus.Attached && !INACTIVE_CONNECTION_STATES.has(connectionStatus);
 
         // wait until the room is attached before attempting to enter, and ensure the connection is active
-        if (!canJoinPresence) {
-          logger.debug('usePresence(); skipping enter room', { roomStatus, connectionStatus });
+        // also check if we haven't explicitly left presence
+        if (!canJoinPresence || hasExplicitlyLeftRef.current) {
+          logger.debug('usePresence(); skipping enter room', {
+            roomStatus,
+            connectionStatus,
+            hasExplicitlyLeft: hasExplicitlyLeftRef.current,
+          });
           return () => {
             // no-op
           };
@@ -202,6 +210,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
           .enter(latestDataRef.current)
           .then(() => {
             logger.debug('usePresence(); entered room');
+            // Reset the explicit leave flag since we've successfully auto-entered
+            hasExplicitlyLeftRef.current = false;
           })
           .catch((error: unknown) => {
             logger.error('usePresence(); error entering room', { error });
@@ -217,7 +227,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
             roomStatus,
             connectionStatus,
           });
-          if (canLeavePresence) {
+          if (canLeavePresence && !hasExplicitlyLeftRef.current) {
+            // Only auto-leave if we haven't already explicitly left
             // Leave the room - state updates are handled by presence.ts
             room.presence
               .leave()
@@ -254,6 +265,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   const update = useCallback(
     async (data?: PresenceData) => {
       latestDataRef.current = data;
+      // Reset the explicit leave flag when update is called explicitly
+      hasExplicitlyLeftRef.current = false;
       const room = await context.room;
       await room.presence.update(data);
     },
@@ -263,6 +276,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   const enter = useCallback(
     async (data?: PresenceData) => {
       latestDataRef.current = data;
+      // Reset the explicit leave flag when enter is called explicitly
+      hasExplicitlyLeftRef.current = false;
       const room = await context.room;
       await room.presence.enter(data);
     },
@@ -271,6 +286,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
   const leave = useCallback(
     async (data?: PresenceData) => {
+      // Mark that leave has been explicitly called
+      hasExplicitlyLeftRef.current = true;
       const room = await context.room;
       await room.presence.leave(data);
     },
