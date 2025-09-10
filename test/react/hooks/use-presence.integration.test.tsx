@@ -89,4 +89,68 @@ describe('usePresence', () => {
     // cleanup
     unmount();
   }, 20000);
+
+  it('should update presence state when room detaches and reattaches', async () => {
+    const chatClient = newChatClient();
+    const roomName = randomRoomName();
+
+    let presenceState = { present: false };
+
+    const TestComponent = () => {
+      const { myPresenceState } = usePresence({ initialData: { status: 'online' } });
+
+      presenceState = myPresenceState;
+
+      return null;
+    };
+
+    const Providers = ({ children }: React.PropsWithChildren) => (
+      <ChatClientProvider client={chatClient}>
+        <ChatRoomProvider name={roomName}>{children}</ChatRoomProvider>
+      </ChatClientProvider>
+    );
+
+    const { unmount } = render(
+      <Providers>
+        <TestComponent />
+      </Providers>,
+    );
+
+    // Get the room instance to control its state
+    const room = await chatClient.rooms.get(roomName);
+
+    // Wait for room to attach and presence to be present
+    await room.attach();
+    await waitFor(
+      () => {
+        expect(presenceState.present).toBe(true);
+      },
+      { timeout: 5000 },
+    );
+
+    // Detach the room
+    await room.detach();
+
+    // Wait for presence state to become false
+    await waitFor(
+      () => {
+        expect(presenceState.present).toBe(false);
+      },
+      { timeout: 5000 },
+    );
+
+    // Reattach the room
+    await room.attach();
+
+    // Wait for presence state to become true again
+    await waitFor(
+      () => {
+        expect(presenceState.present).toBe(true);
+      },
+      { timeout: 5000 },
+    );
+
+    // cleanup
+    unmount();
+  }, 20000);
 });

@@ -840,6 +840,71 @@ describe('usePresence', () => {
       });
     });
 
+    it('should update myPresenceState when channel enters detached state', async () => {
+      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Wait for initial enter to complete and presence to be true
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(true);
+      });
+
+      // Simulate channel state change to detached
+      const channelStateChange: Ably.ChannelStateChange = {
+        current: 'detached',
+        previous: 'attached',
+        resumed: false,
+      };
+
+      // Trigger the channel detached event
+      act(() => {
+        const emit = (
+          mockRoom.channel as unknown as {
+            emit: (event: string, arg: unknown) => void;
+          }
+        ).emit;
+        emit('detached', channelStateChange);
+      });
+
+      // Verify that myPresenceState.present becomes false
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(false);
+      });
+      expect(result.current.myPresenceState.error).toBeUndefined();
+    });
+
+    it('should update myPresenceState when channel enters failed state', async () => {
+      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Wait for initial enter to complete and presence to be true
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(true);
+      });
+
+      // Simulate channel state change to failed
+      const channelStateChange: Ably.ChannelStateChange = {
+        current: 'failed',
+        previous: 'attached',
+        resumed: false,
+        reason: new Ably.ErrorInfo('failed', 40000, 400),
+      };
+
+      // Trigger the channel detached event
+      act(() => {
+        const emit = (
+          mockRoom.channel as unknown as {
+            emit: (event: string, arg: unknown) => void;
+          }
+        ).emit;
+        emit('failed', channelStateChange);
+      });
+
+      // Verify that myPresenceState.present becomes false
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(false);
+      });
+      expect(result.current.myPresenceState.error).toBeErrorInfo({ message: 'failed', code: 40000, statusCode: 400 });
+    });
+
     it('should handle component re-mount scenario with data persistence within same room', async () => {
       const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
 
