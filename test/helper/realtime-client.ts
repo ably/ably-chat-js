@@ -1,13 +1,13 @@
 import * as Ably from 'ably';
 import * as jwt from 'jsonwebtoken';
 
-import { ablyApiKey, isLocalEnvironment, testEnvironment } from './environment.js';
+import { ablyApiKey, isLocalEnvironment, testEndpoint } from './environment.js';
 import { randomClientId } from './identifier.js';
 
 const baseOptions = (options?: Ably.ClientOptions): Ably.ClientOptions => {
   options = options ?? {};
   options.clientId = options.clientId ?? randomClientId();
-  options.environment = options.environment ?? testEnvironment();
+  options.endpoint = options.endpoint ?? testEndpoint();
   options.key = options.key ?? ablyApiKey();
   options.useBinaryProtocol = options.useBinaryProtocol ?? false;
   options.logHandler =

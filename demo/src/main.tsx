@@ -35,20 +35,19 @@ const getRealtimeOptions = () => {
   switch (environment) {
     case 'local': {
       console.log('Using local Ably environment');
-      realtimeOptions.environment = 'local';
+      realtimeOptions.endpoint = 'local-rest.ably.io';
       realtimeOptions.port = 8081;
       realtimeOptions.tls = false;
       break;
     }
     case 'sandbox':
       console.log('Using sandbox Ably environment');
-      realtimeOptions.environment = 'sandbox';
+      realtimeOptions.endpoint = 'nonprod:sandbox';
       break;
     case 'production':
     case undefined:
       console.log('Using production Ably environment');
-      realtimeOptions.restHost = import.meta?.env?.VITE_ABLY_HOST ? import.meta.env.VITE_ABLY_HOST : undefined;
-      realtimeOptions.realtimeHost = import.meta?.env?.VITE_ABLY_HOST ? import.meta.env.VITE_ABLY_HOST : undefined;
+      realtimeOptions.endpoint = import.meta.env.VITE_ABLY_HOST ?? undefined;
       break;
     default:
       throw new Error(
