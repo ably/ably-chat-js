@@ -20,14 +20,11 @@ import { useChatConnection } from './use-chat-connection.js';
  */
 export interface UsePresenceParams extends StatusParams {
   /**
-   * The data to enter the room with. Any JSON serializable data can be provided.
+   * The initial data to enter the room with. Any JSON serializable data can be provided.
+   * This data is used for the first auto-enter only. Subsequent values are ignored
+   * and should be supplied via calls to enter and update.
    */
-  enterWithData?: PresenceData;
-
-  /**
-   * The data to leave the room with. Any JSON serializable data can be provided.
-   */
-  leaveWithData?: PresenceData;
+  initialData?: PresenceData;
 
   /**
    * Controls whether the hook should automatically enter the room on mount and leave on unmount.
@@ -96,8 +93,7 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.S
  *   const [userData, setUserData] = useState({ status: 'online' });
  *
  *   const params = useMemo(() => ({
- *     enterWithData: userData,
- *     leaveWithData: { reason: 'user_left' },
+ *     initialData: userData,
  *     onConnectionStatusChange: (change) => console.log('Connection:', change.current),
  *     onDiscontinuity: (error) => console.error('Discontinuity:', error)
  *   }), [userData]);
@@ -137,11 +133,8 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   // create a stable reference for the onDiscontinuity listener
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
-  // we can't use the data param directly in a dependency array as it will cause an infinite loop
-  const dataRef = useRef(params);
-  useEffect(() => {
-    dataRef.current = params;
-  }, [params]);
+  // Track the latest presence data - set initialData once on first render, then updated by manual calls
+  const latestDataRef = useRef<PresenceData>(params?.initialData);
 
   useEffect(() => {
     // Update the ref when roomStatus changes
@@ -175,6 +168,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
   // enter the room when the hook is mounted (if autoEnterLeave is enabled)
   useEffect(() => {
+    logger.debug('usePresence(); running auto-enter hook');
     if (!shouldAutoEnterLeave) {
       logger.debug('usePresence(); auto enter/leave disabled');
       return () => {
@@ -197,9 +191,9 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
           };
         }
 
-        // Enter the room - state updates are handled by presence.ts
+        // Enter the room using latest data - state updates are handled by presence.ts
         room.presence
-          .enter(dataRef.current?.enterWithData)
+          .enter(latestDataRef.current)
           .then(() => {
             logger.debug('usePresence(); entered room');
           })
@@ -220,7 +214,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
           if (canLeavePresence) {
             // Leave the room - state updates are handled by presence.ts
             room.presence
-              .leave(dataRef.current?.leaveWithData)
+              .leave()
               .then(() => {
                 logger.debug('usePresence(); left room');
               })
@@ -252,17 +246,28 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
   // memoize the methods to avoid re-renders and ensure the same instance is used
   const update = useCallback(
-    (data?: PresenceData) => context.room.then((room: Room) => room.presence.update(data)),
+    async (data?: PresenceData) => {
+      latestDataRef.current = data;
+      const room = await context.room;
+      await room.presence.update(data);
+    },
     [context],
   );
 
   const enter = useCallback(
-    (data?: PresenceData) => context.room.then((room: Room) => room.presence.enter(data)),
+    async (data?: PresenceData) => {
+      latestDataRef.current = data;
+      const room = await context.room;
+      await room.presence.enter(data);
+    },
     [context],
   );
 
   const leave = useCallback(
-    (data?: PresenceData) => context.room.then((room: Room) => room.presence.leave(data)),
+    async (data?: PresenceData) => {
+      const room = await context.room;
+      await room.presence.leave(data);
+    },
     [context],
   );
 
