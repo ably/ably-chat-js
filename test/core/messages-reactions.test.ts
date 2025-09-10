@@ -191,51 +191,64 @@ describe('MessagesReactions', () => {
         context.emulateBackendPublish({
           name: 'chat.message',
           serial: '01672531200000-123@xyzdefghij',
-          version: '01672531200000-123@abcdefghij',
+          version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000 },
           action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
-          summary: {
-            [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
+          annotations: {
+            summary: {
+              [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
+            },
           },
         });
 
         context.emulateBackendPublish({
           name: 'chat.message',
           serial: '01672531200001-123@xyzdefghij',
-          version: '01672531200001-123@abcdefghij',
+          version: { serial: '01672531200001-123@abcdefghij', timestamp: 1672531200001 },
           action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
-          summary: {
-            [ReactionAnnotationType.Distinct]: { '🥦': { total: 1, clientIds: ['user2'] } },
+          annotations: {
+            summary: {
+              [ReactionAnnotationType.Distinct]: { '🥦': { total: 1, clientIds: ['user2'] } },
+            },
           },
         });
 
         context.emulateBackendPublish({
           name: 'chat.message',
           serial: '01672531200002-123@xyzdefghij',
-          version: '01672531200002-123@abcdefghij',
+          version: { serial: '01672531200002-123@abcdefghij', timestamp: 1672531200002 },
           action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
-          summary: {
-            [ReactionAnnotationType.Multiple]: { '🍌': { clientIds: { user1: 10 }, total: 10, totalUnidentified: 0 } },
+          annotations: {
+            summary: {
+              [ReactionAnnotationType.Multiple]: {
+                '🍌': { clientIds: { user1: 10 }, total: 10, totalUnidentified: 0 },
+              },
+            },
           },
         });
 
         context.emulateBackendPublish({
           name: 'chat.message',
           serial: '01672531200002-123@xyzdefghij',
-          version: '01672531200002-123@abcdefghij',
+          version: { serial: '01672531200002-123@abcdefghij', timestamp: 1672531200002 },
           action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
-          summary: {},
+          annotations: {
+            summary: {},
+          },
         });
 
         context.emulateBackendPublish({
           name: 'chat.message',
           serial: '01672531200002-123@xyzdefghij',
-          version: '01672531200002-123@abcdefghij',
+          version: { serial: '01672531200002-123@abcdefghij', timestamp: 1672531200002 },
           action: ChatMessageAction.MessageAnnotationSummary,
           timestamp: publishTimestamp,
+          annotations: {
+            summary: {},
+          },
         });
       }));
 
@@ -262,11 +275,12 @@ describe('MessagesReactions', () => {
       context.emulateBackendPublish({
         name: 'chat.message',
         serial: '01672531200000-123@abcdefghij',
-        version: '01672531200000-123@abcdefghij',
-        refSerial: '01672531200000-123@xyzdefghij',
+        version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000 },
         action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
-        summary: { [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+        annotations: {
+          summary: { [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+        },
       });
 
       expect(c1).toEqual(1);
@@ -276,11 +290,12 @@ describe('MessagesReactions', () => {
       context.emulateBackendPublish({
         name: 'chat.message',
         serial: '01672531200000-123@abcdefghij',
-        version: '01672531200000-123@abcdefghij',
-        refSerial: '01672531200000-123@xyzdefghij',
+        version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000 },
         action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
-        summary: { [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+        annotations: {
+          summary: { [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+        },
       });
 
       expect(c1).toEqual(2);
@@ -293,11 +308,12 @@ describe('MessagesReactions', () => {
       context.emulateBackendPublish({
         name: 'chat.message',
         serial: '01672531200000-123@abcdefghij',
-        version: '01672531200000-123@abcdefghij',
-        refSerial: '01672531200000-123@xyzdefghij',
+        version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000 },
         action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
-        summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+        annotations: {
+          summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+        },
       });
 
       expect(c1).toEqual(3);
@@ -310,11 +326,12 @@ describe('MessagesReactions', () => {
       context.emulateBackendPublish({
         name: 'chat.message',
         serial: '01672531200000-123@abcdefghij',
-        version: '01672531200000-123@abcdefghij',
-        refSerial: '01672531200000-123@xyzdefghij',
+        version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000 },
         action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: publishTimestamp,
-        summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+        annotations: {
+          summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+        },
       });
 
       expect(c1).toEqual(3);
@@ -761,11 +778,13 @@ describe('MessagesReactions', () => {
       context.emulateBackendPublish({
         name: 'chat.message',
         serial: '01672531200000-123@xyzdefghij',
-        version: '01672531200000-123@abcdefghij',
+        version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000 },
         action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: Date.now(),
-        summary: {
-          [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
+        annotations: {
+          summary: {
+            [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
+          },
         },
       });
 
@@ -796,9 +815,12 @@ describe('MessagesReactions', () => {
       context.emulateBackendPublish({
         name: 'chat.message',
         serial: '01672531200000-123@xyzdefghij',
-        version: '01672531200000-123@abcdefghij',
+        version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000 },
         action: ChatMessageAction.MessageAnnotationSummary,
         timestamp: Date.now(),
+        annotations: {
+          summary: {},
+        },
       });
 
       // Verify that the listeners were not called

@@ -16,7 +16,10 @@ describe('parseMessage', () => {
           headers: {},
         },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { text: '', metadata: {} },
@@ -30,7 +33,10 @@ describe('parseMessage', () => {
           headers: {},
         },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { clientId: '' },
@@ -45,7 +51,10 @@ describe('parseMessage', () => {
           headers: {},
         },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { text: '' },
@@ -60,7 +69,10 @@ describe('parseMessage', () => {
           headers: {},
         },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { metadata: {} },
@@ -69,6 +81,7 @@ describe('parseMessage', () => {
       description: 'message.data.metadata is not an object',
       message: {
         data: { text: 'hello', metadata: 'not an object' },
+        version: {},
       },
       expectedDefaults: { metadata: {} },
     },
@@ -79,7 +92,10 @@ describe('parseMessage', () => {
         clientId: 'client1',
         timestamp: 1728402074206,
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { headers: {} },
@@ -94,7 +110,10 @@ describe('parseMessage', () => {
           headers: {},
         },
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: 'unhandled.action',
       },
       expectedDefaults: { action: ChatMessageAction.MessageCreate },
@@ -107,12 +126,15 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         extras: {},
         action: ChatMessageAction.MessageCreate,
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
       },
       expectedDefaults: { serial: '' },
     },
     {
-      description: 'message.version is undefined',
+      description: 'message.version.timestamp is undefined',
       message: {
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         data: { text: 'hello' },
@@ -120,14 +142,15 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         extras: {},
         action: ChatMessageAction.MessageCreate,
+        version: {},
       },
       expectedDefaults: {
         version: {
           clientId: undefined,
           description: undefined,
           metadata: undefined,
-          serial: '',
-          timestamp: new Date(1728402074206),
+          serial: undefined,
+          timestamp: undefined,
         },
       },
     },
@@ -153,7 +176,10 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { text: '', metadata: {} },
@@ -166,7 +192,10 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { text: '', metadata: {} },
@@ -179,7 +208,10 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { text: '', metadata: {} },
@@ -192,7 +224,10 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         extras: {},
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { text: '', metadata: {} },
@@ -205,7 +240,10 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         extras: null,
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { headers: {} },
@@ -218,7 +256,10 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         extras: 'invalid-extras',
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { headers: {} },
@@ -231,7 +272,10 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         extras: 456,
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { headers: {} },
@@ -244,7 +288,10 @@ describe('parseMessage', () => {
         timestamp: 1728402074206,
         extras: false,
         serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-        version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: 1728402074206,
+        },
         action: ChatMessageAction.MessageCreate,
       },
       expectedDefaults: { headers: {} },
@@ -268,7 +315,10 @@ describe('parseMessage', () => {
       clientId: 'client1',
       extras: {},
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-      version: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      version: {
+        serial: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
+        timestamp: 1728402074207,
+      },
       action: ChatMessageAction.MessageCreate,
     };
 
@@ -284,9 +334,11 @@ describe('parseMessage', () => {
       extras: {
         headers: { headerKey: 'headerValue' },
       },
-      createdAt: 1728402074206,
-      timestamp: 1728402074207,
-      version: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
+      timestamp: 1728402074206,
+      version: {
+        serial: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
+        timestamp: 1728402074207,
+      },
       action: ChatMessageAction.MessageCreate,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
     } as Ably.InboundMessage;
@@ -324,10 +376,17 @@ describe('parseMessage', () => {
       },
       action: ChatMessageAction.MessageUpdate,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-      createdAt: 1728402074206,
-      timestamp: 1728402074207,
-      version: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
-      operation: { clientId: 'client2', description: 'update message', metadata: { 'custom-update': 'some flag' } },
+      timestamp: 1728402074206,
+      version: {
+        serial: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
+        timestamp: 1728402074207,
+        clientId: 'client2',
+        description: 'update message',
+        metadata: { 'custom-update': 'some flag' },
+      },
+      annotations: {
+        summary: {},
+      },
     } as Ably.InboundMessage;
 
     const result = parseMessage(message);
@@ -363,13 +422,16 @@ describe('parseMessage', () => {
       },
       action: ChatMessageAction.MessageDelete,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-      timestamp: 1728402074207,
-      createdAt: 1728402074206,
-      version: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
-      operation: {
+      timestamp: 1728402074206,
+      version: {
+        serial: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
+        timestamp: 1728402074207,
         clientId: 'client2',
         description: 'delete message',
         metadata: { 'custom-warning': 'this is a warning' },
+      },
+      annotations: {
+        summary: {},
       },
     } as Ably.InboundMessage;
 
@@ -402,13 +464,16 @@ describe('parseMessage', () => {
       clientId: 'client1',
       action: ChatMessageAction.MessageDelete,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-      createdAt: 1728402074206,
-      timestamp: 1728402074207,
-      version: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
-      operation: {
+      timestamp: 1728402074206,
+      version: {
+        serial: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
+        timestamp: 1728402074207,
         clientId: 'client2',
         description: 'delete message',
         metadata: { 'custom-warning': 'this is a warning' },
+      },
+      annotations: {
+        summary: {},
       },
       extras: {},
     } as Ably.InboundMessage;
@@ -443,13 +508,16 @@ describe('parseMessage', () => {
       // extras can be omitted for delete messages
       action: ChatMessageAction.MessageDelete,
       serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
-      createdAt: 1728402074206,
-      timestamp: 1728402074207,
-      version: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
-      operation: {
+      timestamp: 1728402074206,
+      version: {
+        serial: '01728402074207-000@cbfkKvEYgBhDaZ38195418:0',
+        timestamp: 1728402074207,
         clientId: 'client2',
         description: 'delete message',
         metadata: { 'custom-warning': 'this is a warning' },
+      },
+      annotations: {
+        summary: {},
       },
       extras: {},
     } as Ably.InboundMessage;

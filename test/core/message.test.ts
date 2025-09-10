@@ -359,46 +359,102 @@ describe('ChatMessage', () => {
 
     describe.each([
       [
-        'returns true when this message version is the same as another',
+        'isSameVersionAs returns true when this message version is the same as another',
         {
           firstVersion: '01672531200000-123@abcdefghij:0',
           secondVersion: '01672531200000-123@abcdefghij:0',
-          action: 'isSameVersionAs',
           expected: (firstMessage: Message, secondMessage: Message) => {
             expect(firstMessage.isSameVersionAs(secondMessage)).toBe(true);
           },
         },
       ],
       [
-        'returns false when this message version is not same as another message version',
+        'isSameVersionAs returns false when this message version is not same as another message version',
         {
           firstVersion: '01672531200000-123@abcdefghij:0',
           secondVersion: '01672531200000-124@abcdefghij:0',
-          action: 'isSameVersionAs',
           expected: (firstMessage: Message, secondMessage: Message) => {
             expect(firstMessage.isSameVersionAs(secondMessage)).toBe(false);
           },
         },
       ],
       [
-        'returns true when this message version is older than another message version',
+        'isSameVersionAs returns false when this message version serial is undefined',
+        {
+          firstVersion: undefined,
+          secondVersion: '01672531200000-124@abcdefghij:0',
+          expected: (firstMessage: Message, secondMessage: Message) => {
+            expect(firstMessage.isSameVersionAs(secondMessage)).toBe(false);
+          },
+        },
+      ],
+      [
+        'isSameVersionAs returns false when other version is undefined',
+        {
+          firstVersion: '01672531200000-123@abcdefghij:0',
+          secondVersion: undefined,
+          expected: (firstMessage: Message, secondMessage: Message) => {
+            expect(firstMessage.isSameVersionAs(secondMessage)).toBe(false);
+          },
+        },
+      ],
+      [
+        'isOlderVersionOf returns true when this message version is older than another message version',
         {
           firstVersion: '01672531200000-123@abcdefghij:0',
           secondVersion: '01672531200000-124@abcdefghij:0',
-          action: 'isOlderVersionOf',
           expected: (firstMessage: Message, secondMessage: Message) => {
             expect(firstMessage.isOlderVersionOf(secondMessage)).toBe(true);
           },
         },
       ],
       [
-        'returns true when this message version is newer than another message version',
+        'isOlderVersionOf returns false when this message version serial is undefined',
+        {
+          firstVersion: undefined,
+          secondVersion: '01672531200000-124@abcdefghij:0',
+          expected: (firstMessage: Message, secondMessage: Message) => {
+            expect(firstMessage.isOlderVersionOf(secondMessage)).toBe(false);
+          },
+        },
+      ],
+      [
+        'isOlderVersionOf returns false when other version is undefined',
+        {
+          firstVersion: '01672531200000-123@abcdefghij:0',
+          secondVersion: undefined,
+          expected: (firstMessage: Message, secondMessage: Message) => {
+            expect(firstMessage.isOlderVersionOf(secondMessage)).toBe(false);
+          },
+        },
+      ],
+      [
+        'isNewerVersionOf returns true when this message version is newer than another message version',
         {
           firstVersion: '01672531200000-124@abcdefghij:0',
           secondVersion: '01672531200000-123@abcdefghij:0',
-          action: 'isNewerVersionOf',
           expected: (firstMessage: Message, secondMessage: Message) => {
             expect(firstMessage.isNewerVersionOf(secondMessage)).toBe(true);
+          },
+        },
+      ],
+      [
+        'isNewerVersionOf returns false when this message version serial is undefined',
+        {
+          firstVersion: undefined,
+          secondVersion: '01672531200000-124@abcdefghij:0',
+          expected: (firstMessage: Message, secondMessage: Message) => {
+            expect(firstMessage.isNewerVersionOf(secondMessage)).toBe(false);
+          },
+        },
+      ],
+      [
+        'isNewerVersionOf returns false when other version is undefined',
+        {
+          firstVersion: '01672531200000-123@abcdefghij:0',
+          secondVersion: undefined,
+          expected: (firstMessage: Message, secondMessage: Message) => {
+            expect(firstMessage.isNewerVersionOf(secondMessage)).toBe(false);
           },
         },
       ],
