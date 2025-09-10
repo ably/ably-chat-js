@@ -15,7 +15,7 @@ import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { Subscription } from '../../src/core/subscription.ts';
 import { makeTestLogger } from '../helper/logger.ts';
-import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
+import { waitForOffTimes, waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
@@ -443,6 +443,77 @@ describe('Presence', () => {
       // Clean up
       subscription.unsubscribe();
     });
+
+    it<TestContext>('should emit state change event when channel enters detached state', (context) => {
+      const { room } = context;
+      const stateChanges: PresenceStateChange[] = [];
+
+      // Subscribe to state changes
+      const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
+        stateChanges.push(change);
+      });
+
+      // Mock the channel emit method to simulate a channel state change
+      const emit = (
+        room.channel as unknown as {
+          emit: (event: string, arg: unknown) => void;
+        }
+      ).emit;
+
+      // Simulate a channel state change to detached
+      const channelStateChange: Ably.ChannelStateChange = {
+        current: 'detached',
+        previous: 'attached',
+        resumed: false,
+      };
+
+      emit('detached', channelStateChange);
+
+      // Verify state change event was emitted with present: false
+      expect(stateChanges).toHaveLength(1);
+      expect(stateChanges[0]?.previous.present).toBe(false);
+      expect(stateChanges[0]?.current.present).toBe(false);
+      expect(stateChanges[0]?.error).toBeUndefined();
+
+      // Clean up
+      subscription.unsubscribe();
+    });
+
+    it<TestContext>('should emit state change event when channel enters failed state', (context) => {
+      const { room } = context;
+      const stateChanges: PresenceStateChange[] = [];
+
+      // Subscribe to state changes
+      const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
+        stateChanges.push(change);
+      });
+
+      // Mock the channel emit method to simulate a channel state change
+      const emit = (
+        room.channel as unknown as {
+          emit: (event: string, arg: unknown) => void;
+        }
+      ).emit;
+
+      // Simulate a channel state change to failed
+      const channelStateChange: Ably.ChannelStateChange = {
+        current: 'failed',
+        previous: 'attached',
+        resumed: false,
+        reason: new Ably.ErrorInfo('some failure', 40000, 400),
+      };
+
+      emit('failed', channelStateChange);
+
+      // Verify state change event was emitted with present: false
+      expect(stateChanges).toHaveLength(1);
+      expect(stateChanges[0]?.previous.present).toBe(false);
+      expect(stateChanges[0]?.current.present).toBe(false);
+      expect(stateChanges[0]?.error).toBeErrorInfo({ message: 'some failure', code: 40000, statusCode: 400 });
+
+      // Clean up
+      subscription.unsubscribe();
+    });
   });
 
   describe('DefaultPresence.dispose', () => {
@@ -459,6 +530,21 @@ describe('Presence', () => {
 
       // Assert - verify the listeners were unsubscribed
       await waitForUnsubscribeTimes(channel.presence, 1);
+    });
+
+    it<TestContext>('should remove channel-level listeners', async (context) => {
+      const { room } = context;
+      const channel = room.channel;
+      const presence = room.presence as DefaultPresence;
+
+      // Mock channel methods
+      vi.spyOn(channel, 'off').mockImplementation(() => {});
+
+      // Act - dispose presence
+      presence.dispose();
+
+      // Assert - verify the listeners were unsubscribed
+      await waitForOffTimes(channel, 2);
     });
 
     it<TestContext>('should remove user-level listeners and presence event subscriptions', (context) => {
