@@ -204,8 +204,6 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
           .enter(latestDataRef.current)
           .then(() => {
             logger.debug('usePresence(); entered room');
-            // Reset the explicit leave flag since we've successfully auto-entered
-            hasExplicitlyLeftRef.current = false;
           })
           .catch((error: unknown) => {
             logger.error('usePresence(); error entering room', { error });
