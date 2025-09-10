@@ -139,9 +139,26 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   // Track if leave() has been explicitly called - prevents auto re-enter
   const hasExplicitlyLeftRef = useRef<boolean>(false);
 
+  // Track if we've ever successfully auto-entered (for first-time logic)
+  const hasAutoEnteredRef = useRef<boolean>(false);
+
+  // Track if room has been detached since last auto-enter (for recovery logic)
+  const roomWasDetachedRef = useRef<boolean>(false);
+
+  // If the context changes, then we'll assume auto-enter is required.
   useEffect(() => {
-    // Update the ref when roomStatus changes
+    hasAutoEnteredRef.current = false;
+    roomWasDetachedRef.current = false;
+  }, [context]);
+
+  // Keep track of the room and connection statuses
+  useEffect(() => {
     roomStatusAndConnectionStatusRef.current = { roomStatus, connectionStatus };
+
+    // keep track of the room becoming detached
+    if (roomStatus === RoomStatus.Detached) {
+      roomWasDetachedRef.current = true;
+    }
   }, [roomStatus, connectionStatus]);
 
   // Subscribe to presence state changes
@@ -179,20 +196,25 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
       };
     }
 
-    logger.debug('usePresence(); entering room');
     return wrapRoomPromise(
       context.room,
       (room: Room) => {
         const canJoinPresence =
           room.status === RoomStatus.Attached && !INACTIVE_CONNECTION_STATES.has(connectionStatus);
 
+        // Check if we should auto-enter: first time OR room was previously detached
+        const shouldAutoEnter = !hasAutoEnteredRef.current || roomWasDetachedRef.current;
+
         // wait until the room is attached before attempting to enter, and ensure the connection is active
-        // also check if we haven't explicitly left presence
-        if (!canJoinPresence || hasExplicitlyLeftRef.current) {
+        // also check if we haven't explicitly left presence and if we should auto-enter
+        if (!canJoinPresence || hasExplicitlyLeftRef.current || !shouldAutoEnter) {
           logger.debug('usePresence(); skipping enter room', {
             roomStatus,
             connectionStatus,
             hasExplicitlyLeft: hasExplicitlyLeftRef.current,
+            shouldAutoEnter,
+            hasAutoEntered: hasAutoEnteredRef.current,
+            roomWasDetached: roomWasDetachedRef.current,
           });
           return () => {
             // no-op
@@ -200,10 +222,14 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
         }
 
         // Enter the room using latest data - state updates are handled by presence.ts
+        logger.debug('usePresence(); entering room');
         room.presence
           .enter(latestDataRef.current)
           .then(() => {
             logger.debug('usePresence(); entered room');
+            // Mark that we've successfully auto-entered and reset the detachment flag
+            hasAutoEnteredRef.current = true;
+            roomWasDetachedRef.current = false;
           })
           .catch((error: unknown) => {
             logger.error('usePresence(); error entering room', { error });

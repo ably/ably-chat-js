@@ -62,6 +62,46 @@ describe('usePresence', () => {
   });
 
   describe('Basic Functionality', () => {
+    it('should handle hook with no initialData provided', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+
+      renderHook(() => usePresence());
+
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith(undefined);
+      });
+    });
+
+    it('should handle component re-mount scenario with data persistence within same room', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+
+      // First mount
+      const { result: firstResult, unmount: firstUnmount } = renderHook(() =>
+        usePresence({ initialData: { mount: 'first' } }),
+      );
+
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ mount: 'first' });
+      });
+
+      // Update data
+      await act(async () => {
+        await firstResult.current.update({ mount: 'first_updated' });
+      });
+
+      // Unmount first component
+      firstUnmount();
+
+      enterSpy.mockClear();
+
+      // Second mount - should use initialData again since it's a new component instance
+      renderHook(() => usePresence({ initialData: { mount: 'second' } }));
+
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ mount: 'second' });
+      });
+    });
+
     it('should provide the presence instance and chat status response metrics', async () => {
       // set the connection and room errors to check that they are correctly provided
       mockConnectionError = new Ably.ErrorInfo('test error', 40000, 400);
@@ -114,45 +154,6 @@ describe('usePresence', () => {
     });
   });
 
-  describe('auto-enter connection and room states', () => {
-    describe.each([[ConnectionStatus.Failed], [ConnectionStatus.Suspended]])(
-      'invalid connection state for joining presence',
-      (connectionState: ConnectionStatus) => {
-        it('should not join presence if connection state is: ' + connectionState, () => {
-          // change the connection status, so we render the hook with the new status
-          mockCurrentConnectionStatus = connectionState;
-
-          // spy on the enter method of the presence instance to check if it is called
-          vi.spyOn(mockRoom.presence, 'enter');
-          renderHook(() => usePresence({ initialData: { test: 'data' } }));
-
-          // ensure we have not entered presence
-          expect(mockRoom.presence.enter).not.toHaveBeenCalled();
-        });
-      },
-    );
-
-    it('should not join presence if the room is not attached', () => {
-      vi.spyOn(mockRoom.presence, 'enter');
-      // check we do not enter presence if the room is not attached
-      for (const status of [
-        RoomStatus.Detaching,
-        RoomStatus.Detached,
-        RoomStatus.Suspended,
-        RoomStatus.Failed,
-        RoomStatus.Releasing,
-        RoomStatus.Released,
-      ]) {
-        // change the room status, so we render the hook with the new status
-        mockCurrentRoomStatus = status;
-
-        renderHook(() => usePresence({ initialData: { test: 'data' } }));
-        // ensure we have not entered presence
-        expect(mockRoom.presence.enter).not.toHaveBeenCalled();
-      }
-    });
-  });
-
   describe('error handling', () => {
     it('should correctly handle enter errors', async () => {
       // Create an error to be emitted
@@ -199,9 +200,178 @@ describe('usePresence', () => {
 
       expect(mockOff).toHaveBeenCalled();
     });
+
+    it('should update myPresenceState when channel enters detached state', async () => {
+      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Wait for initial enter to complete and presence to be true
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(true);
+      });
+
+      // Simulate channel state change to detached
+      const channelStateChange: Ably.ChannelStateChange = {
+        current: 'detached',
+        previous: 'attached',
+        resumed: false,
+      };
+
+      // Trigger the channel detached event
+      act(() => {
+        const emit = (
+          mockRoom.channel as unknown as {
+            emit: (event: string, arg: unknown) => void;
+          }
+        ).emit;
+        emit('detached', channelStateChange);
+      });
+
+      // Verify that myPresenceState.present becomes false
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(false);
+      });
+      expect(result.current.myPresenceState.error).toBeUndefined();
+    });
+
+    it('should update myPresenceState when channel enters failed state', async () => {
+      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Wait for initial enter to complete and presence to be true
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(true);
+      });
+
+      // Simulate channel state change to failed
+      const channelStateChange: Ably.ChannelStateChange = {
+        current: 'failed',
+        previous: 'attached',
+        resumed: false,
+        reason: new Ably.ErrorInfo('failed', 40000, 400),
+      };
+
+      // Trigger the channel detached event
+      act(() => {
+        const emit = (
+          mockRoom.channel as unknown as {
+            emit: (event: string, arg: unknown) => void;
+          }
+        ).emit;
+        emit('failed', channelStateChange);
+      });
+
+      // Verify that myPresenceState.present becomes false
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(false);
+      });
+      expect(result.current.myPresenceState.error).toBeErrorInfo({ message: 'failed', code: 40000, statusCode: 400 });
+    });
+  });
+
+  describe('presence status tracking', () => {
+    it('should update myPresenceState when channel enters detached state', async () => {
+      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Wait for initial enter to complete and presence to be true
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(true);
+      });
+
+      // Simulate channel state change to detached
+      const channelStateChange: Ably.ChannelStateChange = {
+        current: 'detached',
+        previous: 'attached',
+        resumed: false,
+      };
+
+      // Trigger the channel detached event
+      act(() => {
+        const emit = (
+          mockRoom.channel as unknown as {
+            emit: (event: string, arg: unknown) => void;
+          }
+        ).emit;
+        emit('detached', channelStateChange);
+      });
+
+      // Verify that myPresenceState.present becomes false
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(false);
+      });
+      expect(result.current.myPresenceState.error).toBeUndefined();
+    });
+
+    it('should update myPresenceState when channel enters failed state', async () => {
+      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Wait for initial enter to complete and presence to be true
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(true);
+      });
+
+      // Simulate channel state change to failed
+      const channelStateChange: Ably.ChannelStateChange = {
+        current: 'failed',
+        previous: 'attached',
+        resumed: false,
+        reason: new Ably.ErrorInfo('failed', 40000, 400),
+      };
+
+      // Trigger the channel detached event
+      act(() => {
+        const emit = (
+          mockRoom.channel as unknown as {
+            emit: (event: string, arg: unknown) => void;
+          }
+        ).emit;
+        emit('failed', channelStateChange);
+      });
+
+      // Verify that myPresenceState.present becomes false
+      await waitFor(() => {
+        expect(result.current.myPresenceState.present).toBe(false);
+      });
+      expect(result.current.myPresenceState.error).toBeErrorInfo({ message: 'failed', code: 40000, statusCode: 400 });
+    });
   });
 
   describe('autoEnterLeave behavior', () => {
+    describe.each([[ConnectionStatus.Failed], [ConnectionStatus.Suspended]])(
+      'invalid connection state for joining presence',
+      (connectionState: ConnectionStatus) => {
+        it('should not join presence if connection state is: ' + connectionState, () => {
+          // change the connection status, so we render the hook with the new status
+          mockCurrentConnectionStatus = connectionState;
+
+          // spy on the enter method of the presence instance to check if it is called
+          vi.spyOn(mockRoom.presence, 'enter');
+          renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+          // ensure we have not entered presence
+          expect(mockRoom.presence.enter).not.toHaveBeenCalled();
+        });
+      },
+    );
+
+    it('should not join presence if the room is not attached', () => {
+      vi.spyOn(mockRoom.presence, 'enter');
+      // check we do not enter presence if the room is not attached
+      for (const status of [
+        RoomStatus.Detaching,
+        RoomStatus.Detached,
+        RoomStatus.Suspended,
+        RoomStatus.Failed,
+        RoomStatus.Releasing,
+        RoomStatus.Released,
+      ]) {
+        // change the room status, so we render the hook with the new status
+        mockCurrentRoomStatus = status;
+
+        renderHook(() => usePresence({ initialData: { test: 'data' } }));
+        // ensure we have not entered presence
+        expect(mockRoom.presence.enter).not.toHaveBeenCalled();
+      }
+    });
+
     it('should automatically enter and leave when autoEnterLeave is true (default)', async () => {
       const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
       const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
@@ -284,123 +454,206 @@ describe('usePresence', () => {
       unmount();
       expect(leaveSpy).not.toHaveBeenCalled();
     });
-  });
 
-  describe('explicit enter/update/leave', () => {
-    it('should correctly call the enter method', async () => {
+    it('should only auto-enter on first connection, not on subsequent status changes', async () => {
       const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
 
-      const { result } = renderHook(() =>
-        usePresence({
-          autoEnterLeave: false, // Disable auto behavior to test manual calls
-        }),
-      );
+      const { rerender } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
 
-      // Call the exposed enter method
-      await act(async () => {
-        await result.current.enter({ manual: 'enter' });
+      // Wait for initial auto-enter
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
       });
 
-      // Verify that the enter method was called with correct data
-      expect(enterSpy).toHaveBeenCalledWith({ manual: 'enter' });
-    });
+      expect(enterSpy).toHaveBeenCalledTimes(1);
+      enterSpy.mockClear();
 
-    it('should correctly call the update method', async () => {
-      // spy on the update method of the presence instance
-      const updateSpy = vi.spyOn(mockRoom.presence, 'update');
+      // Simulate connection status changes - should NOT trigger auto-enter
+      mockCurrentConnectionStatus = ConnectionStatus.Disconnected;
+      rerender();
 
-      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+      mockCurrentConnectionStatus = ConnectionStatus.Connected;
+      rerender();
 
-      // call the update method
-      await act(async () => {
-        await result.current.update({ test: 'updated' });
-      });
-
-      // verify that the update method was called
-      expect(updateSpy).toHaveBeenCalledWith({ test: 'updated' });
-
-      expect(result.current.myPresenceState.present).toBe(true);
-    });
-
-    it('should correctly call the leave method', async () => {
-      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
-
-      const { result } = renderHook(() =>
-        usePresence({
-          autoEnterLeave: false, // Disable auto behavior to test manual calls
-        }),
-      );
-
-      // Call the exposed leave method
-      await act(async () => {
-        await result.current.leave({ manual: 'leave' });
-      });
-
-      // Verify that the leave method was called with correct data
-      expect(leaveSpy).toHaveBeenCalledWith({ manual: 'leave' });
-    });
-
-    it('should allow manual enter/leave calls when autoEnterLeave is false', async () => {
-      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
-      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
-
-      const { result } = renderHook(() =>
-        usePresence({
-          autoEnterLeave: false,
-        }),
-      );
-
-      // Verify auto enter didn't happen
+      // Wait to ensure no additional enters happen
+      await new Promise((resolve) => setTimeout(resolve, 100));
       expect(enterSpy).not.toHaveBeenCalled();
 
-      // Manually enter
-      await act(async () => {
-        await result.current.enter({ manual: 'entry' });
-      });
+      // Simulate room status changes (but not to detached) - should NOT trigger auto-enter
+      mockCurrentRoomStatus = RoomStatus.Attaching;
+      rerender();
 
-      expect(enterSpy).toHaveBeenCalledWith({ manual: 'entry' });
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      rerender();
 
-      // Manually leave
-      await act(async () => {
-        await result.current.leave({ manual: 'exit' });
-      });
-
-      expect(leaveSpy).toHaveBeenCalledWith({ manual: 'exit' });
+      // Wait to ensure no additional enters happen
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(enterSpy).not.toHaveBeenCalled();
     });
 
-    it('should allow manual enter/leave calls even when autoEnterLeave is true', async () => {
+    it('should auto-enter after room goes detached->attached even if already auto-entered before', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+
+      const { rerender } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Wait for initial auto-enter
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+
+      expect(enterSpy).toHaveBeenCalledTimes(1);
+      enterSpy.mockClear();
+
+      // Simulate room going to detached
+      mockCurrentRoomStatus = RoomStatus.Detached;
+      rerender();
+
+      // Simulate room going back to attached - should trigger auto-enter again
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      rerender();
+
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+      expect(enterSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should auto-enter on first time even after multiple non-detached status changes', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+
+      // Start with conditions that prevent auto-enter
+      mockCurrentRoomStatus = RoomStatus.Attaching;
+      mockCurrentConnectionStatus = ConnectionStatus.Suspended;
+
+      const { rerender } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Should not have auto-entered yet
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(enterSpy).not.toHaveBeenCalled();
+
+      // Change room status but keep connection non-ready
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      rerender();
+
+      // Still shouldn't auto-enter
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(enterSpy).not.toHaveBeenCalled();
+
+      // Finally make connection ready - should auto-enter for first time
+      mockCurrentConnectionStatus = ConnectionStatus.Connected;
+      rerender();
+
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+      expect(enterSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not auto-enter after detached->attached if presence was explicitly left', async () => {
       const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
       const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
 
-      const { result } = renderHook(() =>
-        usePresence({
-          autoEnterLeave: true,
-          initialData: { auto: 'enter' },
-        }),
-      );
+      const { result, rerender } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
 
-      // Wait for auto enter to complete
+      // Wait for initial auto-enter
       await waitFor(() => {
-        expect(enterSpy).toHaveBeenCalledWith({ auto: 'enter' });
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
       });
 
-      // Reset spy to test manual calls
       enterSpy.mockClear();
-      leaveSpy.mockClear();
 
-      // Manually enter with different data
+      // Explicitly leave
       await act(async () => {
-        await result.current.enter({ manual: 'override' });
+        await result.current.leave();
       });
 
-      expect(enterSpy).toHaveBeenCalledWith({ manual: 'override' });
-
-      // Manually leave
-      await act(async () => {
-        await result.current.leave({ manual: 'goodbye' });
+      await waitFor(() => {
+        expect(leaveSpy).toHaveBeenCalled();
       });
 
-      expect(leaveSpy).toHaveBeenCalledWith({ manual: 'goodbye' });
+      // Simulate room detached->attached cycle
+      mockCurrentRoomStatus = RoomStatus.Detached;
+      rerender();
+
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      rerender();
+
+      // Should NOT auto-enter since presence was explicitly left
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(enterSpy).not.toHaveBeenCalled();
+    });
+
+    it('should auto-enter after detached->attached even with connection status changes in between', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+
+      const { rerender } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Wait for initial auto-enter
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+
+      enterSpy.mockClear();
+
+      // Simulate room going to detached
+      mockCurrentRoomStatus = RoomStatus.Detached;
+      rerender();
+
+      // Simulate connection status changes while detached
+      mockCurrentConnectionStatus = ConnectionStatus.Disconnected;
+      rerender();
+
+      mockCurrentConnectionStatus = ConnectionStatus.Connected;
+      rerender();
+
+      // Should not auto-enter while still detached
+      expect(enterSpy).not.toHaveBeenCalled();
+
+      // Simulate room going back to attached
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      rerender();
+
+      // Should auto-enter now
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+      expect(enterSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle multiple detached->attached cycles correctly', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+
+      const { rerender } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Wait for initial auto-enter
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+      expect(enterSpy).toHaveBeenCalledTimes(1);
+
+      // First detached->attached cycle
+      enterSpy.mockClear();
+      mockCurrentRoomStatus = RoomStatus.Detached;
+      rerender();
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      rerender();
+
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+      expect(enterSpy).toHaveBeenCalledTimes(1);
+
+      // Second detached->attached cycle
+      enterSpy.mockClear();
+      mockCurrentRoomStatus = RoomStatus.Detached;
+      rerender();
+      mockCurrentRoomStatus = RoomStatus.Attached;
+      rerender();
+
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+      expect(enterSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should re-enter presence automatically after transitioning from detached', async () => {
@@ -633,6 +886,124 @@ describe('usePresence', () => {
     });
   });
 
+  describe('explicit enter/update/leave', () => {
+    it('should correctly call the enter method', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+
+      const { result } = renderHook(() =>
+        usePresence({
+          autoEnterLeave: false, // Disable auto behavior to test manual calls
+        }),
+      );
+
+      // Call the exposed enter method
+      await act(async () => {
+        await result.current.enter({ manual: 'enter' });
+      });
+
+      // Verify that the enter method was called with correct data
+      expect(enterSpy).toHaveBeenCalledWith({ manual: 'enter' });
+    });
+
+    it('should correctly call the update method', async () => {
+      // spy on the update method of the presence instance
+      const updateSpy = vi.spyOn(mockRoom.presence, 'update');
+
+      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // call the update method
+      await act(async () => {
+        await result.current.update({ test: 'updated' });
+      });
+
+      // verify that the update method was called
+      expect(updateSpy).toHaveBeenCalledWith({ test: 'updated' });
+
+      expect(result.current.myPresenceState.present).toBe(true);
+    });
+
+    it('should correctly call the leave method', async () => {
+      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
+
+      const { result } = renderHook(() =>
+        usePresence({
+          autoEnterLeave: false, // Disable auto behavior to test manual calls
+        }),
+      );
+
+      // Call the exposed leave method
+      await act(async () => {
+        await result.current.leave({ manual: 'leave' });
+      });
+
+      // Verify that the leave method was called with correct data
+      expect(leaveSpy).toHaveBeenCalledWith({ manual: 'leave' });
+    });
+
+    it('should allow manual enter/leave calls when autoEnterLeave is false', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
+
+      const { result } = renderHook(() =>
+        usePresence({
+          autoEnterLeave: false,
+        }),
+      );
+
+      // Verify auto enter didn't happen
+      expect(enterSpy).not.toHaveBeenCalled();
+
+      // Manually enter
+      await act(async () => {
+        await result.current.enter({ manual: 'entry' });
+      });
+
+      expect(enterSpy).toHaveBeenCalledWith({ manual: 'entry' });
+
+      // Manually leave
+      await act(async () => {
+        await result.current.leave({ manual: 'exit' });
+      });
+
+      expect(leaveSpy).toHaveBeenCalledWith({ manual: 'exit' });
+    });
+
+    it('should allow manual enter/leave calls even when autoEnterLeave is true', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
+
+      const { result } = renderHook(() =>
+        usePresence({
+          autoEnterLeave: true,
+          initialData: { auto: 'enter' },
+        }),
+      );
+
+      // Wait for auto enter to complete
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ auto: 'enter' });
+      });
+
+      // Reset spy to test manual calls
+      enterSpy.mockClear();
+      leaveSpy.mockClear();
+
+      // Manually enter with different data
+      await act(async () => {
+        await result.current.enter({ manual: 'override' });
+      });
+
+      expect(enterSpy).toHaveBeenCalledWith({ manual: 'override' });
+
+      // Manually leave
+      await act(async () => {
+        await result.current.leave({ manual: 'goodbye' });
+      });
+
+      expect(leaveSpy).toHaveBeenCalledWith({ manual: 'goodbye' });
+    });
+  });
+
   describe('data tracking and persistence', () => {
     it('should use initialData for first auto-enter', async () => {
       const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
@@ -781,18 +1152,6 @@ describe('usePresence', () => {
         expect(mockRoom.presence.enter).toHaveBeenCalledWith({ step: 3 });
       });
     });
-  });
-
-  describe('edge cases', () => {
-    it('should handle hook with no initialData provided', async () => {
-      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
-
-      renderHook(() => usePresence());
-
-      await waitFor(() => {
-        expect(enterSpy).toHaveBeenCalledWith(undefined);
-      });
-    });
 
     it('should handle rapid enter/update calls with data consistency', async () => {
       const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
@@ -837,101 +1196,6 @@ describe('usePresence', () => {
       // Should use the last call's data
       await waitFor(() => {
         expect(mockRoom.presence.enter).toHaveBeenCalledWith({ rapid: 4 });
-      });
-    });
-
-    it('should update myPresenceState when channel enters detached state', async () => {
-      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
-
-      // Wait for initial enter to complete and presence to be true
-      await waitFor(() => {
-        expect(result.current.myPresenceState.present).toBe(true);
-      });
-
-      // Simulate channel state change to detached
-      const channelStateChange: Ably.ChannelStateChange = {
-        current: 'detached',
-        previous: 'attached',
-        resumed: false,
-      };
-
-      // Trigger the channel detached event
-      act(() => {
-        const emit = (
-          mockRoom.channel as unknown as {
-            emit: (event: string, arg: unknown) => void;
-          }
-        ).emit;
-        emit('detached', channelStateChange);
-      });
-
-      // Verify that myPresenceState.present becomes false
-      await waitFor(() => {
-        expect(result.current.myPresenceState.present).toBe(false);
-      });
-      expect(result.current.myPresenceState.error).toBeUndefined();
-    });
-
-    it('should update myPresenceState when channel enters failed state', async () => {
-      const { result } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
-
-      // Wait for initial enter to complete and presence to be true
-      await waitFor(() => {
-        expect(result.current.myPresenceState.present).toBe(true);
-      });
-
-      // Simulate channel state change to failed
-      const channelStateChange: Ably.ChannelStateChange = {
-        current: 'failed',
-        previous: 'attached',
-        resumed: false,
-        reason: new Ably.ErrorInfo('failed', 40000, 400),
-      };
-
-      // Trigger the channel detached event
-      act(() => {
-        const emit = (
-          mockRoom.channel as unknown as {
-            emit: (event: string, arg: unknown) => void;
-          }
-        ).emit;
-        emit('failed', channelStateChange);
-      });
-
-      // Verify that myPresenceState.present becomes false
-      await waitFor(() => {
-        expect(result.current.myPresenceState.present).toBe(false);
-      });
-      expect(result.current.myPresenceState.error).toBeErrorInfo({ message: 'failed', code: 40000, statusCode: 400 });
-    });
-
-    it('should handle component re-mount scenario with data persistence within same room', async () => {
-      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
-
-      // First mount
-      const { result: firstResult, unmount: firstUnmount } = renderHook(() =>
-        usePresence({ initialData: { mount: 'first' } }),
-      );
-
-      await waitFor(() => {
-        expect(enterSpy).toHaveBeenCalledWith({ mount: 'first' });
-      });
-
-      // Update data
-      await act(async () => {
-        await firstResult.current.update({ mount: 'first_updated' });
-      });
-
-      // Unmount first component
-      firstUnmount();
-
-      enterSpy.mockClear();
-
-      // Second mount - should use initialData again since it's a new component instance
-      renderHook(() => usePresence({ initialData: { mount: 'second' } }));
-
-      await waitFor(() => {
-        expect(enterSpy).toHaveBeenCalledWith({ mount: 'second' });
       });
     });
   });
