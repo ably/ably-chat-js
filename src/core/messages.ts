@@ -538,6 +538,8 @@ export class DefaultMessages implements Messages {
     const { text, metadata, headers } = params;
 
     const response = await this._chatApi.sendMessage(this._roomName, { text, headers, metadata });
+    // We apply the timestamp to both the message and the version, since they are the same for a newly created message.
+    const timestamp = new Date(response.timestamp);
     return new DefaultMessage({
       serial: response.serial,
       clientId: this._clientId,
@@ -545,9 +547,11 @@ export class DefaultMessages implements Messages {
       metadata: metadata ?? {},
       headers: headers ?? {},
       action: ChatMessageAction.MessageCreate,
-      version: response.serial,
-      createdAt: new Date(response.createdAt),
-      timestamp: new Date(response.createdAt), // timestamp is the same as createdAt for new messages
+      version: {
+        serial: response.serial,
+        timestamp,
+      },
+      timestamp,
       reactions: emptyMessageReactions(),
     });
   }
@@ -562,7 +566,7 @@ export class DefaultMessages implements Messages {
     this._logger.debug('Messages.delete(); serial', { serial });
     const response = await this._chatApi.deleteMessage(this._roomName, serial, params);
 
-    return messageFromRest(response.message);
+    return messageFromRest(response);
   }
 
   /**
@@ -583,7 +587,7 @@ export class DefaultMessages implements Messages {
     });
 
     this._logger.debug('Messages.update(); message update successfully', { updateParams });
-    return messageFromRest(response.message);
+    return messageFromRest(response);
   }
 
   /**

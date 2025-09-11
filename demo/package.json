@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@ably/chat": "file:..",
-    "ably": "^2.10.1",
+    "ably": "github:ably/ably-js#protocol-v4",
     "clsx": "^2.1.1",
     "nanoid": "^5.1.3",
     "react": "^18.3.1",
