@@ -32,6 +32,7 @@
    1. Update the JS and React version for the chat language selector in [src/data/languages/languageData.ts](https://github.com/ably/docs/blob/main/src/data/languages/languageData.ts#L25-L26).
    2. Update the version used by the [examples](https://github.com/ably/docs/blob/main/examples/package.json), and the examples code if needed.
       - you can do this by running `yarn upgrade @ably/chat@latest` from the `examples` folder
+   3. Update [ExamplesRenderer](https://github.com/ably/docs/blob/main/src/components/Examples/ExamplesRenderer.tsx#L45) `src/components/Examples/ExamplesRenderer.tsx`
 7. Update [`@ably/cli`](https://github.com/ably/cli). This SDK is used to power Chat interactions on the Ably CLI, so please update the Chat SDK version for that repo if necessary (e.g. new features, bug fixes).
 
 ## Running The Test Suite
