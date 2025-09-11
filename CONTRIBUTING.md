@@ -28,7 +28,11 @@
 4. Tag a release using [Github releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release). The version needs to match the one from the commit. Use the "Generate release notes" button to
    add changelog notes and update as required.
 5. Ensure that the NPM Publish and CDN Deploy actions have run successfully.
-6. Update [`@ably/cli`](https://github.com/ably/cli). This SDK is used to power Chat interactions on the Ably CLI, so please update the Chat SDK version for that repo if necessary (e.g. new features, bug fixes).
+6. Update the version in [docs](https://github.com/ably/docs):
+   1. Update the JS and React version for the chat language selector in [src/data/languages/languageData.ts](https://github.com/ably/docs/blob/main/src/data/languages/languageData.ts#L25-L26).
+   2. Update the version used by the [examples](https://github.com/ably/docs/blob/main/examples/package.json), and the examples code if needed.
+      - you can do this by running `yarn upgrade @ably/chat@latest` from the `examples` folder
+7. Update [`@ably/cli`](https://github.com/ably/cli). This SDK is used to power Chat interactions on the Ably CLI, so please update the Chat SDK version for that repo if necessary (e.g. new features, bug fixes).
 
 ## Running The Test Suite
 
