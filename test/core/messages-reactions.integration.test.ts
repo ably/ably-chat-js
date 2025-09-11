@@ -384,4 +384,91 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     void room.detach();
     void room2.detach();
   });
+
+  it<TestContext>('should fetch clientReactions for specific client after receiving summary', async (context) => {
+    const { chat } = context;
+
+    const room = await getRandomRoom(chat);
+
+    // Attach the room
+    await room.attach();
+
+    // Create a second client
+    const client2 = newChatClient();
+    const room2 = await client2.rooms.get(room.name);
+    await room2.attach();
+
+    // Send a message
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+
+    // Subscribe to reaction summaries and collect them
+    const summaryEvents: MessageReactionSummaryEvent[] = [];
+    room.messages.reactions.subscribe((event) => {
+      summaryEvents.push(event);
+    });
+
+    // Send three reactions: one from client1, two from client2
+    await room.messages.reactions.send(message1, { type: MessageReactionType.Distinct, name: '❤️' });
+    await room2.messages.reactions.send(message1, { type: MessageReactionType.Distinct, name: '❤️' });
+    await room2.messages.reactions.send(message1, { type: MessageReactionType.Distinct, name: '🚀' });
+
+    // Wait for summary events to be received
+    await vi.waitFor(
+      () => {
+        expect(summaryEvents.length).toBeGreaterThanOrEqual(1);
+        const latestSummary = summaryEvents.at(-1);
+        expect(latestSummary).toMatchObject({
+          type: MessageReactionEventType.Summary,
+          summary: {
+            messageSerial: message1.serial,
+            distinct: {
+              '❤️': {
+                total: 2,
+                clientIds: [chat.clientId, client2.clientId],
+              },
+              '🚀': {
+                total: 1,
+                clientIds: [client2.clientId],
+              },
+            },
+            unique: {},
+            multiple: {},
+          },
+        });
+      },
+      { timeout: 30_000 },
+    );
+
+    // Fetch clientReactions for client2 (the one with two reactions)
+    const client2Reactions = await room.messages.reactions.clientReactions(message1.serial, client2.clientId);
+
+    // Verify that client2Reactions only contains reactions from client2
+    expect(client2Reactions.distinct).toMatchObject({
+      '❤️': {
+        total: 2,
+        clientIds: [client2.clientId],
+      },
+      '🚀': {
+        total: 1,
+        clientIds: [client2.clientId],
+      },
+    });
+
+    // Fetch clientReactions for client1 (the one with one reaction) for comparison
+    const client1Reactions = await room.messages.reactions.clientReactions(message1.serial, chat.clientId);
+
+    // Verify that client1Reactions only contains reactions from client1
+    expect(client1Reactions.distinct).toMatchObject({
+      '❤️': {
+        total: 2,
+        clientIds: [chat.clientId],
+      },
+    });
+
+    // Verify that client1Reactions does NOT contain reactions from client2
+    expect(client1Reactions.distinct['🚀']).toBeUndefined();
+
+    // Clean up
+    void room2.detach();
+  });
 });

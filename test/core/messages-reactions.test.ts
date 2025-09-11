@@ -142,6 +142,28 @@ describe('MessagesReactions', () => {
       });
     });
 
+    it<TestContext>('should call getClientReactions on the chat API', async (context) => {
+      const { chatApi, room } = context;
+      const timestamp = Date.now();
+      const serial = 'abcdefghij@' + String(timestamp) + '-123';
+      const clientId = 'testClient';
+      const expectedReactions = {
+        unique: { '🥕': { total: 1, clientIds: [clientId] } },
+        distinct: {},
+        multiple: {},
+      };
+
+      vi.spyOn(chatApi, 'getClientReactions').mockResolvedValue(expectedReactions);
+
+      const result = await room.messages.reactions.clientReactions(serial, clientId);
+      expect(chatApi.getClientReactions).toHaveBeenCalledWith(room.name, serial, clientId);
+      expect(result).toBe(expectedReactions);
+
+      // Test without clientId
+      await room.messages.reactions.clientReactions(serial);
+      expect(chatApi.getClientReactions).toHaveBeenCalledWith(room.name, serial, undefined);
+    });
+
     it<TestContext>('should receive summary events', (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = Date.now();
