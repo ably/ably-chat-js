@@ -172,6 +172,14 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.S
  *
  * The {@link UsePresenceResponse.myPresenceState} can be used to determine if the user is currently present
  * in the room, and if any errors occurred while trying to enter or leave presence.
+ *
+ * **Important** When using `autoEnterLeave`, you should not use multiple instances of this hook within the same
+ * ChatClientProvider instance, as each hook uses the same underlying presence instance, and maintains internal
+ * state for the automatic re-entry behavior. If you need to have multiple areas of your application updating the
+ * presence data you could either:
+ *   1. Set `autoEnterLeave` to `false` and manage presence state automatically.
+ *   2. Hold your presence state and call functions at a higher-level (e.g. a context provider), with your
+ *      lower-level components passing data back up the hierarchy to be contained in the presence data.
  * @example
  * ```tsx
  * // Example hook usage with auto-entry of presence on mount and auto-leave on unmount
@@ -210,7 +218,8 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.S
  * ```
  * @example
  * ```tsx
- * // Example with auto-enter but taking manual control via leave
+ * // Example with auto-enter but taking manual control via leave.
+ * // This pattern is useful if you have multiple components in your app updating presence data.
  * const MixedControlComponent = () => {
  *   const { leave, update, myPresenceState } = usePresence({
  *     initialData: { status: 'online' }
