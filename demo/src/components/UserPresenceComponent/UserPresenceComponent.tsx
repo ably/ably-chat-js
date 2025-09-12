@@ -5,7 +5,7 @@ import { useChatClient, usePresence, usePresenceListener } from '@ably/chat/reac
 interface UserListComponentProps {}
 
 export const UserPresenceComponent: FC<UserListComponentProps> = () => {
-  const { myPresenceState } = usePresence({ enterWithData: { status: '💻 Online' } });
+  const { myPresenceState } = usePresence({ initialData: { status: '💻 Online' } });
   const { presenceData } = usePresenceListener({
     listener: (event: unknown) => {
       console.log('Presence data changed', { event });

@@ -187,6 +187,7 @@ export class DefaultPresence implements Presence {
   };
   private readonly _unsubscribePresenceEvents: () => void;
   private readonly _offChannelUpdate: () => void;
+  private readonly _offChannelDetach: () => void;
 
   /**
    * Constructs a new `DefaultPresence` instance.
@@ -210,10 +211,23 @@ export class DefaultPresence implements Presence {
         // PresenceAutoReentryFailed
         this._logger.debug('Presence auto-reentry failed', { reason: stateChange.reason });
         this._emitPresenceStateChange(false, stateChange.reason);
+        return;
+      }
+
+      // Channel has been moved to detached, which means any members we have will be removed
+      if (stateChange.current === 'detached') {
+        this._emitPresenceStateChange(false);
+        return;
       }
     };
 
+    const channelDetachListener = (stateChange: Ably.ChannelStateChange) => {
+      this._emitPresenceStateChange(false, stateChange.reason);
+    };
+
     this._offChannelUpdate = on(this._channel, 'update', channelUpdateListener);
+    this._offChannelDetach = on(this._channel, ['detached', 'failed'], channelDetachListener);
+
     // Use subscription helper to create cleanup function
     this._unsubscribePresenceEvents = subscribe(this._channel.presence, presenceEventsListener);
   }
@@ -378,6 +392,9 @@ export class DefaultPresence implements Presence {
 
     // Remove the channel update listener
     this._offChannelUpdate();
+
+    // Remove the channel detach listener
+    this._offChannelDetach();
 
     this._logger.debug('DefaultPresence.dispose(); disposed successfully');
   }
