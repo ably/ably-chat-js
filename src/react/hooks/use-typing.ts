@@ -1,4 +1,3 @@
-import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
 import { TypingSetEvent } from '../../core/events.js';
@@ -42,13 +41,6 @@ export interface UseTypingResponse extends ChatStatusResponse {
    * It automatically updates based on typing events received from the room.
    */
   readonly currentlyTyping: TypingSetEvent['currentlyTyping'];
-
-  /**
-   * A state value representing the current error state of the hook, this will be an instance of {@link Ably.ErrorInfo} or `undefined`.
-   * An error can occur during mount when initially fetching the current typing state; this does not mean that further
-   * updates will not be received, and so the hook might recover from this state on its own.
-   */
-  readonly error?: Ably.ErrorInfo;
 }
 
 /**
