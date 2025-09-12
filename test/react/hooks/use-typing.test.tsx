@@ -12,7 +12,6 @@ import { TypingListener } from '../../../src/core/typing.ts';
 import { useTyping } from '../../../src/react/hooks/use-typing.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
-import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
 let mockRoomContext: { room: Promise<Room> };
@@ -23,15 +22,15 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
   useChatConnection: () => ({ currentStatus: ConnectionStatus.Connected }),
 }));
 
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
 
-vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-status.js', () => ({
   useRoomStatus: () => ({ status: RoomStatus.Attached }),
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-logger.js', () => ({
   useRoomLogger: () => mockLogger,
 }));
 
@@ -55,11 +54,8 @@ describe('useTyping', () => {
     cleanup();
   });
 
-  it('should provide the typing instance and chat status response metrics', async () => {
+  it('should provide the chat status response metrics', () => {
     const { result } = renderHook(() => useTyping());
-
-    // check that the typing instance is correctly provided
-    await waitForEventualHookValue(result, mockRoom.typing, (value) => value.typingIndicators);
 
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomStatus.Attached);
@@ -86,20 +82,20 @@ describe('useTyping', () => {
 
     // update the mock room with the new typing object
     updateMockRoom({ ...mockRoom, _lifecycle: new DefaultRoomLifecycle(mockLogger), typing: mockTyping });
-    const { result, unmount } = renderHook(() => useTyping({ listener: mockListener }));
-
-    await waitForEventualHookValueToBeDefined(result, (value) => value.typingIndicators);
+    const { unmount } = renderHook(() => useTyping({ listener: mockListener }));
 
     // verify that subscribe was called with the mock listener on mount by triggering an event
-    const typingEvent: TypingSetEvent = {
-      type: TypingSetEventType.SetChanged,
-      change: { clientId: 'someClientId', type: TypingEventType.Stopped },
-      currentlyTyping: new Set<string>(),
-    };
-    for (const listener of mockTyping.listeners) {
-      listener(typingEvent);
-    }
-    expect(mockListener).toHaveBeenCalledWith(typingEvent);
+    await vi.waitFor(() => {
+      const typingEvent: TypingSetEvent = {
+        type: TypingSetEventType.SetChanged,
+        change: { clientId: 'someClientId', type: TypingEventType.Stopped },
+        currentlyTyping: new Set<string>(),
+      };
+      for (const listener of mockTyping.listeners) {
+        listener(typingEvent);
+      }
+      expect(mockListener).toHaveBeenCalledWith(typingEvent);
+    });
 
     // unmount the hook and verify that unsubscribe was called
     unmount();
@@ -209,8 +205,12 @@ describe('useTyping', () => {
   it('should handle rerender if the room instance changes', async () => {
     const { result, rerender } = renderHook(() => useTyping());
 
+    vi.spyOn(mockRoom.typing, 'current').mockReturnValue(new Set(['a', 'b']));
+
     // check the initial state of the typing instance
-    await waitForEventualHookValue(result, mockRoom.typing, (value) => value.typingIndicators);
+    await vi.waitFor(() => {
+      expect(result.current.currentlyTyping).toEqual(new Set(['a', 'b']));
+    });
 
     // change the mock room instance
     updateMockRoom(
@@ -222,12 +222,15 @@ describe('useTyping', () => {
         },
       }),
     );
+    vi.spyOn(mockRoom.typing, 'current').mockReturnValue(new Set(['a', 'b', 'c']));
 
     // re-render to trigger the useEffect
     rerender();
 
     // check that the typing instance is updated
-    await waitForEventualHookValue(result, mockRoom.typing, (value) => value.typingIndicators);
+    await vi.waitFor(() => {
+      expect(result.current.currentlyTyping).toEqual(new Set(['a', 'b', 'c']));
+    });
   });
 
   it('should subscribe and unsubscribe to discontinuity events', async () => {

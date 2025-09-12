@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { Room } from '../../core/room.js';
-import { useRoomLogger } from '../hooks/use-logger.js';
+import { Room } from '../../../core/room.js';
+import { useRoomLogger } from './use-logger.js';
 import { useRoomContext } from './use-room-context.js';
 import { useStableReference } from './use-stable-reference.js';
 

@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 import { useContext } from 'react';
 
-import { ChatRoomContext, ChatRoomContextType } from '../contexts/chat-room-context.js';
+import { ChatRoomContext, ChatRoomContextType } from '../../contexts/chat-room-context.js';
 
 /**
  * A hook that returns the current ChatRoomContext. This should be used within a ChatRoomProvider.

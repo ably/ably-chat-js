@@ -59,11 +59,10 @@ describe('useRoom', () => {
     );
     render(<TestProvider />);
     await vi.waitFor(() => {
-      expect(latestResponse?.room?.name).toBe(roomName);
+      expect(latestResponse?.attach).toBeTruthy();
+      expect(latestResponse?.detach).toBeTruthy();
+      expect(latestResponse?.roomStatus).toBe(RoomStatus.Attached);
     });
-    expect(latestResponse?.attach).toBeTruthy();
-    expect(latestResponse?.detach).toBeTruthy();
-    expect(latestResponse?.roomStatus).toBe(RoomStatus.Attached);
   });
 
   it('should return working shortcuts for attach and detach functions', async () => {
@@ -75,16 +74,22 @@ describe('useRoom', () => {
         <ChatRoomProvider name={roomName}>
           <TestComponent
             callback={(response) => {
-              if (!response.room) return;
+              void (async () => {
+                const room = await chatClient.rooms.get(roomName);
+                vi.spyOn(room, 'attach').mockImplementation(() => Promise.resolve());
+                vi.spyOn(room, 'detach').mockImplementation(() => Promise.resolve());
 
-              vi.spyOn(response.room, 'attach').mockImplementation(() => Promise.resolve());
-              vi.spyOn(response.room, 'detach').mockImplementation(() => Promise.resolve());
-              // no awaiting since we don't care about result, just that the relevant function was called
-              void response.attach();
-              expect(response.room.attach).toHaveBeenCalled();
-              void response.detach();
-              expect(response.room.detach).toHaveBeenCalled();
-              called = true;
+                // no awaiting since we don't care about result, just that the relevant function was called
+                void response.attach();
+                await vi.waitFor(() => {
+                  expect(room.attach).toHaveBeenCalled();
+                });
+                void response.detach();
+                await vi.waitFor(() => {
+                  expect(room.detach).toHaveBeenCalled();
+                });
+                called = true;
+              })();
             }}
           />
         </ChatRoomProvider>

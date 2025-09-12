@@ -2,23 +2,23 @@ import { cleanup, renderHook } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { Logger } from '../../../src/core/logger.ts';
-import { Room } from '../../../src/core/room.ts';
-import { InternalRoomLifecycle, RoomStatus, RoomStatusChange } from '../../../src/core/room-status.ts';
-import { useRoomStatus } from '../../../src/react/helper/use-room-status.ts';
-import { makeTestLogger } from '../../helper/logger.ts';
-import { makeRandomRoom } from '../../helper/room.ts';
-import { waitForEventualHookValue } from '../../helper/wait-for-eventual-hook.ts';
+import { Logger } from '../../../../src/core/logger.ts';
+import { Room } from '../../../../src/core/room.ts';
+import { InternalRoomLifecycle, RoomStatus, RoomStatusChange } from '../../../../src/core/room-status.ts';
+import { useRoomStatus } from '../../../../src/react/hooks/internal/use-room-status.ts';
+import { makeTestLogger } from '../../../helper/logger.ts';
+import { makeRandomRoom } from '../../../helper/room.ts';
+import { waitForEventualHookValue } from '../../../helper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
 let mockRoomContext: { room: Promise<Room> };
 let mockLogger: Logger;
 
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../../../src/react/hooks/internal/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../../../src/react/hooks/internal/use-logger.js', () => ({
   useRoomLogger: () => mockLogger,
 }));
 

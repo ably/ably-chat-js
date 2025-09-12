@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
 
-import { Occupancy, OccupancyListener } from '../../core/occupancy.js';
+import { OccupancyListener } from '../../core/occupancy.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
-import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
-import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
-import { useRoomContext } from '../helper/use-room-context.js';
-import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
+import { useEventListenerRef } from './internal/use-event-listener-ref.js';
+import { useRoomLogger } from './internal/use-logger.js';
+import { useRoomContext } from './internal/use-room-context.js';
+import { useRoomStatus } from './internal/use-room-status.js';
 import { useChatConnection } from './use-chat-connection.js';
-import { useRoomLogger } from './use-logger.js';
 
 /**
  * The options for the {@link useOccupancy} hook.
@@ -36,15 +35,10 @@ export interface UseOccupancyResponse extends ChatStatusResponse {
    * The current number of users present in the room, kept up to date by the hook.
    */
   readonly presenceMembers: number;
-
-  /**
-   * Provides access to the underlying {@link Occupancy} instance of the room.
-   */
-  readonly occupancy?: Occupancy;
 }
 
 /**
- * A hook that provides access to the {@link Occupancy} instance of the room.
+ * A hook that provides access to the rooms occupancy information.
  * It will use the instance belonging to the nearest {@link ChatRoomProvider} in the component tree.
  * @param params - Allows the registering of optional callbacks.
  * @returns UseOccupancyResponse
@@ -133,7 +127,6 @@ export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse 
   }, [listenerRef, context, logger]);
 
   return {
-    occupancy: useEventualRoomProperty((room) => room.occupancy),
     connectionStatus,
     connectionError,
     roomStatus,

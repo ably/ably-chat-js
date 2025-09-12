@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
-import { Logger } from '../../core/logger.js';
-import { useRoomContext } from '../helper/use-room-context.js';
-import { useChatClient } from './use-chat-client.js';
+import { Logger } from '../../../core/logger.js';
+import { useChatClient } from '../use-chat-client.js';
+import { useRoomContext } from './use-room-context.js';
 /**
  * A hook that provides access to the {@link Logger} instance of the {@link ChatClient}.
  * It will use the instance belonging to the {@link ChatClient} in the nearest {@link ChatClientProvider} in the component tree.

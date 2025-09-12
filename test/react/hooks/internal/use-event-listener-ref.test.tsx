@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useEventListenerRef } from '../../../src/react/helper/use-event-listener-ref.js';
+import { useEventListenerRef } from '../../../../src/react/hooks/internal/use-event-listener-ref.js';
 
 describe('useEventListenerRef', () => {
   it('should update the callback as it changes', () => {

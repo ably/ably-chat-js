@@ -9,7 +9,6 @@ import { InternalRoomLifecycle, RoomStatus } from '../../../src/core/room-status
 import { usePresence } from '../../../src/react/hooks/use-presence.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
-import { waitForEventualHookValue } from '../../helper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
 let mockRoomContext: { room: Promise<Room> };
@@ -27,15 +26,15 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
   }),
 }));
 
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
 
-vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-status.js', () => ({
   useRoomStatus: () => ({ status: mockCurrentRoomStatus, error: mockRoomError }),
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-logger.js', () => ({
   useRoomLogger: () => mockLogger,
 }));
 
@@ -62,23 +61,24 @@ describe('usePresence', () => {
     cleanup();
   });
 
-  it('should provide the presence instance and chat status response metrics', async () => {
+  it('should provide chat status response metrics', async () => {
     // set the connection and room errors to check that they are correctly provided
     mockConnectionError = new Ably.ErrorInfo('test error', 40000, 400);
     mockRoomError = new Ably.ErrorInfo('test error', 40000, 400);
 
     const { result } = renderHook(() => usePresence());
 
-    // check that the presence instance and metrics are correctly provided
-    await waitForEventualHookValue(result, mockRoom.presence, (value) => value.presence);
-    expect(result.current.myPresenceState.present).toBe(true);
-    expect(result.current.myPresenceState.error).toBeUndefined();
+    await vi.waitFor(() => {
+      // check that the presence instance and metrics are correctly provided
+      expect(result.current.myPresenceState.present).toBe(true);
+      expect(result.current.myPresenceState.error).toBeUndefined();
 
-    // check connection and room metrics are correctly provided
-    expect(result.current.roomStatus).toBe(RoomStatus.Attached);
-    expect(result.current.roomError).toBeErrorInfo({ message: 'test error' });
-    expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
-    expect(result.current.connectionError).toBeErrorInfo({ message: 'test error' });
+      // check connection and room metrics are correctly provided
+      expect(result.current.roomStatus).toBe(RoomStatus.Attached);
+      expect(result.current.roomError).toBeErrorInfo({ message: 'test error' });
+      expect(result.current.connectionStatus).toEqual(ConnectionStatus.Connected);
+      expect(result.current.connectionError).toBeErrorInfo({ message: 'test error' });
+    });
   });
 
   it('should handle rerender if the room instance changes', async () => {
@@ -94,7 +94,6 @@ describe('usePresence', () => {
     await waitFor(() => result.current.myPresenceState.present);
 
     // check the initial state of the presence instance
-    expect(result.current.presence).toBe(mockRoom.presence);
     expect(result.current.myPresenceState.present).toBe(true);
 
     // change the mock room instance
@@ -111,9 +110,6 @@ describe('usePresence', () => {
     });
     await waitFor(() => result.current.myPresenceState.present);
     expect(result.current.myPresenceState.present).toBe(true);
-
-    // check that the presence instance is updated
-    expect(result.current.presence).toBe(mockRoom.presence);
   });
 
   it('should correctly enter presence on render and leave on unmount', async () => {

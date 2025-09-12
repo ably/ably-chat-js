@@ -18,10 +18,10 @@ import { MessageRawReactionListener, MessageReactionListener } from '../../../sr
 import { PaginatedResult } from '../../../src/core/query.ts';
 import { Room } from '../../../src/core/room.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
-import { useMessages } from '../../../src/react/hooks/use-messages.ts';
+import { useMessages, UseMessagesParams } from '../../../src/react/hooks/use-messages.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
-import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
+import { waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
 let mockRoomContext: { room: Promise<Room> };
@@ -39,15 +39,15 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
   }),
 }));
 
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
 
-vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-status.js', () => ({
   useRoomStatus: () => ({ status: mockCurrentRoomStatus, error: mockRoomError }),
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-logger.js', () => ({
   useRoomLogger: () => testLogger,
 }));
 
@@ -72,15 +72,17 @@ describe('useMessages', () => {
     cleanup();
   });
 
-  it('should provide the messages instance and chat status response metrics', async () => {
+  it('should provide chat status response metrics', async () => {
     // set the connection and room errors to check that they are correctly provided
     mockConnectionError = new Ably.ErrorInfo('test error', 40000, 400);
     mockRoomError = new Ably.ErrorInfo('test error', 40000, 400);
 
     const { result } = renderHook(() => useMessages());
 
-    // check that the messages instance and metrics are correctly provided
-    await waitForEventualHookValue(result, mockRoom.messages, (value) => value.messages);
+    // wait for hook to initialize
+    await waitFor(() => {
+      expect(result.current).toBeDefined();
+    });
 
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomStatus.Attached);
@@ -221,20 +223,39 @@ describe('useMessages', () => {
   });
 
   it('should handle rerender if the room instance changes', async () => {
-    const { result, rerender } = renderHook(() => useMessages());
+    const mockOff = vi.fn();
+    const listeners = new Set<DiscontinuityListener>();
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+      listeners.add(listener);
+      return { off: mockOff };
+    });
 
-    // check the initial state of the messages instance
-    await waitForEventualHookValue(result, mockRoom.messages, (value) => value.messages);
-    expect(result.current.messages).toBe(mockRoom.messages);
+    const { rerender } = renderHook((props: UseMessagesParams) => useMessages(props), {
+      initialProps: {
+        onDiscontinuity: vi.fn(),
+      },
+    });
 
-    // change the mock room instance
-    updateMockRoom(makeRandomRoom({}));
+    await vi.waitFor(() => {
+      expect(mockRoom.onDiscontinuity).toHaveBeenCalledTimes(1);
+    });
 
-    // re-render to trigger the useEffectYou
-    rerender();
+    // change the mock room instance, making it not attached
+    updateMockRoom(makeRandomRoom());
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+      listeners.add(listener);
+      return { off: mockOff };
+    });
 
-    // check that the messages instance is updated
-    await waitForEventualHookValue(result, mockRoom.messages, (value) => value.messages);
+    expect(mockRoom.onDiscontinuity).toHaveBeenCalledTimes(0);
+
+    // re-render to trigger the useEffect
+    rerender({ onDiscontinuity: vi.fn() });
+
+    // check that the room presence instance is updated
+    await vi.waitFor(() => {
+      expect(mockRoom.onDiscontinuity).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('should subscribe and unsubscribe to discontinuity events', async () => {

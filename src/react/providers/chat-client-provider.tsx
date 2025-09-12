@@ -5,7 +5,10 @@ import { ChatClient } from '../../core/chat-client.js';
 import { Logger } from '../../core/logger.js';
 import { ChatClientContext } from '../contexts/chat-client-context.js';
 import { RoomReferenceManager } from '../helper/room-reference-manager.js';
-import { ExtendedChatClientContextValue, ROOM_REFERENCE_MANAGER_KEY } from '../hooks/use-room-reference-manager.js';
+import {
+  ExtendedChatClientContextValue,
+  ROOM_REFERENCE_MANAGER_KEY,
+} from '../hooks/internal/use-room-reference-manager.js';
 
 /**
  * The default identifier for the {@link ChatClientContext}.
