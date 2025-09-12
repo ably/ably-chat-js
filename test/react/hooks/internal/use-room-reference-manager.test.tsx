@@ -2,9 +2,9 @@ import { render, renderHook } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useRoomReferenceManager } from '../../../src/react/hooks/use-room-reference-manager.js';
-import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.js';
-import { newChatClient } from '../../helper/chat.js';
+import { useRoomReferenceManager } from '../../../../src/react/hooks/internal/use-room-reference-manager.js';
+import { ChatClientProvider } from '../../../../src/react/providers/chat-client-provider.js';
+import { newChatClient } from '../../../helper/chat.js';
 
 vi.mock('ably');
 

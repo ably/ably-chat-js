@@ -7,13 +7,13 @@ import { Room } from '../../core/room.js';
 import { RoomStatus } from '../../core/room-status.js';
 import { Subscription } from '../../core/subscription.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
-import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
-import { useRoomContext } from '../helper/use-room-context.js';
-import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { StatusParams } from '../types/status-params.js';
+import { useEventListenerRef } from './internal/use-event-listener-ref.js';
+import { useRoomLogger } from './internal/use-logger.js';
+import { useRoomContext } from './internal/use-room-context.js';
+import { useRoomStatus } from './internal/use-room-status.js';
 import { useChatConnection } from './use-chat-connection.js';
-import { useRoomLogger } from './use-logger.js';
 
 /**
  * The options for the {@link usePresence} hook.

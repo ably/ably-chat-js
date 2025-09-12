@@ -1,8 +1,8 @@
 import * as Ably from 'ably';
 import * as React from 'react';
 
-import { ChatClientContext, ChatClientContextValue } from '../contexts/chat-client-context.js';
-import { RoomReferenceManager } from '../helper/room-reference-manager.js';
+import { ChatClientContext, ChatClientContextValue } from '../../contexts/chat-client-context.js';
+import { RoomReferenceManager } from '../../helper/room-reference-manager.js';
 
 // Symbol to store the room reference manager in the context without conflicting with the string index
 export const ROOM_REFERENCE_MANAGER_KEY = Symbol('roomReferenceManager');

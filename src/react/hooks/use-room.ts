@@ -3,11 +3,11 @@ import { useCallback } from 'react';
 import { ConnectionStatusChange } from '../../core/connection.js';
 import { Room } from '../../core/room.js';
 import { RoomStatusChange } from '../../core/room-status.js';
-import { useRoomContext } from '../helper/use-room-context.js';
-import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
+import { useRoomLogger } from './internal/use-logger.js';
+import { useRoomContext } from './internal/use-room-context.js';
+import { useRoomStatus } from './internal/use-room-status.js';
 import { useChatConnection } from './use-chat-connection.js';
-import { useRoomLogger } from './use-logger.js';
 
 /**
  * The parameters for the {@link useRoom} hook.

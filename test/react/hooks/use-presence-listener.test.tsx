@@ -31,15 +31,15 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
   }),
 }));
 
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-context.js', () => ({
   useRoomContext: () => mockRoomContext,
 }));
 
-vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-status.js', () => ({
   useRoomStatus: () => ({ status: mockCurrentRoomStatus, error: mockRoomError }),
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-logger.js', () => ({
   useRoomLogger: () => mockLogger,
 }));
 

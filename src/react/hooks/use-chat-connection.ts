@@ -2,9 +2,9 @@ import { ErrorInfo } from 'ably';
 import { useEffect, useState } from 'react';
 
 import { ConnectionStatus, ConnectionStatusChange, ConnectionStatusListener } from '../../core/connection.js';
-import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
+import { useEventListenerRef } from './internal/use-event-listener-ref.js';
+import { useLogger } from './internal/use-logger.js';
 import { useChatClient } from './use-chat-client.js';
-import { useLogger } from './use-logger.js';
 
 /**
  * The options for the {@link useChatConnection} hook.

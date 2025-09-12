@@ -1,11 +1,11 @@
 import * as Ably from 'ably';
 import { useEffect, useState } from 'react';
 
-import { Room } from '../../core/room.js';
-import { RoomStatus, RoomStatusChange } from '../../core/room-status.js';
-import { useRoomLogger } from '../hooks/use-logger.js';
-import { wrapRoomPromise } from './room-promise.js';
+import { Room } from '../../../core/room.js';
+import { RoomStatus, RoomStatusChange } from '../../../core/room-status.js';
+import { wrapRoomPromise } from '../../helper/room-promise.js';
 import { useEventListenerRef } from './use-event-listener-ref.js';
+import { useRoomLogger } from './use-logger.js';
 import { useRoomContext } from './use-room-context.js';
 
 /**

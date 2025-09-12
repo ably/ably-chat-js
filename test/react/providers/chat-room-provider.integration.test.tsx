@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Message } from '../../../src/core/message.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
 import { ChatMessageEvent } from '../../../src/index.ts';
-import { useRoomStatus } from '../../../src/react/helper/use-room-status.ts';
+import { useRoomStatus } from '../../../src/react/hooks/internal/use-room-status.ts';
 import { useMessages } from '../../../src/react/hooks/use-messages.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';

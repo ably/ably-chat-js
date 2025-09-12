@@ -21,18 +21,18 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
   useChatConnection: () => ({ currentStatus: ConnectionStatus.Connected }),
 }));
 
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-context.js', () => ({
   useRoomContext: () => {
     mockLogger.debug('useRoomContext() called;');
     return mockRoomContext;
   },
 }));
 
-vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-status.js', () => ({
   useRoomStatus: () => ({ status: RoomStatus.Attached }),
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-logger.js', () => ({
   useRoomLogger: () => mockLogger,
 }));
 
