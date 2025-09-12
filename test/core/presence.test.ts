@@ -169,7 +169,7 @@ describe('Presence', () => {
       const room = context.makeRoom({ presence: { enableEvents: true } });
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
-      await expect(room.presence.enter({ foo: 'bar' })).rejects.toBeErrorInfo({
+      await expect(room.presence.update({ foo: 'bar' })).rejects.toBeErrorInfo({
         code: 40000,
         message: 'could not perform presence operation; room is not attached',
       });
