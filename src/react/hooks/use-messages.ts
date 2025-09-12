@@ -21,7 +21,6 @@ import { MessageRawReactionListener, MessageReactionListener } from '../../core/
 import { Serial } from '../../core/serial.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
-import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
 import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -68,11 +67,6 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * A shortcut to the {@link MessagesReactions.delete} method.
    */
   readonly deleteReaction: Messages['reactions']['delete'];
-
-  /**
-   * Provides access to the underlying {@link Messages} instance of the room.
-   */
-  readonly messages?: Messages;
 
   /**
    * Retrieves the previous messages in the room.
@@ -279,6 +273,5 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     sendReaction,
     deleteReaction,
     historyBeforeSubscribe,
-    messages: useEventualRoomProperty((room) => room.messages),
   };
 };

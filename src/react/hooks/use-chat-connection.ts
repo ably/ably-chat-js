@@ -1,12 +1,7 @@
 import { ErrorInfo } from 'ably';
 import { useEffect, useState } from 'react';
 
-import {
-  Connection,
-  ConnectionStatus,
-  ConnectionStatusChange,
-  ConnectionStatusListener,
-} from '../../core/connection.js';
+import { ConnectionStatus, ConnectionStatusChange, ConnectionStatusListener } from '../../core/connection.js';
 import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
 import { useChatClient } from './use-chat-client.js';
 import { useLogger } from './use-logger.js';
@@ -27,25 +22,20 @@ export interface UseChatConnectionOptions {
  */
 export interface UseChatConnectionResponse {
   /**
-   * The current status of the {@link connection}.
+   * The current status of the connection.
    */
   currentStatus: ConnectionStatus;
 
   /**
-   * An error that provides a reason why the {@link connection} has entered the new status, if applicable.
+   * An error that provides a reason why the connection has entered the new status, if applicable.
    */
   error?: ErrorInfo;
-
-  /**
-   * The current Ably {@link Connection} instance.
-   */
-  connection: Connection;
 }
 
 /**
  * A hook that provides the current connection status and error, and allows the user to listen to connection status changes.
  * @param options - The options for the hook
- * @returns The current connection status and error, as well as the {@link Connection} instance.
+ * @returns The current connection status and error.
  */
 export const useChatConnection = (options?: UseChatConnectionOptions): UseChatConnectionResponse => {
   const chatClient = useChatClient();
@@ -55,11 +45,9 @@ export const useChatConnection = (options?: UseChatConnectionOptions): UseChatCo
   // Initialize states with the current values from chatClient
   const [currentStatus, setCurrentStatus] = useState<ConnectionStatus>(chatClient.connection.status);
   const [error, setError] = useState<ErrorInfo | undefined>(chatClient.connection.error);
-  const [connection, setConnection] = useState<Connection>(chatClient.connection);
 
   // Update the states when the chatClient changes
   useEffect(() => {
-    setConnection(chatClient.connection);
     setError(chatClient.connection.error);
     setCurrentStatus(chatClient.connection.status);
   }, [chatClient]);
@@ -97,6 +85,5 @@ export const useChatConnection = (options?: UseChatConnectionOptions): UseChatCo
   return {
     currentStatus,
     error,
-    connection,
   };
 };

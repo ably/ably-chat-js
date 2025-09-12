@@ -8,10 +8,9 @@ import { OccupancyEvent, OccupancyEventType } from '../../../src/core/events.ts'
 import { OccupancyListener } from '../../../src/core/occupancy.ts';
 import { Room } from '../../../src/core/room.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';
-import { useOccupancy } from '../../../src/react/hooks/use-occupancy.ts';
+import { useOccupancy, UseOccupancyParams } from '../../../src/react/hooks/use-occupancy.ts';
 import { makeTestLogger } from '../../helper/logger.ts';
 import { makeRandomRoom } from '../../helper/room.ts';
-import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.ts';
 
 let mockRoom: Room;
 let mockRoomContext: { room: Promise<Room> };
@@ -52,11 +51,10 @@ describe('useOccupancy', () => {
     cleanup();
   });
 
-  it('should provide the occupancy instance, associated metrics, and chat status response metrics', async () => {
+  it('should provide chat status response metrics', () => {
     const { result } = renderHook(() => useOccupancy());
 
     // check that the occupancy instance and metrics are correctly provided
-    await waitForEventualHookValue(result, mockRoom.occupancy, (value) => value.occupancy);
     expect(result.current.connections).toBe(0);
     expect(result.current.presenceMembers).toBe(0);
 
@@ -95,24 +93,25 @@ describe('useOccupancy', () => {
     // update the mock room with the new occupancy object
     updateMockRoom({ ...mockRoom, occupancy: mockOccupancy });
 
-    const { result, unmount } = renderHook(() => useOccupancy({ listener: mockListener }));
+    const { unmount } = renderHook(() => useOccupancy({ listener: mockListener }));
 
-    await waitForEventualHookValueToBeDefined(result, (value) => value.occupancy);
-
-    // verify that subscribe was called with the mock listener on mount by triggering an occupancy event
-    mockOccupancy.callAllListeners({
-      type: OccupancyEventType.Updated,
-      occupancy: {
-        connections: 5,
-        presenceMembers: 3,
-      },
-    });
-    expect(mockListener).toHaveBeenCalledWith({
-      type: OccupancyEventType.Updated,
-      occupancy: {
-        connections: 5,
-        presenceMembers: 3,
-      },
+    // Wait for the effects
+    await vi.waitFor(() => {
+      // verify that subscribe was called with the mock listener on mount by triggering an occupancy event
+      mockOccupancy.callAllListeners({
+        type: OccupancyEventType.Updated,
+        occupancy: {
+          connections: 5,
+          presenceMembers: 3,
+        },
+      });
+      expect(mockListener).toHaveBeenCalledWith({
+        type: OccupancyEventType.Updated,
+        occupancy: {
+          connections: 5,
+          presenceMembers: 3,
+        },
+      });
     });
 
     // unmount the hook and verify that unsubscribe was called
@@ -143,10 +142,12 @@ describe('useOccupancy', () => {
     // render the hook and check the initial state of the occupancy metrics
     const { result } = renderHook(() => useOccupancy());
 
-    await waitForEventualHookValueToBeDefined(result, (value) => value.occupancy);
-
     expect(result.current.connections).toBe(0);
     expect(result.current.presenceMembers).toBe(0);
+
+    await vi.waitFor(() => {
+      expect(subscribedListener).toBeDefined();
+    });
 
     // emit an occupancy event which should update the DOM
     act(() => {
@@ -173,27 +174,46 @@ describe('useOccupancy', () => {
     // render the hook and check the initial state of the occupancy metrics
     const { result } = renderHook(() => useOccupancy());
 
-    await waitForEventualHookValueToBeDefined(result, (value) => value.occupancy);
-
-    expect(result.current.connections).toBe(6);
-    expect(result.current.presenceMembers).toBe(4);
+    await vi.waitFor(() => {
+      expect(result.current.connections).toBe(6);
+      expect(result.current.presenceMembers).toBe(4);
+    });
   });
 
   it('should handle rerender if the room instance changes', async () => {
-    const { result, rerender } = renderHook(() => useOccupancy());
+    const mockOff = vi.fn();
+    const listeners = new Set<DiscontinuityListener>();
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+      listeners.add(listener);
+      return { off: mockOff };
+    });
 
-    // check the initial state of the occupancy instance
-    await waitForEventualHookValue(result, mockRoom.occupancy, (value) => value.occupancy);
-    expect(result.current.occupancy).toBe(mockRoom.occupancy);
+    const { rerender } = renderHook((props: UseOccupancyParams) => useOccupancy(props), {
+      initialProps: {
+        onDiscontinuity: vi.fn(),
+      },
+    });
 
-    // change the mock room instance
-    updateMockRoom(makeRandomRoom({ options: { occupancy: {} } }));
+    await vi.waitFor(() => {
+      expect(mockRoom.onDiscontinuity).toHaveBeenCalledTimes(1);
+    });
+
+    // change the mock room instance, making it not attached
+    updateMockRoom(makeRandomRoom());
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+      listeners.add(listener);
+      return { off: mockOff };
+    });
+
+    expect(mockRoom.onDiscontinuity).toHaveBeenCalledTimes(0);
 
     // re-render to trigger the useEffect
-    rerender();
+    rerender({ onDiscontinuity: vi.fn() });
 
-    // check that the occupancy instance is updated
-    await waitForEventualHookValue(result, mockRoom.occupancy, (value) => value.occupancy);
+    // check that the room presence instance is updated
+    await vi.waitFor(() => {
+      expect(mockRoom.onDiscontinuity).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('should subscribe and unsubscribe to discontinuity events', async () => {

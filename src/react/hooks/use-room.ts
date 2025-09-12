@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import { ConnectionStatusChange } from '../../core/connection.js';
 import { Room } from '../../core/room.js';
 import { RoomStatusChange } from '../../core/room-status.js';
-import { useEventualRoom } from '../helper/use-eventual-room.js';
 import { useRoomContext } from '../helper/use-room-context.js';
 import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -37,9 +36,6 @@ export interface UseRoomResponse extends ChatStatusResponse {
    * The unique identifier of the room.
    */
   readonly roomName: string;
-
-  /** The room object. */
-  room?: Room;
 
   /**
    * Shortcut to {@link Room.attach}. Not needed if the {@link ChatRoomProvider}
@@ -79,7 +75,6 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
 
   return {
     roomName: roomName,
-    room: useEventualRoom(),
     attach: attach,
     detach: detach,
     roomStatus: roomStatus.status,
