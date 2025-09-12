@@ -1,4 +1,4 @@
-import { ErrorInfo } from 'ably';
+import * as Ably from 'ably';
 import { useEffect, useState } from 'react';
 
 import { ConnectionStatus, ConnectionStatusChange, ConnectionStatusListener } from '../../core/connection.js';
@@ -29,7 +29,7 @@ export interface UseChatConnectionResponse {
   /**
    * An error that provides a reason why the connection has entered the new status, if applicable.
    */
-  error?: ErrorInfo;
+  error?: Ably.ErrorInfo;
 }
 
 /**
@@ -44,7 +44,7 @@ export const useChatConnection = (options?: UseChatConnectionOptions): UseChatCo
 
   // Initialize states with the current values from chatClient
   const [currentStatus, setCurrentStatus] = useState<ConnectionStatus>(chatClient.connection.status);
-  const [error, setError] = useState<ErrorInfo | undefined>(chatClient.connection.error);
+  const [error, setError] = useState<Ably.ErrorInfo | undefined>(chatClient.connection.error);
 
   // Update the states when the chatClient changes
   useEffect(() => {
