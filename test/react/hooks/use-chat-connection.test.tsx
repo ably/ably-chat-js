@@ -33,8 +33,8 @@ const publishStatusChange = (statusChange: ConnectionStatusChange) => {
 };
 
 // Mock the useChatClient hook
-vi.mock('../../../src/react/hooks/use-chat-client.ts', () => ({
-  useChatClient: () => mockChatClient,
+vi.mock('../../../src/react/hooks/internal/use-chat-client-context.ts', () => ({
+  useChatClientContext: () => mockChatClient,
 }));
 
 describe('useChatConnection', () => {

@@ -2,9 +2,9 @@ import * as Ably from 'ably';
 import { useEffect, useState } from 'react';
 
 import { ConnectionStatus, ConnectionStatusChange, ConnectionStatusListener } from '../../core/connection.js';
+import { useChatClientContext } from './internal/use-chat-client-context.js';
 import { useEventListenerRef } from './internal/use-event-listener-ref.js';
 import { useLogger } from './internal/use-logger.js';
-import { useChatClient } from './use-chat-client.js';
 
 /**
  * The options for the {@link useChatConnection} hook.
@@ -38,7 +38,7 @@ export interface UseChatConnectionResponse {
  * @returns The current connection status and error.
  */
 export const useChatConnection = (options?: UseChatConnectionOptions): UseChatConnectionResponse => {
-  const chatClient = useChatClient();
+  const chatClient = useChatClientContext();
   const logger = useLogger();
   logger.trace('useChatConnection();', options);
 

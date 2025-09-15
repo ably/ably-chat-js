@@ -1,20 +1,27 @@
-import * as Ably from 'ably';
-import React from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { type ChatClient } from '../../core/chat-client.js';
+import { useChatClientContext } from './internal/use-chat-client-context.js';
 
-import { ChatClient } from '../../core/chat-client.js';
-import { ChatClientContext } from '../contexts/chat-client-context.js';
-import { DEFAULT_CHAT_CLIENT_ID } from '../providers/chat-client-provider.js';
+/**
+ * The response from the {@link useChatClient} hook.
+ */
+export interface UseChatClientResponse {
+  /**
+   * The current clientId.
+   */
+  readonly clientId: string;
+}
 
 /**
  * Hook to access the chat client provided the current {@link ChatClientProvider}.
  * This hook must be used within a {@link ChatClientProvider}.
  * @throws {ErrorInfo} When the hook is not used within a {@link ChatClientProvider}.
- * @returns The {@link ChatClient} instance provided by the context.
+ * @returns A {@link UseChatClientResponse} containing information about the ChatClient.
  */
-export const useChatClient = (): ChatClient => {
-  const context = React.useContext(ChatClientContext)[DEFAULT_CHAT_CLIENT_ID];
-  if (!context) {
-    throw new Ably.ErrorInfo('useChatClient hook must be used within a chat client provider', 40000, 400);
-  }
-  return context.client;
+export const useChatClient = (): UseChatClientResponse => {
+  const client = useChatClientContext();
+
+  return {
+    clientId: client.realtime.auth.clientId,
+  };
 };

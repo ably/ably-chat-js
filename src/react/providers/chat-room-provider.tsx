@@ -4,9 +4,9 @@ import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { Room } from '../../core/room.js';
 import { RoomOptions } from '../../core/room-options.js';
 import { ChatRoomContext, ChatRoomContextType } from '../contexts/chat-room-context.js';
+import { useChatClientContext } from '../hooks/internal/use-chat-client-context.js';
 import { useLogger } from '../hooks/internal/use-logger.js';
 import { useRoomReferenceManager } from '../hooks/internal/use-room-reference-manager.js';
-import { useChatClient } from '../hooks/use-chat-client.js';
 
 /**
  * Props for the {@link ChatRoomProvider} component.
@@ -76,7 +76,7 @@ export interface ChatRoomProviderProps {
  * @returns The ChatRoomProvider component.
  */
 export const ChatRoomProvider = ({ name: roomName, options, children }: ChatRoomProviderProps): React.ReactElement => {
-  const client = useChatClient();
+  const client = useChatClientContext();
   const clientLogger = useLogger();
   const logger = useMemo(() => clientLogger.withContext({ roomName }), [clientLogger, roomName]);
   const roomReferenceManager = useRoomReferenceManager();
