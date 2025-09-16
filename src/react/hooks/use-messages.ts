@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { ErrorInfo } from 'ably';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -16,7 +18,7 @@ import {
   MessageSubscriptionResponse,
   OperationDetails,
   SendMessageParams,
-  UpdateMessageParams,
+  UpdateMessageParams
 } from '../../core/messages.js';
 import { Serial } from '../../core/serial.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';

@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { ErrorInfo } from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
 import { TypingSetEvent } from '../../core/events.js';
