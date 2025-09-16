@@ -64,22 +64,118 @@ export type RoomReactionListener = (event: RoomReactionEvent) => void;
  */
 export interface RoomReactions {
   /**
-   * Send a reaction to the room including some metadata.
+   * Sends a room-level reaction.
    *
-   * This method accepts parameters for a room-level reaction. It accepts an object
-   * @param params an object containing {name, headers, metadata} for the room
-   * reaction to be sent. Name is required, metadata and headers are optional.
-   * @throws If the `Connection` is not in the `Connected` state.
-   * @returns The returned promise resolves when the reaction was sent. Note
-   * that it is possible to receive your own reaction via the reactions
-   * listener before this promise resolves.
+   * Room reactions are ephemeral events that are not associated with specific messages.
+   * They're commonly used for live interactions like floating emojis, applause, or other
+   * real-time feedback in chat rooms. Unlike message reactions, room reactions are not
+   * persisted and are only visible to users currently connected to the room.
+   *
+   * **Note**:
+   * - The room should be attached to send room reactions.
+   * - It is possible (though unlikely) to receive your own reaction via subscription before this promise resolves.
+   *
+   * @param params - The reaction parameters
+   * @param params.name - The reaction name (e.g., "❤️", "👏", "confetti", "applause")
+   * @param params.metadata - Optional metadata for custom effects or animations
+   * @param params.headers - Optional headers for subscription filtering
+   *
+   * @returns Promise that resolves when the reaction has been sent
+   *
+   * @throws {Ably.ErrorInfo} with code 40001 if name is not provided
+   *
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * // Initialize the chat client
+   * const realtime = new Ably.Realtime({
+   *   authUrl: '/api/ably-auth', // Use token auth in production
+   *   // For development only - never use API keys in production:
+   *   // key: 'your-api-key',
+   *   // clientId: 'user-123'
+   * });
+   *
+   * const chatClient = new ChatClient(realtime);
+   * const room = await chatClient.rooms.get('live-event');
+   *
+   * await room.attach();
+   *
+   * // Send a simple room reaction
+   * try {
+   *   await room.reactions.send({
+   *     name: '❤️'
+   *   });
+   *   console.log('Heart reaction sent to room');
+   * } catch (error) {
+   *    console.error('Failed to send reaction:', error);
+   * }
+   * ```
    */
   send(params: SendReactionParams): Promise<void>;
 
   /**
-   * Subscribe to receive room-level reactions.
-   * @param listener The listener function to be called when a reaction is received.
-   * @returns A response object that allows you to control the subscription.
+   * Subscribes to room-level reaction events.
+   *
+   * Receives all room reactions sent by any user in the room. This is useful for
+   * displaying floating reactions, triggering animations, or showing live audience
+   * engagement in real-time. Room reactions are ephemeral and not persisted.
+   *
+   * **Note**: The room should be attached to receive reaction events.
+   *
+   * @param listener - Callback invoked when a room reaction is received
+   *
+   * @returns Subscription object with an unsubscribe method
+   *
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, RoomReactionEvent } from '@ably/chat';
+   *
+   * // Initialize the chat client
+   * const realtime = new Ably.Realtime({
+   *   authUrl: '/api/ably-auth', // Use token auth in production
+   *   // For development only - never use API keys in production:
+   *   // key: 'your-api-key',
+   *   // clientId: 'user-123'
+   * });
+   *
+   * const chatClient = new ChatClient(realtime);
+   * const room = await chatClient.rooms.get('webinar-room');
+   * await room.attach();
+   *
+   * // Subscribe to room reactions for live animations
+   * const subscription = room.reactions.subscribe((event: RoomReactionEvent) => {
+   *   const { reaction } = event;
+   *
+   *   console.log(`${reaction.clientId} sent ${reaction.name}`);
+   *   console.log(`Sent at: ${reaction.createdAt.toISOString()}`);
+   *
+   *   // Handle different reaction types
+   *   switch (reaction.name) {
+   *     case '❤️':
+   *       // Show floating heart animation
+   *       showFloatingHeart(reaction.isSelf ? 'own' : 'other');
+   *       break;
+   *     case '👏':
+   *       // Show applause indicator
+   *       showApplauseAnimation(reaction.clientId);
+   *       break;
+   *     default:
+   *       // Handle generic reactions
+   *       showGenericReaction(reaction.name);
+   *   }
+   *
+   *   // Check if reaction is from current user
+   *   if (reaction.isSelf) {
+   *     console.log('You sent a reaction:', reaction.name);
+   *   }
+   * });
+   *
+   * // Clean up when done
+   * subscription.unsubscribe();
+   * ```
    */
   subscribe(listener: RoomReactionListener): Subscription;
 }
