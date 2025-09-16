@@ -2,6 +2,22 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.13.0](https://github.com/ably/ably-chat-js/tree/0.13.0) (2025-09-17)
+
+### New Features
+
+- **Client Message Reactions Fetching**: Added method to fetch a client's reactions ("my reactions") in preparation for clipping at large scale. [#626](https://github.com/ably/ably-chat-js/pull/626)
+
+### Improvements
+
+- **usePresence Hook Refactor**: Improved auto-enter/leave behavior and documentation for better presence management in React applications. [#633](https://github.com/ably/ably-chat-js/pull/633)
+- **React Hook Simplification**: Removed core SDK instances from React hooks return values for cleaner API surface. [#637](https://github.com/ably/ably-chat-js/pull/637)
+- **useChatClient Hook Reactive clientId**: The `useChatClient` React hook's `clientId` property is now reactive to changes in the underlying Realtime client. [#638](https://github.com/ably/ably-chat-js/pull/638)
+
+### Documentation
+
+- **usePresence Hook Usage Guidance**: Added comprehensive examples and guidance for the usePresence hook. [#633](https://github.com/ably/ably-chat-js/pull/633)
+
 ## [0.12.0](https://github.com/ably/ably-chat-js/tree/0.12.0) (2025-09-08)
 
 ### New Features

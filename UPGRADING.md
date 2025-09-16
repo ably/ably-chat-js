@@ -2,6 +2,57 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 0.12.x to 0.13.x
+
+### usePresence Hook Changes
+
+**Expected Impact: Medium**
+
+The `usePresence` hook parameters have been updated to improve auto-enter/leave behavior and provide clearer intent.
+
+#### Parameter Changes
+
+The following parameters have been renamed or changed behavior:
+
+- `enterWithData` → `initialData` - Now only used for initial auto-enter when component mounts. Changes to this value after first render are ignored.
+- `leaveWithData` - Removed. Auto-leave now calls `leave()` without data.
+
+**Before**
+
+```ts
+import { usePresence } from '@ably/chat/react';
+
+const { update, enter, leave } = usePresence({
+  enterWithData: { status: 'online' },
+  leaveWithData: { reason: 'component_unmounted' }
+});
+```
+
+**After**
+
+```ts
+import { usePresence } from '@ably/chat/react';
+
+const { update, enter, leave } = usePresence({
+  initialData: { status: 'online' }
+  // leaveWithData removed - auto-leave calls leave() without data
+});
+```
+
+#### Behavior Changes
+
+The hook now tracks presence data internally and persists it across room re-attachments:
+
+- **Data persistence**: The latest presence data from manual `enter()` or `update()` calls is now preserved across room re-attachments
+- **Explicit leave tracking**: Calling `leave()` prevents automatic re-entry until `enter()` or `update()` is called again
+
+#### Migration Steps
+
+1. Replace `enterWithData` with `initialData`
+2. Remove `leaveWithData` parameter - the hook will automatically call `leave()` without data during auto-leave
+3. Update any code that relies on `leaveWithData` behavior to call `leave()` explicitly with the desired data
+4. Consider that `initialData` is only used for the initial mount - use `update()` or `enter()` methods to change presence data after mounting
+
 ## 0.11.x to 0.12.x
 
 No breaking changes. See [CHANGELOG.md](./CHANGELOG.md) for list of improvements.
@@ -482,7 +533,7 @@ This is because all features now share the same channel, so there is no need to 
 
 The SDK has moved from a multi-channel to a single-channel architecture underpinned by a new channel (`*::$chat`).
 This has two major effects:
-1. The new channel is now the only channel used for all features. Thus, this version of the SDK is not compatible with any previous versions of the Ably Chat SDK. 
+1. The new channel is now the only channel used for all features. Thus, this version of the SDK is not compatible with any previous versions of the Ably Chat SDK.
 2. You should no longer express capabilities for channels and REST access separately when creating token requests.
 
 Before:
