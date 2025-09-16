@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { ErrorInfo } from 'ably';
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -9,7 +11,7 @@ import {
   OperationDetails,
   QueryOptions,
   SendMessageParams,
-  UpdateMessageParams,
+  UpdateMessageParams
 } from '../../core/messages.js';
 import type {
   DeleteMessageReactionParams,
