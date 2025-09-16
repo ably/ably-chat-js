@@ -1,7 +1,7 @@
 /**
  * Interface for objects that support listeners via the on/off pattern.
  */
-interface Onable<T> {
+export interface Onable<T> {
   /**
    * Subscribe to events with a callback.
    * @param callback The callback function to be called when events occur.

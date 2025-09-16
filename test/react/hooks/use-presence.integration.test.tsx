@@ -32,14 +32,8 @@ describe('usePresence', () => {
 
     let isPresentState = false;
 
-    const TestComponent = ({
-      enterWithData,
-      leaveWithData,
-    }: {
-      enterWithData: PresenceData;
-      leaveWithData: PresenceData;
-    }) => {
-      const { update, myPresenceState } = usePresence({ enterWithData, leaveWithData });
+    const TestComponent = ({ initialData }: { initialData: PresenceData }) => {
+      const { update, myPresenceState } = usePresence({ initialData });
 
       // the effect should send a presence update
       useEffect(() => {
@@ -61,10 +55,7 @@ describe('usePresence', () => {
 
     const { unmount, rerender } = render(
       <Providers>
-        <TestComponent
-          enterWithData={'test enter'}
-          leaveWithData={'test leave'}
-        />
+        <TestComponent initialData={'test enter'} />
       </Providers>,
     );
 
@@ -89,9 +80,74 @@ describe('usePresence', () => {
     rerender(<Providers></Providers>);
 
     // expect a presence leave event from the test component to be received by the second room
+    // it will have the data of whatever was in the presence set at the time
     await waitForExpectedPresenceEvent(
-      { clientId: chatClientOne.clientId, type: PresenceEventType.Leave, data: 'test leave' },
+      { clientId: chatClientOne.clientId, type: PresenceEventType.Leave, data: 'test update' },
       presenceEventsRoomTwo,
+    );
+
+    // cleanup
+    unmount();
+  }, 20000);
+
+  it('should update presence state when room detaches and reattaches', async () => {
+    const chatClient = newChatClient();
+    const roomName = randomRoomName();
+
+    let presenceState = { present: false };
+
+    const TestComponent = () => {
+      const { myPresenceState } = usePresence({ initialData: { status: 'online' } });
+
+      presenceState = myPresenceState;
+
+      return null;
+    };
+
+    const Providers = ({ children }: React.PropsWithChildren) => (
+      <ChatClientProvider client={chatClient}>
+        <ChatRoomProvider name={roomName}>{children}</ChatRoomProvider>
+      </ChatClientProvider>
+    );
+
+    const { unmount } = render(
+      <Providers>
+        <TestComponent />
+      </Providers>,
+    );
+
+    // Get the room instance to control its state
+    const room = await chatClient.rooms.get(roomName);
+
+    // Wait for room to attach and presence to be present
+    await room.attach();
+    await waitFor(
+      () => {
+        expect(presenceState.present).toBe(true);
+      },
+      { timeout: 5000 },
+    );
+
+    // Detach the room
+    await room.detach();
+
+    // Wait for presence state to become false
+    await waitFor(
+      () => {
+        expect(presenceState.present).toBe(false);
+      },
+      { timeout: 5000 },
+    );
+
+    // Reattach the room
+    await room.attach();
+
+    // Wait for presence state to become true again
+    await waitFor(
+      () => {
+        expect(presenceState.present).toBe(true);
+      },
+      { timeout: 5000 },
     );
 
     // cleanup

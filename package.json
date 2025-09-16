@@ -45,7 +45,7 @@
     "demo:reload": "npm run build && cd demo && npm i file:../",
     "docs": "typedoc",
     "modulereport": "tsc --noEmit --esModuleInterop scripts/moduleReport.ts && esr scripts/moduleReport.ts",
-    "cspell": "cspell '{src,test}/**' './*.md'",
+    "cspell": "cspell --quiet '{src,test}/**' './*.md'",
     "test:no-integration": "vitest run --exclude \"test/**/*.integration.test.ts?(x)\"",
     "precommit": "npm run format:check && npm run lint && npm run test:typescript"
   },
