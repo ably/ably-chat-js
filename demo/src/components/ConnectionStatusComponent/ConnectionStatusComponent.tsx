@@ -18,8 +18,7 @@ const STATUS_MAP: Record<string, { text: string; color: string }> = {
 
 export const ConnectionStatusComponent: React.FC = () => {
   const { currentStatus } = useChatConnection();
-  const chatClient = useChatClient();
-  const clientId = chatClient.clientId;
+  const { clientId } = useChatClient();
   const [editableClientId, setEditableClientId] = useState(clientId);
 
   const handleClientIdChange = (e: ChangeEvent<HTMLInputElement>) => {

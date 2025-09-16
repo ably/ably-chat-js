@@ -49,8 +49,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
   onReactionSend,
   onReactionDelete,
 }) => {
-  const client = useChatClient();
-  const clientId = client.clientId;
+  const { clientId } = useChatClient();
 
   const handleMessageUpdate = useCallback(
     (e: React.UIEvent) => {

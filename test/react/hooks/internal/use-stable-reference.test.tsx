@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useStableReference } from '../../../src/react/helper/use-stable-reference.js';
+import { useStableReference } from '../../../../src/react/hooks/internal/use-stable-reference.js';
 
 describe('useStableReference', () => {
   it('creates a ref', () => {

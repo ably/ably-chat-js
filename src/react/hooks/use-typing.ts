@@ -1,19 +1,17 @@
-import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
 import { TypingSetEvent } from '../../core/events.js';
 import { RoomStatus } from '../../core/room-status.js';
 import { Typing, TypingListener } from '../../core/typing.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
-import { useEventListenerRef } from '../helper/use-event-listener-ref.js';
-import { useEventualRoomProperty } from '../helper/use-eventual-room.js';
-import { useRoomContext } from '../helper/use-room-context.js';
-import { useRoomStatus } from '../helper/use-room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
 import { StatusParams } from '../types/status-params.js';
+import { useEventListenerRef } from './internal/use-event-listener-ref.js';
+import { useRoomLogger } from './internal/use-logger.js';
+import { useRoomContext } from './internal/use-room-context.js';
+import { useRoomStatus } from './internal/use-room-status.js';
 import { useChatConnection } from './use-chat-connection.js';
-import { useRoomLogger } from './use-logger.js';
 
 /**
  * The parameters for the {@link useTyping} hook.
@@ -43,22 +41,10 @@ export interface UseTypingResponse extends ChatStatusResponse {
    * It automatically updates based on typing events received from the room.
    */
   readonly currentlyTyping: TypingSetEvent['currentlyTyping'];
-
-  /**
-   * Provides access to the underlying {@link Typing} instance of the room.
-   */
-  readonly typingIndicators?: Typing;
-
-  /**
-   * A state value representing the current error state of the hook, this will be an instance of {@link Ably.ErrorInfo} or `undefined`.
-   * An error can occur during mount when initially fetching the current typing state; this does not mean that further
-   * updates will not be received, and so the hook might recover from this state on its own.
-   */
-  readonly error?: Ably.ErrorInfo;
 }
 
 /**
- * A hook that provides access to the {@link Typing} instance in the room.
+ * A hook that provides access to typing state (e.g. currently typing clients) of the room.
  * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
  * @param params - Allows the registering of optional callbacks.
  * @returns UseTypingResponse - An object containing the {@link Typing} instance and methods to interact with it.
@@ -150,7 +136,6 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   const stop = useCallback(() => context.room.then((room) => room.typing.stop()), [context]);
 
   return {
-    typingIndicators: useEventualRoomProperty((room) => room.typing),
     connectionStatus,
     connectionError,
     roomStatus,

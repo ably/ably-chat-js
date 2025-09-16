@@ -12,7 +12,7 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
     },
   });
 
-  const clientId = useChatClient().clientId;
+  const { clientId } = useChatClient();
 
   const renderPresentMember = (presentMember: PresenceMember, index: number) => {
     let status: string;

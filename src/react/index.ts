@@ -5,6 +5,7 @@
 export { type ChatClientContextProviderProps } from './contexts/chat-client-context.js';
 export { ChatRoomContext, type ChatRoomContextType } from './contexts/chat-room-context.js';
 export { useChatClient } from './hooks/use-chat-client.js';
+export { type UseChatClientResponse } from './hooks/use-chat-client.js';
 export {
   useChatConnection,
   type UseChatConnectionOptions,

@@ -12,8 +12,7 @@ interface ChatBoxComponentProps {}
 export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
-  const chatClient = useChatClient();
-  const clientId = chatClient.clientId;
+  const { clientId } = useChatClient();
 
   const { historyBeforeSubscribe, deleteMessage, updateMessage, sendReaction, deleteReaction } = useMessages({
     listener: (event: ChatMessageEvent) => {

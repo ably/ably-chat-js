@@ -8,10 +8,9 @@ import { RoomReactionEventType } from '../../../src/core/events.js';
 import { Room } from '../../../src/core/room.js';
 import { RoomReactionListener } from '../../../src/core/room-reactions.js';
 import { RoomStatus } from '../../../src/core/room-status.js';
-import { useRoomReactions } from '../../../src/react/hooks/use-room-reactions.js';
+import { useRoomReactions, UseRoomReactionsParams } from '../../../src/react/hooks/use-room-reactions.js';
 import { makeTestLogger } from '../../helper/logger.js';
 import { makeRandomRoom } from '../../helper/room.js';
-import { waitForEventualHookValue, waitForEventualHookValueToBeDefined } from '../../helper/wait-for-eventual-hook.js';
 
 let mockRoom: Room;
 let mockLogger: ReturnType<typeof makeTestLogger>;
@@ -22,18 +21,18 @@ vi.mock('../../../src/react/hooks/use-chat-connection.js', () => ({
   useChatConnection: () => ({ currentStatus: ConnectionStatus.Connected }),
 }));
 
-vi.mock('../../../src/react/helper/use-room-context.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-context.js', () => ({
   useRoomContext: () => {
     mockLogger.debug('useRoomContext() called;');
     return mockRoomContext;
   },
 }));
 
-vi.mock('../../../src/react/helper/use-room-status.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-room-status.js', () => ({
   useRoomStatus: () => ({ status: RoomStatus.Attached }),
 }));
 
-vi.mock('../../../src/react/hooks/use-logger.js', () => ({
+vi.mock('../../../src/react/hooks/internal/use-logger.js', () => ({
   useRoomLogger: () => mockLogger,
 }));
 
@@ -56,13 +55,8 @@ describe('useRoomReactions', () => {
     cleanup();
   });
 
-  it('should provide the room reactions instance and correct chat status response metrics', async () => {
+  it('should provide the room reactions instance and correct chat status response metrics', () => {
     const { result } = renderHook(() => useRoomReactions());
-
-    // check that the room reactions instance is correctly provided - eventually
-    await vi.waitFor(() => {
-      expect(result.current.reactions).toBe(mockRoom.reactions);
-    });
 
     // check connection and room metrics are correctly provided
     expect(result.current.roomStatus).toBe(RoomStatus.Attached);
@@ -109,28 +103,29 @@ describe('useRoomReactions', () => {
     // update the mock room with the new reactions object
     updateMockRoom({ ...mockRoom, reactions: mockReactions });
 
-    const { result, unmount } = renderHook(() => useRoomReactions({ listener: mockListener }));
-    await waitForEventualHookValueToBeDefined(result, (value) => value.reactions);
+    const { unmount } = renderHook(() => useRoomReactions({ listener: mockListener }));
 
     // verify that subscribe was called with the mock listener on mount by triggering a reaction event
-    const reaction = {
-      name: 'like',
-      user: { id: 'user1' },
-      metadata: { test: 'data' },
-      headers: {},
-      createdAt: new Date(),
-      clientId: 'client1',
-      isSelf: false,
-    };
-    for (const listener of mockReactions.listeners) {
-      listener({
+    await vi.waitFor(() => {
+      const reaction = {
+        name: 'like',
+        user: { id: 'user1' },
+        metadata: { test: 'data' },
+        headers: {},
+        createdAt: new Date(),
+        clientId: 'client1',
+        isSelf: false,
+      };
+      for (const listener of mockReactions.listeners) {
+        listener({
+          type: RoomReactionEventType.Reaction,
+          reaction,
+        });
+      }
+      expect(mockListener).toHaveBeenCalledWith({
         type: RoomReactionEventType.Reaction,
         reaction,
       });
-    }
-    expect(mockListener).toHaveBeenCalledWith({
-      type: RoomReactionEventType.Reaction,
-      reaction,
     });
 
     // unmount the hook and verify that unsubscribe was called
@@ -139,20 +134,39 @@ describe('useRoomReactions', () => {
   });
 
   it('should handle rerender if the room instance changes', async () => {
-    const { result, rerender } = renderHook(() => useRoomReactions());
+    const mockOff = vi.fn();
+    const listeners = new Set<DiscontinuityListener>();
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+      listeners.add(listener);
+      return { off: mockOff };
+    });
 
-    // check the initial state of the reactions object
-    await waitForEventualHookValue(result, mockRoom.reactions, (value) => value.reactions);
+    const { rerender } = renderHook((props: UseRoomReactionsParams) => useRoomReactions(props), {
+      initialProps: {
+        onDiscontinuity: vi.fn(),
+      },
+    });
 
-    // change the mock room instance
+    await vi.waitFor(() => {
+      expect(mockRoom.onDiscontinuity).toHaveBeenCalledTimes(1);
+    });
+
+    // change the mock room instance, making it not attached
     updateMockRoom(makeRandomRoom());
-    mockLogger.debug('rerendering with new room instance');
+    vi.spyOn(mockRoom, 'onDiscontinuity').mockImplementation((listener: DiscontinuityListener) => {
+      listeners.add(listener);
+      return { off: mockOff };
+    });
+
+    expect(mockRoom.onDiscontinuity).toHaveBeenCalledTimes(0);
 
     // re-render to trigger the useEffect
-    rerender();
+    rerender({ onDiscontinuity: vi.fn() });
 
-    // check that the room reactions instance is updated
-    await waitForEventualHookValue(result, mockRoom.reactions, (value) => value.reactions);
+    // check that the room presence instance is updated
+    await vi.waitFor(() => {
+      expect(mockRoom.onDiscontinuity).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('should subscribe and unsubscribe to discontinuity events', async () => {
@@ -167,14 +181,15 @@ describe('useRoomReactions', () => {
     });
 
     // render the hook with a discontinuity listener
-    const { result, unmount } = renderHook(() => useRoomReactions({ onDiscontinuity: mockDiscontinuityListener }));
-    await waitForEventualHookValueToBeDefined(result, (value) => value.reactions);
+    const { unmount } = renderHook(() => useRoomReactions({ onDiscontinuity: mockDiscontinuityListener }));
 
     // check that the listener was subscribed to the discontinuity events by triggering one
-    const errorInfo = new Ably.ErrorInfo('test', 50000, 500);
-    expect(discontinuityListener).toBeDefined();
-    discontinuityListener?.(errorInfo);
-    expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
+    await vi.waitFor(() => {
+      const errorInfo = new Ably.ErrorInfo('test', 50000, 500);
+      expect(discontinuityListener).toBeDefined();
+      discontinuityListener?.(errorInfo);
+      expect(mockDiscontinuityListener).toHaveBeenCalledWith(errorInfo);
+    });
 
     // unmount the hook and verify that the listener was unsubscribed
     unmount();

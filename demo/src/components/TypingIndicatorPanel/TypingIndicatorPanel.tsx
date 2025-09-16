@@ -4,8 +4,7 @@ import { useChatClient, useTyping } from '@ably/chat/react';
 interface TypingIndicatorPanelProps {}
 
 export const TypingIndicatorPanel: FC<TypingIndicatorPanelProps> = () => {
-  const chatClient = useChatClient();
-  const clientId = chatClient.clientId;
+  const { clientId } = useChatClient();
   const { currentlyTyping } = useTyping();
 
   // Filter out the current user from the list of typing users
