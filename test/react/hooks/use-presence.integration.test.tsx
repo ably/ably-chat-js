@@ -20,6 +20,7 @@ describe('usePresence', () => {
     // create new clients
     const chatClientOne = newChatClient();
     const chatClientTwo = newChatClient();
+    const logger = chatClientTwo.logger;
 
     // create a second room and attach it, so we can listen for presence events
     const roomName = randomRoomName();
@@ -28,9 +29,18 @@ describe('usePresence', () => {
 
     // start listening for presence events on room two
     const presenceEventsRoomTwo: PresenceEvent[] = [];
-    roomTwo.presence.subscribe((presenceEvent) => presenceEventsRoomTwo.push(presenceEvent));
+    roomTwo.presence.subscribe((presenceEvent) => {
+      logger.debug('received presence event', presenceEvent);
+      presenceEventsRoomTwo.push(presenceEvent);
+    });
 
     let isPresentState = false;
+
+    // Before we mount the component, we're going to call presence.get() to force
+    // the SYNC to complete. If we don't do this, then events later may be either
+    // present OR enter, which is brittle to assert on. This guarantees that we get enter
+    // by not entering presence until sync is complete.
+    await roomTwo.presence.get();
 
     const TestComponent = ({ initialData }: { initialData: PresenceData }) => {
       const { update, myPresenceState } = usePresence({ initialData });
