@@ -1,7 +1,9 @@
 import { cleanup, render } from '@testing-library/react';
+import * as Ably from 'ably';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import EventEmitter from '../../../src/core/utils/event-emitter.ts';
 import { useChatClient } from '../../../src/react/hooks/use-chat-client.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
@@ -75,27 +77,123 @@ describe('useChatClient', () => {
     expect(clientId1).toEqual(clientId2);
   });
 
-  it('should handle context updates correctly', () => {
+  it('should handle context updates correctly', async () => {
     const client1 = newChatClient();
     const client2 = newChatClient();
+
+    let clientId: string | undefined;
     const { rerender } = render(
       <ChatClientProvider client={client1}>
         <TestComponent
-          callback={(clientId) => {
-            expect(clientId).toEqual(client1.clientId);
+          callback={(id) => {
+            clientId = id;
           }}
         />
       </ChatClientProvider>,
     );
 
+    // Wait for the clientId
+    await vi.waitFor(() => {
+      expect(clientId).toEqual(client1.clientId);
+    });
+
     rerender(
       <ChatClientProvider client={client2}>
         <TestComponent
-          callback={(clientId) => {
-            expect(clientId).toEqual(client2.clientId);
+          callback={(id) => {
+            clientId = id;
           }}
         />
       </ChatClientProvider>,
     );
+
+    // Wait for the clientId
+    await vi.waitFor(() => {
+      expect(clientId).toEqual(client2.clientId);
+    });
+  });
+
+  it('should update the clientId whenever connection status becomes connected', async () => {
+    const client = newChatClient();
+    // Start the connection state as disconnected
+    const connectionEmitter = (
+      client.realtime.connection as unknown as {
+        eventEmitter: EventEmitter<{
+          ['connected']: Ably.ConnectionStateChange;
+          ['disconnected']: Ably.ConnectionStateChange;
+        }>;
+      }
+    ).eventEmitter;
+    connectionEmitter.emit('disconnected', {
+      current: 'disconnected',
+      previous: 'initialized',
+    });
+
+    let clientId: string | undefined;
+    const { rerender } = render(
+      <ChatClientProvider client={client}>
+        <TestComponent
+          callback={(id) => {
+            clientId = id;
+          }}
+        />
+      </ChatClientProvider>,
+    );
+
+    // Wait for the clientId
+    await vi.waitFor(() => {
+      expect(clientId).toEqual(client.clientId);
+    });
+
+    // Now we're going to change the clientId on the client and simulate a connection change
+    vi.spyOn(client.realtime.auth, 'clientId', 'get').mockReturnValue('some-other-clientId');
+    connectionEmitter.emit('connected', {
+      current: 'connected',
+      previous: 'disconnected',
+    });
+
+    rerender(
+      <ChatClientProvider client={client}>
+        <TestComponent
+          callback={(id) => {
+            clientId = id;
+          }}
+        />
+      </ChatClientProvider>,
+    );
+
+    // Wait for the clientId
+    await vi.waitFor(() => {
+      expect(clientId).toEqual('some-other-clientId');
+    });
+  });
+
+  it('subscribe and unsubscribe connection listeners', async () => {
+    const client = newChatClient();
+    const off = vi.fn();
+    let subscribed = false;
+    vi.spyOn(client.connection, 'onStatusChange').mockImplementation(() => {
+      subscribed = true;
+      return { off };
+    });
+
+    const { unmount } = render(
+      <ChatClientProvider client={client}>
+        <TestComponent callback={() => {}} />
+      </ChatClientProvider>,
+    );
+
+    // Wait for the subscription
+    await vi.waitFor(() => {
+      expect(subscribed).toEqual(true);
+    });
+
+    // Unmount
+    unmount();
+
+    // Wait for the clientId
+    await vi.waitFor(() => {
+      expect(off).toHaveBeenCalledTimes(1);
+    });
   });
 });
