@@ -274,8 +274,9 @@ export interface Presence {
    * Updates the presence data for the current user in the chat room.
    * Emits an 'update' event to all subscribers. If the user is not already present, they will be entered automatically.
    *
-   * **Note**: The room must be attached before calling this method.
-   * **Note**: This method uses PUT-like semantics - the entire presence data is replaced with the new value.
+   * **Note**:
+   * - The room must be attached before calling this method.
+   * - This method uses PUT-like semantics - the entire presence data is replaced with the new value.
    *
    * @param data - JSON-serializable data to replace the user's current presence data
    *
@@ -388,8 +389,9 @@ export interface Presence {
   /**
    * Subscribes to specific presence events in the chat room.
    *
-   * **Note**: Requires `enableEvents` to be true in the room's presence options.
-   * **Note**: The room must be attached to receive events.
+   * **Note**:
+   * - Requires `enableEvents` to be true in the room's presence options.
+   * - The room must be attached to receive events.
    *
    * @param eventOrEvents - Single event type or array of event types to subscribe to ('enter', 'leave', 'update', 'present')
    * @param listener - Callback function invoked when matching events occur
@@ -452,8 +454,9 @@ export interface Presence {
   /**
    * Subscribes to all presence events in the chat room.
    *
-   * **Note**: Requires `enableEvents` to be true in the room's presence options.
-   * **Note**: The room must be attached to receive events in real-time.
+   * **Note**:
+   * - Requires `enableEvents` to be true in the room's presence options.
+   * - The room must be attached to receive events in real-time.
    *
    * @param listener - Callback function invoked when any presence event occurs
    *
