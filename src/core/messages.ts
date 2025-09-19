@@ -190,8 +190,25 @@ export interface MessageSubscriptionResponse extends Subscription {
    * fill any gaps in the message history.
    *
    * ```typescript
-   * const { historyBeforeSubscribe } = room.messages.subscribe(listener);
-   * await historyBeforeSubscribe({ limit: 10 });
+   * await room.attach(); // Ensure room is attached
+   *
+   * // Subscribe a listener to message events
+   * const subscription = room.messages.subscribe((event) => {
+   *  console.log(`Message ${event.type}:`, event.message.text)
+   *  });
+   *
+   * // Get historical messages before subscription
+   * try {
+   *   const history = await subscription.historyBeforeSubscribe({ limit: 50 });
+   *   console.log(`Retrieved ${history.items.length} historical messages`);
+   *
+   *   // Process historical messages
+   *   history.items.forEach(message => {
+   *     console.log(`Historical: ${message.text} from ${message.clientId}`);
+   *   });
+   * } catch (error) {
+   *   console.error('Failed to retrieve message history:', error);
+   * }
    * ```
    * @param params Parameters for the history query.
    * @returns A promise that resolves with the paginated result of messages, in newest-to-oldest order.
@@ -226,11 +243,11 @@ export interface Messages {
    * import { ChatClient } from '@ably/chat';
    *
    * // Initialize the chat client
-   * // Note: Use token-based authentication in production for security
    * const realtime = new Ably.Realtime({
-   *   key: 'your-ably-api-key', // Use tokens in production
+   *   key: 'your-ably-api-key', // Only use API keys in development or if running server-side
    *   clientId: 'user-123'
    * });
+   *
    * const chatClient = new ChatClient(realtime);
    *
    * // Get a room and subscribe to messages
@@ -255,19 +272,6 @@ export interface Messages {
    *       break;
    *   }
    * });
-   *
-   * // Get historical messages before subscription
-   * try {
-   *   const history = await subscription.historyBeforeSubscribe({ limit: 50 });
-   *   console.log(`Retrieved ${history.items.length} historical messages`);
-   *
-   *   // Process historical messages
-   *   history.items.forEach(message => {
-   *     console.log(`Historical: ${message.text} from ${message.clientId}`);
-   *   });
-   * } catch (error) {
-   *   console.error('Failed to retrieve message history:', error);
-   * }
    *
    * // Later, unsubscribe when done
    * subscription.unsubscribe();
@@ -522,10 +526,10 @@ export interface Messages {
    * from the realtime channel. Subscribers may see the update event before this method
    * completes.
    *
-   * **Note**: This method uses PUT-like semantics. If metadata or headers are omitted
+   * **Note**:
+   * - This method uses PUT-like semantics. If metadata or headers are omitted
    * from updateParams, they will be replaced with empty objects, not merged with existing values.
-   *
-   * **Note**: The returned Message instance represents the state after the update. If you
+   * - The returned Message instance represents the state after the update. If you
    * have active subscriptions, use the event payloads from those subscriptions instead
    * of the returned instance for consistency.
    *
