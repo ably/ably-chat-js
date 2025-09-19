@@ -81,8 +81,9 @@ export interface Rooms {
    * call `get()` to create a new instance. This method only releases the reference
    * and detaches from Ably; it doesn't unsubscribe existing event listeners.
    *
-   * **Note**: Calling release aborts any in-progress `get` calls for the same room.
-   * **Note**: The room object becomes unusable after release.
+   * **Note**:
+   * - Calling release aborts any in-progress `get` calls for the same room.
+   * - The room object becomes unusable after release.
    *
    * @param name - The unique identifier of the room to release
    *
