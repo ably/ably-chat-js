@@ -178,8 +178,8 @@ describe('useMessages', () => {
     expect(update?.text).toBe('hello universe');
     expect(update?.metadata).toEqual({ icon: 'universe' });
     expect(update?.action).toBe(ChatMessageAction.MessageUpdate);
-    expect(update?.operation?.description).toBe('make it better');
-    expect(update?.operation?.metadata).toEqual({ something: 'else' });
+    expect(update?.version.description).toBe('make it better');
+    expect(update?.version.metadata).toEqual({ something: 'else' });
   }, 10000);
 
   it('should receive messages on a subscribed listener', async () => {

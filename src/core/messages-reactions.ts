@@ -227,20 +227,20 @@ export class DefaultMessageReactions implements MessagesReactions {
       return;
     }
 
-    if (!event.summary) {
-      // This means the summary is now empty, which is valid.
-      // Happens when there are no reactions such as after deleting the last reaction.
-      event.summary = {};
-    }
+    // As Chat uses mutable messages, we know that `serial` will be defined, so this cast is ok
+    const serial = event.serial as unknown as string;
 
-    const unique = (event.summary[ReactionAnnotationType.Unique] ?? {}) as unknown as Ably.SummaryUniqueValues;
-    const distinct = (event.summary[ReactionAnnotationType.Distinct] ?? {}) as unknown as Ably.SummaryDistinctValues;
-    const multiple = (event.summary[ReactionAnnotationType.Multiple] ?? {}) as Ably.SummaryMultipleValues;
+    // Set the reaction types from the summary
+    const summary = event.annotations.summary;
+
+    const unique = (summary[ReactionAnnotationType.Unique] ?? {}) as unknown as Ably.SummaryUniqueValues;
+    const distinct = (summary[ReactionAnnotationType.Distinct] ?? {}) as unknown as Ably.SummaryDistinctValues;
+    const multiple = (summary[ReactionAnnotationType.Multiple] ?? {}) as Ably.SummaryMultipleValues;
 
     this._emitter.emit(MessageReactionEventType.Summary, {
       type: MessageReactionEventType.Summary,
       summary: {
-        messageSerial: event.serial,
+        messageSerial: serial,
         unique: unique,
         distinct: distinct,
         multiple: multiple,

@@ -27,7 +27,7 @@ describe('config', () => {
         statusCode: 400,
       })
       .then(() => {
-        expect(realtime.request).toHaveBeenCalledWith('GET', '/chat/v3/rooms/test/occupancy', 3, undefined, undefined);
+        expect(realtime.request).toHaveBeenCalledWith('GET', '/chat/v4/rooms/test/occupancy', 3, undefined, undefined);
       });
   });
 
@@ -103,7 +103,7 @@ describe('getClientReactions', () => {
 
     expect(requestSpy).toHaveBeenCalledWith(
       'GET',
-      '/chat/v3/rooms/room123/messages/msg-serial-123/client-reactions',
+      '/chat/v4/rooms/room123/messages/msg-serial-123/client-reactions',
       3,
       { forClientId: 'client123' },
       undefined,
@@ -124,7 +124,7 @@ describe('getClientReactions', () => {
 
     expect(requestSpy).toHaveBeenCalledWith(
       'GET',
-      '/chat/v3/rooms/room123/messages/msg-serial-123/client-reactions',
+      '/chat/v4/rooms/room123/messages/msg-serial-123/client-reactions',
       3,
       {},
       undefined,

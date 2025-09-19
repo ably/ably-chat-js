@@ -30,8 +30,10 @@ type ApiHistoryQueryParams = Omit<HistoryQueryParams, 'orderBy'> & {
 };
 
 export interface CreateMessageResponse {
+  /** The serial of the message */
   serial: string;
-  createdAt: number;
+  /** The timestamp of the message */
+  timestamp: number;
 }
 
 interface SendMessageParams {
@@ -40,29 +42,9 @@ interface SendMessageParams {
   headers?: MessageHeaders;
 }
 
-/**
- * Represents the response for deleting or updating a message.
- */
-export interface MessageOperationResponse {
-  /**
-   * The new message version.
-   */
-  version: string;
+type UpdateMessageResponse = RestMessage;
 
-  /**
-   * The timestamp of the operation.
-   */
-  timestamp: number;
-
-  /**
-   * The message that was created or updated.
-   */
-  message: RestMessage;
-}
-
-type UpdateMessageResponse = MessageOperationResponse;
-
-type DeleteMessageResponse = MessageOperationResponse;
+type DeleteMessageResponse = RestMessage;
 
 interface UpdateMessageParams {
   /**
@@ -165,7 +147,7 @@ export class ChatApi {
     }
 
     const data = await this._makeAuthorizedPaginatedRequest<RestMessage>(
-      `/chat/v3/rooms/${roomName}/messages`,
+      `/chat/v4/rooms/${roomName}/messages`,
       apiParams,
     );
     return this._recursivePaginateMessages(data);
@@ -194,7 +176,7 @@ export class ChatApi {
     const encodedSerial = encodeURIComponent(serial);
     roomName = encodeURIComponent(roomName);
     const restMessage = await this._makeAuthorizedRequest<RestMessage>(
-      `/chat/v3/rooms/${roomName}/messages/${encodedSerial}`,
+      `/chat/v4/rooms/${roomName}/messages/${encodedSerial}`,
       'GET',
     );
     return messageFromRest(restMessage);
@@ -208,7 +190,7 @@ export class ChatApi {
     serial = encodeURIComponent(serial);
     roomName = encodeURIComponent(roomName);
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
-      `/chat/v3/rooms/${roomName}/messages/${serial}/delete`,
+      `/chat/v4/rooms/${roomName}/messages/${serial}/delete`,
       'POST',
       body,
       {},
@@ -228,14 +210,14 @@ export class ChatApi {
       body.headers = params.headers;
     }
     roomName = encodeURIComponent(roomName);
-    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v3/rooms/${roomName}/messages`, 'POST', body);
+    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v4/rooms/${roomName}/messages`, 'POST', body);
   }
 
   updateMessage(roomName: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
     const encodedSerial = encodeURIComponent(serial);
     roomName = encodeURIComponent(roomName);
     return this._makeAuthorizedRequest<UpdateMessageResponse>(
-      `/chat/v3/rooms/${roomName}/messages/${encodedSerial}`,
+      `/chat/v4/rooms/${roomName}/messages/${encodedSerial}`,
       'PUT',
       params,
     );
@@ -244,14 +226,14 @@ export class ChatApi {
   sendMessageReaction(roomName: string, serial: string, data: SendMessageReactionParams): Promise<void> {
     const encodedSerial = encodeURIComponent(serial);
     roomName = encodeURIComponent(roomName);
-    return this._makeAuthorizedRequest(`/chat/v3/rooms/${roomName}/messages/${encodedSerial}/reactions`, 'POST', data);
+    return this._makeAuthorizedRequest(`/chat/v4/rooms/${roomName}/messages/${encodedSerial}/reactions`, 'POST', data);
   }
 
   deleteMessageReaction(roomName: string, serial: string, data: DeleteMessageReactionParams): Promise<void> {
     const encodedSerial = encodeURIComponent(serial);
     roomName = encodeURIComponent(roomName);
     return this._makeAuthorizedRequest(
-      `/chat/v3/rooms/${roomName}/messages/${encodedSerial}/reactions`,
+      `/chat/v4/rooms/${roomName}/messages/${encodedSerial}/reactions`,
       'DELETE',
       undefined,
       data,
@@ -263,7 +245,7 @@ export class ChatApi {
     roomName = encodeURIComponent(roomName);
     const params = clientId ? { forClientId: clientId } : {};
     return this._makeAuthorizedRequest<Message['reactions']>(
-      `/chat/v3/rooms/${roomName}/messages/${encodedSerial}/client-reactions`,
+      `/chat/v4/rooms/${roomName}/messages/${encodedSerial}/client-reactions`,
       'GET',
       undefined,
       params,
@@ -272,7 +254,7 @@ export class ChatApi {
 
   getOccupancy(roomName: string): Promise<OccupancyData> {
     roomName = encodeURIComponent(roomName);
-    return this._makeAuthorizedRequest<OccupancyData>(`/chat/v3/rooms/${roomName}/occupancy`, 'GET');
+    return this._makeAuthorizedRequest<OccupancyData>(`/chat/v4/rooms/${roomName}/occupancy`, 'GET');
   }
 
   private async _makeAuthorizedRequest<RES = undefined>(

@@ -23,27 +23,44 @@ export type MessageHeaders = Headers;
 export type MessageMetadata = Metadata;
 
 /**
- * {@link OperationMetadata} type for a chat messages {@link Operation}.
+ * {@link OperationMetadata} type for a chat message. Contains information about an update or deletion operation.
  */
 export type MessageOperationMetadata = OperationMetadata;
 
 /**
  * Represents the detail of a message deletion or update.
  */
-export interface Operation {
+export interface Version {
+  /**
+   * A unique identifier for the latest version of this message.
+   */
+  serial?: string;
+
+  /**
+   * The timestamp at which this version was updated, deleted, or created.
+   */
+  timestamp?: Date;
+
   /**
    * The optional clientId of the user who performed the update or deletion.
    */
   clientId?: string;
+
   /**
    * The optional description for the update or deletion.
    */
   description?: string;
+
   /**
    * The optional metadata associated with the update or deletion.
    */
   metadata?: MessageOperationMetadata;
 }
+
+/**
+ * A helper for versions that we know have a serial.
+ */
+type VersionWithSerial = Required<Pick<Version, 'serial'>>;
 
 /**
  * Represents a single message in a chat room.
@@ -67,7 +84,7 @@ export interface Message {
   /**
    * The timestamp at which the message was created.
    */
-  readonly createdAt: Date;
+  readonly timestamp: Date;
 
   /**
    * The metadata of a chat message. Allows for attaching extra info to a message,
@@ -104,20 +121,9 @@ export interface Message {
   readonly action: ChatMessageAction;
 
   /**
-   * A unique identifier for the latest version of this message.
+   * Information about the latest version of this message.
    */
-  readonly version: string;
-
-  /**
-   * The timestamp at which this version was updated, deleted, or created.
-   */
-  readonly timestamp: Date;
-
-  /**
-   * The details of the operation that modified the message. This is only set for update and delete actions. It contains
-   * information about the operation: the clientId of the user who performed the operation, a description, and metadata.
-   */
-  readonly operation?: Operation;
+  readonly version: Version;
 
   /**
    * The reactions summary for this message.
@@ -296,11 +302,9 @@ export interface DefaultMessageParams {
   metadata: MessageMetadata;
   headers: MessageHeaders;
   action: ChatMessageAction;
-  version: string;
-  createdAt: Date;
+  version: Version;
   timestamp: Date;
   reactions: MessageReactions;
-  operation?: Operation;
 }
 
 /**
@@ -315,11 +319,9 @@ export class DefaultMessage implements Message {
   public readonly metadata: MessageMetadata;
   public readonly headers: MessageHeaders;
   public readonly action: ChatMessageAction;
-  public readonly version: string;
-  public readonly createdAt: Date;
+  public readonly version: Version;
   public readonly timestamp: Date;
   public readonly reactions: MessageReactions;
-  public readonly operation?: Operation;
 
   constructor({
     serial,
@@ -329,10 +331,8 @@ export class DefaultMessage implements Message {
     headers,
     action,
     version,
-    createdAt,
     timestamp,
     reactions,
-    operation,
   }: DefaultMessageParams) {
     this.serial = serial;
     this.clientId = clientId;
@@ -341,11 +341,10 @@ export class DefaultMessage implements Message {
     this.headers = headers;
     this.action = action;
     this.version = version;
-    this.createdAt = createdAt;
     this.timestamp = timestamp;
     this.reactions = reactions;
-    this.operation = operation;
     // The object is frozen after constructing to enforce readonly at runtime too
+    Object.freeze(this.version);
     Object.freeze(this.reactions);
     Object.freeze(this.reactions.multiple);
     Object.freeze(this.reactions.distinct);
@@ -362,43 +361,51 @@ export class DefaultMessage implements Message {
   }
 
   get updatedBy(): string | undefined {
-    return this.isUpdated ? this.operation?.clientId : undefined;
+    return this.isUpdated ? this.version.clientId : undefined;
   }
 
   get deletedBy(): string | undefined {
-    return this.isDeleted ? this.operation?.clientId : undefined;
+    return this.isDeleted ? this.version.clientId : undefined;
   }
 
   get updatedAt(): Date | undefined {
-    return this.isUpdated ? this.timestamp : undefined;
+    return this.isUpdated ? this.version.timestamp : undefined;
   }
 
   get deletedAt(): Date | undefined {
-    return this.isDeleted ? this.timestamp : undefined;
+    return this.isDeleted ? this.version.timestamp : undefined;
   }
 
   isOlderVersionOf(message: Message): boolean {
-    if (!this.equal(message)) {
-      return false;
-    }
-
-    return this.version < message.version;
+    return this._compareVersions(
+      this,
+      message,
+      (first: VersionWithSerial, second: VersionWithSerial) => first.serial < second.serial,
+    );
   }
 
   isNewerVersionOf(message: Message): boolean {
-    if (!this.equal(message)) {
-      return false;
-    }
-
-    return this.version > message.version;
+    return this._compareVersions(
+      this,
+      message,
+      (first: VersionWithSerial, second: VersionWithSerial) => first.serial > second.serial,
+    );
   }
 
   isSameVersionAs(message: Message): boolean {
-    if (!this.equal(message)) {
-      return false;
-    }
+    return this._compareVersions(
+      this,
+      message,
+      (first: VersionWithSerial, second: VersionWithSerial) => first.serial === second.serial,
+    );
+  }
 
-    return this.version === message.version;
+  _isNewerOrSameVersionOf(message: Message): boolean {
+    return this._compareVersions(
+      this,
+      message,
+      (first: VersionWithSerial, second: VersionWithSerial) => first.serial >= second.serial,
+    );
   }
 
   before(message: Message): boolean {
@@ -447,6 +454,25 @@ export class DefaultMessage implements Message {
     return this._getLatestMessageVersion(event.message);
   }
 
+  private _compareVersions(
+    first: Message,
+    second: Message,
+    comparator: (first: VersionWithSerial, second: VersionWithSerial) => boolean,
+  ): boolean {
+    // If our serials aren't the same, not same message and cannot compare1
+    if (!first.equal(second)) {
+      return false;
+    }
+
+    // If one our version serials isn't set, cannot compare
+    if (first.version.serial === undefined || second.version.serial === undefined) {
+      return false;
+    }
+
+    // Use the comparator to determine the comparison
+    return comparator(first.version as VersionWithSerial, second.version as VersionWithSerial);
+  }
+
   /**
    * Get the latest message version, based on the event.
    * If "this" is the latest version, return "this", otherwise clone the message and apply the reactions.
@@ -460,7 +486,7 @@ export class DefaultMessage implements Message {
     }
 
     // event is older, keep this instead
-    if (this.version >= message.version) {
+    if (this._isNewerOrSameVersionOf(message)) {
       return this;
     }
 
@@ -478,11 +504,9 @@ export class DefaultMessage implements Message {
       metadata: replace?.metadata ?? cloneDeep(source.metadata),
       headers: replace?.headers ?? cloneDeep(source.headers),
       action: replace?.action ?? source.action,
-      version: replace?.version ?? source.version,
-      createdAt: replace?.createdAt ?? source.createdAt,
+      version: replace?.version ?? cloneDeep(source.version),
       timestamp: replace?.timestamp ?? source.timestamp,
       reactions: replace?.reactions ?? cloneDeep(source.reactions),
-      operation: replace?.operation ?? cloneDeep(source.operation),
     });
   }
 

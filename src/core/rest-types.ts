@@ -14,8 +14,10 @@ export interface RestClientIdCounts {
   totalUnidentified: number;
 }
 
-// RestOperation represents an operation performed on a chat message
-export interface RestOperation {
+// RestVersion represents the version information of a message. (i.e. an update or delete)
+export interface RestVersion {
+  serial: string;
+  timestamp: number;
   clientId?: string;
   description?: string;
   metadata?: Record<string, string>;
@@ -28,18 +30,16 @@ export interface RestChatMessageReactions {
   multiple?: Record<string, RestClientIdCounts>;
 }
 
-// RestMessage represents a message in V3 of the REST API.
+// RestMessage represents a message in V4 of the REST API.
 export interface RestMessage {
   serial: string;
-  version: string;
+  version: RestVersion;
   text: string;
   clientId: string;
   action: 'message.create' | 'message.update' | 'message.delete';
   metadata: Record<string, unknown>;
   headers: Record<string, string>;
-  createdAt: number;
   timestamp: number;
-  operation?: RestOperation;
   reactions?: RestChatMessageReactions;
 }
 
@@ -59,10 +59,23 @@ export const messageFromRest = (message: RestMessage): Message => {
     ? (message.action as ChatMessageAction)
     : ChatMessageAction.MessageCreate;
 
+  // Create version information from the message
+  const version = {
+    serial: message.version.serial,
+    timestamp: new Date(message.version.timestamp),
+    clientId: message.version.clientId,
+    description: message.version.description,
+    metadata: message.version.metadata,
+  };
+
   return new DefaultMessage({
-    ...message,
+    serial: message.serial,
+    clientId: message.clientId,
+    text: message.text,
+    metadata: message.metadata,
+    headers: message.headers,
     action,
-    createdAt: new Date(message.createdAt),
+    version,
     timestamp: new Date(message.timestamp),
     reactions: reactions,
   });

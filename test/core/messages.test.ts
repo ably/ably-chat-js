@@ -67,7 +67,7 @@ describe('Messages', () => {
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: serial,
-        createdAt: timestamp,
+        timestamp: timestamp,
       });
 
       const messagePromise = context.room.messages.send({ text: 'hello there' });
@@ -79,7 +79,7 @@ describe('Messages', () => {
           serial: serial,
           text: 'hello there',
           clientId: 'clientId',
-          createdAt: new Date(timestamp),
+          timestamp: new Date(timestamp),
         }),
       );
     });
@@ -90,7 +90,7 @@ describe('Messages', () => {
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: serial,
-        createdAt: timestamp,
+        timestamp: timestamp,
       });
 
       const room = makeRandomRoom({ chatApi, realtime });
@@ -107,7 +107,7 @@ describe('Messages', () => {
           serial: serial,
           text: 'hello there',
           clientId: 'clientId',
-          createdAt: new Date(timestamp),
+          timestamp: new Date(timestamp),
           headers: {
             something: 'else',
             abc: 123,
@@ -127,28 +127,26 @@ describe('Messages', () => {
       const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
-        createdAt: sendTimestamp,
+        timestamp: sendTimestamp,
       });
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
-        version: '01672531200001-123@abcdefghij:0',
-        timestamp: deleteTimestamp,
-        message: {
-          serial: sendSerial,
-          clientId: 'clientId',
-          text: 'hello there',
-          metadata: {},
-          headers: {},
-          action: ChatMessageAction.MessageDelete,
-          version: '01672531200001-123@abcdefghij:0',
-          createdAt: sendTimestamp,
+        serial: sendSerial,
+        clientId: 'clientId',
+        text: 'hello there',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageDelete,
+        version: {
+          serial: '01672531200001-123@abcdefghij:0',
           timestamp: deleteTimestamp,
-          reactions: emptyMessageReactions(),
-          operation: {
-            clientId: 'clientId',
-          },
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: sendTimestamp,
+        reactions: emptyMessageReactions(),
       });
 
       const message1 = await context.room.messages.send({ text: 'hello there' });
@@ -159,12 +157,9 @@ describe('Messages', () => {
           serial: sendSerial,
           text: 'hello there',
           clientId: 'clientId',
-          timestamp: new Date(deleteTimestamp),
-          createdAt: new Date(sendTimestamp),
+          timestamp: new Date(sendTimestamp),
         }),
       );
-
-      expect(deleteMessage1.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
     });
 
     it<TestContext>('should be able to delete a message with object containing serial', async (context) => {
@@ -174,28 +169,26 @@ describe('Messages', () => {
       const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
-        createdAt: sendTimestamp,
+        timestamp: sendTimestamp,
       });
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
-        version: '01672531200001-123@abcdefghij:0',
-        timestamp: deleteTimestamp,
-        message: {
-          serial: sendSerial,
-          clientId: 'clientId',
-          text: 'hello there',
-          metadata: {},
-          headers: {},
-          action: ChatMessageAction.MessageDelete,
-          version: '01672531200001-123@abcdefghij:0',
-          createdAt: sendTimestamp,
+        serial: sendSerial,
+        clientId: 'clientId',
+        text: 'hello there',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageDelete,
+        version: {
+          serial: '01672531200001-123@abcdefghij:0',
           timestamp: deleteTimestamp,
-          reactions: emptyMessageReactions(),
-          operation: {
-            clientId: 'clientId',
-          },
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: sendTimestamp,
+        reactions: emptyMessageReactions(),
       });
 
       const message = await room.messages.send({ text: 'hello there' });
@@ -205,12 +198,11 @@ describe('Messages', () => {
           serial: sendSerial,
           text: 'hello there',
           clientId: 'clientId',
-          timestamp: new Date(deleteTimestamp),
-          createdAt: new Date(sendTimestamp),
+          timestamp: new Date(sendTimestamp),
         }),
       );
 
-      expect(deleteMessage.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
+      expect(deleteMessage.version).toEqual(expect.objectContaining({ clientId: 'clientId' }));
     });
 
     it<TestContext>('should be able to delete a message with string serial', async (context) => {
@@ -220,28 +212,26 @@ describe('Messages', () => {
       const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
-        createdAt: sendTimestamp,
+        timestamp: sendTimestamp,
       });
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'deleteMessage').mockResolvedValue({
-        version: '01672531200001-123@abcdefghij:0',
-        timestamp: deleteTimestamp,
-        message: {
-          serial: sendSerial,
-          clientId: 'clientId',
-          text: 'hello there',
-          metadata: {},
-          headers: {},
-          action: ChatMessageAction.MessageDelete,
-          version: '01672531200001-123@abcdefghij:0',
-          createdAt: sendTimestamp,
+        serial: sendSerial,
+        clientId: 'clientId',
+        text: 'hello there',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageDelete,
+        version: {
+          serial: '01672531200001-123@abcdefghij:0',
           timestamp: deleteTimestamp,
-          reactions: emptyMessageReactions(),
-          operation: {
-            clientId: 'clientId',
-          },
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: sendTimestamp,
+        reactions: emptyMessageReactions(),
       });
 
       const message = await room.messages.send({ text: 'hello there' });
@@ -251,12 +241,11 @@ describe('Messages', () => {
           serial: sendSerial,
           text: 'hello there',
           clientId: 'clientId',
-          timestamp: new Date(deleteTimestamp),
-          createdAt: new Date(sendTimestamp),
+          timestamp: new Date(sendTimestamp),
         }),
       );
 
-      expect(deleteMessage.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
+      expect(deleteMessage.version).toEqual(expect.objectContaining({ clientId: 'clientId' }));
     });
 
     it<TestContext>('should throw an error if no serial when deleting a message', async (context) => {
@@ -276,28 +265,26 @@ describe('Messages', () => {
       const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
-        createdAt: sendTimestamp,
+        timestamp: sendTimestamp,
       });
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'updateMessage').mockResolvedValue({
-        version: '01672531200001-123@abcdefghij:0',
-        timestamp: deleteTimestamp,
-        message: {
-          serial: sendSerial,
-          clientId: 'clientId',
-          text: 'hello there',
-          metadata: {},
-          headers: {},
-          action: ChatMessageAction.MessageDelete,
-          version: '01672531200001-123@abcdefghij:0',
-          createdAt: sendTimestamp,
+        serial: sendSerial,
+        clientId: 'clientId',
+        text: 'hello there',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageDelete,
+        version: {
+          serial: '01672531200001-123@abcdefghij:0',
           timestamp: deleteTimestamp,
-          reactions: emptyMessageReactions(),
-          operation: {
-            clientId: 'clientId',
-          },
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: sendTimestamp,
+        reactions: emptyMessageReactions(),
       });
 
       const message = await room.messages.send({ text: 'hello there' });
@@ -311,12 +298,11 @@ describe('Messages', () => {
           serial: sendSerial,
           text: 'hello there',
           clientId: 'clientId',
-          timestamp: new Date(deleteTimestamp),
-          createdAt: new Date(sendTimestamp),
+          timestamp: new Date(sendTimestamp),
         }),
       );
 
-      expect(updateMessage.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
+      expect(updateMessage.version).toEqual(expect.objectContaining({ clientId: 'clientId' }));
     });
 
     it<TestContext>('should update a message using a string serial', async (context) => {
@@ -326,28 +312,26 @@ describe('Messages', () => {
       const sendSerial = '01672531200001-123@abcdefghij:0';
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
-        createdAt: sendTimestamp,
+        timestamp: sendTimestamp,
       });
 
       const deleteTimestamp = Date.now();
       vi.spyOn(chatApi, 'updateMessage').mockResolvedValue({
-        version: '01672531200001-123@abcdefghij:0',
-        timestamp: deleteTimestamp,
-        message: {
-          serial: sendSerial,
-          clientId: 'clientId',
-          text: 'hello there',
-          metadata: {},
-          headers: {},
-          action: ChatMessageAction.MessageDelete,
-          version: '01672531200001-123@abcdefghij:0',
-          createdAt: sendTimestamp,
+        serial: sendSerial,
+        clientId: 'clientId',
+        text: 'hello there',
+        metadata: {},
+        headers: {},
+        action: ChatMessageAction.MessageDelete,
+        version: {
+          serial: '01672531200001-123@abcdefghij:0',
           timestamp: deleteTimestamp,
-          reactions: emptyMessageReactions(),
-          operation: {
-            clientId: 'clientId',
-          },
+          clientId: 'clientId',
+          description: undefined,
+          metadata: undefined,
         },
+        timestamp: sendTimestamp,
+        reactions: emptyMessageReactions(),
       });
 
       const message = await room.messages.send({ text: 'hello there' });
@@ -361,12 +345,11 @@ describe('Messages', () => {
           serial: sendSerial,
           text: 'hello there',
           clientId: 'clientId',
-          timestamp: new Date(deleteTimestamp),
-          createdAt: new Date(sendTimestamp),
+          timestamp: new Date(sendTimestamp),
         }),
       );
 
-      expect(updateMessage.operation).toEqual(expect.objectContaining({ clientId: 'clientId' }));
+      expect(updateMessage.version).toEqual(expect.objectContaining({ clientId: 'clientId' }));
     });
 
     it<TestContext>('should throw an error if no serial when updating a message', async (context) => {
@@ -402,13 +385,11 @@ describe('Messages', () => {
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageDelete,
-          version: '01672531200000-123@abcdefghij',
+          version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
           extras: {
             headers: {},
           },
           timestamp: publishTimestamp,
-          createdAt: publishTimestamp,
-          operation: { clientId: 'yoda' },
         });
         context.emulateBackendPublish({
           clientId: 'yoda',
@@ -419,13 +400,11 @@ describe('Messages', () => {
           },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageUpdate,
-          version: '01672531200000-123@abcdefghij',
+          version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
           extras: {
             headers: {},
           },
           timestamp: publishTimestamp,
-          createdAt: publishTimestamp,
-          operation: { clientId: 'yoda' },
         });
         context.emulateBackendPublish({
           clientId: 'yoda',
@@ -434,14 +413,13 @@ describe('Messages', () => {
             text: 'may the fourth be with you',
             metadata: {},
           },
-          version: '01672531200000-123@abcdefghij',
+          version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
           serial: '01672531200000-123@abcdefghij',
           action: ChatMessageAction.MessageCreate,
           extras: {
             headers: {},
           },
           timestamp: publishTimestamp,
-          createdAt: publishTimestamp,
         });
       }));
 
@@ -480,13 +458,12 @@ describe('Messages', () => {
           metadata: {},
         },
         serial: '01672531200000-123@abcdefghij',
-        version: '01672531200000-123@abcdefghij',
+        version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
         action: ChatMessageAction.MessageCreate,
         extras: {
           headers: {},
         },
         timestamp: publishTimestamp,
-        createdAt: publishTimestamp,
       });
       context.emulateBackendPublish({
         clientId: 'yoda',
@@ -501,11 +478,7 @@ describe('Messages', () => {
           headers: {},
         },
         timestamp: updateTimestamp,
-        createdAt: publishTimestamp,
-        version: '01672531200000-123@abcdefghij:0',
-        operation: {
-          clientId: 'yoda',
-        },
+        version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
       });
       context.emulateBackendPublish({
         clientId: 'yoda',
@@ -520,11 +493,7 @@ describe('Messages', () => {
           headers: {},
         },
         timestamp: deletionTimestamp,
-        createdAt: publishTimestamp,
-        version: '01672531200000-123@abcdefghij:0',
-        operation: {
-          clientId: 'yoda',
-        },
+        version: { serial: '01672531200000-123@abcdefghij:0', timestamp: 1672531200000 },
       });
 
       expect(receivedMessages).toHaveLength(1);
@@ -548,13 +517,12 @@ describe('Messages', () => {
           metadata: {},
         },
         serial: '01672535500000-123@abcdefghij',
-        version: '01672535500000-123@abcdefghij',
+        version: { serial: '01672535500000-123@abcdefghij:0', timestamp: 1672535500000 },
         action: ChatMessageAction.MessageCreate,
         extras: {
           headers: {},
         },
         timestamp: publishTimestamp,
-        createdAt: publishTimestamp,
       });
       context.emulateBackendPublish({
         clientId: 'yoda',
@@ -569,11 +537,7 @@ describe('Messages', () => {
           headers: {},
         },
         timestamp: updateTimestamp,
-        createdAt: publishTimestamp,
-        version: '01672535600000-123@abcdefghij:0',
-        operation: {
-          clientId: 'yoda',
-        },
+        version: { serial: '01672535600000-123@abcdefghij:0', timestamp: 1672535600000 },
       });
       context.emulateBackendPublish({
         clientId: 'yoda',
@@ -588,11 +552,7 @@ describe('Messages', () => {
           headers: {},
         },
         timestamp: deletionTimestamp,
-        createdAt: publishTimestamp,
-        version: '01672535700000-123@abcdefghij:0',
-        operation: {
-          clientId: 'yoda',
-        },
+        version: { serial: '01672535700000-123@abcdefghij:0', timestamp: 1672535700000 },
       });
 
       // We should not have received anything new
@@ -620,13 +580,12 @@ describe('Messages', () => {
             metadata: {},
           },
           serial: serial,
-          version: serial,
+          version: { serial: serial, timestamp: 0 },
           action: ChatMessageAction.MessageCreate,
           extras: {
             headers: {},
           },
           timestamp: publishTimestamp,
-          createdAt: publishTimestamp,
         });
       };
 
@@ -662,7 +621,8 @@ describe('Messages', () => {
         },
         action: ChatMessageAction.MessageCreate,
         timestamp: Date.now(),
-        createdAt: Date.now(),
+        version: {},
+        annotations: {},
       };
 
       context.emulateBackendPublish(inboundMessage as Ably.InboundMessage);
@@ -670,7 +630,12 @@ describe('Messages', () => {
       expect(receivedMessage).toBeDefined();
       expect(receivedMessage?.clientId).toBe('');
       expect(receivedMessage?.serial).toBe('');
-      expect(receivedMessage?.version).toBe('');
+      expect(receivedMessage?.version).toEqual({});
+      expect(receivedMessage?.reactions).toEqual({
+        distinct: {},
+        unique: {},
+        multiple: {},
+      });
       expect(receivedMessage?.text).toBe('may the fourth be with you');
       expect(receivedMessage?.metadata).toEqual({});
       expect(receivedMessage?.headers).toEqual({});
@@ -691,7 +656,6 @@ describe('Messages', () => {
         },
         action: 'this is not the action you are looking for',
         timestamp: Date.now(),
-        createdAt: Date.now(),
       };
 
       context.emulateBackendPublish(inboundMessage as Ably.InboundMessage);
@@ -1145,13 +1109,11 @@ describe('Messages', () => {
         },
         serial: '01672531200000-123@abcdefghij',
         action: ChatMessageAction.MessageDelete,
-        version: '01672531200000-123@abcdefghij',
+        version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000, clientId: 'yoda' },
         extras: {
           headers: {},
         },
         timestamp: Date.now(),
-        createdAt: Date.now(),
-        operation: { clientId: 'yoda' },
       });
 
       // Verify that the listeners were called
@@ -1178,13 +1140,11 @@ describe('Messages', () => {
         },
         serial: '01672531200000-123@abcdefghij',
         action: ChatMessageAction.MessageDelete,
-        version: '01672531200000-123@abcdefghij',
+        version: { serial: '01672531200000-123@abcdefghij', timestamp: 1672531200000, clientId: 'yoda' },
         extras: {
           headers: {},
         },
         timestamp: Date.now(),
-        createdAt: Date.now(),
-        operation: { clientId: 'yoda' },
       });
 
       // Verify that the listeners were not called
