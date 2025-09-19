@@ -24,8 +24,9 @@ export interface Occupancy {
    * This is useful for displaying active user counts, monitoring room capacity, or tracking
    * engagement metrics.
    *
-   * **Note**: Requires `enableEvents` to be true in the room's occupancy options.
-   * **Note**: The room should be attached to receive occupancy events.
+   * **Note**:
+   * - Requires `enableEvents` to be true in the room's occupancy options.
+   * - The room should be attached to receive occupancy events.
    *
    * @param listener - Callback invoked when room occupancy changes
    *
@@ -125,8 +126,9 @@ export interface Occupancy {
    * Returns the most recent occupancy metrics received via subscription. Returns undefined
    * if no occupancy events have been received yet since the room was attached.
    *
-   * **Note**: Requires `enableEvents` to be true in the room's occupancy options.
-   * **Note**: Returns undefined until the first occupancy event is received.
+   * **Note**:
+   * - Requires `enableEvents` to be true in the room's occupancy options.
+   * - Returns undefined until the first occupancy event is received.
    *
    * @returns Latest cached occupancy data or undefined if no events received
    *

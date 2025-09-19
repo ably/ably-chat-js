@@ -374,8 +374,9 @@ export interface Room {
    * from its previous state, potentially resulting in missed messages or events.
    * Use this to detect gaps in the event stream and take corrective action.
    *
-   * **Note**: Discontinuities require fetching missed messages via history.
-   * **Note**: Message subscriptions automatically reset their position on discontinuity.
+   * **Note**:
+   * - Discontinuities require fetching missed messages via history.
+   * - Message subscriptions automatically reset their position on discontinuity.
    *
    * @param handler - Callback invoked when a discontinuity is detected
    *

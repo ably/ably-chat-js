@@ -166,9 +166,10 @@ export interface Typing {
    * excessive network traffic. If called within the throttle interval, the operation
    * becomes a no-op. Multiple rapid calls are serialized to maintain consistency.
    *
-   * **Note**: The connection must be in the 'connected' state.
-   * **Note**: Calls to `keystroke()` and `stop()` are serialized and resolve in order.
-   * **Note**: The most recent operation always determines the final typing state.
+   * **Note**:
+   * - The connection must be in the 'connected' state.
+   * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
+   * - The most recent operation always determines the final typing state.
    *
    * @returns Promise that resolves when the typing event has been sent
    *
@@ -253,8 +254,9 @@ export interface Typing {
    * are serialized to maintain consistency, with the most recent operation determining
    * the final state.
    *
-   * **Note**: The connection must be in the 'connected' state.
-   * **Note**: Calls to `keystroke()` and `stop()` are serialized and resolve in order.
+   * **Note**:
+   * - The connection must be in the 'connected' state.
+   * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
    *
    * @returns Promise that resolves when the stop event has been sent
    *
