@@ -245,7 +245,7 @@ export class ChatApi {
     roomName = encodeURIComponent(roomName);
     const params = clientId ? { forClientId: clientId } : {};
     return this._makeAuthorizedRequest<Message['reactions']>(
-      `/chat/v3/rooms/${roomName}/messages/${encodedSerial}/client-reactions`,
+      `/chat/v4/rooms/${roomName}/messages/${encodedSerial}/client-reactions`,
       'GET',
       undefined,
       params,
