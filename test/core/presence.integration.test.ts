@@ -335,9 +335,9 @@ describe('UserPresence', { timeout: 30000 }, () => {
       presenceEvents,
     );
     // Update with string
-    await context.chatRoom.presence.update('string');
+    await context.chatRoom.presence.update({ foo: 'string' });
     await waitForExpectedPresenceEvent(
-      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: 'string' },
+      { clientId: context.chat.clientId, type: PresenceEventType.Update, data: { foo: 'string' } },
       presenceEvents,
     );
     // Update with number (wrapped in object as Ably doesn't support primitive numbers)

@@ -68,19 +68,19 @@ describe('usePresenceListener', () => {
     );
 
     // enter presence with room two, then update the presence state
-    await roomTwo.presence.enter('test enter');
-    await roomTwo.presence.update('test update');
+    await roomTwo.presence.enter({ foo: 'test enter' });
+    await roomTwo.presence.update({ foo: 'test update' });
 
     // expect a presence enter and update event from the test component to be received
     await waitForArrayLength(presenceEventsReceived, 2);
     expect(presenceEventsReceived[0]?.member.clientId).toBe(chatClientTwo.clientId);
-    expect(presenceEventsReceived[0]?.member.data).toBe('test enter');
+    expect(presenceEventsReceived[0]?.member.data).toEqual({ foo: 'test enter' });
     expect(presenceEventsReceived[1]?.member.clientId).toBe(chatClientTwo.clientId);
-    expect(presenceEventsReceived[1]?.member.data).toBe('test update');
+    expect(presenceEventsReceived[1]?.member.data).toEqual({ foo: 'test update' });
 
     // expect the current presence state to reflect only the latest presence data
     expect(currentPresenceData.length).toBe(1);
     expect(currentPresenceData[0]?.clientId).toBe(chatClientTwo.clientId);
-    expect(currentPresenceData[0]?.data).toBe('test update');
+    expect(currentPresenceData[0]?.data).toEqual({ foo: 'test update' });
   }, 20000);
 });
