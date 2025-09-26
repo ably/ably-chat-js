@@ -2,6 +2,140 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 0.13.x to 0.14.x
+
+### Message API Changes
+
+**Expected Impact: High**
+
+The `Message` API has been updated to provide a cleaner, nested format for message versions.
+
+#### Message Structure Changes
+
+Several fields in the message structure have been updated:
+
+1. **Version Field**: The `version` field, previously a serial string, is now an object containing the version serial and timestamp. It also contains a clientId, description, and metadata (previously held in the Operation field).
+2. **Timestamp Field**: `createdAt` has been removed. The `timestamp` field now always represents the time a message was first created on the server. For the latest updated at timestamp, use `version.timestamp`.
+3. **Operation Field**: The `Operation` field has been removed, with its contents now part of the version object.
+
+**Before**
+
+```ts
+interface Message {
+  timestamp: Date; // Time of last update
+  createdAt: Date; // Time of creation
+  version: string;
+  operation: {
+    clientId: string;
+    description?: string;
+    metadata?: Record<string, string>;
+  };
+  // ... other fields
+}
+```
+
+**After**
+
+```ts
+interface Message {
+  timestamp: Date; // Time of creation
+  version: {
+    serial: string;
+    timestamp: Date; // Time of last update
+    clientId: string;
+    description?: string;
+    metadata?: Record<string, string>;
+  };
+  // operation field removed - contents moved to version object
+  // ... other fields
+}
+```
+
+#### Migration Steps
+
+1. Wherever the time that the message was created on the server is needed, ensure that `message.timestamp` is used.
+2. Update code that accesses `message.version` as a string to access `message.version.serial`
+3. Wherever the time that the message last updated on the server is needed, ensure that `message.version.timestamp` is used.
+4. Update code that accesses operation fields to use the corresponding fields in `message.version`:
+   - `message.operation.clientId` → `message.version.clientId`
+   - `message.operation.description` → `message.version.description`
+   - `message.operation.metadata` → `message.version.metadata`
+5. Update any code that expects nested API responses to work with the direct message format
+
+### Presence Data Type Changes
+
+**Expected Impact: Low**
+
+The `PresenceData` type has been updated to be a JSONable type for better serialization compatibility. This change ensures that presence data can be properly serialized and deserialized across different environments.
+
+#### Type Changes
+
+The `PresenceData` type now enforces JSONable types, meaning it must be serializable to JSON. This excludes functions, undefined values, symbols, and other non-serializable types.
+
+**Before**
+
+```ts
+// This would have worked before but now causes type errors
+const presenceData = {
+  status: 'online',
+  callback: () => console.log('hello'), // Function - not JSONable
+  value: undefined, // undefined - not JSONable
+};
+
+await room.presence.enter(presenceData);
+```
+
+**After**
+
+```ts
+// Only JSONable types are allowed
+const presenceData = {
+  status: 'online',
+  userId: '123',
+  metadata: {
+    lastSeen: new Date().toISOString(),
+    count: 5
+  }
+};
+
+await room.presence.enter(presenceData);
+```
+
+#### Defining Custom Presence Data Types
+
+For better type safety, you can define your own custom type for presence data. It must be a JSON serializable object:
+
+```ts
+import { JsonValue } from '@ably/chat';
+
+// Defining a custom type for presence data
+interface MyPresenceData {
+  [key: string]: JsonValue; // Type check for JSON compatibility
+  status: 'online' | 'away' | 'busy';
+  userId: string;
+  profile: {
+    name: string;
+    avatar?: string;
+  };
+  lastSeen: string; // ISO date string
+}
+
+// Usage with your custom type
+const presenceData: MyPresenceData = {
+  status: 'online',
+  userId: '123',
+  profile: {
+    name: 'John Doe',
+    avatar: 'https://example.com/avatar.jpg'
+  },
+  lastSeen: new Date().toISOString()
+};
+
+await room.presence.enter(presenceData);
+```
+
+The `[key: string]: JsonValue` index signature ensures your custom type remains compatible with JSON serialization while still allowing you to define specific required properties.
+
 ## 0.12.x to 0.13.x
 
 ### usePresence Hook Changes
