@@ -1,7 +1,14 @@
 import * as Ably from 'ably';
 
 import { ChatMessageAction } from './events.js';
-import { DefaultMessage, emptyMessageReactions, Message, MessageHeaders, MessageMetadata, Version } from './message.js';
+import {
+  DefaultMessage,
+  emptyMessageReactions,
+  Message,
+  MessageHeaders,
+  MessageMetadata,
+  MessageVersion,
+} from './message.js';
 
 interface MessagePayload {
   data?: {
@@ -42,7 +49,7 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
           timestamp: versionTimestamp,
         }
       : message.version
-  ) as Version;
+  ) as MessageVersion;
 
   // Use current time as default for missing timestamps
   const currentTime = Date.now();
