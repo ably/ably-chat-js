@@ -18,7 +18,7 @@ import {
   MessageSubscriptionResponse,
   OperationDetails,
   SendMessageParams,
-  UpdateMessageParams
+  UpdateMessageParams,
 } from '../../core/messages.js';
 import { Serial } from '../../core/serial.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
