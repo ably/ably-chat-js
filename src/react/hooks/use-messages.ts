@@ -11,7 +11,7 @@ import {
   OperationDetails,
   QueryOptions,
   SendMessageParams,
-  UpdateMessageParams
+  UpdateMessageParams,
 } from '../../core/messages.js';
 import type {
   DeleteMessageReactionParams,
