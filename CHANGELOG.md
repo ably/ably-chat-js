@@ -2,6 +2,16 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.14.0](https://github.com/ably/ably-chat-js/tree/0.14.0) (2025-09-29)
+
+### Breaking Changes
+
+- **Presence Data Type**: Updated `PresenceData` to be a JSON object for better serialization compatibility. [#642](https://github.com/ably/ably-chat-js/pull/642)
+
+### Improvements
+
+- **Message API Updates**: Updated message API responses to introduce meaningful nesting to message versioning. [#620](https://github.com/ably/ably-chat-js/pull/620)
+
 ## [0.13.0](https://github.com/ably/ably-chat-js/tree/0.13.0) (2025-09-17)
 
 ### New Features
