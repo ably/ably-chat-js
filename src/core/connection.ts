@@ -78,24 +78,142 @@ export type ConnectionStatusListener = (change: ConnectionStatusChange) => void;
 export interface Connection {
   /**
    * The current status of the connection.
+   *
+   * @returns The current ConnectionStatus value
+   *
+   * @example
+   * ```typescript
+   * import { ChatClient, ConnectionStatus } from '@ably/chat';
+   *
+   * const chatClient = new ChatClient(realtime);
+   *
+   * // Check connection status
+   * if (chatClient.connection.status === ConnectionStatus.Connected) {
+   *   console.log('Connected to Ably');
+   * } else if (chatClient.connection.status === ConnectionStatus.Failed) {
+   *   console.error('Connection failed');
+   * }
+   *
+   * // Use status for conditional logic
+   * function canSendMessage(): boolean {
+   *   return chatClient.connection.status === ConnectionStatus.Connected;
+   * }
+   * ```
    */
   get status(): ConnectionStatus;
 
   /**
-   * The current error, if any, that caused the connection to enter the current status.
+   * The error that caused the connection to enter its current status, if any.
+   *
+   * @returns ErrorInfo if an error caused the current status, undefined otherwise
+   *
+   * @example
+   * ```typescript
+   * import { ChatClient, ConnectionStatus } from '@ably/chat';
+   *
+   * const chatClient = new ChatClient(realtime);
+   *
+   * // Check for connection errors
+   * if (chatClient.connection.error) {
+   *   console.error('Connection error:', chatClient.connection.error.message);
+   *   console.error('Error code:', chatClient.connection.error.code);
+   *
+   *   // Handle specific error codes
+   *   if (chatClient.connection.error.code === 40140) {
+   *     console.error('Token expired - need to refresh authentication');
+   *   }
+   * }
+   *
+   * // Monitor for errors during status changes
+   * chatClient.connection.onStatusChange((change) => {
+   *   if (change.error) {
+   *     reportErrorToMonitoring(change.error);
+   *   }
+   * });
+   * ```
    */
   get error(): Ably.ErrorInfo | undefined;
 
   /**
-   * Registers a listener that will be called whenever the connection status changes.
-   * @param listener The function to call when the status changes.
-   * @returns An object that can be used to unregister the listener.
+   * Registers a listener to be notified of connection status changes.
+   *
+   * Status changes indicate the connection lifecycle, including connecting,
+   * connected, disconnected, suspended, and failed states. Use this to monitor
+   * connection health and handle network issues.
+   *
+   * @param listener - Callback invoked when the connection status changes
+   *
+   * @returns Subscription object with an off method to unregister
+   *
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, ConnectionStatus } from '@ably/chat';
+   *
+   * // Initialize the chat client
+   * const realtime = new Ably.Realtime({
+   *   authUrl: '/api/ably-auth', // Use token auth in production
+   *   // For development only - never use API keys in production:
+   *   // key: 'your-api-key',
+   *   // clientId: 'user-123'
+   * });
+   *
+   * const chatClient = new ChatClient(realtime);
+   *
+   * // Monitor connection status changes
+   * const subscription = chatClient.connection.onStatusChange((change) => {
+   *   console.log(`Connection: ${change.previous} -> ${change.current}`);
+   *
+   *   // Handle different connection states..
+   *   switch (change.current) {
+   *     case ConnectionStatus.Connected:
+   *       console.log('✅ Connected to Ably');
+   *       enableChatFeatures();
+   *       hideConnectionWarning();
+   *       break;
+   *
+   *     case ConnectionStatus.Failed:
+   *       console.error('❌ Connection failed permanently');
+   *       if (change.error) {
+   *         console.error('Failure reason:', change.error.message);
+   *         showErrorMessage(`Connection failed: ${change.error.message}`);
+   *       }
+   *       requireManualReconnection();
+   *       break;
+   *
+   *     // Other states: Connecting, Disconnected, Suspended
+   *   }
+   * });
+   *
+   * // Clean up when done
+   * subscription.off();
+   * ```
    */
   onStatusChange(listener: ConnectionStatusListener): StatusSubscription;
 
   /**
    * Disposes of the connection instance, cleaning up any registered listeners.
-   * This method should be called when the connection is no longer needed.
+   *
+   * This method removes all event listeners and frees resources associated with
+   * the connection monitoring. It should be called when the connection instance
+   * is no longer needed.
+   *
+   * **Note**: This is typically called internally when disposing the ChatClient.
+   *
+   * @example
+   * ```typescript
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient = new ChatClient(realtime);
+   *
+   * // Use the chat client...
+   *
+   * // When completely done with the chat client
+   * chatClient.connection.dispose();
+   *
+   * // Note: Normally you would dispose the entire ChatClient instead:
+   * await chatClient.dispose();
+   * ```
    */
   dispose(): void;
 }

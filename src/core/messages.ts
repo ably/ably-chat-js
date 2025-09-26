@@ -197,8 +197,25 @@ export interface MessageSubscriptionResponse extends Subscription {
    * fill any gaps in the message history.
    *
    * ```typescript
-   * const { historyBeforeSubscribe } = room.messages.subscribe(listener);
-   * await historyBeforeSubscribe({ limit: 10 });
+   * await room.attach(); // Ensure room is attached
+   *
+   * // Subscribe a listener to message events
+   * const subscription = room.messages.subscribe((event) => {
+   *  console.log(`Message ${event.type}:`, event.message.text)
+   *  });
+   *
+   * // Get historical messages before subscription
+   * try {
+   *   const history = await subscription.historyBeforeSubscribe({ limit: 50 });
+   *   console.log(`Retrieved ${history.items.length} historical messages`);
+   *
+   *   // Process historical messages
+   *   history.items.forEach(message => {
+   *     console.log(`Historical: ${message.text} from ${message.clientId}`);
+   *   });
+   * } catch (error) {
+   *   console.error('Failed to retrieve message history:', error);
+   * }
    * ```
    * @param params Options for the history query.
    * @returns A promise that resolves with the paginated result of messages, in newest-to-oldest order.
@@ -214,89 +231,410 @@ export interface MessageSubscriptionResponse extends Subscription {
  */
 export interface Messages {
   /**
-   * Subscribe to new messages in this chat room.
-   * @param listener callback that will be called
-   * @returns A response object that allows you to control the subscription.
+   * Subscribe to chat message events in this room.
+   *
+   * This method allows you to listen for chat message events and provides access to
+   * historical messages that occurred before the subscription was established.
+   *
+   * **Note**: The room must be attached for the listener to receive new message events.
+   *
+   * @param listener - A callback function that will be invoked when chat message events occur.
+   *
+   * @returns A {@link MessageSubscriptionResponse} object that provides:
+   *          - `unsubscribe()`: Method to stop listening for message events
+   *          - `historyBeforeSubscribe()`: Method to retrieve messages sent before subscription
+   *
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * // Initialize the chat client
+   * const realtime = new Ably.Realtime({
+   *   key: 'your-ably-api-key', // Only use API keys in development or if running server-side
+   *   clientId: 'user-123'
+   * });
+   *
+   * const chatClient = new ChatClient(realtime);
+   *
+   * // Get a room and subscribe to messages
+   * const room = await chatClient.rooms.get('general-chat');
+   * await room.attach(); // Ensure room is attached to receive events
+   *
+   * const subscription = room.messages.subscribe((event) => {
+   *   console.log(`Message ${event.type}:`, event.message.text);
+   *   console.log('From:', event.message.clientId);
+   *   console.log('At:', event.message.timestamp);
+   *
+   *   // Handle different event types
+   *   switch (event.type) {
+   *     case 'message.created':
+   *       console.log('New message received');
+   *       break;
+   *     case 'message.updated':
+   *       console.log('Message was edited');
+   *       break;
+   *     case 'message.deleted':
+   *       console.log('Message was deleted');
+   *       break;
+   *   }
+   * });
+   *
+   * // Later, unsubscribe when done
+   * subscription.unsubscribe();
+   * ```
    */
   subscribe(listener: MessageListener): MessageSubscriptionResponse;
 
   /**
-   * Get messages that have been previously sent to the chat room, based on the provided options.
-   * @param options Options for the query.
-   * @returns A promise that resolves with the paginated result of messages. This paginated result can
-   * be used to fetch more messages if available.
+   * Get messages that have been previously sent to the chat room.
+   *
+   * This method retrieves historical messages based on the provided query options,
+   * allowing you to paginate through message history, filter by time ranges,
+   * and control the order of results.
+   *
+   * @param options - Query parameters to filter and control the message retrieval
+   *
+   * @returns A Promise that resolves to a {@link PaginatedResult} containing an array of {@link Message} objects
+   *          and methods for pagination control
+   *
+   * @throws {Ably.ErrorInfo} When the query fails due to network issues or invalid parameters
+   *
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, OrderBy } from '@ably/chat';
+   *
+   * // Initialize the chat client
+   * // Note: Use token-based authentication in production for security
+   * const realtime = new Ably.Realtime({
+   *   key: 'your-ably-api-key', // Use tokens in production
+   *   clientId: 'user-123'
+   * });
+   * const chatClient = new ChatClient(realtime);
+   * const room = await chatClient.rooms.get('project-updates');
+   *
+   * // Retrieve message history with pagination
+   * try {
+   *   const result = await room.messages.history({
+   *     limit: 50,
+   *     orderBy: OrderBy.NewestFirst
+   *   });
+   *
+   *   console.log(`Retrieved ${result.items.length} messages`);
+   *   result.items.forEach(message => {
+   *     console.log(`${message.clientId}: ${message.text}`);
+   *     console.log(`Sent at: ${message.createdAt.toISOString()}`);
+   *   });
+   *
+   *   // Check if there are more messages and fetch next page
+   *   if (result.hasNext()) {
+   *     const nextPage = await result.next();
+   *     if (nextPage) {
+   *       console.log(`Next page has ${nextPage.items.length} messages`);
+   *     }
+   *   }
+   * } catch (error) {
+   *   console.error('Failed to retrieve message history:', error);
+   * }
+   * ```
    */
   history(options: QueryOptions): Promise<PaginatedResult<Message>>;
 
   /**
-   * Get a message by its serial.
-   * @param serial The serial of the message to get.
-   * @returns A promise that resolves with the message.
+   * Get a specific message by its unique serial identifier.
+   *
+   * This method retrieves a single message using its serial, which is a unique
+   * identifier assigned to each message when it's created.
+   *
+   * @param serial - The unique serial identifier of the message to retrieve
+   *
+   * @returns A Promise that resolves to the {@link Message} object
+   *
+   * @throws {Ably.ErrorInfo} When the message is not found or network/server errors occur
+   *
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * // Initialize the chat client
+   * // Note: Use token-based authentication in production for security
+   * const realtime = new Ably.Realtime({
+   *   key: 'your-ably-api-key', // Use tokens in production
+   *   clientId: 'user-123'
+   * });
+   * const chatClient = new ChatClient(realtime);
+   * const room = await chatClient.rooms.get('customer-support');
+   *
+   * // Get a specific message by serial
+   * const messageSerial = 'e1bB2@1234567890123-0';
+   *
+   * try {
+   *   const message = await room.messages.get(messageSerial);
+   *
+   *   console.log('Message details:');
+   *   console.log(`Serial: ${message.serial}`);
+   *   console.log(`From: ${message.clientId}`);
+   *   console.log(`Text: ${message.text}`);
+   *
+   *   // Check message status
+   *   if (message.isUpdated) {
+   *     console.log(`Updated by: ${message.updatedBy} at ${message.updatedAt?.toISOString()}`);
+   *   }
+   *
+   *   if (message.isDeleted) {
+   *     console.log(`Deleted by: ${message.deletedBy} at ${message.deletedAt?.toISOString()}`);
+   *   }
+   * } catch (error) {
+   *   if (error.code === 40400) {
+   *     console.error('Message not found:', messageSerial);
+   *   } else {
+   *     console.error('Failed to retrieve message:', error);
+   *   }
+   * }
+   * ```
    */
   get(serial: Serial): Promise<Message>;
 
   /**
-   * Send a message in the chat room.
+   * Send a message to the chat room.
    *
-   * This method uses the Ably Chat API endpoint for sending messages.
+   * This method publishes a new message to the chat room using the Ably Chat API.
+   * The message will be delivered to all subscribers in real-time.
    *
-   * Note that the Promise may resolve before OR after the message is received
-   * from the realtime channel. This means you may see the message that was just
-   * sent in a callback to `subscribe` before the returned promise resolves.
-   * @param params an object containing {text, headers, metadata} for the message
-   * to be sent. Text is required, metadata and headers are optional.
-   * @returns A promise that resolves when the message was published.
+   * **Important**: The Promise may resolve before OR after the message is received
+   * from the realtime channel. This means subscribers may see the message before
+   * the send operation completes.
+   *
+   * @param params - Message parameters containing the text and optional metadata/headers
+   *
+   * @returns A Promise that resolves to the sent {@link Message} object
+   *
+   * @throws {Ably.ErrorInfo} When the message fails to send due to network issues,
+   *         authentication problems, or rate limiting
+   *
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * // Initialize the chat client
+   * // Note: Use token-based authentication in production for security
+   * const realtime = new Ably.Realtime({
+   *   key: 'your-ably-api-key', // Use tokens in production
+   *   clientId: 'user-123'
+   * });
+   * const chatClient = new ChatClient(realtime);
+   * const room = await chatClient.rooms.get('general-chat');
+   *
+   * // Send a message with metadata and headers
+   * try {
+   *   const message = await room.messages.send({
+   *     text: 'Hello, everyone! 👋',
+   *     metadata: {
+   *       priority: 'high',
+   *       category: 'greeting'
+   *     },
+   *     headers: {
+   *       'content-type': 'text',
+   *       'language': 'en'
+   *     }
+   *   });
+   *
+   *   console.log('Message sent successfully!');
+   *   console.log(`Message ID: ${message.serial}`);
+   *   console.log(`Sent at: ${message.createdAt.toISOString()}`);
+   * } catch (error) {
+   *   console.error('Failed to send message:', error);
+   * }
+   * ```
    */
   send(params: SendMessageParams): Promise<Message>;
 
   /**
    * Delete a message in the chat room.
    *
-   * This method uses the Ably Chat API REST endpoint for deleting messages.
-   * It performs a `soft` delete, meaning the message is marked as deleted.
+   * This method performs a "soft delete" on a message, marking it as deleted rather
+   * than permanently removing it. The deleted message will still be visible in message
+   * history but will be flagged as deleted. Subscribers will receive a deletion event
+   * in real-time.
    *
-   * Note that the Promise may resolve before OR after the message is deleted
-   * from the realtime channel. This means you may see the message that was just
-   * deleted in a callback to `subscribe` before the returned promise resolves.
+   * **Important**: The Promise may resolve before OR after the deletion event is received
+   * from the realtime channel. Subscribers may see the deletion event before this method
+   * completes.
    *
-   * NOTE: The Message instance returned by this method is the state of the message as a result of the delete operation.
-   * If you have a subscription to message events via `subscribe`, you should discard the message instance returned by
-   * this method and use the event payloads from the subscription instead.
+   * **Note**: The returned Message instance represents the state after deletion. If you
+   * have active subscriptions, use the event payloads from those subscriptions instead
+   * of the returned instance for consistency.
    *
-   * Should you wish to restore a deleted message, and providing you have the appropriate permissions,
-   * you can simply send an update to the original message.
-   * Note: This is subject to change in future versions, whereby a new permissions model will be introduced
-   * and a deleted message may not be restorable in this way.
-   * @returns A promise that resolves when the message was deleted.
-   * @param serial - A string or object that conveys the serial of the message to delete.
-   * @param deleteMessageParams - Optional details to record about the delete action.
-   * @returns A promise that resolves to the deleted message.
+   * @param serial - The unique identifier of the message to delete
+   * @param deleteMessageParams - Optional parameters for the deletion
+   *
+   * @returns A Promise that resolves to the deleted {@link Message} object with
+   *          `isDeleted` set to true and deletion metadata populated
+   *
+   * @throws {Ably.ErrorInfo} When the message is not found, user lacks permissions,
+   *         or network/server errors occur
+   *
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * // Initialize the chat client
+   * // Note: Use token-based authentication in production for security
+   * const realtime = new Ably.Realtime({
+   *   key: 'your-ably-api-key', // Use tokens in production
+   *   clientId: 'moderator-456'
+   * });
+   * const chatClient = new ChatClient(realtime);
+   * const room = await chatClient.rooms.get('public-chat');
+   *
+   * // Delete a message with tracking information
+   * const messageSerial = 'e1bB2@1234567890123-0';
+   *
+   * try {
+   *   const deletedMessage = await room.messages.delete(messageSerial, {
+   *     description: 'Inappropriate content removed by moderator',
+   *     metadata: {
+   *       moderatorId: chatClient.clientId,
+   *       reason: 'policy-violation',
+   *       timestamp: Date.now()
+   *     }
+   *   });
+   *
+   *   console.log('Message deleted successfully');
+   *   console.log(`Deleted message: ${deletedMessage.text}`);
+   *   console.log(`Deleted by: ${deletedMessage.deletedBy}`);
+   *   console.log(`Deleted at: ${deletedMessage.deletedAt?.toISOString()}`);
+   *   console.log(`Is deleted: ${deletedMessage.isDeleted}`);
+   * } catch (error) {
+   *   if (error.code === 40400) {
+   *     console.error('Message not found:', messageSerial);
+   *   } else if (error.code === 40300) {
+   *     console.error('Permission denied: Cannot delete this message');
+   *   } else {
+   *     console.error('Failed to delete message:', error);
+   *   }
+   * }
+   * ```
    */
   delete(serial: Serial, deleteMessageParams?: DeleteMessageParams): Promise<Message>;
 
   /**
    * Update a message in the chat room.
    *
-   * Note that the Promise may resolve before OR after the updated message is
-   * received from the realtime channel. This means you may see the update that
-   * was just sent in a callback to `subscribe` before the returned promise
-   * resolves.
+   * This method modifies an existing message's content, metadata, or headers.
+   * The update creates a new version of the message while preserving the original
+   * serial identifier. Subscribers will receive an update event in real-time.
    *
-   * NOTE: The Message instance returned by this method is the state of the message as a result of the update operation.
-   * If you have a subscription to message events via `subscribe`, you should discard the message instance returned by
-   * this method and use the event payloads from the subscription instead.
+   * **Important**: The Promise may resolve before OR after the update event is received
+   * from the realtime channel. Subscribers may see the update event before this method
+   * completes.
    *
-   * This method uses PUT-like semantics: if headers and metadata are omitted from the updateParams, then
-   * the existing headers and metadata are replaced with the empty objects.
-   * @param serial - A string or object that conveys the serial of the message to update.
-   * @param updateParams - The parameters for updating the message.
-   * @param details - Optional details to record about the update action.
-   * @returns A promise of the updated message.
+   * **Note**:
+   * - This method uses PUT-like semantics. If metadata or headers are omitted
+   * from updateParams, they will be replaced with empty objects, not merged with existing values.
+   * - The returned Message instance represents the state after the update. If you
+   * have active subscriptions, use the event payloads from those subscriptions instead
+   * of the returned instance for consistency.
+   *
+   * @param serial - The unique identifier of the message to update
+   * @param updateParams - The new message content and properties
+   * @param details - Optional operation details
+   *
+   * @returns A Promise that resolves to the updated {@link Message} object with
+   *          `isUpdated` set to true and update metadata populated
+   *
+   * @throws {Ably.ErrorInfo} When the message is not found, user lacks permissions,
+   *         or network/server errors occur
+   *
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * // Initialize the chat client
+   * // Note: Use token-based authentication in production for security
+   * const realtime = new Ably.Realtime({
+   *   key: 'your-ably-api-key', // Use tokens in production
+   *   clientId: 'user-123'
+   * });
+   * const chatClient = new ChatClient(realtime);
+   * const room = await chatClient.rooms.get('team-updates');
+   *
+   * // Update a message with corrected text and tracking
+   * const messageSerial = 'e1bB2@1234567890123-0';
+   *
+   * try {
+   *   const updatedMessage = await room.messages.update(
+   *     messageSerial,
+   *     {
+   *       text: 'Meeting is scheduled for 3 PM (corrected time)',
+   *       metadata: {
+   *         edited: true,
+   *         editReason: 'time correction',
+   *         lastEditBy: chatClient.clientId
+   *       }
+   *     },
+   *     {
+   *       description: 'Corrected meeting time',
+   *       metadata: {
+   *         editorId: chatClient.clientId,
+   *         editTimestamp: Date.now()
+   *       }
+   *     }
+   *   );
+   *
+   *   console.log('Message updated successfully');
+   *   console.log(`Updated text: ${updatedMessage.text}`);
+   *   console.log(`Updated by: ${updatedMessage.updatedBy}`);
+   *   console.log(`Updated at: ${updatedMessage.updatedAt?.toISOString()}`);
+   *   console.log(`Is updated: ${updatedMessage.isUpdated}`);
+   * } catch (error) {
+   *   if (error.code === 40400) {
+   *     console.error('Message not found:', messageSerial);
+   *   } else if (error.code === 40300) {
+   *     console.error('Permission denied: Cannot update this message');
+   *   } else {
+   *     console.error('Failed to update message:', error);
+   *   }
+   * }
+   * ```
    */
   update(serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
    * Send, delete, and subscribe to message reactions.
+   *
+   * This property provides access to the message reactions functionality, allowing you to
+   * add reactions to specific messages, remove reactions, and subscribe to reaction events
+   * in real-time.
+   *
+   * @example
+   * ```typescript
+   * import { ChatClient } from '@ably/chat';
+   *
+   * // Note: Use token-based authentication in production for security
+   * const realtime = new Ably.Realtime({
+   *   key: 'your-ably-api-key', // Use tokens in production
+   *   clientId: 'user-123'
+   * });
+   * const chatClient = new ChatClient(realtime);
+   * const room = await chatClient.rooms.get('general');
+   *
+   * // Add a reaction to a message
+   * await room.messages.reactions.send('message-serial-123', {
+   *   type: 'like',
+   *   metadata: { source: 'mobile-app' }
+   * });
+   *
+   * // Subscribe to reaction events
+   * room.messages.reactions.subscribe((event) => {
+   *   console.log(`Reaction ${event.type}:`, event.reaction);
+   * });
+   * ```
    */
   reactions: MessagesReactions;
 }
