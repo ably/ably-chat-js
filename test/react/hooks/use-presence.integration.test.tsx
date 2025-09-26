@@ -50,7 +50,7 @@ describe('usePresence', () => {
         // wait till we have entered presence
         if (!myPresenceState.present) return;
         // send a presence update event
-        setTimeout(() => void update('test update'), 500);
+        setTimeout(() => void update({ foo: 'test update' }), 500);
       }, [myPresenceState.present, update]);
 
       isPresentState = myPresenceState.present;
@@ -65,7 +65,7 @@ describe('usePresence', () => {
 
     const { unmount, rerender } = render(
       <Providers>
-        <TestComponent initialData={'test enter'} />
+        <TestComponent initialData={{ foo: 'test enter' }} />
       </Providers>,
     );
 
@@ -78,11 +78,11 @@ describe('usePresence', () => {
 
     // expect a presence enter and update event from the test component to be received by the second room
     await waitForExpectedPresenceEvent(
-      { clientId: chatClientOne.clientId, type: PresenceEventType.Enter, data: 'test enter' },
+      { clientId: chatClientOne.clientId, type: PresenceEventType.Enter, data: { foo: 'test enter' } },
       presenceEventsRoomTwo,
     );
     await waitForExpectedPresenceEvent(
-      { clientId: chatClientOne.clientId, type: PresenceEventType.Update, data: 'test update' },
+      { clientId: chatClientOne.clientId, type: PresenceEventType.Update, data: { foo: 'test update' } },
       presenceEventsRoomTwo,
     );
 
@@ -92,7 +92,7 @@ describe('usePresence', () => {
     // expect a presence leave event from the test component to be received by the second room
     // it will have the data of whatever was in the presence set at the time
     await waitForExpectedPresenceEvent(
-      { clientId: chatClientOne.clientId, type: PresenceEventType.Leave, data: 'test update' },
+      { clientId: chatClientOne.clientId, type: PresenceEventType.Leave, data: { foo: 'test update' } },
       presenceEventsRoomTwo,
     );
 

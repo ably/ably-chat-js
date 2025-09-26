@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 
 import { ChannelOptionsMerger } from './channel-manager.js';
 import { PresenceEventType } from './events.js';
+import { JsonObject } from './json.js';
 import { Logger } from './logger.js';
 import { on, subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions } from './room-options.js';
@@ -55,9 +56,28 @@ interface PresenceEventsMap {
 }
 
 /**
- * Type for PresenceData. Any JSON serializable data type.
+ * Type for data that can be entered into presence as an object literal.
+ * @example
+ * ```ts
+ * const foo: PresenceData = {
+ *   bar: {
+ *     baz: 1
+ *   }
+ * }
+ * ```
+ * @example
+ * ```ts
+ * // Defining a custom type for presence data. It must be a JSON serializable object.
+ * interface MyPresenceData {
+ *   [key: string]: JsonValue; // Type check for JSON compatibility.
+ *   foo: string;
+ *   bar: {
+ *     baz: string;
+ *   }
+ *  }
+ * ```
  */
-export type PresenceData = unknown;
+export type PresenceData = JsonObject;
 
 /**
  * Type for PresenceEvent
@@ -89,7 +109,7 @@ export type PresenceMember = Omit<Ably.PresenceMessage, 'id' | 'action' | 'times
   /**
    * The data associated with the presence member.
    */
-  data: PresenceData;
+  data: PresenceData | undefined;
 
   /**
    * The extras associated with the presence member.

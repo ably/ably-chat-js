@@ -30,6 +30,7 @@ export {
   TypingSetEventType,
 } from './events.js';
 export type { Headers } from './headers.js';
+export type { JsonArray, JsonObject, JsonValue } from './json.js';
 export type { LogContext, Logger, LogHandler } from './logger.js';
 export { LogLevel } from './logger.js';
 export type {
