@@ -397,7 +397,7 @@ export interface Messages {
    *     }
    *   });
    *
-   *   console.log('Message sent successfully: ${message.serial}');
+   *   console.log(`Message sent successfully: ${message.serial}`);
    * } catch (error) {
    *   console.error('Failed to send message:', error);
    * }
