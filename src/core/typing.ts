@@ -23,26 +23,16 @@ export interface Typing {
    * feedback about who is currently composing messages. The subscription emits
    * events containing the current set of typing users and details about what changed.
    *
-   * **Note**: The room should be attached to receive typing events reliably.
-   *
+   * **Note**: The room must be attached to receive typing events.
    * @param listener - Callback invoked when the typing state changes
-   *
    * @returns Subscription object with an unsubscribe method
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, TypingSetEvent } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('team-chat');
    * await room.attach();
    *
@@ -62,36 +52,10 @@ export interface Typing {
    *   } else {
    *     showTypingIndicator(`${currentlyTyping.size} people are typing...`);
    *   }
-   *
-   *   // Handle specific changes
-   *   if (change.type === 'typing.started') {
-   *     console.log(`${change.clientId} started typing`);
-   *     animateTypingIndicator(change.clientId);
-   *   } else if (change.type === 'typing.stopped') {
-   *     console.log(`${change.clientId} stopped typing`);
-   *     removeTypingAnimation(change.clientId);
-   *   }
-   * });
-   *
-   * // Track typing with user details
-   * const userNames = new Map([
-   *   ['user-123', 'Alice'],
-   *   ['user-456', 'Bob'],
-   *   ['user-789', 'Charlie']
-   * ]);
-   *
-   * const detailedSubscription = room.typing.subscribe((event) => {
-   *   const typingNames = Array.from(event.currentlyTyping)
-   *     .map(clientId => userNames.get(clientId) || clientId);
-   *
-   *   if (typingNames.length > 0) {
-   *     updateTypingStatus(typingNames);
-   *   }
    * });
    *
    * // Clean up when done
    * subscription.unsubscribe();
-   * detailedSubscription.unsubscribe();
    * ```
    */
   subscribe(listener: TypingListener): Subscription;
@@ -101,60 +65,30 @@ export interface Typing {
    *
    * Returns a Set containing the client IDs of all users currently typing in the room.
    * This provides a snapshot of the typing state at the time of the call.
-   *
    * @returns Set of client IDs currently typing
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('support-chat');
    *
-   * // Get current typing users on demand
-   * function checkTypingStatus() {
-   *   const typingUsers = room.typing.current();
+   * await room.attach();
    *
-   *   console.log(`${typingUsers.size} users are typing`);
+   * // Must be subscribed to populate the current typing state
+   * room.typing.subscribe((event: TypingSetEvent) => {
+   *  console.log('Typing event:', event);
+   *  });
    *
-   *   if (typingUsers.has('agent-001')) {
-   *     console.log('Support agent is typing a response...');
-   *   }
+   * const typingUsers = room.typing.current();
    *
-   *   // Display typing indicator based on current state
-   *   if (typingUsers.size > 0) {
-   *     const userList = Array.from(typingUsers).join(', ');
-   *     updateTypingIndicator(`Typing: ${userList}`);
-   *   } else {
-   *     clearTypingIndicator();
-   *   }
+   * console.log(`${typingUsers.size} users are typing`);
+   *
+   * if (typingUsers.has('agent-001')) {
+   *   console.log('Support agent is typing a response...');
    * }
-   *
-   * // Check typing status periodically or on specific events
-   * const intervalId = setInterval(checkTypingStatus, 5000);
-   *
-   * // Or check when opening a chat view
-   * async function openChatView() {
-   *   await room.attach();
-   *   const currentlyTyping = room.typing.current();
-   *
-   *   if (currentlyTyping.size > 0) {
-   *     console.log('Users already typing when chat opened:', Array.from(currentlyTyping));
-   *     showImmediateTypingIndicator(currentlyTyping);
-   *   }
-   * }
-   *
-   * // Clean up
-   * clearInterval(intervalId);
    * ```
    */
   current(): Set<string>;
@@ -170,79 +104,31 @@ export interface Typing {
    * - The connection must be in the 'connected' state.
    * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
    * - The most recent operation always determines the final typing state.
-   *
+   * - The room must be attached to send typing events.
    * @returns Promise that resolves when the typing event has been sent
-   *
    * @throws {Ably.ErrorInfo} with code 40000 if not connected
    * @throws {Ably.ErrorInfo} with code 50000 if mutex acquisition fails
    * @throws {Ably.ErrorInfo} if the operation fails to send the event
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('project-discussion', {
    *   typing: {
    *     heartbeatThrottleMs: 1000 // Throttle to 1 event per second
    *   }
    * });
    *
-   * // Send typing indicator when user starts typing
-   * const messageInput = document.getElementById('message-input');
-   * let typingTimeout: NodeJS.Timeout;
+   * await room.attach();
    *
-   * messageInput?.addEventListener('input', async () => {
-   *   try {
-   *     // Send typing started event (throttled automatically)
+   * try {
    *     await room.typing.keystroke();
-   *
-   *     // Clear existing timeout
-   *     if (typingTimeout) {
-   *       clearTimeout(typingTimeout);
-   *     }
-   *
-   *     // Stop typing after 2 seconds of inactivity
-   *     typingTimeout = setTimeout(async () => {
-   *       try {
-   *         await room.typing.stop();
-   *         console.log('Stopped typing indicator');
-   *       } catch (error) {
-   *         console.error('Failed to stop typing:', error);
-   *       }
-   *     }, 2000);
-   *   } catch (error) {
-   *     if (error.code === 40000) {
-   *       console.error('Not connected - cannot send typing indicator');
-   *     } else {
-   *       console.error('Failed to send typing indicator:', error);
-   *     }
-   *   }
-   * });
-   *
-   * // Alternative: Debounced typing indicator
-   * import { debounce } from 'lodash';
-   *
-   * const sendTypingIndicator = debounce(async () => {
-   *   try {
-   *     await room.typing.keystroke();
-   *   } catch (error) {
+   * } catch (error) {
    *     console.error('Typing indicator error:', error);
    *   }
-   * }, 500);
-   *
-   * messageInput?.addEventListener('keypress', () => {
-   *   sendTypingIndicator();
-   * });
    * ```
    */
   keystroke(): Promise<void>;
@@ -257,76 +143,37 @@ export interface Typing {
    * **Note**:
    * - The connection must be in the 'connected' state.
    * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
-   *
+   * - The room must be attached to send typing events.
    * @returns Promise that resolves when the stop event has been sent
-   *
    * @throws {Ably.ErrorInfo} with code 40000 if not connected
    * @throws {Ably.ErrorInfo} with code 50000 if mutex acquisition fails
    * @throws {Ably.ErrorInfo} if the operation fails to send the event
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('customer-support');
    *
-   * // Stop typing when message is sent
-   * async function sendMessage(text: string) {
-   *   try {
-   *     // Stop typing indicator before sending
-   *     await room.typing.stop();
+   * await room.attach();
    *
-   *     // Send the message
-   *     await room.messages.send({ text });
+   * // Start typing in the room
+   * try {
+   *  await room.typing.keystroke();
+   *  } catch (error) {
+   *  console.error('Typing indicator error:', error);
+   *  }
    *
-   *     console.log('Message sent and typing stopped');
-   *   } catch (error) {
-   *     console.error('Failed to send message:', error);
-   *   }
+   *  // User sends a message, or deletes their draft, etc.
+   *
+   * // Stop typing in the room
+   * try {
+   * await room.typing.stop();
+   * } catch (error) {
+   * console.error('Failed to stop typing:', error);
    * }
-   *
-   * // Stop typing when user clears input or cancels
-   * const messageInput = document.getElementById('message-input') as HTMLInputElement;
-   * const cancelButton = document.getElementById('cancel-button');
-   *
-   * cancelButton?.addEventListener('click', async () => {
-   *   try {
-   *     await room.typing.stop();
-   *     messageInput.value = '';
-   *     console.log('Message cancelled, typing stopped');
-   *   } catch (error) {
-   *     console.error('Failed to stop typing:', error);
-   *   }
-   * });
-   *
-   * // Stop typing when focus is lost
-   * messageInput?.addEventListener('blur', async () => {
-   *   try {
-   *     await room.typing.stop();
-   *     console.log('Input blurred, typing stopped');
-   *   } catch (error) {
-   *     // Silently handle error - user may have already disconnected
-   *     console.debug('Could not stop typing on blur:', error);
-   *   }
-   * });
-   *
-   * // Stop typing before page unload
-   * window.addEventListener('beforeunload', () => {
-   *   // Fire and forget - don't await
-   *   room.typing.stop().catch(() => {
-   *     // Ignore errors on page unload
-   *   });
-   * });
    * ```
    */
   stop(): Promise<void>;

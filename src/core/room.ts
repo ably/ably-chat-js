@@ -23,30 +23,26 @@ import { DefaultTyping, Typing } from './typing.js';
 export interface Room {
   /**
    * The unique identifier of the room.
-   *
    * @returns The room name as provided when the room was created
-   *
    * @example
    * ```typescript
    * const room = await chatClient.rooms.get('sports-discussion');
    * console.log(`Connected to room: ${room.name}`);
-   * await room.attach();
-   * console.log(`Attached to room: ${room.name}`);
+   *
+   * // Output: Connected to room: sports-discussion
    * ```
    */
   get name(): string;
 
   /**
    * Provides access to the messages feature for sending, receiving, and querying chat messages.
-   *
    * @returns The Messages instance for this room
-   *
    * @example
    * ```typescript
    * const room = await chatClient.rooms.get('team-chat');
    *
-   * // Send a message
-   * await room.messages.send({ text: 'Hello team!' });
+   * // Access messages feature
+   * const { subscribe, send, update, ... } = room.messages;
    *
    * ```
    */
@@ -54,49 +50,40 @@ export interface Room {
 
   /**
    * Provides access to the presence feature for tracking user presence state.
-   *
    * @returns The Presence instance for this room
-   *
    * @example
    * ```typescript
    * const room = await chatClient.rooms.get('meeting-room');
    *
-   * await room.attach();
-   *
-   * // Enter presence with metadata
-   * await room.presence.enter({ status: 'active' });
+   * // Access presence feature
+   * const { enter, leave, get, ... } = room.presence;
    * ```
    */
   get presence(): Presence;
 
   /**
    * Provides access to room-level reactions for sending ephemeral reactions.
-   *
    * @returns The RoomReactions instance for this room
-   *
    * @example
    * ```typescript
    * const room = await chatClient.rooms.get('live-stream');
    *
-   * // Send a room reaction
-   * await room.reactions.send({ name: '❤️' });
+   * // Access room reactions feature
+   * const { send, ... } = room.reactions;
+   *
    * ```
    */
   get reactions(): RoomReactions;
 
   /**
    * Provides access to the typing indicators feature for showing who is currently typing.
-   *
    * @returns The Typing instance for this room
-   *
    * @example
    * ```typescript
    * const room = await chatClient.rooms.get('support-chat');
    *
-   * await room.attach();
-   *
-   * // Send typing indicator
-   * await room.typing.keystroke();
+   * // Access typing feature
+   * const { keystroke, stop, ... } = room.typing;
    *
    * ```
    */
@@ -104,24 +91,20 @@ export interface Room {
 
   /**
    * Provides access to room occupancy metrics for tracking connection and presence counts.
-   *
    * @returns The Occupancy instance for this room
-   *
    * @example
    * ```typescript
    * const room = await chatClient.rooms.get('webinar-room');
    *
-   * // Get current occupancy
-   * const occupancy = await room.occupancy.get();
+   * // Access occupancy feature
+   * const { get, ... } = room.occupancy;
    * ```
    */
   get occupancy(): Occupancy;
 
   /**
    * The current lifecycle status of the room.
-   *
    * @returns The current RoomStatus value
-   *
    * @example
    * ```typescript
    * const room = await chatClient.rooms.get('game-lobby');
@@ -139,9 +122,7 @@ export interface Room {
 
   /**
    * The error that caused the room to enter its current status, if any.
-   *
    * @returns ErrorInfo if an error caused the current status, undefined otherwise
-   *
    * @example
    * ```typescript
    * const room = await chatClient.rooms.get('private-chat');
@@ -166,25 +147,15 @@ export interface Room {
    *
    * Status changes indicate the room's connection lifecycle. Use this to
    * monitor room health and handle connection issues over time.
-   *
    * @param listener - Callback invoked when the room status changes
-   *
    * @returns Subscription object with an unsubscribe method
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, RoomStatus } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('support-chat');
    *
    * // Monitor room status changes
@@ -205,16 +176,7 @@ export interface Room {
    *       showConnectingSpinner();
    *       break;
    *
-   *     case RoomStatus.Detached:
-   *       console.log('Room disconnected');
-   *       disableChatUI();
-   *       showOfflineIndicator();
-   *       break;
-   *
-   *     case RoomStatus.Failed:
-   *       console.error('Room connection failed, manual intervention required');
-   *       showErrorMessage('Connection failed. Please refresh the page.');
-   *       break;
+   *     // Handle other cases as needed
    *   }
    * });
    *
@@ -235,26 +197,16 @@ export interface Room {
    * - If attachment fails, the room enters {@link RoomStatus.Suspended} or {@link RoomStatus.Failed} state.
    * - Suspended rooms automatically retry; Failed rooms require manual intervention.
    * - The promise rejects with an {@link ErrorInfo} for suspended states, but the room will retry attaching after a delay.
-   *
    * @returns Promise that resolves when the room is successfully attached
-   *
-   * @throws {@link ErrorInfo} if the room enters suspended state (auto-retry will occur)
-   * @throws {@link ErrorInfo} if the room enters failed state (manual intervention required)
-   *
+   * @throws {Ably.ErrorInfo} if the room enters suspended state (auto-retry will occur)
+   * @throws {Ably.ErrorInfo} if the room enters failed state (manual intervention required)
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, RoomStatus } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('team-standup');
    *
    * // Attach to room with error handling
@@ -288,24 +240,16 @@ export interface Room {
    * Detaches from the room to stop receiving chat events.
    *
    * Subscriptions remain registered but won't receive events until the room is
-   * reattached. Use this to gracefully detach when leaving a chat view.
-   *
+   * reattached. Use this to gracefully detach when leaving a chat view. This command leaves all
+   * subscriptions intact, so they will resume receiving events when the room is reattached.
    * @returns Promise that resolves when the room is successfully detached
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('customer-support');
    *
    * // Attach and use room
@@ -330,9 +274,7 @@ export interface Room {
    * Provides access to all room configuration including presence, typing, reactions,
    * and occupancy settings. The returned object is a deep copy to prevent external
    * modifications to the room's configuration.
-   *
    * @returns A deep copy of the room options
-   *
    * @example
    * ```typescript
    * import { ChatClient } from '@ably/chat';
@@ -377,25 +319,15 @@ export interface Room {
    * **Note**:
    * - Discontinuities require fetching missed messages via history.
    * - Message subscriptions automatically reset their position on discontinuity.
-   *
    * @param handler - Callback invoked when a discontinuity is detected
-   *
    * @returns Subscription object with an unsubscribe method
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('critical-updates');
    * await room.attach();
    *
@@ -406,11 +338,7 @@ export interface Room {
    *   // Show warning to user
    *   showDiscontinuityWarning('Connection interrupted - fetching missed messages...');
    *
-   *   // Fetch messages that might have been missed (the `historyBeforeSubscribe` function can be useful here)
-   *   fetchMissedMessages();
-   *
-   *   // Refresh presence state
-   *   refreshPresenceState();
+   *   // You may also want to fetch missed messages to fill gaps during the discontinuity.
    * });
    *
    * // Clean up
@@ -424,23 +352,13 @@ export interface Room {
    *
    * Use this for advanced scenarios requiring direct access to the underlying channel. Directly interacting
    * with the Ably channel can lead to unexpected behavior, and so is generally discouraged.
-   *
    * @returns The underlying Ably RealtimeChannel instance
-   *
    * @example
    * ```typescript
    * const room = await chatClient.rooms.get('advanced-room');
    *
    * // Access underlying channel for advanced operations
    * const channel = room.channel;
-   *
-   * // Check channel state directly
-   * console.log('Channel state:', channel.state);
-   *
-   * // Custom channel subscription (bypass chat SDK)
-   * channel.subscribe('custom-event', (message) => {
-   *   console.log('Custom event received:', message.data);
-   * });
    * ```
    */
   get channel(): Ably.RealtimeChannel;

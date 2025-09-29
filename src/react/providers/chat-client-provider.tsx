@@ -42,9 +42,7 @@ export interface ChatClientProviderProps {
  * import { ChatClient } from '@ably/chat';
  * import { ChatClientProvider } from '@ably/chat/react';
  *
- * // Create client outside React to avoid recreating on re-renders
- * const realtime = new Ably.Realtime({ key: 'your-api-key', clientId: 'user-123' });
- * const chatClient = new ChatClient(realtime);
+ * const chatClient = // initialized ChatClient instance
  *
  * const App = () => {
  *   return (

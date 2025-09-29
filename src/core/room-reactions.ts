@@ -75,32 +75,22 @@ export interface RoomReactions {
    * **Note**:
    * - The room should be attached to send room reactions.
    * - It is possible (though unlikely) to receive your own reaction via subscription before this promise resolves.
-   *
    * @param params - The reaction parameters
    * @param params.name - The reaction name (e.g., "❤️", "👏", "confetti", "applause")
    * @param params.metadata - Optional metadata for custom effects or animations
    * @param params.headers - Optional headers for subscription filtering
-   *
    * @returns Promise that resolves when the reaction has been sent
-   *
    * @throws {Ably.ErrorInfo} with code 40001 if name is not provided
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('live-event');
    *
+   * // Room reactions are not sent via REST, so ensure the room is attached
    * await room.attach();
    *
    * // Send a simple room reaction
@@ -124,25 +114,15 @@ export interface RoomReactions {
    * engagement in real-time. Room reactions are ephemeral and not persisted.
    *
    * **Note**: The room should be attached to receive reaction events.
-   *
    * @param listener - Callback invoked when a room reaction is received
-   *
    * @returns Subscription object with an unsubscribe method
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, RoomReactionEvent } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('webinar-room');
    * await room.attach();
    *

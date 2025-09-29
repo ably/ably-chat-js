@@ -27,32 +27,21 @@ export interface Occupancy {
    * **Note**:
    * - Requires `enableEvents` to be true in the room's occupancy options.
    * - The room should be attached to receive occupancy events.
-   *
    * @param listener - Callback invoked when room occupancy changes
-   *
    * @returns Subscription object with an unsubscribe method
-   *
-   * @throws {@link ErrorInfo} with code 40000 if occupancy events are not enabled
-   *
+   * @throws {Ably.ErrorInfo} with code 40000 if occupancy events are not enabled
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, OccupancyEvent } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Create room with occupancy events enabled
    * const room = await chatClient.rooms.get('conference-room', {
    *   occupancy: { enableEvents: true }
    * });
+   *
    * await room.attach();
    *
    * // Subscribe to occupancy updates
@@ -62,17 +51,6 @@ export interface Occupancy {
    *   console.log(`Room occupancy updated:`);
    *   console.log(`Total connections: ${connections}`);
    *   console.log(`Presence members: ${presenceMembers}`);
-   *
-   *   // Show different indicators based on room size
-   *   if (connections === 0) {
-   *     showEmptyRoomIndicator();
-   *   } else if (connections < 5) {
-   *     showSmallGroupIndicator();
-   *   } else if (connections < 20) {
-   *     showMediumGroupIndicator();
-   *   } else {
-   *     showLargeGroupIndicator();
-   *   }
    * });
    *
    * // Clean up when done
@@ -87,23 +65,14 @@ export interface Occupancy {
    * Makes an REST API call to retrieve the latest occupancy metrics, including the number
    * of active connections and presence members. Use this for on-demand occupancy
    * checks or when occupancy events are not enabled.
-   *
    * @returns Promise resolving to current occupancy data
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, OccupancyData } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
    * const room = await chatClient.rooms.get('webinar-room');
    *
    * // Get current occupancy on demand
@@ -129,25 +98,14 @@ export interface Occupancy {
    * **Note**:
    * - Requires `enableEvents` to be true in the room's occupancy options.
    * - Returns undefined until the first occupancy event is received.
-   *
    * @returns Latest cached occupancy data or undefined if no events received
-   *
-   * @throws {@link ErrorInfo} with code 40000 if occupancy events are not enabled
-   *
+   * @throws {Ably.ErrorInfo} with code 40000 if occupancy events are not enabled
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, OccupancyData } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Room with occupancy events enabled
    * const room = await chatClient.rooms.get('gaming-lobby', {

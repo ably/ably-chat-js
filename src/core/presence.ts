@@ -134,32 +134,20 @@ export interface Presence {
    * Retrieves the current members present in the chat room.
    *
    * **Note**: The room must be attached before calling this method.
-   *
    * @param params - Optional parameters to filter the presence set
    * @param params.clientId - Filter members by a specific client ID
    * @param params.connectionId - Filter members by a specific connection ID
    * @param params.waitForSync - Whether to wait for presence sync to complete before returning (default: true). It is
    *  recommended to leave this as true to ensure you get the full and complete presence set on each call. Setting to false
    *  may result in an incomplete presence set if presence sync has not yet completed.
-   *
    * @returns Promise that resolves with an array of presence members currently in the room
-   *
    * @throws {Ably.ErrorInfo} with code 40000 if the room is not attached
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Get a room and attach to it
    * const room = await chatClient.rooms.get('meeting-room', {
@@ -194,31 +182,21 @@ export interface Presence {
    * Useful if you just need a boolean check rather than the full presence member data.
    *
    * **Note**: The room must be attached before calling this method.
-   *
    * @param clientId - The client ID of the user to check
-   *
    * @returns Promise that resolves with true if the user is present, false otherwise
-   *
    * @throws {Ably.ErrorInfo} with code 40000 if the room is not attached
    * @throws {Ably.ErrorInfo} if the operation fails for any other reason
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Get a room and attach to it
-   * const room = await chatClient.rooms.get('meeting-room');
+   * const room = await chatClient.rooms.get('meeting-room', {
+   *   presence: { enableEvents: true }
+   * });
    * await room.attach();
    *
    * try {
@@ -243,39 +221,24 @@ export interface Presence {
    * user is already present.
    *
    * **Note**: The room must be attached before calling this method.
-   *
    * @param data - Optional JSON-serializable data to associate with the user's presence
-   *
    * @returns Promise that resolves when the user has successfully entered
-   *
    * @throws {Ably.ErrorInfo} with code 40000 if the room is not attached
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
+   * const chatClient = // initialized ChatClient instance
    *
-   * const chatClient = new ChatClient(realtime);
-   *
-   * // Get a room with presence events enabled
-   * const room = await chatClient.rooms.get('meeting-room', {
-   *   presence: { enableEvents: true }
-   * });
+   * // Get a room and attach to it
+   * const room = await chatClient.rooms.get('meeting-room');
    *
    * await room.attach();
    *
    * try {
    *   // Enter with user metadata
    *   await room.presence.enter({
-   *     username: 'John Doe',
    *     avatar: 'https://example.com/avatar.jpg',
    *     status: 'online',
    *     role: 'moderator'
@@ -297,32 +260,18 @@ export interface Presence {
    * **Note**:
    * - The room must be attached before calling this method.
    * - This method uses PUT-like semantics - the entire presence data is replaced with the new value.
-   *
    * @param data - JSON-serializable data to replace the user's current presence data
-   *
    * @returns Promise that resolves when the presence data has been updated
-   *
    * @throws {Ably.ErrorInfo} with code 40000 if the room is not attached
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Get a room with presence events enabled
-   * const room = await chatClient.rooms.get('meeting-room', {
-   *   presence: { enableEvents: true }
-   * });
+   * const room = await chatClient.rooms.get('meeting-room');
    *
    * await room.attach();
    *
@@ -353,39 +302,25 @@ export interface Presence {
    * Emits a 'leave' event to all subscribers. If the user is not present, this is a no-op.
    *
    * **Note**: The room must be attached before calling this method.
-   *
    * @param data - Optional final presence data to include with the leave event
-   *
    * @returns Promise that resolves when the user has left the presence set
-   *
    * @throws {Ably.ErrorInfo} with code 40000 if the room is not attached
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Get a room with presence events enabled
-   * const room = await chatClient.rooms.get('meeting-room', {
-   *   presence: { enableEvents: true }
-   * });
+   * const room = await chatClient.rooms.get('meeting-room');
    *
    * await room.attach();
    *
    * try {
    *   // Enter the room
    *   await room.presence.enter({
-   *     username: 'John Doe',
+   *     avatar: 'https://example.com/avatar.jpg',
    *     status: 'online'
    *   });
    *
@@ -393,7 +328,6 @@ export interface Presence {
    *
    *   // Leave with a final status message
    *   await room.presence.leave({
-   *     username: 'John Doe',
    *     status: 'offline',
    *     lastSeen: new Date().toISOString()
    *   });
@@ -412,28 +346,16 @@ export interface Presence {
    * **Note**:
    * - Requires `enableEvents` to be true in the room's presence options.
    * - The room must be attached to receive events.
-   *
    * @param eventOrEvents - Single event type or array of event types to subscribe to ('enter', 'leave', 'update', 'present')
    * @param listener - Callback function invoked when matching events occur
-   *
    * @returns Subscription object with an unsubscribe method
-   *
    * @throws {Ably.ErrorInfo} with code 40000 if presence events are not enabled
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, PresenceEvent, PresenceEventType } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Get a room with presence events enabled
    * const room = await chatClient.rooms.get('meeting-room', {
@@ -477,27 +399,15 @@ export interface Presence {
    * **Note**:
    * - Requires `enableEvents` to be true in the room's presence options.
    * - The room must be attached to receive events in real-time.
-   *
    * @param listener - Callback function invoked when any presence event occurs
-   *
    * @returns Subscription object with an unsubscribe method
-   *
    * @throws {Ably.ErrorInfo} with code 40000 if presence events are not enabled
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, PresenceEvent, PresenceEventType } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Get a room with presence events enabled
    * const room = await chatClient.rooms.get('meeting-room', {

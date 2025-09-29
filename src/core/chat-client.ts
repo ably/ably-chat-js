@@ -56,30 +56,28 @@ export class ChatClient {
    *
    * **Important**: The Ably Realtime client must have a clientId set. This identifies
    * the user in chat rooms and is required for all chat operations.
-   *
    * @param realtime - An initialized Ably Realtime client with a configured clientId
    * @param clientOptions - Optional configuration for the chat client
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, LogLevel } from '@ably/chat';
    *
    * // Preferred in production: Use auth URL that returns a token with clientId
-   * const realtime = new Ably.Realtime({
+   * const realtimeClient = new Ably.Realtime({
    *   authUrl: '/api/ably-auth', // Your server endpoint that returns an Ably token with clientId
    *   authMethod: 'POST'
    * });
    *
    *
    * // Alternative for development and server-side operations: Set clientId directly (requires API key)
-   * const realtime = new Ably.Realtime({
+   * const realtimeClient = new Ably.Realtime({
    *   key: 'your-ably-api-key',
    *   clientId: 'user-123'
    * });
    *
    * // With custom logging configuration: Defaults to LogLevel.Info and console logging
-   * const chatClientWithLogging = new ChatClient(realtime, {
+   * const chatClientWithLogging = new ChatClient(realtimeClient, {
    *   logLevel: LogLevel.Debug,
    *   logHandler: (message, level, context) => {
    *     // Send to your logging service
@@ -110,12 +108,10 @@ export class ChatClient {
 
   /**
    * Provides access to the rooms instance for creating and managing chat rooms.
-   *
    * @returns The Rooms instance for managing chat rooms
-   *
    * @example
    * ```typescript
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Get a room
    * const room = await chatClient.rooms.get('general-chat');
@@ -135,12 +131,10 @@ export class ChatClient {
 
   /**
    * Provides access to the underlying connection to Ably for monitoring connectivity.
-   *
    * @returns The Connection instance
-   *
    * @example
    * ```typescript
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Check current connection status
    * console.log('Status:', chatClient.connection.status);
@@ -176,12 +170,10 @@ export class ChatClient {
    *
    * **Note**: Directly interacting with the Ably Realtime client can lead to
    * unexpected behavior.
-   *
    * @returns The underlying Ably Realtime client instance
-   *
    * @example
    * ```typescript
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Access underlying Ably features
    * const ablyRealtime = chatClient.realtime;
@@ -193,12 +185,10 @@ export class ChatClient {
 
   /**
    * The configuration options used to initialize the chat client.
-   *
    * @returns The resolved client options including defaults
-   *
    * @example
    * ```typescript
-   * const chatClient = new ChatClient(realtime, {
+   * const chatClient = new ChatClient(realtimeClient, {
    *   logLevel: LogLevel.Debug
    * });
    *
@@ -250,23 +240,13 @@ export class ChatClient {
    * be called when you're completely done with the chat functionality.
    *
    * **Note**: This will release ALL rooms managed by this ChatClient and the ChatClient cannot be reused after disposal.
-   *
    * @returns Promise that resolves when all resources are released
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development or server-side only
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Use the chat client
    * const roomOne = await chatClient.rooms.get('general-chat');

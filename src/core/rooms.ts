@@ -24,30 +24,18 @@ export interface Rooms {
    * - If options differ from an existing room, an error is thrown.
    * - If `get` is called during a release, it waits for release to complete.
    * - If `release` is called before `get` resolves, the promise rejects.
-   *
    * @param name - The unique identifier of the room
    * @param options - Optional configuration for the room features
-   *
    * @returns Promise resolving to the Room instance
-   *
-   * @throws {@link ErrorInfo} with code 40000 if room exists with different options
-   * @throws {@link ErrorInfo} if the rooms instance has been disposed
-   * @throws {@link ErrorInfo} if room is released before get completes
-   *
+   * @throws {Ably.ErrorInfo} with code 40000 if room exists with different options
+   * @throws {Ably.ErrorInfo} if the rooms instance has been disposed
+   * @throws {Ably.ErrorInfo} if room is released before get completes
    * @example
-   * ```typescript
+   * ```
    * import * as Ably from 'ably';
    * import { ChatClient, Room } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Get a room with default options
    * const room = await chatClient.rooms.get('general-chat');
@@ -84,25 +72,14 @@ export interface Rooms {
    * **Note**:
    * - Calling release aborts any in-progress `get` calls for the same room.
    * - The room object becomes unusable after release.
-   *
    * @param name - The unique identifier of the room to release
-   *
    * @returns Promise that resolves when the room is fully released
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Get and use a room
    * const room = await chatClient.rooms.get('temporary-chat');
