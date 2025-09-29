@@ -181,7 +181,7 @@ export interface Room {
    * });
    *
    * // Clean up when done
-   * statusSubscription.unsubscribe();
+   * statusSubscription.off();
    * ```
    */
   onStatusChange(listener: RoomStatusListener): StatusSubscription;
@@ -342,7 +342,7 @@ export interface Room {
    * });
    *
    * // Clean up
-   * discontinuitySubscription.unsubscribe();
+   * discontinuitySubscription.off();
    * ```
    */
   onDiscontinuity(handler: DiscontinuityListener): StatusSubscription;
