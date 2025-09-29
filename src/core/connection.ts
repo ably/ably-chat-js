@@ -78,14 +78,12 @@ export type ConnectionStatusListener = (change: ConnectionStatusChange) => void;
 export interface Connection {
   /**
    * The current status of the connection.
-   *
    * @returns The current ConnectionStatus value
-   *
    * @example
    * ```typescript
    * import { ChatClient, ConnectionStatus } from '@ably/chat';
    *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Check connection status
    * if (chatClient.connection.status === ConnectionStatus.Connected) {
@@ -104,25 +102,17 @@ export interface Connection {
 
   /**
    * The error that caused the connection to enter its current status, if any.
-   *
    * @returns ErrorInfo if an error caused the current status, undefined otherwise
-   *
    * @example
    * ```typescript
    * import { ChatClient, ConnectionStatus } from '@ably/chat';
    *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Check for connection errors
    * if (chatClient.connection.error) {
    *   console.error('Connection error:', chatClient.connection.error.message);
    *   console.error('Error code:', chatClient.connection.error.code);
-   *
-   *   // Handle specific error codes
-   *   if (chatClient.connection.error.code === 40140) {
-   *     console.error('Token expired - need to refresh authentication');
-   *   }
-   * }
    *
    * // Monitor for errors during status changes
    * chatClient.connection.onStatusChange((change) => {
@@ -140,25 +130,14 @@ export interface Connection {
    * Status changes indicate the connection lifecycle, including connecting,
    * connected, disconnected, suspended, and failed states. Use this to monitor
    * connection health and handle network issues.
-   *
    * @param listener - Callback invoked when the connection status changes
-   *
    * @returns Subscription object with an off method to unregister
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, ConnectionStatus } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Use token auth in production
-   *   // For development only - never use API keys in production:
-   *   // key: 'your-api-key',
-   *   // clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Monitor connection status changes
    * const subscription = chatClient.connection.onStatusChange((change) => {

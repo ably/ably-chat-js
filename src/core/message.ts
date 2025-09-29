@@ -201,7 +201,7 @@ export interface Message {
    * from the backend.
    * @param message The message to compare against.
    * @returns true if this message was created before the given message, in global order.
-   * @throws {@link ErrorInfo} if serials of either message is invalid.
+   * @throws {Ably.ErrorInfo} if serials of either message is invalid.
    */
   before(message: Message): boolean;
 
@@ -211,7 +211,7 @@ export interface Message {
    * from the backend.
    * @param message The message to compare against.
    * @returns true if this message was created after the given message, in global order.
-   * @throws {@link ErrorInfo} if serials of either message is invalid.
+   * @throws {Ably.ErrorInfo} if serials of either message is invalid.
    */
   after(message: Message): boolean;
 
@@ -237,8 +237,8 @@ export interface Message {
    *
    * NOTE: This method will not replace the message reactions if the event is of type `Message`.
    * @param event The event to be applied to the returned message.
-   * @throws {@link ErrorInfo} if the event is for a different message.
-   * @throws {@link ErrorInfo} if the event is a {@link ChatMessageEventType.Created}.
+   * @throws {Ably.ErrorInfo} if the event is for a different message.
+   * @throws {Ably.ErrorInfo} if the event is a {@link ChatMessageEventType.Created}.
    * @returns A new message instance with the event applied. If the event is a no-op, such
    *    as an event for an old version, the same message is returned (not a copy).
    */

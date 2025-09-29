@@ -188,9 +188,9 @@ export interface MessageSubscriptionResponse extends Subscription {
    * Get the previous messages that were sent to the room before the listener was subscribed.
    *
    * If the client experiences a discontinuity event (i.e. the connection was lost and could not be resumed), the starting point of
-   * historyBeforeSubscribe will be reset.
+   * `historyBeforeSubscribe` will be reset.
    *
-   * Calls to historyBeforeSubscribe will wait for continuity to be restored before resolving.
+   * Calls to `historyBeforeSubscribe` will wait for continuity to be restored before resolving.
    *
    * Once continuity is restored, the subscription point will be set to the beginning of this new period of continuity. To
    * ensure that no messages are missed, you should call historyBeforeSubscribe after any period of discontinuity to
@@ -237,25 +237,16 @@ export interface Messages {
    * historical messages that occurred before the subscription was established.
    *
    * **Note**: The room must be attached for the listener to receive new message events.
-   *
    * @param listener - A callback function that will be invoked when chat message events occur.
-   *
    * @returns A {@link MessageSubscriptionResponse} object that provides:
    *          - `unsubscribe()`: Method to stop listening for message events
    *          - `historyBeforeSubscribe()`: Method to retrieve messages sent before subscription
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * const realtime = new Ably.Realtime({
-   *   key: 'your-ably-api-key', // Only use API keys in development or if running server-side
-   *   clientId: 'user-123'
-   * });
-   *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
    *
    * // Get a room and subscribe to messages
    * const room = await chatClient.rooms.get('general-chat');
@@ -292,26 +283,17 @@ export interface Messages {
    * This method retrieves historical messages based on the provided query options,
    * allowing you to paginate through message history, filter by time ranges,
    * and control the order of results.
-   *
    * @param options - Query parameters to filter and control the message retrieval
-   *
    * @returns A Promise that resolves to a {@link PaginatedResult} containing an array of {@link Message} objects
    *          and methods for pagination control
-   *
    * @throws {Ably.ErrorInfo} When the query fails due to network issues or invalid parameters
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient, OrderBy } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * // Note: Use token-based authentication in production for security
-   * const realtime = new Ably.Realtime({
-   *   key: 'your-ably-api-key', // Use tokens in production
-   *   clientId: 'user-123'
-   * });
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
+   *
    * const room = await chatClient.rooms.get('project-updates');
    *
    * // Retrieve message history with pagination
@@ -346,25 +328,16 @@ export interface Messages {
    *
    * This method retrieves a single message using its serial, which is a unique
    * identifier assigned to each message when it's created.
-   *
    * @param serial - The unique serial identifier of the message to retrieve
-   *
    * @returns A Promise that resolves to the {@link Message} object
-   *
    * @throws {Ably.ErrorInfo} When the message is not found or network/server errors occur
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * // Note: Use token-based authentication in production for security
-   * const realtime = new Ably.Realtime({
-   *   key: 'your-ably-api-key', // Use tokens in production
-   *   clientId: 'user-123'
-   * });
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
+   *
    * const room = await chatClient.rooms.get('customer-support');
    *
    * // Get a specific message by serial
@@ -373,19 +346,10 @@ export interface Messages {
    * try {
    *   const message = await room.messages.get(messageSerial);
    *
-   *   console.log('Message details:');
    *   console.log(`Serial: ${message.serial}`);
    *   console.log(`From: ${message.clientId}`);
    *   console.log(`Text: ${message.text}`);
    *
-   *   // Check message status
-   *   if (message.isUpdated) {
-   *     console.log(`Updated by: ${message.updatedBy} at ${message.updatedAt?.toISOString()}`);
-   *   }
-   *
-   *   if (message.isDeleted) {
-   *     console.log(`Deleted by: ${message.deletedBy} at ${message.deletedAt?.toISOString()}`);
-   *   }
    * } catch (error) {
    *   if (error.code === 40400) {
    *     console.error('Message not found:', messageSerial);
@@ -406,26 +370,17 @@ export interface Messages {
    * **Important**: The Promise may resolve before OR after the message is received
    * from the realtime channel. This means subscribers may see the message before
    * the send operation completes.
-   *
    * @param params - Message parameters containing the text and optional metadata/headers
-   *
    * @returns A Promise that resolves to the sent {@link Message} object
-   *
    * @throws {Ably.ErrorInfo} When the message fails to send due to network issues,
    *         authentication problems, or rate limiting
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * // Note: Use token-based authentication in production for security
-   * const realtime = new Ably.Realtime({
-   *   key: 'your-ably-api-key', // Use tokens in production
-   *   clientId: 'user-123'
-   * });
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
+   *
    * const room = await chatClient.rooms.get('general-chat');
    *
    * // Send a message with metadata and headers
@@ -442,9 +397,7 @@ export interface Messages {
    *     }
    *   });
    *
-   *   console.log('Message sent successfully!');
-   *   console.log(`Message ID: ${message.serial}`);
-   *   console.log(`Sent at: ${message.createdAt.toISOString()}`);
+   *   console.log('Message sent successfully: ${message.serial}');
    * } catch (error) {
    *   console.error('Failed to send message:', error);
    * }
@@ -467,48 +420,34 @@ export interface Messages {
    * **Note**: The returned Message instance represents the state after deletion. If you
    * have active subscriptions, use the event payloads from those subscriptions instead
    * of the returned instance for consistency.
-   *
    * @param serial - The unique identifier of the message to delete
    * @param deleteMessageParams - Optional parameters for the deletion
-   *
    * @returns A Promise that resolves to the deleted {@link Message} object with
    *          `isDeleted` set to true and deletion metadata populated
-   *
    * @throws {Ably.ErrorInfo} When the message is not found, user lacks permissions,
    *         or network/server errors occur
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * // Note: Use token-based authentication in production for security
-   * const realtime = new Ably.Realtime({
-   *   key: 'your-ably-api-key', // Use tokens in production
-   *   clientId: 'moderator-456'
-   * });
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
+   *
    * const room = await chatClient.rooms.get('public-chat');
    *
    * // Delete a message with tracking information
-   * const messageSerial = 'e1bB2@1234567890123-0';
+   * const messageSerial = '01726585978590-001@abcdefghij:001';
    *
    * try {
    *   const deletedMessage = await room.messages.delete(messageSerial, {
    *     description: 'Inappropriate content removed by moderator',
    *     metadata: {
-   *       moderatorId: chatClient.clientId,
    *       reason: 'policy-violation',
    *       timestamp: Date.now()
    *     }
    *   });
    *
-   *   console.log('Message deleted successfully');
    *   console.log(`Deleted message: ${deletedMessage.text}`);
-   *   console.log(`Deleted by: ${deletedMessage.deletedBy}`);
-   *   console.log(`Deleted at: ${deletedMessage.deletedAt?.toISOString()}`);
-   *   console.log(`Is deleted: ${deletedMessage.isDeleted}`);
    * } catch (error) {
    *   if (error.code === 40400) {
    *     console.error('Message not found:', messageSerial);
@@ -539,59 +478,40 @@ export interface Messages {
    * - The returned Message instance represents the state after the update. If you
    * have active subscriptions, use the event payloads from those subscriptions instead
    * of the returned instance for consistency.
-   *
    * @param serial - The unique identifier of the message to update
    * @param updateParams - The new message content and properties
    * @param details - Optional operation details
-   *
    * @returns A Promise that resolves to the updated {@link Message} object with
    *          `isUpdated` set to true and update metadata populated
-   *
    * @throws {Ably.ErrorInfo} When the message is not found, user lacks permissions,
    *         or network/server errors occur
-   *
    * @example
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * // Initialize the chat client
-   * // Note: Use token-based authentication in production for security
-   * const realtime = new Ably.Realtime({
-   *   key: 'your-ably-api-key', // Use tokens in production
-   *   clientId: 'user-123'
-   * });
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = // initialized ChatClient instance
+   *
    * const room = await chatClient.rooms.get('team-updates');
    *
    * // Update a message with corrected text and tracking
-   * const messageSerial = 'e1bB2@1234567890123-0';
+   * const messageSerial = '01726585978590-001@abcdefghij:001';
    *
    * try {
    *   const updatedMessage = await room.messages.update(
    *     messageSerial,
    *     {
    *       text: 'Meeting is scheduled for 3 PM (corrected time)',
-   *       metadata: {
-   *         edited: true,
-   *         editReason: 'time correction',
-   *         lastEditBy: chatClient.clientId
-   *       }
    *     },
    *     {
    *       description: 'Corrected meeting time',
    *       metadata: {
-   *         editorId: chatClient.clientId,
    *         editTimestamp: Date.now()
    *       }
    *     }
    *   );
    *
-   *   console.log('Message updated successfully');
    *   console.log(`Updated text: ${updatedMessage.text}`);
-   *   console.log(`Updated by: ${updatedMessage.updatedBy}`);
-   *   console.log(`Updated at: ${updatedMessage.updatedAt?.toISOString()}`);
-   *   console.log(`Is updated: ${updatedMessage.isUpdated}`);
    * } catch (error) {
    *   if (error.code === 40400) {
    *     console.error('Message not found:', messageSerial);
@@ -611,30 +531,6 @@ export interface Messages {
    * This property provides access to the message reactions functionality, allowing you to
    * add reactions to specific messages, remove reactions, and subscribe to reaction events
    * in real-time.
-   *
-   * @example
-   * ```typescript
-   * import { ChatClient } from '@ably/chat';
-   *
-   * // Note: Use token-based authentication in production for security
-   * const realtime = new Ably.Realtime({
-   *   key: 'your-ably-api-key', // Use tokens in production
-   *   clientId: 'user-123'
-   * });
-   * const chatClient = new ChatClient(realtime);
-   * const room = await chatClient.rooms.get('general');
-   *
-   * // Add a reaction to a message
-   * await room.messages.reactions.send('message-serial-123', {
-   *   type: 'like',
-   *   metadata: { source: 'mobile-app' }
-   * });
-   *
-   * // Subscribe to reaction events
-   * room.messages.reactions.subscribe((event) => {
-   *   console.log(`Reaction ${event.type}:`, event.reaction);
-   * });
-   * ```
    */
   reactions: MessagesReactions;
 }
