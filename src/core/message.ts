@@ -196,7 +196,6 @@ export interface Message {
    * from the backend.
    * @param message The message to compare against.
    * @returns true if this message was created before the given message, in global order.
-   * @throws {Ably.ErrorInfo} if serials of either message is invalid.
    */
   before(message: Message): boolean;
 
@@ -206,7 +205,6 @@ export interface Message {
    * from the backend.
    * @param message The message to compare against.
    * @returns true if this message was created after the given message, in global order.
-   * @throws {Ably.ErrorInfo} if serials of either message is invalid.
    */
   after(message: Message): boolean;
 
