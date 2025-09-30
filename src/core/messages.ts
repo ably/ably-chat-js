@@ -239,7 +239,7 @@ export interface Messages {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room and subscribe to messages
    * const room = await chatClient.rooms.get('general-chat');
@@ -285,7 +285,7 @@ export interface Messages {
    * import * as Ably from 'ably';
    * import { ChatClient, OrderBy } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('project-updates');
    *
@@ -329,7 +329,7 @@ export interface Messages {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('customer-support');
    *
@@ -372,7 +372,7 @@ export interface Messages {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('general-chat');
    *
@@ -424,7 +424,7 @@ export interface Messages {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('public-chat');
    *
@@ -483,7 +483,7 @@ export interface Messages {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('team-updates');
    *

@@ -154,7 +154,7 @@ export interface Room {
    * import * as Ably from 'ably';
    * import { ChatClient, RoomStatus } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('support-chat');
    *
@@ -205,7 +205,7 @@ export interface Room {
    * import * as Ably from 'ably';
    * import { ChatClient, RoomStatus } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('team-standup');
    *
@@ -248,7 +248,7 @@ export interface Room {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('customer-support');
    *
@@ -326,7 +326,7 @@ export interface Room {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('critical-updates');
    * await room.attach();

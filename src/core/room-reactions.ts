@@ -86,7 +86,7 @@ export interface RoomReactions {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('live-event');
    *
@@ -121,7 +121,7 @@ export interface RoomReactions {
    * import * as Ably from 'ably';
    * import { ChatClient, RoomReactionEvent } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('webinar-room');
    * await room.attach();

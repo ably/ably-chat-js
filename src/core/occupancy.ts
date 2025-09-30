@@ -35,7 +35,7 @@ export interface Occupancy {
    * import * as Ably from 'ably';
    * import { ChatClient, OccupancyEvent } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Create room with occupancy events enabled
    * const room = await chatClient.rooms.get('conference-room', {
@@ -71,7 +71,7 @@ export interface Occupancy {
    * import * as Ably from 'ably';
    * import { ChatClient, OccupancyData } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('webinar-room');
    *
@@ -105,7 +105,7 @@ export interface Occupancy {
    * import * as Ably from 'ably';
    * import { ChatClient, OccupancyData } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Room with occupancy events enabled
    * const room = await chatClient.rooms.get('gaming-lobby', {
