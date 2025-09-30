@@ -93,7 +93,7 @@ export interface Connection {
    * }
    *
    * // Use status for conditional logic
-   * function canSendMessage(): boolean {
+   * function canAttachToRoom(): boolean {
    *   return chatClient.connection.status === ConnectionStatus.Connected;
    * }
    * ```
@@ -140,7 +140,7 @@ export interface Connection {
    * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Monitor connection status changes
-   * const subscription = chatClient.connection.onStatusChange((change) => {
+   * const { off } = chatClient.connection.onStatusChange((change) => {
    *   console.log(`Connection: ${change.previous} -> ${change.current}`);
    *
    *   // Handle different connection states..
@@ -165,7 +165,7 @@ export interface Connection {
    * });
    *
    * // Clean up when done
-   * subscription.off();
+   * off();
    * ```
    */
   onStatusChange(listener: ConnectionStatusListener): StatusSubscription;
