@@ -620,7 +620,7 @@ describe('Messages', () => {
           text: 'may the fourth be with you',
         },
         action: ChatMessageAction.MessageCreate,
-        timestamp: Date.now(),
+        timestamp: 123,
         version: {},
         annotations: {},
       };
@@ -630,7 +630,10 @@ describe('Messages', () => {
       expect(receivedMessage).toBeDefined();
       expect(receivedMessage?.clientId).toBe('');
       expect(receivedMessage?.serial).toBe('');
-      expect(receivedMessage?.version).toEqual({});
+      expect(receivedMessage?.version).toEqual({
+        serial: '',
+        timestamp: new Date(123),
+      });
       expect(receivedMessage?.reactions).toEqual({
         distinct: {},
         unique: {},

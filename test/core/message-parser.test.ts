@@ -136,7 +136,6 @@ describe('parseMessage', () => {
     {
       description: 'message.version.timestamp is undefined',
       message: {
-        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
         data: { text: 'hello' },
         clientId: 'client1',
         timestamp: 1728402074206,
@@ -149,8 +148,28 @@ describe('parseMessage', () => {
           clientId: undefined,
           description: undefined,
           metadata: undefined,
-          serial: undefined,
-          timestamp: undefined,
+          serial: '',
+          timestamp: new Date(1728402074206),
+        },
+      },
+    },
+    {
+      description: 'message.version.serial is undefined',
+      message: {
+        data: { text: 'hello' },
+        clientId: 'client1',
+        extras: {},
+        action: ChatMessageAction.MessageCreate,
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        version: {},
+      },
+      expectedDefaults: {
+        version: {
+          clientId: undefined,
+          description: undefined,
+          metadata: undefined,
+          serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+          timestamp: new Date(0),
         },
       },
     },
