@@ -135,11 +135,6 @@ export interface Presence {
    *
    * **Note**: The room must be attached before calling this method.
    * @param params - Optional parameters to filter the presence set
-   * @param params.clientId - Filter members by a specific client ID
-   * @param params.connectionId - Filter members by a specific connection ID
-   * @param params.waitForSync - Whether to wait for presence sync to complete before returning (default: true). It is
-   *  recommended to leave this as true to ensure you get the full and complete presence set on each call. Setting to false
-   *  may result in an incomplete presence set if presence sync has not yet completed.
    * @returns Promise that resolves with an array of presence members currently in the room
    * @throws {Ably.ErrorInfo} with code 40000 if the room is not attached
    * @example

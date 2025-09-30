@@ -15,13 +15,11 @@ import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.j
  */
 export interface SendReactionParams {
   /**
-   * The name of the reaction, for example an emoji or a short string such as
-   * "like".
+   * The name of the reaction, for example an emoji or a short string (e.g., "❤️", "👏", "confetti", "applause").
    *
    * It is the only mandatory parameter to send a room-level reaction.
    */
   name: string;
-
   /**
    * Optional metadata of the reaction.
    *
@@ -76,9 +74,6 @@ export interface RoomReactions {
    * - The room should be attached to send room reactions.
    * - It is possible (though unlikely) to receive your own reaction via subscription before this promise resolves.
    * @param params - The reaction parameters
-   * @param params.name - The reaction name (e.g., "❤️", "👏", "confetti", "applause")
-   * @param params.metadata - Optional metadata for custom effects or animations
-   * @param params.headers - Optional headers for subscription filtering
    * @returns Promise that resolves when the reaction has been sent
    * @throws {Ably.ErrorInfo} with code 40001 if name is not provided
    * @example
@@ -90,7 +85,7 @@ export interface RoomReactions {
    *
    * const room = await chatClient.rooms.get('live-event');
    *
-   * // Room reactions are not sent via REST, so ensure the room is attached
+   * // Attach to the room to send room reactions
    * await room.attach();
    *
    * // Send a simple room reaction
