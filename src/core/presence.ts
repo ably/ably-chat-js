@@ -149,11 +149,8 @@ export interface Presence {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
-   * // Get a room and attach to it
-   * const room = await chatClient.rooms.get('meeting-room', {
-   *   presence: { enableEvents: true }
-   * });
-   *
+   * // Get a room with default options and attach to it
+   * const room = await chatClient.rooms.get('meeting-room');
    * await room.attach();
    *
    * try {
@@ -193,10 +190,8 @@ export interface Presence {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
-   * // Get a room and attach to it
-   * const room = await chatClient.rooms.get('meeting-room', {
-   *   presence: { enableEvents: true }
-   * });
+   * // Get a room with default options and attach to it
+   * const room = await chatClient.rooms.get('meeting-room');
    * await room.attach();
    *
    * try {
@@ -231,9 +226,8 @@ export interface Presence {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
-   * // Get a room and attach to it
+   * // Get a room with default options and attach to it
    * const room = await chatClient.rooms.get('meeting-room');
-   *
    * await room.attach();
    *
    * try {
@@ -270,9 +264,8 @@ export interface Presence {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
-   * // Get a room with presence events enabled
+   * // Get a room with default options
    * const room = await chatClient.rooms.get('meeting-room');
-   *
    * await room.attach();
    *
    * try {
@@ -312,9 +305,8 @@ export interface Presence {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
-   * // Get a room with presence events enabled
+   * // Get a room with default options
    * const room = await chatClient.rooms.get('meeting-room');
-   *
    * await room.attach();
    *
    * try {
@@ -357,12 +349,8 @@ export interface Presence {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
-   * // Get a room with presence events enabled
-   * const room = await chatClient.rooms.get('meeting-room', {
-   *   presence: { enableEvents: true }
-   * });
-   *
-   * await room.attach();
+   * // Get a room with default options
+   * const room = await chatClient.rooms.get('meeting-room');
    *
    * // Subscribe to a single event type
    * const subscription = room.presence.subscribe('enter', (event: PresenceEvent) => {
@@ -387,6 +375,9 @@ export interface Presence {
    *   }
    * );
    *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
    * // Unsubscribe when done
    * subscription.unsubscribe();
    * ```
@@ -409,12 +400,8 @@ export interface Presence {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
-   * // Get a room with presence events enabled
-   * const room = await chatClient.rooms.get('meeting-room', {
-   *   presence: { enableEvents: true }
-   * });
-   *
-   * await room.attach();
+   * // Get a room with default options
+   * const room = await chatClient.rooms.get('meeting-room');
    *
    * // Subscribe to all presence events
    * const subscription = room.presence.subscribe((event: PresenceEvent) => {
@@ -434,6 +421,9 @@ export interface Presence {
    *       break;
    *   }
    * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
    *
    * // Clean up when done
    * subscription.unsubscribe();

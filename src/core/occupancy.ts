@@ -25,7 +25,7 @@ export interface Occupancy {
    * engagement metrics.
    *
    * **Note**:
-   * - Requires `enableEvents` to be true in the room's occupancy options.
+   * - Requires {@link OccupancyOptions.enableEvents} to be true in the room's occupancy options.
    * - The room should be attached to receive occupancy events.
    * @param listener - Callback invoked when room occupancy changes
    * @returns Subscription object with an unsubscribe method
@@ -42,7 +42,6 @@ export interface Occupancy {
    *   occupancy: { enableEvents: true }
    * });
    *
-   * await room.attach();
    *
    * // Subscribe to occupancy updates
    * const subscription = room.occupancy.subscribe((event: OccupancyEvent) => {
@@ -52,6 +51,9 @@ export interface Occupancy {
    *   console.log(`Total connections: ${connections}`);
    *   console.log(`Presence members: ${presenceMembers}`);
    * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
    *
    * // Clean up when done
    * subscription.unsubscribe();
@@ -111,7 +113,6 @@ export interface Occupancy {
    * const room = await chatClient.rooms.get('gaming-lobby', {
    *   occupancy: { enableEvents: true }
    * });
-   * await room.attach();
    *
    * // Subscribe to occupancy events
    * room.occupancy.subscribe((event) => {
@@ -130,6 +131,10 @@ export interface Occupancy {
    *     console.log('No occupancy data received yet, try fetching from server');
    *   }
    * }
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
    * ```
    */
   current(): OccupancyData | undefined;

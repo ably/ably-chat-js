@@ -124,7 +124,6 @@ export interface RoomReactions {
    * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('webinar-room');
-   * await room.attach();
    *
    * // Subscribe to room reactions for live animations
    * const subscription = room.reactions.subscribe((event: RoomReactionEvent) => {
@@ -153,6 +152,9 @@ export interface RoomReactions {
    *     console.log('You sent a reaction:', reaction.name);
    *   }
    * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
    *
    * // Clean up when done
    * subscription.unsubscribe();

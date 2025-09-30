@@ -250,9 +250,8 @@ export interface Room {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
+   * // Get a room with default options and attach to it
    * const room = await chatClient.rooms.get('customer-support');
-   *
-   * // Attach and use room
    * await room.attach();
    *
    * // Do chat operations...
@@ -319,6 +318,7 @@ export interface Room {
    * **Note**:
    * - Discontinuities require fetching missed messages via history.
    * - Message subscriptions automatically reset their position on discontinuity.
+   * - You should subscribe to discontinuities before attaching to the room.
    * @param handler - Callback invoked when a discontinuity is detected
    * @returns Subscription object with an unsubscribe method
    * @example
@@ -329,7 +329,6 @@ export interface Room {
    * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('critical-updates');
-   * await room.attach();
    *
    * // Handle discontinuities to ensure no messages are missed
    * const discontinuitySubscription = room.onDiscontinuity((reason) => {
@@ -340,6 +339,9 @@ export interface Room {
    *
    *   // You may also want to fetch missed messages to fill gaps during the discontinuity.
    * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
    *
    * // Clean up
    * discontinuitySubscription.off();

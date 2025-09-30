@@ -33,8 +33,8 @@ export interface Typing {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
+   * // Get a room with default options
    * const room = await chatClient.rooms.get('team-chat');
-   * await room.attach();
    *
    * // Subscribe to typing events
    * const subscription = room.typing.subscribe((event: TypingSetEvent) => {
@@ -53,6 +53,9 @@ export interface Typing {
    *     showTypingIndicator(`${currentlyTyping.size} people are typing...`);
    *   }
    * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
    *
    * // Clean up when done
    * subscription.unsubscribe();
@@ -73,15 +76,18 @@ export interface Typing {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
+   * // Get a room with default options
    * const room = await chatClient.rooms.get('support-chat');
-   *
-   * await room.attach();
    *
    * // Must be subscribed to populate the current typing state
    * room.typing.subscribe((event: TypingSetEvent) => {
    *  console.log('Typing event:', event);
    *  });
    *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
+   * // Fetch the current cached set of typing users
    * const typingUsers = room.typing.current();
    *
    * console.log(`${typingUsers.size} users are typing`);
@@ -101,7 +107,7 @@ export interface Typing {
    * becomes a no-op. Multiple rapid calls are serialized to maintain consistency.
    *
    * **Note**:
-   * - The connection must be in the 'connected' state.
+   * - The connection must be in the {@link ConnectionStatus.Connected} state.
    * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
    * - The most recent operation always determines the final typing state.
    * - The room must be attached to send typing events.
@@ -116,12 +122,8 @@ export interface Typing {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
-   * const room = await chatClient.rooms.get('project-discussion', {
-   *   typing: {
-   *     heartbeatThrottleMs: 1000 // Throttle to 1 event per second
-   *   }
-   * });
-   *
+   * // Get a room with default options and attach to it
+   * const room = await chatClient.rooms.get('project-discussion');
    * await room.attach();
    *
    * try {
@@ -141,7 +143,7 @@ export interface Typing {
    * the final state.
    *
    * **Note**:
-   * - The connection must be in the 'connected' state.
+   * - The connection must be in the {@link ConnectionStatus.Connected} state.
    * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
    * - The room must be attached to send typing events.
    * @returns Promise that resolves when the stop event has been sent
@@ -155,8 +157,8 @@ export interface Typing {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
+   * // Get a room with default options and attach to it
    * const room = await chatClient.rooms.get('customer-support');
-   *
    * await room.attach();
    *
    * // Start typing in the room

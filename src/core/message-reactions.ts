@@ -191,7 +191,6 @@ export interface MessageReactions {
    * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('product-reviews');
-   * await room.attach();
    *
    * // Subscribe to reaction summaries
    * const subscription = room.messages.reactions.subscribe((event: MessageReactionSummaryEvent) => {
@@ -218,6 +217,9 @@ export interface MessageReactions {
    *   }
    * });
    *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
    * // Clean up when done
    * subscription.unsubscribe();
    * ```
@@ -231,7 +233,7 @@ export interface MessageReactions {
    * added or removed. This is most useful for analytics, but is not recommended
    * for driving UI due to the high volume of events.
    *
-   * **Note**: Requires `rawMessageReactions` to be enabled in room options.
+   * **Note**: Requires {@link MessageOptions.rawMessageReactions} to be enabled in room options.
    * @param listener - Callback invoked for each individual reaction event
    * @returns Subscription object with an unsubscribe method
    * @throws {Ably.ErrorInfo} with code 40001 if raw message reactions are not enabled
@@ -248,7 +250,6 @@ export interface MessageReactions {
    *     rawMessageReactions: true
    *   }
    * });
-   * await room.attach();
    *
    * // Subscribe to individual reaction events
    * const subscription = room.messages.reactions.subscribeRaw((event: MessageReactionRawEvent) => {
@@ -269,6 +270,9 @@ export interface MessageReactions {
    *     console.log(`Reaction has count: ${reaction.count}`);
    *   }
    * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
    *
    * // Clean up when done
    * subscription.unsubscribe();
@@ -297,8 +301,6 @@ export interface MessageReactions {
    * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('large-event');
-   * // Attach to receive reaction summaries via subscription
-   * await room.attach();
    *
    * // Subscribe to reaction summaries and handle clipped results
    * room.messages.reactions.subscribe(async (event) => {
@@ -322,6 +324,9 @@ export interface MessageReactions {
    *     }
    *   }
    * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
    * ```
    */
   clientReactions(messageSerial: Serial, clientId?: string): Promise<Message['reactions']>;
