@@ -185,25 +185,58 @@ export type MessageListener = (event: ChatMessageEvent) => void;
  */
 export interface MessageSubscriptionResponse extends Subscription {
   /**
-   * Get the previous messages that were sent to the room before the listener was subscribed.
+   * Get the previous messages that were sent to the room before the listener was subscribed. This can be used to populate
+   * a room on initial subscription or to refresh local state after a discontinuity event.
    *
-   * If the client experiences a discontinuity event (i.e. the connection was lost and could not be resumed), the starting point of
+   * **NOTE**:
+   * - If the client experiences a discontinuity event (i.e. the connection was lost and could not be resumed), the starting point of
    * `historyBeforeSubscribe` will be reset.
-   *
-   * Calls to `historyBeforeSubscribe` will wait for continuity to be restored before resolving.
-   *
-   * Once continuity is restored, the subscription point will be set to the beginning of this new period of continuity. To
-   * ensure that no messages are missed, you should call historyBeforeSubscribe after any period of discontinuity to
-   * fill any gaps in the message history.
-   *
+   * - Calls to `historyBeforeSubscribe` will then wait for continuity to be restored before resolving.
+   * - Once continuity is restored, the subscription point will be set to the beginning of this new period of continuity. To
+   * ensure that no messages are missed (or updates/deletes), you should call `historyBeforeSubscribe` after any period of discontinuity to
+   * refresh your re-populate your local state.
+   * @example
+   * **Simple example: Populating messages on initial subscription**
    * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   * const room = await chatClient.rooms.get('general-chat');
+   *
+   * // Local message state
+   * const localMessages: Message[] = [];
+   *
+   * const updateLocalMessageState = (messages: Message[], message:Message): void => {
+   *   // Find existing message in local state
+   *   const existingIndex = messages.findIndex(m => m.serial === message.serial);
+   *   if (existingIndex === -1) {
+   *     // New message, add to local state
+   *     messages.push(message);
+   *   } else {
+   *     // Existing message, update local state
+   *     messages[existingIndex] = messages[existingIndex].with(message);
+   *   }
+   *   // Messages should be ordered by serial
+   *   messages.sort((a, b) => a.serial.localeCompare(b.serial));
+   * };
+   *
    *
    * // Subscribe a listener to message events
    * const subscription = room.messages.subscribe((event) => {
-   *  console.log(`Message ${event.type}:`, event.message.text)
-   *  });
+   *   console.log(`Message ${event.type}:`, event.message.text);
+   *   switch (event.type) {
+   *     case ChatMessageEventType.Created:
+   *     case ChatMessageEventType.Updated:
+   *     case ChatMessageEventType.Deleted:
+   *       updateLocalMessageState(localMessages, event.message);
+   *       break;
+   *     default:
+   *       break;
+   *   }
+   * });
    *
-   *  // Attach to the room to start receiving events
+   * // Attach to the room to start receiving message events
    * await room.attach();
    *
    * // Get historical messages before subscription
@@ -214,10 +247,40 @@ export interface MessageSubscriptionResponse extends Subscription {
    *   // Process historical messages
    *   history.items.forEach(message => {
    *     console.log(`Historical: ${message.text} from ${message.clientId}`);
+   *     updateLocalMessageState(localMessages, message);
    *   });
    * } catch (error) {
    *   console.error('Failed to retrieve message history:', error);
    * }
+   * ```
+   * @example
+   * **Advanced example: Handling discontinuities to refresh local state**
+   * ```typescript
+   * // Subscribe a listener to message events as before
+   * const { historyBeforeSubscribe } = // subscribed listener response
+   *
+   * // Subscribe to discontinuity events on the room
+   * room.onDiscontinuity(async (reason) => {
+   *   console.warn('Discontinuity detected:', reason);
+   *   // Clear local state and re-fetch messages
+   *   localMessages.length = 0;
+   *   try {
+   *     // Fetch messages before the new subscription point
+   *     const history = await subscription.historyBeforeSubscribe({ limit: 100 });
+   *
+   *     // Merge each message into local state
+   *     history.items.forEach(message => {
+   *       updateLocalMessageState(localMessages, message);
+   *     });
+   *
+   *     console.log(`Refreshed local state with ${localMessages.length} messages`);
+   *   } catch (error) {
+   *     console.error('Failed to refresh messages after discontinuity:', error);
+   *   }
+   * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
    * ```
    * @param params Options for the history query.
    * @returns A promise that resolves with the paginated result of messages, in newest-to-oldest order.
