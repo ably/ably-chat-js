@@ -6,7 +6,7 @@ import { ConnectionStatus } from '../../src/core/connection.ts';
 import { LogLevel } from '../../src/core/logger.ts';
 import { RealtimeWithOptions } from '../../src/core/realtime-extensions.ts';
 import { Room } from '../../src/core/room.ts';
-import { CHANNEL_OPTIONS_AGENT_STRING_REACT, VERSION } from '../../src/core/version.ts';
+import { CHANNEL_OPTIONS_AGENT_STRING, CHANNEL_OPTIONS_AGENT_STRING_REACT, VERSION } from '../../src/core/version.ts';
 import { newChatClient } from '../helper/chat.ts';
 import { testClientOptions } from '../helper/options.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -89,7 +89,7 @@ describe('Chat', () => {
     const channelOptions = (room.channel as unknown as { channelOptions: Ably.ChannelOptions }).channelOptions;
     expect(channelOptions.params).toEqual(
       expect.objectContaining({
-        agent: CHANNEL_OPTIONS_AGENT_STRING_REACT,
+        agent: `${CHANNEL_OPTIONS_AGENT_STRING} ${CHANNEL_OPTIONS_AGENT_STRING_REACT}`,
       }),
     );
   });

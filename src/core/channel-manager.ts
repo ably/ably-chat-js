@@ -55,6 +55,7 @@ export class ChannelManager {
   private _defaultChannelOptions(): ChannelOptionsWithModes {
     this._logger.trace('ChannelManager._defaultChannelOptions();');
 
+    // Spec: CHA-IN1e
     const baseOptions = this._isReact ? DEFAULT_CHANNEL_OPTIONS_REACT : DEFAULT_CHANNEL_OPTIONS;
     this._logger.trace(this._isReact ? 'using react channel options' : 'using default channel options');
 

@@ -75,7 +75,7 @@ describe('Room', () => {
 
   describe.each([
     ['vanilla JS', false, CHANNEL_OPTIONS_AGENT_STRING],
-    ['react', true, CHANNEL_OPTIONS_AGENT_STRING_REACT],
+    ['react', true, `${CHANNEL_OPTIONS_AGENT_STRING} ${CHANNEL_OPTIONS_AGENT_STRING_REACT}`],
   ])('should apply channel options %s', (description: string, setReact: boolean, agentString: string) => {
     it<TestContext>('applies the correct options', (context) => {
       vi.spyOn(context.realtime.channels, 'get');
