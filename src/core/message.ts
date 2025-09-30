@@ -228,7 +228,7 @@ export interface Message {
   /**
    * Creates a new message instance with the event applied.
    *
-   * NOTE: This method will not replace the message reactions if the event is of type `Message`.
+   * **NOTE**: This method will not replace the message reactions if the event is of type `Message`.
    * @param event The event to be applied to the returned message.
    * @throws {Ably.ErrorInfo} if the event is for a different message.
    * @throws {Ably.ErrorInfo} if the event is a {@link ChatMessageEventType.Created}.
