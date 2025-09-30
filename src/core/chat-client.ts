@@ -1,7 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatClientOptions, normalizeClientOptions, NormalizedChatClientOptions } from './config.js';
-import { Connection, DefaultConnection } from './connection.js';
+import { Connection, DefaultConnection, InternalConnection } from './connection.js';
 import { randomId } from './id.js';
 import { Logger, makeLogger } from './logger.js';
 import { RealtimeWithOptions } from './realtime-extensions.js';
@@ -30,7 +30,7 @@ export class ChatClient {
   /**
    * @internal
    */
-  private readonly _connection: Connection;
+  private readonly _connection: InternalConnection;
 
   /**
    * @internal

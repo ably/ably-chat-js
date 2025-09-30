@@ -92,10 +92,16 @@ export interface Connection {
    * @returns An object that can be used to unregister the listener.
    */
   onStatusChange(listener: ConnectionStatusListener): StatusSubscription;
+}
 
+/**
+ * An internal interface for the connection with additional methods.
+ */
+export interface InternalConnection extends Connection {
   /**
    * Disposes of the connection instance, cleaning up any registered listeners.
    * This method should be called when the connection is no longer needed.
+   * @internal
    */
   dispose(): void;
 }
@@ -106,7 +112,7 @@ type ConnectionEventsMap = Record<ConnectionStatus, ConnectionStatusChange>;
  * An implementation of the `Connection` interface.
  * @internal
  */
-export class DefaultConnection implements Connection {
+export class DefaultConnection implements InternalConnection {
   private _status: ConnectionStatus = ConnectionStatus.Initialized;
   private _error?: Ably.ErrorInfo;
   private readonly _logger: Logger;

@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat-client.ts';
+import { InternalConnection } from '../../src/core/connection.ts';
 import { randomRoomName } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 
@@ -28,7 +29,7 @@ describe('ChatClient', () => {
       expect(context.chat.rooms.count).toBe(1);
 
       // Mock the connection dispose method
-      const mockConnectionDispose = vi.spyOn(context.chat.connection, 'dispose');
+      const mockConnectionDispose = vi.spyOn(context.chat.connection as InternalConnection, 'dispose');
 
       // Dispose should succeed and release rooms automatically
       await context.chat.dispose();
@@ -42,7 +43,7 @@ describe('ChatClient', () => {
 
     it<TestContext>('should dispose successfully when no rooms exist', async (context) => {
       // Mock the connection dispose method
-      const mockConnectionDispose = vi.spyOn(context.chat.connection, 'dispose');
+      const mockConnectionDispose = vi.spyOn(context.chat.connection as InternalConnection, 'dispose');
 
       // Attempt to dispose
       await context.chat.dispose();
@@ -62,7 +63,7 @@ describe('ChatClient', () => {
       expect(context.chat.rooms.count).toBe(2);
 
       // Mock the connection dispose method
-      const mockConnectionDispose = vi.spyOn(context.chat.connection, 'dispose');
+      const mockConnectionDispose = vi.spyOn(context.chat.connection as InternalConnection, 'dispose');
 
       // Dispose should succeed and release all rooms automatically
       await context.chat.dispose();
