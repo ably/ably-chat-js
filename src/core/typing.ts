@@ -31,7 +31,7 @@ export interface Typing {
    * import * as Ably from 'ably';
    * import { ChatClient, TypingSetEvent } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('team-chat');
    * await room.attach();
@@ -71,7 +71,7 @@ export interface Typing {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('support-chat');
    *
@@ -114,7 +114,7 @@ export interface Typing {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('project-discussion', {
    *   typing: {
@@ -153,7 +153,7 @@ export interface Typing {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('customer-support');
    *

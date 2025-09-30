@@ -147,7 +147,7 @@ export interface Presence {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room and attach to it
    * const room = await chatClient.rooms.get('meeting-room', {
@@ -191,7 +191,7 @@ export interface Presence {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room and attach to it
    * const room = await chatClient.rooms.get('meeting-room', {
@@ -229,7 +229,7 @@ export interface Presence {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room and attach to it
    * const room = await chatClient.rooms.get('meeting-room');
@@ -268,7 +268,7 @@ export interface Presence {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room with presence events enabled
    * const room = await chatClient.rooms.get('meeting-room');
@@ -310,7 +310,7 @@ export interface Presence {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room with presence events enabled
    * const room = await chatClient.rooms.get('meeting-room');
@@ -355,7 +355,7 @@ export interface Presence {
    * import * as Ably from 'ably';
    * import { ChatClient, PresenceEvent, PresenceEventType } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room with presence events enabled
    * const room = await chatClient.rooms.get('meeting-room', {
@@ -407,7 +407,7 @@ export interface Presence {
    * import * as Ably from 'ably';
    * import { ChatClient, PresenceEvent, PresenceEventType } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room with presence events enabled
    * const room = await chatClient.rooms.get('meeting-room', {

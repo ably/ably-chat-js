@@ -96,7 +96,7 @@ export interface MessagesReactions {
    * import * as Ably from 'ably';
    * import { ChatClient, MessageReactionType } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('sports-chat');
    *
@@ -145,7 +145,7 @@ export interface MessagesReactions {
    * import * as Ably from 'ably';
    * import { ChatClient, MessageReactionType } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('team-chat');
    *
@@ -188,7 +188,7 @@ export interface MessagesReactions {
    * import * as Ably from 'ably';
    * import { ChatClient, MessageReactionSummaryEvent } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('product-reviews');
    * await room.attach();
@@ -212,7 +212,7 @@ export interface MessagesReactions {
    *
    *   // Handle multiple reactions (multiple types of reactions, no limit per type)
    *   if (summary.multiple) {
-   *     Object.entries(summary.multiple).forEach(([reaction, data]) => {;
+   *     Object.entries(summary.multiple).forEach(([reaction, data]) => {
    *       console.log(`${reaction}: ${data.total} total votes`);
    *     });
    *   }
@@ -240,7 +240,7 @@ export interface MessagesReactions {
    * import * as Ably from 'ably';
    * import { ChatClient, MessageReactionRawEvent, MessageReactionEventType } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Enable raw reactions in room options
    * const room = await chatClient.rooms.get('live-stream', {
@@ -294,7 +294,7 @@ export interface MessagesReactions {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('large-event');
    * // Attach to receive reaction summaries via subscription

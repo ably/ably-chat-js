@@ -104,7 +104,7 @@ export class ChatClient {
    * @returns The Rooms instance for managing chat rooms
    * @example
    * ```typescript
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room
    * const room = await chatClient.rooms.get('general-chat');
@@ -127,7 +127,7 @@ export class ChatClient {
    * @returns The Connection instance
    * @example
    * ```typescript
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Check current connection status
    * console.log('Status:', chatClient.connection.status);
@@ -162,7 +162,7 @@ export class ChatClient {
    * @returns The underlying Ably Realtime client instance
    * @example
    * ```typescript
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Access underlying Ably features
    * const ablyRealtime = chatClient.realtime;
@@ -235,7 +235,7 @@ export class ChatClient {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Use the chat client
    * const roomOne = await chatClient.rooms.get('general-chat');

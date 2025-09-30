@@ -42,7 +42,7 @@ export interface ChatClientProviderProps {
  * import { ChatClient } from '@ably/chat';
  * import { ChatClientProvider } from '@ably/chat/react';
  *
- * const chatClient = // initialized ChatClient instance
+ * const chatClient: ChatClient; // existing ChatClient instance
  *
  * const App = () => {
  *   return (

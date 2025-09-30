@@ -83,7 +83,7 @@ export interface Connection {
    * ```typescript
    * import { ChatClient, ConnectionStatus } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Check connection status
    * if (chatClient.connection.status === ConnectionStatus.Connected) {
@@ -107,7 +107,7 @@ export interface Connection {
    * ```typescript
    * import { ChatClient, ConnectionStatus } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Check for connection errors
    * if (chatClient.connection.error) {
@@ -137,7 +137,7 @@ export interface Connection {
    * import * as Ably from 'ably';
    * import { ChatClient, ConnectionStatus } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Monitor connection status changes
    * const subscription = chatClient.connection.onStatusChange((change) => {

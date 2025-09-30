@@ -35,7 +35,7 @@ export interface Rooms {
    * import * as Ably from 'ably';
    * import { ChatClient, Room } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room with default options
    * const room = await chatClient.rooms.get('general-chat');
@@ -79,7 +79,7 @@ export interface Rooms {
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
    *
-   * const chatClient = // initialized ChatClient instance
+   * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get and use a room
    * const room = await chatClient.rooms.get('temporary-chat');
