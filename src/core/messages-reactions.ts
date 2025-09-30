@@ -41,12 +41,12 @@ export type MessageRawReactionListener = (event: MessageReactionRawEvent) => voi
  */
 export interface SendMessageReactionParams {
   /**
-   * The reaction name to send; ie. the emoji.
+   * The reaction name to send; (e.g., emoji like "👍", "❤️", or custom names)
    */
   name: string;
 
   /**
-   * The type of reaction, must be one of {@link MessageReactionType}.
+   * The optional type of reaction, must be one of {@link MessageReactionType} if set.
    * If not set, the default type will be used which is configured in the {@link MessageOptions.defaultMessageReactionType} of the room.
    */
   type?: MessageReactionType;
@@ -86,9 +86,6 @@ export interface MessagesReactions {
    * **Note** that the behavior depends on the reaction type configured for the room.
    * @param messageSerial - The unique identifier of the message to react to
    * @param params - The reaction parameters
-   * @param params.name - The reaction name (e.g., emoji like "👍", "❤️", or custom names)
-   * @param params.type - Optional reaction type (defaults to room's {@link MessageOptions.defaultMessageReactionType})
-   * @param params.count - Count for Multiple type reactions (defaults to 1)
    * @returns Promise that resolves when the reaction has been sent
    * @throws {Ably.ErrorInfo} with status code 404 if the message does not exist.
    * @example
@@ -135,8 +132,6 @@ export interface MessagesReactions {
    * - **Multiple**: Removes all instances of a reaction by name
    * @param messageSerial - The unique identifier of the message to remove the reaction from
    * @param params - Optional deletion parameters
-   * @param params.name - The reaction name to delete (required for all types except Unique)
-   * @param params.type - The reaction type (defaults to room's defaultMessageReactionType)
    * @returns Promise that resolves when the reaction has been deleted
    * @throws {Ably.ErrorInfo} with code 40400 if the message does not exist.
    * @throws {Ably.ErrorInfo} with code 40001 if trying to delete a non-Unique reaction without a name.
