@@ -317,7 +317,7 @@ export interface Room {
    *
    * **Note**:
    * - Discontinuities require fetching missed messages via history.
-   * - Message subscriptions automatically reset their position on discontinuity.
+   * - Message subscriptions automatically reset their position on discontinuity, see {@link MessageSubscriptionResponse.historyBeforeSubscribe} for more information.
    * - You should subscribe to discontinuities before attaching to the room.
    * @param handler - Callback invoked when a discontinuity is detected
    * @returns Subscription object with an unsubscribe method
