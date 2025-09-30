@@ -34,33 +34,28 @@ export interface MessageVersion {
   /**
    * A unique identifier for the latest version of this message.
    */
-  serial?: string;
+  serial: string;
 
   /**
    * The timestamp at which this version was updated, deleted, or created.
    */
-  timestamp?: Date;
+  timestamp: Date;
 
   /**
-   * The optional clientId of the user who performed the update or deletion.
+   * The optional clientId of the user who performed an update or deletion.
    */
   clientId?: string;
 
   /**
-   * The optional description for the update or deletion.
+   * The optional description for an update or deletion.
    */
   description?: string;
 
   /**
-   * The optional metadata associated with the update or deletion.
+   * The optional metadata associated with an update or deletion.
    */
   metadata?: MessageOperationMetadata;
 }
-
-/**
- * A helper for versions that we know have a serial.
- */
-type MessageVersionWithSerial = Required<Pick<MessageVersion, 'serial'>>;
 
 /**
  * Represents a single message in a chat room.
@@ -380,7 +375,7 @@ export class DefaultMessage implements Message {
     return this._compareVersions(
       this,
       message,
-      (first: MessageVersionWithSerial, second: MessageVersionWithSerial) => first.serial < second.serial,
+      (first: MessageVersion, second: MessageVersion) => first.serial < second.serial,
     );
   }
 
@@ -388,7 +383,7 @@ export class DefaultMessage implements Message {
     return this._compareVersions(
       this,
       message,
-      (first: MessageVersionWithSerial, second: MessageVersionWithSerial) => first.serial > second.serial,
+      (first: MessageVersion, second: MessageVersion) => first.serial > second.serial,
     );
   }
 
@@ -396,7 +391,7 @@ export class DefaultMessage implements Message {
     return this._compareVersions(
       this,
       message,
-      (first: MessageVersionWithSerial, second: MessageVersionWithSerial) => first.serial === second.serial,
+      (first: MessageVersion, second: MessageVersion) => first.serial === second.serial,
     );
   }
 
@@ -404,7 +399,7 @@ export class DefaultMessage implements Message {
     return this._compareVersions(
       this,
       message,
-      (first: MessageVersionWithSerial, second: MessageVersionWithSerial) => first.serial >= second.serial,
+      (first: MessageVersion, second: MessageVersion) => first.serial >= second.serial,
     );
   }
 
@@ -457,20 +452,14 @@ export class DefaultMessage implements Message {
   private _compareVersions(
     first: Message,
     second: Message,
-    comparator: (first: MessageVersionWithSerial, second: MessageVersionWithSerial) => boolean,
+    comparator: (first: MessageVersion, second: MessageVersion) => boolean,
   ): boolean {
     // If our serials aren't the same, not same message and cannot compare1
     if (!first.equal(second)) {
       return false;
     }
 
-    // If one our version serials isn't set, cannot compare
-    if (first.version.serial === undefined || second.version.serial === undefined) {
-      return false;
-    }
-
-    // Use the comparator to determine the comparison
-    return comparator(first.version as MessageVersionWithSerial, second.version as MessageVersionWithSerial);
+    return first.equal(second) && comparator(first.version, second.version);
   }
 
   /**

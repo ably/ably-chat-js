@@ -1,14 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatMessageAction } from './events.js';
-import {
-  DefaultMessage,
-  emptyMessageReactions,
-  Message,
-  MessageHeaders,
-  MessageMetadata,
-  MessageVersion,
-} from './message.js';
+import { DefaultMessage, emptyMessageReactions, Message, MessageHeaders, MessageMetadata } from './message.js';
 
 interface MessagePayload {
   data?: {
@@ -36,24 +29,20 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
   const extras = message.extras && typeof message.extras === 'object' ? message.extras : {};
   const clientId = message.clientId || '';
   const text = data.text || '';
+  // Spec: CHA-M4k5
+  const timestamp = new Date(message.timestamp || 0);
   const serial = message.serial || '';
   const metadata = data.metadata && typeof data.metadata === 'object' ? data.metadata : {};
   const headers = extras.headers || {};
 
-  // Create the version - only converting the timestamp if it's actually defined.
-  const versionTimestamp = message.version.timestamp === undefined ? undefined : new Date(message.version.timestamp);
-  const version = (
-    versionTimestamp
-      ? {
-          ...message.version,
-          timestamp: versionTimestamp,
-        }
-      : message.version
-  ) as MessageVersion;
-
-  // Use current time as default for missing timestamps
-  const currentTime = Date.now();
-  const timestamp = new Date(message.timestamp || currentTime);
+  // Create the version, using defaults as required
+  const version = {
+    ...message.version,
+    // Spec: CHA-M4k6
+    serial: message.version.serial || serial,
+    // Spec: CHA-M4k7
+    timestamp: new Date(message.version.timestamp || timestamp),
+  };
 
   // Convert the action to a ChatMessageAction enum, defaulting to MessageCreate if the action is not found.
   const action = Object.values(ChatMessageAction).includes(message.action as ChatMessageAction)
