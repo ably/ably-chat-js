@@ -197,12 +197,14 @@ export interface MessageSubscriptionResponse extends Subscription {
    * fill any gaps in the message history.
    *
    * ```typescript
-   * await room.attach(); // Ensure room is attached
    *
    * // Subscribe a listener to message events
    * const subscription = room.messages.subscribe((event) => {
    *  console.log(`Message ${event.type}:`, event.message.text)
    *  });
+   *
+   *  // Attach to the room to start receiving events
+   * await room.attach();
    *
    * // Get historical messages before subscription
    * try {
@@ -250,7 +252,6 @@ export interface Messages {
    *
    * // Get a room and subscribe to messages
    * const room = await chatClient.rooms.get('general-chat');
-   * await room.attach(); // Ensure room is attached to receive events
    *
    * const subscription = room.messages.subscribe((event) => {
    *   console.log(`Message ${event.type}:`, event.message.text);
@@ -270,6 +271,9 @@ export interface Messages {
    *       break;
    *   }
    * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
    *
    * // Later, unsubscribe when done
    * subscription.unsubscribe();

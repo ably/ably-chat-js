@@ -81,7 +81,7 @@ export interface Rooms {
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
-   * // Get and use a room
+   * // Get a room with default options and attach to it
    * const room = await chatClient.rooms.get('temporary-chat');
    * await room.attach();
    *
