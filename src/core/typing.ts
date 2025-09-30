@@ -107,7 +107,7 @@ export interface Typing {
    * becomes a no-op. Multiple rapid calls are serialized to maintain consistency.
    *
    * **Note**:
-   * - The connection must be in the {@link ConnectionStatus.Connected} state.
+   * - The connection must be in the `connected` state.
    * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
    * - The most recent operation always determines the final typing state.
    * - The room must be attached to send typing events.
@@ -143,7 +143,7 @@ export interface Typing {
    * the final state.
    *
    * **Note**:
-   * - The connection must be in the {@link ConnectionStatus.Connected} state.
+   * - The connection must be in the `connected` state.
    * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
    * - The room must be attached to send typing events.
    * @returns Promise that resolves when the stop event has been sent
