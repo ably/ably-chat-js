@@ -56,6 +56,9 @@ export class ChatClient {
    *
    * **Important**: The Ably Realtime client must have a clientId set. This identifies
    * the user in chat rooms and is required for all chat operations.
+   *
+   * **NOTE**: You can provide optional overrides to the {@link ChatClient}, these will be merged
+   * with the default options. See {@link ChatClientOptions} for the available options.
    * @param realtime - An initialized Ably Realtime client with a configured clientId
    * @param clientOptions - Optional configuration for the chat client
    * @example
@@ -68,20 +71,23 @@ export class ChatClient {
    *   authUrl: '/api/ably-auth', // Your server endpoint that returns an Ably token with clientId
    *   authMethod: 'POST'
    * });
-   *
-   *
+   *```
+   * @example
+   *```typescript
    * // Alternative for development and server-side operations: Set clientId directly (requires API key)
    * const realtimeClient = new Ably.Realtime({
    *   key: 'your-ably-api-key',
    *   clientId: 'user-123'
    * });
-   *
+   * ```
+   * @example
+   * ```typescript
    * // With custom logging configuration: Defaults to LogLevel.Info and console logging
    * const chatClientWithLogging = new ChatClient(realtimeClient, {
    *   logLevel: LogLevel.Debug,
    *   logHandler: (message, level, context) => {
    *     // Send to your logging service
-   *     myLogger.log({
+   *     yourLoggerInstance.log({
    *       level,
    *       message,
    *       context,
@@ -113,10 +119,10 @@ export class ChatClient {
    * ```typescript
    * const chatClient: ChatClient; // existing ChatClient instance
    *
-   * // Get a room
+   * // Get a room with default options
    * const room = await chatClient.rooms.get('general-chat');
    *
-   * // Get a room with options
+   * // Get a room with custom options (merges with defaults)
    * const configuredRoom = await chatClient.rooms.get('team-chat', {
    *   typing: { heartbeatThrottleMs: 1000 }
    * });
@@ -141,7 +147,7 @@ export class ChatClient {
    * console.log('Error:', chatClient.connection.error);
    *
    * // Monitor connection changes
-   * const subscription = chatClient.connection.onStatusChange((change) => {
+   * const { off } = chatClient.connection.onStatusChange((change) => {
    *   console.log(`Connection: ${change.previous} -> ${change.current}`);
    * });
    * ```
@@ -171,13 +177,6 @@ export class ChatClient {
    * **Note**: Directly interacting with the Ably Realtime client can lead to
    * unexpected behavior.
    * @returns The underlying Ably Realtime client instance
-   * @example
-   * ```typescript
-   * const chatClient: ChatClient; // existing ChatClient instance
-   *
-   * // Access underlying Ably features
-   * const ablyRealtime = chatClient.realtime;
-   * ```
    */
   get realtime(): Ably.Realtime {
     return this._realtime;
@@ -187,15 +186,6 @@ export class ChatClient {
    * The configuration options used to initialize the chat client.
    * @returns The resolved client options including defaults
    * @example
-   * ```typescript
-   * const chatClient = new ChatClient(realtimeClient, {
-   *   logLevel: LogLevel.Debug
-   * });
-   *
-   * // Check current configuration
-   * const options = chatClient.clientOptions;
-   * console.log('Log level:', options.logLevel);
-   * ```
    */
   get clientOptions(): ChatClientOptions {
     return this._clientOptions;
