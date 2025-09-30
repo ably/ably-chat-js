@@ -350,6 +350,9 @@ export interface Messages {
    * This method retrieves historical messages based on the provided query options,
    * allowing you to paginate through message history, filter by time ranges,
    * and control the order of results.
+   *
+   * **NOTE**: This method uses the Ably Chat REST API and so does not need to be
+   *  called on an attached room.
    * @param options - Query parameters to filter and control the message retrieval
    * @returns A Promise that resolves to a {@link PaginatedResult} containing an array of {@link Message} objects
    *          and methods for pagination control
@@ -401,6 +404,9 @@ export interface Messages {
    *
    * This method retrieves a single message using its serial, which is a unique
    * identifier assigned to each message when it's created.
+   *
+   * **NOTE**: This method uses the Ably Chat REST API and so does not need to be
+   *  called on an attached room.
    * @param serial - The unique serial identifier of the message to retrieve
    * @returns A Promise that resolves to the {@link Message} object
    * @throws {Ably.ErrorInfo} When the message is not found or network/server errors occur
@@ -413,8 +419,8 @@ export interface Messages {
    *
    * const room = await chatClient.rooms.get('customer-support');
    *
-   * // Get a specific message by serial
-   * const messageSerial = 'e1bB2@1234567890123-0';
+   * // Get a specific message by its serial
+   * const messageSerial = '01726585978590-001@abcdefghij:001';
    *
    * try {
    *   const message = await room.messages.get(messageSerial);
@@ -443,6 +449,9 @@ export interface Messages {
    * **Important**: The Promise may resolve before OR after the message is received
    * from the realtime channel. This means subscribers may see the message before
    * the send operation completes.
+   *
+   * **NOTE**: This method uses the Ably Chat REST API and so does not need to be
+   *  called on an attached room.
    * @param params - Message parameters containing the text and optional metadata/headers
    * @returns A Promise that resolves to the sent {@link Message} object
    * @throws {Ably.ErrorInfo} When the message fails to send due to network issues,
@@ -490,9 +499,12 @@ export interface Messages {
    * from the realtime channel. Subscribers may see the deletion event before this method
    * completes.
    *
-   * **Note**: The returned Message instance represents the state after deletion. If you
+   * **Note**:
+   * - The returned Message instance represents the state after deletion. If you
    * have active subscriptions, use the event payloads from those subscriptions instead
    * of the returned instance for consistency.
+   * - This method uses the Ably Chat REST API and so does not need to be
+   *  called on an attached room.
    * @param serial - The unique identifier of the message to delete
    * @param deleteMessageParams - Optional parameters for the deletion
    * @returns A Promise that resolves to the deleted {@link Message} object with
@@ -551,6 +563,8 @@ export interface Messages {
    * - The returned Message instance represents the state after the update. If you
    * have active subscriptions, use the event payloads from those subscriptions instead
    * of the returned instance for consistency.
+   * - This method uses the Ably Chat REST API and so does not need to be
+   *  called on an attached room.
    * @param serial - The unique identifier of the message to update
    * @param updateParams - The new message content and properties
    * @param details - Optional operation details
