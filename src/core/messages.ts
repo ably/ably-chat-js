@@ -365,7 +365,7 @@ export interface Messages {
    *
    * // Retrieve message history with pagination
    * try {
-   *   const result = await room.messages.history({
+   *   let result = await room.messages.history({
    *     limit: 50,
    *     orderBy: OrderBy.NewestFirst
    *   });
@@ -373,16 +373,22 @@ export interface Messages {
    *   console.log(`Retrieved ${result.items.length} messages`);
    *   result.items.forEach(message => {
    *     console.log(`${message.clientId}: ${message.text}`);
-   *     console.log(`Sent at: ${message.createdAt.toISOString()}`);
    *   });
    *
-   *   // Check if there are more messages and fetch next page
-   *   if (result.hasNext()) {
+   *   // Paginate through additional pages if available
+   *   while (result.hasNext()) {
    *     const nextPage = await result.next();
    *     if (nextPage) {
    *       console.log(`Next page has ${nextPage.items.length} messages`);
+   *       nextPage.items.forEach(message => {
+   *         console.log(`${message.clientId}: ${message.text}`);
+   *       });
+   *       result = nextPage;
+   *     } else {
+   *     break; // No more pages
    *     }
    *   }
+   *   console.log('All message history retrieved');
    * } catch (error) {
    *   console.error('Failed to retrieve message history:', error);
    * }
