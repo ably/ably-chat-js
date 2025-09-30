@@ -64,9 +64,12 @@ export interface Occupancy {
   /**
    * Fetches the current occupancy of the chat room from the server.
    *
-   * Makes an REST API call to retrieve the latest occupancy metrics, including the number
+   * Retrieves the latest occupancy metrics, including the number
    * of active connections and presence members. Use this for on-demand occupancy
    * checks or when occupancy events are not enabled.
+   *
+   * **Note**: This method uses the Ably Chat REST API and so does not need to be
+   *  called on an attached room.
    * @returns Promise resolving to current occupancy data
    * @example
    * ```typescript
