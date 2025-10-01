@@ -61,21 +61,30 @@ export class ChatClient {
    * import { ChatClient, LogLevel } from '@ably/chat';
    *
    * // Preferred in production: Use auth URL that returns a token with clientId
-   * const realtimeClient = new Ably.Realtime({
+   * const realtimeClientWithTokens = new Ably.Realtime({
    *   authUrl: '/api/ably-auth', // Your server endpoint that returns an Ably token with clientId
    *   authMethod: 'POST'
    * });
+   *
+   * const chatClientWithLogging = new ChatClient(realtimeClientWithTokens)
    *```
    * @example
    *```typescript
    * // Alternative for development and server-side operations: Set clientId directly (requires API key)
-   * const realtimeClient = new Ably.Realtime({
+   * const realtimeClientWithKey = new Ably.Realtime({
    *   key: 'your-ably-api-key',
    *   clientId: 'user-123'
    * });
+   *
+   * const chatClientWithLogging = new ChatClient(realtimeClientWithKey)
    * ```
    * @example
    * ```typescript
+   * const realtimeClient = new Ably.Realtime({
+   *   authUrl: '/api/ably-auth',
+   *   authMethod: 'POST'
+   * });
+   *
    * // With custom logging configuration: Defaults to LogLevel.Info and console logging
    * const chatClientWithLogging = new ChatClient(realtimeClient, {
    *   logLevel: LogLevel.Debug,
