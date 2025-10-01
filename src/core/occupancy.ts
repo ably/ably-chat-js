@@ -68,8 +68,8 @@ export interface Occupancy {
    * of active connections and presence members. Use this for on-demand occupancy
    * checks or when occupancy events are not enabled.
    *
-   * **Note**: This method uses the Ably Chat REST API and so does not need to be
-   *  called on an attached room.
+   * **Note**: This method uses the Ably Chat REST API and so does require the room
+   * to be attached to be called.
    * @returns Promise resolving to current occupancy data
    * @example
    * ```typescript
