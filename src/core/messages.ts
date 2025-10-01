@@ -198,7 +198,7 @@ export interface MessageSubscriptionResponse extends Subscription {
    * const room = await chatClient.rooms.get('general-chat');
    *
    * // Local message state
-   * const localMessages: Message[] = [];
+   * let localMessages: Message[] = [];
    *
    * const updateLocalMessageState = (messages: Message[], message:Message): void => {
    *   // Find existing message in local state
