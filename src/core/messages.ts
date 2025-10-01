@@ -256,7 +256,7 @@ export interface MessageSubscriptionResponse extends Subscription {
    * room.onDiscontinuity(async (reason) => {
    *   console.warn('Discontinuity detected:', reason);
    *   // Clear local state and re-fetch messages
-   *   localMessages.length = 0;
+   *   localMessages = []
    *   try {
    *     // Fetch messages before the new subscription point
    *     const history = await subscription.historyBeforeSubscribe({ limit: 100 });
@@ -344,8 +344,8 @@ export interface Messages {
    * allowing you to paginate through message history, filter by time ranges,
    * and control the order of results.
    *
-   * **NOTE**: This method uses the Ably Chat REST API and so does not need to be
-   *  called on an attached room.
+   * **NOTE**: This method uses the Ably Chat REST API and so does require the room
+   * to be attached to be called.
    * @param options - Query parameters to filter and control the message retrieval
    * @returns A Promise that resolves to a {@link PaginatedResult} containing an array of {@link Message} objects
    *          and methods for pagination control
@@ -398,8 +398,8 @@ export interface Messages {
    * This method retrieves a single message using its serial, which is a unique
    * identifier assigned to each message when it's created.
    *
-   * **NOTE**: This method uses the Ably Chat REST API and so does not need to be
-   *  called on an attached room.
+   * **NOTE**: This method uses the Ably Chat REST API and so does require the room
+   * to be attached to be called.
    * @param serial - The unique serial identifier of the message to retrieve
    * @returns A Promise that resolves to the {@link Message} object
    * @throws {Ably.ErrorInfo} When the message is not found or network/server errors occur
@@ -443,8 +443,8 @@ export interface Messages {
    * from the realtime channel. This means subscribers may see the message before
    * the send operation completes.
    *
-   * **NOTE**: This method uses the Ably Chat REST API and so does not need to be
-   *  called on an attached room.
+   * **NOTE**: This method uses the Ably Chat REST API and so does require the room
+   * to be attached to be called.
    * @param params - Message parameters containing the text and optional metadata/headers
    * @returns A Promise that resolves to the sent {@link Message} object
    * @throws {Ably.ErrorInfo} When the message fails to send due to network issues,
@@ -496,8 +496,8 @@ export interface Messages {
    * - The returned Message instance represents the state after deletion. If you
    * have active subscriptions, use the event payloads from those subscriptions instead
    * of the returned instance for consistency.
-   * - This method uses the Ably Chat REST API and so does not need to be
-   *  called on an attached room.
+   * - This method uses the Ably Chat REST API and so does require the room
+   * to be attached to be called.
    * @param serial - The unique identifier of the message to delete
    * @param deleteMessageParams - Optional parameters for the deletion
    * @returns A Promise that resolves to the deleted {@link Message} object with
@@ -556,8 +556,8 @@ export interface Messages {
    * - The returned Message instance represents the state after the update. If you
    * have active subscriptions, use the event payloads from those subscriptions instead
    * of the returned instance for consistency.
-   * - This method uses the Ably Chat REST API and so does not need to be
-   *  called on an attached room.
+   * - This method uses the Ably Chat REST API and so does require the room
+   * to be attached to be called.
    * @param serial - The unique identifier of the message to update
    * @param updateParams - The new message content and properties
    * @param details - Optional operation details
