@@ -82,6 +82,7 @@ export interface Typing {
    * // Must be subscribed to populate the current typing state
    * room.typing.subscribe((event: TypingSetEvent) => {
    *  console.log('Typing event:', event);
+   *  console.log('Currently typing:', Array.from(event.currentlyTyping).join(', '));
    *  });
    *
    * // Attach to the room to start receiving events
