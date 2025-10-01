@@ -223,7 +223,7 @@ export class DefaultMessageReactions implements MessagesReactions {
     this._logger.trace('MessagesReactions._processMessageEvent();', { event });
 
     // only process summary events
-    if (event.action !== ChatMessageAction.MessageAnnotationSummary) {
+    if (event.action !== ChatMessageAction.MessageAnnotationSummary.valueOf()) {
       return;
     }
 
