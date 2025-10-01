@@ -13,7 +13,8 @@ export const DEFAULT_CHANNEL_OPTIONS: Ably.ChannelOptions = {
 };
 
 export const DEFAULT_CHANNEL_OPTIONS_REACT: Ably.ChannelOptions = {
-  params: { agent: CHANNEL_OPTIONS_AGENT_STRING_REACT },
+  // Spec: CHA-IN1b1
+  params: { agent: `${CHANNEL_OPTIONS_AGENT_STRING} ${CHANNEL_OPTIONS_AGENT_STRING_REACT}` },
   attachOnSubscribe: false,
   modes: DEFAULT_CHANNEL_MODES,
 };
