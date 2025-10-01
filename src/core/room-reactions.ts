@@ -75,6 +75,7 @@ export interface RoomReactions {
    * @param params - The reaction parameters
    * @returns Promise that resolves when the reaction has been sent
    * @throws {Ably.ErrorInfo} with code 40001 if name is not provided
+   * @throws {Ably.ErrorInfo} with code 40000 if not connected to Ably
    * @example
    * ```typescript
    * import * as Ably from 'ably';
