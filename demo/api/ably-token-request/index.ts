@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import * as Ably from 'ably';
+import * as jwt from 'jsonwebtoken';
 import { HandlerEvent } from '@netlify/functions';
 
 dotenv.config();
@@ -21,21 +21,36 @@ Please see README.md for more details on configuring your Ably API Key.`);
   }
 
   const clientId = event.queryStringParameters?.['clientId'] || process.env.DEFAULT_CLIENT_ID || 'NO_CLIENT_ID';
-  const client = new Ably.Rest({
-    key: process.env.VITE_ABLY_CHAT_API_KEY,
-    restHost: process.env.VITE_ABLY_HOST,
-    realtimeHost: process.env.VITE_ABLY_HOST,
-  });
-  const tokenRequestData = await client.auth.createTokenRequest({
-    capability: {
-      '[chat]*': ['*'],
-    },
-    clientId: clientId,
+
+  // Parse API key to extract key name and secret
+  const apiKey = process.env.VITE_ABLY_CHAT_API_KEY;
+  const [keyName, keySecret] = apiKey.split(':');
+
+  if (!keySecret) {
+    return {
+      statusCode: 500,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify('Invalid API key format'),
+    };
+  }
+
+  // Create JWT token with Ably claims
+  const currentTime = Math.floor(Date.now() / 1000);
+  const claims = {
+    'x-ably-capability': JSON.stringify({ '[chat]*': ['*'] }),
+    'x-ably-clientId': clientId,
+    iat: currentTime,
+    exp: currentTime + 3600, // Token valid for 1 hour
+  };
+
+  const token = jwt.sign(claims, keySecret, {
+    algorithm: 'HS256',
+    keyid: keyName,
   });
 
   return {
     statusCode: 200,
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(tokenRequestData),
+    headers: { 'content-type': 'application/jwt' },
+    body: token,
   };
 }
