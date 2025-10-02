@@ -235,17 +235,7 @@ export class ChatApi {
     body?: unknown,
     params?: unknown,
   ): Promise<RES> {
-    const response = await this._realtime.request<RES>(method, url, this._apiProtocolVersion, params, body);
-    if (!response.success) {
-      this._logger.error('ChatApi._makeAuthorizedRequest(); failed to make request', {
-        url,
-        statusCode: response.statusCode,
-        errorCode: response.errorCode,
-        errorMessage: response.errorMessage,
-      });
-      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
-    }
-
+    const response = await this._doRequest(url, method, params, body);
     return response.items[0] as RES;
   }
 
@@ -254,16 +244,27 @@ export class ChatApi {
     params?: unknown,
     body?: unknown,
   ): Promise<PaginatedResult<RES>> {
-    const response = await this._realtime.request('GET', url, this._apiProtocolVersion, params, body);
+    return this._doRequest(url, 'GET', params, body);
+  }
+
+  private async _doRequest<RES>(
+    url: string,
+    method: 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH',
+    params?: unknown,
+    body?: unknown,
+  ): Promise<PaginatedResult<RES>> {
+    const response = await this._realtime.request(method, url, this._apiProtocolVersion, params, body);
     if (!response.success) {
-      this._logger.error('ChatApi._makeAuthorizedPaginatedRequest(); failed to make request', {
+      this._logger.error('ChatApi._doRequest(); failed to make request', {
         url,
+        method,
         statusCode: response.statusCode,
         errorCode: response.errorCode,
         errorMessage: response.errorMessage,
       });
       throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
     }
+
     return response;
   }
 
