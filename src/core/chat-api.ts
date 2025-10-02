@@ -116,7 +116,7 @@ export interface DeleteMessageReactionParams {
 export class ChatApi {
   private readonly _realtime: Ably.Realtime;
   private readonly _logger: Logger;
-  private readonly _apiProtocolVersion: number = 3;
+  private readonly _apiProtocolVersion: number = 4;
 
   constructor(realtime: Ably.Realtime, logger: Logger) {
     this._realtime = realtime;
