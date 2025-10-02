@@ -176,9 +176,9 @@ export class ChatApi {
   }
 
   deleteMessage(roomName: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
-    const body: { description?: string; metadata?: MessageOperationMetadata } = {
-      description: params?.description,
-      metadata: params?.metadata,
+    const body = {
+      ...(params?.description && { description: params.description }),
+      ...(params?.metadata && { metadata: params.metadata }),
     };
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
       this._messageUrl(roomName, serial, '/delete'),
@@ -189,17 +189,11 @@ export class ChatApi {
   }
 
   sendMessage(roomName: string, params: SendMessageParams): Promise<CreateMessageResponse> {
-    const body: {
-      text: string;
-      metadata?: MessageMetadata;
-      headers?: MessageHeaders;
-    } = { text: params.text };
-    if (params.metadata) {
-      body.metadata = params.metadata;
-    }
-    if (params.headers) {
-      body.headers = params.headers;
-    }
+    const body = {
+      text: params.text,
+      ...(params.metadata && { metadata: params.metadata }),
+      ...(params.headers && { headers: params.headers }),
+    };
     return this._makeAuthorizedRequest<CreateMessageResponse>(this._roomUrl(roomName, '/messages'), 'POST', body);
   }
 
