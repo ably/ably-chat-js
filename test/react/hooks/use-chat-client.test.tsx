@@ -8,7 +8,7 @@ import { useChatClient } from '../../../src/react/hooks/use-chat-client.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 
-const TestComponent: React.FC<{ callback: (clientId: string) => void }> = ({ callback }) => {
+const TestComponent: React.FC<{ callback: (clientId?: string) => void }> = ({ callback }) => {
   const { clientId } = useChatClient();
   callback(clientId);
   return <div />;

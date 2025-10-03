@@ -35,6 +35,9 @@ describe('Room', () => {
         normalizeRoomOptions(options, useReact ?? false),
         context.realtime,
         chatApi,
+        {
+          get: (): string => context.realtime.clientId,
+        },
         logger,
       );
   });

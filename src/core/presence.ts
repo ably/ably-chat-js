@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChannelOptionsMerger } from './channel-manager.js';
+import { ClientIdResolver } from './client-id.js';
 import { PresenceEventType } from './events.js';
 import { JsonObject } from './json.js';
 import { Logger } from './logger.js';
@@ -197,7 +198,7 @@ export interface Presence {
  */
 export class DefaultPresence implements Presence {
   private readonly _channel: Ably.RealtimeChannel;
-  private readonly _clientId: string;
+  private readonly _clientId: ClientIdResolver;
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<PresenceEventsMap>();
   private readonly _stateEmitter = new EventEmitter<{ 'presence.state.change': PresenceStateChange }>();
@@ -212,12 +213,11 @@ export class DefaultPresence implements Presence {
   /**
    * Constructs a new `DefaultPresence` instance.
    * @param channel The Realtime channel instance.
-   * @param clientId The client ID, attached to presences messages as an identifier of the sender.
-   * A channel can have multiple connections using the same clientId.
+   * @param clientId The client ID resolver.
    * @param logger An instance of the Logger.
    * @param options The room options.
    */
-  constructor(channel: Ably.RealtimeChannel, clientId: string, logger: Logger, options: InternalRoomOptions) {
+  constructor(channel: Ably.RealtimeChannel, clientId: ClientIdResolver, logger: Logger, options: InternalRoomOptions) {
     this._channel = channel;
     this._clientId = clientId;
     this._logger = logger;
@@ -281,7 +281,7 @@ export class DefaultPresence implements Presence {
     this._logger.trace(`Presence.enter()`, { data });
     this._assertChannelState();
     try {
-      await this._channel.presence.enterClient(this._clientId, data);
+      await this._channel.presence.enterClient(this._clientId.get(), data);
       this._emitPresenceStateChange(true);
     } catch (error) {
       this._emitPresenceStateChange(false, error as Ably.ErrorInfo);
@@ -296,7 +296,7 @@ export class DefaultPresence implements Presence {
     this._logger.trace(`Presence.update()`, { data });
     this._assertChannelState();
     try {
-      await this._channel.presence.updateClient(this._clientId, data);
+      await this._channel.presence.updateClient(this._clientId.get(), data);
       this._emitPresenceStateChange(true);
     } catch (error) {
       this._emitPresenceStateChange(false, error as Ably.ErrorInfo);
@@ -311,7 +311,7 @@ export class DefaultPresence implements Presence {
     this._logger.trace(`Presence.leave()`, { data });
     this._assertChannelState();
     try {
-      await this._channel.presence.leaveClient(this._clientId, data);
+      await this._channel.presence.leaveClient(this._clientId.get(), data);
       this._emitPresenceStateChange(false);
     } catch (error) {
       this._emitPresenceStateChange(false, error as Ably.ErrorInfo);
