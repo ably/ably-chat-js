@@ -116,7 +116,7 @@ export interface DeleteMessageReactionParams {
 export class ChatApi {
   private readonly _realtime: Ably.Realtime;
   private readonly _logger: Logger;
-  private readonly _apiProtocolVersion: number = 3;
+  private readonly _apiProtocolVersion: number = 4;
 
   constructor(realtime: Ably.Realtime, logger: Logger) {
     this._realtime = realtime;
@@ -124,8 +124,6 @@ export class ChatApi {
   }
 
   async history(roomName: string, params: HistoryQueryParams): Promise<PaginatedResult<Message>> {
-    roomName = encodeURIComponent(roomName);
-
     // convert the params into internal format
     const apiParams: ApiHistoryQueryParams = { ...params };
     if (params.orderBy) {
@@ -147,7 +145,7 @@ export class ChatApi {
     }
 
     const data = await this._makeAuthorizedPaginatedRequest<RestMessage>(
-      `/chat/v4/rooms/${roomName}/messages`,
+      this._roomUrl(roomName, '/messages'),
       apiParams,
     );
     return this._recursivePaginateMessages(data);
@@ -173,24 +171,17 @@ export class ChatApi {
   }
 
   async getMessage(roomName: string, serial: string): Promise<Message> {
-    const encodedSerial = encodeURIComponent(serial);
-    roomName = encodeURIComponent(roomName);
-    const restMessage = await this._makeAuthorizedRequest<RestMessage>(
-      `/chat/v4/rooms/${roomName}/messages/${encodedSerial}`,
-      'GET',
-    );
+    const restMessage = await this._makeAuthorizedRequest<RestMessage>(this._messageUrl(roomName, serial), 'GET');
     return messageFromRest(restMessage);
   }
 
   deleteMessage(roomName: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
-    const body: { description?: string; metadata?: MessageOperationMetadata } = {
-      description: params?.description,
-      metadata: params?.metadata,
+    const body = {
+      ...(params?.description && { description: params.description }),
+      ...(params?.metadata && { metadata: params.metadata }),
     };
-    serial = encodeURIComponent(serial);
-    roomName = encodeURIComponent(roomName);
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
-      `/chat/v4/rooms/${roomName}/messages/${serial}/delete`,
+      this._messageUrl(roomName, serial, '/delete'),
       'POST',
       body,
       {},
@@ -198,54 +189,30 @@ export class ChatApi {
   }
 
   sendMessage(roomName: string, params: SendMessageParams): Promise<CreateMessageResponse> {
-    const body: {
-      text: string;
-      metadata?: MessageMetadata;
-      headers?: MessageHeaders;
-    } = { text: params.text };
-    if (params.metadata) {
-      body.metadata = params.metadata;
-    }
-    if (params.headers) {
-      body.headers = params.headers;
-    }
-    roomName = encodeURIComponent(roomName);
-    return this._makeAuthorizedRequest<CreateMessageResponse>(`/chat/v4/rooms/${roomName}/messages`, 'POST', body);
+    const body = {
+      text: params.text,
+      ...(params.metadata && { metadata: params.metadata }),
+      ...(params.headers && { headers: params.headers }),
+    };
+    return this._makeAuthorizedRequest<CreateMessageResponse>(this._roomUrl(roomName, '/messages'), 'POST', body);
   }
 
   updateMessage(roomName: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
-    const encodedSerial = encodeURIComponent(serial);
-    roomName = encodeURIComponent(roomName);
-    return this._makeAuthorizedRequest<UpdateMessageResponse>(
-      `/chat/v4/rooms/${roomName}/messages/${encodedSerial}`,
-      'PUT',
-      params,
-    );
+    return this._makeAuthorizedRequest<UpdateMessageResponse>(this._messageUrl(roomName, serial), 'PUT', params);
   }
 
   sendMessageReaction(roomName: string, serial: string, data: SendMessageReactionParams): Promise<void> {
-    const encodedSerial = encodeURIComponent(serial);
-    roomName = encodeURIComponent(roomName);
-    return this._makeAuthorizedRequest(`/chat/v4/rooms/${roomName}/messages/${encodedSerial}/reactions`, 'POST', data);
+    return this._makeAuthorizedRequest(this._messageUrl(roomName, serial, '/reactions'), 'POST', data);
   }
 
   deleteMessageReaction(roomName: string, serial: string, data: DeleteMessageReactionParams): Promise<void> {
-    const encodedSerial = encodeURIComponent(serial);
-    roomName = encodeURIComponent(roomName);
-    return this._makeAuthorizedRequest(
-      `/chat/v4/rooms/${roomName}/messages/${encodedSerial}/reactions`,
-      'DELETE',
-      undefined,
-      data,
-    );
+    return this._makeAuthorizedRequest(this._messageUrl(roomName, serial, '/reactions'), 'DELETE', undefined, data);
   }
 
   getClientReactions(roomName: string, serial: string, clientId?: string): Promise<Message['reactions']> {
-    const encodedSerial = encodeURIComponent(serial);
-    roomName = encodeURIComponent(roomName);
     const params = clientId ? { forClientId: clientId } : {};
     return this._makeAuthorizedRequest<Message['reactions']>(
-      `/chat/v4/rooms/${roomName}/messages/${encodedSerial}/client-reactions`,
+      this._messageUrl(roomName, serial, '/client-reactions'),
       'GET',
       undefined,
       params,
@@ -253,8 +220,7 @@ export class ChatApi {
   }
 
   getOccupancy(roomName: string): Promise<OccupancyData> {
-    roomName = encodeURIComponent(roomName);
-    return this._makeAuthorizedRequest<OccupancyData>(`/chat/v4/rooms/${roomName}/occupancy`, 'GET');
+    return this._makeAuthorizedRequest<OccupancyData>(this._roomUrl(roomName, '/occupancy'), 'GET');
   }
 
   private async _makeAuthorizedRequest<RES = undefined>(
@@ -263,17 +229,7 @@ export class ChatApi {
     body?: unknown,
     params?: unknown,
   ): Promise<RES> {
-    const response = await this._realtime.request<RES>(method, url, this._apiProtocolVersion, params, body);
-    if (!response.success) {
-      this._logger.error('ChatApi._makeAuthorizedRequest(); failed to make request', {
-        url,
-        statusCode: response.statusCode,
-        errorCode: response.errorCode,
-        errorMessage: response.errorMessage,
-      });
-      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
-    }
-
+    const response = await this._doRequest(url, method, params, body);
     return response.items[0] as RES;
   }
 
@@ -282,16 +238,48 @@ export class ChatApi {
     params?: unknown,
     body?: unknown,
   ): Promise<PaginatedResult<RES>> {
-    const response = await this._realtime.request('GET', url, this._apiProtocolVersion, params, body);
+    return this._doRequest(url, 'GET', params, body);
+  }
+
+  private async _doRequest<RES>(
+    url: string,
+    method: 'POST' | 'GET' | 'PUT' | 'DELETE' | 'PATCH',
+    params?: unknown,
+    body?: unknown,
+  ): Promise<PaginatedResult<RES>> {
+    const response = await this._realtime.request(method, url, this._apiProtocolVersion, params, body);
     if (!response.success) {
-      this._logger.error('ChatApi._makeAuthorizedPaginatedRequest(); failed to make request', {
+      this._logger.error('ChatApi._doRequest(); failed to make request', {
         url,
+        method,
         statusCode: response.statusCode,
         errorCode: response.errorCode,
         errorMessage: response.errorMessage,
       });
       throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode);
     }
+
     return response;
+  }
+
+  /**
+   * Returns a URL for a specific room.
+   * @param roomName Name of the room
+   * @param suffix The suffix to add to the room URL, prefixed with /
+   * @returns string The formatted URL
+   */
+  private _roomUrl(roomName: string, suffix = ''): string {
+    return `/chat/v4/rooms/${encodeURIComponent(roomName)}${suffix}`;
+  }
+
+  /**
+   * Returns a URL for a specific message in the room.
+   * @param roomName string Name of the room
+   * @param serial string The serial of the message
+   * @param suffix The suffix to add to the room URL, prefixed with /
+   * @returns string The formatted URL
+   */
+  private _messageUrl(roomName: string, serial: string, suffix = ''): string {
+    return `${this._roomUrl(roomName, '/messages')}/${encodeURIComponent(serial)}${suffix}`;
   }
 }
