@@ -505,7 +505,7 @@ export interface Messages {
    * of the returned instance for consistency.
    * - This method uses the Ably Chat REST API and so does require the room
    * to be attached to be called.
-   * @param serial - The unique identifier of the message to delete
+   * @param serial - The unique identifier of the message to delete (i.e. the {@link Message.serial} field)
    * @param deleteMessageParams - Optional parameters for the deletion
    * @returns A Promise that resolves to the deleted {@link Message} object with
    *          `isDeleted` set to true and deletion metadata populated
@@ -514,13 +514,13 @@ export interface Messages {
    * @example
    * ```typescript
    * import * as Ably from 'ably';
-   * import { ChatClient } from '@ably/chat';
+   * import { ChatClient, Message } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
    * const room = await chatClient.rooms.get('public-chat');
    *
-   * // Delete a message with tracking information
+   * // Serial of the message to delete
    * const messageSerial = '01726585978590-001@abcdefghij:001';
    *
    * try {
