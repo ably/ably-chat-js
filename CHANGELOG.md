@@ -2,6 +2,17 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.14.1](https://github.com/ably/ably-chat-js/tree/0.14.1) (2025-10-02)
+
+### Fixes
+
+- **Message Versioning**: Made `version.serial` and `version.timestamp` non-nullable for better type safety. [#646](https://github.com/ably/ably-chat-js/pull/646)
+- **React Agent String**: Fixed agent string to include JavaScript SDK version when using React hooks. [#647](https://github.com/ably/ably-chat-js/pull/647)
+
+### API Changes
+
+- **Connection API**: Removed internal `dispose` method from public Connection API. [#645](https://github.com/ably/ably-chat-js/pull/645)
+
 ## [0.14.0](https://github.com/ably/ably-chat-js/tree/0.14.0) (2025-09-29)
 
 ### Breaking Changes
