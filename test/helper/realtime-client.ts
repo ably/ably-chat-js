@@ -61,7 +61,11 @@ const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtim
 
   options.token = jwt.sign(claims, keySecret, { header: header });
 
-  return ablyRealtimeClient(options);
+  // Strip the clientId, so we get it confirmed from the server
+  delete options.clientId;
+  delete options.key;
+
+  return new Ably.Realtime(options);
 };
 
 export { ablyRealtimeClient, ablyRealtimeClientWithToken };
