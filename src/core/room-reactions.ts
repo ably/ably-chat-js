@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { ClientIdResolver } from './client-id.js';
 import { RoomReactionEvent, RoomReactionEventType, RoomReactionRealtimeEventType } from './events.js';
 import { Logger } from './logger.js';
 import { messageToEphemeral } from './realtime.js';
@@ -99,7 +100,7 @@ interface ReactionPayload {
 export class DefaultRoomReactions implements RoomReactions {
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _connection: Ably.Connection;
-  private readonly _clientId: string;
+  private readonly _clientIdResolver: ClientIdResolver;
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<RoomReactionEventsMap>();
   private readonly _unsubscribeRoomReactionEvents: () => void;
@@ -108,13 +109,18 @@ export class DefaultRoomReactions implements RoomReactions {
    * Constructs a new `DefaultRoomReactions` instance.
    * @param channel The Realtime channel instance.
    * @param connection The connection instance.
-   * @param clientId The client ID of the user.
+   * @param clientIdResolver The client ID resolver.
    * @param logger An instance of the Logger.
    */
-  constructor(channel: Ably.RealtimeChannel, connection: Ably.Connection, clientId: string, logger: Logger) {
+  constructor(
+    channel: Ably.RealtimeChannel,
+    connection: Ably.Connection,
+    clientIdResolver: ClientIdResolver,
+    logger: Logger,
+  ) {
     this._channel = channel;
     this._connection = connection;
-    this._clientId = clientId;
+    this._clientIdResolver = clientIdResolver;
     this._logger = logger;
 
     // Create bound listener
@@ -179,7 +185,7 @@ export class DefaultRoomReactions implements RoomReactions {
 
   // parses reactions from realtime channel into Reaction objects and forwards them to the EventEmitter
   private _forwarder = (inbound: Ably.InboundMessage) => {
-    const reaction = parseRoomReaction(inbound, this._clientId);
+    const reaction = parseRoomReaction(inbound, this._clientIdResolver.get());
     this._emitter.emit(RoomReactionEventType.Reaction, {
       type: RoomReactionEventType.Reaction,
       reaction,

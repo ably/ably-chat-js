@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { DefaultClientIdResolver } from './client-id.js';
 import { ChatClientOptions, normalizeClientOptions, NormalizedChatClientOptions } from './config.js';
 import { Connection, DefaultConnection, InternalConnection } from './connection.js';
 import { randomId } from './id.js';
@@ -43,6 +44,11 @@ export class ChatClient {
   private readonly _nonce: string;
 
   /**
+   * @internal
+   */
+  private readonly _clientIdResolver: DefaultClientIdResolver;
+
+  /**
    * Constructor for Chat
    *
    * **Important**: The Ably Realtime client must have a clientId set. This can be done by configuring
@@ -79,7 +85,8 @@ export class ChatClient {
     });
 
     this._connection = new DefaultConnection(realtime, this._logger);
-    this._rooms = new DefaultRooms(realtime, this._logger);
+    this._clientIdResolver = new DefaultClientIdResolver(realtime, this._logger);
+    this._rooms = new DefaultRooms(realtime, this._clientIdResolver, this._logger);
     this._addAgent('chat-js');
     this._logger.trace(`ably chat client version ${VERSION}; initialized`);
   }
@@ -102,10 +109,14 @@ export class ChatClient {
   }
 
   /**
-   * Returns the clientId of the current client.
-   * @returns The clientId.
+   * Returns the clientId of the current client, if known.
+   *
+   * **Important** When using an Ably key for authentication, this value is determined immediately. If using a token,
+   * the clientId is not known until the client has successfully connected to and authenticated with
+   * the server. Use the `chatClient.connection.status` to check the connection status.
+   * @returns The clientId, or undefined if unknown.
    */
-  get clientId(): string {
+  get clientId(): string | undefined {
     return this._realtime.auth.clientId;
   }
 
@@ -168,6 +179,7 @@ export class ChatClient {
 
     // Dispose of the connection instance
     this._connection.dispose();
+
     this._logger.debug('ChatClient.dispose(); client disposed successfully');
   }
 

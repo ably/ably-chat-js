@@ -302,7 +302,6 @@ export class DefaultMessages implements Messages {
   private readonly _options: MessageOptions;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
-  private readonly _clientId: string;
   private readonly _listenerSubscriptionPoints: Map<
     MessageListener,
     Promise<{
@@ -324,7 +323,6 @@ export class DefaultMessages implements Messages {
    * @param options The room options for the messages.
    * @param channel An instance of the Realtime channel for the room.
    * @param chatApi An instance of the ChatApi.
-   * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
   constructor(
@@ -332,14 +330,12 @@ export class DefaultMessages implements Messages {
     options: MessageOptions,
     channel: Ably.RealtimeChannel,
     chatApi: ChatApi,
-    clientId: string,
     logger: Logger,
   ) {
     this._roomName = roomName;
     this._options = options;
     this._channel = channel;
     this._chatApi = chatApi;
-    this._clientId = clientId;
     this._logger = logger;
     this._listenerSubscriptionPoints = new Map<MessageListener, Promise<{ fromSerial: string }>>();
 

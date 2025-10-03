@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { dequal } from 'dequal';
 
 import { ChatApi } from './chat-api.js';
+import { ClientIdResolver } from './client-id.js';
 import { ErrorCode } from './errors.js';
 import { randomId } from './id.js';
 import { Logger } from './logger.js';
@@ -91,6 +92,7 @@ export class DefaultRooms implements Rooms {
   private readonly _chatApi: ChatApi;
   private readonly _rooms: Map<string, RoomMapEntry> = new Map<string, RoomMapEntry>();
   private readonly _releasing = new Map<string, Promise<void>>();
+  private readonly _clientIdResolver: ClientIdResolver;
   private readonly _logger: Logger;
   private _isReact = false;
   private _disposed = false;
@@ -98,11 +100,13 @@ export class DefaultRooms implements Rooms {
   /**
    * Constructs a new Rooms instance.
    * @param realtime An instance of the Ably Realtime client.
+   * @param clientIdResolver A resolver for the clientId.
    * @param logger An instance of the Logger.
    */
-  constructor(realtime: Ably.Realtime, logger: Logger) {
+  constructor(realtime: Ably.Realtime, clientIdResolver: ClientIdResolver, logger: Logger) {
     this._realtime = realtime;
     this._chatApi = new ChatApi(realtime, logger);
+    this._clientIdResolver = clientIdResolver;
     this._logger = logger;
   }
 
@@ -402,6 +406,7 @@ export class DefaultRooms implements Rooms {
       normalizeRoomOptions(options, this._isReact),
       this._realtime,
       this._chatApi,
+      this._clientIdResolver,
       this._logger,
     );
   }
