@@ -29,13 +29,6 @@ type ApiHistoryQueryParams = Omit<HistoryQueryParams, 'orderBy'> & {
   direction?: 'forwards' | 'backwards';
 };
 
-export interface CreateMessageResponse {
-  /** The serial of the message */
-  serial: string;
-  /** The timestamp of the message */
-  timestamp: number;
-}
-
 interface SendMessageParams {
   text: string;
   metadata?: MessageMetadata;
@@ -111,7 +104,8 @@ export interface DeleteMessageReactionParams {
 }
 
 /**
- * Chat SDK Backend
+ * Bridge for the Chat REST API.
+ * @internal
  */
 export class ChatApi {
   private readonly _realtime: Ably.Realtime;
@@ -188,13 +182,13 @@ export class ChatApi {
     );
   }
 
-  sendMessage(roomName: string, params: SendMessageParams): Promise<CreateMessageResponse> {
+  sendMessage(roomName: string, params: SendMessageParams): Promise<RestMessage> {
     const body = {
       text: params.text,
       ...(params.metadata && { metadata: params.metadata }),
       ...(params.headers && { headers: params.headers }),
     };
-    return this._makeAuthorizedRequest<CreateMessageResponse>(this._roomUrl(roomName, '/messages'), 'POST', body);
+    return this._makeAuthorizedRequest<RestMessage>(this._roomUrl(roomName, '/messages'), 'POST', body);
   }
 
   updateMessage(roomName: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
