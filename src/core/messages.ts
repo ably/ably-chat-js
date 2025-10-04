@@ -3,14 +3,7 @@ import * as Ably from 'ably';
 import { ChatApi } from './chat-api.js';
 import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType, RealtimeMessageName } from './events.js';
 import { Logger } from './logger.js';
-import {
-  DefaultMessage,
-  emptyMessageReactions,
-  Message,
-  MessageHeaders,
-  MessageMetadata,
-  MessageOperationMetadata,
-} from './message.js';
+import { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
 import { DefaultMessageReactions, MessagesReactions } from './messages-reactions.js';
 import { PaginatedResult } from './query.js';
@@ -538,22 +531,7 @@ export class DefaultMessages implements Messages {
     const { text, metadata, headers } = params;
 
     const response = await this._chatApi.sendMessage(this._roomName, { text, headers, metadata });
-    // We apply the timestamp to both the message and the version, since they are the same for a newly created message.
-    const timestamp = new Date(response.timestamp);
-    return new DefaultMessage({
-      serial: response.serial,
-      clientId: this._clientId,
-      text: text,
-      metadata: metadata ?? {},
-      headers: headers ?? {},
-      action: ChatMessageAction.MessageCreate,
-      version: {
-        serial: response.serial,
-        timestamp,
-      },
-      timestamp,
-      reactions: emptyMessageReactions(),
-    });
+    return messageFromRest(response);
   }
 
   /**
