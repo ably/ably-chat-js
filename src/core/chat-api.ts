@@ -188,13 +188,13 @@ export class ChatApi {
     );
   }
 
-  sendMessage(roomName: string, params: SendMessageParams): Promise<CreateMessageResponse> {
+  sendMessage(roomName: string, params: SendMessageParams): Promise<RestMessage> {
     const body = {
       text: params.text,
       ...(params.metadata && { metadata: params.metadata }),
       ...(params.headers && { headers: params.headers }),
     };
-    return this._makeAuthorizedRequest<CreateMessageResponse>(this._roomUrl(roomName, '/messages'), 'POST', body);
+    return this._makeAuthorizedRequest<RestMessage>(this._roomUrl(roomName, '/messages'), 'POST', body);
   }
 
   updateMessage(roomName: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {

@@ -68,6 +68,17 @@ describe('Messages', () => {
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: serial,
         timestamp: timestamp,
+        text: 'hello there',
+        clientId: 'clientId',
+        action: ChatMessageAction.MessageCreate,
+        metadata: {},
+        headers: {},
+        version: {
+          serial: serial,
+          timestamp: timestamp,
+          clientId: 'clientId',
+        },
+        reactions: emptyMessageReactions(),
       });
 
       const messagePromise = context.room.messages.send({ text: 'hello there' });
@@ -88,16 +99,29 @@ describe('Messages', () => {
       const { chatApi, realtime } = context;
       const timestamp = Date.now();
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
+      const headers = { something: 'else', abc: '123' };
+      const metadata = { hello: { name: 'world', more: ['nested', true] }, 'meta-abc': 'abc', '123': 456, pi: 3.14 };
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: serial,
         timestamp: timestamp,
+        text: 'hello there',
+        clientId: 'clientId',
+        action: ChatMessageAction.MessageCreate,
+        metadata: metadata,
+        headers: headers,
+        version: {
+          serial: serial,
+          timestamp: timestamp,
+          clientId: 'clientId',
+        },
+        reactions: emptyMessageReactions(),
       });
 
       const room = makeRandomRoom({ chatApi, realtime });
       const messagePromise = room.messages.send({
         text: 'hello there',
-        headers: { something: 'else', abc: 123, def: true, bla: null },
-        metadata: { hello: { name: 'world', more: ['nested', true] }, 'meta-abc': 'abc', '123': 456, pi: 3.14 },
+        headers: headers,
+        metadata: metadata,
       });
 
       const message = await messagePromise;
@@ -108,12 +132,7 @@ describe('Messages', () => {
           text: 'hello there',
           clientId: 'clientId',
           timestamp: new Date(timestamp),
-          headers: {
-            something: 'else',
-            abc: 123,
-            def: true,
-            bla: null,
-          },
+          headers: { something: 'else', abc: '123' },
           metadata: { hello: { name: 'world', more: ['nested', true] }, 'meta-abc': 'abc', '123': 456, pi: 3.14 },
         }),
       );
@@ -128,6 +147,17 @@ describe('Messages', () => {
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
         timestamp: sendTimestamp,
+        text: 'hello there',
+        clientId: 'clientId',
+        action: ChatMessageAction.MessageCreate,
+        metadata: {},
+        headers: {},
+        version: {
+          serial: sendSerial,
+          timestamp: sendTimestamp,
+          clientId: 'clientId',
+        },
+        reactions: emptyMessageReactions(),
       });
 
       const deleteTimestamp = Date.now();
@@ -170,6 +200,17 @@ describe('Messages', () => {
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
         timestamp: sendTimestamp,
+        text: 'hello there',
+        clientId: 'clientId',
+        action: ChatMessageAction.MessageCreate,
+        metadata: {},
+        headers: {},
+        version: {
+          serial: sendSerial,
+          timestamp: sendTimestamp,
+          clientId: 'clientId',
+        },
+        reactions: emptyMessageReactions(),
       });
 
       const deleteTimestamp = Date.now();
@@ -213,6 +254,17 @@ describe('Messages', () => {
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
         timestamp: sendTimestamp,
+        text: 'hello there',
+        clientId: 'clientId',
+        action: ChatMessageAction.MessageCreate,
+        metadata: {},
+        headers: {},
+        version: {
+          serial: sendSerial,
+          timestamp: sendTimestamp,
+          clientId: 'clientId',
+        },
+        reactions: emptyMessageReactions(),
       });
 
       const deleteTimestamp = Date.now();
@@ -266,6 +318,17 @@ describe('Messages', () => {
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
         timestamp: sendTimestamp,
+        text: 'hello there',
+        clientId: 'clientId',
+        action: ChatMessageAction.MessageCreate,
+        metadata: {},
+        headers: {},
+        version: {
+          serial: sendSerial,
+          timestamp: sendTimestamp,
+          clientId: 'clientId',
+        },
+        reactions: emptyMessageReactions(),
       });
 
       const deleteTimestamp = Date.now();
@@ -313,6 +376,17 @@ describe('Messages', () => {
       vi.spyOn(chatApi, 'sendMessage').mockResolvedValue({
         serial: sendSerial,
         timestamp: sendTimestamp,
+        text: 'hello there',
+        clientId: 'clientId',
+        action: ChatMessageAction.MessageCreate,
+        metadata: {},
+        headers: {},
+        version: {
+          serial: sendSerial,
+          timestamp: sendTimestamp,
+          clientId: 'clientId',
+        },
+        reactions: emptyMessageReactions(),
       });
 
       const deleteTimestamp = Date.now();
