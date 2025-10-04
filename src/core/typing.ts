@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import { E_CANCELED, Mutex } from 'async-mutex';
 
+import { ClientIdResolver } from './client-id.js';
 import { TypingEventType, TypingSetEvent, TypingSetEventType } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
@@ -90,7 +91,7 @@ type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
  * @inheritDoc
  */
 export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
-  private readonly _clientId: string;
+  private readonly _clientId: ClientIdResolver;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
@@ -116,14 +117,14 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @param options The options for typing in the room.
    * @param connection The connection instance.
    * @param channel The channel for the room.
-   * @param clientId The client ID of the user.
+   * @param clientId The client ID resolver.
    * @param logger An instance of the Logger.
    */
   constructor(
     options: InternalTypingOptions,
     connection: Ably.Connection,
     channel: Ably.RealtimeChannel,
-    clientId: string,
+    clientId: ClientIdResolver,
     logger: Logger,
   ) {
     super();

@@ -11,9 +11,13 @@ import { useLogger } from './internal/use-logger.js';
  */
 export interface UseChatClientResponse {
   /**
-   * The current clientId.
+   * The current clientId, if known.
+   *
+   * **Important** When using an Ably key for authentication, this value is determined immediately. If using a token,
+   * the clientId is not known until the client has successfully connected to and authenticated with
+   * the server. Use the `chatClient.connection.status` to check the connection status.
    */
-  readonly clientId: string;
+  readonly clientId?: string;
 }
 
 /**

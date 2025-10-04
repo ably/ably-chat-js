@@ -1,7 +1,9 @@
 import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DefaultClientIdResolver } from '../../src/core/client-id.ts';
 import { normalizeClientOptions } from '../../src/core/config.ts';
+import { DefaultConnection } from '../../src/core/connection.ts';
 import { DefaultRoom } from '../../src/core/room.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
 import { ErrorCode } from '../../src/index.ts';
@@ -20,7 +22,13 @@ describe('rooms', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
     const logger = makeTestLogger();
-    context.rooms = new DefaultRooms(context.realtime, normalizeClientOptions({}), logger);
+    const connection = new DefaultConnection(context.realtime, logger);
+    context.rooms = new DefaultRooms(
+      context.realtime,
+      normalizeClientOptions({}),
+      new DefaultClientIdResolver(connection, context.realtime, logger),
+      logger,
+    );
   });
 
   describe('room get', () => {

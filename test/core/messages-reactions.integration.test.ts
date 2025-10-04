@@ -7,17 +7,19 @@ import {
   MessageReactionSummaryEvent,
   MessageReactionType,
 } from '../../src/core/events.ts';
-import { newChatClient } from '../helper/chat.ts';
+import { newChatClient, waitForClientId } from '../helper/chat.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { getRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
   chat: ChatClient;
+  clientId: string;
 }
 
 describe('message reactions integration', { timeout: 60000 }, () => {
-  beforeEach<TestContext>((context) => {
+  beforeEach<TestContext>(async (context) => {
     context.chat = newChatClient();
+    context.clientId = await waitForClientId(context.chat);
   });
 
   it<TestContext>('should be able to send and receive raw message reactions', async (context) => {
@@ -87,7 +89,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
   });
 
   it<TestContext>('should be able to receive reaction summaries: multiple', async (context) => {
-    const { chat } = context;
+    const { chat, clientId } = context;
 
     const room = await getRandomRoom(chat);
 
@@ -126,13 +128,13 @@ describe('message reactions integration', { timeout: 60000 }, () => {
               '👍': {
                 total: 11,
                 clientIds: {
-                  [chat.clientId]: 11,
+                  [clientId]: 11,
                 },
               },
               '❤️': {
                 total: 3,
                 clientIds: {
-                  [chat.clientId]: 3,
+                  [clientId]: 3,
                 },
               },
             },
@@ -158,7 +160,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
               '👍': {
                 total: 11,
                 clientIds: {
-                  [chat.clientId]: 11,
+                  [clientId]: 11,
                 },
               },
             },

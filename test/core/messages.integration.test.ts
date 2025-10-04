@@ -6,7 +6,7 @@ import { Message } from '../../src/core/message.ts';
 import { OrderBy } from '../../src/core/messages.ts';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.ts';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.ts';
-import { newChatClient } from '../helper/chat.ts';
+import { newChatClient, waitForClientId } from '../helper/chat.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { randomRoomName } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -17,8 +17,9 @@ interface TestContext {
 }
 
 describe('messages integration', { timeout: 10000 }, () => {
-  beforeEach<TestContext>((context) => {
+  beforeEach<TestContext>(async (context) => {
     context.chat = newChatClient();
+    await waitForClientId(context.chat);
   });
 
   describe('channel configuration', () => {

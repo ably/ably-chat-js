@@ -3,6 +3,8 @@ import { vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { ChatClient } from '../../src/core/chat-client.ts';
+import { DefaultClientIdResolver } from '../../src/core/client-id.ts';
+import { DefaultConnection } from '../../src/core/connection.ts';
 import { ErrorCode } from '../../src/core/errors.ts';
 import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
@@ -39,6 +41,7 @@ export const makeRandomRoom = (params?: {
   const logger = params?.logger ?? makeTestLogger();
   const realtime = params?.realtime ?? ablyRealtimeClient();
   const chatApi = params?.chatApi ?? new ChatApi(realtime, logger);
+  const connection = new DefaultConnection(realtime, logger);
 
   return new DefaultRoom(
     randomRoomName(),
@@ -46,6 +49,7 @@ export const makeRandomRoom = (params?: {
     normalizeRoomOptions(params?.options, false),
     realtime,
     chatApi,
+    new DefaultClientIdResolver(connection, realtime, logger),
     logger,
   );
 };
