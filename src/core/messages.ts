@@ -188,8 +188,7 @@ export interface MessageSubscriptionResponse extends Subscription {
    * - Once continuity is restored, the subscription point will be set to the beginning of this new period of continuity. To
    * ensure that no messages are missed (or updates/deletes), you should call `historyBeforeSubscribe` after any period of discontinuity to
    * refresh your re-populate your local state.
-   * @example
-   * **Simple example: Populating messages on initial subscription**
+   * @example Populating messages on initial subscription
    * ```typescript
    * import * as Ably from 'ably';
    * import { ChatClient } from '@ably/chat';
@@ -211,7 +210,7 @@ export interface MessageSubscriptionResponse extends Subscription {
    *     messages[existingIndex] = messages[existingIndex].with(message);
    *   }
    *   // Messages should be ordered by serial
-   *   messages.sort((a, b) => a.serial.localeCompare(b.serial));
+   *   messages.sort((a, b) => a.before(b) ? -1 : (b.before(a) ? 1 : 0));
    * };
    *
    *
@@ -246,8 +245,7 @@ export interface MessageSubscriptionResponse extends Subscription {
    *   console.error('Failed to retrieve message history:', error);
    * }
    * ```
-   * @example
-   * **Advanced example: Handling discontinuities to refresh local state**
+   * @example Handling discontinuities to refresh local state
    * ```typescript
    * // Subscribe a listener to message events as before
    * const { historyBeforeSubscribe } = // subscribed listener response
