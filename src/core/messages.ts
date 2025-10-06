@@ -342,7 +342,7 @@ export interface Messages {
    * allowing you to paginate through message history, filter by time ranges,
    * and control the order of results.
    *
-   * **NOTE**: This method uses the Ably Chat REST API and so does require the room
+   * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
    * @param options - Query parameters to filter and control the message retrieval
    * @returns A Promise that resolves to a {@link PaginatedResult} containing an array of {@link Message} objects
@@ -396,7 +396,7 @@ export interface Messages {
    * This method retrieves a single message using its serial, which is a unique
    * identifier assigned to each message when it's created.
    *
-   * **NOTE**: This method uses the Ably Chat REST API and so does require the room
+   * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
    * @param serial - The unique serial identifier of the message to retrieve
    * @returns A Promise that resolves to the {@link Message} object
@@ -441,7 +441,7 @@ export interface Messages {
    * from the realtime channel. This means subscribers may see the message before
    * the send operation completes.
    *
-   * **NOTE**: This method uses the Ably Chat REST API and so does require the room
+   * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
    * @param params - Message parameters containing the text and optional metadata/headers
    * @returns A Promise that resolves to the sent {@link Message} object
@@ -494,7 +494,7 @@ export interface Messages {
    * - The returned Message instance represents the state after deletion. If you
    * have active subscriptions, use the event payloads from those subscriptions instead
    * of the returned instance for consistency.
-   * - This method uses the Ably Chat REST API and so does require the room
+   * - This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
    * @param serial - The unique identifier of the message to delete (i.e. the {@link Message.serial} field)
    * @param deleteMessageParams - Optional parameters for the deletion
@@ -554,7 +554,7 @@ export interface Messages {
    * - The returned Message instance represents the state after the update. If you
    * have active subscriptions, use the event payloads from those subscriptions instead
    * of the returned instance for consistency.
-   * - This method uses the Ably Chat REST API and so does require the room
+   * - This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
    * @param serial - The unique identifier of the message to update
    * @param updateParams - The new message content and properties

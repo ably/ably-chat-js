@@ -113,7 +113,7 @@ export interface Connection {
    * if (chatClient.connection.error) {
    *   console.error('Connection error:', chatClient.connection.error.message);
    *   console.error('Error code:', chatClient.connection.error.code);
-   *
+   * }
    * // Monitor for errors during status changes
    * chatClient.connection.onStatusChange((change) => {
    *   if (change.error) {

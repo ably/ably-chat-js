@@ -85,7 +85,7 @@ export interface MessageReactions {
    *
    * **Note**:
    * - The behavior depends on the reaction type configured for the room.
-   * - This method uses the Ably Chat REST API and so does require the room
+   * - This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
    * @param messageSerial - The unique identifier of the message to react to
    * @param params - The reaction parameters
@@ -134,7 +134,7 @@ export interface MessageReactions {
    * - **Distinct**: Removes a specific reaction by name
    * - **Multiple**: Removes all instances of a reaction by name
    *
-   * **Note**: This method uses the Ably Chat REST API and so does require the room
+   * **Note**: This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
    * @param messageSerial - The unique identifier of the message to remove the reaction from
    * @param params - Optional deletion parameters
@@ -288,7 +288,7 @@ export interface MessageReactions {
    * and you need to check if a specific client has reacted. This is particularly
    * useful for determining if the current user has reacted when they're not in
    * the summary's client list.
-   * **Note**: This method uses the Ably Chat REST API and so does require the room
+   * **Note**: This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
    * @param messageSerial - The unique identifier of the message
    * @param clientId - The client ID to check (defaults to current client)
