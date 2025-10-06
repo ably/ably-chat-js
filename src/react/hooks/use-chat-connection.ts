@@ -13,6 +13,14 @@ export interface UseChatConnectionOptions {
   /**
    * A callback that will be called whenever the connection status changes.
    * The listener is removed when the component unmounts.
+   * @example
+   * ```tsx
+   * useChatConnection({
+   *   onStatusChange: (change) => {
+   *     console.log(`Connection changed from ${change.previous} to ${change.current}`);
+   *   }
+   * });
+   * ```
    */
   onStatusChange?: ConnectionStatusListener;
 }

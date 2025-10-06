@@ -37,6 +37,14 @@ export interface UsePresenceListenerParams extends StatusParams, Listenable<Pres
   /**
    * The listener to be called when the presence state changes.
    * The listener is removed when the component unmounts.
+   * @example
+   * ```tsx
+   * usePresenceListener({
+   *   listener: (presenceEvent) => {
+   *     console.log('Presence event:', presenceEvent.type, presenceEvent.member.clientId);
+   *   }
+   * });
+   * ```
    */
   listener?: PresenceListener;
 }

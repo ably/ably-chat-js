@@ -19,6 +19,14 @@ import { useChatConnection } from './use-chat-connection.js';
 export interface UseRoomReactionsParams extends StatusParams, Listenable<RoomReactionListener> {
   /**
    * A listener that will be called whenever a reaction is sent to the room.
+   * @example
+   * ```tsx
+   * useRoomReactions({
+   *   listener: (reactionEvent) => {
+   *     console.log('Room reaction received:', reactionEvent.type, reactionEvent.clientId);
+   *   }
+   * });
+   * ```
    */
   listener?: RoomReactionListener;
 }

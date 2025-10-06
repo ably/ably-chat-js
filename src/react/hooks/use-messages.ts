@@ -208,12 +208,28 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
   /**
    * An optional listener that can be provided to receive new messages in the room.
    * The listener is removed when the component unmounts.
+   * @example
+   * ```tsx
+   * useMessages({
+   *   listener: (event) => {
+   *     console.log(`Message ${event.type}:`, event.message.text);
+   *   }
+   * });
+   * ```
    */
   listener?: MessageListener;
 
   /**
    * An optional listener that can be provided to receive reaction summaries to
    * messages in the room. The listener is removed when the component unmounts.
+   * @example
+   * ```tsx
+   * useMessages({
+   *   reactionsListener: (event) => {
+   *     console.log('Reaction summary:', event.summary);
+   *   }
+   * });
+   * ```
    */
   reactionsListener?: MessageReactionListener;
 
@@ -221,6 +237,14 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
    * An optional listener that can be provided to receive individual reactions
    * to messages in the room. The listener is removed when the component
    * unmounts.
+   * @example
+   * ```tsx
+   * useMessages({
+   *   rawReactionsListener: (event) => {
+   *     console.log('Raw reaction:', event.reaction.type);
+   *   }
+   * });
+   * ```
    */
   rawReactionsListener?: MessageRawReactionListener;
 }

@@ -18,6 +18,14 @@ export interface UseOccupancyParams extends StatusParams, Listenable<OccupancyLi
   /**
    * A listener that will be called whenever an occupancy event is received.
    * The listener is removed when the component unmounts.
+   * @example
+   * ```tsx
+   * useOccupancy({
+   *   listener: (occupancyEvent) => {
+   *     console.log('Occupancy changed:', occupancyEvent.occupancy);
+   *   }
+   * });
+   * ```
    */
   listener?: OccupancyListener;
 }

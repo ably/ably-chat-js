@@ -22,7 +22,14 @@ export interface TypingParams extends StatusParams, Listenable<TypingListener> {
   /**
    * A listener that will be called whenever a typing event is sent to the room.
    * The listener is removed when the component unmounts.
-   *
+   * @example
+   * ```tsx
+   * useTyping({
+   *   listener: (typingEvent) => {
+   *     console.log('Typing event:', Array.from(typingEvent.currentlyTyping));
+   *   }
+   * });
+   * ```
    */
   listener?: TypingListener;
 }
