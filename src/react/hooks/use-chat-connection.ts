@@ -33,9 +33,75 @@ export interface UseChatConnectionResponse {
 }
 
 /**
- * A hook that provides the current connection status and error, and allows the user to listen to connection status changes.
- * @param options - The options for the hook
- * @returns The current connection status and error.
+ * React hook that provides the current connection status and error, and allows the user to listen to connection status changes.
+ *
+ * This hook automatically tracks the connection state of the underlying Ably Realtime
+ * client and provides access to the current status and any connection errors. It also
+ * allows you to register a listener for connection state changes.
+ *
+ * The hook will automatically clean up listeners when the component unmounts and
+ * update the connection state whenever the underlying chat client changes.
+ *
+ * **Note**: This hook must be used within a {@link ChatClientProvider} component tree.
+ * @param options - Optional configuration for the hook
+ * @returns A {@link UseChatConnectionResponse} containing the current connection status and error
+ * @throws {Ably.ErrorInfo} When used outside of a {@link ChatClientProvider}
+ * @example
+ * ```tsx
+ * import * as Ably from 'ably';
+ * import React from 'react';
+ * import { ChatClient, ConnectionStatus } from '@ably/chat';
+ * import { ChatClientProvider, useChatConnection } from '@ably/chat/react';
+ *
+ * // Component that displays connection status
+ * const ConnectionStatus = () => {
+ *   const { currentStatus, error } = useChatConnection({
+ *     onStatusChange: (change) => {
+ *       console.log(`Connection changed from ${change.previous} to ${change.current}`);
+ *       if (change.error) {
+ *         console.error('Connection error:', change.error);
+ *       }
+ *     }
+ *   });
+ *
+ *   const getStatusColor = (status: ConnectionStatus) => {
+ *     switch (status) {
+ *       case ConnectionStatus.Connected: return 'green';
+ *       case ConnectionStatus.Connecting: return 'orange';
+ *       case ConnectionStatus.Disconnected: return 'red';
+ *       case ConnectionStatus.Suspended: return 'yellow';
+ *       case ConnectionStatus.Failed: return 'red';
+ *       default: return 'gray';
+ *     }
+ *   };
+ *
+ *   return (
+ *     <div>
+ *       <div style={{ color: getStatusColor(currentStatus) }}>
+ *         Status: {currentStatus}
+ *       </div>
+ *       {error && (
+ *         <div style={{ color: 'red' }}>
+ *           Error: {error.message} (Code: {error.code})
+ *         </div>
+ *       )}
+ *     </div>
+ *   );
+ * };
+ *
+ * const chatClient: ChatClient; // existing ChatClient instance
+ *
+ * // App component with provider setup
+ * const App = () => {
+ *   return (
+ *     <ChatClientProvider client={chatClient}>
+ *       <ConnectionStatus />
+ *     </ChatClientProvider>
+ *   );
+ * };
+ *
+ * export default App;
+ * ```
  */
 export const useChatConnection = (options?: UseChatConnectionOptions): UseChatConnectionResponse => {
   const chatClient = useChatClientContext();

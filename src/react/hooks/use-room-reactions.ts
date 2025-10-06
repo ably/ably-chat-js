@@ -29,15 +29,90 @@ export interface UseRoomReactionsParams extends StatusParams, Listenable<RoomRea
 export interface UseRoomReactionsResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link RoomReactions.send} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @example
+   * ```tsx
+   * const { sendRoomReaction } = useRoomReactions();
+   *
+   * const celebrateSuccess = async () => {
+   *   try {
+   *     await sendRoomReaction({
+   *       type: '🎉',
+   *       metadata: { reason: 'milestone_reached' }
+   *     });
+   *   } catch (error) {
+   *     console.error('Failed to send room reaction:', error);
+   *   }
+   * };
+   * ```
    */
   readonly sendRoomReaction: RoomReactions['send'];
 }
 
 /**
- * A hook that provides access to the {@link RoomReactions} instance in the room.
- * It will use the instance belonging to the nearest {@link ChatRoomProvider} in the component tree.
- * @param params - Allows the registering of optional callbacks.
- * @returns UseRoomReactionsResponse
+ * React hook that provides access to room reaction functionality.
+ *
+ * This hook allows you to send reactions to the room (not to specific messages) and
+ * subscribe to room reaction events. Room reactions are ephemeral messages (not persisted) that
+ * all room participants can see, such as applause, cheers, or other real-time feedback.
+ *
+ * **Note**:
+ * - This hook must be used within a {@link ChatRoomProvider} component tree.
+ * - Room must be attached to send and receive room reactions, typically the {@link ChatRoomProvider} handles this automatically.
+ * @param params - Optional parameters for event listeners and room status callbacks
+ * @returns A {@link UseRoomReactionsResponse} containing room reaction methods and status
+ * @throws {Ably.ErrorInfo} When used outside of a {@link ChatRoomProvider}
+ * @example Basic usage
+ * ```tsx
+ * import React from 'react';
+ * import { ChatClient, RoomReactionEvent } from '@ably/chat';
+ * import {
+ *   ChatClientProvider,
+ *   ChatRoomProvider,
+ *   useRoomReactions
+ * } from '@ably/chat/react';
+ *
+ * // Component that handles room reactions
+ * const RoomReactionHandler = () => {
+ *   const { sendRoomReaction } = useRoomReactions({
+ *     listener: (reactionEvent: RoomReactionEvent) => {
+ *       console.log('Room reaction received:', reactionEvent.type, reactionEvent.clientId);
+ *     }
+ *   });
+ *
+ *   const sendReaction = async (type: string) => {
+ *     try {
+ *       await sendRoomReaction({ type });
+ *       console.log(`Sent ${type} reaction`);
+ *     } catch (error) {
+ *       console.error('Failed to send reaction:', error);
+ *     }
+ *   };
+ *
+ *   return (
+ *     <div>
+ *       <button onClick={() => sendReaction('👏')}>👏 Clap</button>
+ *       <button onClick={() => sendReaction('🎉')}>🎉 Celebrate</button>
+ *     </div>
+ *   );
+ * };
+ *
+ * const chatClient: ChatClient; // existing ChatClient instance
+ *
+ * // App component with providers
+ * const App = () => {
+ *   return (
+ *     <ChatClientProvider client={chatClient}>
+ *       <ChatRoomProvider name="event-room">
+ *         <RoomReactionHandler />
+ *       </ChatRoomProvider>
+ *     </ChatClientProvider>
+ *   );
+ * };
+ *
+ * export default App;
+ * ```
  */
 export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReactionsResponse => {
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({

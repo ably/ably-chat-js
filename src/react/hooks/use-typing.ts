@@ -30,11 +30,41 @@ export interface TypingParams extends StatusParams, Listenable<TypingListener> {
 export interface UseTypingResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Typing.keystroke} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @example
+   * ```tsx
+   * const { keystroke } = useTyping();
+   *
+   * const handleKeyPress = async () => {
+   *   try {
+   *     await keystroke();
+   *     console.log('Typing indicator sent');
+   *   } catch (error) {
+   *     console.error('Failed to send keystroke:', error);
+   *   }
+   * };
+   * ```
    */
   readonly keystroke: Typing['keystroke'];
 
   /**
    * A shortcut to the {@link Typing.stop} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @example
+   * ```tsx
+   * const { stop } = useTyping();
+   *
+   * const handleStopTyping = async () => {
+   *   try {
+   *     await stop();
+   *     console.log('Stopped typing indicator');
+   *   } catch (error) {
+   *     console.error('Failed to stop typing:', error);
+   *   }
+   * };
+   * ```
    */
   readonly stop: Typing['stop'];
 
@@ -46,10 +76,76 @@ export interface UseTypingResponse extends ChatStatusResponse {
 }
 
 /**
- * A hook that provides access to typing state (e.g. currently typing clients) of the room.
- * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
- * @param params - Allows the registering of optional callbacks.
- * @returns UseTypingResponse - An object containing the {@link Typing} instance and methods to interact with it.
+ *
+ *React hook that provides typing indicator functionality for chat rooms.
+ *
+ *The hook automatically tracks the set of users currently typing and provides
+ *this as state that updates in real-time as users start and stop typing.
+ *
+ ***Note**:
+ *- This hook must be used within a {@link ChatRoomProvider} component tree.
+ *- The `Room` must be attached to send and receive typing indicators, typically the {@link ChatRoomProvider} handles this automatically.
+ * @param params - Optional parameters for event listeners and room status callbacks
+ * @returns A {@link UseTypingResponse} containing typing methods and current state
+ * @throws {ErrorInfo} When used outside of a {@link ChatRoomProvider}
+ * @example Basic usage
+ * ```tsx
+ * import React, { useState } from 'react';
+ * import { ChatClient, TypingEvent } from '@ably/chat';
+ * import {
+ *   ChatClientProvider,
+ *   ChatRoomProvider,
+ *   useTyping
+ * } from '@ably/chat/react';
+ *
+ * // Component that handles typing indicators
+ * const TypingIndicator = () => {
+ *   const [messageText, setMessageText] = useState('');
+ *   const { keystroke, stop, currentlyTyping } = useTyping({
+ *     listener: (typingEvent: TypingEvent) => {
+ *       console.log('Currently typing users:', Array.from(typingEvent.currentlyTyping));
+ *     },
+ *   });
+ *
+ *   const handleInputChange = async (value: string) => {
+ *     setMessageText(value);
+ *     if (value.length > 0) {
+ *       try {
+ *         await keystroke();
+ *         console.log('Started typing');
+ *       } catch (error) {
+ *         console.error('Failed to send keystroke:', error);
+ *       }
+ *     }
+ *   };
+ *
+ *   return (
+ *     <div>
+ *       <input
+ *         value={messageText}
+ *         onChange={(e) => handleInputChange(e.target.value)}
+ *         placeholder="Type a message..."
+ *       />
+ *       <div>Currently typing: {Array.from(currentlyTyping).join(', ')}</div>
+ *     </div>
+ *   );
+ * };
+ *
+ * const chatClient: ChatClient; // existing ChatClient instance
+ *
+ * // App component with providers
+ * const App = () => {
+ *   return (
+ *     <ChatClientProvider client={chatClient}>
+ *       <ChatRoomProvider name="general-chat">
+ *         <TypingIndicator />
+ *       </ChatRoomProvider>
+ *     </ChatClientProvider>
+ *   );
+ * };
+ *
+ * export default App;
+ * ```
  */
 export const useTyping = (params?: TypingParams): UseTypingResponse => {
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({

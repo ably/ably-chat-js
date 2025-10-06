@@ -37,36 +37,151 @@ import { useChatConnection } from './use-chat-connection.js';
 export interface UseMessagesResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Messages.send} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @example
+   * ```tsx
+   * const { sendMessage } = useMessages();
+   *
+   * const handleSend = async () => {
+   *   try {
+   *     await sendMessage({
+   *       text: 'Hello world!',
+   *     });
+   *   } catch (error) {
+   *     console.error('Failed to send message:', error);
+   *   }
+   * };
+   * ```
    */
   readonly sendMessage: Messages['send'];
 
   /**
    * A shortcut to the {@link Messages.get} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @example
+   * ```tsx
+   * const { getMessage } = useMessages();
+   *
+   * const fetchSpecificMessage = async (messageSerial: string) => {
+   *   try {
+   *     const message = await getMessage(messageSerial);
+   *     console.log('Retrieved message:', message.text);
+   *   } catch (error) {
+   *     console.error('Failed to get message:', error);
+   *   }
+   * };
+   * ```
    */
   readonly getMessage: Messages['get'];
 
   /**
    * A shortcut to the {@link Messages.update} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @example
+   * ```tsx
+   * const { updateMessage } = useMessages();
+   *
+   * const editMessage = async (serial: string, newText: string) => {
+   *   try {
+   *     await updateMessage(serial, {
+   *       text: newText
+   *     }, {
+   *       description: 'User edited message'
+   *     });
+   *   } catch (error) {
+   *     console.error('Failed to update message:', error);
+   *   }
+   * };
+   * ```
    */
   readonly updateMessage: Messages['update'];
 
   /**
    * A shortcut to the {@link Messages.history} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @example
+   * ```tsx
+   * const { history } = useMessages();
+   *
+   * const loadPreviousMessages = async () => {
+   *   try {
+   *     const result = await history({
+   *       limit: 50,
+   *       direction: 'backwards'
+   *     });
+   *     console.log('Previous messages:', result.items);
+   *   } catch (error) {
+   *     console.error('Failed to load history:', error);
+   *   }
+   * };
+   * ```
    */
   readonly history: Messages['history'];
 
   /**
    * A shortcut to the {@link Messages.delete} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @example
+   * ```tsx
+   * const { deleteMessage } = useMessages();
+   *
+   * const removeMessage = async (serial: string) => {
+   *   try {
+   *     await deleteMessage(serial, {
+   *       description: 'User deleted message'
+   *     });
+   *   } catch (error) {
+   *     console.error('Failed to delete message:', error);
+   *   }
+   * };
+   * ```
    */
   readonly deleteMessage: Messages['delete'];
 
   /**
    * A shortcut to the {@link MessageReactions.send} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @example
+   * ```tsx
+   * const { sendReaction } = useMessages();
+   *
+   * const addReaction = async (messageSerial: string, emoji: string) => {
+   *   try {
+   *     await sendReaction(messageSerial, {
+   *       type: emoji
+   *     });
+   *   } catch (error) {
+   *     console.error('Failed to send reaction:', error);
+   *   }
+   * };
+   * ```
    */
   readonly sendReaction: Messages['reactions']['send'];
 
   /**
    * A shortcut to the {@link MessageReactions.delete} method.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @example
+   * ```tsx
+   * const { deleteReaction } = useMessages();
+   *
+   * const removeReaction = async (messageSerial: string, emoji: string) => {
+   *   try {
+   *     await deleteReaction(messageSerial, {
+   *       type: emoji
+   *     });
+   *   } catch (error) {
+   *     console.error('Failed to delete reaction:', error);
+   *   }
+   * };
+   * ```
    */
   readonly deleteReaction: Messages['reactions']['delete'];
 
@@ -79,6 +194,8 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    *
    * It is advised to call this method after any discontinuity event; to retrieve messages that may have been missed
    * before the listener was re-attached.
+   *
+   * See the {@link MessageSubscriptionResponse.historyBeforeSubscribe} documentation for more details.
    *
    * This is removed when the component unmounts or when the previously provided listener is removed.
    * @param params - The query parameters to use when fetching the previous messages.
@@ -109,12 +226,115 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
 }
 
 /**
- * A hook that provides access to the {@link Messages} instance in the room.
- * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
- * If a listener is provided, it will subscribe to new messages in the room,
- * and will also set the {@link UseMessagesResponse.historyBeforeSubscribe}.
- * @param params - Allows the registering of optional callbacks.
- * @returns UsePresenceResponse - An object containing the {@link Messages} instance and methods to interact with it.
+ *
+ *A hook that provides access to the {@link Messages} instance in the room.
+ *
+ *If a listener is provided, it will subscribe to new messages in the room,
+ *and will also set the {@link UseMessagesResponse.historyBeforeSubscribe}.
+ *
+ ***Note**: This hook must be used within a {@link ChatRoomProvider} component tree.
+ ***Note**: Room must be attached to receive message events.
+ * @param params - Optional parameters for event listeners and room status callbacks
+ * @returns A {@link UseMessagesResponse} containing message methods and room status
+ * @throws {Ably.ErrorInfo} When used outside of a {@link ChatRoomProvider}
+ * @example Message listener and state management
+ * ```tsx
+ * import React, { useState } from 'react';
+ * import { ChatClient, ChatMessageEventType, Message, ChatMessageEvent, MessageReactionSummaryEvent } from '@ably/chat';
+ * import { ChatClientProvider, ChatRoomProvider, useMessages } from '@ably/chat/react';
+ *
+ * // Helper function to update local message state
+ * const updateLocalMessageState = (messages: Message[], message: Message): Message[] => {
+ *   // Find existing message in local state
+ *   const existingIndex = messages.findIndex(m => m.equal(message));
+ *   let updatedMessages = [...messages];
+ *
+ *   if (existingIndex === -1) {
+ *     // New message, add to local state
+ *     updatedMessages.push(message);
+ *   } else {
+ *     // Update existing message using with() method
+ *     updatedMessages[existingIndex] = updatedMessages[existingIndex].with(message);
+ *   }
+ *   // Sort by serial for deterministic ordering
+ *   return updatedMessages.sort((a, b) => a.before(b) ? -1 : (b.before(a) ? 1 : 0));
+ * };
+ *
+ * // Component that handles messages
+ * const MessageHandler = () => {
+ *   const [messages, setMessages] = useState<Message[]>([]);
+ *
+ *   const { sendMessage } = useMessages({
+ *     listener: (event: ChatMessageEvent) => {
+ *       console.log(`Message ${event.type}:`, event.message.text);
+ *
+ *       setMessages(prevMessages => {
+ *         switch (event.type) {
+ *           case ChatMessageEventType.Created:
+ *           case ChatMessageEventType.Updated:
+ *           case ChatMessageEventType.Deleted:
+ *             return updateLocalMessageState(prevMessages, event.message);
+ *           default:
+ *             return prevMessages;
+ *         }
+ *       });
+ *     },
+ *     reactionsListener: (event: MessageReactionSummaryEvent) => {
+ *       // Update message with new reaction data using with() method
+ *       setMessages(prevMessages => {
+ *         const messageIndex = prevMessages.findIndex(m => m.serial === event.summary.messageSerial);
+ *         if (messageIndex === -1) {
+ *           // Message not found, return unchanged
+ *           return prevMessages;
+ *         }
+ *
+ *         // Update the specific message and return new array
+ *         const updatedMessages = [...prevMessages];
+ *         updatedMessages[messageIndex] = updatedMessages[messageIndex].with(event);
+ *         return updatedMessages;
+ *       });
+ *     },
+ *     onDiscontinuity: (error) => {
+ *       console.error('Discontinuity detected:', error);
+ *       // Clear local state and optionally re-fetch messages using historyBeforeSubscribe.
+ *       setMessages([]);
+ *     }
+ *   });
+ *
+ *   return (
+ *     <div>
+ *       {messages.map(message => (
+ *         <div key={message.serial}>
+ *           <strong>{message.clientId}:</strong> {message.text}
+ *             <div>
+ *               {Object.entries(message.reactions.unique).map(([reaction, summary]) => (
+ *                 <span key={`unique-${reaction}`}>{reaction} {summary.total}</span>
+ *               ))}
+ *               {Object.entries(message.reactions.distinct).map(([reaction, summary]) => (
+ *                 <span key={`distinct-${reaction}`}>{reaction} {summary.total}</span>
+ *               ))}
+ *               {Object.entries(message.reactions.multiple).map(([reaction, summary]) => (
+ *                 <span key={`multiple-${reaction}`}>{reaction} {summary.total}</span>
+ *               ))}
+ *             </div>
+ *         </div>
+ *       ))}
+ *     </div>
+ *   );
+ * };
+ *
+ * const App = () => {
+ *   const chatClient: ChatClient; // existing ChatClient instance
+ *
+ *   return (
+ *     <ChatClientProvider client={chatClient}>
+ *       <ChatRoomProvider name="general-chat">
+ *         <MessageHandler />
+ *       </ChatRoomProvider>
+ *     </ChatClientProvider>
+ *   );
+ * };
+ * ```
  */
 export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => {
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
