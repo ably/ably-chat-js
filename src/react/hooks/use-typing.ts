@@ -98,7 +98,7 @@ export interface UseTypingResponse extends ChatStatusResponse {
  * @example Basic usage
  * ```tsx
  * import React, { useState } from 'react';
- * import { ChatClient, TypingEvent } from '@ably/chat';
+ * import { ChatClient, TypingSetEvent } from '@ably/chat';
  * import {
  *   ChatClientProvider,
  *   ChatRoomProvider,
@@ -109,7 +109,7 @@ export interface UseTypingResponse extends ChatStatusResponse {
  * const TypingIndicator = () => {
  *   const [messageText, setMessageText] = useState('');
  *   const { keystroke, stop, currentlyTyping } = useTyping({
- *     listener: (typingEvent: TypingEvent) => {
+ *     listener: (typingEvent: TypingSetEvent) => {
  *       console.log('Currently typing users:', Array.from(typingEvent.currentlyTyping));
  *     },
  *   });

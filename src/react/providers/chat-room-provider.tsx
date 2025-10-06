@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { ErrorInfo } from 'ably';
+import type * as Ably from 'ably';
 // imported for docs linking
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 
@@ -67,8 +67,8 @@ export interface ChatRoomProviderProps {
  * @param props.options Overriding options to use when creating the room.
  * @param props.children The child components to be rendered within this provider.
  * @returns A React element that provides the room context to its children
- * @throws {ErrorInfo} When used outside of a {@link ChatClientProvider}
- * @throws {ErrorInfo} When room exists with different options
+ * @throws {Ably.ErrorInfo} When used outside of a {@link ChatClientProvider}
+ * @throws {Ably.ErrorInfo} When room exists with different options
  * @example Basic usage
  * ```tsx
  * import * as Ably from 'ably';
@@ -78,7 +78,7 @@ export interface ChatRoomProviderProps {
  *   ChatClientProvider,
  *   ChatRoomProvider,
  *   useMessages,
- *   usePresence
+ *   useRoom,
  * } from '@ably/chat/react';
  *
  * const chatClient: ChatClient; // existing ChatClient instance
