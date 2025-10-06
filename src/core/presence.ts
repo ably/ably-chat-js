@@ -197,7 +197,6 @@ export interface Presence {
  */
 export class DefaultPresence implements Presence {
   private readonly _channel: Ably.RealtimeChannel;
-  private readonly _clientId: string;
   private readonly _logger: Logger;
   private readonly _emitter = new EventEmitter<PresenceEventsMap>();
   private readonly _stateEmitter = new EventEmitter<{ 'presence.state.change': PresenceStateChange }>();
@@ -212,14 +211,11 @@ export class DefaultPresence implements Presence {
   /**
    * Constructs a new `DefaultPresence` instance.
    * @param channel The Realtime channel instance.
-   * @param clientId The client ID, attached to presences messages as an identifier of the sender.
-   * A channel can have multiple connections using the same clientId.
    * @param logger An instance of the Logger.
    * @param options The room options.
    */
-  constructor(channel: Ably.RealtimeChannel, clientId: string, logger: Logger, options: InternalRoomOptions) {
+  constructor(channel: Ably.RealtimeChannel, logger: Logger, options: InternalRoomOptions) {
     this._channel = channel;
-    this._clientId = clientId;
     this._logger = logger;
     this._options = options;
 
@@ -281,7 +277,7 @@ export class DefaultPresence implements Presence {
     this._logger.trace(`Presence.enter()`, { data });
     this._assertChannelState();
     try {
-      await this._channel.presence.enterClient(this._clientId, data);
+      await this._channel.presence.enter(data);
       this._emitPresenceStateChange(true);
     } catch (error) {
       this._emitPresenceStateChange(false, error as Ably.ErrorInfo);
@@ -296,7 +292,7 @@ export class DefaultPresence implements Presence {
     this._logger.trace(`Presence.update()`, { data });
     this._assertChannelState();
     try {
-      await this._channel.presence.updateClient(this._clientId, data);
+      await this._channel.presence.update(data);
       this._emitPresenceStateChange(true);
     } catch (error) {
       this._emitPresenceStateChange(false, error as Ably.ErrorInfo);
@@ -311,7 +307,7 @@ export class DefaultPresence implements Presence {
     this._logger.trace(`Presence.leave()`, { data });
     this._assertChannelState();
     try {
-      await this._channel.presence.leaveClient(this._clientId, data);
+      await this._channel.presence.leave(data);
       this._emitPresenceStateChange(false);
     } catch (error) {
       this._emitPresenceStateChange(false, error as Ably.ErrorInfo);

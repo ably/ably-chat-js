@@ -175,7 +175,7 @@ export class DefaultRoom implements Room {
       realtime.auth.clientId,
       this._logger,
     );
-    this._presence = new DefaultPresence(channel, realtime.auth.clientId, this._logger, options);
+    this._presence = new DefaultPresence(channel, this._logger, options);
     this._typing = new DefaultTyping(
       options.typing,
       realtime.connection,
