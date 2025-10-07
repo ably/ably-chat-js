@@ -51,11 +51,11 @@ export type {
 } from './message-reactions.js';
 export type {
   DeleteMessageParams,
+  HistoryParams,
   MessageListener,
   Messages,
   MessageSubscriptionResponse,
   OperationDetails,
-  QueryOptions,
   SendMessageParams,
   UpdateMessageParams,
 } from './messages.js';

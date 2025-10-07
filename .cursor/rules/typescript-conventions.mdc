@@ -44,9 +44,9 @@ interface MessageEventPayload {
 - Link using {@link} to types mentioned.
 ```typescript
 /**
- * Options for querying messages in a chat room.
+ * Parameters for querying messages in a chat room.
  */
-interface QueryOptions {
+interface HistoryParams {
   /**
    * The start of the time window to query from.
    * @defaultValue The beginning of time

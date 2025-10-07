@@ -10,11 +10,11 @@ import type {
 import { MessageRawReactionListener, MessageReactionListener } from '../../core/message-reactions.js';
 import {
   DeleteMessageParams,
+  HistoryParams,
   MessageListener,
   Messages,
   MessageSubscriptionResponse,
   OperationDetails,
-  QueryOptions,
   SendMessageParams,
   UpdateMessageParams,
 } from '../../core/messages.js';
@@ -79,7 +79,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * before the listener was re-attached.
    *
    * This is removed when the component unmounts or when the previously provided listener is removed.
-   * @param options - The query options to use when fetching the previous messages.
+   * @param params - The query parameters to use when fetching the previous messages.
    * @defaultValue - This will be undefined if no listener is provided in the {@link UseMessagesParams}.
    */
   readonly historyBeforeSubscribe?: MessageSubscriptionResponse['historyBeforeSubscribe'];
@@ -145,7 +145,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   );
 
   const history = useCallback(
-    (options: QueryOptions) => context.room.then((room) => room.messages.history(options)),
+    (params: HistoryParams) => context.room.then((room) => room.messages.history(params)),
     [context],
   );
 
@@ -190,7 +190,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
             return;
           }
 
-          return (params: Omit<QueryOptions, 'orderBy'>) => {
+          return (params: Omit<HistoryParams, 'orderBy'>) => {
             // If we've unmounted, then the subscription is gone and we can't call historyBeforeSubscribe
             // So return a dummy object that should be thrown away anyway
             logger.debug('useMessages(); historyBeforeSubscribe called');
