@@ -18,7 +18,7 @@ import {
 import { Logger } from './logger.js';
 import { Message } from './message.js';
 import { subscribe } from './realtime-subscriptions.js';
-import { InternalRoomOptions, MessageOptions } from './room-options.js';
+import { InternalRoomOptions, MessagesOptions } from './room-options.js';
 import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
@@ -47,7 +47,7 @@ export interface SendMessageReactionParams {
 
   /**
    * The type of reaction, must be one of {@link MessageReactionType}.
-   * If not set, the default type will be used which is configured in the {@link MessageOptions.defaultMessageReactionType} of the room.
+   * If not set, the default type will be used which is configured in the {@link MessagesOptions.defaultMessageReactionType} of the room.
    */
   type?: MessageReactionType;
 
@@ -71,7 +71,7 @@ export interface DeleteMessageReactionParams {
 
   /**
    * The type of reaction, must be one of {@link MessageReactionType}.
-   * If not set, the default type will be used which is configured in the {@link MessageOptions.defaultMessageReactionType} of the room.
+   * If not set, the default type will be used which is configured in the {@link MessagesOptions.defaultMessageReactionType} of the room.
    */
   type?: MessageReactionType;
 }
@@ -167,7 +167,7 @@ export class DefaultMessageReactions implements MessageReactions {
 
   constructor(
     private readonly _logger: Logger,
-    private readonly _options: MessageOptions | undefined,
+    private readonly _options: MessagesOptions | undefined,
     private readonly _api: ChatApi,
     private readonly _roomName: string,
     private readonly _channel: Ably.RealtimeChannel,

@@ -47,7 +47,7 @@ const DefaultRoomOptions: Omit<InternalRoomOptions, 'isReactClient'> = {
 /**
  * Represents the message options for a chat room.
  */
-export interface MessageOptions {
+export interface MessagesOptions {
   /**
    * Whether to enable receiving raw individual message reactions from the
    * realtime channel. Set to true if subscribing to raw message reactions.
@@ -133,7 +133,7 @@ export interface RoomOptions {
   /**
    * The message options for the room.
    */
-  messages?: MessageOptions;
+  messages?: MessagesOptions;
 }
 
 /**
@@ -154,7 +154,7 @@ export type InternalPresenceOptions = Required<PresenceOptions>;
 /**
  * Represents the normalized message options for a chat room. Everything becomes required.
  */
-export type InternalMessageOptions = Required<MessageOptions>;
+export type InternalMessagesOptions = Required<MessagesOptions>;
 
 /**
  * Represents the normalized options for a chat room.
@@ -183,7 +183,7 @@ export interface InternalRoomOptions {
   /**
    * Message options with everything made mandatory.
    */
-  messages: InternalMessageOptions;
+  messages: InternalMessagesOptions;
 }
 
 /**
@@ -219,7 +219,7 @@ const normalizePresenceOptions = (options: RoomOptions | undefined): InternalPre
   ...options?.presence,
 });
 
-const normalizeMessageOptions = (options: RoomOptions | undefined): InternalMessageOptions => ({
+const normalizeMessagesOptions = (options: RoomOptions | undefined): InternalMessagesOptions => ({
   ...DefaultRoomOptions.messages,
   ...options?.messages,
 });
@@ -228,6 +228,6 @@ export const normalizeRoomOptions = (options: RoomOptions | undefined, react: bo
   typing: normalizeTypingOptions(options),
   occupancy: normalizeOccupancyOptions(options),
   presence: normalizePresenceOptions(options),
-  messages: normalizeMessageOptions(options),
+  messages: normalizeMessagesOptions(options),
   isReactClient: react,
 });
