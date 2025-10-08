@@ -48,7 +48,7 @@ export interface UseTypingResponse extends ChatStatusResponse {
    * - The connection must be in the `connected` state.
    * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
    * - The most recent operation always determines the final typing state.
-    * - The room must be attached to send typing events, typically the {@link ChatRoomProvider} handles this automatically.
+   * - The room must be attached to send typing events, typically the {@link ChatRoomProvider} handles this automatically.
    *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example
@@ -113,8 +113,8 @@ export interface UseTypingResponse extends ChatStatusResponse {
  * this as state that updates in real-time as users start and stop typing.
  *
  * **Note**:
- *- This hook must be used within a {@link ChatRoomProvider} component tree.
- *- The `Room` must be attached to send and receive typing indicators, typically the {@link ChatRoomProvider} handles this automatically.
+ * - This hook must be used within a {@link ChatRoomProvider} component tree.
+ * - The `Room` must be attached to send and receive typing indicators, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for event listeners and room status callbacks
  * @returns A {@link UseTypingResponse} containing typing methods and current state
  * @throws {Ably.ErrorInfo} When used outside of a {@link ChatRoomProvider}
