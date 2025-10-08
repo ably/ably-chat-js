@@ -1,4 +1,5 @@
 import { ChatMessageAction } from './events.js';
+import { JsonObject } from './json.js';
 import { DefaultMessage, emptyMessageReactions, Message } from './message.js';
 
 // RestClientIdList represents a list of client IDs with aggregation data
@@ -37,7 +38,7 @@ export interface RestMessage {
   text: string;
   clientId: string;
   action: 'message.create' | 'message.update' | 'message.delete';
-  metadata: Record<string, unknown>;
+  metadata: JsonObject;
   headers: Record<string, string>;
   timestamp: number;
   reactions?: RestChatMessageReactions;
