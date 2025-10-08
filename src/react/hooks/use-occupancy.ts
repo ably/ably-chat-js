@@ -91,8 +91,7 @@ export interface UseOccupancyResponse extends ChatStatusResponse {
  *   return (
  *     <div>
  *       <div>👥 Total Connections: {connections}</div>
- *       <div>🟢 Active Members: {presenceMembers}</div>
- *       <div>👻 Anonymous Users: {connections - presenceMembers}</div>
+ *       <div>🟢 Present Members: {presenceMembers}</div>
  *     </div>
  *   );
  * };

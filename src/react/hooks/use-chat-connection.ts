@@ -30,22 +30,20 @@ export interface UseChatConnectionOptions {
  */
 export interface UseChatConnectionResponse {
   /**
-   * The current status of the connection.
+   * The current status of the connection. Kept up to date by the hook.
    */
   currentStatus: ConnectionStatus;
 
   /**
    * An error that provides a reason why the connection has entered the new status, if applicable.
+   * Kept up to date by the hook.
    */
   error?: Ably.ErrorInfo;
 }
 
 /**
- * React hook that provides the current connection status and error, and allows the user to listen to connection status changes.
- *
- * This hook automatically tracks the connection state of the underlying Ably Realtime
- * client and provides access to the current status and any connection errors. It also
- * allows you to register a listener for connection state changes.
+ * React hook that provides the current connection status and error between the client and Ably, and
+ * allows the user to listen to connection status changes overtime.
  *
  * The hook will automatically clean up listeners when the component unmounts and
  * update the connection state whenever the underlying chat client changes.
@@ -71,25 +69,13 @@ export interface UseChatConnectionResponse {
  *       }
  *     }
  *   });
- *
- *   const getStatusColor = (status: ConnectionStatus) => {
- *     switch (status) {
- *       case ConnectionStatus.Connected: return 'green';
- *       case ConnectionStatus.Connecting: return 'orange';
- *       case ConnectionStatus.Disconnected: return 'red';
- *       case ConnectionStatus.Suspended: return 'yellow';
- *       case ConnectionStatus.Failed: return 'red';
- *       default: return 'gray';
- *     }
- *   };
- *
  *   return (
  *     <div>
- *       <div style={{ color: getStatusColor(currentStatus) }}>
+ *       <div>
  *         Status: {currentStatus}
  *       </div>
  *       {error && (
- *         <div style={{ color: 'red' }}>
+ *         <div>
  *           Error: {error.message} (Code: {error.code})
  *         </div>
  *       )}

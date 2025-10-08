@@ -22,10 +22,10 @@ export interface UseRoomParams {
    * @example
    * ```tsx
    * useRoom({
-   *  onStatusChange: (change) => {
-   *   console.log(`Room status changed from ${change.previous} to ${change.current}`);
+   *   onStatusChange: (change) => {
+   *     console.log(`Room status changed from ${change.previous} to ${change.current}`);
    *   },
-   *   });
+   * });
    *```
    */
   onStatusChange?: (change: RoomStatusChange) => void;
@@ -37,10 +37,10 @@ export interface UseRoomParams {
    * @example
    * ```tsx
    * useRoom({
-   *  onConnectionStatusChange: (change) => {
-   *   console.log(`Connection changed from ${change.previous} to ${change.current}`);
+   *   onConnectionStatusChange: (change) => {
+   *     console.log(`Connection changed from ${change.previous} to ${change.current}`);
    *   },
-   *  });
+   * });
    * ```
    */
   onConnectionStatusChange?: (change: ConnectionStatusChange) => void;

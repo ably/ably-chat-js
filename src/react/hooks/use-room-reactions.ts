@@ -23,7 +23,7 @@ export interface UseRoomReactionsParams extends StatusParams, Listenable<RoomRea
    * ```tsx
    * useRoomReactions({
    *   listener: (reactionEvent) => {
-   *     console.log('Room reaction received:', reactionEvent.type, reactionEvent.clientId);
+   *     console.log('Room reaction received:', reactionEvent.reaction.name, " from ", reactionEvent.reaction.clientId);
    *   }
    * });
    * ```
@@ -46,7 +46,7 @@ export interface UseRoomReactionsResponse extends ChatStatusResponse {
    * const celebrateSuccess = async () => {
    *   try {
    *     await sendRoomReaction({
-   *       type: '🎉',
+   *       name: '🎉',
    *       metadata: { reason: 'milestone_reached' }
    *     });
    *   } catch (error) {
@@ -85,14 +85,14 @@ export interface UseRoomReactionsResponse extends ChatStatusResponse {
  * const RoomReactionHandler = () => {
  *   const { sendRoomReaction } = useRoomReactions({
  *     listener: (reactionEvent: RoomReactionEvent) => {
- *       console.log('Room reaction received:', reactionEvent.type, reactionEvent.clientId);
+ *       console.log('Room reaction received:', reactionEvent.reaction.name, " from ", reactionEvent.reaction.clientId);
  *     }
  *   });
  *
- *   const sendReaction = async (type: string) => {
+ *   const handleSendRoomReaction = async (name: string) => {
  *     try {
- *       await sendRoomReaction({ type });
- *       console.log(`Sent ${type} reaction`);
+ *       await sendRoomReaction({ name });
+ *       console.log(`Sent ${name} reaction`);
  *     } catch (error) {
  *       console.error('Failed to send reaction:', error);
  *     }
@@ -100,8 +100,8 @@ export interface UseRoomReactionsResponse extends ChatStatusResponse {
  *
  *   return (
  *     <div>
- *       <button onClick={() => sendReaction('👏')}>👏 Clap</button>
- *       <button onClick={() => sendReaction('🎉')}>🎉 Celebrate</button>
+ *       <button onClick={() => handleSendRoomReaction('👏')}>👏 Clap</button>
+ *       <button onClick={() => handleSendRoomReaction('🎉')}>🎉 Celebrate</button>
  *     </div>
  *   );
  * };

@@ -103,11 +103,11 @@ export interface UsePresenceListenerResponse extends ChatStatusResponse {
  *   return (
  *     <div>
  *       <p>Total Members: {presenceData.length}</p>
- *       {presenceData.map((member) => (
- *         <div key={member.clientId}>
- *           👤 {member.clientId}
- *         </div>
- *       ))}
+ *       <ul>
+ *         {presenceData.map((member) => (
+ *           <li key={member.clientId}>👤 {member.clientId}</li>
+ *         ))}
+ *       </ul>
  *     </div>
  *   );
  * };

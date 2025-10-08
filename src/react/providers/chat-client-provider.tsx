@@ -66,10 +66,7 @@ export interface ChatClientProviderProps {
  * const App = () => {
  *   return (
  *     <ChatClientProvider client={chatClient}>
- *       <div>
- *         <h1>My Chat App</h1>
  *         <ChatComponent />
- *       </div>
  *     </ChatClientProvider>
  *   );
  * };

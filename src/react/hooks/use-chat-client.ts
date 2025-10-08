@@ -42,12 +42,7 @@ export interface UseChatClientResponse {
  * // Component that displays current user information
  * const UserInfo = () => {
  *   const { clientId } = useChatClient();
- *
- *   return (
- *     <div>
- *       <p>Connected as: {clientId}</p>
- *     </div>
- *   );
+ *   return (<p>Connected as: {clientId}</p>);
  * };
  *
  * const chatClient: ChatClient; // existing ChatClient instance

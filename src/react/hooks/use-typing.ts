@@ -84,12 +84,12 @@ export interface UseTypingResponse extends ChatStatusResponse {
 
 /**
  *
- *React hook that provides typing indicator functionality for chat rooms.
+ * React hook that provides typing indicator functionality for chat rooms.
  *
- *The hook automatically tracks the set of users currently typing and provides
- *this as state that updates in real-time as users start and stop typing.
+ * The hook automatically tracks the set of users currently typing and provides
+ * this as state that updates in real-time as users start and stop typing.
  *
- ***Note**:
+ * **Note**:
  *- This hook must be used within a {@link ChatRoomProvider} component tree.
  *- The `Room` must be attached to send and receive typing indicators, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for event listeners and room status callbacks
@@ -107,15 +107,14 @@ export interface UseTypingResponse extends ChatStatusResponse {
  *
  * // Component that handles typing indicators
  * const TypingIndicator = () => {
- *   const [messageText, setMessageText] = useState('');
  *   const { keystroke, stop, currentlyTyping } = useTyping({
  *     listener: (typingEvent: TypingSetEvent) => {
  *       console.log('Currently typing users:', Array.from(typingEvent.currentlyTyping));
  *     },
  *   });
  *
- *   const handleInputChange = async (value: string) => {
- *     setMessageText(value);
+ *   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+ *     const value = e.target.value;
  *     if (value.length > 0) {
  *       try {
  *         await keystroke();
@@ -123,14 +122,20 @@ export interface UseTypingResponse extends ChatStatusResponse {
  *       } catch (error) {
  *         console.error('Failed to send keystroke:', error);
  *       }
+ *     } else {
+ *       try {
+ *         await stop();
+ *         console.log('Stopped typing');
+ *       } catch (error) {
+ *         console.error('Failed to stop typing:', error);
+ *       }
  *     }
  *   };
  *
  *   return (
  *     <div>
  *       <input
- *         value={messageText}
- *         onChange={(e) => handleInputChange(e.target.value)}
+ *         onChange={handleInputChange}
  *         placeholder="Type a message..."
  *       />
  *       <div>Currently typing: {Array.from(currentlyTyping).join(', ')}</div>
@@ -140,11 +145,10 @@ export interface UseTypingResponse extends ChatStatusResponse {
  *
  * const chatClient: ChatClient; // existing ChatClient instance
  *
- * // App component with providers
  * const App = () => {
  *   return (
  *     <ChatClientProvider client={chatClient}>
- *       <ChatRoomProvider name="general-chat">
+ *       <ChatRoomProvider id="room-id" release={true} attach={true}>
  *         <TypingIndicator />
  *       </ChatRoomProvider>
  *     </ChatClientProvider>

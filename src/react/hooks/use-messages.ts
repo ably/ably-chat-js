@@ -41,7 +41,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * ```tsx
    * const { sendMessage } = useMessages();
    *
-   * const handleSend = async () => {
+   * const handleSendMessage = async () => {
    *   try {
    *     await sendMessage({
    *       text: 'Hello world!',
@@ -62,7 +62,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * ```tsx
    * const { getMessage } = useMessages();
    *
-   * const fetchSpecificMessage = async (messageSerial: string) => {
+   * const handleGetMessage = async (messageSerial: string) => {
    *   try {
    *     const message = await getMessage(messageSerial);
    *     console.log('Retrieved message:', message.text);
@@ -82,7 +82,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * ```tsx
    * const { updateMessage } = useMessages();
    *
-   * const handleUpdate = async (serial: string, newText: string) => {
+   * const handleUpdateMessage = async (serial: string, newText: string) => {
    *   try {
    *     await updateMessage(serial, {
    *       text: newText
@@ -105,7 +105,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * ```tsx
    * const { history } = useMessages();
    *
-   * const loadPreviousMessages = async () => {
+   * const loadHistory = async () => {
    *   try {
    *     const result = await history({
    *       limit: 50,
@@ -128,7 +128,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * ```tsx
    * const { deleteMessage } = useMessages();
    *
-   * const handleDelete = async (serial: string) => {
+   * const handleDeleteMessage = async (serial: string) => {
    *   try {
    *     await deleteMessage(serial, {
    *       description: 'User deleted message'
@@ -327,7 +327,7 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
  *     <div>
  *       {messages.map(message => (
  *         <div key={message.serial}>
- *           <strong>{message.clientId}:</strong> {message.text}
+ *           <strong>{message.clientId}:</strong> {message.isDeleted ? <em>Deleted Message</em>: message.text}
  *             <div>
  *               {Object.entries(message.reactions.unique).map(([reaction, summary]) => (
  *                 <span key={`unique-${reaction}`}>{reaction} {summary.total}</span>
@@ -345,9 +345,9 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
  *   );
  * };
  *
- * const App = () => {
- *   const chatClient: ChatClient; // existing ChatClient instance
+ * const chatClient: ChatClient; // existing ChatClient instance
  *
+ * const App = () => {
  *   return (
  *     <ChatClientProvider client={chatClient}>
  *       <ChatRoomProvider name="general-chat">
