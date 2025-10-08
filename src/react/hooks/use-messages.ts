@@ -36,6 +36,15 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Messages.send} method.
    *
+   * Send a message to the chat room using the Ably Chat API.
+   *
+   * **Important**: The Promise may resolve before OR after the message is received
+   * from the realtime channel. This means subscribers may see the message before
+   * the send operation completes.
+   *
+   * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
+   *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example
    * ```tsx
@@ -57,6 +66,14 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Messages.get} method.
    *
+   * Get a specific message by its unique serial identifier.
+   *
+   * This method retrieves a single message using its serial, which is a unique
+   * identifier assigned to each message when it's created.
+   *
+   * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
+   *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example
    * ```tsx
@@ -66,6 +83,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    *   try {
    *     const message = await getMessage(messageSerial);
    *     console.log('Retrieved message:', message.text);
+   *     console.log('From:', message.clientId);
    *   } catch (error) {
    *     console.error('Failed to get message:', error);
    *   }
@@ -76,6 +94,25 @@ export interface UseMessagesResponse extends ChatStatusResponse {
 
   /**
    * A shortcut to the {@link Messages.update} method.
+   *
+   * Update a message in the chat room.
+   *
+   * This method modifies an existing message's content, metadata, or headers.
+   * The update creates a new version of the message while preserving the original
+   * serial identifier. Subscribers will receive an update event in real-time.
+   *
+   * **Important**: The Promise may resolve before OR after the update event is received
+   * from the realtime channel. Subscribers may see the update event before this method
+   * completes.
+   *
+   * **Note**:
+   * - This method uses PUT-like semantics. If metadata or headers are omitted
+   * from updateParams, they will be replaced with empty objects, not merged with existing values.
+   * - The returned Message instance represents the state after the update. If you
+   * have active subscriptions, use the event payloads from those subscriptions instead
+   * of the returned instance for consistency.
+   * - This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
    *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example
@@ -100,6 +137,15 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Messages.history} method.
    *
+   * Get messages that have been previously sent to the chat room.
+   *
+   * This method retrieves historical messages based on the provided query options,
+   * allowing you to paginate through message history, filter by time ranges,
+   * and control the order of results.
+   *
+   * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
+   *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example
    * ```tsx
@@ -109,9 +155,15 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    *   try {
    *     const result = await history({
    *       limit: 50,
-   *       direction: 'backwards'
+   *       orderBy: OrderBy.NewestFirst
    *     });
    *     console.log('Previous messages:', result.items);
+   *
+   *     // Paginate through additional pages if available
+   *     if (result.hasNext()) {
+   *       const nextPage = await result.next();
+   *       console.log('Next page:', nextPage?.items);
+   *     }
    *   } catch (error) {
    *     console.error('Failed to load history:', error);
    *   }
@@ -122,6 +174,24 @@ export interface UseMessagesResponse extends ChatStatusResponse {
 
   /**
    * A shortcut to the {@link Messages.delete} method.
+   *
+   * Delete a message in the chat room.
+   *
+   * This method performs a "soft delete" on a message, marking it as deleted rather
+   * than permanently removing it. The deleted message will still be visible in message
+   * history but will be flagged as deleted. Subscribers will receive a deletion event
+   * in real-time.
+   *
+   * **Important**: The Promise may resolve before OR after the deletion event is received
+   * from the realtime channel. Subscribers may see the deletion event before this method
+   * completes.
+   *
+   * **Note**:
+   * - The returned Message instance represents the state after deletion. If you
+   * have active subscriptions, use the event payloads from those subscriptions instead
+   * of the returned instance for consistency.
+   * - This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
    *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example
@@ -144,6 +214,13 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link MessageReactions.send} method.
    *
+   * Sends a reaction to a specific chat message.
+   *
+   * **Note**:
+   * - The behavior depends on the reaction type configured for the room.
+   * - This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
+   *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example
    * ```tsx
@@ -164,6 +241,16 @@ export interface UseMessagesResponse extends ChatStatusResponse {
 
   /**
    * A shortcut to the {@link MessageReactions.delete} method.
+   *
+   * Deletes a previously sent reaction from a chat message.
+   *
+   * The deletion behavior depends on the reaction type:
+   * - **Unique**: Removes the client's single reaction (name not required)
+   * - **Distinct**: Removes a specific reaction by name
+   * - **Multiple**: Removes all instances of a reaction by name
+   *
+   * **Note**: This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
    *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example
@@ -196,7 +283,6 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * See the {@link MessageSubscriptionResponse.historyBeforeSubscribe} documentation for more details.
    *
    * This is removed when the component unmounts or when the previously provided listener is removed.
-   * @param params - The query parameters to use when fetching the previous messages.
    * @defaultValue - This will be undefined if no listener is provided in the {@link UseMessagesParams}.
    */
   readonly historyBeforeSubscribe?: MessageSubscriptionResponse['historyBeforeSubscribe'];
@@ -249,13 +335,14 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
 
 /**
  *
- *A hook that provides access to the {@link Messages} instance in the room.
+ * A hook that provides access to the {@link Messages} instance in the room.
  *
- *If a listener is provided, it will subscribe to new messages in the room,
- *and will also set the {@link UseMessagesResponse.historyBeforeSubscribe}.
+ * If a listener is provided, it will subscribe to new messages in the room,
+ * and will also set the {@link UseMessagesResponse.historyBeforeSubscribe}.
  *
- ***Note**: This hook must be used within a {@link ChatRoomProvider} component tree.
- ***Note**: Room must be attached to receive message events, typically the {@link ChatRoomProvider} handles this automatically.
+ * **Note**:
+ * - This hook must be used within a {@link ChatRoomProvider} component tree.
+ * - Room must be attached to receive message events, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for event listeners and room status callbacks
  * @returns A {@link UseMessagesResponse} containing message methods and room status
  * @throws {Ably.ErrorInfo} When used outside of a {@link ChatRoomProvider}

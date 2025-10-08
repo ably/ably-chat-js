@@ -38,6 +38,17 @@ export interface UseRoomReactionsResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link RoomReactions.send} method.
    *
+   * Sends a room-level reaction.
+   *
+   * Room reactions are ephemeral events that are not associated with specific messages.
+   * They're commonly used for live interactions like floating emojis, applause, or other
+   * real-time feedback in chat rooms. Unlike message reactions, room reactions are not
+   * persisted and are only visible to users currently connected to the room.
+   *
+   * **Note**:
+   * - Room must be attached to send room reactions, typically the {@link ChatRoomProvider} handles this automatically.
+   * - It is possible (though unlikely) to receive your own reaction via subscription before this promise resolves.
+   *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example
    * ```tsx

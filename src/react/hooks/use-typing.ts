@@ -38,6 +38,18 @@ export interface UseTypingResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Typing.keystroke} method.
    *
+   * Sends a typing started event to notify other users that the current user is typing.
+   *
+   * Events are throttled according to the `heartbeatThrottleMs` room option to prevent
+   * excessive network traffic. If called within the throttle interval, the operation
+   * becomes a no-op. Multiple rapid calls are serialized to maintain consistency.
+   *
+   * **Note**:
+   * - The connection must be in the `connected` state.
+   * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
+   * - The most recent operation always determines the final typing state.
+    * - The room must be attached to send typing events, typically the {@link ChatRoomProvider} handles this automatically.
+   *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example
    * ```tsx
@@ -57,6 +69,17 @@ export interface UseTypingResponse extends ChatStatusResponse {
 
   /**
    * A shortcut to the {@link Typing.stop} method.
+   *
+   * Sends a typing stopped event to notify other users that the current user has stopped typing.
+   *
+   * If the user is not currently typing, this operation is a no-op. Multiple rapid calls
+   * are serialized to maintain consistency, with the most recent operation determining
+   * the final state.
+   *
+   * **Note**:
+   * - The connection must be in the `connected` state.
+   * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
+   * - The room must be attached to send typing events, typically the {@link ChatRoomProvider} handles this automatically.
    *
    * This is a stable reference and will not be changed between renders for the same room.
    * @example

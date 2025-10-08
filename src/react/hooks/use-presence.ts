@@ -59,7 +59,14 @@ export interface UsePresenceResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Presence.update} method.
    *
-   *  This is a stable reference and will not be changed between renders for the same room.
+   * Updates the presence data for the current user in the chat room.
+   * Emits an 'update' event to all subscribers. If the user is not already present, they will be entered automatically.
+   *
+   * **Note**:
+   * - The room must be attached before calling this method.
+   * - This method uses PUT-like semantics - the entire presence data is replaced with the new value.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
    *
    * **Important** When called, if {@link UsePresenceParams.autoEnterLeave} is set to true, the hook will attempt to
    * auto-enter presence automatically when conditions are met.
@@ -69,6 +76,12 @@ export interface UsePresenceResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Presence.enter} method, which can be used to manually enter presence when
    * `autoEnterLeave` is false, or to explicitly re-enter presence with new data.
+   *
+   * Enters the current user into the chat room presence set.
+   * Emits an 'enter' event to all presence subscribers. Multiple calls will emit additional `update` events if the
+   * user is already present.
+   *
+   * **Note**: The room must be attached before calling this method.
    *
    * This is a stable reference and will not be changed between renders for the same room.
    *
@@ -96,6 +109,11 @@ export interface UsePresenceResponse extends ChatStatusResponse {
 
   /**
    * A shortcut to the {@link Presence.leave} method.
+   *
+   * Removes the current user from the chat room presence set.
+   * Emits a 'leave' event to all subscribers. If the user is not present, this is a no-op.
+   *
+   * **Note**: The room must be attached before calling this method.
    *
    * This is a stable reference and will not be changed between renders for the same room.
    *
