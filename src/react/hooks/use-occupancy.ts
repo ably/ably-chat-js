@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as Ably from 'ably';
 import { useEffect, useState } from 'react';
 
 import { OccupancyListener } from '../../core/occupancy.js';

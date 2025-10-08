@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { Realtime } from 'ably';
+import * as Ably from 'ably';
 import * as React from 'react';
 import { ReactNode, useRef } from 'react';
 
@@ -39,7 +39,7 @@ export interface ChatClientProviderProps {
  * The provider manages room reference counting internally and will only detach rooms when no more references exist.
  *
  * **Important**: The `client` prop should be memoized to prevent unnecessary context updates.
- * Ideally, create the {@link ChatClient} and its underlying {@link Realtime} client outside
+ * Ideally, create the {@link ChatClient} and its underlying {@link Ably.Realtime} client outside
  * of React components to avoid duplicate connections and ensure stable references.
  *
  * **Note**: All chat-related hooks must be used within this provider's component tree.

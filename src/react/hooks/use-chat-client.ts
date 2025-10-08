@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as Ably from 'ably';
 import { useEffect, useState } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -29,7 +31,7 @@ export interface UseChatClientResponse {
  *
  * **Note**: This hook must be used within a {@link ChatClientProvider} component tree.
  * @returns A {@link UseChatClientResponse} containing the current client ID
- * @throws {ErrorInfo} When used outside of a {@link ChatClientProvider}
+ * @throws {Ably.ErrorInfo} When used outside of a {@link ChatClientProvider}
  * @example
  * ```tsx
  * import * as Ably from 'ably';
