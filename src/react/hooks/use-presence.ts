@@ -180,7 +180,7 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.S
  * 2. Manage presence state at a higher level (e.g., context provider)
  *
  * **Note**: This hook must be used within a {@link ChatRoomProvider} component tree.
- * **Note**: Room must be attached and connection active for presence operations.
+ * **Note**: Room must be attached and connection active for presence operations, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for initial data, auto-enter/leave behavior, and status callbacks
  * @returns A {@link UsePresenceResponse} containing presence methods and current state
  * @example

@@ -58,7 +58,7 @@ export interface UseOccupancyResponse extends ChatStatusResponse {
  * register listeners for occupancy change events.
  *
  * **Note**: This hook must be used within a {@link ChatRoomProvider} component tree.
- * **Note**: Room must be attached to receive real-time occupancy updates.
+ * **Note**: Room must be attached to receive real-time occupancy updates, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for event listeners and room status callbacks
  * @returns A {@link UseOccupancyResponse} containing current occupancy metrics and room status
  * @throws {Ably.ErrorInfo} When used outside of a {@link ChatRoomProvider}

@@ -82,7 +82,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * ```tsx
    * const { updateMessage } = useMessages();
    *
-   * const editMessage = async (serial: string, newText: string) => {
+   * const handleUpdate = async (serial: string, newText: string) => {
    *   try {
    *     await updateMessage(serial, {
    *       text: newText
@@ -128,7 +128,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * ```tsx
    * const { deleteMessage } = useMessages();
    *
-   * const removeMessage = async (serial: string) => {
+   * const handleDelete = async (serial: string) => {
    *   try {
    *     await deleteMessage(serial, {
    *       description: 'User deleted message'
@@ -149,7 +149,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * ```tsx
    * const { sendReaction } = useMessages();
    *
-   * const addReaction = async (messageSerial: string, emoji: string) => {
+   * const handleSendReaction = async (messageSerial: string, emoji: string) => {
    *   try {
    *     await sendReaction(messageSerial, {
    *       type: emoji
@@ -170,7 +170,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * ```tsx
    * const { deleteReaction } = useMessages();
    *
-   * const removeReaction = async (messageSerial: string, emoji: string) => {
+   * const handleDeleteReaction = async (messageSerial: string, emoji: string) => {
    *   try {
    *     await deleteReaction(messageSerial, {
    *       type: emoji
@@ -255,7 +255,7 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
  *and will also set the {@link UseMessagesResponse.historyBeforeSubscribe}.
  *
  ***Note**: This hook must be used within a {@link ChatRoomProvider} component tree.
- ***Note**: Room must be attached to receive message events.
+ ***Note**: Room must be attached to receive message events, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for event listeners and room status callbacks
  * @returns A {@link UseMessagesResponse} containing message methods and room status
  * @throws {Ably.ErrorInfo} When used outside of a {@link ChatRoomProvider}
