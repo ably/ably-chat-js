@@ -810,15 +810,15 @@ describe('ChatMessage', () => {
         timestamp: new Date(1672531200000),
         reactions: {
           unique: {
-            '👍': { total: 2, clientIds: ['a', 'b'] },
+            '👍': { total: 2, clientIds: ['a', 'b'], clipped: false },
           },
           distinct: {
-            '👍': { total: 2, clientIds: ['a', 'b'] },
-            '🚀': { total: 1, clientIds: ['a'] },
+            '👍': { total: 2, clientIds: ['a', 'b'], clipped: false },
+            '🚀': { total: 1, clientIds: ['a'], clipped: false },
           },
           multiple: {
-            '👍': { total: 10, clientIds: { a: 6, b: 4 }, totalUnidentified: 0 },
-            '🚀': { total: 1, clientIds: { a: 1 }, totalUnidentified: 0 },
+            '👍': { total: 10, clientIds: { a: 6, b: 4 }, totalUnidentified: 0, clipped: false, totalClientIds: 2 },
+            '🚀': { total: 1, clientIds: { a: 1 }, totalUnidentified: 0, clipped: false, totalClientIds: 1 },
           },
         },
       });

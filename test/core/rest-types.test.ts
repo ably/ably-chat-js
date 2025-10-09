@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ChatMessageAction } from '../../src/core/events.js';
 import { DefaultMessage, emptyMessageReactions } from '../../src/core/message.js';
-import { messageFromRest, RestMessage } from '../../src/core/rest-types.js';
+import { messageFromRest, RestClientIdList, RestMessage } from '../../src/core/rest-types.js';
 
 describe('messageFromRest', () => {
   it('should convert a basic REST message to a Message', () => {
@@ -148,11 +148,11 @@ describe('messageFromRest', () => {
           '👍': {
             total: 2,
             clientIds: ['client1', 'client2'],
-          },
+          } as RestClientIdList,
           '❤️': {
             total: 1,
             clientIds: ['client3'],
-          },
+          } as RestClientIdList,
         },
       },
     };
@@ -163,10 +163,12 @@ describe('messageFromRest', () => {
       '👍': {
         total: 2,
         clientIds: ['client1', 'client2'],
+        clipped: false,
       },
       '❤️': {
         total: 1,
         clientIds: ['client3'],
+        clipped: false,
       },
     });
     expect(result.reactions.distinct).toEqual({});
@@ -191,7 +193,7 @@ describe('messageFromRest', () => {
           '🎉': {
             total: 3,
             clientIds: ['client1', 'client2', 'client3'],
-          },
+          } as RestClientIdList,
         },
       },
     };
@@ -202,6 +204,7 @@ describe('messageFromRest', () => {
       '🎉': {
         total: 3,
         clientIds: ['client1', 'client2', 'client3'],
+        clipped: false,
       },
     });
     expect(result.reactions.unique).toEqual({});
@@ -245,6 +248,8 @@ describe('messageFromRest', () => {
           client2: 10,
         },
         totalUnidentified: 0,
+        clipped: false,
+        totalClientIds: 0,
       },
     });
     expect(result.reactions.unique).toEqual({});
@@ -269,13 +274,13 @@ describe('messageFromRest', () => {
           '👍': {
             total: 1,
             clientIds: ['client1'],
-          },
+          } as RestClientIdList,
         },
         distinct: {
           '🎉': {
             total: 2,
             clientIds: ['client2', 'client3'],
-          },
+          } as RestClientIdList,
         },
         multiple: {
           '👏': {
@@ -295,12 +300,14 @@ describe('messageFromRest', () => {
       '👍': {
         total: 1,
         clientIds: ['client1'],
+        clipped: false,
       },
     });
     expect(result.reactions.distinct).toEqual({
       '🎉': {
         total: 2,
         clientIds: ['client2', 'client3'],
+        clipped: false,
       },
     });
     expect(result.reactions.multiple).toEqual({
@@ -310,6 +317,8 @@ describe('messageFromRest', () => {
           client4: 10,
         },
         totalUnidentified: 0,
+        clipped: false,
+        totalClientIds: 0,
       },
     });
   });
@@ -332,7 +341,7 @@ describe('messageFromRest', () => {
           '👍': {
             total: 1,
             clientIds: ['client1'],
-          },
+          } as RestClientIdList,
         },
         // Missing distinct and multiple reactions
       },
@@ -344,6 +353,7 @@ describe('messageFromRest', () => {
       '👍': {
         total: 1,
         clientIds: ['client1'],
+        clipped: false,
       },
     });
     expect(result.reactions.distinct).toEqual({});
@@ -509,5 +519,148 @@ describe('messageFromRest', () => {
 
     const result = messageFromRest(restMessage);
     expect(result.action).toBe(ChatMessageAction.MessageCreate);
+  });
+
+  it('should explicitly set clipped to false when missing for unique reactions', () => {
+    const restMessage: RestMessage = {
+      serial: '01672531200000-123@abcdefghij',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
+      text: 'Message with unique reactions missing clipped',
+      clientId: 'client123',
+      action: 'message.create',
+      metadata: {},
+      headers: {},
+      timestamp: 1672531300000,
+      reactions: {
+        unique: {
+          '👍': {
+            total: 2,
+            clientIds: ['client1', 'client2'],
+            // clipped is intentionally missing
+          } as RestClientIdList,
+        },
+      },
+    };
+
+    const result = messageFromRest(restMessage);
+
+    expect(result.reactions.unique['👍']?.clipped).toBe(false);
+  });
+
+  it('should explicitly set clipped to false when missing for distinct reactions', () => {
+    const restMessage: RestMessage = {
+      serial: '01672531200000-123@abcdefghij',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
+      text: 'Message with distinct reactions missing clipped',
+      clientId: 'client123',
+      action: 'message.create',
+      metadata: {},
+      headers: {},
+      timestamp: 1672531300000,
+      reactions: {
+        distinct: {
+          '🎉': {
+            total: 3,
+            clientIds: ['client1', 'client2', 'client3'],
+            // clipped is intentionally missing
+          } as RestClientIdList,
+        },
+      },
+    };
+
+    const result = messageFromRest(restMessage);
+
+    expect(result.reactions.distinct['🎉']?.clipped).toBe(false);
+  });
+
+  it('should explicitly set clipped to false and totalClientIds to zero when missing for multiple reactions', () => {
+    const restMessage: RestMessage = {
+      serial: '01672531200000-123@abcdefghij',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
+      text: 'Message with multiple reactions missing clipped and totalClientIds',
+      clientId: 'client123',
+      action: 'message.create',
+      metadata: {},
+      headers: {},
+      timestamp: 1672531300000,
+      reactions: {
+        multiple: {
+          '👏': {
+            total: 15,
+            clientIds: {
+              client1: 5,
+              client2: 10,
+            },
+            totalUnidentified: 0,
+            // clipped and totalClientIds are intentionally missing
+          },
+        },
+      },
+    };
+
+    const result = messageFromRest(restMessage);
+
+    expect(result.reactions.multiple['👏']?.clipped).toBe(false);
+    expect(result.reactions.multiple['👏']?.totalClientIds).toBe(0);
+  });
+
+  it('should preserve existing clipped and totalClientIds values when they are present', () => {
+    const restMessage: RestMessage = {
+      serial: '01672531200000-123@abcdefghij',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
+      text: 'Message with reactions that have explicit values',
+      clientId: 'client123',
+      action: 'message.create',
+      metadata: {},
+      headers: {},
+      timestamp: 1672531300000,
+      reactions: {
+        unique: {
+          '👍': {
+            total: 2,
+            clientIds: ['client1', 'client2'],
+            clipped: true,
+          },
+        },
+        distinct: {
+          '🎉': {
+            total: 3,
+            clientIds: ['client1', 'client2', 'client3'],
+            clipped: true,
+          },
+        },
+        multiple: {
+          '👏': {
+            total: 15,
+            clientIds: {
+              client1: 5,
+              client2: 10,
+            },
+            totalUnidentified: 0,
+            clipped: true,
+            totalClientIds: 5,
+          },
+        },
+      },
+    };
+
+    const result = messageFromRest(restMessage);
+
+    expect(result.reactions.unique['👍']?.clipped).toBe(true);
+    expect(result.reactions.distinct['🎉']?.clipped).toBe(true);
+    expect(result.reactions.multiple['👏']?.clipped).toBe(true);
+    expect(result.reactions.multiple['👏']?.totalClientIds).toBe(5);
   });
 });
