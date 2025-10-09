@@ -90,14 +90,6 @@ describe('Rooms', () => {
     await expect(chat.rooms.release('test')).resolves.toBeUndefined();
   });
 
-  it('returns the client options', () => {
-    expect(newChatClient({ logLevel: LogLevel.Silent }).rooms.clientOptions).toEqual(
-      expect.objectContaining({
-        logLevel: LogLevel.Silent,
-      }),
-    );
-  });
-
   describe('dispose', () => {
     it('disposes successfully when no rooms exist', async () => {
       const chat = newChatClient({ logLevel: LogLevel.Silent });

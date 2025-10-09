@@ -3,7 +3,6 @@ import * as Ably from 'ably';
 import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { normalizeClientOptions } from '../../src/core/config.ts';
 import { TypingEventType, TypingSetEvent, TypingSetEventType } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
@@ -37,7 +36,7 @@ describe('Typing', () => {
   beforeEach<TestContext>(async (context) => {
     context.realtime = ablyRealtimeClient();
     const logger = makeTestLogger();
-    context.chat = new DefaultRooms(context.realtime, normalizeClientOptions({}), logger);
+    context.chat = new DefaultRooms(context.realtime, logger);
     context.clientId = context.realtime.auth.clientId;
     context.chatRoom = await context.chat.get(randomRoomName(), {
       typing: { heartbeatThrottleMs: 600 },
@@ -101,17 +100,9 @@ describe('Typing', () => {
       });
       // Create new clients with new client ids
       const clientId1 = randomClientId();
-      const client1 = new DefaultRooms(
-        ablyRealtimeClient({ clientId: clientId1 }),
-        normalizeClientOptions({}),
-        makeTestLogger(),
-      );
+      const client1 = new DefaultRooms(ablyRealtimeClient({ clientId: clientId1 }), makeTestLogger());
       const clientId2 = randomClientId();
-      const client2 = new DefaultRooms(
-        ablyRealtimeClient({ clientId: clientId2 }),
-        normalizeClientOptions({}),
-        makeTestLogger(),
-      );
+      const client2 = new DefaultRooms(ablyRealtimeClient({ clientId: clientId2 }), makeTestLogger());
       const roomOptions = { typing: { heartbeatThrottleMs: 10000 } };
 
       const client1Room = await client1.get(context.chatRoom.name, roomOptions);
