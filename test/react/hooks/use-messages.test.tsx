@@ -13,8 +13,8 @@ import {
   MessageReactionType,
 } from '../../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../../src/core/message.ts';
+import { MessageRawReactionListener, MessageReactionListener } from '../../../src/core/message-reactions.ts';
 import { MessageListener } from '../../../src/core/messages.ts';
-import { MessageRawReactionListener, MessageReactionListener } from '../../../src/core/messages-reactions.ts';
 import { PaginatedResult } from '../../../src/core/query.ts';
 import { Room } from '../../../src/core/room.ts';
 import { RoomStatus } from '../../../src/core/room-status.ts';

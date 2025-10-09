@@ -62,7 +62,7 @@ export interface MessageOptions {
    * The default message reaction type to use for sending message reactions.
    *
    * Any message reaction type can be sent regardless of this setting by specifying the `type` parameter
-   * in the {@link MessagesReactions.send} method.
+   * in the {@link MessageReactions.send} method.
    * @defaultValue {@link MessageReactionType.Distinct}
    */
   defaultMessageReactionType?: MessageReactionType;

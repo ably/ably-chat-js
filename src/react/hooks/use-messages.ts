@@ -1,6 +1,13 @@
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
+import type {
+  DeleteMessageReactionParams,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  MessageReactions,
+  SendMessageReactionParams,
+} from '../../core/message-reactions.js'; // imported for typedoc links
+import { MessageRawReactionListener, MessageReactionListener } from '../../core/message-reactions.js';
 import {
   DeleteMessageParams,
   MessageListener,
@@ -11,13 +18,6 @@ import {
   SendMessageParams,
   UpdateMessageParams,
 } from '../../core/messages.js';
-import type {
-  DeleteMessageReactionParams,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  MessagesReactions,
-  SendMessageReactionParams,
-} from '../../core/messages-reactions.js'; // imported for typedoc links
-import { MessageRawReactionListener, MessageReactionListener } from '../../core/messages-reactions.js';
 import { Serial } from '../../core/serial.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -59,12 +59,12 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly deleteMessage: Messages['delete'];
 
   /**
-   * A shortcut to the {@link MessagesReactions.send} method.
+   * A shortcut to the {@link MessageReactions.send} method.
    */
   readonly sendReaction: Messages['reactions']['send'];
 
   /**
-   * A shortcut to the {@link MessagesReactions.delete} method.
+   * A shortcut to the {@link MessageReactions.delete} method.
    */
   readonly deleteReaction: Messages['reactions']['delete'];
 
