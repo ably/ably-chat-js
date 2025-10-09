@@ -21,7 +21,8 @@ export type {
 export {
   ChatMessageAction,
   ChatMessageEventType,
-  MessageReactionEventType,
+  MessageReactionRawEventType,
+  MessageReactionSummaryEventType,
   MessageReactionType,
   OccupancyEventType,
   PresenceEventType,

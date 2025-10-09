@@ -9,9 +9,10 @@ import {
 import {
   AnnotationTypeToReactionType,
   ChatMessageAction,
-  MessageReactionEventType,
   MessageReactionRawEvent,
+  MessageReactionRawEventType,
   MessageReactionSummaryEvent,
+  MessageReactionSummaryEventType,
   MessageReactionType,
   ReactionAnnotationType,
 } from './events.js';
@@ -146,9 +147,9 @@ export interface MessageReactions {
 /**
  * Maps Ably PubSub annotation action to message reaction event type.
  */
-const eventTypeMap: Record<string, MessageReactionEventType.Create | MessageReactionEventType.Delete> = {
-  'annotation.create': MessageReactionEventType.Create,
-  'annotation.delete': MessageReactionEventType.Delete,
+const eventTypeMap: Record<string, MessageReactionRawEventType> = {
+  'annotation.create': MessageReactionRawEventType.Create,
+  'annotation.delete': MessageReactionRawEventType.Delete,
 };
 
 /**
@@ -156,9 +157,9 @@ const eventTypeMap: Record<string, MessageReactionEventType.Create | MessageReac
  */
 export class DefaultMessageReactions implements MessageReactions {
   private _emitter = new EventEmitter<{
-    [MessageReactionEventType.Create]: MessageReactionRawEvent;
-    [MessageReactionEventType.Delete]: MessageReactionRawEvent;
-    [MessageReactionEventType.Summary]: MessageReactionSummaryEvent;
+    [MessageReactionRawEventType.Create]: MessageReactionRawEvent;
+    [MessageReactionRawEventType.Delete]: MessageReactionRawEvent;
+    [MessageReactionSummaryEventType.Summary]: MessageReactionSummaryEvent;
   }>();
 
   private readonly _defaultType: MessageReactionType;
@@ -212,7 +213,7 @@ export class DefaultMessageReactions implements MessageReactions {
 
     if (event.count) {
       reactionEvent.reaction.count = event.count;
-    } else if (eventType === MessageReactionEventType.Create && reactionType === MessageReactionType.Multiple) {
+    } else if (eventType === MessageReactionRawEventType.Create && reactionType === MessageReactionType.Multiple) {
       reactionEvent.reaction.count = 1; // count defaults to 1 for multiple if not set
     }
 
@@ -237,8 +238,8 @@ export class DefaultMessageReactions implements MessageReactions {
     const distinct = (summary[ReactionAnnotationType.Distinct] ?? {}) as unknown as Ably.SummaryDistinctValues;
     const multiple = (summary[ReactionAnnotationType.Multiple] ?? {}) as Ably.SummaryMultipleValues;
 
-    this._emitter.emit(MessageReactionEventType.Summary, {
-      type: MessageReactionEventType.Summary,
+    this._emitter.emit(MessageReactionSummaryEventType.Summary, {
+      type: MessageReactionSummaryEventType.Summary,
       summary: {
         messageSerial: serial,
         unique: unique,
@@ -297,7 +298,7 @@ export class DefaultMessageReactions implements MessageReactions {
     this._logger.trace('MessageReactions.subscribe();');
 
     const wrapped = wrap(listener);
-    this._emitter.on(MessageReactionEventType.Summary, wrapped);
+    this._emitter.on(MessageReactionSummaryEventType.Summary, wrapped);
     return {
       unsubscribe: () => {
         this._emitter.off(wrapped);
@@ -315,7 +316,7 @@ export class DefaultMessageReactions implements MessageReactions {
       throw new Ably.ErrorInfo('Raw message reactions are not enabled', 40001, 400);
     }
     const wrapped = wrap(listener);
-    this._emitter.on([MessageReactionEventType.Create, MessageReactionEventType.Delete], wrapped);
+    this._emitter.on([MessageReactionRawEventType.Create, MessageReactionRawEventType.Delete], wrapped);
     return {
       unsubscribe: () => {
         this._emitter.off(wrapped);
