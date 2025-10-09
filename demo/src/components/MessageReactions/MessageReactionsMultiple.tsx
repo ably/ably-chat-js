@@ -1,5 +1,6 @@
 import React from 'react';
 import { Message, MessageReactionType, Messages } from '@ably/chat';
+import { useChatClient } from '@ably/chat/react';
 import './styles.css';
 
 interface MessageReactionsMultipleProps {
@@ -15,11 +16,21 @@ export const MessageReactionsMultiple: React.FC<MessageReactionsMultipleProps> =
   onReactionSend,
   onReactionDelete: onReactionRemove,
 }) => {
+  const { clientId } = useChatClient();
+
   const handleReactionClick = (name: string) => {
+    if (!clientId) {
+      return;
+    }
+
     onReactionSend(message, { type: MessageReactionType.Multiple, name: name });
   };
 
   const handleReactionRemoveClick = (name: string) => {
+    if (!clientId) {
+      return;
+    }
+
     onReactionRemove(message, { type: MessageReactionType.Multiple, name: name });
   };
 

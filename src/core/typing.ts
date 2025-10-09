@@ -90,7 +90,6 @@ type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
  * @inheritDoc
  */
 export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
-  private readonly _clientId: string;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _connection: Ably.Connection;
   private readonly _logger: Logger;
@@ -116,18 +115,15 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * @param options The options for typing in the room.
    * @param connection The connection instance.
    * @param channel The channel for the room.
-   * @param clientId The client ID of the user.
    * @param logger An instance of the Logger.
    */
   constructor(
     options: InternalTypingOptions,
     connection: Ably.Connection,
     channel: Ably.RealtimeChannel,
-    clientId: string,
     logger: Logger,
   ) {
     super();
-    this._clientId = clientId;
     this._channel = channel;
     this._connection = connection;
 

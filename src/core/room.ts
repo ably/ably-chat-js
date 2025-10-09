@@ -3,6 +3,7 @@ import cloneDeep from 'lodash.clonedeep';
 
 import { ChannelManager } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
+import { ClientIdResolver } from './client-id.js';
 import { DiscontinuityListener } from './discontinuity.js';
 import { Logger } from './logger.js';
 import { DefaultMessageReactions } from './message-reactions.js';
@@ -141,6 +142,7 @@ export class DefaultRoom implements Room {
    * @param options The options for the room.
    * @param realtime An instance of the Ably Realtime client.
    * @param chatApi An instance of the ChatApi.
+   * @param clientIdResolver An instance of the ClientIdResolver.
    * @param logger An instance of the Logger.
    */
   constructor(
@@ -149,6 +151,7 @@ export class DefaultRoom implements Room {
     options: InternalRoomOptions,
     realtime: Ably.Realtime,
     chatApi: ChatApi,
+    clientIdResolver: ClientIdResolver,
     logger: Logger,
   ) {
     validateRoomOptions(options);
@@ -167,23 +170,10 @@ export class DefaultRoom implements Room {
     const channel = channelManager.get();
 
     // Setup features
-    this._messages = new DefaultMessages(
-      name,
-      options.messages,
-      channel,
-      this._chatApi,
-      realtime.auth.clientId,
-      this._logger,
-    );
-    this._presence = new DefaultPresence(channel, realtime.auth.clientId, this._logger, options);
-    this._typing = new DefaultTyping(
-      options.typing,
-      realtime.connection,
-      channel,
-      realtime.auth.clientId,
-      this._logger,
-    );
-    this._reactions = new DefaultRoomReactions(channel, realtime.connection, realtime.auth.clientId, this._logger);
+    this._messages = new DefaultMessages(name, options.messages, channel, this._chatApi, this._logger);
+    this._presence = new DefaultPresence(channel, this._logger, options);
+    this._typing = new DefaultTyping(options.typing, realtime.connection, channel, this._logger);
+    this._reactions = new DefaultRoomReactions(channel, realtime.connection, clientIdResolver, this._logger);
     this._occupancy = new DefaultOccupancy(name, channel, this._chatApi, this._logger, options);
 
     // Set the lifecycle manager last, so it becomes the last thing to find out about channel state changes

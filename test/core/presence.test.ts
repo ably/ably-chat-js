@@ -208,8 +208,8 @@ describe('Presence', () => {
       // Mock the channel state to be attached
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
-      // Mock the enterClient method to resolve
-      vi.spyOn(room.channel.presence, 'enterClient').mockResolvedValue();
+      // Mock the enter method to resolve
+      vi.spyOn(room.channel.presence, 'enter').mockResolvedValue();
 
       // Subscribe to state changes
       const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
@@ -237,8 +237,8 @@ describe('Presence', () => {
       // Mock the channel state to be attached
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
-      // Mock the enterClient method to reject
-      vi.spyOn(room.channel.presence, 'enterClient').mockRejectedValue(error);
+      // Mock the enter method to reject
+      vi.spyOn(room.channel.presence, 'enter').mockRejectedValue(error);
 
       // Subscribe to state changes
       const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
@@ -271,8 +271,8 @@ describe('Presence', () => {
       // Mock the channel state to be attached
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
-      // Mock the updateClient method to resolve
-      vi.spyOn(room.channel.presence, 'updateClient').mockResolvedValue();
+      // Mock the update method to resolve
+      vi.spyOn(room.channel.presence, 'update').mockResolvedValue();
 
       // Subscribe to state changes
       const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
@@ -300,8 +300,8 @@ describe('Presence', () => {
       // Mock the channel state to be attached
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
-      // Mock the updateClient method to reject
-      vi.spyOn(room.channel.presence, 'updateClient').mockRejectedValue(error);
+      // Mock the update method to reject
+      vi.spyOn(room.channel.presence, 'update').mockRejectedValue(error);
 
       // Subscribe to state changes
       const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
@@ -335,14 +335,14 @@ describe('Presence', () => {
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // First set the state to present
-      vi.spyOn(room.channel.presence, 'enterClient').mockResolvedValue();
+      vi.spyOn(room.channel.presence, 'enter').mockResolvedValue();
       await room.presence.enter({ foo: 'bar' });
 
       // Clear any existing state changes
       stateChanges.length = 0;
 
-      // Mock the leaveClient method to resolve
-      vi.spyOn(room.channel.presence, 'leaveClient').mockResolvedValue();
+      // Mock the leave method to resolve
+      vi.spyOn(room.channel.presence, 'leave').mockResolvedValue();
 
       // Subscribe to state changes
       const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {
@@ -371,14 +371,14 @@ describe('Presence', () => {
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // First set the state to present
-      vi.spyOn(room.channel.presence, 'enterClient').mockResolvedValue();
+      vi.spyOn(room.channel.presence, 'enter').mockResolvedValue();
       await room.presence.enter({ foo: 'bar' });
 
       // Clear any existing state changes
       stateChanges.length = 0;
 
-      // Mock the leaveClient method to reject
-      vi.spyOn(room.channel.presence, 'leaveClient').mockRejectedValue(error);
+      // Mock the leave method to reject
+      vi.spyOn(room.channel.presence, 'leave').mockRejectedValue(error);
 
       // Subscribe to state changes
       const subscription = (room.presence as PresenceWithStateChangeListener).onPresenceStateChange((change) => {

@@ -7,7 +7,7 @@ import { PresenceData, PresenceEvent } from '../../../src/core/presence.ts';
 import { usePresence } from '../../../src/react/hooks/use-presence.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.tsx';
-import { newChatClient } from '../../helper/chat.ts';
+import { newChatClient, waitForClientId } from '../../helper/chat.ts';
 import { waitForExpectedPresenceEvent } from '../../helper/common.ts';
 import { randomRoomName } from '../../helper/identifier.ts';
 
@@ -21,6 +21,8 @@ describe('usePresence', () => {
     const chatClientOne = newChatClient();
     const chatClientTwo = newChatClient();
     const logger = chatClientTwo.logger;
+
+    const client1Id = await waitForClientId(chatClientOne);
 
     // create a second room and attach it, so we can listen for presence events
     const roomName = randomRoomName();
@@ -78,11 +80,11 @@ describe('usePresence', () => {
 
     // expect a presence enter and update event from the test component to be received by the second room
     await waitForExpectedPresenceEvent(
-      { clientId: chatClientOne.clientId, type: PresenceEventType.Enter, data: { foo: 'test enter' } },
+      { clientId: client1Id, type: PresenceEventType.Enter, data: { foo: 'test enter' } },
       presenceEventsRoomTwo,
     );
     await waitForExpectedPresenceEvent(
-      { clientId: chatClientOne.clientId, type: PresenceEventType.Update, data: { foo: 'test update' } },
+      { clientId: client1Id, type: PresenceEventType.Update, data: { foo: 'test update' } },
       presenceEventsRoomTwo,
     );
 
@@ -92,7 +94,7 @@ describe('usePresence', () => {
     // expect a presence leave event from the test component to be received by the second room
     // it will have the data of whatever was in the presence set at the time
     await waitForExpectedPresenceEvent(
-      { clientId: chatClientOne.clientId, type: PresenceEventType.Leave, data: { foo: 'test update' } },
+      { clientId: client1Id, type: PresenceEventType.Leave, data: { foo: 'test update' } },
       presenceEventsRoomTwo,
     );
 

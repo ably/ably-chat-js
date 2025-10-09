@@ -4,7 +4,7 @@ import './styles.css';
 
 interface MessageReactionsUniqueProps {
   message: Message;
-  clientId: string;
+  clientId?: string;
   onReactionSend: Messages['reactions']['send'];
   onReactionDelete: Messages['reactions']['delete'];
 }
@@ -20,9 +20,9 @@ export const MessageReactionsUnique: React.FC<MessageReactionsUniqueProps> = ({
   const unique = message.reactions.unique ?? {};
 
   const handleReactionClick = (name: string) => {
-    if (unique[name]?.clientIds.includes(clientId)) {
+    if (clientId && unique[name]?.clientIds.includes(clientId)) {
       onReactionRemove(message, { type: MessageReactionType.Unique, name: name });
-    } else {
+    } else if (clientId) {
       onReactionSend(message, { type: MessageReactionType.Unique, name: name });
     }
   };
