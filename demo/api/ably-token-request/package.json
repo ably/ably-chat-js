@@ -10,7 +10,7 @@
   "dependencies": {
     "@netlify/functions": "^4.2.5",
     "@types/node": "^24.3.0",
-    "ably": "^2.12.0",
+    "ably": "^2.14.0",
     "dotenv": "^17.2.1",
     "jsonwebtoken": "^9.0.2",
     "typescript": "^5.9.2"

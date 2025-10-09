@@ -1,11 +1,12 @@
 import { ChatMessageAction } from './events.js';
 import { JsonObject } from './json.js';
-import { DefaultMessage, emptyMessageReactions, Message } from './message.js';
+import { DefaultMessage, emptyMessageReactions, Message, MessageReactionSummary } from './message.js';
 
 // RestClientIdList represents a list of client IDs with aggregation data
 export interface RestClientIdList {
   total: number;
   clientIds: string[];
+  clipped?: boolean;
 }
 
 // RestClientIdCounts represents client ID counts with aggregation data
@@ -13,6 +14,8 @@ export interface RestClientIdCounts {
   total: number;
   clientIds: Record<string, number>;
   totalUnidentified: number;
+  clipped?: boolean;
+  totalClientIds?: number;
 }
 
 // RestVersion represents the version information of a message. (i.e. an update or delete)
@@ -55,6 +58,32 @@ export const messageFromRest = (message: RestMessage): Message => {
     ...message.reactions,
   };
 
+  // Iterate through all reaction types and normalize fields
+  // For unique and distinct reactions, ensure clipped is explicitly set to false if not present
+  for (const reactionType of ['unique', 'distinct']) {
+    const reactionTypeData = reactions[reactionType as keyof typeof reactions] as Record<string, RestClientIdList>;
+    for (const reactionName of Object.keys(reactionTypeData)) {
+      const reaction = reactionTypeData[reactionName];
+      if (reaction && !reaction.clipped) {
+        reaction.clipped = false;
+      }
+    }
+  }
+
+  // For multiple reactions, ensure clipped is explicitly set to false and totalClientIds is set to zero if not present
+  const multipleReactions = reactions.multiple;
+  for (const reactionName of Object.keys(multipleReactions)) {
+    const reaction = multipleReactions[reactionName];
+    if (reaction) {
+      if (!reaction.clipped) {
+        reaction.clipped = false;
+      }
+      if (!reaction.totalClientIds) {
+        reaction.totalClientIds = 0;
+      }
+    }
+  }
+
   // Convert the action to a ChatMessageAction enum, defaulting to MessageCreate if the action is not found.
   const action = Object.values(ChatMessageAction).includes(message.action as ChatMessageAction)
     ? (message.action as ChatMessageAction)
@@ -78,6 +107,6 @@ export const messageFromRest = (message: RestMessage): Message => {
     action,
     version,
     timestamp: new Date(message.timestamp),
-    reactions: reactions,
+    reactions: reactions as MessageReactionSummary,
   });
 };

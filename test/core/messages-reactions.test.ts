@@ -147,7 +147,7 @@ describe('MessageReactions', () => {
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
       const clientId = 'testClient';
       const expectedReactions = {
-        unique: { '🥕': { total: 1, clientIds: [clientId] } },
+        unique: { '🥕': { total: 1, clientIds: [clientId], clipped: false } },
         distinct: {},
         multiple: {},
       };
@@ -217,7 +217,7 @@ describe('MessageReactions', () => {
           timestamp: publishTimestamp,
           annotations: {
             summary: {
-              [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
+              [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'], clipped: false } },
             },
           },
         });
@@ -230,7 +230,7 @@ describe('MessageReactions', () => {
           timestamp: publishTimestamp,
           annotations: {
             summary: {
-              [ReactionAnnotationType.Distinct]: { '🥦': { total: 1, clientIds: ['user2'] } },
+              [ReactionAnnotationType.Distinct]: { '🥦': { total: 1, clientIds: ['user2'], clipped: false } },
             },
           },
         });
@@ -244,7 +244,7 @@ describe('MessageReactions', () => {
           annotations: {
             summary: {
               [ReactionAnnotationType.Multiple]: {
-                '🍌': { clientIds: { user1: 10 }, total: 10, totalUnidentified: 0 },
+                '🍌': { clientIds: { user1: 10 }, total: 10, totalUnidentified: 0, clipped: false, totalClientIds: 1 },
               },
             },
           },
@@ -300,7 +300,7 @@ describe('MessageReactions', () => {
         action: 'message.summary',
         timestamp: publishTimestamp,
         annotations: {
-          summary: { [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+          summary: { [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'], clipped: false } } },
         },
       });
 
@@ -315,7 +315,7 @@ describe('MessageReactions', () => {
         action: 'message.summary',
         timestamp: publishTimestamp,
         annotations: {
-          summary: { [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+          summary: { [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'], clipped: false } } },
         },
       });
 
@@ -333,7 +333,7 @@ describe('MessageReactions', () => {
         action: 'message.summary',
         timestamp: publishTimestamp,
         annotations: {
-          summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+          summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'], clipped: false } } },
         },
       });
 
@@ -351,7 +351,7 @@ describe('MessageReactions', () => {
         action: 'message.summary',
         timestamp: publishTimestamp,
         annotations: {
-          summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } } },
+          summary: { [MessageReactionType.Unique]: { '🥦': { total: 1, clientIds: ['user1'], clipped: false } } },
         },
       });
 
@@ -804,7 +804,7 @@ describe('MessageReactions', () => {
         timestamp: Date.now(),
         annotations: {
           summary: {
-            [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'] } },
+            [ReactionAnnotationType.Unique]: { '🥦': { total: 1, clientIds: ['user1'], clipped: false } },
           },
         },
       });

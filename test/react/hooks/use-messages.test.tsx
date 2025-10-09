@@ -307,9 +307,11 @@ describe('useMessages', () => {
       type: MessageReactionEventType.Summary,
       summary: {
         messageSerial: '123',
-        unique: { '👍': { total: 1, clientIds: ['user1'] } },
-        distinct: { '👍': { total: 1, clientIds: ['user1'] } },
-        multiple: { '👍': { total: 1, totalUnidentified: 0, clientIds: { user1: 1 } } },
+        unique: { '👍': { total: 1, clientIds: ['user1'], clipped: false } },
+        distinct: { '👍': { total: 1, clientIds: ['user1'], clipped: false } },
+        multiple: {
+          '👍': { total: 1, totalUnidentified: 0, clientIds: { user1: 1 }, clipped: false, totalClientIds: 1 },
+        },
       },
     };
 
