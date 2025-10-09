@@ -1,8 +1,6 @@
-import * as Ably from 'ably';
-
-import { Message } from './message.js';
-import { OccupancyData } from './occupancy-parser.js';
-import { RoomReaction } from './room-reaction.js';
+import type { Message, MessageReactionSummary } from './message.js';
+import type { OccupancyData } from './occupancy-parser.js';
+import type { RoomReaction } from './room-reaction.js';
 
 /**
  * All chat message events.
@@ -298,20 +296,11 @@ export interface MessageReactionSummaryEvent {
   /** The type of the event */
   type: MessageReactionSummaryEventType;
 
+  /** Reference to the original message's serial */
+  messageSerial: string;
+
   /** The message reactions summary. */
-  summary: {
-    /** Reference to the original message's serial number */
-    messageSerial: string;
-
-    /** Map of unique-type reactions summaries */
-    unique: Ably.SummaryUniqueValues;
-
-    /** Map of distinct-type reactions summaries */
-    distinct: Ably.SummaryDistinctValues;
-
-    /** Map of multiple-type reactions summaries */
-    multiple: Ably.SummaryMultipleValues;
-  };
+  reactions: MessageReactionSummary;
 }
 
 /**

@@ -432,14 +432,14 @@ export class DefaultMessage implements Message {
 
     // reaction summary
     if (event.type === MessageReactionSummaryEventType.Summary) {
-      if (event.summary.messageSerial !== this.serial) {
+      if (event.messageSerial !== this.serial) {
         throw new Ably.ErrorInfo('cannot apply event for a different message', 40000, 400);
       }
 
       const newReactions: MessageReactionSummary = {
-        unique: cloneDeep(event.summary.unique),
-        distinct: cloneDeep(event.summary.distinct),
-        multiple: cloneDeep(event.summary.multiple),
+        unique: cloneDeep(event.reactions.unique),
+        distinct: cloneDeep(event.reactions.distinct),
+        multiple: cloneDeep(event.reactions.multiple),
       };
 
       return DefaultMessage._clone(this, { reactions: newReactions });
