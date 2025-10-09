@@ -9,7 +9,7 @@ import { DefaultMessageReactions, MessageReactions } from './message-reactions.j
 import { PaginatedResult } from './query.js';
 import { on, once, subscribe } from './realtime-subscriptions.js';
 import { messageFromRest } from './rest-types.js';
-import { MessageOptions } from './room-options.js';
+import { MessagesOptions } from './room-options.js';
 import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
@@ -299,7 +299,7 @@ export interface Messages {
  */
 export class DefaultMessages implements Messages {
   private readonly _roomName: string;
-  private readonly _options: MessageOptions;
+  private readonly _options: MessagesOptions;
   private readonly _channel: Ably.RealtimeChannel;
   private readonly _chatApi: ChatApi;
   private readonly _listenerSubscriptionPoints: Map<
@@ -327,7 +327,7 @@ export class DefaultMessages implements Messages {
    */
   constructor(
     roomName: string,
-    options: MessageOptions,
+    options: MessagesOptions,
     channel: Ably.RealtimeChannel,
     chatApi: ChatApi,
     logger: Logger,
