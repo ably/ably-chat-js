@@ -123,7 +123,7 @@ export interface Message {
   /**
    * The reactions summary for this message.
    */
-  readonly reactions: MessageReactions;
+  readonly reactions: MessageReactionSummary;
 
   /**
    * Indicates if the message has been updated.
@@ -270,7 +270,7 @@ export interface MessageCopyParams {
 /**
  * Represents a summary of all reactions on a message.
  */
-export interface MessageReactions {
+export interface MessageReactionSummary {
   /**
    * Map of reaction to the summary (total and clients) for reactions of type {@link MessageReactionType.Unique}.
    */
@@ -299,7 +299,7 @@ export interface DefaultMessageParams {
   action: ChatMessageAction;
   version: MessageVersion;
   timestamp: Date;
-  reactions: MessageReactions;
+  reactions: MessageReactionSummary;
 }
 
 /**
@@ -316,7 +316,7 @@ export class DefaultMessage implements Message {
   public readonly action: ChatMessageAction;
   public readonly version: MessageVersion;
   public readonly timestamp: Date;
-  public readonly reactions: MessageReactions;
+  public readonly reactions: MessageReactionSummary;
 
   constructor({
     serial,
@@ -436,7 +436,7 @@ export class DefaultMessage implements Message {
         throw new Ably.ErrorInfo('cannot apply event for a different message', 40000, 400);
       }
 
-      const newReactions: MessageReactions = {
+      const newReactions: MessageReactionSummary = {
         unique: cloneDeep(event.summary.unique),
         distinct: cloneDeep(event.summary.distinct),
         multiple: cloneDeep(event.summary.multiple),
@@ -505,10 +505,10 @@ export class DefaultMessage implements Message {
 }
 
 /**
- * Creates an empty MessageReactions object with empty unique and distinct reaction collections.
- * @returns An empty MessageReactions object.
+ * Creates an empty MessageReactionSummary object with empty unique and distinct reaction collections.
+ * @returns An empty MessageReactionSummary object.
  */
-export const emptyMessageReactions = (): MessageReactions => ({
+export const emptyMessageReactions = (): MessageReactionSummary => ({
   unique: {},
   distinct: {},
   multiple: {},

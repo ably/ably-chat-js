@@ -39,7 +39,7 @@ export type {
   MessageHeaders,
   MessageMetadata,
   MessageOperationMetadata,
-  MessageReactions,
+  MessageReactionSummary,
   MessageVersion,
 } from './message.js';
 export type {
