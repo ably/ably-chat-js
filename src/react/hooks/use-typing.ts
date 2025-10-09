@@ -171,7 +171,7 @@ export interface UseTypingResponse extends ChatStatusResponse {
  * const App = () => {
  *   return (
  *     <ChatClientProvider client={chatClient}>
- *       <ChatRoomProvider id="room-id" release={true} attach={true}>
+ *       <ChatRoomProvider name="room-id">
  *         <TypingIndicator />
  *       </ChatRoomProvider>
  *     </ChatClientProvider>

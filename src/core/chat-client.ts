@@ -194,7 +194,6 @@ export class ChatClient {
   /**
    * The configuration options used to initialize the chat client.
    * @returns The resolved client options including defaults
-   * @example
    */
   get clientOptions(): ChatClientOptions {
     return this._clientOptions;
