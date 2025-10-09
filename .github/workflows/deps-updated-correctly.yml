@@ -23,7 +23,7 @@ jobs:
           submodules: true
       - uses: actions/setup-node@v1
         with:
-          node-version: 24
+          node-version: '24.9.0'
       - run: npm install
       - run: git diff --exit-code
       - run: cd demo && npm install
