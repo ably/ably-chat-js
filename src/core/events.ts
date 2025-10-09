@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { Message } from './message.js';
+import { OccupancyData } from './occupancy-parser.js';
 import { RoomReaction } from './room-reaction.js';
 
 /**
@@ -329,17 +330,7 @@ export interface OccupancyEvent {
   /**
    * The occupancy data.
    */
-  occupancy: {
-    /**
-     * The number of connections to the chat room.
-     */
-    connections: number;
-
-    /**
-     * The number of presence members in the chat room - members who have entered presence.
-     */
-    presenceMembers: number;
-  };
+  occupancy: OccupancyData;
 }
 
 /**
