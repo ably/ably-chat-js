@@ -388,7 +388,7 @@ export interface Messages {
    * }
    * ```
    */
-  history(options: QueryOptions): Promise<PaginatedResult<Message>>;
+  history(options: HistoryParams): Promise<PaginatedResult<Message>>;
 
   /**
    * Get a specific message by its unique serial identifier.

@@ -234,7 +234,7 @@ export interface MessageReactions {
    * added or removed. This is most useful for analytics, but is not recommended
    * for driving UI due to the high volume of events.
    *
-   * **Note**: Requires {@link MessageOptions.rawMessageReactions} to be enabled in room options.
+   * **Note**: Requires {@link MessagesOptions.rawMessageReactions} to be enabled in room options.
    * @param listener - Callback invoked for each individual reaction event
    * @returns Subscription object with an unsubscribe method
    * @throws {Ably.ErrorInfo} with code 40001 if raw message reactions are not enabled
