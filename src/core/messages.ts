@@ -121,12 +121,6 @@ export interface UpdateMessageParams {
 }
 
 /**
- * Parameters for deleting a message.
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DeleteMessageParams extends OperationDetails {}
-
-/**
  * Params for sending a text message. Only `text` is mandatory.
  */
 export interface SendMessageParams {
@@ -262,10 +256,10 @@ export interface Messages {
    * and a deleted message may not be restorable in this way.
    * @returns A promise that resolves when the message was deleted.
    * @param serial - A string or object that conveys the serial of the message to delete.
-   * @param deleteMessageParams - Optional details to record about the delete action.
+   * @param details - Optional details to record about the delete action.
    * @returns A promise that resolves to the deleted message.
    */
-  delete(serial: Serial, deleteMessageParams?: DeleteMessageParams): Promise<Message>;
+  delete(serial: Serial, details?: OperationDetails): Promise<Message>;
 
   /**
    * Update a message in the chat room.
@@ -533,12 +527,12 @@ export class DefaultMessages implements Messages {
   /**
    * @inheritdoc
    */
-  async delete(serial: Serial, params?: DeleteMessageParams): Promise<Message> {
-    this._logger.trace('Messages.delete();', { params });
+  async delete(serial: Serial, details?: OperationDetails): Promise<Message> {
+    this._logger.trace('Messages.delete();', { details });
 
     serial = serialToString(serial);
     this._logger.debug('Messages.delete(); serial', { serial });
-    const response = await this._chatApi.deleteMessage(this._roomName, serial, params);
+    const response = await this._chatApi.deleteMessage(this._roomName, serial, details);
 
     return messageFromRest(response);
   }

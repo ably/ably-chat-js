@@ -9,7 +9,6 @@ import type {
 } from '../../core/message-reactions.js'; // imported for typedoc links
 import { MessageRawReactionListener, MessageReactionListener } from '../../core/message-reactions.js';
 import {
-  DeleteMessageParams,
   HistoryParams,
   MessageListener,
   Messages,
@@ -139,8 +138,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   const getMessage = useCallback((serial: Serial) => context.room.then((room) => room.messages.get(serial)), [context]);
 
   const deleteMessage = useCallback(
-    (serial: Serial, deleteMessageParams?: DeleteMessageParams) =>
-      context.room.then((room) => room.messages.delete(serial, deleteMessageParams)),
+    (serial: Serial, details?: OperationDetails) => context.room.then((room) => room.messages.delete(serial, details)),
     [context],
   );
 

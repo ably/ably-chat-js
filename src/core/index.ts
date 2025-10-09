@@ -51,7 +51,6 @@ export type {
   SendMessageReactionParams,
 } from './message-reactions.js';
 export type {
-  DeleteMessageParams,
   HistoryParams,
   MessageListener,
   Messages,
