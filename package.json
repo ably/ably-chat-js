@@ -24,7 +24,7 @@
   },
   "scripts": {
     "copilot:from-cursor": "(cd .github && npx tsx ./copilot-from-cursor.ts)",
-    "lint": "eslint . && npm run cspell",
+    "lint": "eslint . && npm run cspell && npm run docs:lint",
     "lint:fix": "eslint --fix .; (npm run format > /dev/null)",
     "format": "prettier --list-different --write src test __mocks__ demo/src",
     "format:check": "prettier --check src test __mocks__ demo/src",
@@ -44,6 +44,7 @@
     "test:typescript": "tsc",
     "demo:reload": "npm run build && cd demo && npm i file:../",
     "docs": "typedoc",
+    "docs:lint": "typedoc --emit none",
     "modulereport": "tsc --noEmit --esModuleInterop scripts/moduleReport.ts && esr scripts/moduleReport.ts",
     "cspell": "cspell --quiet '{src,test}/**' './*.md'",
     "test:no-integration": "vitest run --exclude \"test/**/*.integration.test.ts?(x)\"",
