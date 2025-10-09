@@ -51,7 +51,13 @@ export interface Rooms {
    * @returns A promise that resolves when all rooms have been released.
    */
   dispose(): Promise<void>;
+}
 
+/**
+ * An internal interface for Rooms.
+ * @internal
+ */
+export interface InternalRooms extends Rooms {
   /**
    * Get the number of rooms currently in the rooms map.
    * @returns The number of rooms currently in the rooms map.
@@ -87,7 +93,7 @@ interface RoomMapEntry {
 /**
  * Manages the chat rooms.
  */
-export class DefaultRooms implements Rooms {
+export class DefaultRooms implements InternalRooms {
   private readonly _realtime: Ably.Realtime;
   private readonly _chatApi: ChatApi;
   private readonly _rooms: Map<string, RoomMapEntry> = new Map<string, RoomMapEntry>();

@@ -5,6 +5,7 @@ import { ChatClient } from '../../src/core/chat-client.ts';
 import { InternalConnection } from '../../src/core/connection.ts';
 import { randomRoomName } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
+import { expectRoomsCount } from '../helper/room.ts';
 
 vi.mock('ably');
 
@@ -26,7 +27,7 @@ describe('ChatClient', () => {
       await context.chat.rooms.get(roomName);
 
       // Verify room exists
-      expect(context.chat.rooms.count).toBe(1);
+      expectRoomsCount(context.chat.rooms, 1);
 
       // Mock the connection dispose method
       const mockConnectionDispose = vi.spyOn(context.chat.connection as InternalConnection, 'dispose');
@@ -38,7 +39,7 @@ describe('ChatClient', () => {
       expect(mockConnectionDispose).toHaveBeenCalledTimes(1);
 
       // Rooms should be released
-      expect(context.chat.rooms.count).toBe(0);
+      expectRoomsCount(context.chat.rooms, 0);
     });
 
     it<TestContext>('should dispose successfully when no rooms exist', async (context) => {
@@ -60,7 +61,7 @@ describe('ChatClient', () => {
       await context.chat.rooms.get(roomName2);
 
       // Verify rooms exist
-      expect(context.chat.rooms.count).toBe(2);
+      expectRoomsCount(context.chat.rooms, 2);
 
       // Mock the connection dispose method
       const mockConnectionDispose = vi.spyOn(context.chat.connection as InternalConnection, 'dispose');
@@ -72,7 +73,7 @@ describe('ChatClient', () => {
       expect(mockConnectionDispose).toHaveBeenCalledTimes(1);
 
       // All rooms should be released
-      expect(context.chat.rooms.count).toBe(0);
+      expectRoomsCount(context.chat.rooms, 0);
     });
   });
 });

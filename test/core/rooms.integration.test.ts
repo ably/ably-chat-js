@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { LogLevel } from '../../src/core/logger.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';
-import { waitForRoomStatus } from '../helper/room.ts';
+import { expectRoomsCount, waitForRoomStatus } from '../helper/room.ts';
 
 describe('Rooms', () => {
   it('throws an error if you create the same room with different options', async () => {
@@ -94,18 +94,18 @@ describe('Rooms', () => {
     it('disposes successfully when no rooms exist', async () => {
       const chat = newChatClient({ logLevel: LogLevel.Silent });
       await expect(chat.rooms.dispose()).resolves.toBeUndefined();
-      expect(chat.rooms.count).toBe(0);
+      expectRoomsCount(chat.rooms, 0);
     });
 
     it('disposes a single room', async () => {
       const chat = newChatClient({ logLevel: LogLevel.Silent });
       const room = await chat.rooms.get('test-room');
 
-      expect(chat.rooms.count).toBe(1);
+      expectRoomsCount(chat.rooms, 1);
 
       await chat.rooms.dispose();
 
-      expect(chat.rooms.count).toBe(0);
+      expectRoomsCount(chat.rooms, 0);
       expect(room.status).toBe(RoomStatus.Released);
     });
 
@@ -115,11 +115,11 @@ describe('Rooms', () => {
       const room2 = await chat.rooms.get('test-room-2');
       const room3 = await chat.rooms.get('test-room-3');
 
-      expect(chat.rooms.count).toBe(3);
+      expectRoomsCount(chat.rooms, 3);
 
       await chat.rooms.dispose();
 
-      expect(chat.rooms.count).toBe(0);
+      expectRoomsCount(chat.rooms, 0);
       expect(room1.status).toBe(RoomStatus.Released);
       expect(room2.status).toBe(RoomStatus.Released);
       expect(room3.status).toBe(RoomStatus.Released);
@@ -136,11 +136,11 @@ describe('Rooms', () => {
 
       expect(room1.status).toBe(RoomStatus.Attached);
       expect(room2.status).toBe(RoomStatus.Attached);
-      expect(chat.rooms.count).toBe(2);
+      expectRoomsCount(chat.rooms, 2);
 
       await chat.rooms.dispose();
 
-      expect(chat.rooms.count).toBe(0);
+      expectRoomsCount(chat.rooms, 0);
       expect(room1.status).toBe(RoomStatus.Released);
       expect(room2.status).toBe(RoomStatus.Released);
     });
@@ -162,11 +162,11 @@ describe('Rooms', () => {
       // Wait for room to enter failed state
       await waitForRoomStatus(room, RoomStatus.Failed);
       expect(room.status).toBe(RoomStatus.Failed);
-      expect(chat.rooms.count).toBe(1);
+      expectRoomsCount(chat.rooms, 1);
 
       await chat.rooms.dispose();
 
-      expect(chat.rooms.count).toBe(0);
+      expectRoomsCount(chat.rooms, 0);
       expect(room.status).toBe(RoomStatus.Released);
     });
 
@@ -180,11 +180,11 @@ describe('Rooms', () => {
 
       expect(initializedRoom.status).toBe(RoomStatus.Initialized);
       expect(attachedRoom.status).toBe(RoomStatus.Attached);
-      expect(chat.rooms.count).toBe(2);
+      expectRoomsCount(chat.rooms, 2);
 
       await chat.rooms.dispose();
 
-      expect(chat.rooms.count).toBe(0);
+      expectRoomsCount(chat.rooms, 0);
       expect(initializedRoom.status).toBe(RoomStatus.Released);
       expect(attachedRoom.status).toBe(RoomStatus.Released);
     });
@@ -195,10 +195,10 @@ describe('Rooms', () => {
       // Create and dispose rooms
       await chat.rooms.get('test-room-1');
       await chat.rooms.get('test-room-2');
-      expect(chat.rooms.count).toBe(2);
+      expectRoomsCount(chat.rooms, 2);
 
       await chat.rooms.dispose();
-      expect(chat.rooms.count).toBe(0);
+      expectRoomsCount(chat.rooms, 0);
 
       // Should not be able to create new rooms after dispose
       await expect(chat.rooms.get('test-room-new')).rejects.toBeErrorInfoWithCode(40000);
