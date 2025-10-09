@@ -51,9 +51,9 @@ export enum OrderBy {
 }
 
 /**
- * Options for querying messages in a chat room.
+ * Parameters for querying messages in a chat room.
  */
-export interface QueryOptions {
+export interface HistoryParams {
   /**
    * The start of the time window to query from. If provided, the response will include
    * messages with timestamps equal to or greater than this value.
@@ -193,10 +193,10 @@ export interface MessageSubscriptionResponse extends Subscription {
    * const { historyBeforeSubscribe } = room.messages.subscribe(listener);
    * await historyBeforeSubscribe({ limit: 10 });
    * ```
-   * @param params Options for the history query.
+   * @param params Parameters for the history query.
    * @returns A promise that resolves with the paginated result of messages, in newest-to-oldest order.
    */
-  historyBeforeSubscribe(params: Omit<QueryOptions, 'orderBy'>): Promise<PaginatedResult<Message>>;
+  historyBeforeSubscribe(params: Omit<HistoryParams, 'orderBy'>): Promise<PaginatedResult<Message>>;
 }
 
 /**
@@ -214,12 +214,12 @@ export interface Messages {
   subscribe(listener: MessageListener): MessageSubscriptionResponse;
 
   /**
-   * Get messages that have been previously sent to the chat room, based on the provided options.
-   * @param options Options for the query.
+   * Get messages that have been previously sent to the chat room, based on the provided parameters.
+   * @param params Parameters for the query.
    * @returns A promise that resolves with the paginated result of messages. This paginated result can
    * be used to fetch more messages if available.
    */
-  history(options: QueryOptions): Promise<PaginatedResult<Message>>;
+  history(params: HistoryParams): Promise<PaginatedResult<Message>>;
 
   /**
    * Get a message by its serial.
@@ -370,7 +370,7 @@ export class DefaultMessages implements Messages {
    */
   private async _getBeforeSubscriptionStart(
     listener: MessageListener,
-    params: Omit<QueryOptions, 'orderBy'>,
+    params: Omit<HistoryParams, 'orderBy'>,
   ): Promise<PaginatedResult<Message>> {
     this._logger.trace(`DefaultSubscriptionManager.getBeforeSubscriptionStart();`);
 
@@ -505,7 +505,7 @@ export class DefaultMessages implements Messages {
   /**
    * @inheritdoc
    */
-  async history(options: QueryOptions): Promise<PaginatedResult<Message>> {
+  async history(options: HistoryParams): Promise<PaginatedResult<Message>> {
     this._logger.trace('Messages.query();');
     return this._chatApi.history(this._roomName, options);
   }
@@ -592,7 +592,7 @@ export class DefaultMessages implements Messages {
         this._logger.trace('Messages.unsubscribe();');
         this._emitter.off(wrapped);
       },
-      historyBeforeSubscribe: (params: Omit<QueryOptions, 'orderBy'>) =>
+      historyBeforeSubscribe: (params: Omit<HistoryParams, 'orderBy'>) =>
         this._getBeforeSubscriptionStart(wrapped, params),
     };
   }
