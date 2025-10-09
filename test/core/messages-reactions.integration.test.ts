@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat-client.ts';
 import {
-  MessageReactionEventType,
   MessageReactionRawEvent,
+  MessageReactionRawEventType,
   MessageReactionSummaryEvent,
+  MessageReactionSummaryEventType,
   MessageReactionType,
 } from '../../src/core/events.ts';
 import { newChatClient, waitForClientId } from '../helper/chat.ts';
@@ -47,7 +48,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     await waitForArrayLength(found, 4);
 
     expect(found[0]).toMatchObject({
-      type: MessageReactionEventType.Create,
+      type: MessageReactionRawEventType.Create,
       reaction: {
         type: MessageReactionType.Unique,
         name: '👍',
@@ -57,7 +58,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     });
 
     expect(found[1]).toMatchObject({
-      type: MessageReactionEventType.Create,
+      type: MessageReactionRawEventType.Create,
       reaction: {
         type: MessageReactionType.Distinct,
         name: '🚀',
@@ -67,7 +68,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     });
 
     expect(found[2]).toMatchObject({
-      type: MessageReactionEventType.Create,
+      type: MessageReactionRawEventType.Create,
       reaction: {
         type: MessageReactionType.Multiple,
         name: '🙈',
@@ -78,7 +79,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     });
 
     expect(found[3]).toMatchObject({
-      type: MessageReactionEventType.Delete,
+      type: MessageReactionRawEventType.Delete,
       reaction: {
         type: MessageReactionType.Distinct,
         name: '🚀',
@@ -121,7 +122,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
         const latestSummary = found.at(-1);
         expect(latestSummary).toMatchObject({
-          type: MessageReactionEventType.Summary,
+          type: MessageReactionSummaryEventType.Summary,
           summary: {
             messageSerial: message1.serial,
             multiple: {
@@ -153,7 +154,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
         const latestSummary = found.at(-1);
         expect(latestSummary).toMatchObject({
-          type: MessageReactionEventType.Summary,
+          type: MessageReactionSummaryEventType.Summary,
           summary: {
             messageSerial: message1.serial,
             multiple: {
@@ -216,7 +217,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         const latestSummary = found.at(-1);
         latestSummary?.summary.distinct['👍']?.clientIds.sort();
         expect(latestSummary).toMatchObject({
-          type: MessageReactionEventType.Summary,
+          type: MessageReactionSummaryEventType.Summary,
           summary: {
             messageSerial: message1.serial,
             distinct: {
@@ -249,7 +250,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
         const latestSummary = found.at(-1);
         expect(latestSummary).toMatchObject({
-          type: MessageReactionEventType.Summary,
+          type: MessageReactionSummaryEventType.Summary,
           summary: {
             messageSerial: message1.serial,
             distinct: {
@@ -311,7 +312,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
         const latestSummary = found.at(-1);
         expect(latestSummary).toMatchObject({
-          type: MessageReactionEventType.Summary,
+          type: MessageReactionSummaryEventType.Summary,
           summary: {
             messageSerial: message1.serial,
             unique: {
@@ -337,7 +338,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
         const latestSummary = found.at(-1);
         expect(latestSummary).toMatchObject({
-          type: MessageReactionEventType.Summary,
+          type: MessageReactionSummaryEventType.Summary,
           summary: {
             messageSerial: message1.serial,
             unique: {
@@ -364,7 +365,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         const message2Summary = found.findLast((e) => e.summary.messageSerial === message2.serial);
         expect(message2Summary).toBeDefined();
         expect(message2Summary).toMatchObject({
-          type: MessageReactionEventType.Summary,
+          type: MessageReactionSummaryEventType.Summary,
           summary: {
             messageSerial: message2.serial,
             unique: {
@@ -420,7 +421,7 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         expect(summaryEvents.length).toBeGreaterThanOrEqual(1);
         const latestSummary = summaryEvents.at(-1);
         expect(latestSummary).toMatchObject({
-          type: MessageReactionEventType.Summary,
+          type: MessageReactionSummaryEventType.Summary,
           summary: {
             messageSerial: message1.serial,
             distinct: {

@@ -7,9 +7,10 @@ import { DiscontinuityListener } from '../../../src/core/discontinuity.ts';
 import {
   ChatMessageAction,
   ChatMessageEventType,
-  MessageReactionEventType,
   MessageReactionRawEvent,
+  MessageReactionRawEventType,
   MessageReactionSummaryEvent,
+  MessageReactionSummaryEventType,
   MessageReactionType,
 } from '../../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../../src/core/message.ts';
@@ -304,7 +305,7 @@ describe('useMessages', () => {
 
     // verify that subscribe was called with the mock listener on mount by invoking it
     const reactionEvent: MessageReactionSummaryEvent = {
-      type: MessageReactionEventType.Summary,
+      type: MessageReactionSummaryEventType.Summary,
       summary: {
         messageSerial: '123',
         unique: { '👍': { total: 1, clientIds: ['user1'], clipped: false } },
@@ -350,7 +351,7 @@ describe('useMessages', () => {
     // verify that subscribe was called with the mock listener on mount by invoking it
     const timestamp = new Date();
     const rawReactionEvent: MessageReactionRawEvent = {
-      type: MessageReactionEventType.Create,
+      type: MessageReactionRawEventType.Create,
       timestamp,
       reaction: {
         messageSerial: '123',

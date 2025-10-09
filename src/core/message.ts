@@ -5,8 +5,8 @@ import {
   ChatMessageAction,
   ChatMessageEvent,
   ChatMessageEventType,
-  MessageReactionEventType,
   MessageReactionSummaryEvent,
+  MessageReactionSummaryEventType,
 } from './events.js';
 import { Headers } from './headers.js';
 import { Metadata } from './metadata.js';
@@ -431,7 +431,7 @@ export class DefaultMessage implements Message {
     }
 
     // reaction summary
-    if (event.type === MessageReactionEventType.Summary) {
+    if (event.type === MessageReactionSummaryEventType.Summary) {
       if (event.summary.messageSerial !== this.serial) {
         throw new Ably.ErrorInfo('cannot apply event for a different message', 40000, 400);
       }

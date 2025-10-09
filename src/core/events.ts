@@ -238,9 +238,9 @@ export const AnnotationTypeToReactionType: Record<string, MessageReactionType> =
 } as const;
 
 /**
- * Enum representing different message reaction events in the chat system.
+ * Enum representing different raw message reaction events in the chat system.
  */
-export enum MessageReactionEventType {
+export enum MessageReactionRawEventType {
   /**
    * A reaction was added to a message.
    */
@@ -249,6 +249,12 @@ export enum MessageReactionEventType {
    * A reaction was removed from a message.
    */
   Delete = 'reaction.delete',
+}
+
+/**
+ * Enum representing different message reaction summary events in the chat system.
+ */
+export enum MessageReactionSummaryEventType {
   /**
    * A reactions summary was updated for a message.
    */
@@ -260,7 +266,7 @@ export enum MessageReactionEventType {
  */
 export interface MessageReactionRawEvent {
   /** Whether reaction was added or removed */
-  type: MessageReactionEventType.Create | MessageReactionEventType.Delete;
+  type: MessageReactionRawEventType;
 
   /** The timestamp of this event */
   timestamp: Date;
@@ -290,7 +296,7 @@ export interface MessageReactionRawEvent {
  */
 export interface MessageReactionSummaryEvent {
   /** The type of the event */
-  type: MessageReactionEventType.Summary;
+  type: MessageReactionSummaryEventType;
 
   /** The message reactions summary. */
   summary: {
