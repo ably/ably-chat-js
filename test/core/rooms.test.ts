@@ -8,6 +8,7 @@ import { ErrorCode } from '../../src/index.ts';
 import { randomRoomName } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
+import { expectRoomsCount } from '../helper/room.ts';
 
 vi.mock('ably');
 
@@ -209,19 +210,19 @@ describe('rooms', () => {
       await context.rooms.get(roomName1);
       await context.rooms.get(roomName2);
 
-      expect(context.rooms.count).toBe(2);
+      expectRoomsCount(context.rooms, 2);
 
       await context.rooms.dispose();
 
-      expect(context.rooms.count).toBe(0);
+      expectRoomsCount(context.rooms, 0);
     });
 
     it<TestContext>('handles dispose when no rooms exist', async (context) => {
-      expect(context.rooms.count).toBe(0);
+      expectRoomsCount(context.rooms, 0);
 
       await expect(context.rooms.dispose()).resolves.toBeUndefined();
 
-      expect(context.rooms.count).toBe(0);
+      expectRoomsCount(context.rooms, 0);
     });
   });
 });

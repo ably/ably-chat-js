@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { ChatClient } from '../../src/core/chat-client.ts';
@@ -9,6 +9,7 @@ import { randomId } from '../../src/core/id.ts';
 import { DefaultRoom, Room } from '../../src/core/room.ts';
 import { normalizeRoomOptions, RoomOptions } from '../../src/core/room-options.ts';
 import { RoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';
+import { InternalRooms, Rooms } from '../../src/core/rooms.ts';
 import { Logger } from '../../src/index.ts';
 import { randomRoomName } from './identifier.ts';
 import { makeTestLogger } from './logger.ts';
@@ -28,6 +29,11 @@ export const waitForRoomError = async (status: RoomLifecycle, expected: ErrorCod
 // Gets a random room with default options from the chat client
 export const getRandomRoom = async (chat: ChatClient, options?: RoomOptions): Promise<Room> =>
   chat.rooms.get(randomRoomName(), options);
+
+// Check that the rooms instance has the given number of rooms
+export const expectRoomsCount = (rooms: Rooms, count: number) => {
+  expect((rooms as InternalRooms).count).toEqual(count);
+};
 
 // Makes a room with the given (or default) options, as a standalone room aside from the chat client
 // Should be used in unit tests where the dependencies are mocked.
