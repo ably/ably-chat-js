@@ -79,7 +79,7 @@ export class ChatClient {
     });
 
     this._connection = new DefaultConnection(realtime, this._logger);
-    this._rooms = new DefaultRooms(realtime, this._clientOptions, this._logger);
+    this._rooms = new DefaultRooms(realtime, this._logger);
     this._addAgent('chat-js');
     this._logger.trace(`ably chat client version ${VERSION}; initialized`);
   }

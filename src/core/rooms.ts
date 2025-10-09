@@ -2,7 +2,6 @@ import * as Ably from 'ably';
 import { dequal } from 'dequal';
 
 import { ChatApi } from './chat-api.js';
-import { ChatClientOptions, NormalizedChatClientOptions } from './config.js';
 import { ErrorCode } from './errors.js';
 import { randomId } from './id.js';
 import { Logger } from './logger.js';
@@ -53,12 +52,6 @@ export interface Rooms {
   dispose(): Promise<void>;
 
   /**
-   * Get the client options used to create the Chat instance.
-   * @returns ChatClientOptions
-   */
-  get clientOptions(): ChatClientOptions;
-
-  /**
    * Get the number of rooms currently in the rooms map.
    * @returns The number of rooms currently in the rooms map.
    */
@@ -96,7 +89,6 @@ interface RoomMapEntry {
 export class DefaultRooms implements Rooms {
   private readonly _realtime: Ably.Realtime;
   private readonly _chatApi: ChatApi;
-  private readonly _clientOptions: NormalizedChatClientOptions;
   private readonly _rooms: Map<string, RoomMapEntry> = new Map<string, RoomMapEntry>();
   private readonly _releasing = new Map<string, Promise<void>>();
   private readonly _logger: Logger;
@@ -106,13 +98,11 @@ export class DefaultRooms implements Rooms {
   /**
    * Constructs a new Rooms instance.
    * @param realtime An instance of the Ably Realtime client.
-   * @param clientOptions The client options from the chat instance.
    * @param logger An instance of the Logger.
    */
-  constructor(realtime: Ably.Realtime, clientOptions: NormalizedChatClientOptions, logger: Logger) {
+  constructor(realtime: Ably.Realtime, logger: Logger) {
     this._realtime = realtime;
     this._chatApi = new ChatApi(realtime, logger);
-    this._clientOptions = clientOptions;
     this._logger = logger;
   }
 
@@ -192,14 +182,6 @@ export class DefaultRooms implements Rooms {
 
     await Promise.all(all);
     this._logger.debug('Rooms.dispose(); all rooms released successfully');
-  }
-
-  /**
-   * Get the client options used to create the Chat instance.
-   * @returns ChatClientOptions
-   */
-  get clientOptions(): ChatClientOptions {
-    return this._clientOptions;
   }
 
   /**
