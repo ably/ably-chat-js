@@ -114,7 +114,7 @@ export type PresenceMember = Omit<Ably.PresenceMessage, 'id' | 'action' | 'times
   /**
    * The extras associated with the presence member.
    */
-  extras: unknown;
+  extras: JsonObject | undefined;
 };
 
 /**
@@ -431,6 +431,7 @@ export class DefaultPresence implements Presence {
    */
   private _realtimeMemberToPresenceMember(member: Ably.PresenceMessage): PresenceMember {
     return {
+      // Note that we're casting `extras` from ably-js's `any` to our `JsonObject | undefined`; although ably-js's types don't express it we can assume this type per https://sdk.ably.com/builds/ably/specification/main/features/#TP3i.
       ...member,
       data: member.data as PresenceData,
       updatedAt: new Date(member.timestamp),
