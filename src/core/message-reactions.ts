@@ -79,7 +79,7 @@ export interface DeleteMessageReactionParams {
 /**
  * Send, delete, and subscribe to message reactions.
  */
-export interface MessagesReactions {
+export interface MessageReactions {
   /**
    * Send a message reaction.
    * @param messageSerial The serial of the message to react to.
@@ -154,7 +154,7 @@ const eventTypeMap: Record<string, MessageReactionEventType.Create | MessageReac
 /**
  * @inheritDoc
  */
-export class DefaultMessageReactions implements MessagesReactions {
+export class DefaultMessageReactions implements MessageReactions {
   private _emitter = new EventEmitter<{
     [MessageReactionEventType.Create]: MessageReactionRawEvent;
     [MessageReactionEventType.Delete]: MessageReactionRawEvent;
@@ -182,19 +182,19 @@ export class DefaultMessageReactions implements MessagesReactions {
   }
 
   private _processAnnotationEvent(event: Ably.Annotation) {
-    this._logger.trace('MessagesReactions._processAnnotationEvent();', { event });
+    this._logger.trace('MessageReactions._processAnnotationEvent();', { event });
 
     // If we don't know the reaction type, ignore it
     const reactionType = AnnotationTypeToReactionType[event.type];
     if (!reactionType) {
-      this._logger.info('MessagesReactions._processAnnotationEvent(); ignoring unknown reaction type', { event });
+      this._logger.info('MessageReactions._processAnnotationEvent(); ignoring unknown reaction type', { event });
       return;
     }
 
     // If we don't know the event type, ignore it
     const eventType = eventTypeMap[event.action];
     if (!eventType) {
-      this._logger.info('MessagesReactions._processAnnotationEvent(); ignoring unknown reaction event type', { event });
+      this._logger.info('MessageReactions._processAnnotationEvent(); ignoring unknown reaction event type', { event });
       return;
     }
 
@@ -220,7 +220,7 @@ export class DefaultMessageReactions implements MessagesReactions {
   }
 
   private _processMessageEvent(event: Ably.InboundMessage) {
-    this._logger.trace('MessagesReactions._processMessageEvent();', { event });
+    this._logger.trace('MessageReactions._processMessageEvent();', { event });
 
     // only process summary events
     if (event.action !== ChatMessageAction.MessageAnnotationSummary.valueOf()) {
@@ -252,7 +252,7 @@ export class DefaultMessageReactions implements MessagesReactions {
    * @inheritDoc
    */
   send(messageSerial: Serial, params: SendMessageReactionParams): Promise<void> {
-    this._logger.trace('MessagesReactions.send();', { messageSerial, params });
+    this._logger.trace('MessageReactions.send();', { messageSerial, params });
     const serial = serialToString(messageSerial);
 
     let { type, count } = params;
@@ -273,7 +273,7 @@ export class DefaultMessageReactions implements MessagesReactions {
    * @inheritDoc
    */
   delete(messageSerial: Serial, params?: DeleteMessageReactionParams): Promise<void> {
-    this._logger.trace('MessagesReactions.delete();', { messageSerial, params });
+    this._logger.trace('MessageReactions.delete();', { messageSerial, params });
     const serial = serialToString(messageSerial);
 
     let type = params?.type;
@@ -294,7 +294,7 @@ export class DefaultMessageReactions implements MessagesReactions {
    * @inheritDoc
    */
   subscribe(listener: MessageReactionListener): Subscription {
-    this._logger.trace('MessagesReactions.subscribe();');
+    this._logger.trace('MessageReactions.subscribe();');
 
     const wrapped = wrap(listener);
     this._emitter.on(MessageReactionEventType.Summary, wrapped);
@@ -309,7 +309,7 @@ export class DefaultMessageReactions implements MessagesReactions {
    * @inheritDoc
    */
   subscribeRaw(listener: MessageRawReactionListener): Subscription {
-    this._logger.trace('MessagesReactions.subscribeRaw();');
+    this._logger.trace('MessageReactions.subscribeRaw();');
 
     if (!this._options?.rawMessageReactions) {
       throw new Ably.ErrorInfo('Raw message reactions are not enabled', 40001, 400);
@@ -343,7 +343,7 @@ export class DefaultMessageReactions implements MessagesReactions {
   }
 
   clientReactions(messageSerial: Serial, clientId?: string): Promise<Message['reactions']> {
-    this._logger.trace('MessagesReactions.clientReactions();', { messageSerial, clientId });
+    this._logger.trace('MessageReactions.clientReactions();', { messageSerial, clientId });
     const serial = serialToString(messageSerial);
     return this._api.getClientReactions(this._roomName, serial, clientId);
   }

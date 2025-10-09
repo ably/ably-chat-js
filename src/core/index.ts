@@ -43,6 +43,13 @@ export type {
   MessageVersion,
 } from './message.js';
 export type {
+  DeleteMessageReactionParams,
+  MessageRawReactionListener,
+  MessageReactionListener,
+  MessageReactions,
+  SendMessageReactionParams,
+} from './message-reactions.js';
+export type {
   DeleteMessageParams,
   MessageListener,
   Messages,
@@ -53,13 +60,6 @@ export type {
   UpdateMessageParams,
 } from './messages.js';
 export { OrderBy } from './messages.js';
-export type {
-  DeleteMessageReactionParams,
-  MessageRawReactionListener,
-  MessageReactionListener,
-  MessagesReactions,
-  SendMessageReactionParams,
-} from './messages-reactions.js';
 export type { Metadata } from './metadata.js';
 export type { Occupancy, OccupancyListener } from './occupancy.js';
 export type { OccupancyData } from './occupancy-parser.js';

@@ -8,7 +8,7 @@ import {
   MessageReactionType,
   ReactionAnnotationType,
 } from '../../src/core/events.ts';
-import { DefaultMessageReactions } from '../../src/core/messages-reactions.ts';
+import { DefaultMessageReactions } from '../../src/core/message-reactions.ts';
 import { Room } from '../../src/core/room.ts';
 import {
   channelAnnotationEventEmitter,
@@ -32,7 +32,7 @@ interface TestContext {
 
 vi.mock('ably');
 
-describe('MessagesReactions', () => {
+describe('MessageReactions', () => {
   describe('message reaction basics', () => {
     beforeEach<TestContext>((context) => {
       context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });

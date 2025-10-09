@@ -5,7 +5,7 @@ import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType, RealtimeMess
 import { Logger } from './logger.js';
 import { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { parseMessage } from './message-parser.js';
-import { DefaultMessageReactions, MessagesReactions } from './messages-reactions.js';
+import { DefaultMessageReactions, MessageReactions } from './message-reactions.js';
 import { PaginatedResult } from './query.js';
 import { on, once, subscribe } from './realtime-subscriptions.js';
 import { messageFromRest } from './rest-types.js';
@@ -291,7 +291,7 @@ export interface Messages {
   /**
    * Send, delete, and subscribe to message reactions.
    */
-  reactions: MessagesReactions;
+  reactions: MessageReactions;
 }
 
 /**
@@ -365,7 +365,7 @@ export class DefaultMessages implements Messages {
   /**
    * @inheritdoc
    */
-  get reactions(): MessagesReactions {
+  get reactions(): MessageReactions {
     return this._reactions;
   }
 
