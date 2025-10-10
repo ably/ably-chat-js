@@ -3,6 +3,7 @@ import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, HistoryQueryParams } from '../../src/core/chat-api.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType } from '../../src/core/events.ts';
 import { emptyMessageReactions, Message } from '../../src/core/message.ts';
 import { DefaultMessages, OrderBy } from '../../src/core/messages.ts';
@@ -728,7 +729,7 @@ describe('Messages', () => {
       unsubscribe();
 
       await expect(historyBeforeSubscribe({ limit: 50 })).rejects.toBeErrorInfo({
-        code: 40000,
+        code: ErrorCode.ListenerNotSubscribedYet,
         message: 'cannot query history; listener has not been subscribed yet',
       });
     });

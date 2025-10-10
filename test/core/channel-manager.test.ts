@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { roomChannelName } from '../../src/core/channel.ts';
 import { ChannelManager, ChannelOptionsMerger } from '../../src/core/channel-manager.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import { DEFAULT_CHANNEL_OPTIONS, DEFAULT_CHANNEL_OPTIONS_REACT } from '../../src/core/version.ts';
 import { randomClientId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -84,7 +85,7 @@ describe('ChannelManager', () => {
     // Now try to merge again, should error
     expect(() => {
       context.channelManager.mergeOptions(merger2);
-    }).toThrowErrorInfo({ code: 40000, statusCode: 400 });
+    }).toThrowErrorInfo({ code: ErrorCode.ChannelOptionsCannotBeModified, statusCode: 400 });
 
     // And we shouldn't have called get again
     expect(context.mockRealtime.channels.get).toHaveBeenCalledTimes(1);

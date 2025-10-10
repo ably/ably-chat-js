@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import { describe, expect, it, vi } from 'vitest';
 
+import { ErrorCode } from '../../../src/core/errors.js';
 import { Room } from '../../../src/core/room.js';
 import { RoomReferenceManager } from '../../../src/react/helper/room-reference-manager.js';
 import { newChatClient } from '../../helper/chat.js';
@@ -113,7 +114,7 @@ describe('RoomReferenceManager', () => {
     // Now try to add a reference with different options
     // This should now throw an error since the room is actively being used
     await expect(manager.addReference(roomName, options2)).rejects.toBeErrorInfo({
-      code: 40000,
+      code: ErrorCode.RoomExistsWithDifferentOptions,
       message: `cannot get room with different options; room "${roomName}" is already in use with different options`,
     });
 
@@ -148,7 +149,7 @@ describe('RoomReferenceManager', () => {
     // Now try to add a reference with no options
     // This should now throw an error since the room is actively being used
     await expect(manager.addReference(roomName)).rejects.toBeErrorInfo({
-      code: 40000,
+      code: ErrorCode.RoomExistsWithDifferentOptions,
       message: `cannot get room with different options; room "${roomName}" is already in use with different options`,
     });
 
@@ -185,7 +186,7 @@ describe('RoomReferenceManager', () => {
     // Now try to add a reference with different options
     // This should now throw an error since the room is actively being used with multiple references
     await expect(manager.addReference(roomName, options2)).rejects.toBeErrorInfo({
-      code: 40000,
+      code: ErrorCode.RoomExistsWithDifferentOptions,
       message: `cannot get room with different options; room "${roomName}" is already in use with different options`,
     });
 

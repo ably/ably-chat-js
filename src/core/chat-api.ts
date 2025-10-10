@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { ErrorCode } from './errors.js';
 import { Logger } from './logger.js';
 import { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { OrderBy } from './messages.js';
@@ -132,8 +133,12 @@ export class ChatApi {
         }
         default: {
           // in vanilla JS use-cases, without types, we need to check non-enum values
-          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-          throw new Ably.ErrorInfo(`invalid orderBy value: ${params.orderBy}`, 40000, 400);
+          throw new Ably.ErrorInfo(
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            `invalid orderBy value: ${params.orderBy}`,
+            ErrorCode.InvalidArgument,
+            400,
+          );
         }
       }
     }

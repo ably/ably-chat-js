@@ -10,6 +10,16 @@ export enum ErrorCode {
   BadRequest = 40000,
 
   /**
+   * Invalid argument provided.
+   */
+  InvalidArgument = 40003,
+
+  /**
+   * Resource has been disposed.
+   */
+  ResourceDisposed = 40014,
+
+  /**
    * The message was rejected before publishing by a rule on the chat room.
    */
   MessageRejectedByBeforePublishRule = 42211,
@@ -18,6 +28,11 @@ export enum ErrorCode {
    * The message was rejected before publishing by a moderation rule on the chat room.
    */
   MessageRejectedByModeration = 42213,
+
+  /**
+   * The client is not connected to Ably.
+   */
+  Disconnected = 80003,
 
   /**
    * Could not re-enter presence automatically after a room re-attach occurred.
@@ -50,6 +65,53 @@ export enum ErrorCode {
    * Room was released before the operation could complete.
    */
   RoomReleasedBeforeOperationCompleted = 102106,
+
+  /**
+   * A room already exists with different options.
+   */
+  RoomExistsWithDifferentOptions = 102107,
+
+  /**
+   * Feature is not enabled in room options.
+   */
+  FeatureNotEnabledInRoom = 102108,
+
+  /**
+   * Listener has not been subscribed yet.
+   */
+  ListenerNotSubscribedYet = 102109,
+
+  /**
+   * Channel serial is not defined when expected.
+   */
+  ChannelSerialNotDefined = 102110,
+
+  /**
+   * Channel options cannot be modified after the channel has been requested.
+   */
+  ChannelOptionsCannotBeModified = 102111,
+
+  /**
+   * Could not perform operation; room is not attached.
+   */
+  RoomNotAttached = 102112,
+
+  /**
+   * Failed to acquire mutex for operation serialization.
+   */
+  MutexAcquisitionFailed = 102113,
+
+  // 102200 - 102300 are reserved for React errors
+
+  /**
+   * React hook must be used within the appropriate provider.
+   */
+  ReactHookMustBeUsedWithinProvider = 102200,
+
+  /**
+   * React component has been unmounted.
+   */
+  ReactComponentUnmounted = 102201,
 }
 
 /**

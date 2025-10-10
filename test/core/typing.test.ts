@@ -9,6 +9,7 @@ import { Logger } from '../../src/core/logger.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { DefaultTyping, Typing } from '../../src/core/typing.ts';
+import { ErrorCode } from '../../src/index.ts';
 import { channelEventEmitter, ChannelEventEmitterReturnType } from '../helper/channel.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { makeTestLogger } from '../helper/logger.ts';
@@ -210,7 +211,7 @@ describe('Typing', () => {
       vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
 
       // Start typing
-      await expect(room.typing.keystroke()).rejects.toBeErrorInfoWithCode(40000);
+      await expect(room.typing.keystroke()).rejects.toBeErrorInfoWithCode(ErrorCode.Disconnected);
     });
 
     it<TestContext>('cancels stop operation when interrupted by subsequent keystroke', async (context) => {
@@ -296,7 +297,7 @@ describe('Typing', () => {
       await room.typing.keystroke();
       vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
 
-      await expect(room.typing.stop()).rejects.toBeErrorInfoWithCode(40000);
+      await expect(room.typing.stop()).rejects.toBeErrorInfoWithCode(ErrorCode.Disconnected);
 
       // Check that no messages were sent
       expect(realtimeChannel.publish).toHaveBeenCalledTimes(1);
@@ -362,7 +363,7 @@ describe('Typing', () => {
             .stop()
             .catch((error: unknown) => {
               // Stop should be rejected since we're disposed
-              expect(error).toBeErrorInfoWithCode(40000);
+              expect(error).toBeErrorInfoWithCode(ErrorCode.ResourceDisposed);
             })
             .finally(() => {
               clearTimeout(timeoutId);
@@ -837,7 +838,7 @@ describe('Typing', () => {
             .stop()
             .catch((error: unknown) => {
               // Stop should be rejected since we're disposed
-              expect(error).toBeErrorInfoWithCode(40000);
+              expect(error).toBeErrorInfoWithCode(ErrorCode.ResourceDisposed);
             })
             .finally(() => {
               clearTimeout(timeoutId);

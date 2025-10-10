@@ -1,6 +1,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { ErrorCode } from '../../../../src/core/errors.ts';
 import { useRoomContext } from '../../../../src/react/hooks/internal/use-room-context.ts';
 import { ChatRoomProvider } from '../../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../../src/react/providers/chat-client-provider.tsx';
@@ -16,7 +17,7 @@ describe('useRoom', () => {
 
     const TestThrowError: React.FC = () => {
       expect(() => useRoomContext('foo')).toThrowErrorInfo({
-        code: 40000,
+        code: ErrorCode.ReactHookMustBeUsedWithinProvider,
         message: 'foo hook must be used within a <ChatRoomProvider>',
       });
       return null;

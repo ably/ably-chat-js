@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 
 import { ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
+import { ErrorCode } from './errors.js';
 import { OccupancyEvent, OccupancyEventType, RealtimeMetaEventType } from './events.js';
 import { Logger } from './logger.js';
 import { OccupancyData, parseOccupancyMessage } from './occupancy-parser.js';
@@ -113,7 +114,7 @@ export class DefaultOccupancy implements Occupancy {
     if (!this._roomOptions.occupancy.enableEvents) {
       throw new Ably.ErrorInfo(
         'cannot subscribe to occupancy; occupancy events are not enabled in room options',
-        40000,
+        ErrorCode.FeatureNotEnabledInRoom,
         400,
       ) as unknown as Error;
     }
@@ -147,7 +148,7 @@ export class DefaultOccupancy implements Occupancy {
     if (!this._roomOptions.occupancy.enableEvents) {
       throw new Ably.ErrorInfo(
         'cannot get current occupancy; occupancy events are not enabled in room options',
-        40000,
+        ErrorCode.FeatureNotEnabledInRoom,
         400,
       ) as unknown as Error;
     }

@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { ClientIdResolver } from './client-id.js';
+import { ErrorCode } from './errors.js';
 import { RoomReactionEvent, RoomReactionEventType, RoomReactionRealtimeEventType } from './events.js';
 import { Logger } from './logger.js';
 import { messageToEphemeral } from './realtime.js';
@@ -148,7 +149,9 @@ export class DefaultRoomReactions implements RoomReactions {
 
     // CHA-ER3f
     if (this._connection.state !== 'connected') {
-      return Promise.reject(new Ably.ErrorInfo('unable to send reaction; not connected to Ably', 40000, 400));
+      return Promise.reject(
+        new Ably.ErrorInfo('unable to send reaction; not connected to Ably', ErrorCode.Disconnected, 400),
+      );
     }
 
     const payload: ReactionPayload = {
