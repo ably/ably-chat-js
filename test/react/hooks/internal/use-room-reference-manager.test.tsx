@@ -2,6 +2,7 @@ import { render, renderHook } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { ErrorCode } from '../../../../src/core/errors.ts';
 import { useRoomReferenceManager } from '../../../../src/react/hooks/internal/use-room-reference-manager.js';
 import { ChatClientProvider } from '../../../../src/react/providers/chat-client-provider.js';
 import { newChatClient } from '../../../helper/chat.js';
@@ -12,7 +13,7 @@ describe('useRoomReferenceManager', () => {
   it('should throw an error when used outside of ChatClientProvider', () => {
     const TestComponent: React.FC = () => {
       expect(() => useRoomReferenceManager()).toThrowErrorInfo({
-        code: 40000,
+        code: ErrorCode.ReactHookMustBeUsedWithinProvider,
         message: 'useRoomReferenceManager must be used within a ChatClientProvider',
       });
       return null;

@@ -3,6 +3,7 @@ import * as Ably from 'ably';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { ErrorCode } from '../../../src/core/errors.ts';
 import { RoomStatus, RoomStatusListener } from '../../../src/core/room-status.ts';
 import { ChatRoomProvider, useRoom, UseRoomResponse } from '../../../src/react/index.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -27,7 +28,7 @@ describe('useRoom', () => {
 
     const TestThrowError: React.FC = () => {
       expect(() => useRoom()).toThrowErrorInfo({
-        code: 40000,
+        code: ErrorCode.ReactHookMustBeUsedWithinProvider,
         message: 'useRoom hook must be used within a <ChatRoomProvider>',
       });
       return null;

@@ -2,9 +2,9 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DefaultClientIdResolver } from '../../src/core/client-id.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import { DefaultRoom } from '../../src/core/room.ts';
 import { DefaultRooms, Rooms } from '../../src/core/rooms.ts';
-import { ErrorCode } from '../../src/index.ts';
 import { randomRoomName } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -32,7 +32,7 @@ describe('rooms', () => {
       await expect(room1).resolves.toBeDefined();
       await expect(room2).rejects.toBeErrorInfo({
         statusCode: 400,
-        code: 40000,
+        code: ErrorCode.RoomExistsWithDifferentOptions,
         message: 'room already exists with different options',
       });
     });

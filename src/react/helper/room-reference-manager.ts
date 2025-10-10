@@ -194,7 +194,7 @@ export class RoomReferenceManager {
         // Room is actively being used with different options - throw an error
         throw new Ably.ErrorInfo(
           `cannot get room with different options; room "${roomName}" is already in use with different options`,
-          ErrorCode.BadRequest,
+          ErrorCode.RoomExistsWithDifferentOptions,
           400,
         );
       }

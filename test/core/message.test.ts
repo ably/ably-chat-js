@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { ErrorCode } from '../../src/core/errors.ts';
 import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType } from '../../src/core/events.ts';
 import { DefaultMessage, emptyMessageReactions, Message } from '../../src/core/message.ts';
 
@@ -486,7 +487,7 @@ describe('ChatMessage', () => {
       };
 
       expect(() => message.with(event)).toThrowErrorInfo({
-        code: 40000,
+        code: ErrorCode.InvalidArgument,
         statusCode: 400,
         message: 'cannot apply event for a different message',
       });
@@ -517,7 +518,7 @@ describe('ChatMessage', () => {
       };
 
       expect(() => message.with(event)).toThrowErrorInfo({
-        code: 40000,
+        code: ErrorCode.InvalidArgument,
         statusCode: 400,
         message: 'cannot apply a created event to a message',
       });

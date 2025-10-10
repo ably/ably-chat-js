@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import { describe, expect, it } from 'vitest';
 
+import { ErrorCode } from '../../src/core/errors.ts';
 import { LogLevel } from '../../src/core/logger.ts';
 import { RoomStatus } from '../../src/core/room-status.ts';
 import { newChatClient } from '../helper/chat.ts';
@@ -11,7 +12,7 @@ describe('Rooms', () => {
     const chat = newChatClient({ logLevel: LogLevel.Silent });
     await chat.rooms.get('test', { typing: { heartbeatThrottleMs: 5000 } });
     await expect(chat.rooms.get('test', { typing: { heartbeatThrottleMs: 6000 } })).rejects.toBeErrorInfoWithCode(
-      40000,
+      ErrorCode.RoomExistsWithDifferentOptions,
     );
   });
 
@@ -201,7 +202,7 @@ describe('Rooms', () => {
       expectRoomsCount(chat.rooms, 0);
 
       // Should not be able to create new rooms after dispose
-      await expect(chat.rooms.get('test-room-new')).rejects.toBeErrorInfoWithCode(40000);
+      await expect(chat.rooms.get('test-room-new')).rejects.toBeErrorInfoWithCode(ErrorCode.ResourceDisposed);
     });
 
     it('should fail when trying to get rooms after dispose', async () => {
@@ -211,16 +212,16 @@ describe('Rooms', () => {
 
       // Any attempt to get a room should fail
       await expect(chat.rooms.get('any-room')).rejects.toBeErrorInfo({
-        code: 40000,
+        code: ErrorCode.ResourceDisposed,
         statusCode: 400,
         message: 'cannot get room, rooms instance has been disposed',
       });
 
       // Multiple calls should all fail
-      await expect(chat.rooms.get('another-room')).rejects.toBeErrorInfoWithCode(40000);
+      await expect(chat.rooms.get('another-room')).rejects.toBeErrorInfoWithCode(ErrorCode.ResourceDisposed);
       await expect(
         chat.rooms.get('yet-another-room', { typing: { heartbeatThrottleMs: 1000 } }),
-      ).rejects.toBeErrorInfoWithCode(40000);
+      ).rejects.toBeErrorInfoWithCode(ErrorCode.ResourceDisposed);
     });
   });
 });

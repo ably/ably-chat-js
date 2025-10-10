@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChannelOptionsMerger } from './channel-manager.js';
+import { ErrorCode } from './errors.js';
 import { PresenceEventType } from './events.js';
 import { JsonObject } from './json.js';
 import { Logger } from './logger.js';
@@ -332,12 +333,16 @@ export class DefaultPresence implements Presence {
     // Check if presence events are enabled
     if (!this._options.presence.enableEvents) {
       this._logger.error('could not subscribe to presence; presence events are not enabled');
-      throw new Ably.ErrorInfo('could not subscribe to presence; presence events are not enabled', 40000, 400);
+      throw new Ably.ErrorInfo(
+        'could not subscribe to presence; presence events are not enabled',
+        ErrorCode.FeatureNotEnabledInRoom,
+        400,
+      );
     }
 
     if (!listenerOrEvents && !listener) {
       this._logger.error('could not subscribe to presence; invalid arguments');
-      throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400);
+      throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', ErrorCode.InvalidArgument, 400);
     }
 
     // Add listener to all events
@@ -441,7 +446,11 @@ export class DefaultPresence implements Presence {
   private _assertChannelState(): void {
     if (this._channel.state !== 'attaching' && this._channel.state !== 'attached') {
       this._logger.error('could not perform presence operation; room is not attached');
-      throw new Ably.ErrorInfo('could not perform presence operation; room is not attached', 40000, 400);
+      throw new Ably.ErrorInfo(
+        'could not perform presence operation; room is not attached',
+        ErrorCode.RoomNotAttached,
+        400,
+      );
     }
   }
 

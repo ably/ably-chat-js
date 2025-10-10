@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { ChatApi } from './chat-api.js';
+import { ErrorCode } from './errors.js';
 import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType, RealtimeMessageName } from './events.js';
 import { Logger } from './logger.js';
 import { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
@@ -376,8 +377,8 @@ export class DefaultMessages implements Messages {
       );
       throw new Ably.ErrorInfo(
         'cannot query history; listener has not been subscribed yet',
-        40000,
-        400,
+        ErrorCode.ListenerNotSubscribedYet,
+        500,
       ) as unknown as Error;
     }
 
@@ -424,7 +425,11 @@ export class DefaultMessages implements Messages {
         return { fromSerial: channelWithProperties.properties.channelSerial };
       }
       this._logger.error(`DefaultSubscriptionManager.handleAttach(); channelSerial is undefined`);
-      throw new Ably.ErrorInfo('channel is attached, but channelSerial is not defined', 40000, 400) as unknown as Error;
+      throw new Ably.ErrorInfo(
+        'channel is attached, but channelSerial is not defined',
+        ErrorCode.ChannelSerialNotDefined,
+        500,
+      ) as unknown as Error;
     }
 
     return this._subscribeAtChannelAttach();
@@ -467,7 +472,11 @@ export class DefaultMessages implements Messages {
           this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
           cleanup();
           reject(
-            new Ably.ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error,
+            new Ably.ErrorInfo(
+              'channel is attached, but attachSerial is not defined',
+              ErrorCode.ChannelSerialNotDefined,
+              500,
+            ) as unknown as Error,
           );
         }
         return;
@@ -487,7 +496,11 @@ export class DefaultMessages implements Messages {
         } else {
           this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
           reject(
-            new Ably.ErrorInfo('channel is attached, but attachSerial is not defined', 40000, 400) as unknown as Error,
+            new Ably.ErrorInfo(
+              'channel is attached, but attachSerial is not defined',
+              ErrorCode.ChannelSerialNotDefined,
+              500,
+            ) as unknown as Error,
           );
         }
       });
@@ -618,7 +631,11 @@ export class DefaultMessages implements Messages {
     this._emitter.off();
 
     // Reject all pending subscription point promises to break circular references
-    const disposalError = new Ably.ErrorInfo('room has been disposed', 40000, 400) as unknown as Error;
+    const disposalError = new Ably.ErrorInfo(
+      'room has been disposed',
+      ErrorCode.ResourceDisposed,
+      400,
+    ) as unknown as Error;
     for (const rejectFn of this._pendingPromiseRejecters) {
       try {
         rejectFn(disposalError);
