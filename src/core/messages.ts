@@ -10,7 +10,6 @@ import { PaginatedResult } from './query.js';
 import { on, once, subscribe } from './realtime-subscriptions.js';
 import { messageFromRest } from './rest-types.js';
 import { MessagesOptions } from './room-options.js';
-import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
@@ -220,7 +219,7 @@ export interface Messages {
    * @param serial The serial of the message to get.
    * @returns A promise that resolves with the message.
    */
-  get(serial: Serial): Promise<Message>;
+  get(serial: string): Promise<Message>;
 
   /**
    * Send a message in the chat room.
@@ -255,11 +254,11 @@ export interface Messages {
    * Note: This is subject to change in future versions, whereby a new permissions model will be introduced
    * and a deleted message may not be restorable in this way.
    * @returns A promise that resolves when the message was deleted.
-   * @param serial - A string or object that conveys the serial of the message to delete.
+   * @param serial - The serial of the message to delete.
    * @param details - Optional details to record about the delete action.
    * @returns A promise that resolves to the deleted message.
    */
-  delete(serial: Serial, details?: OperationDetails): Promise<Message>;
+  delete(serial: string, details?: OperationDetails): Promise<Message>;
 
   /**
    * Update a message in the chat room.
@@ -275,12 +274,12 @@ export interface Messages {
    *
    * This method uses PUT-like semantics: if headers and metadata are omitted from the updateParams, then
    * the existing headers and metadata are replaced with the empty objects.
-   * @param serial - A string or object that conveys the serial of the message to update.
+   * @param serial - The serial of the message to update.
    * @param updateParams - The parameters for updating the message.
    * @param details - Optional details to record about the update action.
    * @returns A promise of the updated message.
    */
-  update(serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
+  update(serial: string, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
    * Send, delete, and subscribe to message reactions.
@@ -507,9 +506,9 @@ export class DefaultMessages implements Messages {
   /**
    * @inheritdoc
    */
-  get(serial: Serial): Promise<Message> {
+  get(serial: string): Promise<Message> {
     this._logger.trace('Messages.get();', { serial });
-    return this._chatApi.getMessage(this._roomName, serialToString(serial));
+    return this._chatApi.getMessage(this._roomName, serial);
   }
 
   /**
@@ -527,11 +526,8 @@ export class DefaultMessages implements Messages {
   /**
    * @inheritdoc
    */
-  async delete(serial: Serial, details?: OperationDetails): Promise<Message> {
-    this._logger.trace('Messages.delete();', { details });
-
-    serial = serialToString(serial);
-    this._logger.debug('Messages.delete(); serial', { serial });
+  async delete(serial: string, details?: OperationDetails): Promise<Message> {
+    this._logger.trace('Messages.delete();', { serial, details });
     const response = await this._chatApi.deleteMessage(this._roomName, serial, details);
 
     return messageFromRest(response);
@@ -540,11 +536,8 @@ export class DefaultMessages implements Messages {
   /**
    * @inheritdoc
    */
-  async update(serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message> {
-    this._logger.trace('Messages.update();', { updateParams, details });
-
-    serial = serialToString(serial);
-    this._logger.debug('Messages.update(); serial', { serial });
+  async update(serial: string, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message> {
+    this._logger.trace('Messages.update();', { serial, updateParams, details });
     const response = await this._chatApi.updateMessage(this._roomName, serial, {
       message: {
         text: updateParams.text,

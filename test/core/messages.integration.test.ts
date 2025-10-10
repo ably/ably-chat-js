@@ -160,7 +160,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
       // send a message, and then delete it
       const message1 = await room.messages.send({ text: 'Hello there!' });
-      const deletedMessage1 = await room.messages.delete(message1, {
+      const deletedMessage1 = await room.messages.delete(message1.serial, {
         description: 'Deleted message',
         metadata: { key: 'value' },
       });
@@ -293,13 +293,10 @@ describe('messages integration', { timeout: 10000 }, () => {
 
       // send a message, and then delete it using an object with serial
       const message1 = await room.messages.send({ text: 'Hello there!' });
-      const deletedMessage1 = await room.messages.delete(
-        { serial: message1.serial },
-        {
-          description: 'Deleted message',
-          metadata: { key: 'value' },
-        },
-      );
+      const deletedMessage1 = await room.messages.delete(message1.serial, {
+        description: 'Deleted message',
+        metadata: { key: 'value' },
+      });
 
       // Wait up to 5 seconds for the promises to resolve
       await waitForArrayLength(messages, 1);
@@ -335,7 +332,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       const room = await getRandomRoom(chat);
 
       const message1 = await room.messages.send({ text: 'Hello there!' });
-      const deletedMessage1 = await room.messages.delete(message1, { description: 'Deleted message' });
+      const deletedMessage1 = await room.messages.delete(message1.serial, { description: 'Deleted message' });
 
       const updatedMessage1 = message1.with(deletedMessage1);
 
@@ -382,7 +379,7 @@ describe('messages integration', { timeout: 10000 }, () => {
 
       // send a message, and then update it
       const message1 = await room.messages.send({ text: 'Hello there!' });
-      const updated1 = await room.messages.update(message1, message1.copy({ text: 'bananas' }), {
+      const updated1 = await room.messages.update(message1.serial, message1.copy({ text: 'bananas' }), {
         description: 'updated message',
         metadata: { key: 'value' },
       });
@@ -514,13 +511,10 @@ describe('messages integration', { timeout: 10000 }, () => {
 
       // send a message, and then update it using an object with serial
       const message1 = await room.messages.send({ text: 'Hello there!' });
-      const updated1 = await room.messages.update(
-        { serial: message1.serial },
-        {
-          text: 'bananas',
-          metadata: { key: 'value' },
-        },
-      );
+      const updated1 = await room.messages.update(message1.serial, {
+        text: 'bananas',
+        metadata: { key: 'value' },
+      });
 
       // Wait up to 5 seconds for the promises to resolve
       await waitForArrayLength(messages, 1);
@@ -630,7 +624,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       const message1 = await room.messages.send({ text: 'Hello there!' });
 
       // Delete the message
-      const deletedMessage1 = await room.messages.delete(message1, { description: 'Deleted message' });
+      const deletedMessage1 = await room.messages.delete(message1.serial, { description: 'Deleted message' });
 
       // Do a history request to get the deleted message
       await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
@@ -678,7 +672,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       const message1 = await room.messages.send({ text: 'Hello there!' });
 
       // Update the message
-      const updatedMessage1 = await room.messages.update(message1, message1.copy({ text: 'Hello test!' }), {
+      const updatedMessage1 = await room.messages.update(message1.serial, message1.copy({ text: 'Hello test!' }), {
         description: 'updated message',
       });
 

@@ -177,7 +177,7 @@ describe('Messages', () => {
       });
 
       const message1 = await context.room.messages.send({ text: 'hello there' });
-      const deleteMessage1 = await context.room.messages.delete(message1);
+      const deleteMessage1 = await context.room.messages.delete(message1.serial);
 
       expect(deleteMessage1).toEqual(
         expect.objectContaining({
@@ -229,7 +229,7 @@ describe('Messages', () => {
       });
 
       const message = await room.messages.send({ text: 'hello there' });
-      const deleteMessage = await room.messages.delete({ serial: message.serial });
+      const deleteMessage = await room.messages.delete(message.serial);
       expect(deleteMessage).toEqual(
         expect.objectContaining({
           serial: sendSerial,
@@ -294,14 +294,6 @@ describe('Messages', () => {
 
       expect(deleteMessage.version).toEqual(expect.objectContaining({ clientId: 'clientId' }));
     });
-
-    it<TestContext>('should throw an error if no serial when deleting a message', async (context) => {
-      const { room } = context;
-      await expect(room.messages.delete({} as Message)).rejects.toBeErrorInfo({
-        code: 40000,
-        message: 'invalid serial; must be string or object with serial property',
-      });
-    });
   });
 
   describe('updating messages', () => {
@@ -346,7 +338,7 @@ describe('Messages', () => {
 
       const message = await room.messages.send({ text: 'hello there' });
       const updateMessage = await room.messages.update(
-        { serial: message.serial },
+        message.serial,
         { text: 'hello there' },
         { metadata: { hello: 'world' } },
       );
@@ -417,14 +409,6 @@ describe('Messages', () => {
       );
 
       expect(updateMessage.version).toEqual(expect.objectContaining({ clientId: 'clientId' }));
-    });
-
-    it<TestContext>('should throw an error if no serial when updating a message', async (context) => {
-      const { room } = context;
-      await expect(room.messages.update({} as Message, { text: 'hello there' })).rejects.toBeErrorInfo({
-        code: 40000,
-        message: 'invalid serial; must be string or object with serial property',
-      });
     });
   });
 

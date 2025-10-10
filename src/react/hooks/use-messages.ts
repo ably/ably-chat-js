@@ -17,7 +17,6 @@ import {
   SendMessageParams,
   UpdateMessageParams,
 } from '../../core/messages.js';
-import { Serial } from '../../core/serial.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
@@ -135,10 +134,10 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
 
-  const getMessage = useCallback((serial: Serial) => context.room.then((room) => room.messages.get(serial)), [context]);
+  const getMessage = useCallback((serial: string) => context.room.then((room) => room.messages.get(serial)), [context]);
 
   const deleteMessage = useCallback(
-    (serial: Serial, details?: OperationDetails) => context.room.then((room) => room.messages.delete(serial, details)),
+    (serial: string, details?: OperationDetails) => context.room.then((room) => room.messages.delete(serial, details)),
     [context],
   );
 
@@ -148,19 +147,19 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   );
 
   const updateMessage = useCallback(
-    (serial: Serial, updateParams: UpdateMessageParams, details?: OperationDetails) =>
+    (serial: string, updateParams: UpdateMessageParams, details?: OperationDetails) =>
       context.room.then((room) => room.messages.update(serial, updateParams, details)),
     [context],
   );
 
   const sendReaction: Messages['reactions']['send'] = useCallback(
-    (serial: Serial, params: SendMessageReactionParams) =>
+    (serial: string, params: SendMessageReactionParams) =>
       context.room.then((room) => room.messages.reactions.send(serial, params)),
     [context],
   );
 
   const deleteReaction: Messages['reactions']['delete'] = useCallback(
-    (serial: Serial, params?: DeleteMessageReactionParams) =>
+    (serial: string, params?: DeleteMessageReactionParams) =>
       context.room.then((room) => room.messages.reactions.delete(serial, params)),
     [context],
   );

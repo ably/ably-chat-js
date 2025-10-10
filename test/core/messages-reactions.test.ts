@@ -50,28 +50,26 @@ describe('MessageReactions', () => {
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'sendMessageReaction').mockResolvedValue();
 
-      const msg = { serial: serial };
-
-      await context.room.messages.reactions.send(msg, { type: MessageReactionType.Unique, name: '🥕' });
+      await context.room.messages.reactions.send(serial, { type: MessageReactionType.Unique, name: '🥕' });
       expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Unique,
         name: '🥕',
       });
 
-      await context.room.messages.reactions.send(msg, { type: MessageReactionType.Distinct, name: '🥕' });
+      await context.room.messages.reactions.send(serial, { type: MessageReactionType.Distinct, name: '🥕' });
       expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '🥕',
       });
 
-      await context.room.messages.reactions.send(msg, { type: MessageReactionType.Multiple, name: '🥕' });
+      await context.room.messages.reactions.send(serial, { type: MessageReactionType.Multiple, name: '🥕' });
       expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
         count: 1,
       });
 
-      await context.room.messages.reactions.send(msg, { type: MessageReactionType.Multiple, name: '🥕', count: 10 });
+      await context.room.messages.reactions.send(serial, { type: MessageReactionType.Multiple, name: '🥕', count: 10 });
       expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
@@ -79,7 +77,7 @@ describe('MessageReactions', () => {
       });
 
       // default is distinct for AllFeaturesEnabled
-      await context.room.messages.reactions.send(msg, { name: '👻' });
+      await context.room.messages.reactions.send(serial, { name: '👻' });
       expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '👻',
@@ -92,52 +90,28 @@ describe('MessageReactions', () => {
       const serial = 'abcdefghij@' + String(timestamp) + '-123';
       vi.spyOn(chatApi, 'deleteMessageReaction').mockResolvedValue();
 
-      const msg = { serial: serial };
-
-      await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Unique });
+      await context.room.messages.reactions.delete(serial, { type: MessageReactionType.Unique });
       expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Unique,
       });
 
-      await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Distinct, name: '🥕' });
+      await context.room.messages.reactions.delete(serial, { type: MessageReactionType.Distinct, name: '🥕' });
       expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '🥕',
       });
 
-      await context.room.messages.reactions.delete(msg, { type: MessageReactionType.Multiple, name: '🥕' });
+      await context.room.messages.reactions.delete(serial, { type: MessageReactionType.Multiple, name: '🥕' });
       expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Multiple,
         name: '🥕',
       });
 
       // default is distinct for AllFeaturesEnabled
-      await context.room.messages.reactions.delete(msg, { name: '👻' });
+      await context.room.messages.reactions.delete(serial, { name: '👻' });
       expect(chatApi.deleteMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '👻',
-      });
-    });
-
-    it<TestContext>('should throw error when sending reaction with invalid serial', (context) => {
-      const { room } = context;
-
-      expect(() => room.messages.reactions.send('', { type: MessageReactionType.Unique, name: '🥕' })).toThrowErrorInfo(
-        {
-          code: 40000,
-          statusCode: 400,
-          message: 'invalid serial; must be string or object with serial property',
-        },
-      );
-    });
-
-    it<TestContext>('should throw error when deleting reaction with invalid serial', (context) => {
-      const { room } = context;
-
-      expect(() => room.messages.reactions.delete('', { type: MessageReactionType.Unique })).toThrowErrorInfo({
-        code: 40000,
-        statusCode: 400,
-        message: 'invalid serial; must be string or object with serial property',
       });
     });
 

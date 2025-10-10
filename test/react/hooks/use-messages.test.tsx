@@ -210,7 +210,7 @@ describe('useMessages', () => {
     await act(async () => {
       await result.current.sendMessage({ text: 'test message' });
       await result.current.history({ limit: 10 });
-      await result.current.deleteMessage(message, {
+      await result.current.deleteMessage(message.serial, {
         description: 'deleted',
         metadata: { reason: 'test' },
       });
@@ -218,7 +218,7 @@ describe('useMessages', () => {
 
     expect(sendSpy).toHaveBeenCalledWith({ text: 'test message' });
     expect(historySpy).toHaveBeenCalledWith({ limit: 10 });
-    expect(deleteSpy).toHaveBeenCalledWith(message, {
+    expect(deleteSpy).toHaveBeenCalledWith(message.serial, {
       description: 'deleted',
       metadata: { reason: 'test' },
     });

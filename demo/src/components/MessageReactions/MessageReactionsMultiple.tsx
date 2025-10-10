@@ -23,7 +23,7 @@ export const MessageReactionsMultiple: React.FC<MessageReactionsMultipleProps> =
       return;
     }
 
-    onReactionSend(message, { type: MessageReactionType.Multiple, name: name });
+    onReactionSend(message.serial, { type: MessageReactionType.Multiple, name: name });
   };
 
   const handleReactionRemoveClick = (name: string) => {
@@ -31,7 +31,7 @@ export const MessageReactionsMultiple: React.FC<MessageReactionsMultipleProps> =
       return;
     }
 
-    onReactionRemove(message, { type: MessageReactionType.Multiple, name: name });
+    onReactionRemove(message.serial, { type: MessageReactionType.Multiple, name: name });
   };
 
   const multiple = message.reactions.multiple ?? {};

@@ -20,7 +20,6 @@ import { Logger } from './logger.js';
 import { Message } from './message.js';
 import { subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions, MessagesOptions } from './room-options.js';
-import { Serial, serialToString } from './serial.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
@@ -87,7 +86,7 @@ export interface MessageReactions {
    * @param params Describe the reaction to send.
    * @returns A promise that resolves when the reaction is sent.
    */
-  send(messageSerial: Serial, params: SendMessageReactionParams): Promise<void>;
+  send(messageSerial: string, params: SendMessageReactionParams): Promise<void>;
 
   /**
    * Delete a message reaction
@@ -95,7 +94,7 @@ export interface MessageReactions {
    * @param params The type of reaction annotation and the specific reaction to remove. The reaction to remove is required for all types except {@link MessageReactionType.Unique}.
    * @returns A promise that resolves when the reaction is deleted.
    */
-  delete(messageSerial: Serial, params?: DeleteMessageReactionParams): Promise<void>;
+  delete(messageSerial: string, params?: DeleteMessageReactionParams): Promise<void>;
 
   /**
    * Subscribe to message reaction summaries. Use this to keep message reaction
@@ -141,7 +140,7 @@ export interface MessageReactions {
    * });
    * ```
    */
-  clientReactions(messageSerial: Serial, clientId?: string): Promise<Message['reactions']>;
+  clientReactions(messageSerial: string, clientId?: string): Promise<Message['reactions']>;
 }
 
 /**
@@ -252,9 +251,8 @@ export class DefaultMessageReactions implements MessageReactions {
   /**
    * @inheritDoc
    */
-  send(messageSerial: Serial, params: SendMessageReactionParams): Promise<void> {
+  send(messageSerial: string, params: SendMessageReactionParams): Promise<void> {
     this._logger.trace('MessageReactions.send();', { messageSerial, params });
-    const serial = serialToString(messageSerial);
 
     let { type, count } = params;
     if (!type) {
@@ -267,15 +265,14 @@ export class DefaultMessageReactions implements MessageReactions {
     if (count) {
       apiParams.count = count;
     }
-    return this._api.sendMessageReaction(this._roomName, serial, apiParams);
+    return this._api.sendMessageReaction(this._roomName, messageSerial, apiParams);
   }
 
   /**
    * @inheritDoc
    */
-  delete(messageSerial: Serial, params?: DeleteMessageReactionParams): Promise<void> {
+  delete(messageSerial: string, params?: DeleteMessageReactionParams): Promise<void> {
     this._logger.trace('MessageReactions.delete();', { messageSerial, params });
-    const serial = serialToString(messageSerial);
 
     let type = params?.type;
     if (!type) {
@@ -288,7 +285,7 @@ export class DefaultMessageReactions implements MessageReactions {
     if (type !== MessageReactionType.Unique) {
       apiParams.name = params?.name;
     }
-    return this._api.deleteMessageReaction(this._roomName, serial, apiParams);
+    return this._api.deleteMessageReaction(this._roomName, messageSerial, apiParams);
   }
 
   /**
@@ -343,10 +340,9 @@ export class DefaultMessageReactions implements MessageReactions {
     };
   }
 
-  clientReactions(messageSerial: Serial, clientId?: string): Promise<Message['reactions']> {
+  clientReactions(messageSerial: string, clientId?: string): Promise<Message['reactions']> {
     this._logger.trace('MessageReactions.clientReactions();', { messageSerial, clientId });
-    const serial = serialToString(messageSerial);
-    return this._api.getClientReactions(this._roomName, serial, clientId);
+    return this._api.getClientReactions(this._roomName, messageSerial, clientId);
   }
 
   /**
