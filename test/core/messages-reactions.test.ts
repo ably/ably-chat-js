@@ -176,11 +176,17 @@ describe('MessageReactions', () => {
         });
 
         const expected = [
-          { messageSerial: '01672531200000-123@xyzdefghij', unique: { '🥦': { total: 1, clientIds: ['user1'] } } },
-          { messageSerial: '01672531200001-123@xyzdefghij', distinct: { '🥦': { total: 1, clientIds: ['user2'] } } },
+          {
+            messageSerial: '01672531200000-123@xyzdefghij',
+            reactions: { unique: { '🥦': { total: 1, clientIds: ['user1'] } } },
+          },
+          {
+            messageSerial: '01672531200001-123@xyzdefghij',
+            reactions: { distinct: { '🥦': { total: 1, clientIds: ['user2'] } } },
+          },
           {
             messageSerial: '01672531200002-123@xyzdefghij',
-            multiple: { '🍌': { clientIds: { user1: 10 }, total: 10 } },
+            reactions: { multiple: { '🍌': { clientIds: { user1: 10 }, total: 10 } } },
           },
           { messageSerial: '01672531200002-123@xyzdefghij' },
           { messageSerial: '01672531200002-123@xyzdefghij' },
@@ -196,7 +202,7 @@ describe('MessageReactions', () => {
             if (!exp) {
               return;
             } // pleasing typescript
-            expect(found, 'idx=' + String(nextExpected)).toMatchObject({ summary: exp });
+            expect(found, 'idx=' + String(nextExpected)).toMatchObject({ ...exp });
 
             nextExpected++;
             if (nextExpected >= expected.length) {

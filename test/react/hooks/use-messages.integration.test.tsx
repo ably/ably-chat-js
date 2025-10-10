@@ -572,8 +572,8 @@ describe('useMessages', () => {
 
     // expect a reaction summary to be received by the second room
     await waitForArrayLength(reactionSummariesRoomTwo, 1, 10000);
-    expect(reactionSummariesRoomTwo[0]?.summary.messageSerial).toBe(sentMessage?.serial);
-    expect(reactionSummariesRoomTwo[0]?.summary.distinct['👍']?.total).toBe(1);
+    expect(reactionSummariesRoomTwo[0]?.messageSerial).toBe(sentMessage?.serial);
+    expect(reactionSummariesRoomTwo[0]?.reactions.distinct['👍']?.total).toBe(1);
   }, 10000);
 
   it('should delete reactions correctly', async () => {
@@ -628,11 +628,11 @@ describe('useMessages', () => {
     await waitForArrayLength(reactionSummariesRoomTwo, 2, 10000);
 
     // First event should be the reaction being added
-    expect(reactionSummariesRoomTwo[0]?.summary.messageSerial).toBe(sentMessage?.serial);
-    expect(reactionSummariesRoomTwo[0]?.summary.distinct['👍']?.total).toBe(1);
+    expect(reactionSummariesRoomTwo[0]?.messageSerial).toBe(sentMessage?.serial);
+    expect(reactionSummariesRoomTwo[0]?.reactions.distinct['👍']?.total).toBe(1);
 
     // Second event should be the reaction being removed (empty summary)
-    expect(reactionSummariesRoomTwo[1]?.summary.messageSerial).toBe(sentMessage?.serial);
-    expect(reactionSummariesRoomTwo[1]?.summary.distinct['👍']).toBeUndefined();
+    expect(reactionSummariesRoomTwo[1]?.messageSerial).toBe(sentMessage?.serial);
+    expect(reactionSummariesRoomTwo[1]?.reactions.distinct['👍']).toBeUndefined();
   }, 10000);
 });

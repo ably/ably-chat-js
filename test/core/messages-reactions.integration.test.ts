@@ -123,8 +123,8 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         const latestSummary = found.at(-1);
         expect(latestSummary).toMatchObject({
           type: MessageReactionSummaryEventType.Summary,
-          summary: {
-            messageSerial: message1.serial,
+          messageSerial: message1.serial,
+          reactions: {
             multiple: {
               '👍': {
                 total: 11,
@@ -155,8 +155,8 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         const latestSummary = found.at(-1);
         expect(latestSummary).toMatchObject({
           type: MessageReactionSummaryEventType.Summary,
-          summary: {
-            messageSerial: message1.serial,
+          messageSerial: message1.serial,
+          reactions: {
             multiple: {
               '👍': {
                 total: 11,
@@ -215,11 +215,11 @@ describe('message reactions integration', { timeout: 60000 }, () => {
       () => {
         expect(found.length).toBeGreaterThanOrEqual(1);
         const latestSummary = found.at(-1);
-        latestSummary?.summary.distinct['👍']?.clientIds.sort();
+        latestSummary?.reactions.distinct['👍']?.clientIds.sort();
         expect(latestSummary).toMatchObject({
           type: MessageReactionSummaryEventType.Summary,
-          summary: {
-            messageSerial: message1.serial,
+          messageSerial: message1.serial,
+          reactions: {
             distinct: {
               '👍': {
                 total: 2,
@@ -251,8 +251,8 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         const latestSummary = found.at(-1);
         expect(latestSummary).toMatchObject({
           type: MessageReactionSummaryEventType.Summary,
-          summary: {
-            messageSerial: message1.serial,
+          messageSerial: message1.serial,
+          reactions: {
             distinct: {
               '👍': {
                 total: 1,
@@ -313,8 +313,8 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         const latestSummary = found.at(-1);
         expect(latestSummary).toMatchObject({
           type: MessageReactionSummaryEventType.Summary,
-          summary: {
-            messageSerial: message1.serial,
+          messageSerial: message1.serial,
+          reactions: {
             unique: {
               '❤️': {
                 total: 1,
@@ -339,8 +339,8 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         const latestSummary = found.at(-1);
         expect(latestSummary).toMatchObject({
           type: MessageReactionSummaryEventType.Summary,
-          summary: {
-            messageSerial: message1.serial,
+          messageSerial: message1.serial,
+          reactions: {
             unique: {
               '👍': {
                 total: 1,
@@ -362,12 +362,12 @@ describe('message reactions integration', { timeout: 60000 }, () => {
 
     await vi.waitFor(
       () => {
-        const message2Summary = found.findLast((e) => e.summary.messageSerial === message2.serial);
+        const message2Summary = found.findLast((e) => e.messageSerial === message2.serial);
         expect(message2Summary).toBeDefined();
         expect(message2Summary).toMatchObject({
           type: MessageReactionSummaryEventType.Summary,
-          summary: {
-            messageSerial: message2.serial,
+          messageSerial: message2.serial,
+          reactions: {
             unique: {
               '❤️': {
                 total: 1,
@@ -422,8 +422,8 @@ describe('message reactions integration', { timeout: 60000 }, () => {
         const latestSummary = summaryEvents.at(-1);
         expect(latestSummary).toMatchObject({
           type: MessageReactionSummaryEventType.Summary,
-          summary: {
-            messageSerial: message1.serial,
+          messageSerial: message1.serial,
+          reactions: {
             distinct: {
               '❤️': {
                 total: 2,

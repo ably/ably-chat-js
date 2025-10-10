@@ -129,12 +129,12 @@ export interface MessageReactions {
    *   if (uniqueLikes && uniqueLikes.clipped && !uniqueLikes.clientIds.includes(myClientId)) {
    *     // summary is clipped and doesn't include myClientId, so we need to fetch a clientSummary
    *     const clientReactions = await room.messages.reactions.clientReactions(
-   *       event.summary.messageSerial,
+   *       event.messageSerial,
    *       myClientId
    *     );
    *     if (clientReactions.unique && clientReactions.unique['👍']) {
    *       // client has reacted with 👍
-   *       event.summary.unique['👍'].clientIds.push(myClientId);
+   *       event.reactions.unique['👍'].clientIds.push(myClientId);
    *     }
    *   }
    *   // from here, process the summary as usual
@@ -240,8 +240,8 @@ export class DefaultMessageReactions implements MessageReactions {
 
     this._emitter.emit(MessageReactionSummaryEventType.Summary, {
       type: MessageReactionSummaryEventType.Summary,
-      summary: {
-        messageSerial: serial,
+      messageSerial: serial,
+      reactions: {
         unique: unique,
         distinct: distinct,
         multiple: multiple,

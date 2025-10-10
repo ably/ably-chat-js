@@ -306,8 +306,8 @@ describe('useMessages', () => {
     // verify that subscribe was called with the mock listener on mount by invoking it
     const reactionEvent: MessageReactionSummaryEvent = {
       type: MessageReactionSummaryEventType.Summary,
-      summary: {
-        messageSerial: '123',
+      messageSerial: '123',
+      reactions: {
         unique: { '👍': { total: 1, clientIds: ['user1'], clipped: false } },
         distinct: { '👍': { total: 1, clientIds: ['user1'], clipped: false } },
         multiple: {

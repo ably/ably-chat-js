@@ -2,7 +2,7 @@ import { MessageComponent } from '../MessageComponent';
 import { useChatClient, useMessages } from '@ably/chat/react';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { Message, PaginatedResult, ChatMessageEventType } from '@ably/chat';
-import type { ChatMessageEvent } from '@ably/chat';
+import type { ChatMessageEvent, MessageReactionSummaryEvent } from '@ably/chat';
 import { ErrorInfo } from 'ably';
 import { useReactionType } from '../MessageReactions';
 import { MessageInput } from '../MessageInput';
@@ -63,15 +63,15 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
         }
       }
     },
-    reactionsListener: (reaction) => {
-      const messageSerial = reaction.summary.messageSerial;
+    reactionsListener: (event: MessageReactionSummaryEvent) => {
+      const messageSerial = event.messageSerial;
       setMessages((prevMessages) => {
         const index = prevMessages.findIndex((m) => m.serial === messageSerial);
         if (index === -1) {
           return prevMessages;
         }
 
-        const newMessage = prevMessages[index].with(reaction);
+        const newMessage = prevMessages[index].with(event);
 
         // if no change, do nothing
         if (newMessage === prevMessages[index]) {
