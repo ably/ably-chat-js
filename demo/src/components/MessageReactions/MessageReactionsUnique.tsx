@@ -21,9 +21,9 @@ export const MessageReactionsUnique: React.FC<MessageReactionsUniqueProps> = ({
 
   const handleReactionClick = (name: string) => {
     if (clientId && unique[name]?.clientIds.includes(clientId)) {
-      onReactionRemove(message, { type: MessageReactionType.Unique, name: name });
+      onReactionRemove(message.serial, { type: MessageReactionType.Unique, name: name });
     } else if (clientId) {
-      onReactionSend(message, { type: MessageReactionType.Unique, name: name });
+      onReactionSend(message.serial, { type: MessageReactionType.Unique, name: name });
     }
   };
 

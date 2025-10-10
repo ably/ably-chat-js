@@ -21,9 +21,9 @@ export const MessageReactionsDistinct: React.FC<MessageReactionsDistinctProps> =
 
   const handleReactionClick = (name: string) => {
     if (clientId && distinct[name]?.clientIds.includes(clientId)) {
-      onReactionRemove(message, { type: MessageReactionType.Distinct, name: name });
+      onReactionRemove(message.serial, { type: MessageReactionType.Distinct, name: name });
     } else if (clientId) {
-      onReactionSend(message, { type: MessageReactionType.Distinct, name: name });
+      onReactionSend(message.serial, { type: MessageReactionType.Distinct, name: name });
     }
   };
 

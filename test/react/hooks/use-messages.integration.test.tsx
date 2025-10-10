@@ -89,7 +89,7 @@ describe('useMessages', () => {
       useEffect(() => {
         if (roomStatus === RoomStatus.Attached) {
           void sendMessage({ text: 'hello world' }).then((message) => {
-            void deleteMessage(message, {
+            void deleteMessage(message.serial, {
               description: 'deleted',
               metadata: { reason: 'test' },
             });

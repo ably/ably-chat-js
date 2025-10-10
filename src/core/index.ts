@@ -73,7 +73,6 @@ export type { RoomReactionListener, RoomReactions, SendReactionParams } from './
 export type { RoomStatusChange, RoomStatusListener } from './room-status.js';
 export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
-export type { Serial } from './serial.js';
 export type { StatusSubscription, Subscription } from './subscription.js';
 export type { Typing, TypingListener } from './typing.js';
 export type { ErrorInfo, RealtimePresenceParams } from 'ably';
