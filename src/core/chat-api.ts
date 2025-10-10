@@ -57,11 +57,11 @@ interface UpdateMessageParams {
   metadata?: MessageOperationMetadata;
 }
 
-interface DeleteMessageParams {
-  /** Description of the delete action */
+interface OperationDetails {
+  /** Description of the operation */
   description?: string;
 
-  /** Metadata of the delete action */
+  /** Metadata of the operation */
   metadata?: MessageOperationMetadata;
 }
 
@@ -169,10 +169,10 @@ export class ChatApi {
     return messageFromRest(restMessage);
   }
 
-  deleteMessage(roomName: string, serial: string, params?: DeleteMessageParams): Promise<DeleteMessageResponse> {
+  deleteMessage(roomName: string, serial: string, details?: OperationDetails): Promise<DeleteMessageResponse> {
     const body = {
-      ...(params?.description && { description: params.description }),
-      ...(params?.metadata && { metadata: params.metadata }),
+      ...(details?.description && { description: details.description }),
+      ...(details?.metadata && { metadata: details.metadata }),
     };
     return this._makeAuthorizedRequest<DeleteMessageResponse>(
       this._messageUrl(roomName, serial, '/delete'),
