@@ -74,13 +74,13 @@ export const ChatClientProvider = ({ children, client }: ChatClientProviderProps
     }
 
     // Add the agent for the UI kit
-    const uiKitVersion = globalThis.__ABLY_CHAT_REACT_UI_COMPONENTS_VERSION__;
+    const uiKitVersion = globalThis.__ABLY_CHAT_REACT_UI_KIT_VERSION__;
     if (typeof uiKitVersion === 'string') {
       (
         client as unknown as {
           addAgentWithVersion(agent: string, version: string): void;
         }
-      ).addAgentWithVersion('chat-react-ui-components', uiKitVersion);
+      ).addAgentWithVersion('chat-react-ui-kit', uiKitVersion);
     }
 
     return {

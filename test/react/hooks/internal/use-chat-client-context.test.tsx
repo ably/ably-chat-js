@@ -51,7 +51,7 @@ describe('useChatClientContext', () => {
   });
 
   it('should get the chat client from the context without error and ui kit agent if set', () => {
-    (globalThis as Record<string, unknown>).__ABLY_CHAT_REACT_UI_COMPONENTS_VERSION__ = '1.0.0';
+    (globalThis as Record<string, unknown>).__ABLY_CHAT_REACT_UI_KIT_VERSION__ = '1.0.0';
     const chatClient = newChatClient();
     const TestProvider = () => (
       <ChatClientProvider client={chatClient}>
@@ -59,7 +59,7 @@ describe('useChatClientContext', () => {
           callback={(client) => {
             expect(client).toBe(chatClient);
             const agents = (client.realtime as RealtimeWithOptions).options.agents;
-            expect(agents).toEqual({ 'chat-js': VERSION, 'chat-react': VERSION, 'chat-react-ui-components': '1.0.0' });
+            expect(agents).toEqual({ 'chat-js': VERSION, 'chat-react': VERSION, 'chat-react-ui-kit': '1.0.0' });
           }}
         />
       </ChatClientProvider>
