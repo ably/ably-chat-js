@@ -225,9 +225,9 @@ describe('UserPresence', { timeout: 30000 }, () => {
 
   // Test for successful subscription to enter events
   it<TestContext>('should successfully subscribe to enter events ', async (context) => {
-    // Subscribe to enter events
+    // Subscribe to all presence events
     const presenceEvents: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe(PresenceEventType.Enter, (event) => {
+    context.chatRoom.presence.subscribe((event) => {
       presenceEvents.push(event);
     });
 
@@ -241,31 +241,11 @@ describe('UserPresence', { timeout: 30000 }, () => {
     );
   });
 
-  it<TestContext>('does not send unrelated presence events', async (context) => {
-    // Subscribe to enter events
-    const presenceEvents: PresenceEvent[] = [];
-    const { unsubscribe } = context.chatRoom.presence.subscribe(PresenceEventType.Leave, (event) => {
-      presenceEvents.push(event);
-    });
-
-    // Enter presence to trigger the enter event
-    await context.chatRoom.presence.update({ customKeyOne: 1 });
-
-    // Wait for the enter event to be received
-    await assertNoPresenceEvent(presenceEvents, PresenceEventType.Enter, context.clientId);
-
-    // Unsubscribe from presence events
-    unsubscribe();
-  });
-
   it<TestContext>('should unsubscribe from presence events', async (context) => {
     const presenceEvents: PresenceEvent[] = [];
-    const { unsubscribe } = context.chatRoom.presence.subscribe(
-      [PresenceEventType.Enter, PresenceEventType.Update],
-      (event) => {
-        presenceEvents.push(event);
-      },
-    );
+    const { unsubscribe } = context.chatRoom.presence.subscribe((event) => {
+      presenceEvents.push(event);
+    });
 
     // Enter presence to trigger the enter event
     await context.chatRoom.presence.enter({ customKeyOne: 1 });
@@ -290,9 +270,9 @@ describe('UserPresence', { timeout: 30000 }, () => {
   });
 
   it<TestContext>('should successfully subscribe to update events ', async (context) => {
-    // Subscribe to update events
+    // Subscribe to all presence events
     const presenceEvents: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe(PresenceEventType.Update, (event) => {
+    context.chatRoom.presence.subscribe((event) => {
       presenceEvents.push(event);
     });
 
@@ -308,9 +288,9 @@ describe('UserPresence', { timeout: 30000 }, () => {
   });
 
   it<TestContext>('should successfully subscribe to leave events ', async (context) => {
-    // Subscribe to leave events
+    // Subscribe to all presence events
     const presenceEvents: PresenceEvent[] = [];
-    context.chatRoom.presence.subscribe(PresenceEventType.Leave, (event) => {
+    context.chatRoom.presence.subscribe((event) => {
       presenceEvents.push(event);
     });
 
