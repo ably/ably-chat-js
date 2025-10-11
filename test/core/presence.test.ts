@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import { PresenceEventType } from '../../src/core/events.ts';
 import {
   DefaultPresence,
@@ -47,7 +48,7 @@ describe('Presence', () => {
         context.room.presence.subscribe();
       }).toThrowErrorInfo({
         message: 'could not subscribe listener: invalid arguments',
-        code: 40000,
+        code: ErrorCode.InvalidArgument,
       });
     });
 
@@ -58,7 +59,7 @@ describe('Presence', () => {
         room.presence.subscribe(() => {});
       }).toThrowErrorInfo({
         message: 'could not subscribe to presence; presence events are not enabled',
-        code: 40000,
+        code: ErrorCode.FeatureNotEnabledInRoom,
       });
     });
 
@@ -146,7 +147,7 @@ describe('Presence', () => {
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
       await expect(room.presence.isUserPresent('clientId')).rejects.toBeErrorInfo({
-        code: 40000,
+        code: ErrorCode.RoomNotAttached,
         message: 'could not perform presence operation; room is not attached',
       });
     });
@@ -158,7 +159,7 @@ describe('Presence', () => {
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
       await expect(room.presence.enter({ foo: 'bar' })).rejects.toBeErrorInfo({
-        code: 40000,
+        code: ErrorCode.RoomNotAttached,
         message: 'could not perform presence operation; room is not attached',
       });
     });
@@ -170,7 +171,7 @@ describe('Presence', () => {
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
       await expect(room.presence.update({ foo: 'bar' })).rejects.toBeErrorInfo({
-        code: 40000,
+        code: ErrorCode.RoomNotAttached,
         message: 'could not perform presence operation; room is not attached',
       });
     });
@@ -182,7 +183,7 @@ describe('Presence', () => {
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
       await expect(room.presence.leave()).rejects.toBeErrorInfo({
-        code: 40000,
+        code: ErrorCode.RoomNotAttached,
         message: 'could not perform presence operation; room is not attached',
       });
     });
@@ -194,7 +195,7 @@ describe('Presence', () => {
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('detached');
 
       await expect(room.presence.get()).rejects.toBeErrorInfo({
-        code: 40000,
+        code: ErrorCode.RoomNotAttached,
         message: 'could not perform presence operation; room is not attached',
       });
     });

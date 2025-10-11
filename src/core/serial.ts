@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { ErrorCode } from './errors.js';
 import { Message } from './message.js';
 
 /**
@@ -42,7 +43,11 @@ export const serialToString = (serial: Serial): string => {
   }
 
   if (serialString === '') {
-    throw new Ably.ErrorInfo('invalid serial; must be string or object with serial property', 40000, 400);
+    throw new Ably.ErrorInfo(
+      'invalid serial; must be string or object with serial property',
+      ErrorCode.InvalidArgument,
+      400,
+    );
   }
 
   return serialString;

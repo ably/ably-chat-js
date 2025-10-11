@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { NormalizedChatClientOptions } from './config.js';
+import { ErrorCode } from './errors.js';
 
 /**
  * Interface for loggers.
@@ -182,7 +183,7 @@ class DefaultLogger implements Logger {
 
     const levelNumber = logLevelNumberMap.get(level);
     if (levelNumber === undefined) {
-      throw new Ably.ErrorInfo(`Invalid log level: ${level}`, 50000, 500);
+      throw new Ably.ErrorInfo(`Invalid log level: ${level}`, ErrorCode.InvalidArgument, 400);
     }
 
     this._levelNumber = levelNumber;

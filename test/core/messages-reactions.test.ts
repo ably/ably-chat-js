@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import {
   MessageReactionRawEvent,
   MessageReactionRawEventType,
@@ -124,7 +125,7 @@ describe('MessageReactions', () => {
 
       expect(() => room.messages.reactions.send('', { type: MessageReactionType.Unique, name: '🥕' })).toThrowErrorInfo(
         {
-          code: 40000,
+          code: ErrorCode.InvalidArgument,
           statusCode: 400,
           message: 'invalid serial; must be string or object with serial property',
         },
@@ -135,7 +136,7 @@ describe('MessageReactions', () => {
       const { room } = context;
 
       expect(() => room.messages.reactions.delete('', { type: MessageReactionType.Unique })).toThrowErrorInfo({
-        code: 40000,
+        code: ErrorCode.InvalidArgument,
         statusCode: 400,
         message: 'invalid serial; must be string or object with serial property',
       });

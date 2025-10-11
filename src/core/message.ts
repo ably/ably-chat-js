@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import cloneDeep from 'lodash.clonedeep';
 
+import { ErrorCode } from './errors.js';
 import {
   ChatMessageAction,
   ChatMessageEvent,
@@ -427,13 +428,13 @@ export class DefaultMessage implements Message {
 
     // If the event is a created event, throw an error
     if (event.type === ChatMessageEventType.Created) {
-      throw new Ably.ErrorInfo('cannot apply a created event to a message', 40000, 400);
+      throw new Ably.ErrorInfo('cannot apply a created event to a message', ErrorCode.InvalidArgument, 400);
     }
 
     // reaction summary
     if (event.type === MessageReactionSummaryEventType.Summary) {
       if (event.messageSerial !== this.serial) {
-        throw new Ably.ErrorInfo('cannot apply event for a different message', 40000, 400);
+        throw new Ably.ErrorInfo('cannot apply event for a different message', ErrorCode.InvalidArgument, 400);
       }
 
       const newReactions: MessageReactionSummary = {
@@ -471,7 +472,7 @@ export class DefaultMessage implements Message {
   private _getLatestMessageVersion(message: Message): Message {
     // message event (update or delete)
     if (message.serial !== this.serial) {
-      throw new Ably.ErrorInfo('cannot apply event for a different message', 40000, 400);
+      throw new Ably.ErrorInfo('cannot apply event for a different message', ErrorCode.InvalidArgument, 400);
     }
 
     // event is older, keep this instead

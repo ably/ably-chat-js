@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import * as React from 'react';
 
+import { ErrorCode } from '../../../core/errors.js';
 import { ChatClientContext, ChatClientContextValue } from '../../contexts/chat-client-context.js';
 import { RoomReferenceManager } from '../../helper/room-reference-manager.js';
 
@@ -23,7 +24,11 @@ export const useRoomReferenceManager = (): RoomReferenceManager => {
   const context = React.useContext(ChatClientContext) as ExtendedChatClientContextValue;
   const manager = context[ROOM_REFERENCE_MANAGER_KEY];
   if (!manager) {
-    throw new Ably.ErrorInfo('useRoomReferenceManager must be used within a ChatClientProvider', 40000, 400);
+    throw new Ably.ErrorInfo(
+      'useRoomReferenceManager must be used within a ChatClientProvider',
+      ErrorCode.ReactHookMustBeUsedWithinProvider,
+      400,
+    );
   }
   return manager;
 };

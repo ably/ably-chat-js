@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { ErrorCode } from '../../src/core/errors.ts';
 import { ChatMessageAction } from '../../src/core/events.js';
 import { DefaultMessage, emptyMessageReactions } from '../../src/core/message.js';
 import { Serial, serialToString } from '../../src/core/serial.js';
@@ -73,7 +74,7 @@ describe('serialToString', () => {
   ])('should throw ErrorInfo when given $description', ({ input }) => {
     // Act & Assert
     expect(() => serialToString(input)).toThrowErrorInfo({
-      code: 40000,
+      code: ErrorCode.InvalidArgument,
       statusCode: 400,
       message: 'invalid serial; must be string or object with serial property',
     });

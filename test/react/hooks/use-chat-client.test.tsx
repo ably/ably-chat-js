@@ -3,6 +3,7 @@ import * as Ably from 'ably';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { ErrorCode } from '../../../src/core/errors.ts';
 import EventEmitter from '../../../src/core/utils/event-emitter.ts';
 import { useChatClient } from '../../../src/react/hooks/use-chat-client.ts';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
@@ -41,7 +42,7 @@ describe('useChatClient', () => {
   it('should throw an error if used outside of ChatClientProvider', () => {
     const TestThrowError: React.FC = () => {
       expect(() => useChatClient()).toThrowErrorInfo({
-        code: 40000,
+        code: ErrorCode.ReactHookMustBeUsedWithinProvider,
         message: 'useChatClient hook must be used within a chat client provider',
       });
       return null;

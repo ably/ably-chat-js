@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import { E_CANCELED, Mutex } from 'async-mutex';
 
+import { ErrorCode } from './errors.js';
 import { TypingEventType, TypingSetEvent, TypingSetEventType } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
@@ -223,7 +224,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         this._logger.debug(`DefaultTyping.keystroke(); mutex was canceled by a later operation`);
         return;
       }
-      throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
+      throw new Ably.ErrorInfo('mutex acquisition failed', ErrorCode.MutexAcquisitionFailed, 500);
     }
     try {
       // Check if connection is connected
@@ -232,7 +233,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         this._logger.error(`DefaultTyping.keystroke(); connection is not connected`, {
           status: this._connection.state,
         });
-        throw new Ably.ErrorInfo('cannot type, connection is not connected', 40000, 400);
+        throw new Ably.ErrorInfo('cannot stop typing, disconnected from Ably', ErrorCode.Disconnected, 400);
       }
 
       // Check whether user is already typing before publishing again
@@ -271,7 +272,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         this._logger.debug(`DefaultTyping.stop(); mutex was canceled by a later operation`);
         return;
       }
-      throw new Ably.ErrorInfo('mutex acquisition failed', 50000, 500);
+      throw new Ably.ErrorInfo('mutex acquisition failed', ErrorCode.MutexAcquisitionFailed, 500);
     }
     try {
       // Check if connection is connected
@@ -279,7 +280,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         this._logger.error(`DefaultTyping.stop(); connection is not connected`, {
           status: this._connection.state,
         });
-        throw new Ably.ErrorInfo('cannot stop typing, connection is not connected', 40000, 400);
+        throw new Ably.ErrorInfo('cannot stop typing, disconnected from Ably', ErrorCode.Disconnected, 400);
       }
 
       // If the user is not typing, do nothing.

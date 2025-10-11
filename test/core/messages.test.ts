@@ -3,6 +3,7 @@ import { RealtimeChannel } from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, HistoryQueryParams } from '../../src/core/chat-api.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import { ChatMessageAction, ChatMessageEvent, ChatMessageEventType } from '../../src/core/events.ts';
 import { emptyMessageReactions, Message } from '../../src/core/message.ts';
 import { DefaultMessages, OrderBy } from '../../src/core/messages.ts';
@@ -298,7 +299,7 @@ describe('Messages', () => {
     it<TestContext>('should throw an error if no serial when deleting a message', async (context) => {
       const { room } = context;
       await expect(room.messages.delete({} as Message)).rejects.toBeErrorInfo({
-        code: 40000,
+        code: ErrorCode.InvalidArgument,
         message: 'invalid serial; must be string or object with serial property',
       });
     });
@@ -422,7 +423,7 @@ describe('Messages', () => {
     it<TestContext>('should throw an error if no serial when updating a message', async (context) => {
       const { room } = context;
       await expect(room.messages.update({} as Message, { text: 'hello there' })).rejects.toBeErrorInfo({
-        code: 40000,
+        code: ErrorCode.InvalidArgument,
         message: 'invalid serial; must be string or object with serial property',
       });
     });
@@ -744,7 +745,7 @@ describe('Messages', () => {
       unsubscribe();
 
       await expect(historyBeforeSubscribe({ limit: 50 })).rejects.toBeErrorInfo({
-        code: 40000,
+        code: ErrorCode.ListenerNotSubscribedYet,
         message: 'cannot query history; listener has not been subscribed yet',
       });
     });
