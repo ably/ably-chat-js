@@ -101,6 +101,11 @@ export enum ErrorCode {
    */
   MutexAcquisitionFailed = 102113,
 
+  /**
+   * Failed to acquire mutex for operation serialization.
+   */
+  MutexAcquisitionFailed = 102114,
+
   // 102200 - 102300 are reserved for React errors
 
   /**
@@ -112,6 +117,11 @@ export enum ErrorCode {
    * React component has been unmounted.
    */
   ReactComponentUnmounted = 102201,
+
+  /**
+   * Failed to fetch presence data after maximum retries.
+   */
+  PresenceFetchFailed = 102202,
 }
 
 /**

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { normalizeClientOptions } from '../../src/core/config.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import { LogContext, Logger, LogLevel, makeLogger } from '../../src/core/logger.ts';
 
 const defaultLogContext = { contextKey: 'contextValue' };
@@ -79,8 +80,8 @@ describe('logger', () => {
   it('throws exception on invalid log level', () => {
     expect(() => makeLogger({ logLevel: 'invalid' as LogLevel })).toThrowErrorInfo({
       message: 'Invalid log level: invalid',
-      statusCode: 500,
-      code: 50000,
+      statusCode: 400,
+      code: ErrorCode.InvalidArgument,
     });
   });
 });
