@@ -171,17 +171,6 @@ export interface Presence {
   leave(data?: PresenceData): Promise<void>;
 
   /**
-   * Subscribe the given listener from the given list of events.
-   *
-   * Note: This requires presence events to be enabled via the `enableEvents` option in
-   * the {@link PresenceOptions} provided to the room. If this is not enabled, an error will be thrown.
-   * @param eventOrEvents {'enter' | 'leave' | 'update' | 'present'} single event name or array of events to subscribe to
-   * @param listener listener to subscribe
-   * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
-   */
-  subscribe(eventOrEvents: PresenceEventType | PresenceEventType[], listener?: PresenceListener): Subscription;
-
-  /**
    * Subscribe the given listener to all presence events.
    *
    * Note: This requires presence events to be enabled via the `enableEvents` option in
@@ -189,7 +178,7 @@ export interface Presence {
    * @param listener listener to subscribe
    * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
    */
-  subscribe(listener?: PresenceListener): Subscription;
+  subscribe(listener: PresenceListener): Subscription;
 }
 
 /**
@@ -318,16 +307,8 @@ export class DefaultPresence implements Presence {
   /**
    * @inheritDoc
    */
-  subscribe(eventOrEvents: PresenceEventType | PresenceEventType[], listener?: PresenceListener): Subscription;
-  /**
-   * @inheritDoc
-   */
-  subscribe(listener?: PresenceListener): Subscription;
-  subscribe(
-    listenerOrEvents?: PresenceEventType | PresenceEventType[] | PresenceListener,
-    listener?: PresenceListener,
-  ): Subscription {
-    this._logger.trace('Presence.subscribe(); listenerOrEvents', { listenerOrEvents });
+  subscribe(listener: PresenceListener): Subscription {
+    this._logger.trace('Presence.subscribe()');
 
     // Check if presence events are enabled
     if (!this._options.presence.enableEvents) {
@@ -335,31 +316,14 @@ export class DefaultPresence implements Presence {
       throw new Ably.ErrorInfo('could not subscribe to presence; presence events are not enabled', 40000, 400);
     }
 
-    if (!listenerOrEvents && !listener) {
-      this._logger.error('could not subscribe to presence; invalid arguments');
-      throw new Ably.ErrorInfo('could not subscribe listener: invalid arguments', 40000, 400);
-    }
-
-    // Add listener to all events
-    if (listener) {
-      const wrapped = wrap(listener);
-      this._emitter.on(listenerOrEvents as PresenceEventType, wrapped);
-      return {
-        unsubscribe: () => {
-          this._logger.trace('Presence.unsubscribe();', { events: listenerOrEvents });
-          this._emitter.off(wrapped);
-        },
-      };
-    } else {
-      const wrapped = wrap(listenerOrEvents as PresenceListener);
-      this._emitter.on(wrapped);
-      return {
-        unsubscribe: () => {
-          this._logger.trace('Presence.unsubscribe();');
-          this._emitter.off(wrapped);
-        },
-      };
-    }
+    const wrapped = wrap(listener);
+    this._emitter.on(wrapped);
+    return {
+      unsubscribe: () => {
+        this._logger.trace('Presence.unsubscribe();');
+        this._emitter.off(wrapped);
+      },
+    };
   }
 
   /**
