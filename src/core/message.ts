@@ -126,108 +126,6 @@ export interface Message {
   readonly reactions: MessageReactionSummary;
 
   /**
-   * Indicates if the message has been updated.
-   */
-  get isUpdated(): boolean;
-
-  /**
-   * Indicates if the message has been deleted.
-   */
-  get isDeleted(): boolean;
-
-  /**
-   * The clientId of the user who deleted the message.
-   */
-  get deletedBy(): string | undefined;
-
-  /**
-   * The clientId of the user who updated the message.
-   */
-  get updatedBy(): string | undefined;
-
-  /**
-   * The timestamp at which the message was deleted.
-   */
-  get deletedAt(): Date | undefined;
-
-  /**
-   * The timestamp at which the message was updated.
-   */
-  get updatedAt(): Date | undefined;
-
-  /**
-   * Determines if this message is an older version of the given message.
-   *
-   * **Note** that negating this function does not mean that the message is a newer
-   * version of the same message, as the two may be different messages entirely.
-   *
-   * ```ts
-   *  !message.isOlderVersionOf(other) !== message.isNewerVersionOf(other)
-   * ```
-   * @param message The message to compare against.
-   * @returns true if the two messages are the same message (isSameAs returns true) and this message is an older version.
-   */
-  isOlderVersionOf(message: Message): boolean;
-
-  /**
-   * Determines if this message is a newer version of the given message.
-   *
-   * **Note** that negating this function does not mean that the message is an older
-   * version of the same message, as the two may be different messages entirely.
-   *
-   * ```ts
-   * !message.isNewerVersionOf(other) !== message.isOlderVersionOf(other)
-   * ```
-   * @param message The message to compare against.
-   * @returns true if the two messages are the same message (isSameAs returns true) and this message is a newer version.
-   */
-  isNewerVersionOf(message: Message): boolean;
-
-  /**
-   * Determines if this message is the same version as the given message.
-   * @param message The message to compare against.
-   * @returns true if the two messages are the same message and have the same version.
-   */
-  isSameVersionAs(message: Message): boolean;
-
-  /**
-   * Determines if this message was created before the given message. This comparison is based on
-   * global order, so does not necessarily represent the order that messages are received in realtime
-   * from the backend.
-   * @param message The message to compare against.
-   * @returns true if this message was created before the given message, in global order.
-   * @throws {@link ErrorInfo} if serials of either message is invalid.
-   */
-  before(message: Message): boolean;
-
-  /**
-   * Determines if this message was created after the given message. This comparison is based on
-   * global order, so does not necessarily represent the order that messages are received in realtime
-   * from the backend.
-   * @param message The message to compare against.
-   * @returns true if this message was created after the given message, in global order.
-   * @throws {@link ErrorInfo} if serials of either message is invalid.
-   */
-  after(message: Message): boolean;
-
-  /**
-   * Determines if this message is equal to the given message.
-   *
-   * Note that this method compares messages based on {@link Message.serial} alone. It returns true if the
-   * two messages represent different versions of the same message.
-   * @param message The message to compare against.
-   * @returns true if the two messages are the same message.
-   */
-  equal(message: Message): boolean;
-
-  /**
-   * Alias for {@link equal}.
-   * @param message The message to compare against.
-   * @returns true if the two messages are the same message.
-   */
-  isSameAs(message: Message): boolean;
-
-  /**
    * Creates a new message instance with the event applied.
    *
    * NOTE: This method will not replace the message reactions if the event is of type `Message`.
@@ -347,78 +245,6 @@ export class DefaultMessage implements Message {
     Object.freeze(this);
   }
 
-  get isUpdated(): boolean {
-    return this.action === ChatMessageAction.MessageUpdate;
-  }
-
-  get isDeleted(): boolean {
-    return this.action === ChatMessageAction.MessageDelete;
-  }
-
-  get updatedBy(): string | undefined {
-    return this.isUpdated ? this.version.clientId : undefined;
-  }
-
-  get deletedBy(): string | undefined {
-    return this.isDeleted ? this.version.clientId : undefined;
-  }
-
-  get updatedAt(): Date | undefined {
-    return this.isUpdated ? this.version.timestamp : undefined;
-  }
-
-  get deletedAt(): Date | undefined {
-    return this.isDeleted ? this.version.timestamp : undefined;
-  }
-
-  isOlderVersionOf(message: Message): boolean {
-    return this._compareVersions(
-      this,
-      message,
-      (first: MessageVersion, second: MessageVersion) => first.serial < second.serial,
-    );
-  }
-
-  isNewerVersionOf(message: Message): boolean {
-    return this._compareVersions(
-      this,
-      message,
-      (first: MessageVersion, second: MessageVersion) => first.serial > second.serial,
-    );
-  }
-
-  isSameVersionAs(message: Message): boolean {
-    return this._compareVersions(
-      this,
-      message,
-      (first: MessageVersion, second: MessageVersion) => first.serial === second.serial,
-    );
-  }
-
-  _isNewerOrSameVersionOf(message: Message): boolean {
-    return this._compareVersions(
-      this,
-      message,
-      (first: MessageVersion, second: MessageVersion) => first.serial >= second.serial,
-    );
-  }
-
-  before(message: Message): boolean {
-    return this.serial < message.serial;
-  }
-
-  after(message: Message): boolean {
-    return this.serial > message.serial;
-  }
-
-  equal(message: Message): boolean {
-    return this.serial === message.serial;
-  }
-
-  isSameAs(message: Message): boolean {
-    return this.equal(message);
-  }
-
   with(event: Message | ChatMessageEvent | MessageReactionSummaryEvent): Message {
     // If event has the property "serial", then it's a message
     if ('serial' in event) {
@@ -449,19 +275,6 @@ export class DefaultMessage implements Message {
     return this._getLatestMessageVersion(event.message);
   }
 
-  private _compareVersions(
-    first: Message,
-    second: Message,
-    comparator: (first: MessageVersion, second: MessageVersion) => boolean,
-  ): boolean {
-    // If our serials aren't the same, not same message and cannot compare1
-    if (!first.equal(second)) {
-      return false;
-    }
-
-    return first.equal(second) && comparator(first.version, second.version);
-  }
-
   /**
    * Get the latest message version, based on the event.
    * If "this" is the latest version, return "this", otherwise clone the message and apply the reactions.
@@ -475,7 +288,7 @@ export class DefaultMessage implements Message {
     }
 
     // event is older, keep this instead
-    if (this._isNewerOrSameVersionOf(message)) {
+    if (this.version.serial >= message.version.serial) {
       return this;
     }
 

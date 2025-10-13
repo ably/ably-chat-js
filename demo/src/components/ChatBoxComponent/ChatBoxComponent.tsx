@@ -21,7 +21,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
         case ChatMessageEventType.Created: {
           setMessages((prevMessages) => {
             // if already exists do nothing
-            const index = prevMessages.findIndex((other) => message.isSameAs(other));
+            const index = prevMessages.findIndex((other) => message.serial === other.serial);
             if (index !== -1) {
               return prevMessages;
             }
@@ -30,7 +30,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
             const newArray = [...prevMessages, message];
 
             // and put it at the right place
-            newArray.sort((a, b) => (a.before(b) ? -1 : 1));
+            newArray.sort((a, b) => (a.serial < b.serial ? -1 : 1));
 
             return newArray;
           });
@@ -39,7 +39,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
         case ChatMessageEventType.Updated:
         case ChatMessageEventType.Deleted: {
           setMessages((prevMessages) => {
-            const index = prevMessages.findIndex((other) => message.isSameAs(other));
+            const index = prevMessages.findIndex((other) => message.serial === other.serial);
             if (index === -1) {
               return prevMessages;
             }

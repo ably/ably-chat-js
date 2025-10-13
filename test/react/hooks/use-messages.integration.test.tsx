@@ -112,8 +112,7 @@ describe('useMessages', () => {
 
     // expect a message to be received by the second room
     await waitForArrayLength(deletionsRoomTwo, 1);
-    expect(deletionsRoomTwo[0]?.isDeleted).toBe(true);
-    expect(deletionsRoomTwo[0]?.deletedBy).toBe(chatClientOne.clientId);
+    expect(deletionsRoomTwo[0]?.version.clientId).toBe(chatClientOne.clientId);
   }, 10000);
 
   it('should update messages correctly', async () => {
@@ -173,13 +172,12 @@ describe('useMessages', () => {
     await waitForArrayLength(updatesRoomTwo, 1);
     expect(updatesRoomTwo.length).toBe(1);
     const update = updatesRoomTwo[0];
-    expect(update?.isUpdated).toBe(true);
-    expect(update?.updatedBy).toBe(chatClientOne.clientId);
     expect(update?.text).toBe('hello universe');
     expect(update?.metadata).toEqual({ icon: 'universe' });
     expect(update?.action).toBe(ChatMessageAction.MessageUpdate);
     expect(update?.version.description).toBe('make it better');
     expect(update?.version.metadata).toEqual({ something: 'else' });
+    expect(update?.version.clientId).toBe(chatClientOne.clientId);
   }, 10000);
 
   it('should receive messages on a subscribed listener', async () => {

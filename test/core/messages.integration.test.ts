@@ -165,14 +165,11 @@ describe('messages integration', { timeout: 10000 }, () => {
         metadata: { key: 'value' },
       });
 
-      // deleted message should look like a deleted message and convenience getters should work
+      // deleted message should look like a deleted message
+      expect(deletedMessage1.action).toEqual(ChatMessageAction.MessageDelete);
       expect(deletedMessage1.version).not.toEqual(deletedMessage1.serial);
       expect(deletedMessage1.version).not.toEqual(message1.version);
-      expect(deletedMessage1.action).toEqual(ChatMessageAction.MessageDelete);
-      expect(deletedMessage1.deletedAt).toBeDefined();
-      expect(deletedMessage1.deletedAt).toEqual(deletedMessage1.version.timestamp);
-      expect(deletedMessage1.deletedBy).toBeDefined();
-      expect(deletedMessage1.deletedBy).toEqual(deletedMessage1.version.clientId);
+      expect(deletedMessage1.version.clientId).toEqual(chat.clientId);
       expect(deletedMessage1.version.description).toEqual('Deleted message');
       expect(deletedMessage1.version.metadata).toEqual({ key: 'value' });
 
@@ -387,8 +384,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       expect(updated1.text).toBe('bananas');
       expect(updated1.serial).toBe(message1.serial);
       expect(updated1.timestamp.getTime()).toBe(message1.timestamp.getTime());
-      expect(updated1.updatedAt).toBeDefined();
-      expect(updated1.updatedBy).toBe(chat.clientId);
+      expect(updated1.version.clientId).toBe(chat.clientId);
       expect(updated1.version.description).toEqual('updated message');
       expect(updated1.version.metadata).toEqual({ key: 'value' });
 
@@ -411,8 +407,6 @@ describe('messages integration', { timeout: 10000 }, () => {
           text: 'bananas',
           clientId: chat.clientId,
           serial: message1.serial,
-          updatedAt: updated1.updatedAt,
-          updatedBy: chat.clientId,
           action: ChatMessageAction.MessageUpdate,
           version: updated1.version,
           timestamp: message1.timestamp,
@@ -473,8 +467,6 @@ describe('messages integration', { timeout: 10000 }, () => {
           text: 'bananas',
           clientId: chat.clientId,
           serial: message1.serial,
-          updatedAt: updated1.updatedAt,
-          updatedBy: chat.clientId,
           action: ChatMessageAction.MessageUpdate,
           version: updated1.version,
           timestamp: message1.timestamp,
@@ -535,8 +527,6 @@ describe('messages integration', { timeout: 10000 }, () => {
           text: 'bananas',
           clientId: chat.clientId,
           serial: message1.serial,
-          updatedAt: updated1.updatedAt,
-          updatedBy: chat.clientId,
           action: ChatMessageAction.MessageUpdate,
           version: updated1.version,
           timestamp: message1.timestamp,
@@ -567,8 +557,6 @@ describe('messages integration', { timeout: 10000 }, () => {
           text: 'bananas',
           clientId: chat.clientId,
           serial: message1.serial,
-          updatedAt: updated1.updatedAt,
-          updatedBy: chat.clientId,
           action: ChatMessageAction.MessageUpdate,
           version: updated1.version,
           timestamp: message1.timestamp,
@@ -640,8 +628,8 @@ describe('messages integration', { timeout: 10000 }, () => {
           timestamp: message1.timestamp,
           version: {
             serial: deletedMessage1.version.serial,
-            timestamp: deletedMessage1.deletedAt,
-            clientId: deletedMessage1.deletedBy,
+            timestamp: deletedMessage1.version.timestamp,
+            clientId: deletedMessage1.version.clientId,
             description: 'Deleted message',
             metadata: deletedMessage1.version.metadata,
           },
@@ -650,13 +638,9 @@ describe('messages integration', { timeout: 10000 }, () => {
       ]);
 
       // test shorthand getters
-      expect(history.items[0]?.isUpdated).toBe(false);
-      expect(history.items[0]?.isDeleted).toBe(true);
-      expect(history.items[0]?.deletedAt).toEqual(deletedMessage1.deletedAt);
-      expect(history.items[0]?.deletedBy).toEqual(deletedMessage1.deletedBy);
       expect(history.items[0]?.version.serial).toEqual(deletedMessage1.version.serial);
-      expect(history.items[0]?.version.timestamp).toEqual(deletedMessage1.deletedAt);
-      expect(history.items[0]?.version.clientId).toEqual(deletedMessage1.deletedBy);
+      expect(history.items[0]?.version.timestamp).toEqual(deletedMessage1.version.timestamp);
+      expect(history.items[0]?.version.clientId).toEqual(chat.clientId);
       expect(history.items[0]?.version.description).toEqual('Deleted message');
 
       // We shouldn't have a "next" link in the response
@@ -688,19 +672,13 @@ describe('messages integration', { timeout: 10000 }, () => {
           timestamp: message1.timestamp,
           version: {
             serial: updatedMessage1.version.serial,
-            timestamp: updatedMessage1.updatedAt,
-            clientId: updatedMessage1.updatedBy,
+            timestamp: updatedMessage1.version.timestamp,
+            clientId: updatedMessage1.version.clientId,
             description: updatedMessage1.version.description,
           },
           action: ChatMessageAction.MessageUpdate,
         }),
       ]);
-
-      // test shorthand getters
-      expect(history.items[0]?.isUpdated).toBe(true);
-      expect(history.items[0]?.isDeleted).toBe(false);
-      expect(history.items[0]?.updatedAt).toEqual(updatedMessage1.updatedAt);
-      expect(history.items[0]?.updatedBy).toEqual(updatedMessage1.updatedBy);
 
       // We shouldn't have a "next" link in the response
       expect(history.hasNext()).toBe(false);
@@ -762,8 +740,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       if (!history2Item) expect.fail('expected history2Item to be defined');
 
       // Ensure that items in `next` pagination can call `Message` functions
-      expect(history1Item.before(history2Item)).toBe(true);
-      expect(history2Item.after(history1Item)).toBe(true);
+      expect(history1Item.serial < history2Item.serial).toBeTruthy();
 
       // Ensure that `current` pagination method works
       const current = await history2.current();
@@ -781,7 +758,7 @@ describe('messages integration', { timeout: 10000 }, () => {
         expect.fail('expected currentItem to be defined');
       }
       // Ensure the items in the `current` pagination can call `Message` functions
-      expect(currentItem.equal(history2Item)).toBe(true);
+      expect(currentItem.serial === history2Item.serial).toBeTruthy();
 
       // Ensure that `first` pagination method works
       const first = await history2.first();
@@ -808,7 +785,7 @@ describe('messages integration', { timeout: 10000 }, () => {
         expect.fail('expected firstItem to be defined');
       }
       // Ensure the items in the `first` pagination can call `Message` functions
-      expect(firstItem.equal(history1Item)).toBe(true);
+      expect(firstItem.serial).toEqual(history1Item.serial);
 
       // We shouldn't have a "next" link in the response
       expect(history2.hasNext()).toBe(false);
