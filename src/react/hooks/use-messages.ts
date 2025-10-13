@@ -353,7 +353,7 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
  * // Helper function to update local message state
  * const updateLocalMessageState = (messages: Message[], message: Message): Message[] => {
  *   // Find existing message in local state
- *   const existingIndex = messages.findIndex(m => m.equal(message));
+ *   const existingIndex = messages.findIndex(m => m.serial === message.serial);
  *   let updatedMessages = [...messages];
  *
  *   if (existingIndex === -1) {
@@ -364,7 +364,7 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
  *     updatedMessages[existingIndex] = updatedMessages[existingIndex].with(message);
  *   }
  *   // Sort by serial for deterministic ordering
- *   return updatedMessages.sort((a, b) => a.before(b) ? -1 : (b.before(a) ? 1 : 0));
+ *   return updatedMessages.sort((a, b) => a.serial < b.serial ? -1 : (b.serial < a.serial ? 1 : 0));
  * };
  *
  * // Component that handles messages

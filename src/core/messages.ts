@@ -184,7 +184,7 @@ export interface MessageSubscriptionResponse extends Subscription {
    * @example Populating messages on initial subscription
    * ```typescript
    * import * as Ably from 'ably';
-   * import { ChatClient } from '@ably/chat';
+   * import { ChatClient, ChatMessageEventType } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    * const room = await chatClient.rooms.get('general-chat');
@@ -203,7 +203,7 @@ export interface MessageSubscriptionResponse extends Subscription {
    *     messages[existingIndex] = messages[existingIndex].with(message);
    *   }
    *   // Messages should be ordered by serial
-   *   messages.sort((a, b) => a.before(b) ? -1 : (b.before(a) ? 1 : 0));
+   *   messages.sort((a, b) => a.serial < b.serial ? -1 : (b.serial < a.serial ? 1 : 0));
    * };
    *
    *
@@ -293,7 +293,7 @@ export interface Messages {
    * @example
    * ```typescript
    * import * as Ably from 'ably';
-   * import { ChatClient } from '@ably/chat';
+   * import { ChatClient, ChatMessageEventType } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
@@ -307,13 +307,13 @@ export interface Messages {
    *
    *   // Handle different event types
    *   switch (event.type) {
-   *     case 'message.created':
+   *     case ChatMessageEventType.Created:
    *       console.log('New message received');
    *       break;
-   *     case 'message.updated':
+   *     case ChatMessageEventType.Updated:
    *       console.log('Message was edited');
    *       break;
-   *     case 'message.deleted':
+   *     case ChatMessageEventType.Deleted:
    *       console.log('Message was deleted');
    *       break;
    *   }
