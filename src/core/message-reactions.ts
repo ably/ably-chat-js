@@ -99,9 +99,11 @@ export interface MessageReactions {
    *
    * const room = await chatClient.rooms.get('sports-chat');
    *
+   * const messageSerial = '01726585978590-001@abcdefghij:001';
+   *
    * // Send a simple reaction to a message
    * try {
-   *   await room.messages.reactions.send(message.serial, {
+   *   await room.messages.reactions.send(messageSerial, {
    *     name: '👍'
    *   });
    *   console.log('Reaction sent successfully');
@@ -110,13 +112,13 @@ export interface MessageReactions {
    * }
    *
    * // Send a distinct type reaction (can react with multiple different emojis)
-   * await room.messages.reactions.send(message.serial, {
+   * await room.messages.reactions.send(messageSerial, {
    *   name: '❤️',
    *   type: MessageReactionType.Distinct
    * });
    *
    * // Send a multiple type reaction with count (for vote-style reactions)
-   * await room.messages.reactions.send(message.serial, {
+   * await room.messages.reactions.send(messageSerial, {
    *   name: 'option-a',
    *   type: MessageReactionType.Multiple,
    *   count: 3  // User votes 3 times for option-a
@@ -149,9 +151,11 @@ export interface MessageReactions {
    *
    * const room = await chatClient.rooms.get('team-chat');
    *
+   * const messageSerial = '01726585978590-001@abcdefghij:001';
+   *
    * // Delete a distinct reaction (specific emoji)
    * try {
-   *   await room.messages.reactions.delete(message.serial, {
+   *   await room.messages.reactions.delete(messageSerial, {
    *     name: '👍',
    *     type: MessageReactionType.Distinct
    *   });
@@ -161,12 +165,12 @@ export interface MessageReactions {
    * }
    *
    * // Delete a unique reaction (only one per user, name not needed)
-   * await room.messages.reactions.delete(message.serial, {
+   * await room.messages.reactions.delete(messageSerial, {
    *   type: MessageReactionType.Unique
    * });
    *
    * // Delete all instances of a multiple reaction
-   * await room.messages.reactions.delete(message.serial, {
+   * await room.messages.reactions.delete(messageSerial, {
    *   name: 'option-b',
    *   type: MessageReactionType.Multiple
    * });
@@ -180,7 +184,9 @@ export interface MessageReactions {
    * Summary events provide aggregated reaction counts. Each summary event contains counts and
    * client lists for all reaction types on a message.
    *
-   * **Note**: The room must be attached to receive reaction events.
+   * **Note**:
+   * - The room must be attached to receive reaction events.
+   * - When there are many reacting clients, the client list may be clipped. Check the `clipped` flag and use {@link clientReactions} for complete client information when needed.
    * @param listener - Callback invoked when reaction summaries are updated
    * @returns Subscription object with an unsubscribe method
    * @example
@@ -194,25 +200,41 @@ export interface MessageReactions {
    *
    * // Subscribe to reaction summaries
    * const subscription = room.messages.reactions.subscribe((event: MessageReactionSummaryEvent) => {
-   *   const { summary } = event;
-   *   if (summary.distinct) {
-   *     Object.entries(summary.distinct).forEach(([reaction, data]) => {
+   *   const { reactions } = event;
+   *
+   *   // Handle distinct reactions
+   *   if (reactions.distinct && chatClient.clientId) {
+   *     Object.entries(reactions.distinct).forEach(([reaction, data]) => {
+   *       const hasUserReacted = data.clientIds.includes(chatClient.clientId);
    *       console.log(`${reaction}: ${data.total} reactions from ${data.clientIds.length} users`);
+   *       if (data.clipped && !hasUserReacted) {
+   *         // Client list is clipped - use clientReactions() to check if your client reacted
+   *         console.log(`⚠️ Client list for ${reaction} is clipped`);
+   *       }
    *     });
    *   }
    *
-   *   // Handle unique reactions (only one reaction per user)
-   *   if (summary.unique) {
-   *     Object.entries(summary.unique).forEach(([reaction, data]) => {
+   *   // Handle unique reactions
+   *   if (reactions.unique && chatClient.clientId) {
+   *     Object.entries(reactions.unique).forEach(([reaction, data]) => {
    *       const hasUserReacted = data.clientIds.includes(chatClient.clientId);
    *       console.log(`${reaction}: ${data.total} users (you: ${hasUserReacted})`);
+   *       if (data.clipped && !hasUserReacted) {
+   *         // Client list is clipped - use clientReactions() to check if your client reacted
+   *         console.log(`⚠️ Client list for ${reaction} may not include all reacting users`);
+   *       }
    *     });
    *   }
    *
-   *   // Handle multiple reactions (multiple types of reactions, no limit per type)
-   *   if (summary.multiple) {
-   *     Object.entries(summary.multiple).forEach(([reaction, data]) => {
+   *   // Handle multiple reactions
+   *   if (reactions.multiple && chatClient.clientId) {
+   *     Object.entries(reactions.multiple).forEach(([reaction, data]) => {
+   *       const hasUserReacted = data.clientIds[chatClient.clientId] > 0;
    *       console.log(`${reaction}: ${data.total} total votes`);
+   *       if (data.clipped && !hasUserReacted) {
+   *         // Client list is clipped - use clientReactions() to check if your client reacted
+   *         console.log(`⚠️ Vote data for ${reaction} is clipped`);
+   *       }
    *     });
    *   }
    * });
@@ -300,28 +322,31 @@ export interface MessageReactions {
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
-   *
    * const room = await chatClient.rooms.get('large-event');
    *
-   * // Subscribe to reaction summaries and handle clipped results
-   * room.messages.reactions.subscribe(async (event) => {
-   *   // For brevity of example, we check unique 👍 (normally iterate for all relevant reactions)
-   *   const uniqueLikes = event.summary.unique['👍'];
-   *   if (uniqueLikes && uniqueLikes.clipped && !uniqueLikes.clientIds.includes(myClientId)) {
-   *     // summary is clipped and doesn't include myClientId, so we need to fetch a clientSummary
-   *     const clientReactions = await room.messages.reactions.clientReactions(
-   *       event.messageSerial,
-   *       myClientId
-   *     );
-   *     if (clientReactions.unique && clientReactions.unique['👍']) {
-   *       // client has reacted with 👍
-   *       event.reactions.unique['👍'].clientIds.push(myClientId);
-   *     }
-   *   }
-   * });
+   * const messageSerial = '01726585978590-001@abcdefghij:001';
    *
-   * // Attach to the room to start receiving events
-   * await room.attach();
+   * try {
+   *   // Get reactions for the current client
+   *   const myReactions = await room.messages.reactions.clientReactions(messageSerial);
+   *   if (myReactions.unique?.['👍']) {
+   *     console.log('I have reacted with 👍');
+   *   }
+   *   if (myReactions.distinct?.['❤️']) {
+   *     console.log('I have reacted with ❤️');
+   *   }
+   *   if (myReactions.multiple?.['vote-option-a'] && chatClient.clientId) {
+   *     console.log(`I voted for option A: ${myReactions.multiple['vote-option-a'].clientIds[chatClient.clientId]} times`);
+   *   }
+   *   // Check reactions for a specific client
+   *   const specificClientReactions = await room.messages.reactions.clientReactions(
+   *     messageSerial,
+   *     'specific-client-id'
+   *   );
+   *   console.log('Specific client reactions:', specificClientReactions);
+   * } catch (error) {
+   *   console.error('Failed to get client reactions:', error);
+   * }
    * ```
    */
   clientReactions(messageSerial: string, clientId?: string): Promise<Message['reactions']>;
