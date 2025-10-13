@@ -44,12 +44,6 @@ export enum ChatMessageAction {
 
   /** Action applied to a deleted message. */
   MessageDelete = 'message.delete',
-
-  /** Action applied to an annotation summary message. */
-  MessageAnnotationSummary = 'message.summary',
-
-  /** Action applied to a meta occupancy message. */
-  MessageMetaOccupancy = 'meta.occupancy',
 }
 
 /**

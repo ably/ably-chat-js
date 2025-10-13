@@ -8,7 +8,6 @@ import {
 } from './chat-api.js';
 import {
   AnnotationTypeToReactionType,
-  ChatMessageAction,
   MessageReactionRawEvent,
   MessageReactionRawEventType,
   MessageReactionSummaryEvent,
@@ -223,7 +222,7 @@ export class DefaultMessageReactions implements MessageReactions {
     this._logger.trace('MessageReactions._processMessageEvent();', { event });
 
     // only process summary events
-    if (event.action !== ChatMessageAction.MessageAnnotationSummary.valueOf()) {
+    if (event.action !== 'message.summary') {
       return;
     }
 
