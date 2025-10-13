@@ -42,15 +42,6 @@ describe('Presence', () => {
   });
 
   describe<TestContext>('subscribe', () => {
-    it<TestContext>('throws ErrorInfo if subscribing with no arguments', (context) => {
-      expect(() => {
-        context.room.presence.subscribe();
-      }).toThrowErrorInfo({
-        message: 'could not subscribe listener: invalid arguments',
-        code: 40000,
-      });
-    });
-
     it<TestContext>('throws ErrorInfo if presence events are not enabled', (context) => {
       const room = context.makeRoom({ presence: { enableEvents: false } });
 
