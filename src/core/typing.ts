@@ -224,7 +224,11 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         this._logger.debug(`DefaultTyping.keystroke(); mutex was canceled by a later operation`);
         return;
       }
-      throw new Ably.ErrorInfo('mutex acquisition failed', ErrorCode.MutexAcquisitionFailed, 500);
+      throw new Ably.ErrorInfo(
+        'unable to send keystroke event; unable to acquire operation serialization mutex',
+        ErrorCode.MutexAcquisitionFailed,
+        500,
+      );
     }
     try {
       // Check if connection is connected
@@ -272,7 +276,11 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         this._logger.debug(`DefaultTyping.stop(); mutex was canceled by a later operation`);
         return;
       }
-      throw new Ably.ErrorInfo('mutex acquisition failed', ErrorCode.MutexAcquisitionFailed, 500);
+      throw new Ably.ErrorInfo(
+        'unable to send typing stop event; unable to acquire operation serialization mutex',
+        ErrorCode.MutexAcquisitionFailed,
+        500,
+      );
     }
     try {
       // Check if connection is connected
