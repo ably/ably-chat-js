@@ -135,7 +135,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
         return;
       }
       updateMessage(
-        message,
+        message.serial,
         message.copy({
           text: newText,
           metadata: message.metadata,
@@ -154,7 +154,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
 
   const onDeleteMessage = useCallback(
     (message: Message) => {
-      deleteMessage(message, { description: 'deleted by user' }).then((deletedMessage: Message) => {
+      deleteMessage(message.serial, { description: 'deleted by user' }).then((deletedMessage: Message) => {
         handleRESTMessageUpdate(deletedMessage);
       });
     },
