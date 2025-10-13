@@ -374,14 +374,6 @@ describe('parseMessage', () => {
     expect(result.version.serial).toBe('01728402074207-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.version.timestamp).toEqual(new Date(1728402074207));
 
-    // deletion related fields should be undefined
-    expect(result.deletedAt).toBeUndefined();
-    expect(result.deletedBy).toBeUndefined();
-
-    // update related fields should be undefined
-    expect(result.updatedAt).toBeUndefined();
-    expect(result.updatedBy).toBeUndefined();
-
     expect(result.action).toEqual(ChatMessageAction.MessageCreate);
   });
 
@@ -417,18 +409,12 @@ describe('parseMessage', () => {
     expect(result.timestamp).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
-    expect(result.updatedAt).toEqual(new Date(1728402074207));
-    expect(result.updatedBy).toBe('client2');
     expect(result.action).toEqual(ChatMessageAction.MessageUpdate);
     expect(result.version.serial).toEqual('01728402074207-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.version.timestamp).toEqual(new Date(1728402074207));
     expect(result.version.clientId).toEqual('client2');
     expect(result.version.description).toEqual('update message');
     expect(result.version.metadata).toEqual({ 'custom-update': 'some flag' });
-
-    // deletion related fields should be undefined
-    expect(result.deletedAt).toBeUndefined();
-    expect(result.deletedBy).toBeUndefined();
   });
 
   it('should return a DefaultMessage instance for a valid deleted message', () => {
@@ -463,17 +449,11 @@ describe('parseMessage', () => {
     expect(result.timestamp).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({}); // Empty object for all delete messages
     expect(result.headers).toEqual({}); // Empty object for all delete messages
-    expect(result.deletedAt).toEqual(new Date(1728402074207));
-    expect(result.deletedBy).toBe('client2');
     expect(result.version.serial).toEqual('01728402074207-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.version.timestamp).toEqual(new Date(1728402074207));
     expect(result.version.clientId).toEqual('client2');
     expect(result.version.description).toEqual('delete message');
     expect(result.version.metadata).toEqual({ 'custom-warning': 'this is a warning' });
-
-    // update related fields should be undefined
-    expect(result.updatedAt).toBeUndefined();
-    expect(result.updatedBy).toBeUndefined();
   });
 
   it('should return a DefaultMessage instance with empty text/metadata/headers for any deleted message', () => {
@@ -506,17 +486,11 @@ describe('parseMessage', () => {
     expect(result.timestamp).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({}); // Empty object for all delete messages
     expect(result.headers).toEqual({}); // Empty object for all delete messages
-    expect(result.deletedAt).toEqual(new Date(1728402074207));
-    expect(result.deletedBy).toBe('client2');
     expect(result.version.serial).toEqual('01728402074207-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.version.timestamp).toEqual(new Date(1728402074207));
     expect(result.version.clientId).toEqual('client2');
     expect(result.version.description).toEqual('delete message');
     expect(result.version.metadata).toEqual({ 'custom-warning': 'this is a warning' });
-
-    // update related fields should be undefined
-    expect(result.updatedAt).toBeUndefined();
-    expect(result.updatedBy).toBeUndefined();
   });
 
   it('should return a DefaultMessage instance for a deleted message with empty data', () => {
@@ -550,16 +524,10 @@ describe('parseMessage', () => {
     expect(result.timestamp).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({}); // Empty object for all delete messages
     expect(result.headers).toEqual({}); // Empty object for all delete messages
-    expect(result.deletedAt).toEqual(new Date(1728402074207));
-    expect(result.deletedBy).toBe('client2');
     expect(result.version.serial).toEqual('01728402074207-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.version.timestamp).toEqual(new Date(1728402074207));
     expect(result.version.clientId).toEqual('client2');
     expect(result.version.description).toEqual('delete message');
     expect(result.version.metadata).toEqual({ 'custom-warning': 'this is a warning' });
-
-    // update related fields should be undefined
-    expect(result.updatedAt).toBeUndefined();
-    expect(result.updatedBy).toBeUndefined();
   });
 });

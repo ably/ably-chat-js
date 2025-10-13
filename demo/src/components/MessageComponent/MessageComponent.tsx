@@ -1,4 +1,4 @@
-import { Message, MessageReactionType, Messages } from '@ably/chat';
+import { ChatMessageAction, Message, MessageReactionType, Messages } from '@ably/chat';
 import { useChatClient } from '@ably/chat/react';
 import React, { useCallback } from 'react';
 import clsx from 'clsx';
@@ -121,15 +121,15 @@ export const MessageComponent: React.FC<MessageProps> = ({
               <span className="group-hover/time:hidden">{shortDate(message.timestamp)}</span>
               <span className="hidden group-hover/time:inline">{message.timestamp.toLocaleString()}</span>
             </span>
-            {message.isUpdated && message.updatedAt ? (
+            {message.action === ChatMessageAction.MessageUpdate && message.version.timestamp ? (
               <>
                 {' '}
                 &middot; Edited{' '}
                 <span className="group/time relative">
-                  <span className="group-hover/time:hidden">{shortDate(message.updatedAt)}</span>
-                  <span className="hidden group-hover/time:inline">{message.updatedAt.toLocaleString()}</span>
+                  <span className="group-hover/time:hidden">{shortDate(message.version.timestamp)}</span>
+                  <span className="hidden group-hover/time:inline">{message.version.timestamp.toLocaleString()}</span>
                 </span>
-                {message.updatedBy ? <span> by {message.updatedBy}</span> : ''}
+                {message.version.clientId ? <span> by {message.version.clientId}</span> : ''}
               </>
             ) : (
               ''
@@ -141,7 +141,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
               'rounded-bl justify-start bg-gray-300 text-gray-600': !self,
             })}
           >
-            {message.isDeleted ? (
+            {message.action === ChatMessageAction.MessageDelete ? (
               <>
                 This message was deleted.
                 <a
