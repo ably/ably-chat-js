@@ -201,40 +201,22 @@ export interface MessageReactions {
    * // Subscribe to reaction summaries
    * const subscription = room.messages.reactions.subscribe((event: MessageReactionSummaryEvent) => {
    *   const { reactions } = event;
-   *
    *   // Handle distinct reactions
-   *   if (reactions.distinct && chatClient.clientId) {
+   *   if (reactions.distinct) {
    *     Object.entries(reactions.distinct).forEach(([reaction, data]) => {
-   *       const hasUserReacted = data.clientIds.includes(chatClient.clientId);
    *       console.log(`${reaction}: ${data.total} reactions from ${data.clientIds.length} users`);
-   *       if (data.clipped && !hasUserReacted) {
-   *         // Client list is clipped - use clientReactions() to check if your client reacted
-   *         console.log(`⚠️ Client list for ${reaction} is clipped`);
-   *       }
    *     });
    *   }
-   *
    *   // Handle unique reactions
-   *   if (reactions.unique && chatClient.clientId) {
+   *   if (reactions.unique) {
    *     Object.entries(reactions.unique).forEach(([reaction, data]) => {
-   *       const hasUserReacted = data.clientIds.includes(chatClient.clientId);
-   *       console.log(`${reaction}: ${data.total} users (you: ${hasUserReacted})`);
-   *       if (data.clipped && !hasUserReacted) {
-   *         // Client list is clipped - use clientReactions() to check if your client reacted
-   *         console.log(`⚠️ Client list for ${reaction} may not include all reacting users`);
-   *       }
+   *       console.log(`${reaction}: ${data.total} users reacted`);
    *     });
    *   }
-   *
    *   // Handle multiple reactions
-   *   if (reactions.multiple && chatClient.clientId) {
+   *   if (reactions.multiple) {
    *     Object.entries(reactions.multiple).forEach(([reaction, data]) => {
-   *       const hasUserReacted = data.clientIds[chatClient.clientId] > 0;
    *       console.log(`${reaction}: ${data.total} total votes`);
-   *       if (data.clipped && !hasUserReacted) {
-   *         // Client list is clipped - use clientReactions() to check if your client reacted
-   *         console.log(`⚠️ Vote data for ${reaction} is clipped`);
-   *       }
    *     });
    *   }
    * });
