@@ -99,11 +99,6 @@ export enum ErrorCode {
   /**
    * Failed to acquire mutex for operation serialization.
    */
-  MutexAcquisitionFailed = 102113,
-
-  /**
-   * Failed to acquire mutex for operation serialization.
-   */
   MutexAcquisitionFailed = 102114,
 
   // 102200 - 102300 are reserved for React errors
