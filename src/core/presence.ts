@@ -412,7 +412,7 @@ export class DefaultPresence implements Presence {
       this._logger.error('could not perform presence operation; room is not attached');
       throw new Ably.ErrorInfo(
         'could not perform presence operation; room is not attached',
-        ErrorCode.RoomNotAttached,
+        ErrorCode.RoomInInvalidState,
         400,
       );
     }

@@ -47,19 +47,9 @@ export enum ErrorCode {
   // Unable to perform operation;
 
   /**
-   * Cannot perform operation because the room is in a failed state.
+   * Cannot perform operation because the room is in an invalid state.
    */
-  RoomInFailedState = 102101,
-
-  /**
-   * Cannot perform operation because the room is in a releasing state.
-   */
-  RoomIsReleasing = 102102,
-
-  /**
-   * Cannot perform operation because the room is in a released state.
-   */
-  RoomIsReleased = 102103,
+  RoomInInvalidState = 102112,
 
   /**
    * Room was released before the operation could complete.
@@ -90,11 +80,6 @@ export enum ErrorCode {
    * Channel options cannot be modified after the channel has been requested.
    */
   ChannelOptionsCannotBeModified = 102111,
-
-  /**
-   * Could not perform operation; room is not attached.
-   */
-  RoomNotAttached = 102112,
 
   /**
    * Failed to acquire mutex for operation serialization.

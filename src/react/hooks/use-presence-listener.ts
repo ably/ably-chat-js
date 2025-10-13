@@ -221,7 +221,7 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
             })
             .catch((error: unknown) => {
               const errorInfo = error as Ably.ErrorInfo;
-              if (errorInfoIs(errorInfo, ErrorCode.RoomIsReleased)) return;
+              if (errorInfoIs(errorInfo, ErrorCode.RoomInInvalidState)) return;
 
               logger.error('usePresenceListener(); error fetching initial presence data', {
                 error,
