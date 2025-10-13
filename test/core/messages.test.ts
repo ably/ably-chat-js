@@ -729,8 +729,9 @@ describe('Messages', () => {
       unsubscribe();
 
       await expect(historyBeforeSubscribe({ limit: 50 })).rejects.toBeErrorInfo({
-        code: ErrorCode.ListenerNotSubscribedYet,
-        message: 'cannot query history; listener has not been subscribed yet',
+        code: ErrorCode.ListenerNotSubscribed,
+        message: 'cannot query history; listener has not been subscribed',
+        statusCode: 400,
       });
     });
 

@@ -79,7 +79,7 @@ export enum ErrorCode {
   /**
    * Listener has not been subscribed yet.
    */
-  ListenerNotSubscribedYet = 102109,
+  ListenerNotSubscribed = 102109,
 
   /**
    * Channel serial is not defined when expected.
@@ -99,7 +99,7 @@ export enum ErrorCode {
   /**
    * Failed to acquire mutex for operation serialization.
    */
-  MutexAcquisitionFailed = 102114,
+  MutexAcquisitionFailed = 102113,
 
   // 102200 - 102300 are reserved for React errors
 

@@ -371,13 +371,11 @@ export class DefaultMessages implements Messages {
     const subscriptionPoint = this._listenerSubscriptionPoints.get(listener);
 
     if (subscriptionPoint === undefined) {
-      this._logger.error(
-        `DefaultSubscriptionManager.getBeforeSubscriptionStart(); listener has not been subscribed yet`,
-      );
+      this._logger.error(`DefaultSubscriptionManager.getBeforeSubscriptionStart(); listener has not been subscribed`);
       throw new Ably.ErrorInfo(
-        'cannot query history; listener has not been subscribed yet',
-        ErrorCode.ListenerNotSubscribedYet,
-        500,
+        'cannot query history; listener has not been subscribed',
+        ErrorCode.ListenerNotSubscribed,
+        400,
       ) as unknown as Error;
     }
 
