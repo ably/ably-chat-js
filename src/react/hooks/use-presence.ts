@@ -59,7 +59,14 @@ export interface UsePresenceResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Presence.update} method.
    *
-   *  This is a stable reference and will not be changed between renders for the same room.
+   * Updates the presence data for the current user in the chat room.
+   * Emits an 'update' event to all subscribers. If the user is not already present, they will be entered automatically.
+   *
+   * **Note**:
+   * - The room must be attached before calling this method.
+   * - This method uses PUT-like semantics - the entire presence data is replaced with the new value.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
    *
    * **Important** When called, if {@link UsePresenceParams.autoEnterLeave} is set to true, the hook will attempt to
    * auto-enter presence automatically when conditions are met.
@@ -69,6 +76,12 @@ export interface UsePresenceResponse extends ChatStatusResponse {
   /**
    * A shortcut to the {@link Presence.enter} method, which can be used to manually enter presence when
    * `autoEnterLeave` is false, or to explicitly re-enter presence with new data.
+   *
+   * Enters the current user into the chat room presence set.
+   * Emits an 'enter' event to all presence subscribers. Multiple calls will emit additional `update` events if the
+   * user is already present.
+   *
+   * **Note**: The room must be attached before calling this method.
    *
    * This is a stable reference and will not be changed between renders for the same room.
    *
@@ -96,6 +109,11 @@ export interface UsePresenceResponse extends ChatStatusResponse {
 
   /**
    * A shortcut to the {@link Presence.leave} method.
+   *
+   * Removes the current user from the chat room presence set.
+   * Emits a 'leave' event to all subscribers. If the user is not present, this is a no-op.
+   *
+   * **Note**: The room must be attached before calling this method.
    *
    * This is a stable reference and will not be changed between renders for the same room.
    *
@@ -160,39 +178,29 @@ interface PresenceWithStateChangeListener extends Presence {
 const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.Suspended, ConnectionStatus.Failed]);
 
 /**
- * A hook that provides access to the {@link Presence} instance in the room.
- * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
+ * React hook that manages user presence in a chat room.
  *
- * By default (when `autoEnterLeave` is true or not provided), the hook will automatically `enter` the room
- * when the component mounts and the room is attached, and `leave` when the component unmounts. The hook will
- * also automatically re-enter presence after room detachment/reattachment cycles.
+ * This hook provides comprehensive presence functionality with both automatic and manual
+ * control modes. It handles entering/leaving presence, updating presence data, and
+ * tracking the current presence state with automatic recovery after disconnections.
  *
- * When `autoEnterLeave` is false, you have full manual control over entering and leaving presence using the
- * returned `enter` and `leave` methods.
+ * By default (`autoEnterLeave: true`), the hook automatically enters presence when the
+ * component mounts and the room is attached, and leaves when unmounting. It also handles
+ * automatic re-entry after room detachment/reattachment cycles.
  *
- * The {@link UsePresenceResponse.myPresenceState} can be used to determine if the user is currently present
- * in the room, and if any errors occurred while trying to enter or leave presence.
+ * With `autoEnterLeave: false`, you have full manual control over presence lifecycle
+ * using the returned `enter` and `leave` methods.
  *
- * **Important** When using `autoEnterLeave`, you should not use multiple instances of this hook within the same
- * ChatClientProvider instance, as each hook uses the same underlying presence instance, and maintains internal
- * state for the automatic re-entry behavior. If you need to have multiple areas of your application updating the
- * presence data you could either:
- *   1. Set `autoEnterLeave` to `false` and manage presence state automatically.
- *   2. Hold your presence state and call functions at a higher-level (e.g. a context provider), with your
- *      lower-level components passing data back up the hierarchy to be contained in the presence data.
- * @example
- * ```tsx
- * // Example hook usage with auto-entry of presence on mount and auto-leave on unmount
- * const MyComponent = () => {
- *   const { presence, myPresenceState, update } = usePresence({
- *     initialData: { status: 'online' },
- *     onConnectionStatusChange: (change) => console.log('Connection:', change.current),
- *     onDiscontinuity: (error) => console.error('Discontinuity:', error)
- *   });
+ * **Important**: When using `autoEnterLeave`, avoid multiple instances of this hook within
+ * the same ChatClientProvider, as they share the same underlying presence instance. For
+ * multiple components updating presence data, either:
+ * 1. Set `autoEnterLeave: false` and manage state manually
+ * 2. Manage presence state at a higher level (e.g., context provider)
  *
- *   return <div>Present: {myPresenceState.present}</div>;
- * };
- * ```
+ * **Note**: This hook must be used within a {@link ChatRoomProvider} component tree.
+ * **Note**: Room must be attached and connection active for presence operations, typically the {@link ChatRoomProvider} handles this automatically.
+ * @param params - Optional parameters for initial data, auto-enter/leave behavior, and status callbacks
+ * @returns A {@link UsePresenceResponse} containing presence methods and current state
  * @example
  * ```tsx
  * // Example with full manual control (no auto-enter/leave)
@@ -266,8 +274,6 @@ const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.S
  *   return <div>Present: {myPresenceState.present}</div>;
  * };
  * ```
- * @param params - Configuration options for the hook behavior and optional callbacks.
- * @returns UsePresenceResponse - An object containing the {@link Presence} instance and methods to interact with it.
  */
 export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => {
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({
