@@ -119,7 +119,7 @@ export const ChatBoxComponent: FC<ChatBoxComponentProps> = () => {
       if (index === -1) {
         return prevMessages;
       }
-      if (updatedMessage.version <= prevMessages[index].version) {
+      if (updatedMessage.version.serial <= prevMessages[index].version.serial) {
         return prevMessages;
       }
       const updatedArray = prevMessages.slice();
