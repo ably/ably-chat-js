@@ -337,7 +337,7 @@ export interface Messages {
    *
    * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
-   * @param options - Query parameters to filter and control the message retrieval
+   * @param params - Query parameters to filter and control the message retrieval
    * @returns A Promise that resolves to a {@link PaginatedResult} containing an array of {@link Message} objects
    *          and methods for pagination control
    * @throws {Ably.ErrorInfo} When the query fails due to network issues or invalid parameters
@@ -391,7 +391,7 @@ export interface Messages {
    *
    * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
-   * @param serial - The unique serial identifier of the message to retrieve
+   * @param serial - The unique serial identifier of the message to retrieve.
    * @returns A Promise that resolves to the {@link Message} object
    * @throws {Ably.ErrorInfo} When the message is not found or network/server errors occur
    * @example
@@ -489,8 +489,8 @@ export interface Messages {
    * of the returned instance for consistency.
    * - This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
-   * @param serial - The unique identifier of the message to delete (i.e. the {@link Message.serial} field)
-   * @param deleteMessageParams - Optional parameters for the deletion
+   * @param serial - The unique identifier of the message to delete.
+   * @param details - Optional details to record about the delete action.
    * @returns A Promise that resolves to the deleted {@link Message} object with
    *          `isDeleted` set to true and deletion metadata populated
    * @throws {Ably.ErrorInfo} When the message is not found, user lacks permissions,
@@ -549,9 +549,9 @@ export interface Messages {
    * of the returned instance for consistency.
    * - This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
-   * @param serial - The unique identifier of the message to update
-   * @param updateParams - The new message content and properties
-   * @param details - Optional operation details
+   * @param serial - The unique identifier of the message to update.
+   * @param updateParams - The new message content and properties.
+   * @param details - Optional details to record about the delete action.
    * @returns A Promise that resolves to the updated {@link Message} object with
    *          `isUpdated` set to true and update metadata populated
    * @throws {Ably.ErrorInfo} When the message is not found, user lacks permissions,
