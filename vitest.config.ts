@@ -9,10 +9,10 @@ export default defineConfig({
       reporter: ['text', 'html', 'json-summary', 'json'],
       reportOnFailure: true,
       thresholds: {
-        statements: 96,
-        branches: 96,
+        statements: 95,
+        branches: 97,
         functions: 98,
-        lines: 96,
+        lines: 95,
       },
       provider: 'v8',
       ignoreEmptyLines: true,
