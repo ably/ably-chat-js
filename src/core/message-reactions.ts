@@ -6,6 +6,7 @@ import {
   DeleteMessageReactionParams as APIDeleteMessageReactionParams,
   SendMessageReactionParams as APISendMessageReactionParams,
 } from './chat-api.js';
+import { ErrorCode } from './errors.js';
 import {
   AnnotationTypeToReactionType,
   MessageReactionRawEvent,
@@ -278,7 +279,7 @@ export class DefaultMessageReactions implements MessageReactions {
       type = this._defaultType;
     }
     if (type !== MessageReactionType.Unique && !params?.name) {
-      throw new Ably.ErrorInfo(`cannot delete reaction of type ${type} without a name`, 40001, 400);
+      throw new Ably.ErrorInfo(`cannot delete reaction of type ${type} without a name`, ErrorCode.InvalidArgument, 400);
     }
     const apiParams: APIDeleteMessageReactionParams = { type };
     if (type !== MessageReactionType.Unique) {
@@ -309,7 +310,7 @@ export class DefaultMessageReactions implements MessageReactions {
     this._logger.trace('MessageReactions.subscribeRaw();');
 
     if (!this._options?.rawMessageReactions) {
-      throw new Ably.ErrorInfo('Raw message reactions are not enabled', 40001, 400);
+      throw new Ably.ErrorInfo('Raw message reactions are not enabled', ErrorCode.FeatureNotEnabledInRoom, 400);
     }
     const wrapped = wrap(listener);
     this._emitter.on([MessageReactionRawEventType.Create, MessageReactionRawEventType.Delete], wrapped);

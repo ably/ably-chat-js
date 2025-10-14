@@ -144,7 +144,9 @@ export class DefaultRoomReactions implements RoomReactions {
     const { name, metadata, headers } = params;
 
     if (!name) {
-      return Promise.reject(new Ably.ErrorInfo('unable to send reaction; name not set and it is required', 40001, 400));
+      return Promise.reject(
+        new Ably.ErrorInfo('unable to send reaction; name not set and it is required', ErrorCode.InvalidArgument, 400),
+      );
     }
 
     // CHA-ER3f

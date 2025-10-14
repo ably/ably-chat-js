@@ -15,6 +15,11 @@ export enum ErrorCode {
   InvalidArgument = 40003,
 
   /**
+   * Invalid client ID.
+   */
+  InvalidClientId = 40012,
+
+  /**
    * Resource has been disposed.
    */
   ResourceDisposed = 40014,
