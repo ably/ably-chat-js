@@ -82,9 +82,9 @@ export enum ErrorCode {
   ChannelOptionsCannotBeModified = 102111,
 
   /**
-   * Failed to acquire mutex for operation serialization.
+   * Failed to enforce sequential execution of the operation.
    */
-  MutexAcquisitionFailed = 102113,
+  OperationSerializationFailed = 102113,
 
   // 102200 - 102300 are reserved for React errors
 

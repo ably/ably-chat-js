@@ -225,8 +225,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         return;
       }
       throw new Ably.ErrorInfo(
-        'unable to send keystroke event; unable to acquire operation serialization mutex',
-        ErrorCode.MutexAcquisitionFailed,
+        'unable to send keystroke event; failed to enforce sequential execution of the operation',
+        ErrorCode.OperationSerializationFailed,
         500,
       );
     }
@@ -281,8 +281,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         return;
       }
       throw new Ably.ErrorInfo(
-        'unable to send typing stop event; unable to acquire operation serialization mutex',
-        ErrorCode.MutexAcquisitionFailed,
+        'unable to send typing stop event; failed to enforce sequential execution of the operation',
+        ErrorCode.OperationSerializationFailed,
         500,
       );
     }
