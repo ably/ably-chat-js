@@ -17,8 +17,6 @@ describe('useChatClient integration', () => {
     const realtimeClient = ablyRealtimeClientWithToken({
       autoConnect: false,
       clientId: 'test-client-id',
-      logLevel: 4,
-      logHandler: console.log,
     });
 
     // Initialize a chat client from the realtime client
