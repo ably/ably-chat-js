@@ -49,7 +49,7 @@ const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtim
     callback: (err: Ably.ErrorInfo | null, token: string | null) => void,
   ) => {
     // Generate the token
-    // It's valid for 10 minutes and has access to all channels and chat rooms
+    // It's valid for 10 minutes and has access to all chat rooms
     const header = {
       typ: 'JWT',
       alg: 'HS256',
@@ -59,7 +59,7 @@ const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtim
     const claims = {
       iat: currentTime,
       exp: currentTime + 600,
-      'x-ably-capability': '{"[chat]*":["*"]}',
+      'x-ably-capability': '{"*":["*"]}',
       'x-ably-clientId': clientId,
     };
 
