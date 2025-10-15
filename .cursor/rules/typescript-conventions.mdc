@@ -140,13 +140,49 @@ async update(
   - The third argument is the status code. When the error code is in the 10000-59999 range, the status code will be the HTTP status code that matches the first 3 numbers.
 - Specific error codes can be found in the `ErrorCodes` enum in the [errors.ts](mdc:src/core/errors.ts) file.
 
+### Error Message Format
+All error messages MUST follow the pattern: `"unable to <operation>; <reason>"`
+
+**Guidelines:**
+- Always start with "unable to" followed by the operation in lowercase
+- Use a semicolon (`;`) to separate the operation from the reason
+- The operation should describe what action was being attempted
+- The reason should explain why the operation failed
+
+**Examples:**
 ```typescript
+// Good examples
 throw new Ably.ErrorInfo(
-  'cannot query history; listener has not been subscribed yet',
-  40000,
+  'unable to send message; room is not attached',
+  ErrorCode.RoomInInvalidState,
+  400,
+);
+
+throw new Ably.ErrorInfo(
+  'unable to get room; room already exists with different options',
+  ErrorCode.RoomExistsWithDifferentOptions,
+  400,
+);
+
+throw new Ably.ErrorInfo(
+  'unable to subscribe to presence; presence events are not enabled',
+  ErrorCode.FeatureNotEnabledInRoom,
+  400,
+);
+
+throw new Ably.ErrorInfo(
+  'unable to query messages; component unmounted',
+  ErrorCode.ReactComponentUnmounted,
   400,
 ) as unknown as Error;
 ```
+
+**Common patterns to avoid:**
+- ❌ `"cannot do something, reason"` (use semicolon, not comma)
+- ❌ `"could not do something"` (use "unable to")
+- ❌ `"failed to do something"` (use "unable to")
+- ❌ `"invalid configuration"` (missing operation context)
+- ✅ `"unable to do something; reason"` (correct format)
 
 ## Logging
 

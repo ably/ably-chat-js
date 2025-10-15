@@ -79,7 +79,15 @@ The React SDK provides hooks and providers for integrating chat functionality in
 ### Key Concepts
 
 - **Feature Specification**: Code is backed by a specification with points like `CHA-M10a`. All `@[Testable]@` spec points MUST have corresponding tests. Include spec point comments in both code (`// @CHA-M10a`) and tests (`// CHA-M10a`).
-- **Error Handling**: Uses `ErrorInfo` from `ably` package. Error codes defined in `ErrorCodes` enum in `src/core/errors.ts`. Format: `new Ably.ErrorInfo(message, code, statusCode)`.
+- **Error Handling**: Uses `ErrorInfo` from `ably` package. Error codes defined in `ErrorCodes` enum in `src/core/errors.ts`. 
+  - Format: `new Ably.ErrorInfo(message, code, statusCode)`
+  - **Error Message Format**: All error messages MUST follow the pattern: `"unable to <operation>; <reason>"`
+    - Examples:
+      - `"unable to send message; room is not attached"`
+      - `"unable to get room; room already exists with different options"`
+      - `"unable to subscribe to presence; presence events are not enabled"`
+    - Use semicolons (`;`) to separate the operation from the reason
+    - Always start with "unable to" followed by the operation in lowercase
 - **Logging**: All key operations have trace-level logs. Use `_logger.trace()`, `_logger.debug()`, `_logger.error()` with context objects. Never log Ably channel instances.
 - **Channel Management**: Features share a single channel per room through `ChannelManager`, which merges channel options from different features.
 
