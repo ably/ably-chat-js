@@ -25,7 +25,7 @@ export const useRoomReferenceManager = (): RoomReferenceManager => {
   const manager = context[ROOM_REFERENCE_MANAGER_KEY];
   if (!manager) {
     throw new Ably.ErrorInfo(
-      'useRoomReferenceManager must be used within a ChatClientProvider',
+      'unable to get room reference manager; useRoomReferenceManager must be used within a ChatClientProvider',
       ErrorCode.ReactHookMustBeUsedWithinProvider,
       400,
     );

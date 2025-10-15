@@ -115,7 +115,7 @@ describe('RoomReferenceManager', () => {
     // This should now throw an error since the room is actively being used
     await expect(manager.addReference(roomName, options2)).rejects.toBeErrorInfo({
       code: ErrorCode.RoomExistsWithDifferentOptions,
-      message: `cannot get room with different options; room "${roomName}" is already in use with different options`,
+      message: `unable to get room reference; room "${roomName}" is already in use with different options`,
     });
 
     // Original room should still exist and be unchanged
@@ -150,7 +150,7 @@ describe('RoomReferenceManager', () => {
     // This should now throw an error since the room is actively being used
     await expect(manager.addReference(roomName)).rejects.toBeErrorInfo({
       code: ErrorCode.RoomExistsWithDifferentOptions,
-      message: `cannot get room with different options; room "${roomName}" is already in use with different options`,
+      message: `unable to get room reference; room "${roomName}" is already in use with different options`,
     });
 
     // Original room should still exist and be unchanged
@@ -187,7 +187,7 @@ describe('RoomReferenceManager', () => {
     // This should now throw an error since the room is actively being used with multiple references
     await expect(manager.addReference(roomName, options2)).rejects.toBeErrorInfo({
       code: ErrorCode.RoomExistsWithDifferentOptions,
-      message: `cannot get room with different options; room "${roomName}" is already in use with different options`,
+      message: `unable to get room reference; room "${roomName}" is already in use with different options`,
     });
 
     // Original room should still exist and be unchanged

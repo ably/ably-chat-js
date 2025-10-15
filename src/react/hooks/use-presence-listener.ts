@@ -161,7 +161,7 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
                 logger.error('usePresenceListener(); failed to fetch presence data after max retries');
                 setErrorState(
                   new Ably.ErrorInfo(
-                    'failed to fetch presence data after max retries',
+                    'unable to fetch presence data; failed after max retries',
                     ErrorCode.PresenceFetchFailed,
                     500,
                   ),
