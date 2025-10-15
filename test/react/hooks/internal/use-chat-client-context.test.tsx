@@ -3,6 +3,7 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../../../src/core/chat-client.ts';
+import { ErrorCode } from '../../../../src/core/errors.ts';
 import { RealtimeWithOptions } from '../../../../src/core/realtime-extensions.ts';
 import { VERSION } from '../../../../src/core/version.ts';
 import { useChatClientContext } from '../../../../src/react/hooks/internal/use-chat-client-context.ts';
@@ -25,7 +26,7 @@ describe('useChatClientContext', () => {
   it('should throw an error if used outside of ChatClientProvider', () => {
     const TestThrowError: React.FC = () => {
       expect(() => useChatClientContext()).toThrowErrorInfo({
-        code: 40000,
+        code: ErrorCode.ReactHookMustBeUsedWithinProvider,
         message: 'useChatClient hook must be used within a chat client provider',
       });
       return null;

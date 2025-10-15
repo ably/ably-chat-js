@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 
 vi.mock('ably');
@@ -80,7 +81,7 @@ describe('config', () => {
     // @ts-expect-error Testing invalid OrderBy
     await expect(chatApi.history('test', { orderBy: 'foo' })).rejects.toBeErrorInfo({
       message: 'invalid orderBy value: foo',
-      code: 40000,
+      code: ErrorCode.InvalidArgument,
       statusCode: 400,
     });
 

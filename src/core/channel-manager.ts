@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { roomChannelName } from './channel.js';
+import { ErrorCode } from './errors.js';
 import { Logger } from './logger.js';
 import { DEFAULT_CHANNEL_OPTIONS, DEFAULT_CHANNEL_OPTIONS_REACT } from './version.js';
 
@@ -29,7 +30,11 @@ export class ChannelManager {
     this._logger.trace('ChannelManager.mergeOptions();');
     if (this._resolvedChannel) {
       this._logger.error('channel options cannot be modified after the channel has been requested');
-      throw new Ably.ErrorInfo('channel options cannot be modified after the channel has been requested', 40000, 400);
+      throw new Ably.ErrorInfo(
+        'channel options cannot be modified after the channel has been requested',
+        ErrorCode.ChannelOptionsCannotBeModified,
+        400,
+      );
     }
 
     this._registeredOptions = merger(this._registeredOptions);

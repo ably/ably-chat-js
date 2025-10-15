@@ -714,7 +714,7 @@ describe('MessageReactions', () => {
 
       expect(() => {
         room.messages.reactions.subscribeRaw(() => {});
-      }).toThrowErrorInfo({ code: 40001, message: 'Raw message reactions are not enabled', statusCode: 400 });
+      }).toThrowErrorInfo({ code: 102108, message: 'Raw message reactions are not enabled', statusCode: 400 });
     });
   });
 

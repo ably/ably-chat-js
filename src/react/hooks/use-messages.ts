@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
+import { ErrorCode } from '../../core/errors.js';
 import type {
   DeleteMessageReactionParams,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -192,7 +193,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
             // So return a dummy object that should be thrown away anyway
             logger.debug('useMessages(); historyBeforeSubscribe called');
             if (unmounted) {
-              return Promise.reject(new Ably.ErrorInfo('component unmounted', 40000, 400));
+              return Promise.reject(new Ably.ErrorInfo('component unmounted', ErrorCode.ReactComponentUnmounted, 400));
             }
             return sub.historyBeforeSubscribe(params);
           };

@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { ErrorCode } from './errors.js';
 import { MessageReactionType } from './events.js';
 
 /**
@@ -192,7 +193,7 @@ export interface InternalRoomOptions {
  * @returns An ErrorInfo.
  */
 const invalidRoomConfiguration = (reason: string): Error =>
-  new Ably.ErrorInfo(`invalid room configuration: ${reason}`, 40001, 400);
+  new Ably.ErrorInfo(`invalid room configuration: ${reason}`, ErrorCode.InvalidArgument, 400);
 
 export const validateRoomOptions = (options: InternalRoomOptions): void => {
   validateTypingOptions(options.typing);

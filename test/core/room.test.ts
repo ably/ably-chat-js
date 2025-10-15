@@ -58,7 +58,7 @@ describe('Room', () => {
       expect(() => {
         context.getRoom(options);
       }).toThrowErrorInfo({
-        code: 40001,
+        code: 40003,
         message: `invalid room configuration: ${reason}`,
       });
     });

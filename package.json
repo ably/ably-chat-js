@@ -24,6 +24,7 @@
   },
   "scripts": {
     "copilot:from-cursor": "(cd .github && npx tsx ./copilot-from-cursor.ts)",
+    "check:error-codes": "tsx scripts/validate-error-codes.ts",
     "lint": "eslint . && npm run cspell && npm run docs:lint",
     "lint:fix": "eslint --fix .; (npm run format > /dev/null)",
     "format": "prettier --list-different --write src test __mocks__ demo/src",

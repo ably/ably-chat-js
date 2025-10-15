@@ -1,5 +1,6 @@
 import * as Ably from 'ably';
 
+import { ErrorCode } from './errors.js';
 import { Logger } from './logger.js';
 
 /**
@@ -24,7 +25,7 @@ export class DefaultClientIdResolver implements ClientIdResolver {
     const clientId = this._realtime.auth.clientId;
     if (!clientId) {
       this._logger.error('invalid client id', { clientId });
-      throw new Ably.ErrorInfo('invalid client id', 40012, 400);
+      throw new Ably.ErrorInfo('invalid client id', ErrorCode.InvalidClientId, 400);
     }
 
     return clientId;

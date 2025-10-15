@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import React from 'react';
 
 import { ChatClient } from '../../../core/chat-client.js';
+import { ErrorCode } from '../../../core/errors.js';
 import { ChatClientContext } from '../../contexts/chat-client-context.js';
 import { DEFAULT_CHAT_CLIENT_ID } from '../../providers/chat-client-provider.js';
 
@@ -14,7 +15,11 @@ import { DEFAULT_CHAT_CLIENT_ID } from '../../providers/chat-client-provider.js'
 export const useChatClientContext = (): ChatClient => {
   const context = React.useContext(ChatClientContext)[DEFAULT_CHAT_CLIENT_ID];
   if (!context) {
-    throw new Ably.ErrorInfo('useChatClient hook must be used within a chat client provider', 40000, 400);
+    throw new Ably.ErrorInfo(
+      'useChatClient hook must be used within a chat client provider',
+      ErrorCode.ReactHookMustBeUsedWithinProvider,
+      400,
+    );
   }
   return context.client;
 };

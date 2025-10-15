@@ -119,7 +119,7 @@ describe('RoomLifecycleManager', () => {
       // Act & Assert
       await expect(roomLifeCycleManager.attach()).rejects.toBeErrorInfo({
         message: 'cannot attach room, room is released',
-        code: ErrorCode.RoomIsReleased,
+        code: ErrorCode.RoomInInvalidState,
         statusCode: 400,
       });
       expect(mockChannel.attach).not.toHaveBeenCalled();
@@ -136,7 +136,7 @@ describe('RoomLifecycleManager', () => {
       // Act & Assert
       await expect(roomLifeCycleManager.attach()).rejects.toBeErrorInfo({
         message: 'cannot attach room, room is currently releasing',
-        code: ErrorCode.RoomIsReleasing,
+        code: ErrorCode.RoomInInvalidState,
         statusCode: 400,
       });
       expect(mockChannel.attach).not.toHaveBeenCalled();
@@ -213,7 +213,7 @@ describe('RoomLifecycleManager', () => {
       // Act & Assert
       await expect(roomLifeCycleManager.detach()).rejects.toBeErrorInfo({
         message: 'cannot detach room, room is in failed state',
-        code: ErrorCode.RoomInFailedState,
+        code: ErrorCode.RoomInInvalidState,
         statusCode: 400,
       });
       expect(mockChannel.detach).not.toHaveBeenCalled();
@@ -230,7 +230,7 @@ describe('RoomLifecycleManager', () => {
       // Act & Assert
       await expect(roomLifeCycleManager.detach()).rejects.toBeErrorInfo({
         message: 'cannot detach room, room is released',
-        code: ErrorCode.RoomIsReleased,
+        code: ErrorCode.RoomInInvalidState,
         statusCode: 400,
       });
       expect(mockChannel.detach).not.toHaveBeenCalled();
@@ -247,7 +247,7 @@ describe('RoomLifecycleManager', () => {
       // Act & Assert
       await expect(roomLifeCycleManager.detach()).rejects.toBeErrorInfo({
         message: 'cannot detach room, room is currently releasing',
-        code: ErrorCode.RoomIsReleasing,
+        code: ErrorCode.RoomInInvalidState,
         statusCode: 400,
       });
       expect(mockChannel.detach).not.toHaveBeenCalled();

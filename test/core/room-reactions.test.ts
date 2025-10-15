@@ -7,6 +7,7 @@ import { RoomReactionEventType } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { RoomReaction } from '../../src/core/room-reaction.ts';
 import { DefaultRoomReactions } from '../../src/core/room-reactions.ts';
+import { ErrorCode } from '../../src/index.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
@@ -318,7 +319,7 @@ describe('Reactions', () => {
       // Mock connection status to be disconnected
       vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
 
-      await expect(room.reactions.send({ name: 'love' })).rejects.toBeErrorInfoWithCode(40000);
+      await expect(room.reactions.send({ name: 'love' })).rejects.toBeErrorInfoWithCode(ErrorCode.Disconnected);
     });
 
     it<TestContext>('should be able to send a reaction and receive a reaction with metadata and headers', (context) =>
