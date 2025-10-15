@@ -518,7 +518,7 @@ export class DefaultMessages implements Messages {
   /**
    * @inheritdoc
    */
-  get(serial: string): Promise<Message> {
+  async get(serial: string): Promise<Message> {
     this._logger.trace('Messages.get();', { serial });
     return this._chatApi.getMessage(this._roomName, serial);
   }
@@ -595,7 +595,7 @@ export class DefaultMessages implements Messages {
         this._logger.trace('Messages.unsubscribe();');
         this._emitter.off(wrapped);
       },
-      historyBeforeSubscribe: (params: Omit<HistoryParams, 'orderBy'>) =>
+      historyBeforeSubscribe: async (params: Omit<HistoryParams, 'orderBy'>) =>
         this._getBeforeSubscriptionStart(wrapped, params),
     };
   }

@@ -132,8 +132,8 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   }, [context, listenerRef, logger]);
 
   // memoize the methods to avoid re-renders, and ensure the same instance is used
-  const keystroke = useCallback(() => context.room.then((room) => room.typing.keystroke()), [context]);
-  const stop = useCallback(() => context.room.then((room) => room.typing.stop()), [context]);
+  const keystroke = useCallback(async () => context.room.then(async (room) => room.typing.keystroke()), [context]);
+  const stop = useCallback(async () => context.room.then(async (room) => room.typing.stop()), [context]);
 
   return {
     connectionStatus,

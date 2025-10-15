@@ -26,7 +26,7 @@ describe('logger', () => {
     [LogLevel.Error, LogLevel.Error, undefined], // no context
   ])(
     `logs %s when configured level %s`,
-    (logLevel: LogLevel, configuredLevel: LogLevel, logContext?: LogContext) =>
+    async (logLevel: LogLevel, configuredLevel: LogLevel, logContext?: LogContext) =>
       new Promise((done, reject) => {
         const options = normalizeClientOptions({
           logLevel: configuredLevel,
@@ -62,7 +62,7 @@ describe('logger', () => {
     [LogLevel.Silent, LogLevel.Error],
   ])(
     'does not log below the log level',
-    (configuredLevel: LogLevel, logLevel: LogLevel) =>
+    async (configuredLevel: LogLevel, logLevel: LogLevel) =>
       new Promise((done, reject) => {
         const options = normalizeClientOptions({
           logLevel: configuredLevel,
@@ -87,7 +87,7 @@ describe('logger', () => {
 });
 
 describe('withContext', () => {
-  it('creates new logger with merged context', () =>
+  it('creates new logger with merged context', async () =>
     new Promise<void>((done) => {
       const baseContext = { baseKey: 'baseValue', sharedKey: 'baseSharedValue' };
       const newContext = { newKey: 'newValue', sharedKey: 'newSharedValue' };
@@ -131,7 +131,7 @@ describe('withContext', () => {
     expect(handler).toHaveBeenCalledTimes(2);
   });
 
-  it('handles undefined base context', () =>
+  it('handles undefined base context', async () =>
     new Promise<void>((done) => {
       const newContext = { key: 'value' };
 

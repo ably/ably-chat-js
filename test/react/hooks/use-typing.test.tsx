@@ -106,7 +106,7 @@ describe('useTyping', () => {
     const { result } = renderHook(() => useTyping());
 
     // spy on the keystroke method of the typing instance
-    const keystrokeSpy = vi.spyOn(mockRoom.typing, 'keystroke').mockImplementation(() => Promise.resolve());
+    const keystrokeSpy = vi.spyOn(mockRoom.typing, 'keystroke').mockImplementation(async () => {});
 
     // call the keystroke method
     await act(async () => {
@@ -121,7 +121,7 @@ describe('useTyping', () => {
     const { result } = renderHook(() => useTyping());
 
     // spy on the stop method of the typing instance
-    const stopSpy = vi.spyOn(mockRoom.typing, 'stop').mockImplementation(() => Promise.resolve());
+    const stopSpy = vi.spyOn(mockRoom.typing, 'stop').mockImplementation(async () => {});
 
     // call the stop method
     await act(async () => {

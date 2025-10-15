@@ -6,6 +6,7 @@ import { Room } from '../../../src/core/room.js';
 import { RoomReferenceManager } from '../../../src/react/helper/room-reference-manager.js';
 import { newChatClient } from '../../helper/chat.js';
 import { randomRoomName } from '../../helper/identifier.js';
+import { wrapWithPromise } from '../../helper/promise.js';
 
 vi.mock('ably');
 
@@ -100,12 +101,13 @@ describe('RoomReferenceManager', () => {
     const options2 = { occupancy: { enableEvents: false } };
 
     // Mock release method to actually remove the room from the client's internal map
-    vi.spyOn(client.rooms, 'release').mockImplementation((name: string) => {
-      // Remove the room from the client's internal rooms map to simulate real behavior
-      const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
-      roomsInternal.delete(name);
-      return Promise.resolve();
-    });
+    vi.spyOn(client.rooms, 'release').mockImplementation(
+      wrapWithPromise((name: string) => {
+        // Remove the room from the client's internal rooms map to simulate real behavior
+        const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
+        roomsInternal.delete(name);
+      }),
+    );
 
     // First, add a reference with options1
     await manager.addReference(roomName, options1);
@@ -135,12 +137,13 @@ describe('RoomReferenceManager', () => {
     const options1 = { occupancy: { enableEvents: true } };
 
     // Mock release method to actually remove the room from the client's internal map
-    vi.spyOn(client.rooms, 'release').mockImplementation((name: string) => {
-      // Remove the room from the client's internal rooms map to simulate real behavior
-      const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
-      roomsInternal.delete(name);
-      return Promise.resolve();
-    });
+    vi.spyOn(client.rooms, 'release').mockImplementation(
+      wrapWithPromise((name: string) => {
+        // Remove the room from the client's internal rooms map to simulate real behavior
+        const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
+        roomsInternal.delete(name);
+      }),
+    );
 
     // First, add a reference with options
     await manager.addReference(roomName, options1);
@@ -171,12 +174,13 @@ describe('RoomReferenceManager', () => {
     const options2 = { occupancy: { enableEvents: false } };
 
     // Mock release method to actually remove the room from the client's internal map
-    vi.spyOn(client.rooms, 'release').mockImplementation((name: string) => {
-      // Remove the room from the client's internal rooms map to simulate real behavior
-      const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
-      roomsInternal.delete(name);
-      return Promise.resolve();
-    });
+    vi.spyOn(client.rooms, 'release').mockImplementation(
+      wrapWithPromise((name: string) => {
+        // Remove the room from the client's internal rooms map to simulate real behavior
+        const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
+        roomsInternal.delete(name);
+      }),
+    );
 
     // Add multiple references with options1
     await manager.addReference(roomName, options1);
@@ -491,12 +495,13 @@ describe('RoomReferenceManager', () => {
     const options2 = { occupancy: { enableEvents: false } };
 
     // Mock release method to actually remove the room from the client's internal map
-    vi.spyOn(client.rooms, 'release').mockImplementation((name: string) => {
-      // Remove the room from the client's internal rooms map to simulate real behavior
-      const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
-      roomsInternal.delete(name);
-      return Promise.resolve();
-    });
+    vi.spyOn(client.rooms, 'release').mockImplementation(
+      wrapWithPromise((name: string) => {
+        // Remove the room from the client's internal rooms map to simulate real behavior
+        const roomsInternal = (client.rooms as unknown as { _rooms: Map<string, unknown> })._rooms;
+        roomsInternal.delete(name);
+      }),
+    );
 
     // First, add and then remove a reference to schedule it for release
     await manager.addReference(roomName, options1);

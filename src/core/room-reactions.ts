@@ -138,22 +138,22 @@ export class DefaultRoomReactions implements RoomReactions {
   /**
    * @inheritDoc
    */
-  send(params: SendReactionParams): Promise<void> {
+  async send(params: SendReactionParams): Promise<void> {
     this._logger.trace('RoomReactions.send();', params);
 
     const { name, metadata, headers } = params;
 
     if (!name) {
-      return Promise.reject(
-        new Ably.ErrorInfo('unable to send reaction; name not set and it is required', ErrorCode.InvalidArgument, 400),
+      throw new Ably.ErrorInfo(
+        'unable to send reaction; name not set and it is required',
+        ErrorCode.InvalidArgument,
+        400,
       );
     }
 
     // CHA-ER3f
     if (this._connection.state !== 'connected') {
-      return Promise.reject(
-        new Ably.ErrorInfo('unable to send reaction; not connected to Ably', ErrorCode.Disconnected, 400),
-      );
+      throw new Ably.ErrorInfo('unable to send reaction; not connected to Ably', ErrorCode.Disconnected, 400);
     }
 
     const payload: ReactionPayload = {

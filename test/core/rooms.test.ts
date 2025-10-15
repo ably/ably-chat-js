@@ -165,7 +165,7 @@ describe('rooms', () => {
         room1ReleaseResolver = resolve;
       });
 
-      vi.spyOn(room1 as DefaultRoom, 'release').mockImplementation(() => room1ReleasePromise);
+      vi.spyOn(room1 as DefaultRoom, 'release').mockImplementation(async () => room1ReleasePromise);
 
       // Start releasing room1 but don't await it so we create an in-flight release
       const manualReleasePromise = context.rooms.release(roomName1);

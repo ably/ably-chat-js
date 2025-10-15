@@ -8,6 +8,7 @@ import { RoomOptions } from '../../../src/core/room-options.js';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.js';
 import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provider.js';
 import { makeTestLogger } from '../../helper/logger.js';
+import { wrapWithPromise } from '../../helper/promise.js';
 
 vi.mock('ably');
 
@@ -19,14 +20,14 @@ interface TestContext {
 describe('ChatRoomProvider', () => {
   beforeEach<TestContext>((context) => {
     context.mockRoom = {
-      attach: vi.fn(() => Promise.resolve()),
-      detach: vi.fn(() => Promise.resolve()),
+      attach: vi.fn(wrapWithPromise(() => {})),
+      detach: vi.fn(wrapWithPromise(() => {})),
     } as unknown as Room;
 
     context.mockChatClient = {
       rooms: {
-        get: vi.fn(() => Promise.resolve(context.mockRoom)),
-        release: vi.fn(() => new Promise((resolve) => setTimeout(resolve, 50))), // Make release take some time
+        get: vi.fn(async () => await Promise.resolve(context.mockRoom)),
+        release: vi.fn(async () => new Promise((resolve) => setTimeout(resolve, 50))), // Make release take some time
       },
       logger: makeTestLogger(),
       addReactAgent: vi.fn(() => {}),

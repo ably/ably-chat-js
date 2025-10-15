@@ -100,9 +100,9 @@ describe('Typing', () => {
     const publishSpy = vi
       .spyOn(realtimeChannel, 'publish')
       .mockImplementationOnce(
-        () => new Promise((resolve) => setTimeout(resolve, 300)), // Simulate 300ms delay in publish
+        async () => new Promise((resolve) => setTimeout(resolve, 300)), // Simulate 300ms delay in publish
       )
-      .mockImplementationOnce(() => Promise.resolve());
+      .mockImplementationOnce(async () => {});
 
     // Needed to allow typing calls to proceed
     vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
@@ -223,9 +223,9 @@ describe('Typing', () => {
       const publishSpy = vi
         .spyOn(realtimeChannel, 'publish')
         .mockImplementationOnce(
-          () => new Promise((resolve) => setTimeout(resolve, 1000)), // Simulate 1s delay
+          async () => new Promise((resolve) => setTimeout(resolve, 1000)), // Simulate 1s delay
         )
-        .mockImplementation(() => Promise.resolve()); // All subsequent calls resolve immediately
+        .mockImplementation(async () => {}); // All subsequent calls resolve immediately
 
       // Needed to allow typing calls to proceed
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
@@ -334,9 +334,9 @@ describe('Typing', () => {
       const publishSpy = vi
         .spyOn(realtimeChannel, 'publish')
         .mockImplementationOnce(
-          () => new Promise((resolve) => setTimeout(resolve, 1000)), // Simulate 1s delay on first keystroke
+          async () => new Promise((resolve) => setTimeout(resolve, 1000)), // Simulate 1s delay on first keystroke
         )
-        .mockImplementation(() => Promise.resolve()); // All subsequent calls resolve immediately
+        .mockImplementation(async () => {}); // All subsequent calls resolve immediately
 
       // Needed to allow typing calls to proceed
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
@@ -769,7 +769,7 @@ describe('Typing', () => {
       const defaultTyping = room.typing as TestTypingInterface;
       const defaultRoom = room as TestRoomInterface;
       // Mock implementation for `publish` to simulate successful publish
-      vi.spyOn(realtimeChannel, 'publish').mockImplementation(() => Promise.resolve());
+      vi.spyOn(realtimeChannel, 'publish').mockImplementation(async () => {});
 
       // Put the room into the attached state
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
@@ -806,9 +806,9 @@ describe('Typing', () => {
       const publishSpy = vi
         .spyOn(realtimeChannel, 'publish')
         .mockImplementationOnce(
-          () => new Promise((resolve) => setTimeout(resolve, 2000)), // Simulate 2s delay
+          async () => new Promise((resolve) => setTimeout(resolve, 2000)), // Simulate 2s delay
         )
-        .mockImplementation(() => Promise.resolve()); // All subsequent calls resolve immediately
+        .mockImplementation(async () => {}); // All subsequent calls resolve immediately
 
       // Needed to allow typing calls to proceed
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');

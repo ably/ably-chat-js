@@ -70,8 +70,8 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
     onRoomStatusChange: params?.onStatusChange,
   });
 
-  const attach = useCallback(() => context.room.then((room: Room) => room.attach()), [context]);
-  const detach = useCallback(() => context.room.then((room: Room) => room.detach()), [context]);
+  const attach = useCallback(async () => context.room.then(async (room: Room) => room.attach()), [context]);
+  const detach = useCallback(async () => context.room.then(async (room: Room) => room.detach()), [context]);
 
   return {
     roomName: roomName,
