@@ -18,7 +18,7 @@ describe('useRoom', () => {
     const TestThrowError: React.FC = () => {
       expect(() => useRoomContext('foo')).toThrowErrorInfo({
         code: ErrorCode.ReactHookMustBeUsedWithinProvider,
-        message: 'foo hook must be used within a <ChatRoomProvider>',
+        message: 'unable to get room context; foo hook must be used within a <ChatRoomProvider>',
       });
       return null;
     };

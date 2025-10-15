@@ -113,7 +113,7 @@ export class DefaultOccupancy implements Occupancy {
 
     if (!this._roomOptions.occupancy.enableEvents) {
       throw new Ably.ErrorInfo(
-        'cannot subscribe to occupancy; occupancy events are not enabled in room options',
+        'unable to subscribe to occupancy; occupancy events are not enabled in room options',
         ErrorCode.FeatureNotEnabledInRoom,
         400,
       ) as unknown as Error;
@@ -147,7 +147,7 @@ export class DefaultOccupancy implements Occupancy {
     // CHA-O7c
     if (!this._roomOptions.occupancy.enableEvents) {
       throw new Ably.ErrorInfo(
-        'cannot get current occupancy; occupancy events are not enabled in room options',
+        'unable to get current occupancy; occupancy events are not enabled in room options',
         ErrorCode.FeatureNotEnabledInRoom,
         400,
       ) as unknown as Error;

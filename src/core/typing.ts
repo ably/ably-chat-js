@@ -238,7 +238,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
           status: this._connection.state,
         });
         throw new Ably.ErrorInfo(
-          'cannot send typing keystroke event, disconnected from Ably',
+          'unable to send typing keystroke event; disconnected from Ably',
           ErrorCode.Disconnected,
           400,
         );
@@ -292,7 +292,11 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         this._logger.error(`DefaultTyping.stop(); connection is not connected`, {
           status: this._connection.state,
         });
-        throw new Ably.ErrorInfo('cannot send typing stop event, disconnected from Ably', ErrorCode.Disconnected, 400);
+        throw new Ably.ErrorInfo(
+          'unable to send typing stop event; disconnected from Ably',
+          ErrorCode.Disconnected,
+          400,
+        );
       }
 
       // If the user is not typing, do nothing.

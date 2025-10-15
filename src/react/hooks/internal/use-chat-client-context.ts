@@ -16,7 +16,7 @@ export const useChatClientContext = (): ChatClient => {
   const context = React.useContext(ChatClientContext)[DEFAULT_CHAT_CLIENT_ID];
   if (!context) {
     throw new Ably.ErrorInfo(
-      'useChatClient hook must be used within a chat client provider',
+      'unable to get chat client; useChatClient hook must be used within a chat client provider',
       ErrorCode.ReactHookMustBeUsedWithinProvider,
       400,
     );

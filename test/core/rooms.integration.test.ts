@@ -214,7 +214,7 @@ describe('Rooms', () => {
       await expect(chat.rooms.get('any-room')).rejects.toBeErrorInfo({
         code: ErrorCode.ResourceDisposed,
         statusCode: 400,
-        message: 'cannot get room, rooms instance has been disposed',
+        message: 'unable to get room; rooms instance has been disposed',
       });
 
       // Multiple calls should all fail

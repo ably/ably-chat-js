@@ -80,7 +80,7 @@ describe('config', () => {
 
     // @ts-expect-error Testing invalid OrderBy
     await expect(chatApi.history('test', { orderBy: 'foo' })).rejects.toBeErrorInfo({
-      message: 'invalid orderBy value: foo',
+      message: 'unable to query messages; invalid orderBy value: foo',
       code: ErrorCode.InvalidArgument,
       statusCode: 400,
     });

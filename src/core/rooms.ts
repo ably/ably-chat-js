@@ -206,7 +206,7 @@ export class DefaultRooms implements InternalRooms {
    */
   private _ensureNotDisposed(): void {
     if (this._disposed) {
-      throw new Ably.ErrorInfo('cannot get room, rooms instance has been disposed', ErrorCode.ResourceDisposed, 400);
+      throw new Ably.ErrorInfo('unable to get room; rooms instance has been disposed', ErrorCode.ResourceDisposed, 400);
     }
   }
 
@@ -220,7 +220,7 @@ export class DefaultRooms implements InternalRooms {
   private async _handleExistingRoom(existingRoom: RoomMapEntry, name: string, options?: RoomOptions): Promise<Room> {
     if (!dequal(existingRoom.options, options)) {
       throw new Ably.ErrorInfo(
-        'room already exists with different options',
+        'unable to get room; room already exists with different options',
         ErrorCode.RoomExistsWithDifferentOptions,
         400,
       );
@@ -303,7 +303,7 @@ export class DefaultRooms implements InternalRooms {
         this._logger.debug('Rooms.get(); aborted before init', { roomName: name });
         reject(
           new Ably.ErrorInfo(
-            'room released before get operation could complete',
+            'unable to get room; room released before operation could complete',
             ErrorCode.RoomReleasedBeforeOperationCompleted,
             400,
           ),

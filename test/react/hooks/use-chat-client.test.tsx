@@ -43,7 +43,7 @@ describe('useChatClient', () => {
     const TestThrowError: React.FC = () => {
       expect(() => useChatClient()).toThrowErrorInfo({
         code: ErrorCode.ReactHookMustBeUsedWithinProvider,
-        message: 'useChatClient hook must be used within a chat client provider',
+        message: 'unable to get chat client; useChatClient hook must be used within a chat client provider',
       });
       return null;
     };

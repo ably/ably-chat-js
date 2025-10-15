@@ -14,7 +14,8 @@ describe('useRoomReferenceManager', () => {
     const TestComponent: React.FC = () => {
       expect(() => useRoomReferenceManager()).toThrowErrorInfo({
         code: ErrorCode.ReactHookMustBeUsedWithinProvider,
-        message: 'useRoomReferenceManager must be used within a ChatClientProvider',
+        message:
+          'unable to get room reference manager; useRoomReferenceManager must be used within a ChatClientProvider',
       });
       return null;
     };

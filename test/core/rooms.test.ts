@@ -33,7 +33,7 @@ describe('rooms', () => {
       await expect(room2).rejects.toBeErrorInfo({
         statusCode: 400,
         code: ErrorCode.RoomExistsWithDifferentOptions,
-        message: 'room already exists with different options',
+        message: 'unable to get room; room already exists with different options',
       });
     });
 
@@ -79,7 +79,7 @@ describe('rooms', () => {
       await expect(room2).rejects.toBeErrorInfo({
         statusCode: 400,
         code: ErrorCode.RoomReleasedBeforeOperationCompleted,
-        message: 'room released before get operation could complete',
+        message: 'unable to get room; room released before operation could complete',
       });
       await expect(releasedPromise2).resolves.toBeUndefined();
     });
@@ -101,18 +101,18 @@ describe('rooms', () => {
       await expect(room2).rejects.toBeErrorInfo({
         statusCode: 400,
         code: ErrorCode.RoomReleasedBeforeOperationCompleted,
-        message: 'room released before get operation could complete',
+        message: 'unable to get room; room released before operation could complete',
       });
       await expect(releasedPromise2).resolves.toBeUndefined();
       await expect(room3).rejects.toBeErrorInfo({
         statusCode: 400,
         code: ErrorCode.RoomReleasedBeforeOperationCompleted,
-        message: 'room released before get operation could complete',
+        message: 'unable to get room; room released before operation could complete',
       });
       await expect(room4).rejects.toBeErrorInfo({
         statusCode: 400,
         code: ErrorCode.RoomReleasedBeforeOperationCompleted,
-        message: 'room released before get operation could complete',
+        message: 'unable to get room; room released before operation could complete',
       });
       await expect(releasePromise3).resolves.toBeUndefined();
       await expect(releasePromise4).resolves.toBeUndefined();

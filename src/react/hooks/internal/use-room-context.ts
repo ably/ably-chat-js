@@ -15,7 +15,7 @@ export const useRoomContext = (callingHook: string): ChatRoomContextType => {
   const context = useContext(ChatRoomContext);
   if (!context) {
     throw new Ably.ErrorInfo(
-      `${callingHook} hook must be used within a <ChatRoomProvider>`,
+      `unable to get room context; ${callingHook} hook must be used within a <ChatRoomProvider>`,
       ErrorCode.ReactHookMustBeUsedWithinProvider,
       400,
     );

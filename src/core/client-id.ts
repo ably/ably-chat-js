@@ -24,8 +24,8 @@ export class DefaultClientIdResolver implements ClientIdResolver {
   get(): string {
     const clientId = this._realtime.auth.clientId;
     if (!clientId) {
-      this._logger.error('invalid client id', { clientId });
-      throw new Ably.ErrorInfo('invalid client id', ErrorCode.InvalidClientId, 400);
+      this._logger.error('unable to get client id; client id is not set', { clientId });
+      throw new Ably.ErrorInfo('unable to get client id; client id is not set', ErrorCode.InvalidClientId, 400);
     }
 
     return clientId;

@@ -193,7 +193,13 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
             // So return a dummy object that should be thrown away anyway
             logger.debug('useMessages(); historyBeforeSubscribe called');
             if (unmounted) {
-              return Promise.reject(new Ably.ErrorInfo('component unmounted', ErrorCode.ReactComponentUnmounted, 400));
+              return Promise.reject(
+                new Ably.ErrorInfo(
+                  'unable to query messages; component unmounted',
+                  ErrorCode.ReactComponentUnmounted,
+                  400,
+                ),
+              );
             }
             return sub.historyBeforeSubscribe(params);
           };

@@ -140,7 +140,7 @@ export class RoomLifecycleManager {
 
       // CHA-RL2d
       if (this._roomStatusIs(RoomStatus.Failed)) {
-        throw new Ably.ErrorInfo('cannot detach room, room is in failed state', ErrorCode.RoomInInvalidState, 400);
+        throw new Ably.ErrorInfo('unable to detach room; room is in failed state', ErrorCode.RoomInInvalidState, 400);
       }
 
       // CHA-RL2b, CHA-RL2c
@@ -261,10 +261,14 @@ export class RoomLifecycleManager {
   private _checkRoomNotReleasing(op: string) {
     switch (this._roomLifecycle.status) {
       case RoomStatus.Released: {
-        throw new Ably.ErrorInfo(`cannot ${op} room, room is released`, ErrorCode.RoomInInvalidState, 400);
+        throw new Ably.ErrorInfo(`unable to ${op} room; room is released`, ErrorCode.RoomInInvalidState, 400);
       }
       case RoomStatus.Releasing: {
-        throw new Ably.ErrorInfo(`cannot ${op} room, room is currently releasing`, ErrorCode.RoomInInvalidState, 400);
+        throw new Ably.ErrorInfo(
+          `unable to ${op} room; room is currently releasing`,
+          ErrorCode.RoomInInvalidState,
+          400,
+        );
       }
     }
   }
