@@ -54,6 +54,17 @@ jobs:
           node-version: ${{ env.BASE_NODE_VERSION }}
       - run: npm ci
       - run: npm run test:typescript
+  check-error-codes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ env.BASE_NODE_VERSION }}
+      - run: npm ci
+      - run: npx --yes tsx scripts/validate-error-codes.ts
   test:
     runs-on: ubuntu-latest
     permissions:

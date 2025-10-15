@@ -36,7 +36,7 @@ export default [
       '**/node_modules',
       '**/ably-common',
       '**/typedoc',
-      'scripts/cdn_deploy.js',
+      'scripts/**',
       '**/vitest.config.ts',
       '**/vite.config.ts',
       '**/vitest.workspace.ts',
