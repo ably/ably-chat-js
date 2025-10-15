@@ -59,7 +59,7 @@ describe('Room', () => {
         context.getRoom(options);
       }).toThrowErrorInfo({
         code: 40003,
-        message: `invalid room configuration: ${reason}`,
+        message: `unable to create room; invalid room configuration: ${reason}`,
       });
     });
   });

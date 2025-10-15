@@ -183,7 +183,7 @@ class DefaultLogger implements Logger {
 
     const levelNumber = logLevelNumberMap.get(level);
     if (levelNumber === undefined) {
-      throw new Ably.ErrorInfo(`Invalid log level: ${level}`, ErrorCode.InvalidArgument, 400);
+      throw new Ably.ErrorInfo(`unable to create logger; invalid log level: ${level}`, ErrorCode.InvalidArgument, 400);
     }
 
     this._levelNumber = levelNumber;

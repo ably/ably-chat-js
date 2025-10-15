@@ -313,9 +313,9 @@ export class DefaultPresence implements Presence {
 
     // Check if presence events are enabled
     if (!this._options.presence.enableEvents) {
-      this._logger.error('could not subscribe to presence; presence events are not enabled');
+      this._logger.error('unable to subscribe to presence; presence events are not enabled');
       throw new Ably.ErrorInfo(
-        'could not subscribe to presence; presence events are not enabled',
+        'unable to subscribe to presence; presence events are not enabled',
         ErrorCode.FeatureNotEnabledInRoom,
         400,
       );
@@ -409,9 +409,9 @@ export class DefaultPresence implements Presence {
 
   private _assertChannelState(): void {
     if (this._channel.state !== 'attaching' && this._channel.state !== 'attached') {
-      this._logger.error('could not perform presence operation; room is not attached');
+      this._logger.error('unable to perform presence operation; room is not attached');
       throw new Ably.ErrorInfo(
-        'could not perform presence operation; room is not attached',
+        'unable to perform presence operation; room is not attached',
         ErrorCode.RoomInInvalidState,
         400,
       );

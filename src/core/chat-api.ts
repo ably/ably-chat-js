@@ -135,7 +135,7 @@ export class ChatApi {
           // in vanilla JS use-cases, without types, we need to check non-enum values
           throw new Ably.ErrorInfo(
             // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-            `invalid orderBy value: ${params.orderBy}`,
+            `unable to query messages; invalid orderBy value: ${params.orderBy}`,
             ErrorCode.InvalidArgument,
             400,
           );

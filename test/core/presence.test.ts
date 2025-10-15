@@ -49,7 +49,7 @@ describe('Presence', () => {
       expect(() => {
         room.presence.subscribe(() => {});
       }).toThrowErrorInfo({
-        message: 'could not subscribe to presence; presence events are not enabled',
+        message: 'unable to subscribe to presence; presence events are not enabled',
         code: ErrorCode.FeatureNotEnabledInRoom,
       });
     });
@@ -139,7 +139,7 @@ describe('Presence', () => {
 
       await expect(room.presence.isUserPresent('clientId')).rejects.toBeErrorInfo({
         code: ErrorCode.RoomInInvalidState,
-        message: 'could not perform presence operation; room is not attached',
+        message: 'unable to perform presence operation; room is not attached',
       });
     });
   });
@@ -151,7 +151,7 @@ describe('Presence', () => {
 
       await expect(room.presence.enter({ foo: 'bar' })).rejects.toBeErrorInfo({
         code: ErrorCode.RoomInInvalidState,
-        message: 'could not perform presence operation; room is not attached',
+        message: 'unable to perform presence operation; room is not attached',
       });
     });
   });
@@ -163,7 +163,7 @@ describe('Presence', () => {
 
       await expect(room.presence.update({ foo: 'bar' })).rejects.toBeErrorInfo({
         code: ErrorCode.RoomInInvalidState,
-        message: 'could not perform presence operation; room is not attached',
+        message: 'unable to perform presence operation; room is not attached',
       });
     });
   });
@@ -175,7 +175,7 @@ describe('Presence', () => {
 
       await expect(room.presence.leave()).rejects.toBeErrorInfo({
         code: ErrorCode.RoomInInvalidState,
-        message: 'could not perform presence operation; room is not attached',
+        message: 'unable to perform presence operation; room is not attached',
       });
     });
   });
@@ -187,7 +187,7 @@ describe('Presence', () => {
 
       await expect(room.presence.get()).rejects.toBeErrorInfo({
         code: ErrorCode.RoomInInvalidState,
-        message: 'could not perform presence operation; room is not attached',
+        message: 'unable to perform presence operation; room is not attached',
       });
     });
   });

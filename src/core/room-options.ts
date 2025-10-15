@@ -193,7 +193,7 @@ export interface InternalRoomOptions {
  * @returns An ErrorInfo.
  */
 const invalidRoomConfiguration = (reason: string): Error =>
-  new Ably.ErrorInfo(`invalid room configuration: ${reason}`, ErrorCode.InvalidArgument, 400);
+  new Ably.ErrorInfo(`unable to create room; invalid room configuration: ${reason}`, ErrorCode.InvalidArgument, 400);
 
 export const validateRoomOptions = (options: InternalRoomOptions): void => {
   validateTypingOptions(options.typing);

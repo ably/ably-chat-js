@@ -52,7 +52,7 @@ describe('Occupancy', () => {
       room.occupancy.subscribe(() => {
         // This should not be called
       });
-    }).toThrow('cannot subscribe to occupancy; occupancy events are not enabled in room options');
+    }).toThrow('unable to subscribe to occupancy; occupancy events are not enabled in room options');
   });
 
   it<TestContext>('receives occupancy updates', (context) =>
@@ -253,7 +253,7 @@ describe('Occupancy', () => {
 
       expect(() => {
         room.occupancy.current();
-      }).toThrow('cannot get current occupancy; occupancy events are not enabled in room options');
+      }).toThrow('unable to get current occupancy; occupancy events are not enabled in room options');
     });
 
     // CHA-O7b

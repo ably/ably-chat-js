@@ -37,7 +37,7 @@ describe('ClientIdResolver', () => {
       expect(() => resolver.get()).toThrowErrorInfo({
         code: 40012,
         statusCode: 400,
-        message: 'invalid client id',
+        message: 'unable to get client id; client id is not set',
       });
     });
   });

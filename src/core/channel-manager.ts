@@ -29,9 +29,9 @@ export class ChannelManager {
   mergeOptions(merger: ChannelOptionsMerger): void {
     this._logger.trace('ChannelManager.mergeOptions();');
     if (this._resolvedChannel) {
-      this._logger.error('channel options cannot be modified after the channel has been requested');
+      this._logger.error('unable to modify channel options; channel has already been requested');
       throw new Ably.ErrorInfo(
-        'channel options cannot be modified after the channel has been requested',
+        'unable to modify channel options; channel has already been requested',
         ErrorCode.ChannelOptionsCannotBeModified,
         400,
       );

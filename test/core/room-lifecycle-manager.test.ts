@@ -118,7 +118,7 @@ describe('RoomLifecycleManager', () => {
 
       // Act & Assert
       await expect(roomLifeCycleManager.attach()).rejects.toBeErrorInfo({
-        message: 'cannot attach room, room is released',
+        message: 'unable to attach room; room is released',
         code: ErrorCode.RoomInInvalidState,
         statusCode: 400,
       });
@@ -135,7 +135,7 @@ describe('RoomLifecycleManager', () => {
 
       // Act & Assert
       await expect(roomLifeCycleManager.attach()).rejects.toBeErrorInfo({
-        message: 'cannot attach room, room is currently releasing',
+        message: 'unable to attach room; room is currently releasing',
         code: ErrorCode.RoomInInvalidState,
         statusCode: 400,
       });
@@ -212,7 +212,7 @@ describe('RoomLifecycleManager', () => {
 
       // Act & Assert
       await expect(roomLifeCycleManager.detach()).rejects.toBeErrorInfo({
-        message: 'cannot detach room, room is in failed state',
+        message: 'unable to detach room; room is in failed state',
         code: ErrorCode.RoomInInvalidState,
         statusCode: 400,
       });
@@ -229,7 +229,7 @@ describe('RoomLifecycleManager', () => {
 
       // Act & Assert
       await expect(roomLifeCycleManager.detach()).rejects.toBeErrorInfo({
-        message: 'cannot detach room, room is released',
+        message: 'unable to detach room; room is released',
         code: ErrorCode.RoomInInvalidState,
         statusCode: 400,
       });
@@ -246,7 +246,7 @@ describe('RoomLifecycleManager', () => {
 
       // Act & Assert
       await expect(roomLifeCycleManager.detach()).rejects.toBeErrorInfo({
-        message: 'cannot detach room, room is currently releasing',
+        message: 'unable to detach room; room is currently releasing',
         code: ErrorCode.RoomInInvalidState,
         statusCode: 400,
       });

@@ -373,7 +373,7 @@ export class DefaultMessages implements Messages {
     if (subscriptionPoint === undefined) {
       this._logger.error(`DefaultSubscriptionManager.getBeforeSubscriptionStart(); listener has not been subscribed`);
       throw new Ably.ErrorInfo(
-        'cannot query history; listener has not been subscribed',
+        'unable to query history; listener has not been subscribed',
         ErrorCode.ListenerNotSubscribed,
         400,
       ) as unknown as Error;
@@ -423,7 +423,7 @@ export class DefaultMessages implements Messages {
       }
       this._logger.error(`DefaultSubscriptionManager.handleAttach(); channelSerial is undefined`);
       throw new Ably.ErrorInfo(
-        'channel is attached, but channelSerial is not defined',
+        'unable to query messages; channel is attached but channelSerial is not defined',
         ErrorCode.ChannelSerialNotDefined,
         500,
       ) as unknown as Error;
@@ -470,7 +470,7 @@ export class DefaultMessages implements Messages {
           cleanup();
           reject(
             new Ably.ErrorInfo(
-              'channel is attached, but attachSerial is not defined',
+              'unable to query messages; channel is attached but attachSerial is not defined',
               ErrorCode.ChannelSerialNotDefined,
               500,
             ) as unknown as Error,
@@ -494,7 +494,7 @@ export class DefaultMessages implements Messages {
           this._logger.error(`DefaultSubscriptionManager.handleAttach(); attachSerial is undefined`);
           reject(
             new Ably.ErrorInfo(
-              'channel is attached, but attachSerial is not defined',
+              'unable to query messages; channel is attached but attachSerial is not defined',
               ErrorCode.ChannelSerialNotDefined,
               500,
             ) as unknown as Error,
@@ -623,7 +623,7 @@ export class DefaultMessages implements Messages {
 
     // Reject all pending subscription point promises to break circular references
     const disposalError = new Ably.ErrorInfo(
-      'room has been disposed',
+      'unable to query messages; room has been disposed',
       ErrorCode.ResourceDisposed,
       400,
     ) as unknown as Error;

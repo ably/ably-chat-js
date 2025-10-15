@@ -52,7 +52,7 @@ describe('ChatMessage', () => {
       expect(() => message.with(event)).toThrowErrorInfo({
         code: ErrorCode.InvalidArgument,
         statusCode: 400,
-        message: 'cannot apply event for a different message',
+        message: 'unable to apply message event; event is for a different message',
       });
     });
 
@@ -83,7 +83,7 @@ describe('ChatMessage', () => {
       expect(() => message.with(event)).toThrowErrorInfo({
         code: ErrorCode.InvalidArgument,
         statusCode: 400,
-        message: 'cannot apply a created event to a message',
+        message: 'unable to apply message event; unable to apply created event to existing message',
       });
     });
 
