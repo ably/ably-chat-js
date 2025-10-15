@@ -251,7 +251,7 @@ export class DefaultMessageReactions implements MessageReactions {
   /**
    * @inheritDoc
    */
-  send(messageSerial: string, params: SendMessageReactionParams): Promise<void> {
+  async send(messageSerial: string, params: SendMessageReactionParams): Promise<void> {
     this._logger.trace('MessageReactions.send();', { messageSerial, params });
 
     let { type, count } = params;
@@ -271,7 +271,7 @@ export class DefaultMessageReactions implements MessageReactions {
   /**
    * @inheritDoc
    */
-  delete(messageSerial: string, params?: DeleteMessageReactionParams): Promise<void> {
+  async delete(messageSerial: string, params?: DeleteMessageReactionParams): Promise<void> {
     this._logger.trace('MessageReactions.delete();', { messageSerial, params });
 
     let type = params?.type;
@@ -348,7 +348,7 @@ export class DefaultMessageReactions implements MessageReactions {
     };
   }
 
-  clientReactions(messageSerial: string, clientId?: string): Promise<Message['reactions']> {
+  async clientReactions(messageSerial: string, clientId?: string): Promise<Message['reactions']> {
     this._logger.trace('MessageReactions.clientReactions();', { messageSerial, clientId });
     return this._api.getClientReactions(this._roomName, messageSerial, clientId);
   }
