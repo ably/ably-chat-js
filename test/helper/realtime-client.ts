@@ -42,24 +42,37 @@ const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtim
     throw new Error('key must be in the format "keyId:key');
   }
 
-  options.useTokenAuth = true;
+  const clientId = options.clientId;
 
-  // Generate the token
-  // It's valid for 1 hour and has access to all channels and chat rooms
-  const header = {
-    typ: 'JWT',
-    alg: 'HS256',
-    kid: keyId,
-  };
-  const currentTime = Math.round(Date.now() / 1000);
-  const claims = {
-    iat: currentTime,
-    exp: currentTime + 3600,
-    'x-ably-capability': '{"[chat]*":["*"]}',
-    'x-ably-clientId': options.clientId,
-  };
+  options.authCallback = (
+    data: Ably.TokenParams,
+    callback: (err: Ably.ErrorInfo | null, token: string | null) => void,
+  ) => {
+    // Generate the token
+    // It's valid for 10 minutes and has access to all channels and chat rooms
+    const header = {
+      typ: 'JWT',
+      alg: 'HS256',
+      kid: keyId,
+    };
+    const currentTime = Math.round(Date.now() / 1000);
+    const claims = {
+      iat: currentTime,
+      exp: currentTime + 600,
+      'x-ably-capability': '{"[chat]*":["*"]}',
+      'x-ably-clientId': clientId,
+    };
 
-  options.token = jwt.sign(claims, keySecret, { header: header });
+    let token: string | null = null;
+    let err: Ably.ErrorInfo | null = null;
+    try {
+      token = jwt.sign(claims, keySecret, { header: header });
+    } catch (error: unknown) {
+      err = new Ably.ErrorInfo('unable to generate JWT', 40000, 400, error as Error);
+    } finally {
+      callback(err, token);
+    }
+  };
 
   // Strip the clientId, so we get it confirmed from the server
   delete options.clientId;
