@@ -88,8 +88,9 @@ export interface MessageReactions {
    * to be attached to be called.
    * @param messageSerial - The unique identifier of the message to react to.
    * @param params - The reaction parameters
-   * @returns Promise that resolves when the reaction has been sent
-   * @throws {Ably.ErrorInfo} with status code 404 if the message does not exist.
+   * @returns Promise that resolves when the reaction has been sent.
+   * The promise **rejects** with:
+   * - {@link Ably.ErrorInfo} with code 40400 if the message does not exist.
    * @example
    * ```typescript
    * import * as Ably from 'ably';
@@ -140,8 +141,9 @@ export interface MessageReactions {
    * @param messageSerial - The unique identifier of the message to remove the reaction from
    * @param params - Optional deletion parameters
    * @returns Promise that resolves when the reaction has been deleted
-   * @throws {Ably.ErrorInfo} with code 40400 if the message does not exist.
-   * @throws {Ably.ErrorInfo} with code 40001 if trying to delete a non-Unique reaction without a name.
+   * The promise **rejects** with:
+   * - {@link Ably.ErrorInfo} with code 40400 if the message does not exist.
+   * - {@link Ably.ErrorInfo} with code 40001 if trying to delete a non-Unique reaction without a name.
    * @example
    * ```typescript
    * import * as Ably from 'ably';
@@ -187,6 +189,7 @@ export interface MessageReactions {
    * **Note**:
    * - The room must be attached to receive reaction events.
    * - When there are many reacting clients, the client list may be clipped. Check the `clipped` flag and use {@link clientReactions} for complete client information when needed.
+   * - When the rate of reactions is very high, multiple summaries may be rolled up into a single summary event, meaning the delta between sequential summaries is not guaranteed to be a single reaction change.
    * @param listener - Callback invoked when reaction summaries are updated
    * @returns Subscription object with an unsubscribe method
    * @example
@@ -224,7 +227,7 @@ export interface MessageReactions {
    * // Attach to the room to start receiving events
    * await room.attach();
    *
-   * // Clean up when done
+   * // Later, unsubscribe when done
    * subscription.unsubscribe();
    * ```
    */
@@ -278,7 +281,7 @@ export interface MessageReactions {
    * // Attach to the room to start receiving events
    * await room.attach();
    *
-   * // Clean up when done
+   * // Later, unsubscribe when done
    * subscription.unsubscribe();
    * ```
    */
@@ -295,9 +298,9 @@ export interface MessageReactions {
    * to be attached to be called.
    * @param messageSerial - The unique identifier of the message
    * @param clientId - The client ID to check (defaults to current client)
-   * @returns Promise resolving to reaction data for the specified client
-   * @throws {Ably.ErrorInfo} if the operation fails due to network issues
-   * @throws {Ably.ErrorInfo} with status code 404 if the message does not exist.
+   * @returns Promise - That resolves to reaction data for the specified client.
+   * The promise **rejects** with:
+   * - {@link Ably.ErrorInfo} with code 40400 if the message does not exist.
    * @example
    * ```typescript
    * import * as Ably from 'ably';

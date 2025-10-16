@@ -57,7 +57,7 @@ export interface Typing {
    * // Attach to the room to start receiving events
    * await room.attach();
    *
-   * // Clean up when done
+   * // Later, unsubscribe when done
    * subscription.unsubscribe();
    * ```
    */

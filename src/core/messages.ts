@@ -293,30 +293,18 @@ export interface Messages {
    * @example
    * ```typescript
    * import * as Ably from 'ably';
-   * import { ChatClient, ChatMessageEventType } from '@ably/chat';
+   * import { ChatClient, ChatMessageEvent } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
    *
    * // Get a room and subscribe to messages
    * const room = await chatClient.rooms.get('general-chat');
    *
-   * const subscription = room.messages.subscribe((event) => {
+   * const subscription = room.messages.subscribe((event: ChatMessageEvent) => {
    *   console.log(`Message ${event.type}:`, event.message.text);
    *   console.log('From:', event.message.clientId);
    *   console.log('At:', event.message.timestamp);
-   *
    *   // Handle different event types
-   *   switch (event.type) {
-   *     case ChatMessageEventType.Created:
-   *       console.log('New message received');
-   *       break;
-   *     case ChatMessageEventType.Updated:
-   *       console.log('Message was edited');
-   *       break;
-   *     case ChatMessageEventType.Deleted:
-   *       console.log('Message was deleted');
-   *       break;
-   *   }
    * });
    *
    * // Attach to the room to start receiving events
