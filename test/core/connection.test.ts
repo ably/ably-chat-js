@@ -80,7 +80,7 @@ describe('connection', () => {
     expect(connection.error).toEqual(new Ably.ErrorInfo('error', 500, 50000));
   });
 
-  it<TestContext>('listeners can be added', (context) =>
+  it<TestContext>('listeners can be added', async (context) =>
     new Promise<void>((done, reject) => {
       const connection = new DefaultConnection(context.realtime, makeTestLogger());
       connection.onStatusChange((status) => {
@@ -94,7 +94,7 @@ describe('connection', () => {
       reject(new Error('Expected onChange to be called'));
     }));
 
-  it<TestContext>('listeners can be removed', (context) =>
+  it<TestContext>('listeners can be removed', async (context) =>
     new Promise<void>((done, reject) => {
       const connection = new DefaultConnection(context.realtime, makeTestLogger());
       const { off } = connection.onStatusChange(() => {
@@ -182,7 +182,7 @@ describe('connection', () => {
     ) => {
       const baseError = new Ably.ErrorInfo('error', 500, 99999);
 
-      it<TestContext>(`transitions state to ${expectedStatus} when realtime state goes from ${previousRealtimeState} to ${newRealtimeState}`, (context) =>
+      it<TestContext>(`transitions state to ${expectedStatus} when realtime state goes from ${previousRealtimeState} to ${newRealtimeState}`, async (context) =>
         new Promise<void>((done, reject) => {
           vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(previousRealtimeState);
           vi.spyOn(context.realtime.connection, 'errorReason', 'get').mockReturnValue(error ?? baseError);

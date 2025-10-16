@@ -319,23 +319,22 @@ describe('usePresenceListener', () => {
     // change the mock so it now throws an error on the next call,
     // this should trigger a retry to get the presence data
     let callNum = 0;
-    vi.spyOn(mockRoom.presence, 'get').mockImplementation(() => {
+    vi.spyOn(mockRoom.presence, 'get').mockImplementation(async () => {
       callNum++;
       if (callNum === 1) {
-        return Promise.reject<PresenceMember[]>(new Ably.ErrorInfo('test', 500, 50000));
-      } else {
-        // return a successful response on the second call with a presence member
-        return Promise.resolve<PresenceMember[]>([
-          {
-            clientId: 'client1',
-            data: undefined,
-            extras: undefined,
-            updatedAt: new Date(),
-            connectionId: 'connection1',
-            encoding: 'json',
-          },
-        ]);
+        throw new Ably.ErrorInfo('test', 500, 50000);
       }
+      // return a successful response on the second call with a presence member
+      return await Promise.resolve([
+        {
+          clientId: 'client1',
+          data: undefined,
+          extras: undefined,
+          updatedAt: new Date(),
+          connectionId: 'connection1',
+          encoding: 'json',
+        },
+      ]);
     });
 
     // trigger the listener; this should trigger the next call to presence.get
@@ -419,7 +418,7 @@ describe('usePresenceListener', () => {
     ];
 
     let callNum = 0;
-    vi.spyOn(mockRoom.presence, 'get').mockImplementation(() => {
+    vi.spyOn(mockRoom.presence, 'get').mockImplementation(async () => {
       callNum++;
       if (callNum === 1) {
         return new Promise((accept) => {

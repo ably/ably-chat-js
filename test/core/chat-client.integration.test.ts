@@ -12,7 +12,7 @@ import { testClientOptions } from '../helper/options.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { getRandomRoom } from '../helper/room.ts';
 
-const waitForConnectionStatus = (chat: ChatClient, state: ConnectionStatus) =>
+const waitForConnectionStatus = async (chat: ChatClient, state: ConnectionStatus) =>
   new Promise<void>((resolve, reject) => {
     const { off } = chat.connection.onStatusChange((change) => {
       if (change.current === state) {

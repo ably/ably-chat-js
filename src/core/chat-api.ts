@@ -155,12 +155,21 @@ export class ChatApi {
     result.items = data.items.map((payload) => messageFromRest(payload));
 
     // Recursively map the next paginated data
-    // eslint-disable-next-line unicorn/no-null
-    result.next = () => data.next().then((nextData) => (nextData ? this._recursivePaginateMessages(nextData) : null));
+    result.next = async () => {
+      const nextData = await data.next();
+      // eslint-disable-next-line unicorn/no-null
+      return nextData ? this._recursivePaginateMessages(nextData) : null;
+    };
 
-    result.first = () => data.first().then((firstData) => this._recursivePaginateMessages(firstData));
+    result.first = async () => {
+      const firstData = await data.first();
+      return this._recursivePaginateMessages(firstData);
+    };
 
-    result.current = () => data.current().then((currentData) => this._recursivePaginateMessages(currentData));
+    result.current = async () => {
+      const currentData = await data.current();
+      return this._recursivePaginateMessages(currentData);
+    };
 
     result.hasNext = () => data.hasNext();
 
@@ -174,7 +183,7 @@ export class ChatApi {
     return messageFromRest(restMessage);
   }
 
-  deleteMessage(roomName: string, serial: string, details?: OperationDetails): Promise<DeleteMessageResponse> {
+  async deleteMessage(roomName: string, serial: string, details?: OperationDetails): Promise<DeleteMessageResponse> {
     const body = {
       ...(details?.description && { description: details.description }),
       ...(details?.metadata && { metadata: details.metadata }),
@@ -187,7 +196,7 @@ export class ChatApi {
     );
   }
 
-  sendMessage(roomName: string, params: SendMessageParams): Promise<RestMessage> {
+  async sendMessage(roomName: string, params: SendMessageParams): Promise<RestMessage> {
     const body = {
       text: params.text,
       ...(params.metadata && { metadata: params.metadata }),
@@ -196,19 +205,19 @@ export class ChatApi {
     return this._makeAuthorizedRequest<RestMessage>(this._roomUrl(roomName, '/messages'), 'POST', body);
   }
 
-  updateMessage(roomName: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
+  async updateMessage(roomName: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
     return this._makeAuthorizedRequest<UpdateMessageResponse>(this._messageUrl(roomName, serial), 'PUT', params);
   }
 
-  sendMessageReaction(roomName: string, serial: string, data: SendMessageReactionParams): Promise<void> {
+  async sendMessageReaction(roomName: string, serial: string, data: SendMessageReactionParams): Promise<void> {
     return this._makeAuthorizedRequest(this._messageUrl(roomName, serial, '/reactions'), 'POST', data);
   }
 
-  deleteMessageReaction(roomName: string, serial: string, data: DeleteMessageReactionParams): Promise<void> {
+  async deleteMessageReaction(roomName: string, serial: string, data: DeleteMessageReactionParams): Promise<void> {
     return this._makeAuthorizedRequest(this._messageUrl(roomName, serial, '/reactions'), 'DELETE', undefined, data);
   }
 
-  getClientReactions(roomName: string, serial: string, clientId?: string): Promise<Message['reactions']> {
+  async getClientReactions(roomName: string, serial: string, clientId?: string): Promise<Message['reactions']> {
     const params = clientId ? { forClientId: clientId } : {};
     return this._makeAuthorizedRequest<Message['reactions']>(
       this._messageUrl(roomName, serial, '/client-reactions'),
@@ -218,7 +227,7 @@ export class ChatApi {
     );
   }
 
-  getOccupancy(roomName: string): Promise<OccupancyData> {
+  async getOccupancy(roomName: string): Promise<OccupancyData> {
     return this._makeAuthorizedRequest<OccupancyData>(this._roomUrl(roomName, '/occupancy'), 'GET');
   }
 

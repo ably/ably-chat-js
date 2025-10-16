@@ -181,7 +181,7 @@ export class DefaultRooms implements InternalRooms {
     }
 
     // Release all rooms concurrently
-    const releasePromises = roomNames.map((roomName) => this.release(roomName));
+    const releasePromises = roomNames.map(async (roomName) => this.release(roomName));
 
     // Ensure we wait for all ongoing releases too, since we guarantee that all rooms are released after this call
     // resolves.
@@ -291,14 +291,15 @@ export class DefaultRooms implements InternalRooms {
    * @param abortController An AbortController to manage the abort signal.
    * @returns A promise that resolves to a new room or rejects if the operation is aborted.
    */
-  private _createAbortableRoomPromise(
+  private async _createAbortableRoomPromise(
     name: string,
     nonce: string,
     options: RoomOptions | undefined,
     ongoingRelease: Promise<void>,
     abortController: AbortController,
   ): Promise<DefaultRoom> {
-    return new Promise<DefaultRoom>((resolve, reject) => {
+    // Create a promise that rejects when the abort signal fires
+    const abortPromise = new Promise<never>((_, reject) => {
       const abortListener = () => {
         this._logger.debug('Rooms.get(); aborted before init', { roomName: name });
         reject(
@@ -310,25 +311,16 @@ export class DefaultRooms implements InternalRooms {
         );
       };
 
-      abortController.signal.addEventListener('abort', abortListener);
-
-      ongoingRelease
-        .then(() => {
-          if (abortController.signal.aborted) {
-            this._logger.debug('Rooms.get(); aborted before releasing promise resolved', { roomName: name });
-            return;
-          }
-
-          this._logger.debug('Rooms.get(); releasing finished', { roomName: name });
-          const room = this._makeRoom(name, nonce, options);
-          abortController.signal.removeEventListener('abort', abortListener);
-          resolve(room);
-        })
-        .catch((error: unknown) => {
-          abortController.signal.removeEventListener('abort', abortListener);
-          reject(error as Error);
-        });
+      abortController.signal.addEventListener('abort', abortListener, { once: true });
     });
+
+    // Race between the ongoing release and the abort signal
+    await Promise.race([ongoingRelease, abortPromise]);
+
+    // If we get here, the release completed without being aborted
+    this._logger.debug('Rooms.get(); releasing finished', { roomName: name });
+    const room = this._makeRoom(name, nonce, options);
+    return room;
   }
 
   /**

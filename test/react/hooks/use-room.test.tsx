@@ -77,8 +77,8 @@ describe('useRoom', () => {
             callback={(response) => {
               void (async () => {
                 const room = await chatClient.rooms.get(roomName);
-                vi.spyOn(room, 'attach').mockImplementation(() => Promise.resolve());
-                vi.spyOn(room, 'detach').mockImplementation(() => Promise.resolve());
+                vi.spyOn(room, 'attach').mockImplementation(async () => {});
+                vi.spyOn(room, 'detach').mockImplementation(async () => {});
 
                 // no awaiting since we don't care about result, just that the relevant function was called
                 void response.attach();
@@ -108,8 +108,8 @@ describe('useRoom', () => {
     const roomName = randomRoomName();
     const room = await chatClient.rooms.get(roomName);
 
-    vi.spyOn(room, 'attach').mockImplementation(() => Promise.resolve());
-    vi.spyOn(room, 'detach').mockImplementation(() => Promise.resolve());
+    vi.spyOn(room, 'attach').mockImplementation(async () => {});
+    vi.spyOn(room, 'detach').mockImplementation(async () => {});
     vi.spyOn(chatClient.rooms, 'release');
 
     const TestProvider = ({ room1 = true, room2 = true }) => {

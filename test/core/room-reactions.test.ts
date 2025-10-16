@@ -10,6 +10,7 @@ import { DefaultRoomReactions } from '../../src/core/room-reactions.ts';
 import { ErrorCode } from '../../src/index.ts';
 import { channelEventEmitter } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
+import { wrapWithPromise } from '../helper/promise.ts';
 import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
@@ -43,19 +44,20 @@ describe('Reactions', () => {
     const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
 
-    vi.spyOn(channel, 'publish').mockImplementation((message: Ably.Message) => {
-      context.emulateBackendPublish({
-        ...message,
-        clientId: clientId,
-        timestamp: context.publishTimestamp.getTime(),
-        encoding: 'json',
-      });
-      return Promise.resolve();
-    });
+    vi.spyOn(channel, 'publish').mockImplementation(
+      wrapWithPromise((message: Ably.Message) => {
+        context.emulateBackendPublish({
+          ...message,
+          clientId: clientId,
+          timestamp: context.publishTimestamp.getTime(),
+          encoding: 'json',
+        });
+      }),
+    );
   });
 
   describe('receiving a reaction', () => {
-    it<TestContext>("should be able to get a reaction from realtime channel and recognize it as being somebody else's", (context) =>
+    it<TestContext>("should be able to get a reaction from realtime channel and recognize it as being somebody else's", async (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = Date.now();
         const { room } = context;
@@ -87,7 +89,7 @@ describe('Reactions', () => {
         });
       }));
 
-    it<TestContext>('should be able to get a reaction from realtime channel and recognize it as your own', (context) =>
+    it<TestContext>('should be able to get a reaction from realtime channel and recognize it as your own', async (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = Date.now();
         const { room } = context;
@@ -244,7 +246,7 @@ describe('Reactions', () => {
     (description: string, inbound: object, expected: { expectedClientId: string; expectedType: string }) => {
       test<TestContext>(
         'processes reaction with defaults for: ' + description,
-        (context) =>
+        async (context) =>
           new Promise<void>((done, reject) => {
             const { room } = context;
 
@@ -268,7 +270,7 @@ describe('Reactions', () => {
   );
 
   describe('sending a reaction', () => {
-    it<TestContext>('should be able to send a reaction and see it back on the realtime channel', (context) =>
+    it<TestContext>('should be able to send a reaction and see it back on the realtime channel', async (context) =>
       new Promise<void>((done, reject) => {
         const { room } = context;
 
@@ -322,7 +324,7 @@ describe('Reactions', () => {
       await expect(room.reactions.send({ name: 'love' })).rejects.toBeErrorInfoWithCode(ErrorCode.Disconnected);
     });
 
-    it<TestContext>('should be able to send a reaction and receive a reaction with metadata and headers', (context) =>
+    it<TestContext>('should be able to send a reaction and receive a reaction with metadata and headers', async (context) =>
       new Promise<void>((done, reject) => {
         const { room } = context;
 

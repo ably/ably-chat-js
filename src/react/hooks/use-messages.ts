@@ -131,37 +131,58 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
   const sendMessage = useCallback(
-    (params: SendMessageParams) => context.room.then((room) => room.messages.send(params)),
+    async (params: SendMessageParams) => {
+      const room = await context.room;
+      return room.messages.send(params);
+    },
     [context],
   );
 
-  const getMessage = useCallback((serial: string) => context.room.then((room) => room.messages.get(serial)), [context]);
+  const getMessage = useCallback(
+    async (serial: string) => {
+      const room = await context.room;
+      return room.messages.get(serial);
+    },
+    [context],
+  );
 
   const deleteMessage = useCallback(
-    (serial: string, details?: OperationDetails) => context.room.then((room) => room.messages.delete(serial, details)),
+    async (serial: string, details?: OperationDetails) => {
+      const room = await context.room;
+      return room.messages.delete(serial, details);
+    },
     [context],
   );
 
   const history = useCallback(
-    (params: HistoryParams) => context.room.then((room) => room.messages.history(params)),
+    async (params: HistoryParams) => {
+      const room = await context.room;
+      return room.messages.history(params);
+    },
     [context],
   );
 
   const updateMessage = useCallback(
-    (serial: string, updateParams: UpdateMessageParams, details?: OperationDetails) =>
-      context.room.then((room) => room.messages.update(serial, updateParams, details)),
+    async (serial: string, updateParams: UpdateMessageParams, details?: OperationDetails) => {
+      const room = await context.room;
+      return room.messages.update(serial, updateParams, details);
+    },
     [context],
   );
 
   const sendReaction: Messages['reactions']['send'] = useCallback(
-    (serial: string, params: SendMessageReactionParams) =>
-      context.room.then((room) => room.messages.reactions.send(serial, params)),
+    async (serial: string, params: SendMessageReactionParams) => {
+      const room = await context.room;
+      return room.messages.reactions.send(serial, params);
+    },
     [context],
   );
 
   const deleteReaction: Messages['reactions']['delete'] = useCallback(
-    (serial: string, params?: DeleteMessageReactionParams) =>
-      context.room.then((room) => room.messages.reactions.delete(serial, params)),
+    async (serial: string, params?: DeleteMessageReactionParams) => {
+      const room = await context.room;
+      return room.messages.reactions.delete(serial, params);
+    },
     [context],
   );
 
@@ -188,17 +209,15 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
             return;
           }
 
-          return (params: Omit<HistoryParams, 'orderBy'>) => {
+          return async (params: Omit<HistoryParams, 'orderBy'>) => {
             // If we've unmounted, then the subscription is gone and we can't call historyBeforeSubscribe
             // So return a dummy object that should be thrown away anyway
             logger.debug('useMessages(); historyBeforeSubscribe called');
             if (unmounted) {
-              return Promise.reject(
-                new Ably.ErrorInfo(
-                  'unable to query messages; component unmounted',
-                  ErrorCode.ReactComponentUnmounted,
-                  400,
-                ),
+              throw new Ably.ErrorInfo(
+                'unable to query messages; component unmounted',
+                ErrorCode.ReactComponentUnmounted,
+                400,
               );
             }
             return sub.historyBeforeSubscribe(params);

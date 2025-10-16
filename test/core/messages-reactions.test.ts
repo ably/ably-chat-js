@@ -176,7 +176,7 @@ describe('MessageReactions', () => {
       });
     });
 
-    it<TestContext>('should receive summary events', (context) =>
+    it<TestContext>('should receive summary events', async (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = Date.now();
 
@@ -399,7 +399,7 @@ describe('MessageReactions', () => {
       context.emulateBackendAnnotation = channelAnnotationEventEmitter(channel);
     });
 
-    it<TestContext>('should receive raw reaction events', (context) =>
+    it<TestContext>('should receive raw reaction events', async (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = Date.now();
 

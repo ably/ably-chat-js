@@ -11,7 +11,7 @@ import { PresenceEvent } from '../../src/core/presence.ts';
  * @param timeoutMs The timeout in milliseconds to wait for the event.
  * @returns A promise that resolves when the expected occupancy is found.
  */
-export const waitForExpectedInbandOccupancy = (
+export const waitForExpectedInbandOccupancy = async (
   occupancyEvents: OccupancyEvent[],
   expectedOccupancy: OccupancyEvent,
   timeoutMs: number,
@@ -53,7 +53,7 @@ export const waitForArrayLength = async (array: unknown[], expectedCount: number
  * @param presenceEvents The array of presence events to search through.
  * @returns A promise that resolves when the expected presence event is found.
  */
-export const waitForExpectedPresenceEvent = (
+export const waitForExpectedPresenceEvent = async (
   event: { clientId: string; data: unknown; type: PresenceEventType },
   presenceEvents: PresenceEvent[],
 ): Promise<void> =>

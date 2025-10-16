@@ -13,7 +13,7 @@ describe('room status', () => {
     expect(status.error).toBeUndefined();
   });
 
-  it('listeners can be added', () =>
+  it('listeners can be added', async () =>
     new Promise<void>((done, reject) => {
       const status = new DefaultRoomLifecycle(makeTestLogger());
       status.onChange((status) => {
@@ -26,7 +26,7 @@ describe('room status', () => {
       reject(new Error('Expected onChange to be called'));
     }));
 
-  it('listeners can be removed', () =>
+  it('listeners can be removed', async () =>
     new Promise<void>((done, reject) => {
       const status = new DefaultRoomLifecycle(makeTestLogger());
       const { off } = status.onChange(() => {
@@ -38,7 +38,7 @@ describe('room status', () => {
       done();
     }));
 
-  it('subscriptions are unique even if listeners are identical', () =>
+  it('subscriptions are unique even if listeners are identical', async () =>
     new Promise<void>((done, reject) => {
       const status = new DefaultRoomLifecycle(makeTestLogger());
 

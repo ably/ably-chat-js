@@ -11,7 +11,7 @@ interface TestContext {
   chat: ChatClient;
 }
 
-const waitForReactions = (foundTypes: string[], expectedTypes: string[]) =>
+const waitForReactions = async (foundTypes: string[], expectedTypes: string[]) =>
   new Promise<void>((resolve, reject) => {
     const interval = setInterval(() => {
       if (foundTypes.length === expectedTypes.length) {
