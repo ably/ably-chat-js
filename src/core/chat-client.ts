@@ -68,7 +68,7 @@ export class ChatClient {
    *
    * // Preferred in production: Use auth URL that returns a JWT
    * const realtimeClientWithJWT = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Your server endpoint that returns an JWT with clientId
+   *   authUrl: '/api/ably-auth', // Your server endpoint that returns a JWT with clientId
    *   authMethod: 'POST'
    * });
    *
