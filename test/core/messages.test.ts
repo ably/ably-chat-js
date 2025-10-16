@@ -139,6 +139,19 @@ describe('Messages', () => {
   });
 
   describe('deleting messages', () => {
+    // CHA-M9f
+    describe.each([
+      ['undefined', undefined],
+      ['null', null],
+      ['empty string', ''],
+    ])('when serial is %s', (_, serial: unknown) => {
+      it<TestContext>('should throw InvalidArgument error', async (context) => {
+        await expect(context.room.messages.delete(serial as string)).rejects.toBeErrorInfoWithCode(
+          ErrorCode.InvalidArgument,
+        );
+      });
+    });
+
     it<TestContext>('should be able to delete a message and get it back from response', async (context) => {
       const { chatApi } = context;
       const sendTimestamp = Date.now();
@@ -298,6 +311,19 @@ describe('Messages', () => {
   });
 
   describe('updating messages', () => {
+    // CHA-M8g
+    describe.each([
+      ['undefined', undefined],
+      ['null', null],
+      ['empty string', ''],
+    ])('when serial is %s', (_, serial: unknown) => {
+      it<TestContext>('should throw InvalidArgument error', async (context) => {
+        await expect(
+          context.room.messages.update(serial as string, { text: 'updated text' }),
+        ).rejects.toBeErrorInfoWithCode(ErrorCode.InvalidArgument);
+      });
+    });
+
     it<TestContext>('should update a message using an object containing serial', async (context) => {
       const { room } = context;
       const { chatApi } = context;

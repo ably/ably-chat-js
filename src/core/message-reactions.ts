@@ -20,6 +20,7 @@ import { Logger } from './logger.js';
 import { Message } from './message.js';
 import { subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions, MessagesOptions } from './room-options.js';
+import { assertValidSerial } from './serial.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
@@ -251,8 +252,10 @@ export class DefaultMessageReactions implements MessageReactions {
   /**
    * @inheritDoc
    */
-  send(messageSerial: string, params: SendMessageReactionParams): Promise<void> {
+  async send(messageSerial: string, params: SendMessageReactionParams): Promise<void> {
     this._logger.trace('MessageReactions.send();', { messageSerial, params });
+    // Spec: CHA-MR4a2
+    assertValidSerial(messageSerial, 'send message reaction', 'messageSerial');
 
     let { type, count } = params;
     if (!type) {
@@ -271,8 +274,10 @@ export class DefaultMessageReactions implements MessageReactions {
   /**
    * @inheritDoc
    */
-  delete(messageSerial: string, params?: DeleteMessageReactionParams): Promise<void> {
+  async delete(messageSerial: string, params?: DeleteMessageReactionParams): Promise<void> {
     this._logger.trace('MessageReactions.delete();', { messageSerial, params });
+    // Spec: CHA-MR11a2
+    assertValidSerial(messageSerial, 'delete message reaction', 'messageSerial');
 
     let type = params?.type;
     if (!type) {
@@ -348,8 +353,9 @@ export class DefaultMessageReactions implements MessageReactions {
     };
   }
 
-  clientReactions(messageSerial: string, clientId?: string): Promise<Message['reactions']> {
+  async clientReactions(messageSerial: string, clientId?: string): Promise<Message['reactions']> {
     this._logger.trace('MessageReactions.clientReactions();', { messageSerial, clientId });
+    assertValidSerial(messageSerial, 'get client reactions', 'messageSerial');
     return this._api.getClientReactions(this._roomName, messageSerial, clientId);
   }
 

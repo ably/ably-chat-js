@@ -2,6 +2,7 @@ import * as Ably from 'ably';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import {
   MessageReactionRawEvent,
   MessageReactionRawEventType,
@@ -44,6 +45,19 @@ describe('MessageReactions', () => {
       context.emulateBackendAnnotation = channelAnnotationEventEmitter(channel);
     });
 
+    // CHA-MR4a2
+    describe.each([
+      ['undefined', undefined],
+      ['null', null],
+      ['empty string', ''],
+    ])('when messageSerial is %s', (_, messageSerial: unknown) => {
+      it<TestContext>('should throw InvalidArgument error', async (context) => {
+        await expect(
+          context.room.messages.reactions.send(messageSerial as string, { name: '🥕' }),
+        ).rejects.toBeErrorInfoWithCode(ErrorCode.InvalidArgument);
+      });
+    });
+
     it<TestContext>('should correctly send message reaction', async (context) => {
       const { chatApi } = context;
       const timestamp = Date.now();
@@ -81,6 +95,19 @@ describe('MessageReactions', () => {
       expect(chatApi.sendMessageReaction).toHaveBeenLastCalledWith(context.room.name, serial, {
         type: MessageReactionType.Distinct,
         name: '👻',
+      });
+    });
+
+    // CHA-MR11a2
+    describe.each([
+      ['undefined', undefined],
+      ['null', null],
+      ['empty string', ''],
+    ])('when messageSerial is %s for delete', (_, messageSerial: unknown) => {
+      it<TestContext>('should throw InvalidArgument error', async (context) => {
+        await expect(
+          context.room.messages.reactions.delete(messageSerial as string, { name: '🥕' }),
+        ).rejects.toBeErrorInfoWithCode(ErrorCode.InvalidArgument);
       });
     });
 
@@ -135,6 +162,18 @@ describe('MessageReactions', () => {
       // Test without clientId
       await room.messages.reactions.clientReactions(serial);
       expect(chatApi.getClientReactions).toHaveBeenCalledWith(room.name, serial, undefined);
+    });
+
+    describe.each([
+      ['undefined', undefined],
+      ['null', null],
+      ['empty string', ''],
+    ])('when messageSerial is %s for clientReactions', (_, messageSerial: unknown) => {
+      it<TestContext>('should throw InvalidArgument error', async (context) => {
+        await expect(
+          context.room.messages.reactions.clientReactions(messageSerial as string),
+        ).rejects.toBeErrorInfoWithCode(ErrorCode.InvalidArgument);
+      });
     });
 
     it<TestContext>('should receive summary events', (context) =>

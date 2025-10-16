@@ -11,6 +11,7 @@ import { PaginatedResult } from './query.js';
 import { on, once, subscribe } from './realtime-subscriptions.js';
 import { messageFromRest } from './rest-types.js';
 import { MessagesOptions } from './room-options.js';
+import { assertValidSerial } from './serial.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.js';
 
@@ -539,6 +540,8 @@ export class DefaultMessages implements Messages {
    */
   async delete(serial: string, details?: OperationDetails): Promise<Message> {
     this._logger.trace('Messages.delete();', { serial, details });
+    // Spec: CHA-M9f
+    assertValidSerial(serial, 'delete message', 'serial');
     const response = await this._chatApi.deleteMessage(this._roomName, serial, details);
 
     return messageFromRest(response);
@@ -549,6 +552,8 @@ export class DefaultMessages implements Messages {
    */
   async update(serial: string, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message> {
     this._logger.trace('Messages.update();', { serial, updateParams, details });
+    // Spec: CHA-M8g
+    assertValidSerial(serial, 'update message', 'serial');
     const response = await this._chatApi.updateMessage(this._roomName, serial, {
       message: {
         text: updateParams.text,
