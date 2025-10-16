@@ -134,7 +134,7 @@ describe('useOccupancy', () => {
       return { unsubscribe: vi.fn() };
     });
 
-    vi.spyOn(mockRoom.occupancy, 'current').mockReturnValueOnce({
+    vi.spyOn(mockRoom.occupancy, 'current', 'get').mockReturnValueOnce({
       connections: 0,
       presenceMembers: 0,
     });
@@ -166,7 +166,7 @@ describe('useOccupancy', () => {
   });
 
   it('should load the initial occupancy metrics from current', async () => {
-    vi.spyOn(mockRoom.occupancy, 'current').mockReturnValueOnce({
+    vi.spyOn(mockRoom.occupancy, 'current', 'get').mockReturnValueOnce({
       connections: 6,
       presenceMembers: 4,
     });

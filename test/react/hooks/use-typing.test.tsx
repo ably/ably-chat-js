@@ -142,7 +142,7 @@ describe('useTyping', () => {
     });
 
     // spy on the get method of the typing instance, for now return an empty set
-    vi.spyOn(mockRoom.typing, 'current').mockReturnValue(new Set());
+    vi.spyOn(mockRoom.typing, 'current', 'get').mockReturnValue(new Set());
 
     // render the hook and check the initial state
     const { result } = renderHook(() => useTyping());
@@ -182,7 +182,7 @@ describe('useTyping', () => {
 
     const testSet = new Set<string>(['user1', 'user2']);
     // spy on the get method of the typing instance, return an initial set
-    vi.spyOn(mockRoom.typing, 'current').mockReturnValue(testSet);
+    vi.spyOn(mockRoom.typing, 'current', 'get').mockReturnValue(testSet);
 
     // render the hook and check the initial state
     const { result } = renderHook(() => useTyping());
@@ -196,7 +196,6 @@ describe('useTyping', () => {
     );
 
     expect(mockRoom.typing.subscribe).toHaveBeenCalledTimes(1);
-    expect(mockRoom.typing.current).toHaveBeenCalledOnce();
 
     // check the states of the occupancy metrics are correctly updated
     expect(result.current.currentlyTyping).toEqual(testSet);
@@ -205,7 +204,7 @@ describe('useTyping', () => {
   it('should handle rerender if the room instance changes', async () => {
     const { result, rerender } = renderHook(() => useTyping());
 
-    vi.spyOn(mockRoom.typing, 'current').mockReturnValue(new Set(['a', 'b']));
+    vi.spyOn(mockRoom.typing, 'current', 'get').mockReturnValue(new Set(['a', 'b']));
 
     // check the initial state of the typing instance
     await vi.waitFor(() => {
@@ -222,7 +221,7 @@ describe('useTyping', () => {
         },
       }),
     );
-    vi.spyOn(mockRoom.typing, 'current').mockReturnValue(new Set(['a', 'b', 'c']));
+    vi.spyOn(mockRoom.typing, 'current', 'get').mockReturnValue(new Set(['a', 'b', 'c']));
 
     // re-render to trigger the useEffect
     rerender();
