@@ -40,7 +40,7 @@ export interface Occupancy {
    * @returns The latest occupancy data, or undefined if no realtime events have been received yet.
    * @throws {Ably.ErrorInfo} If occupancy events are not enabled for this room.
    */
-  current(): OccupancyData | undefined;
+  get current(): OccupancyData | undefined;
 }
 
 /**
@@ -141,7 +141,7 @@ export class DefaultOccupancy implements Occupancy {
   /**
    * @inheritdoc
    */
-  current(): OccupancyData | undefined {
+  get current(): OccupancyData | undefined {
     this._logger.trace('Occupancy.current();');
 
     // CHA-O7c

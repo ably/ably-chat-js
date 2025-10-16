@@ -252,13 +252,13 @@ describe('Occupancy', () => {
       });
 
       expect(() => {
-        room.occupancy.current();
+        void room.occupancy.current;
       }).toThrow('unable to get current occupancy; occupancy events are not enabled in room options');
     });
 
     // CHA-O7b
     it<TestContext>('returns undefined when no events have been received', (context) => {
-      expect(context.room.occupancy.current()).toBeUndefined();
+      expect(context.room.occupancy.current).toBeUndefined();
     });
 
     // CHA-O7a
@@ -274,7 +274,7 @@ describe('Occupancy', () => {
         },
       });
 
-      expect(context.room.occupancy.current()).toEqual({
+      expect(context.room.occupancy.current).toEqual({
         connections: 5,
         presenceMembers: 3,
       });
@@ -290,7 +290,7 @@ describe('Occupancy', () => {
         },
       });
 
-      expect(context.room.occupancy.current()).toEqual({
+      expect(context.room.occupancy.current).toEqual({
         connections: 7,
         presenceMembers: 4,
       });
