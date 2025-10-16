@@ -227,7 +227,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * const handleSendReaction = async (messageSerial: string, emoji: string) => {
    *   try {
    *     await sendReaction(messageSerial, {
-   *       type: emoji
+   *       name: emoji
    *     });
    *   } catch (error) {
    *     console.error('Failed to send reaction:', error);
@@ -258,7 +258,7 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * const handleDeleteReaction = async (messageSerial: string, emoji: string) => {
    *   try {
    *     await deleteReaction(messageSerial, {
-   *       type: emoji
+   *       name: emoji
    *     });
    *   } catch (error) {
    *     console.error('Failed to delete reaction:', error);
