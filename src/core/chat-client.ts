@@ -51,8 +51,8 @@ export class ChatClient {
   /**
    * Creates a new ChatClient instance for interacting with Ably Chat.
    *
-   * The ChatClient is the main entry point for the Ably Chat SDK. It manages the
-   * connection to Ably and provides access to chat rooms through the rooms property.
+   * The ChatClient is the main entry point for the Ably Chat SDK. It requires a Realtime client
+   * and provides access to chat rooms through the rooms property.
    *
    * **Important**: The Ably Realtime client must have a clientId set. This identifies
    * the user in chat rooms and is required for all chat operations.
@@ -66,13 +66,13 @@ export class ChatClient {
    * import * as Ably from 'ably';
    * import { ChatClient, LogLevel } from '@ably/chat';
    *
-   * // Preferred in production: Use auth URL that returns a token with clientId
-   * const realtimeClientWithTokens = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Your server endpoint that returns an Ably token with clientId
+   * // Preferred in production: Use auth URL that returns a JWT
+   * const realtimeClientWithJWT = new Ably.Realtime({
+   *   authUrl: '/api/ably-auth', // Your server endpoint that returns an JWT with clientId
    *   authMethod: 'POST'
    * });
    *
-   * const chatClientWithLogging = new ChatClient(realtimeClientWithTokens)
+   * const chatClient = new ChatClient(realtimeClientWithJWT)
    *```
    * @example
    *```typescript
@@ -82,7 +82,7 @@ export class ChatClient {
    *   clientId: 'user-123'
    * });
    *
-   * const chatClientWithLogging = new ChatClient(realtimeClientWithKey)
+   * const chatClient = new ChatClient(realtimeClientWithKey)
    * ```
    * @example
    * ```typescript
