@@ -13,6 +13,7 @@ import { ErrorCode } from '../../src/index.ts';
 import { channelEventEmitter, ChannelEventEmitterReturnType } from '../helper/channel.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { makeTestLogger } from '../helper/logger.ts';
+import { withAsyncTimeout } from '../helper/promise.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
@@ -111,30 +112,18 @@ describe('Typing', () => {
     const resolveOrder: string[] = [];
 
     // Start the first typing operation
-    const keystrokePromise = new Promise<void>((resolve, reject) => {
-      room.typing
-        .keystroke()
-        .then(() => {
-          resolveOrder.push('keystrokePromise');
-          resolve();
-        })
-        .catch(reject);
-    });
+    const keystrokePromise = (async () => {
+      await room.typing.keystroke();
+      resolveOrder.push('keystrokePromise');
+    })();
 
     // Start the second operation with a short delay of 100ms,
     // this is smaller than the delay in the mock publish of 300ms.
     // The `stop` call should await before the `keystroke` call has resolved, but only resolve itself after.
-    const stopPromise = new Promise<void>((resolve, reject) => {
-      setTimeout(() => {
-        room.typing
-          .stop()
-          .then(() => {
-            resolveOrder.push('stopPromise');
-            resolve();
-          })
-          .catch(reject);
-      }, 100); // 100ms delay
-    });
+    const stopPromise = withAsyncTimeout(async () => {
+      await room.typing.stop();
+      resolveOrder.push('stopPromise');
+    }, 100);
 
     // Wait for both to complete
     await Promise.all([keystrokePromise, stopPromise]);
@@ -234,28 +223,14 @@ describe('Typing', () => {
       const firstKeystrokePromise = room.typing.keystroke();
 
       // After 250ms, call stop
-      const stopPromise = new Promise<void>((resolve, reject) => {
-        setTimeout(() => {
-          room.typing
-            .stop()
-            .then(() => {
-              resolve();
-            })
-            .catch(reject);
-        }, 250);
-      });
+      const stopPromise = withAsyncTimeout(async () => {
+        await room.typing.stop();
+      }, 250);
 
       // Then immediately call keystroke again
-      const secondKeystrokePromise = new Promise<void>((resolve, reject) => {
-        setTimeout(() => {
-          room.typing
-            .keystroke()
-            .then(() => {
-              resolve();
-            })
-            .catch(reject);
-        }, 300); // Slightly after the stop call
-      });
+      const secondKeystrokePromise = withAsyncTimeout(async () => {
+        await room.typing.keystroke();
+      }, 300);
 
       // Wait for all operations to complete
       await Promise.all([firstKeystrokePromise, stopPromise, secondKeystrokePromise]);
@@ -345,32 +320,19 @@ describe('Typing', () => {
       const firstKeystrokePromise = room.typing.keystroke();
 
       // After 250ms, call keystroke again
-      const secondKeystrokePromise = new Promise<void>((resolve, reject) => {
-        setTimeout(() => {
-          room.typing
-            .keystroke()
-            .then(() => {
-              resolve();
-            })
-            .catch(reject);
-        }, 250);
-      });
+      const secondKeystrokePromise = withAsyncTimeout(async () => {
+        await room.typing.keystroke();
+      }, 250);
 
       // Then call stop
-      const stopPromise = new Promise<void>((resolve) => {
-        const timeoutId = setTimeout(() => {
-          void room.typing
-            .stop()
-            .catch((error: unknown) => {
-              // Stop should be rejected since we're disposed
-              expect(error).toBeErrorInfoWithCode(ErrorCode.ResourceDisposed);
-            })
-            .finally(() => {
-              clearTimeout(timeoutId);
-              resolve();
-            });
-        }, 300);
-      });
+      const stopPromise = withAsyncTimeout(async () => {
+        try {
+          await room.typing.stop();
+        } catch (error: unknown) {
+          // Stop should be rejected since we're disposed
+          expect(error).toBeErrorInfoWithCode(ErrorCode.ResourceDisposed);
+        }
+      }, 300);
 
       // Wait for all operations to complete
       await Promise.all([firstKeystrokePromise, secondKeystrokePromise, stopPromise]);
@@ -819,33 +781,20 @@ describe('Typing', () => {
       });
 
       // After 250ms, call dispose
-      const disposePromise = new Promise<void>((resolve, reject) => {
-        setTimeout(() => {
-          (room.typing as DefaultTyping)
-            .dispose()
-            .then(() => {
-              resolve();
-            })
-            .catch(reject);
-        }, 250);
-      });
+      const disposePromise = withAsyncTimeout(async () => {
+        await (room.typing as DefaultTyping).dispose();
+      }, 250);
 
       // After 300ms, call stop
       // This will cancel the
-      const stopPromise = new Promise<void>((resolve) => {
-        const timeoutId = setTimeout(() => {
-          void room.typing
-            .stop()
-            .catch((error: unknown) => {
-              // Stop should be rejected since we're disposed
-              expect(error).toBeErrorInfoWithCode(ErrorCode.ResourceDisposed);
-            })
-            .finally(() => {
-              clearTimeout(timeoutId);
-              resolve();
-            });
-        }, 300);
-      });
+      const stopPromise = withAsyncTimeout(async () => {
+        try {
+          await room.typing.stop();
+        } catch (error: unknown) {
+          // Stop should be rejected since we're disposed
+          expect(error).toBeErrorInfoWithCode(ErrorCode.ResourceDisposed);
+        }
+      }, 300);
 
       // Wait for all operations to complete
       await Promise.all([keystrokePromise, disposePromise, stopPromise]);

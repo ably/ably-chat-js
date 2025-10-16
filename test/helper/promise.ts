@@ -21,3 +21,33 @@ export const wrapWithPromise =
     callback(...args);
     await Promise.resolve();
   };
+
+/**
+ * Creates a promise that resolves after a specified timeout, executing an async function when the timeout concludes.
+ * The returned promise resolves with the result of the async function.
+ * @template T The return type of the async function
+ * @param asyncFn The async function to execute when the timeout concludes
+ * @param timeoutMs The timeout duration in milliseconds
+ * @returns A promise that resolves with the result of the async function
+ * @example
+ * ```ts
+ * // Execute an async operation after 100ms
+ * const result = await withAsyncTimeout(async () => {
+ *   await someAsyncOperation();
+ *   return 'done';
+ * }, 100);
+ * ```
+ */
+export const withAsyncTimeout = async <T>(asyncFn: () => Promise<T>, timeoutMs: number): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    setTimeout(() => {
+      void (async () => {
+        try {
+          const result = await asyncFn();
+          resolve(result);
+        } catch (error: unknown) {
+          reject(error instanceof Error ? error : new Error(String(error)));
+        }
+      })();
+    }, timeoutMs);
+  });

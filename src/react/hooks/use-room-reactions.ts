@@ -86,7 +86,10 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
   }, [context, listenerRef, logger]);
 
   const sendRoomReaction = useCallback(
-    async (params: SendReactionParams) => context.room.then(async (room) => room.reactions.send(params)),
+    async (params: SendReactionParams) => {
+      const room = await context.room;
+      return room.reactions.send(params);
+    },
     [context],
   );
 

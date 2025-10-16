@@ -131,41 +131,58 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
   const sendMessage = useCallback(
-    async (params: SendMessageParams) => context.room.then(async (room) => room.messages.send(params)),
+    async (params: SendMessageParams) => {
+      const room = await context.room;
+      return room.messages.send(params);
+    },
     [context],
   );
 
   const getMessage = useCallback(
-    async (serial: string) => context.room.then(async (room) => room.messages.get(serial)),
+    async (serial: string) => {
+      const room = await context.room;
+      return room.messages.get(serial);
+    },
     [context],
   );
 
   const deleteMessage = useCallback(
-    async (serial: string, details?: OperationDetails) =>
-      context.room.then(async (room) => room.messages.delete(serial, details)),
+    async (serial: string, details?: OperationDetails) => {
+      const room = await context.room;
+      return room.messages.delete(serial, details);
+    },
     [context],
   );
 
   const history = useCallback(
-    async (params: HistoryParams) => context.room.then(async (room) => room.messages.history(params)),
+    async (params: HistoryParams) => {
+      const room = await context.room;
+      return room.messages.history(params);
+    },
     [context],
   );
 
   const updateMessage = useCallback(
-    async (serial: string, updateParams: UpdateMessageParams, details?: OperationDetails) =>
-      context.room.then(async (room) => room.messages.update(serial, updateParams, details)),
+    async (serial: string, updateParams: UpdateMessageParams, details?: OperationDetails) => {
+      const room = await context.room;
+      return room.messages.update(serial, updateParams, details);
+    },
     [context],
   );
 
   const sendReaction: Messages['reactions']['send'] = useCallback(
-    async (serial: string, params: SendMessageReactionParams) =>
-      context.room.then(async (room) => room.messages.reactions.send(serial, params)),
+    async (serial: string, params: SendMessageReactionParams) => {
+      const room = await context.room;
+      return room.messages.reactions.send(serial, params);
+    },
     [context],
   );
 
   const deleteReaction: Messages['reactions']['delete'] = useCallback(
-    async (serial: string, params?: DeleteMessageReactionParams) =>
-      context.room.then(async (room) => room.messages.reactions.delete(serial, params)),
+    async (serial: string, params?: DeleteMessageReactionParams) => {
+      const room = await context.room;
+      return room.messages.reactions.delete(serial, params);
+    },
     [context],
   );
 

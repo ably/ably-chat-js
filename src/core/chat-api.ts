@@ -155,13 +155,21 @@ export class ChatApi {
     result.items = data.items.map((payload) => messageFromRest(payload));
 
     // Recursively map the next paginated data
-    result.next = async () =>
+    result.next = async () => {
+      const nextData = await data.next();
       // eslint-disable-next-line unicorn/no-null
-      data.next().then((nextData) => (nextData ? this._recursivePaginateMessages(nextData) : null));
+      return nextData ? this._recursivePaginateMessages(nextData) : null;
+    };
 
-    result.first = async () => data.first().then((firstData) => this._recursivePaginateMessages(firstData));
+    result.first = async () => {
+      const firstData = await data.first();
+      return this._recursivePaginateMessages(firstData);
+    };
 
-    result.current = async () => data.current().then((currentData) => this._recursivePaginateMessages(currentData));
+    result.current = async () => {
+      const currentData = await data.current();
+      return this._recursivePaginateMessages(currentData);
+    };
 
     result.hasNext = () => data.hasNext();
 

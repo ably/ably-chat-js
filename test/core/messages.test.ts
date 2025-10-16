@@ -15,7 +15,7 @@ import {
   ChannelStateEventEmitterReturnType,
 } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
-import { mockReturningPromiseNull } from '../helper/promise.ts';
+import { mockReturningPromiseNull, withAsyncTimeout } from '../helper/promise.ts';
 import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
@@ -802,11 +802,7 @@ describe('Messages', () => {
       // we changed the channel state below. To address this issue we wait an
       // insignificant amount of time here to ensure the channel promise inside
       // DefaultMessages resolves BEFORE we change the channel state here.
-      await new Promise<void>((resolve) =>
-        setTimeout(() => {
-          resolve();
-        }, 10),
-      );
+      await withAsyncTimeout(async () => {}, 10);
 
       // Mock the channel state to be attached
       vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
@@ -893,11 +889,7 @@ describe('Messages', () => {
       const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
       // wait
-      await new Promise<void>((resolve) =>
-        setTimeout(() => {
-          resolve();
-        }, 10),
-      );
+      await withAsyncTimeout(async () => {}, 10);
 
       // Mock the channel state to be attached
       vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');

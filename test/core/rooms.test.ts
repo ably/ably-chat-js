@@ -175,9 +175,10 @@ describe('rooms', () => {
 
       // Track when dispose completes
       let disposeCompleted = false;
-      const disposePromise = context.rooms.dispose().then(() => {
+      const disposePromise = (async () => {
+        await context.rooms.dispose();
         disposeCompleted = true;
-      });
+      })();
 
       // Give dispose a chance to try to complete
       await new Promise((resolve) => setTimeout(resolve, 10));

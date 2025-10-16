@@ -21,15 +21,12 @@ describe('config', () => {
       }) as Promise<Ably.HttpPaginatedResponse>,
     );
 
-    await expect(chatApi.getOccupancy('test'))
-      .rejects.toBeErrorInfo({
-        message: 'test',
-        code: 40000,
-        statusCode: 400,
-      })
-      .then(() => {
-        expect(realtime.request).toHaveBeenCalledWith('GET', '/chat/v4/rooms/test/occupancy', 4, undefined, undefined);
-      });
+    await expect(chatApi.getOccupancy('test')).rejects.toBeErrorInfo({
+      message: 'test',
+      code: 40000,
+      statusCode: 400,
+    });
+    expect(realtime.request).toHaveBeenCalledWith('GET', '/chat/v4/rooms/test/occupancy', 4, undefined, undefined);
   });
 
   it('throws an error if Realtime returns ErrorInfo on non-paginated request', async () => {
