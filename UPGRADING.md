@@ -6,7 +6,7 @@ This guide provides detailed instructions on how to upgrade between major versio
 
 ### Typing and Occupancy Current Changed to Properties
 
-**Expected Impact: High**
+**Expected Impact: Low**
 
 The `current()` methods have been changed to properties for consistency with other parts of the API (e.g., room status).
 
@@ -85,17 +85,18 @@ presence.subscribe(['enter', 'leave'], (event) => {
 **After**
 
 ```ts
+import { PresenceEventType } from '@ably/chat';
 presence.subscribe((event) => {
-  if (event.action === 'enter') {
+  if (event.type === PresenceEventType.Enter) {
     console.log('User entered:', event.member.clientId);
   }
 });
 
 // Or with switch for multiple events
 presence.subscribe((event) => {
-  switch (event.action) {
-    case 'enter':
-    case 'leave':
+  switch (event.type) {
+    case PresenceEventType.Enter:
+    case PresenceEventType.Leave:
       console.log('User presence changed:', event.type);
       break;
   }
@@ -104,7 +105,7 @@ presence.subscribe((event) => {
 
 ### Message Serial Parameters Must Be Strings
 
-**Expected Impact: Medium**
+**Expected Impact: Low**
 
 Serial parameters in method signatures must now always be strings, not objects with a `serial` property.
 
@@ -120,30 +121,6 @@ const message = await messages.get({ serial: '123@456' });
 ```ts
 // Must pass string directly
 const message = await messages.get('123@456');
-```
-
-### Messages.delete Signature Changed
-
-**Expected Impact: Low**
-
-The signature has been updated to be consistent with `Messages.update`. The parameter is now called `details` (type `OperationDetails`) instead of `updateParams`.
-
-**Before**
-
-```ts
-await messages.delete(message, {
-  metadata: { reason: 'spam' }
-});
-```
-
-**After**
-
-```ts
-// Signature is now consistent with update
-await messages.delete(message, {
-  metadata: { reason: 'spam' }
-});
-// Type changed from DeleteMessageParams to OperationDetails
 ```
 
 ### Message Reaction Summary Event Restructured
@@ -172,7 +149,7 @@ messageReactions.subscribe((event) => {
 
 ### Type Renames
 
-**Expected Impact: Medium**
+**Expected Impact: Low**
 
 Several types have been renamed:
 
