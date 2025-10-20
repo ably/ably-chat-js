@@ -2,6 +2,334 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 0.14.x to 0.15.0
+
+### Typing and Occupancy Current Changed to Properties
+
+**Expected Impact: Low**
+
+The `current()` methods have been changed to properties for consistency with other parts of the API (e.g., room status).
+
+**Before**
+
+```ts
+const typingInfo = typing.current();
+const occupancyInfo = occupancy.current();
+```
+
+**After**
+
+```ts
+const typingInfo = typing.current;
+const occupancyInfo = occupancy.current;
+```
+
+### Message Convenience Methods Removed
+
+**Expected Impact: Medium**
+
+Convenience comparison methods have been removed from the `Message` type. Use direct string comparisons of the `serial` and `version.serial` properties instead.
+
+**Before**
+
+```ts
+if (message1.before(message2)) {
+  // message1 is before message2
+}
+
+if (message1.equal(message2)) {
+  // same message
+}
+
+if (message1.versionBefore(message2)) {
+  // message1 version is older
+}
+```
+
+**After**
+
+```ts
+// Direct comparison using serial strings
+if (message1.serial < message2.serial) {
+  // message1 is before message2
+}
+
+if (message1.serial === message2.serial) {
+  // same message
+}
+
+// For version comparison
+if (message1.version.serial < message2.version.serial) {
+  // message1 version is older
+}
+```
+
+### Presence Event Filter Removed
+
+**Expected Impact: Medium**
+
+Event filtering on presence subscription has been removed. Use if/switch statements for event filtering instead.
+
+**Before**
+
+```ts
+presence.subscribe('enter', (event) => {
+  console.log('User entered:', event.member.clientId);
+});
+
+presence.subscribe(['enter', 'leave'], (event) => {
+  console.log('User presence changed:', event.type);
+});
+```
+
+**After**
+
+```ts
+import { PresenceEventType } from '@ably/chat';
+presence.subscribe((event) => {
+  if (event.type === PresenceEventType.Enter) {
+    console.log('User entered:', event.member.clientId);
+  }
+});
+
+// Or with switch for multiple events
+presence.subscribe((event) => {
+  switch (event.type) {
+    case PresenceEventType.Enter:
+    case PresenceEventType.Leave:
+      console.log('User presence changed:', event.type);
+      break;
+  }
+});
+```
+
+### Message Serial Parameters Must Be Strings
+
+**Expected Impact: Low**
+
+Serial parameters in method signatures must now always be strings, not objects with a `serial` property.
+
+**Before**
+
+```ts
+// Could pass object with serial property
+const message = await messages.get({ serial: '123@456' });
+```
+
+**After**
+
+```ts
+// Must pass string directly
+const message = await messages.get('123@456');
+```
+
+### Message Reaction Summary Event Restructured
+
+**Expected Impact: Medium**
+
+The structure of message reaction summary events has been updated.
+
+**Before**
+
+```ts
+messageReactions.subscribe((event) => {
+  const reactions = event.summary.reactions;
+  const serial = event.summary.messageSerial;
+});
+```
+
+**After**
+
+```ts
+messageReactions.subscribe((event) => {
+  const reactions = event.reactions; // Renamed from summary
+  const serial = event.messageSerial; // Lifted to top level
+});
+```
+
+### Type Renames
+
+**Expected Impact: Low**
+
+Several types have been renamed:
+
+#### QueryOptions → HistoryParams
+
+**Before**
+
+```ts
+const options: QueryOptions = {
+  limit: 50,
+  orderBy: OrderBy.NewestFirst
+};
+const history = await messages.get(options);
+```
+
+**After**
+
+```ts
+const params: HistoryParams = {
+  limit: 50,
+  orderBy: OrderBy.NewestFirst
+};
+const history = await messages.get(params);
+```
+
+#### MessageOptions → MessagesOptions
+
+**Before**
+
+```ts
+import { MessageOptions } from '@ably/chat';
+let messageOptions: MessageOptions
+const room = await rooms.get('room-name', {
+  messages: messageOptions
+});
+```
+
+**After**
+
+```ts
+import { MessagesOptions } from '@ably/chat';
+let messagesOptions: MessagesOptions
+const room = await rooms.get('room-name', {
+  messages: messagesOptions
+});
+```
+
+#### Message Reactions Type Renames
+
+**Before**
+
+```ts
+import { MessagesReactions, MessageReactions } from '@ably/chat';
+
+const messagesReactions: MessagesReactions = room.messages.reactions;
+const summary: MessageReactions = event.summary;
+```
+
+**After**
+
+```ts
+import { MessageReactions, MessageReactionSummary } from '@ably/chat';
+
+const messageReactions: MessageReactions = room.messages.reactions;
+const summary: MessageReactionSummary = event.reactions;
+```
+
+### Type Safety Improvements
+
+**Expected Impact: Low to Medium**
+
+Several type definitions have been tightened for better type safety.
+
+#### PresenceMember.extras
+
+**Before**
+
+```ts
+const extras: any = presenceMember.extras;
+```
+
+**After**
+
+```ts
+const extras: JsonObject | undefined = presenceMember.extras;
+```
+
+#### Metadata Must Be JSON Serializable
+
+**Before**
+
+```ts
+const metadata: Record<string, unknown> = {
+  callback: () => {}, // Functions were technically allowed
+  data: someValue
+};
+```
+
+**After**
+
+```ts
+const metadata: JsonObject = {
+  // Only JSON-serializable values allowed
+  data: 'string',
+  count: 123,
+  nested: { key: 'value' }
+};
+```
+
+#### ChatClient.clientId Is Now Optional
+
+**Before**
+
+```ts
+const clientId: string = chatClient.clientId;
+```
+
+**After**
+
+```ts
+// May be undefined with token auth before connection
+const clientId: string | undefined = chatClient.clientId;
+
+// Check before use
+if (chatClient.clientId) {
+  console.log('Client ID:', chatClient.clientId);
+}
+```
+
+#### Message Version Fields Non-Nullable
+
+**Before**
+
+```ts
+interface MessageVersion {
+  serial?: string;
+  timestamp?: number;
+}
+```
+
+**After**
+
+```ts
+interface MessageVersion {
+  serial: string; // Always present
+  timestamp: number; // Always present
+}
+```
+
+### Message Reaction Event Types Split
+
+**Expected Impact: Low**
+
+Summary and raw message reaction events now have completely separate type definitions.
+
+**Before**
+
+```ts
+type MessageReactionEventType = 'summaryChanged' | 'reactionSent' | 'reactionDeleted';
+```
+
+**After**
+
+```ts
+// Separate types for different subscription APIs
+type MessageReactionSummaryEventType = 'summaryChanged';
+type MessageReactionRawEventType = 'reactionSent' | 'reactionDeleted';
+```
+
+### Internal API Removals
+
+**Expected Impact: Low**
+
+Several internal APIs have been removed from public interfaces:
+
+- `clientOptions` removed from Rooms interface (available from ChatClient)
+- `Rooms.count` moved to internal interface
+- Redundant `ChatMessageAction` enum members removed
+- `Connection.dispose()` removed from public API (internal only)
+
 ## 0.13.x to 0.14.x
 
 ### Message API Changes
