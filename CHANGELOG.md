@@ -2,6 +2,48 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [0.15.0](https://github.com/ably/ably-chat-js/tree/0.15.0) (TBD)
+
+### Breaking Changes
+
+This release contains significant API changes to improve consistency and type safety. Please see `UPGRADING.md` for full guidance on upgrading from version 0.14.x.
+
+- **Typing and Occupancy API**: Changed `current()` methods to properties for consistency with other SDK APIs. [#682](https://github.com/ably/ably-chat-js/pull/682)
+- **Message API Simplification**: Removed convenience comparison methods (`before()`, `after()`, `equal()`, etc.) from Message type. [#676](https://github.com/ably/ably-chat-js/pull/676)
+- **Presence Event Filtering**: Removed event filter parameter from presence subscription for API consistency. [#675](https://github.com/ably/ably-chat-js/pull/674)
+- **Message Serial Parameters**: Serial parameters in method signatures must now be strings instead of objects. [#673](https://github.com/ably/ably-chat-js/pull/673)
+- **Messages.delete Signature**: Updated signature to be consistent with `Messages.update`, using `OperationDetails` type. [#671](https://github.com/ably/ably-chat-js/pull/671)
+- **Message Reaction Events**: Restructured summary events - renamed `summary` to `reactions` and lifted `messageSerial` to top level. [#670](https://github.com/ably/ably-chat-js/pull/670)
+- **Type Renaming**: Multiple type renames for clarity:
+  - `QueryOptions` → `HistoryParams` [#657](https://github.com/ably/ably-chat-js/pull/657)
+  - `MessageOptions` → `MessagesOptions` [#659](https://github.com/ably/ably-chat-js/pull/659)
+  - `MessagesReactions` → `MessageReactions` [#663](https://github.com/ably/ably-chat-js/pull/663)
+  - `MessageReactions` → `MessageReactionSummary` [#663](https://github.com/ably/ably-chat-js/pull/663)
+- **Event Type Changes**: Split `MessageReactionEventType` into separate types for summary and raw events. [#660](https://github.com/ably/ably-chat-js/pull/660)
+- **Type Safety Improvements**:
+  - `PresenceMember.extras` type tightened from `any` to `JsonObject` [#668](https://github.com/ably/ably-chat-js/pull/668)
+  - Metadata types now enforce JSON serializability [#658](https://github.com/ably/ably-chat-js/pull/658)
+  - `ChatClient.clientId` is now optional to match specification [#655](https://github.com/ably/ably-chat-js/pull/655)
+  - `Message.version.serial` and `Message.version.timestamp` are now non-nullable [#646](https://github.com/ably/ably-chat-js/pull/646)
+- **Internal API Changes**:
+  - Removed `clientOptions` from Rooms interface [#661](https://github.com/ably/ably-chat-js/pull/661)
+  - Moved `Rooms.count` to internal interface [#666](https://github.com/ably/ably-chat-js/pull/666)
+  - Removed redundant enum members from `ChatMessageAction` [#677](https://github.com/ably/ably-chat-js/pull/677)
+
+### Fixes
+
+- **Serial Validation**: Re-introduced checks to ensure serial is not empty string, null, or undefined. [#680](https://github.com/ably/ably-chat-js/pull/680)
+- **Promise Handling**: Made promise-returning methods properly async to ensure exceptions return rejected promises. [#678](https://github.com/ably/ably-chat-js/pull/678)
+- **Protocol Version**: Bumped chat-api protocol version to 4 as per specification. [#654](https://github.com/ably/ably-chat-js/pull/654)
+
+### Improvements
+
+- **Error Messages**: Standardized error message format across core and React packages to "unable to <op>; <reason>". [#678](https://github.com/ably/ably-chat-js/pull/678)
+- **Error Codes**: Introduced specific error codes to replace generic 40000 and 50000 codes for better developer experience. [#672](https://github.com/ably/ably-chat-js/pull/672)
+- **Messages API**: `messages.send()` now uses full server response to create message object. [#656](https://github.com/ably/ably-chat-js/pull/656)
+- **Dependencies**: Bumped ably-js to 2.14.0 with proper parsing of clipped flag. [#664](https://github.com/ably/ably-chat-js/pull/664)
+- **Demo App**: Updated to use JWT authentication instead of Ably tokens. [#648](https://github.com/ably/ably-chat-js/pull/648)
+
 ## [0.14.1](https://github.com/ably/ably-chat-js/tree/0.14.1) (2025-10-02)
 
 ### Fixes
