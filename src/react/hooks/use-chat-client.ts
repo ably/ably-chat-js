@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as Ably from 'ably';
 import { useEffect, useState } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -21,10 +23,41 @@ export interface UseChatClientResponse {
 }
 
 /**
- * Hook to access the chat client provided the current {@link ChatClientProvider}.
- * This hook must be used within a {@link ChatClientProvider}.
- * @throws {ErrorInfo} When the hook is not used within a {@link ChatClientProvider}.
- * @returns A {@link UseChatClientResponse} containing information about the ChatClient.
+ * React hook to access the chat client provided by the current {@link ChatClientProvider}.
+ *
+ * This hook automatically tracks the clientId and updates when connection state changes,
+ * ensuring the most current client ID is always available. The client ID may change
+ * when the underlying Ably Realtime client reconnects with different authentication.
+ *
+ * **Note**: This hook must be used within a {@link ChatClientProvider} component tree.
+ * @returns A {@link UseChatClientResponse} containing the current client ID
+ * @throws {Ably.ErrorInfo} When used outside of a {@link ChatClientProvider}
+ * @example
+ * ```tsx
+ * import * as Ably from 'ably';
+ * import React from 'react';
+ * import { ChatClient } from '@ably/chat';
+ * import { ChatClientProvider, useChatClient } from '@ably/chat/react';
+ *
+ * // Component that displays current user information
+ * const UserInfo = () => {
+ *   const { clientId } = useChatClient();
+ *   return (<p>Connected as: {clientId}</p>);
+ * };
+ *
+ * const chatClient: ChatClient; // existing ChatClient instance
+ *
+ * // App component with provider
+ * const App = () => {
+ *   return (
+ *     <ChatClientProvider client={chatClient}>
+ *       <UserInfo />
+ *     </ChatClientProvider>
+ *   );
+ * };
+ *
+ * export default App;
+ * ```
  */
 export const useChatClient = (): UseChatClientResponse => {
   const client = useChatClientContext();

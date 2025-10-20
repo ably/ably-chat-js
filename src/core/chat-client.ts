@@ -49,32 +49,62 @@ export class ChatClient {
   private readonly _clientIdResolver: DefaultClientIdResolver;
 
   /**
-   * Constructor for Chat
+   * Creates a new ChatClient instance for interacting with Ably Chat.
    *
-   * **Important**: The Ably Realtime client must have a clientId set. This can be done by configuring
-   * token-based authentication that returns a token with a clientId, or by setting
-   * the clientId directly in the Realtime client options.
+   * The ChatClient is the main entry point for the Ably Chat SDK. It requires a Realtime client
+   * and provides access to chat rooms through the rooms property.
+   *
+   * **Important**: The Ably Realtime client must have a clientId set. This identifies
+   * the user in chat rooms and is required for all chat operations.
+   *
+   * **NOTE**: You can provide optional overrides to the {@link ChatClient}, these will be merged
+   * with the default options. See {@link ChatClientOptions} for the available options.
+   * @param realtime - An initialized Ably Realtime client with a configured clientId
+   * @param clientOptions - Optional configuration for the chat client
    * @example
    * ```typescript
    * import * as Ably from 'ably';
-   * import { ChatClient } from '@ably/chat';
+   * import { ChatClient, LogLevel } from '@ably/chat';
    *
-   * // Preferred in production: Use auth URL that returns a token with clientId
-   * const realtime = new Ably.Realtime({
-   *   authUrl: '/api/ably-auth', // Your server endpoint that returns an Ably token with clientId
+   * // Preferred in production: Use auth URL that returns a JWT
+   * const realtimeClientWithJWT = new Ably.Realtime({
+   *   authUrl: '/api/ably-auth', // Your server endpoint that returns a JWT with clientId
    *   authMethod: 'POST'
    * });
-   * const chatClient = new ChatClient(realtime);
    *
+   * const chatClient = new ChatClient(realtimeClientWithJWT)
+   *```
+   * @example
+   *```typescript
    * // Alternative for development and server-side operations: Set clientId directly (requires API key)
-   * const realtime = new Ably.Realtime({
+   * const realtimeClientWithKey = new Ably.Realtime({
    *   key: 'your-ably-api-key',
    *   clientId: 'user-123'
    * });
-   * const chatClient = new ChatClient(realtime);
+   *
+   * const chatClient = new ChatClient(realtimeClientWithKey)
    * ```
-   * @param realtime - The Ably Realtime client.
-   * @param clientOptions - The client options.
+   * @example
+   * ```typescript
+   * const realtimeClient = new Ably.Realtime({
+   *   authUrl: '/api/ably-auth',
+   *   authMethod: 'POST'
+   * });
+   *
+   * // With custom logging configuration: Defaults to LogLevel.Info and console logging
+   * const chatClientWithLogging = new ChatClient(realtimeClient, {
+   *   logLevel: LogLevel.Debug,
+   *   logHandler: (message, level, context) => {
+   *     // Send to your logging service
+   *     yourLoggerInstance.log({
+   *       level,
+   *       message,
+   *       context,
+   *       timestamp: new Date()
+   *     });
+   *   }
+   * });
+   * ```
    */
   constructor(realtime: Ably.Realtime, clientOptions?: ChatClientOptions) {
     this._realtime = realtime;
@@ -92,17 +122,44 @@ export class ChatClient {
   }
 
   /**
-   * Returns the rooms object, which provides access to chat rooms.
-   * @returns The rooms object.
+   * Provides access to the rooms instance for creating and managing chat rooms.
+   * @returns The Rooms instance for managing chat rooms
+   * @example
+   * ```typescript
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options
+   * const room = await chatClient.rooms.get('general-chat');
+   *
+   * // Get a room with custom options (merges with defaults)
+   * const configuredRoom = await chatClient.rooms.get('team-chat', {
+   *   typing: { heartbeatThrottleMs: 1000 }
+   * });
+   *
+   * // Release a room when done
+   * await chatClient.rooms.release('general-chat');
+   * ```
    */
   get rooms(): Rooms {
     return this._rooms;
   }
 
   /**
-   * Returns the underlying connection to Ably, which can be used to monitor the client's
-   * connection to Ably servers.
-   * @returns The connection object.
+   * Provides access to the underlying connection to Ably for monitoring connectivity.
+   * @returns The Connection instance
+   * @example
+   * ```typescript
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Check current connection status
+   * console.log('Status:', chatClient.connection.status);
+   * console.log('Error:', chatClient.connection.error);
+   *
+   * // Monitor connection changes
+   * const { off } = chatClient.connection.onStatusChange((change) => {
+   *   console.log(`Connection: ${change.previous} -> ${change.current}`);
+   * });
+   * ```
    */
   get connection(): Connection {
     return this._connection;
@@ -121,16 +178,22 @@ export class ChatClient {
   }
 
   /**
-   * Returns the underlying Ably Realtime client.
-   * @returns The Ably Realtime client.
+   * Provides direct access to the underlying Ably Realtime client.
+   *
+   * Use this for advanced scenarios requiring direct Ably access. Most chat
+   * operations should use the high-level chat SDK methods instead.
+   *
+   * **Note**: Directly interacting with the Ably Realtime client can lead to
+   * unexpected behavior.
+   * @returns The underlying Ably Realtime client instance
    */
   get realtime(): Ably.Realtime {
     return this._realtime;
   }
 
   /**
-   * Returns the resolved client options for the client, including any defaults that have been set.
-   * @returns The client options.
+   * The configuration options used to initialize the chat client.
+   * @returns The resolved client options including defaults
    */
   get clientOptions(): ChatClientOptions {
     return this._clientOptions;
@@ -168,8 +231,36 @@ export class ChatClient {
   }
 
   /**
-   * Disposes of the ChatClient instance, cleaning up any resources and rendering it unusable.
-   * This method will release all rooms before disposing of the client.
+   * Disposes of the ChatClient instance and releases all resources.
+   *
+   * Releases all chat rooms, removes event listeners, and cleans up connections.
+   * After calling dispose, the ChatClient instance is no longer usable. This should
+   * be called when you're completely done with the chat functionality.
+   *
+   * **Note**: This will release ALL rooms managed by this ChatClient and the ChatClient cannot be reused after disposal.
+   * @returns Promise that resolves when all resources are released
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Use the chat client
+   * const roomOne = await chatClient.rooms.get('general-chat');
+   * const roomTwo = await chatClient.rooms.get('random-chat');
+   *
+   * // ... chat operations ...
+   *
+   * // Clean up when completely done
+   * try {
+   *   await chatClient.dispose();
+   *   console.log('Chat client disposed successfully');
+   * } catch (error) {
+   *   console.error('Failed to dispose chat client:', error);
+   * }
+   *
+   * ```
    */
   async dispose(): Promise<void> {
     this._logger.trace('ChatClient.dispose();');
