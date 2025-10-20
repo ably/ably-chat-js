@@ -317,7 +317,7 @@ export class DefaultRoom implements Room {
    * Releases resources associated with the room.
    * @returns A promise that resolves when the room is released.
    */
-  release(): Promise<void> {
+  async release(): Promise<void> {
     this._logger.trace('Room.release();');
     return this._finalizer();
   }

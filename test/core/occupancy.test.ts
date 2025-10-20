@@ -55,7 +55,7 @@ describe('Occupancy', () => {
     }).toThrow('unable to subscribe to occupancy; occupancy events are not enabled in room options');
   });
 
-  it<TestContext>('receives occupancy updates', (context) =>
+  it<TestContext>('receives occupancy updates', async (context) =>
     new Promise<void>((done, reject) => {
       // Setup room with enableEvents enabled
       const room = makeRandomRoom({

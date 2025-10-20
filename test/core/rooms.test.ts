@@ -165,7 +165,7 @@ describe('rooms', () => {
         room1ReleaseResolver = resolve;
       });
 
-      vi.spyOn(room1 as DefaultRoom, 'release').mockImplementation(() => room1ReleasePromise);
+      vi.spyOn(room1 as DefaultRoom, 'release').mockImplementation(async () => room1ReleasePromise);
 
       // Start releasing room1 but don't await it so we create an in-flight release
       const manualReleasePromise = context.rooms.release(roomName1);
@@ -175,9 +175,10 @@ describe('rooms', () => {
 
       // Track when dispose completes
       let disposeCompleted = false;
-      const disposePromise = context.rooms.dispose().then(() => {
+      const disposePromise = (async () => {
+        await context.rooms.dispose();
         disposeCompleted = true;
-      });
+      })();
 
       // Give dispose a chance to try to complete
       await new Promise((resolve) => setTimeout(resolve, 10));

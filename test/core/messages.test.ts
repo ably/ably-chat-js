@@ -15,6 +15,7 @@ import {
   ChannelStateEventEmitterReturnType,
 } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
+import { mockReturningPromiseNull, withAsyncTimeout } from '../helper/promise.ts';
 import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
@@ -40,14 +41,15 @@ interface MockPaginatedResult {
   isLast(): boolean;
 }
 
-const mockPaginatedResultWithItems = (items: Message[]): MockPaginatedResult => ({
-  items,
-  first: () => Promise.resolve(mockPaginatedResultWithItems(items)),
-  next: () => Promise.resolve(null),
-  current: () => Promise.resolve(mockPaginatedResultWithItems(items)),
-  hasNext: () => false,
-  isLast: () => true,
-});
+const mockPaginatedResultWithItems = async (items: Message[]): Promise<MockPaginatedResult> =>
+  await Promise.resolve({
+    items,
+    first: async () => mockPaginatedResultWithItems(items),
+    next: mockReturningPromiseNull(),
+    current: async () => mockPaginatedResultWithItems(items),
+    hasNext: () => false,
+    isLast: () => true,
+  });
 
 vi.mock('ably');
 
@@ -440,7 +442,7 @@ describe('Messages', () => {
   });
 
   describe('subscribing to updates', () => {
-    it<TestContext>('should subscribe to all message events', (context) =>
+    it<TestContext>('should subscribe to all message events', async (context) =>
       new Promise<void>((done, reject) => {
         const publishTimestamp = Date.now();
         let eventCount = 0;
@@ -768,13 +770,15 @@ describe('Messages', () => {
 
       const { room, chatApi } = context;
 
-      vi.spyOn(chatApi, 'history').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
-        expect(roomName).toEqual(room.name);
-        expect(params.orderBy).toEqual(testOrderBy);
-        expect(params.limit).toEqual(testLimit);
-        expect(params.fromSerial).toEqual(testAttachSerial);
-        return Promise.resolve(mockPaginatedResultWithItems([]));
-      });
+      vi.spyOn(chatApi, 'history').mockImplementation(
+        async (roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+          expect(roomName).toEqual(room.name);
+          expect(params.orderBy).toEqual(testOrderBy);
+          expect(params.limit).toEqual(testLimit);
+          expect(params.fromSerial).toEqual(testAttachSerial);
+          return mockPaginatedResultWithItems([]);
+        },
+      );
 
       const msgChannel = room.channel;
 
@@ -788,7 +792,7 @@ describe('Messages', () => {
       // Set the serial of the channel attach
       channel.properties.attachSerial = testAttachSerial;
 
-      vi.spyOn(channel, 'whenState').mockImplementation(() => Promise.resolve(null));
+      vi.spyOn(channel, 'whenState').mockImplementation(mockReturningPromiseNull());
 
       // Subscribe to the messages
       const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
@@ -798,11 +802,7 @@ describe('Messages', () => {
       // we changed the channel state below. To address this issue we wait an
       // insignificant amount of time here to ensure the channel promise inside
       // DefaultMessages resolves BEFORE we change the channel state here.
-      await new Promise<void>((resolve) =>
-        setTimeout(() => {
-          resolve();
-        }, 10),
-      );
+      await withAsyncTimeout(async () => {}, 10);
 
       // Mock the channel state to be attached
       vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
@@ -826,13 +826,15 @@ describe('Messages', () => {
 
       const { room, chatApi } = context;
 
-      vi.spyOn(chatApi, 'history').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
-        expect(roomName).toEqual(room.name);
-        expect(params.orderBy).toEqual(testOrderBy);
-        expect(params.limit).toEqual(testLimit);
-        expect(params.fromSerial).toEqual(latestChannelSerial);
-        return Promise.resolve(mockPaginatedResultWithItems([]));
-      });
+      vi.spyOn(chatApi, 'history').mockImplementation(
+        async (roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+          expect(roomName).toEqual(room.name);
+          expect(params.orderBy).toEqual(testOrderBy);
+          expect(params.limit).toEqual(testLimit);
+          expect(params.fromSerial).toEqual(latestChannelSerial);
+          return mockPaginatedResultWithItems([]);
+        },
+      );
 
       const msgChannel = room.channel;
 
@@ -866,10 +868,12 @@ describe('Messages', () => {
 
       const { room, chatApi } = context;
 
-      vi.spyOn(chatApi, 'history').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
-        expectFunction(roomName, params);
-        return Promise.resolve(mockPaginatedResultWithItems([]));
-      });
+      vi.spyOn(chatApi, 'history').mockImplementation(
+        async (roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+          expectFunction(roomName, params);
+          return mockPaginatedResultWithItems([]);
+        },
+      );
 
       const msgChannel = room.channel;
       const channel = msgChannel as RealtimeChannel & {
@@ -885,11 +889,7 @@ describe('Messages', () => {
       const { historyBeforeSubscribe } = room.messages.subscribe(() => {});
 
       // wait
-      await new Promise<void>((resolve) =>
-        setTimeout(() => {
-          resolve();
-        }, 10),
-      );
+      await withAsyncTimeout(async () => {}, 10);
 
       // Mock the channel state to be attached
       vi.spyOn(channel, 'state', 'get').mockReturnValue('attached');
@@ -963,10 +963,12 @@ describe('Messages', () => {
 
       const { room, chatApi } = context;
 
-      vi.spyOn(chatApi, 'history').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
-        expectFunction(roomName, params);
-        return Promise.resolve(mockPaginatedResultWithItems([]));
-      });
+      vi.spyOn(chatApi, 'history').mockImplementation(
+        async (roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+          expectFunction(roomName, params);
+          return mockPaginatedResultWithItems([]);
+        },
+      );
 
       const msgChannel = room.channel;
       const channel = msgChannel as RealtimeChannel & {
@@ -976,7 +978,7 @@ describe('Messages', () => {
         };
       };
 
-      vi.spyOn(channel, 'whenState').mockImplementation(() => Promise.resolve(null));
+      vi.spyOn(channel, 'whenState').mockImplementation(mockReturningPromiseNull());
 
       // Set the serials for the channel
       channel.properties.channelSerial = firstChannelSerial;
@@ -1049,10 +1051,12 @@ describe('Messages', () => {
 
       const { room, chatApi } = context;
 
-      vi.spyOn(chatApi, 'history').mockImplementation((roomName, params): Promise<Ably.PaginatedResult<Message>> => {
-        expectFunction(roomName, params);
-        return Promise.resolve(mockPaginatedResultWithItems([]));
-      });
+      vi.spyOn(chatApi, 'history').mockImplementation(
+        async (roomName, params): Promise<Ably.PaginatedResult<Message>> => {
+          expectFunction(roomName, params);
+          return mockPaginatedResultWithItems([]);
+        },
+      );
 
       const msgChannel = room.channel;
       const channel = msgChannel as RealtimeChannel & {
@@ -1063,7 +1067,7 @@ describe('Messages', () => {
       };
 
       // Mock the whenState to resolve immediately
-      vi.spyOn(channel, 'whenState').mockImplementation(() => Promise.resolve(null));
+      vi.spyOn(channel, 'whenState').mockImplementation(mockReturningPromiseNull());
 
       // Set the serials for the channel
       channel.properties.channelSerial = firstChannelSerial;

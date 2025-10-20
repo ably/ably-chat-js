@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { ConnectionStatusChange } from '../../core/connection.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Room } from '../../core/room.js';
 import { RoomStatusChange } from '../../core/room-status.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -70,8 +71,14 @@ export const useRoom = (params?: UseRoomParams): UseRoomResponse => {
     onRoomStatusChange: params?.onStatusChange,
   });
 
-  const attach = useCallback(() => context.room.then((room: Room) => room.attach()), [context]);
-  const detach = useCallback(() => context.room.then((room: Room) => room.detach()), [context]);
+  const attach = useCallback(async () => {
+    const room = await context.room;
+    return room.attach();
+  }, [context]);
+  const detach = useCallback(async () => {
+    const room = await context.room;
+    return room.detach();
+  }, [context]);
 
   return {
     roomName: roomName,

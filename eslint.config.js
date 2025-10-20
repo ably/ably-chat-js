@@ -101,6 +101,7 @@ export default [
       'unicorn/filename-case': 'error',
       'node/no-missing-import': 'off',
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      '@typescript-eslint/promise-function-async': 'error',
       'arrow-body-style': ['error', 'as-needed'],
 
       // Off, as we currently support Chrome 109
