@@ -2,7 +2,26 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
-## [0.15.0](https://github.com/ably/ably-chat-js/tree/0.15.0) (TBD)
+## [1.0.0](https://github.com/ably/ably-chat-js/tree/1.0.0) (2025-10-22)
+
+We are excited to announce that the Ably Chat SDK API is now stable.
+
+The Chat SDK includes comprehensive support for:
+
+- Chat rooms for 1:1, 1:many, many:1 and many:many participation
+- Messages with full CRUD operations (create, read, update, delete)
+- Presence to track online status of chat participants
+- Occupancy for monitoring total connections and presence members
+- Typing indicators for real-time typing awareness
+- Room reactions for real-time room reactions
+- Message reactions for reactions to specific messages
+- Hooks for direct integrations into React applications.
+
+We are committed to maintaining API stability and providing long-term support for v1.x releases.
+
+Thank you to everyone who provided feedback during the preview releases!
+
+## [0.15.0](https://github.com/ably/ably-chat-js/tree/0.15.0) (2025-10-20)
 
 ### Breaking Changes
 
