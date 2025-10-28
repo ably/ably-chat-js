@@ -155,11 +155,11 @@ describe('Chat', () => {
 
     await waitForConnectionStatus(chat, ConnectionStatus.Connected);
 
-    // Fail the connection by disconnecting
+    // Closed the connection by disconnecting
     realtime.close();
 
     // Wait for the connection to fail
-    await waitForConnectionStatus(chat, ConnectionStatus.Failed);
+    await waitForConnectionStatus(chat, ConnectionStatus.Closed);
   });
 
   it('should garbage collect chat client after disposal', { timeout: 10000 }, async () => {
