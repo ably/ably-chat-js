@@ -157,7 +157,12 @@ interface PresenceWithStateChangeListener extends Presence {
 /**
  * A set of connection states that are considered inactive and where presence operations should not be attempted.
  */
-const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([ConnectionStatus.Suspended, ConnectionStatus.Failed]);
+const INACTIVE_CONNECTION_STATES = new Set<ConnectionStatus>([
+  ConnectionStatus.Suspended,
+  ConnectionStatus.Failed,
+  ConnectionStatus.Closing,
+  ConnectionStatus.Closed,
+]);
 
 /**
  * A hook that provides access to the {@link Presence} instance in the room.

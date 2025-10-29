@@ -38,6 +38,19 @@ export enum ConnectionStatus {
    * The library is currently disconnected from Ably and will not attempt to reconnect.
    */
   Failed = 'failed',
+
+  /**
+   * An explicit request by the developer to close the connection has been sent to the Ably service.
+   * If a reply is not received from Ably within a short period of time, the connection is forcibly
+   * terminated and the connection status becomes Closed.
+   */
+  Closing = 'closing',
+
+  /**
+   * The connection has been explicitly closed by the client. In the closed state, no reconnection
+   * attempts are made automatically. No connection state is preserved by the service or the library.
+   */
+  Closed = 'closed',
 }
 
 /**
@@ -208,14 +221,42 @@ export class DefaultConnection implements InternalConnection {
     this._emitter.emit(change.current, change);
   }
 
+  /**
+   * Maps an Ably connection state to a connection status.
+   * @param status The Ably connection state to map.
+   * @returns The corresponding connection status.
+   */
   private _mapAblyStatusToChat(status: Ably.ConnectionState): ConnectionStatus {
     switch (status) {
-      case 'closing':
+      case 'initialized': {
+        return ConnectionStatus.Initialized;
+      }
+      case 'connecting': {
+        return ConnectionStatus.Connecting;
+      }
+      case 'connected': {
+        return ConnectionStatus.Connected;
+      }
+      case 'disconnected': {
+        return ConnectionStatus.Disconnected;
+      }
+      case 'suspended': {
+        return ConnectionStatus.Suspended;
+      }
+      case 'closing': {
+        return ConnectionStatus.Closing;
+      }
       case 'closed': {
+        return ConnectionStatus.Closed;
+      }
+      case 'failed': {
         return ConnectionStatus.Failed;
       }
       default: {
-        return status as ConnectionStatus;
+        this._logger.error('DefaultConnection._mapAblyStatusToChat(); unknown connection state', {
+          status,
+        });
+        return ConnectionStatus.Failed;
       }
     }
   }

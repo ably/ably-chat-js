@@ -36,10 +36,14 @@ const mapAblyStatusToChat = (status: Ably.ConnectionState): ConnectionStatus => 
     case 'connecting': {
       return ConnectionStatus.Connecting;
     }
-    case 'failed':
-    case 'closing':
-    case 'closed': {
+    case 'failed': {
       return ConnectionStatus.Failed;
+    }
+    case 'closing': {
+      return ConnectionStatus.Closing;
+    }
+    case 'closed': {
+      return ConnectionStatus.Closed;
     }
     default: {
       return ConnectionStatus.Initialized;
@@ -161,13 +165,13 @@ describe('connection', () => {
       new Ably.ErrorInfo('error', 500, 99999),
     ],
     [
-      ConnectionStatus.Failed,
+      ConnectionStatus.Closed,
       AblyConnectionState.Connected,
       AblyConnectionState.Closed,
       new Ably.ErrorInfo('error', 500, 99999),
     ],
     [
-      ConnectionStatus.Failed,
+      ConnectionStatus.Closing,
       AblyConnectionState.Connected,
       AblyConnectionState.Closing,
       new Ably.ErrorInfo('error', 500, 99999),

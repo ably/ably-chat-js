@@ -14,6 +14,8 @@ const STATUS_MAP: Record<string, { text: string; color: string }> = {
   },
   [ConnectionStatus.Failed]: { text: 'Connection failed. Refresh the page to try again.', color: 'text-red-800' },
   [ConnectionStatus.Connected]: { text: 'Connected', color: 'text-green-800' },
+  [ConnectionStatus.Closing]: { text: 'Closing connection...', color: 'text-orange-600' },
+  [ConnectionStatus.Closed]: { text: 'Connection closed. Refresh the page to reconnect.', color: 'text-gray-800' },
 };
 
 export const ConnectionStatusComponent: React.FC = () => {

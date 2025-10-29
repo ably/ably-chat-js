@@ -335,22 +335,24 @@ describe('usePresence', () => {
   });
 
   describe('autoEnterLeave behavior', () => {
-    describe.each([[ConnectionStatus.Failed], [ConnectionStatus.Suspended]])(
-      'invalid connection state for joining presence',
-      (connectionState: ConnectionStatus) => {
-        it('should not join presence if connection state is: ' + connectionState, () => {
-          // change the connection status, so we render the hook with the new status
-          mockCurrentConnectionStatus = connectionState;
+    describe.each([
+      [ConnectionStatus.Failed],
+      [ConnectionStatus.Suspended],
+      [ConnectionStatus.Closing],
+      [ConnectionStatus.Closed],
+    ])('invalid connection state for joining presence', (connectionState: ConnectionStatus) => {
+      it('should not join presence if connection state is: ' + connectionState, () => {
+        // change the connection status, so we render the hook with the new status
+        mockCurrentConnectionStatus = connectionState;
 
-          // spy on the enter method of the presence instance to check if it is called
-          vi.spyOn(mockRoom.presence, 'enter');
-          renderHook(() => usePresence({ initialData: { test: 'data' } }));
+        // spy on the enter method of the presence instance to check if it is called
+        vi.spyOn(mockRoom.presence, 'enter');
+        renderHook(() => usePresence({ initialData: { test: 'data' } }));
 
-          // ensure we have not entered presence
-          expect(mockRoom.presence.enter).not.toHaveBeenCalled();
-        });
-      },
-    );
+        // ensure we have not entered presence
+        expect(mockRoom.presence.enter).not.toHaveBeenCalled();
+      });
+    });
 
     it('should not join presence if the room is not attached', () => {
       vi.spyOn(mockRoom.presence, 'enter');
