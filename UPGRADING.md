@@ -2,6 +2,14 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## <=1.0.0 to 1.1.0
+
+### Additional Connection Status Enum Values
+
+**Expected Impact: Low**
+
+Added missing `closing` and `closed` states to the `ConnectionStatus` enum. Previously these states were incorrectly mapped to `failed`. In cases with exhaustive `switch` statements over the enum values, either add a `default` clause or handle these explicitly.
+
 ## 0.14.x to 0.15.0
 
 ### Typing and Occupancy Current Changed to Properties

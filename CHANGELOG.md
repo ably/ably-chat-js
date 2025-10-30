@@ -2,6 +2,12 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [1.1.0](https://github.com/ably/ably-chat-js/tree/1.1.0) (2025-10-30)
+
+### Bug Fixes
+
+- **Connection Status**: Added missing `closing` and `closed` states to the `ConnectionStatus` enum. Previously these states were incorrectly mapped to `failed`. [#687](https://github.com/ably/ably-chat-js/pull/687)
+
 ## [1.0.0](https://github.com/ably/ably-chat-js/tree/1.0.0) (2025-10-22)
 
 We are excited to announce that the Ably Chat SDK API is now stable.
