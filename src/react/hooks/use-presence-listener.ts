@@ -66,7 +66,6 @@ export interface UsePresenceListenerResponse extends ChatStatusResponse {
   readonly error?: Ably.ErrorInfo;
 }
 
-// eslint-disable-next-line jsdoc/require-throws-type
 /**
  * React hook that provides real-time presence data for all users in a room.
  *
@@ -78,7 +77,7 @@ export interface UsePresenceListenerResponse extends ChatStatusResponse {
  * - Room must be attached to receive presence updates, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for event listeners and room status callbacks
  * @returns A {@link UsePresenceListenerResponse} containing current presence data and error state
- * @throws {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ErrorCode.ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
+ * @throws An {@link Ably.ErrorInfo} with {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
  * @example Basic usage
  * ```tsx
  * import React from 'react';

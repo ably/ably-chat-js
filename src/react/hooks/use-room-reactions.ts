@@ -2,6 +2,7 @@
 import * as Ably from 'ably';
 import { useCallback, useEffect } from 'react';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { RoomReactionListener, RoomReactions, SendReactionParams } from '../../core/room-reactions.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -85,7 +86,7 @@ export interface UseRoomReactionsResponse extends ChatStatusResponse {
  * - Room must be attached to send and receive room reactions, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for event listeners and room status callbacks
  * @returns A {@link UseRoomReactionsResponse} containing room reaction methods and status
- * @throws {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
+ * @throws An {@link Ably.ErrorInfo} with {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
  * @example Basic usage
  * ```tsx
  * import React from 'react';
@@ -198,6 +199,6 @@ export const useRoomReactions = (params?: UseRoomReactionsParams): UseRoomReacti
     connectionError,
     roomStatus,
     roomError,
-    sendRoomReaction: sendRoomReaction as RoomReactions['send'],
+    sendRoomReaction,
   };
 };

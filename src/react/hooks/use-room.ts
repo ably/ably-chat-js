@@ -99,7 +99,6 @@ export interface UseRoomResponse extends ChatStatusResponse {
   detach: () => Promise<void>;
 }
 
-// eslint-disable-next-line jsdoc/require-throws-type
 /**
  * React hook that provides access to room information and basic room operations.
  *
@@ -109,7 +108,7 @@ export interface UseRoomResponse extends ChatStatusResponse {
  * **Note**: This hook must be used within a {@link ChatRoomProvider} component tree.
  * @param params - Optional parameters for status change callbacks
  * @returns A {@link UseRoomResponse} containing room data and operations
- * @throws {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
+ * @throws An {@link Ably.ErrorInfo} with {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
  * @example Basic usage
  * ```tsx
  * import React from 'react';

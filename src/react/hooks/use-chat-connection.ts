@@ -51,7 +51,7 @@ export interface UseChatConnectionResponse {
  * **Note**: This hook must be used within a {@link ChatClientProvider} component tree.
  * @param options - Optional configuration for the hook
  * @returns A {@link UseChatConnectionResponse} containing the current connection status and error
- * @throws {Ably.ErrorInfo} When used outside of a {@link ChatClientProvider}
+ * @throws An {@link Ably.ErrorInfo} When used outside of a {@link ChatClientProvider}
  * @example
  * ```tsx
  * import * as Ably from 'ably';

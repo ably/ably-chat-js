@@ -146,7 +146,11 @@ export interface UseMessagesResponse extends ChatStatusResponse {
    * };
    * ```
    */
-  readonly updateMessage: (serial: string, updateParams: UpdateMessageParams, details?: OperationDetails) => Promise<Message>;
+  readonly updateMessage: (
+    serial: string,
+    updateParams: UpdateMessageParams,
+    details?: OperationDetails,
+  ) => Promise<Message>;
 
   /**
    * A shortcut to the {@link Messages.history} method.
@@ -374,7 +378,7 @@ export interface UseMessagesParams extends StatusParams, Listenable<MessageListe
  * - Room must be attached to receive message events, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for event listeners and room status callbacks
  * @returns A {@link UseMessagesResponse} containing message methods and room status
- * @throws {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
+ * @throws An {@link Ably.ErrorInfo} with {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
  * @example Message listener and state management
  * ```tsx
  * import React, { useState } from 'react';
@@ -649,11 +653,11 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     connectionError,
     roomStatus,
     roomError,
-    sendMessage: sendMessage as Messages['send'],
-    getMessage: getMessage as Messages['get'],
-    updateMessage: updateMessage as Messages['update'],
-    history: history as Messages['history'],
-    deleteMessage: deleteMessage as Messages['delete'],
+    sendMessage,
+    getMessage,
+    updateMessage,
+    history,
+    deleteMessage,
     sendReaction,
     deleteReaction,
     historyBeforeSubscribe,

@@ -49,7 +49,6 @@ export interface ChatRoomProviderProps {
   children?: ReactNode | ReactNode[] | null;
 }
 
-// eslint-disable-next-line jsdoc/require-throws-type
 /**
  * React Context Provider that makes a specific {@link Room} available to child components.
  *
@@ -68,8 +67,8 @@ export interface ChatRoomProviderProps {
  * @param props.options Overriding options to use when creating the room.
  * @param props.children The child components to be rendered within this provider.
  * @returns A React element that provides the room context to its children
- * @throws {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} when used outside of a {@link ChatRoomProvider}
- * @throws {@link chat-js!ErrorCode.RoomExistsWithDifferentOptions | RoomExistsWithDifferentOptions} if room exists with different options
+ * @throws An {@link Ably.ErrorInfo} with {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
+ * @throws An {@link Ably.ErrorInfo} with {@link chat-js!ErrorCode.RoomExistsWithDifferentOptions | RoomExistsWithDifferentOptions} if room exists with different options
  * @example Basic usage
  * ```tsx
  * import * as Ably from 'ably';

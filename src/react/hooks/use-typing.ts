@@ -3,6 +3,7 @@ import * as Ably from 'ably';
 import { useCallback, useEffect, useState } from 'react';
 
 import { RoomStatus } from '../../core/room-status.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Typing, TypingListener } from '../../core/typing.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
@@ -124,7 +125,7 @@ export interface UseTypingResponse extends ChatStatusResponse {
  * - The `Room` must be attached to send and receive typing indicators, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for event listeners and room status callbacks
  * @returns A {@link UseTypingResponse} containing typing methods and current state
- * @throws {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
+ * @throws An {@link Ably.ErrorInfo} with {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
  * @example Basic usage
  * ```tsx
  * import React, { useState } from 'react';
@@ -285,8 +286,8 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
     connectionError,
     roomStatus,
     roomError,
-    keystroke: keystroke as Typing['keystroke'],
-    stop: stop as Typing['stop'],
+    keystroke,
+    stop,
     currentlyTyping,
   };
 };

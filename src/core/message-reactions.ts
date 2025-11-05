@@ -243,7 +243,7 @@ export interface MessageReactions {
    * **Note**: Requires {@link MessagesOptions.rawMessageReactions} to be enabled in room options.
    * @param listener - Callback invoked for each individual reaction event
    * @returns Subscription object with an unsubscribe method
-   * @throws {ErrorCode.FeatureNotEnabledInRoom} if raw message reactions are not enabled
+   * @throws An {@link Ably.ErrorInfo} with {@link ErrorCode.FeatureNotEnabledInRoom} if raw message reactions are not enabled
    * @example
    * ```typescript
    * import * as Ably from 'ably';

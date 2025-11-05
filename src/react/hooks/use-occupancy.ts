@@ -47,7 +47,6 @@ export interface UseOccupancyResponse extends ChatStatusResponse {
   readonly presenceMembers: number;
 }
 
-// eslint-disable-next-line jsdoc/require-throws-type
 /**
  * React hook that provides real-time room occupancy information.
  *
@@ -62,7 +61,7 @@ export interface UseOccupancyResponse extends ChatStatusResponse {
  * **Note**: Room must be attached to receive real-time occupancy updates, typically the {@link ChatRoomProvider} handles this automatically.
  * @param params - Optional parameters for event listeners and room status callbacks
  * @returns A {@link UseOccupancyResponse} containing current occupancy metrics and room status
- * @throws {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
+ * @throws An {@link Ably.ErrorInfo} with {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
  * @example Basic usage
  * ```tsx
  * import React from 'react';

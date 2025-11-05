@@ -31,7 +31,7 @@ export interface UseChatClientResponse {
  *
  * **Note**: This hook must be used within a {@link ChatClientProvider} component tree.
  * @returns A {@link UseChatClientResponse} containing the current client ID
- * @throws {Ably.ErrorInfo} When used outside of a {@link ChatClientProvider}
+ * @throws An {@link Ably.ErrorInfo} When used outside of a {@link ChatClientProvider}
  * @example
  * ```tsx
  * import * as Ably from 'ably';

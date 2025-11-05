@@ -336,7 +336,7 @@ export interface Presence {
    * - The room must be attached to receive events in real-time.
    * @param listener - Callback function invoked when any presence event occurs
    * @returns Subscription object with an unsubscribe method
-   * @throws {ErrorCode.FeatureNotEnabledInRoom} if presence events are not enabled
+   * @throws An {@link Ably.ErrorInfo} with {@link ErrorCode.FeatureNotEnabledInRoom} if presence events are not enabled
    * @example
    * ```typescript
    * import * as Ably from 'ably';

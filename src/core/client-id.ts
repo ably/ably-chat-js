@@ -9,7 +9,7 @@ import { Logger } from './logger.js';
 export interface ClientIdResolver {
   /**
    * Return the current clientId, throwing an exception if one isn't set.
-   * @throws {Ably.ErrorInfo} if no clientId is set.
+   * @throws An {@link Ably.ErrorInfo} if no clientId is set.
    * @returns string The resolved clientId
    */
   get(): string;

@@ -30,7 +30,7 @@ export interface Occupancy {
    * - The room should be attached to receive occupancy events.
    * @param listener - Callback invoked when room occupancy changes
    * @returns Subscription object with an unsubscribe method
-   * @throws {ErrorCode.FeatureNotEnabledInRoom} if occupancy events are not enabled
+   * @throws An {@link Ably.ErrorInfo} with {@link ErrorCode.FeatureNotEnabledInRoom} if occupancy events are not enabled
    * @example
    * ```typescript
    * import * as Ably from 'ably';
@@ -105,7 +105,7 @@ export interface Occupancy {
    * - Requires `enableEvents` to be true in the room's occupancy options.
    * - Returns undefined until the first occupancy event is received.
    * @returns Latest cached occupancy data or undefined if no events received
-   * @throws {ErrorCode.FeatureNotEnabledInRoom} if occupancy events are not enabled
+   * @throws An {@link Ably.ErrorInfo} with {@link ErrorCode.FeatureNotEnabledInRoom} if occupancy events are not enabled
    * @example
    * ```typescript
    * import * as Ably from 'ably';

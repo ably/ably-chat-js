@@ -500,9 +500,9 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
     connectionError,
     roomStatus,
     roomError,
-    update: update as Presence['update'],
-    enter: enter as Presence['enter'],
-    leave: leave as Presence['leave'],
+    update: update,
+    enter: enter,
+    leave: leave,
     myPresenceState,
   };
 };
