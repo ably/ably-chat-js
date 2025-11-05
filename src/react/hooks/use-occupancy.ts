@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as Ably from 'ably';
 import { useEffect, useState } from 'react';
 
 import { OccupancyListener } from '../../core/occupancy.js';
@@ -18,6 +20,14 @@ export interface UseOccupancyParams extends StatusParams, Listenable<OccupancyLi
   /**
    * A listener that will be called whenever an occupancy event is received.
    * The listener is removed when the component unmounts.
+   * @example
+   * ```tsx
+   * useOccupancy({
+   *   listener: (occupancyEvent) => {
+   *     console.log('Occupancy changed:', occupancyEvent.occupancy);
+   *   }
+   * });
+   * ```
    */
   listener?: OccupancyListener;
 }
@@ -37,11 +47,71 @@ export interface UseOccupancyResponse extends ChatStatusResponse {
   readonly presenceMembers: number;
 }
 
+// eslint-disable-next-line jsdoc/require-throws-type
 /**
- * A hook that provides access to the rooms occupancy information.
- * It will use the instance belonging to the nearest {@link ChatRoomProvider} in the component tree.
- * @param params - Allows the registering of optional callbacks.
- * @returns UseOccupancyResponse
+ * React hook that provides real-time room occupancy information.
+ *
+ * This hook automatically tracks the number of connections and presence members in a room,
+ * updating the counts in real-time as users join and leave. It integrates with the nearest
+ * {@link ChatRoomProvider} and handles cleanup when the component unmounts.
+ *
+ * The hook provides both the current occupancy metrics as state values and allows you to
+ * register listeners for occupancy change events.
+ *
+ * **Note**: This hook must be used within a {@link ChatRoomProvider} component tree.
+ * **Note**: Room must be attached to receive real-time occupancy updates, typically the {@link ChatRoomProvider} handles this automatically.
+ * @param params - Optional parameters for event listeners and room status callbacks
+ * @returns A {@link UseOccupancyResponse} containing current occupancy metrics and room status
+ * @throws {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
+ * @example Basic usage
+ * ```tsx
+ * import React from 'react';
+ * import { ChatClient, OccupancyEvent } from '@ably/chat';
+ * import {
+ *   ChatClientProvider,
+ *   ChatRoomProvider,
+ *   useOccupancy
+ * } from '@ably/chat/react';
+ *
+ * // Component that displays occupancy information
+ * const RoomOccupancy = () => {
+ *   const {
+ *     connections,
+ *     presenceMembers,
+ *     connectionStatus,
+ *     roomStatus
+ *   } = useOccupancy({
+ *     listener: (occupancyEvent: OccupancyEvent) => {
+ *       console.log('Occupancy changed:', occupancyEvent.occupancy);
+ *     },
+ *     onDiscontinuity: (error) => {
+ *       console.error('Discontinuity detected:', error);
+ *     }
+ *   });
+ *
+ *   return (
+ *     <div>
+ *       <div>👥 Total Connections: {connections}</div>
+ *       <div>🟢 Present Members: {presenceMembers}</div>
+ *     </div>
+ *   );
+ * };
+ *
+ * const chatClient: ChatClient; // existing ChatClient instance
+ *
+ * // App component with providers
+ * const App = () => {
+ *   return (
+ *     <ChatClientProvider client={chatClient}>
+ *       <ChatRoomProvider name="public-lobby">
+ *         <RoomOccupancy />
+ *       </ChatRoomProvider>
+ *     </ChatClientProvider>
+ *   );
+ * };
+ *
+ * export default App;
+ * ```
  */
 export const useOccupancy = (params?: UseOccupancyParams): UseOccupancyResponse => {
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({

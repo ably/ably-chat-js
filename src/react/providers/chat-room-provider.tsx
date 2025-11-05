@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type * as Ably from 'ably';
 // imported for docs linking
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 
@@ -16,10 +18,14 @@ export interface ChatRoomProviderProps {
   name: string;
 
   /**
-   * Overriding options to use when creating the room.
+   * Overriding options to use when creating the room. See {@link RoomOptions} for details.
    *
-   * **Important**: The `options` should be memoized to prevent unnecessary room recreations. Passing a new object reference
+   * **Important**:
+   * - The `options` should be memoized to prevent unnecessary room recreations. Passing a new object reference
    * on each render will cause the room to be released and recreated.
+   * - Provided options are merged with the default options, so you only need to specify the options you want to change.
+   * - Room options cannot be changed after the room is created. Different options
+   * for the same room name will result in an error.
    * @example
    * ```tsx
    * const MyRoomComponent = () => {
@@ -27,7 +33,6 @@ export interface ChatRoomProviderProps {
    *
    *   const roomOptions = useMemo(() => ({
    *     typing: { timeoutMs: 5000 },
-   *     reactions: { enabled: true }
    *   }), []); // Stable reference - options don't change
    *
    *   return (
@@ -44,36 +49,91 @@ export interface ChatRoomProviderProps {
   children?: ReactNode | ReactNode[] | null;
 }
 
+// eslint-disable-next-line jsdoc/require-throws-type
 /**
- * Provider for a {@link Room}. Must be wrapped in a {@link ChatClientProvider}.
+ * React Context Provider that makes a specific {@link Room} available to child components.
  *
- * The provider automatically manages room attachment and release based on reference counting.
- * The first provider for a room will attach it, and the last provider to unmount will release it.
+ * The provider automatically handles room attachment/detachment and provides the room
+ * instance to child components through room-specific hooks like {@link useMessages},
+ * {@link usePresence}, {@link useTyping}, etc.
  *
- * **Important**: The `props.options` should be memoized to prevent unnecessary room recreations. Passing a new object reference
- * on each render will cause the room to be released and recreated.
- * @example
+ * Multiple providers for the same room (with same options) share the same underlying
+ * room instance through reference counting, making it safe to have multiple components
+ * using the same room simultaneously.
+ *
+ * When the first {@link ChatRoomProvider} for a room mounts, it creates
+ * and attaches the room. When the last provider unmounts, it releases the room.
+ * @param props - The props for the ChatRoomProvider component.
+ * @param props.name The name of the room.
+ * @param props.options Overriding options to use when creating the room.
+ * @param props.children The child components to be rendered within this provider.
+ * @returns A React element that provides the room context to its children
+ * @throws {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ReactHookMustBeUsedWithinProvider} when used outside of a {@link ChatRoomProvider}
+ * @throws {@link chat-js!ErrorCode.RoomExistsWithDifferentOptions | RoomExistsWithDifferentOptions} if room exists with different options
+ * @example Basic usage
  * ```tsx
- * const MyRoomComponent = () => {
- *   const [typing, setTyping] = useState(true);
+ * import * as Ably from 'ably';
+ * import React, { useMemo } from 'react';
+ * import { ChatClient } from '@ably/chat';
+ * import {
+ *   ChatClientProvider,
+ *   ChatRoomProvider,
+ *   useMessages,
+ *   useRoom,
+ * } from '@ably/chat/react';
  *
- *   const roomOptions = useMemo(() => ({
- *     typing: { timeoutMs: 5000 },
- *     reactions: { enabled: true }
- *   }), []); // Stable reference - options don't change
+ * const chatClient: ChatClient; // existing ChatClient instance
+ *
+ * // Child component using room functionality
+ * const ChatInterface = () => {
+ *   const { roomName } = useRoom();
+ *   const { sendMessage } = useMessages();
  *
  *   return (
- *     <ChatRoomProvider name="my-room" options={roomOptions}>
- *       <MyChat />
- *     </ChatRoomProvider>
+ *     <div>
+ *       <h2>Chat Room: {roomName}</h2>
+ *       <button onClick={() => sendMessage({ text: 'Hello!' })}>
+ *         Send Message
+ *       </button>
+ *     </div>
+ *   );
+ * };
+ *
+ * const BasicExample = () => {
+ *   return (
+ *     <ChatClientProvider client={chatClient}>
+ *       <ChatRoomProvider name="general-chat">
+ *         <ChatInterface />
+ *       </ChatRoomProvider>
+ *     </ChatClientProvider>
  *   );
  * };
  * ```
- * @param props The props object for the ChatRoomProvider.
- * @param props.name The name of the room.
- * @param props.options The room options.
- * @param props.children The child components to render.
- * @returns The ChatRoomProvider component.
+ * @example Providing custom room options
+ * ```tsx
+ * import { ChatClientProvider, ChatRoomProvider } from '@ably/chat/react';
+ * import { ChatClient } from '@ably/chat';
+ *
+ * const chatClient: ChatClient; // existing ChatClient instance
+ *
+ * // Example with room options (properly memoized)
+ * const CustomOptions = () => {
+ *   // Memoize options to prevent room recreation
+ *   const roomOptions = useMemo(() => ({
+ *     typing: {
+ *       timeoutMs: 10000 // 10 second typing timeout
+ *     },
+ *   }), []); // Empty dependency array = stable reference
+ *
+ *   return (
+ *     <ChatClientProvider client={chatClient}>
+ *       <ChatRoomProvider name="team-room" options={roomOptions}>
+ *         <ChatInterface />
+ *       </ChatRoomProvider>
+ *     </ChatClientProvider>
+ *   );
+ * };
+ * ```
  */
 export const ChatRoomProvider = ({ name: roomName, options, children }: ChatRoomProviderProps): React.ReactElement => {
   const client = useChatClientContext();

@@ -37,6 +37,14 @@ export interface UsePresenceListenerParams extends StatusParams, Listenable<Pres
   /**
    * The listener to be called when the presence state changes.
    * The listener is removed when the component unmounts.
+   * @example
+   * ```tsx
+   * usePresenceListener({
+   *   listener: (presenceEvent) => {
+   *     console.log('Presence event:', presenceEvent.type, presenceEvent.member.clientId);
+   *   }
+   * });
+   * ```
    */
   listener?: PresenceListener;
 }
@@ -58,12 +66,68 @@ export interface UsePresenceListenerResponse extends ChatStatusResponse {
   readonly error?: Ably.ErrorInfo;
 }
 
+// eslint-disable-next-line jsdoc/require-throws-type
 /**
- * A hook that provides access to the the current presence state for the room.
- * It will use the instance belonging to the room in the nearest {@link ChatRoomProvider} in the component tree.
- * On calling, the hook will subscribe to the presence state of the room and update the state accordingly.
- * @param params - Allows the registering of optional callbacks.
- * @returns UsePresenceResponse - An object containing the current presence state.
+ * React hook that provides real-time presence data for all users in a room.
+ *
+ * This hook automatically subscribes to presence events and maintains an up-to-date
+ * list of all presence members in the room.
+ *
+ * **Note**:
+ * - This hook must be used within a {@link ChatRoomProvider} component tree.
+ * - Room must be attached to receive presence updates, typically the {@link ChatRoomProvider} handles this automatically.
+ * @param params - Optional parameters for event listeners and room status callbacks
+ * @returns A {@link UsePresenceListenerResponse} containing current presence data and error state
+ * @throws {@link chat-js!ErrorCode.ReactHookMustBeUsedWithinProvider | ErrorCode.ReactHookMustBeUsedWithinProvider} When used outside of a {@link ChatRoomProvider}
+ * @example Basic usage
+ * ```tsx
+ * import React from 'react';
+ * import { ChatClient, PresenceEvent } from '@ably/chat';
+ * import {
+ *   ChatClientProvider,
+ *   ChatRoomProvider,
+ *   usePresenceListener
+ * } from '@ably/chat/react';
+ *
+ * // Component that displays all presence members
+ * const PresenceList = () => {
+ *   const { presenceData, error } = usePresenceListener({
+ *     listener: (presenceEvent: PresenceEvent) => {
+ *       console.log(`Presence ${presenceEvent.type}:`, presenceEvent.member);
+ *     },
+ *   });
+ *
+ *   if (error) {
+ *     return <div>Error: {error.message}</div>;
+ *   }
+ *
+ *   return (
+ *     <div>
+ *       <p>Total Members: {presenceData.length}</p>
+ *       <ul>
+ *         {presenceData.map((member) => (
+ *           <li key={member.clientId}>👤 {member.clientId}</li>
+ *         ))}
+ *       </ul>
+ *     </div>
+ *   );
+ * };
+ *
+ * const chatClient: ChatClient; // existing ChatClient instance
+ *
+ * // App component with providers
+ * const App = () => {
+ *   return (
+ *     <ChatClientProvider client={chatClient}>
+ *       <ChatRoomProvider name="team-room">
+ *         <PresenceList />
+ *       </ChatRoomProvider>
+ *     </ChatClientProvider>
+ *   );
+ * };
+ *
+ * export default App;
+ * ```
  */
 export const usePresenceListener = (params?: UsePresenceListenerParams): UsePresenceListenerResponse => {
   const { currentStatus: connectionStatus, error: connectionError } = useChatConnection({

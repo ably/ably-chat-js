@@ -18,7 +18,7 @@ export interface ExtendedChatClientContextValue extends ChatClientContextValue {
 /**
  * Hook to access the room reference manager from the current ChatClientProvider.
  * @returns The room reference manager instance
- * @throws ErrorInfo if used outside of a ChatClientProvider
+ * @throws {Ably.ErrorInfo} if used outside of a ChatClientProvider
  */
 export const useRoomReferenceManager = (): RoomReferenceManager => {
   const context = React.useContext(ChatClientContext) as ExtendedChatClientContextValue;
