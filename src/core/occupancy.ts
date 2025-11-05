@@ -19,26 +19,127 @@ import EventEmitter, { emitterHasListeners, wrap } from './utils/event-emitter.j
  */
 export interface Occupancy {
   /**
-   * Subscribe a given listener to occupancy updates of the chat room.
+   * Subscribes to occupancy updates for the chat room.
    *
-   * Note: This requires occupancy events to be enabled via the `enableEvents` option in
-   * the {@link OccupancyOptions} options provided to the room. If this is not enabled, an error will be thrown.
-   * @param listener A listener to be called when the occupancy of the room changes.
-   * @returns A subscription object that can be used to unsubscribe the listener.
-   * @throws {Ably.ErrorInfo} If occupancy events are not enabled for this room.
+   * Receives updates whenever the number of connections or present members in the room changes.
+   * This is useful for displaying active user counts, monitoring room capacity, or tracking
+   * engagement metrics.
+   *
+   * **Note**:
+   * - Requires {@link OccupancyOptions.enableEvents} to be true in the room's occupancy options.
+   * - The room should be attached to receive occupancy events.
+   * @param listener - Callback invoked when room occupancy changes
+   * @returns Subscription object with an unsubscribe method
+   * @throws {ErrorCode.FeatureNotEnabledInRoom} if occupancy events are not enabled
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, OccupancyEvent } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Create room with occupancy events enabled
+   * const room = await chatClient.rooms.get('conference-room', {
+   *   occupancy: { enableEvents: true }
+   * });
+   *
+   *
+   * // Subscribe to occupancy updates
+   * const subscription = room.occupancy.subscribe((event: OccupancyEvent) => {
+   *   const { connections, presenceMembers } = event.occupancy;
+   *
+   *   console.log(`Room occupancy updated:`);
+   *   console.log(`Total connections: ${connections}`);
+   *   console.log(`Presence members: ${presenceMembers}`);
+   * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
+   * // Later, unsubscribe when done
+   * subscription.unsubscribe();
+   * ```
    */
   subscribe(listener: OccupancyListener): Subscription;
 
   /**
-   * Get the current occupancy of the chat room.
-   * @returns A promise that resolves to the current occupancy of the chat room.
+   * Fetches the current occupancy of the chat room from the server.
+   *
+   * Retrieves the latest occupancy metrics, including the number
+   * of active connections and presence members. Use this for on-demand occupancy
+   * checks or when occupancy events are not enabled.
+   *
+   * **Note**: This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
+   * @returns Promise resolving to current occupancy data
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, OccupancyData } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * const room = await chatClient.rooms.get('webinar-room');
+   *
+   * // Get current occupancy on demand
+   * try {
+   *   const occupancy: OccupancyData = await room.occupancy.get();
+   *
+   *   console.log(`Current room statistics:`);
+   *   console.log(`Active connections: ${occupancy.connections}`);
+   *   console.log(`Presence members: ${occupancy.presenceMembers}`);
+   * } catch (error) {
+   *   console.error('Failed to fetch occupancy:', error);
+   * }
+   * ```
    */
   get(): Promise<OccupancyData>;
 
   /**
-   * Get the latest occupancy data received from realtime events.
-   * @returns The latest occupancy data, or undefined if no realtime events have been received yet.
-   * @throws {Ably.ErrorInfo} If occupancy events are not enabled for this room.
+   * Gets the latest occupancy data cached from realtime events.
+   *
+   * Returns the most recent occupancy metrics received via subscription. Returns undefined
+   * if no occupancy events have been received yet since the room was attached.
+   *
+   * **Note**:
+   * - Requires `enableEvents` to be true in the room's occupancy options.
+   * - Returns undefined until the first occupancy event is received.
+   * @returns Latest cached occupancy data or undefined if no events received
+   * @throws {ErrorCode.FeatureNotEnabledInRoom} if occupancy events are not enabled
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, OccupancyData } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Room with occupancy events enabled
+   * const room = await chatClient.rooms.get('gaming-lobby', {
+   *   occupancy: { enableEvents: true }
+   * });
+   *
+   * // Subscribe to occupancy events
+   * room.occupancy.subscribe((event) => {
+   *   console.log('Occupancy updated:', event.occupancy);
+   * });
+   *
+   * // Get cached occupancy instantly (after first event)
+   * function displayCurrentOccupancy() {
+   *   const occupancy = room.occupancy.current;
+   *
+   *   if (occupancy) {
+   *     console.log(`Current cached occupancy:`);
+   *     console.log(`Connections: ${occupancy.connections}`);
+   *     console.log(`Presence: ${occupancy.presenceMembers}`);
+   *   } else {
+   *     console.log('No occupancy data received yet, try fetching from server');
+   *   }
+   * }
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
+   * ```
    */
   get current(): OccupancyData | undefined;
 }

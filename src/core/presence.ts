@@ -132,52 +132,246 @@ export type PresenceListener = (event: PresenceEvent) => void;
  */
 export interface Presence {
   /**
-   * Method to get list of the current online users and returns the latest presence messages associated to it.
-   * @param params - Parameters that control how the presence set is retrieved.
-   * @throws If the room is not in the `attached` or `attaching` state.
-   * @returns or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
+   * Retrieves the current members present in the chat room.
+   *
+   * **Note**: The room must be attached before calling this method.
+   * @param params - Optional parameters to filter the presence set
+   * @returns Promise that resolves with an array of presence members currently in the room,
+   *          or rejects with {@link ErrorCode.RoomInInvalidState} if the room is not attached
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options and attach to it
+   * const room = await chatClient.rooms.get('meeting-room');
+   * await room.attach();
+   *
+   * try {
+   *   // Get all currently present members
+   *   const members: PresenceMember[] = await room.presence.get();
+   *   console.log(`${members.length} users present in the room`);
+   *
+   *   members.forEach((member) => {
+   *     console.log(`User ${member.clientId} is present with data:`, member.data);
+   *   });
+   *
+   *   // Get members with a specific client ID
+   *   const specificUser = await room.presence.get({ clientId: 'user-456' });
+   *   if (specificUser.length > 0) {
+   *     console.log('User-456 is in the room');
+   *   }
+   * } catch (error) {
+   *   console.error('Failed to get presence members:', error);
+   * }
+   * ```
    */
   get(params?: Ably.RealtimePresenceParams): Promise<PresenceMember[]>;
 
   /**
-   * Method to check if user with supplied clientId is online
-   * @param clientId - The client ID to check if it is present in the room.
-   * @throws If the room is not in the `attached` or `attaching` state.
-   * @returns or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
+   * Checks whether a specific user is currently present in the chat room.
+   * Useful if you just need a boolean check rather than the full presence member data.
+   *
+   * **Note**: The room must be attached before calling this method.
+   * @param clientId - The client ID of the user to check
+   * @returns Promise that resolves with true if the user is present, false otherwise, or rejects with:
+   * - {@link ErrorCode.RoomInInvalidState} if the room is not attached
+   * - {@link Ably.ErrorInfo} if the operation fails for any other reason
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options and attach to it
+   * const room = await chatClient.rooms.get('meeting-room');
+   * await room.attach();
+   *
+   * try {
+   *   // Check if a specific user is present
+   *   const isPresent: boolean = await room.presence.isUserPresent('user-456');
+   *
+   *   if (isPresent) {
+   *     console.log('User-456 is currently in the room');
+   *   } else {
+   *     console.log('User-456 is not in the room');
+   *   }
+   * } catch (error) {
+   *   console.error('Failed to check user presence:', error);
+   * }
+   * ```
    */
   isUserPresent(clientId: string): Promise<boolean>;
 
   /**
-   * Method to join room presence, will emit an enter event to all subscribers. Repeat calls will trigger more enter events.
-   * @param data - The users data, a JSON serializable object that will be sent to all subscribers.
-   * @throws If the room is not in the `attached` or `attaching` state.
-   * @returns or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
+   * Enters the current user into the chat room presence set.
+   * Emits an 'enter' event to all presence subscribers. Multiple calls will emit additional `update` events if the
+   * user is already present.
+   *
+   * **Note**: The room must be attached before calling this method.
+   * @param data - Optional JSON-serializable data to associate with the user's presence
+   * @returns Promise that resolves when the user has successfully entered,
+   *          or rejects with {@link ErrorCode.RoomInInvalidState} if the room is not attached
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options and attach to it
+   * const room = await chatClient.rooms.get('meeting-room');
+   * await room.attach();
+   *
+   * try {
+   *   // Enter with user metadata
+   *   await room.presence.enter({
+   *     avatar: 'https://example.com/avatar.jpg',
+   *     status: 'online',
+   *     role: 'moderator'
+   *   });
+   *
+   *   console.log('Successfully entered the room');
+   * } catch (error) {
+   *   console.error('Failed to enter room:', error);
+   * }
+   *
+   * ```
    */
   enter(data?: PresenceData): Promise<void>;
 
   /**
-   * Method to update room presence, will emit an update event to all subscribers. If the user is not present, it will be treated as a join event.
-   * @param data - The users data, a JSON serializable object that will be sent to all subscribers.
-   * @throws If the room is not in the `attached` or `attaching` state.
-   * @returns or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
+   * Updates the presence data for the current user in the chat room.
+   * Emits an 'update' event to all subscribers. If the user is not already present, they will be entered automatically.
+   *
+   * **Note**:
+   * - The room must be attached before calling this method.
+   * - This method uses PUT-like semantics - the entire presence data is replaced with the new value.
+   * @param data - JSON-serializable data to replace the user's current presence data
+   * @returns Promise that resolves when the presence data has been updated,
+   *          or rejects with {@link ErrorCode.RoomInInvalidState} if the room is not attached
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options
+   * const room = await chatClient.rooms.get('meeting-room');
+   * await room.attach();
+   *
+   * try {
+   *   // Initial enter with status
+   *   await room.presence.enter({
+   *     username: 'John Doe',
+   *     status: 'online'
+   *   });
+   *
+   *   // Update status to busy (replaces entire data object)
+   *   await room.presence.update({
+   *     username: 'John Doe',
+   *     status: 'busy',
+   *     statusMessage: 'In a meeting'
+   *   });
+   *
+   *   console.log('Presence status updated');
+   * } catch (error) {
+   *   console.error('Failed to update presence:', error);
+   * }
+   * ```
    */
   update(data?: PresenceData): Promise<void>;
 
   /**
-   * Method to leave room presence, will emit a leave event to all subscribers. If the user is not present, it will be treated as a no-op.
-   * @param data - The users data, a JSON serializable object that will be sent to all subscribers.
-   * @throws If the room is not in the `attached` or `attaching` state.
-   * @returns or upon failure, the promise will be rejected with an {@link Ably.ErrorInfo} object which explains the error.
+   * Removes the current user from the chat room presence set.
+   * Emits a 'leave' event to all subscribers. If the user is not present, this is a no-op.
+   *
+   * **Note**: The room must be attached before calling this method.
+   * @param data - Optional final presence data to include with the leave event
+   * @returns Promise that resolves when the user has left the presence set,
+   *          or rejects with {@link ErrorCode.RoomInInvalidState} if the room is not attached
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options
+   * const room = await chatClient.rooms.get('meeting-room');
+   * await room.attach();
+   *
+   * try {
+   *   // Enter the room
+   *   await room.presence.enter({
+   *     avatar: 'https://example.com/avatar.jpg',
+   *     status: 'online'
+   *   });
+   *
+   *   // Do some work in the room...
+   *
+   *   // Leave with a final status message
+   *   await room.presence.leave({
+   *     status: 'offline',
+   *     lastSeen: new Date().toISOString()
+   *   });
+   *
+   *   console.log('Successfully left the room');
+   * } catch (error) {
+   *   console.error('Failed to leave room:', error);
+   * }
+   * ```
    */
   leave(data?: PresenceData): Promise<void>;
 
   /**
-   * Subscribe the given listener to all presence events.
+   * Subscribes to all presence events in the chat room.
    *
-   * Note: This requires presence events to be enabled via the `enableEvents` option in
-   * the {@link PresenceOptions} provided to the room. If this is not enabled, an error will be thrown.
-   * @param listener listener to subscribe
-   * @throws An {@link Ably.ErrorInfo} with code 40000 if presence events are not enabled
+   * **Note**:
+   * - Requires `enableEvents` to be true in the room's presence options.
+   * - The room must be attached to receive events in real-time.
+   * @param listener - Callback function invoked when any presence event occurs
+   * @returns Subscription object with an unsubscribe method
+   * @throws {ErrorCode.FeatureNotEnabledInRoom} if presence events are not enabled
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, PresenceEvent, PresenceEventType } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options
+   * const room = await chatClient.rooms.get('meeting-room');
+   *
+   * // Subscribe to all presence events
+   * const subscription = room.presence.subscribe((event: PresenceEvent) => {
+   *   const { type, member } = event;
+   *   switch (type) {
+   *     case PresenceEventType.Enter:
+   *       console.log(`${member.clientId} entered at ${member.updatedAt}`);
+   *       break;
+   *     case PresenceEventType.Leave:
+   *       console.log(`${member.clientId} left at ${member.updatedAt}`);
+   *       break;
+   *     case PresenceEventType.Update:
+   *       console.log(`${member.clientId} updated their data:`, member.data);
+   *       break;
+   *     case PresenceEventType.Present:
+   *       console.log(`${member.clientId} is already present`);
+   *       break;
+   *   }
+   * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
+   * // Later, unsubscribe when done
+   * subscription.unsubscribe();
+   * ```
    */
   subscribe(listener: PresenceListener): Subscription;
 }

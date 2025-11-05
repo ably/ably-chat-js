@@ -8,6 +8,9 @@ import { OccupancyData } from './occupancy-parser.js';
 import { PaginatedResult } from './query.js';
 import { messageFromRest, RestMessage } from './rest-types.js';
 
+/**
+ * Parameters for querying message history.
+ */
 export interface HistoryQueryParams {
   start?: number;
   end?: number;

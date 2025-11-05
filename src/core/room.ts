@@ -23,94 +23,345 @@ import { DefaultTyping, Typing } from './typing.js';
 export interface Room {
   /**
    * The unique identifier of the room.
-   * @returns The room name.
+   * @returns The room name as provided when the room was created
+   * @example
+   * ```typescript
+   * const room = await chatClient.rooms.get('sports-discussion');
+   * console.log(`Connected to room: ${room.name}`);
+   *
+   * // Output: Connected to room: sports-discussion
+   * ```
    */
   get name(): string;
 
   /**
-   * Allows you to send, subscribe-to and query messages in the room.
-   * @returns The messages instance for the room.
+   * Provides access to the messages feature for sending, receiving, and querying chat messages.
+   * @returns The Messages instance for this room
+   * @example
+   * ```typescript
+   * const room = await chatClient.rooms.get('team-chat');
+   *
+   * // Access messages feature
+   * const { subscribe, send, update, ... } = room.messages;
+   *
+   * ```
    */
   get messages(): Messages;
 
   /**
-   * Allows you to subscribe to presence events in the room.
-   * @returns The presence instance for the room.
+   * Provides access to the presence feature for tracking user presence state.
+   * @returns The Presence instance for this room
+   * @example
+   * ```typescript
+   * const room = await chatClient.rooms.get('meeting-room');
+   *
+   * // Access presence feature
+   * const { enter, leave, get, ... } = room.presence;
+   * ```
    */
   get presence(): Presence;
 
   /**
-   * Allows you to interact with room-level reactions.
-   * @returns The room reactions instance for the room.
+   * Provides access to room-level reactions for sending ephemeral reactions.
+   * @returns The RoomReactions instance for this room
+   * @example
+   * ```typescript
+   * const room = await chatClient.rooms.get('live-stream');
+   *
+   * // Access room reactions feature
+   * const { send, ... } = room.reactions;
+   *
+   * ```
    */
   get reactions(): RoomReactions;
 
   /**
-   * Allows you to interact with typing events in the room.
-   * @returns The typing instance for the room.
+   * Provides access to the typing indicators feature for showing who is currently typing.
+   * @returns The Typing instance for this room
+   * @example
+   * ```typescript
+   * const room = await chatClient.rooms.get('support-chat');
+   *
+   * // Access typing feature
+   * const { keystroke, stop, ... } = room.typing;
+   *
+   * ```
    */
   get typing(): Typing;
 
   /**
-   * Allows you to interact with occupancy metrics for the room.
-   * @returns The occupancy instance for the room.
+   * Provides access to room occupancy metrics for tracking connection and presence counts.
+   * @returns The Occupancy instance for this room
+   * @example
+   * ```typescript
+   * const room = await chatClient.rooms.get('webinar-room');
+   *
+   * // Access occupancy feature
+   * const { get, ... } = room.occupancy;
+   * ```
    */
   get occupancy(): Occupancy;
 
   /**
-   * The current status of the room.
-   * @returns The current status.
+   * The current lifecycle status of the room.
+   * @returns The current RoomStatus value
+   * @example
+   * ```typescript
+   * const room = await chatClient.rooms.get('game-lobby');
+   *
+   * // Check room status
+   * if (room.status === RoomStatus.Attached) {
+   *   console.log('Room is connected and ready');
+   * } else if (room.status === RoomStatus.Failed) {
+   *   console.error('Room connection failed');
+   * }
+   *
+   * ```
    */
   get status(): RoomStatus;
 
   /**
-   * The current error, if any, that caused the room to enter the current status.
+   * The error that caused the room to enter its current status, if any.
+   * @returns ErrorInfo if an error caused the current status, undefined otherwise
+   * @example
+   * ```typescript
+   * const room = await chatClient.rooms.get('private-chat');
+   *
+   * if (room.error) {
+   *   console.error('Room error:', room.error.message);
+   *   console.error('Error code:', room.error.code);
+   *
+   *   // Handle specific error codes
+   *   if (room.error.code === 40300) {
+   *     showMessage('Access denied to this room');
+   *   } else {
+   *     showMessage(`Connection failed: ${room.error.message}`);
+   *   }
+   * }
+   * ```
    */
   get error(): Ably.ErrorInfo | undefined;
 
   /**
-   * Registers a listener that will be called whenever the room status changes.
-   * @param listener The function to call when the status changes.
-   * @returns An object that can be used to unregister the listener.
+   * Registers a listener to be notified of room status changes.
+   *
+   * Status changes indicate the room's connection lifecycle. Use this to
+   * monitor room health and handle connection issues over time.
+   * @param listener - Callback invoked when the room status changes
+   * @returns Subscription object with an unsubscribe method
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, RoomStatus } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * const room = await chatClient.rooms.get('support-chat');
+   *
+   * // Monitor room status changes
+   * const statusSubscription = room.onStatusChange((change) => {
+   *   console.log(`Room status: ${change.previous} -> ${change.current}`);
+   *   console.log(`Timestamp: ${change.timestamp.toISOString()}`);
+   *
+   *   // Handle different status transitions
+   *   switch (change.current) {
+   *     case RoomStatus.Attached:
+   *       console.log('Room is now connected');
+   *       enableChatUI();
+   *       showOnlineIndicator();
+   *       break;
+   *
+   *     case RoomStatus.Attaching:
+   *       console.log('Connecting to room...');
+   *       showConnectingSpinner();
+   *       break;
+   *
+   *     // Handle other cases as needed
+   *   }
+   * });
+   *
+   * // Clean up when done
+   * statusSubscription.off();
+   * ```
    */
   onStatusChange(listener: RoomStatusListener): StatusSubscription;
 
   /**
-   * Attaches to the room to receive events in realtime.
+   * Attaches to the room to begin receiving events.
    *
-   * If a room fails to attach, it will enter either the {@link RoomStatus.Suspended} or {@link RoomStatus.Failed} state.
+   * Establishes an attachment to the room, enabling message delivery,
+   * presence updates, typing, and other events. The room must be
+   * attached before non-REST-based operations (like `presence.enter()`) can be performed.
    *
-   * If the room enters the failed state, then it will not automatically retry attaching and intervention is required.
+   * **Note**:
+   * - If attachment fails, the room enters {@link RoomStatus.Suspended} or {@link RoomStatus.Failed} state.
+   * - Suspended rooms automatically retry; Failed rooms require manual intervention.
+   * - The promise rejects with an {@link ErrorInfo} for suspended states, but the room will retry attaching after a delay.
+   * @returns Promise that resolves when the room is successfully attached, or rejects with:
+   * - {@link Ably.ErrorInfo} if the room enters suspended state (auto-retry will occur)
+   * - {@link Ably.ErrorInfo} if the room enters failed state (manual intervention required)
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, RoomStatus } from '@ably/chat';
    *
-   * If the room enters the suspended state, then the call to attach will reject with the {@link ErrorInfo} that caused the suspension. However,
-   * the room will automatically retry attaching after a delay.
-   * @returns A promise that resolves when the room is attached.
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * const room = await chatClient.rooms.get('team-standup');
+   *
+   * // Attach to room with error handling
+   * try {
+   *   await room.attach();
+   *   console.log('Successfully attached to room');
+   *
+   *   // Now safe to use room features
+   *   await room.presence.enter();
+   *
+   *   // And subscriptions will start receiving events
+   *   room.messages.subscribe((event) => {
+   *     console.log('New message:', event.message);
+   *   });
+   * } catch (error) {
+   *   console.error('Failed to attach to room:', error);
+   *
+   *   // Check current room status
+   *   if (room.status === RoomStatus.Suspended) {
+   *     console.log('Room suspended, will retry automatically');
+   *   } else if (room.status === RoomStatus.Failed) {
+   *     console.error('Room failed, manual intervention needed');
+   *   }
+   * }
+   *
+   * ```
    */
   attach(): Promise<void>;
 
   /**
-   * Detaches from the room to stop receiving events in realtime.
-   * @returns A promise that resolves when the room is detached.
+   * Detaches from the room to stop receiving chat events.
+   *
+   * Subscriptions remain registered but won't receive events until the room is
+   * reattached. Use this to gracefully detach when leaving a chat view. This command leaves all
+   * subscriptions intact, so they will resume receiving events when the room is reattached.
+   * @returns Promise that resolves when the room is successfully detached
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options and attach to it
+   * const room = await chatClient.rooms.get('customer-support');
+   * await room.attach();
+   *
+   * // Do chat operations...
+   *
+   * try {
+   *     // Detach from room
+   *     await room.detach();
+   *     console.log('Successfully detached from room');
+   *   } catch (error) {
+   *     console.error('Failed to detach from room:', error);
+   *   }
+   * ```
    */
   detach(): Promise<void>;
 
   /**
-   * Returns the room options.
-   * @returns A copy of the options used to create the room.
+   * Returns a copy of the options used to configure the room.
+   *
+   * Provides access to all room configuration including presence, typing, reactions,
+   * and occupancy settings. The returned object is a deep copy to prevent external
+   * modifications to the room's configuration.
+   * @returns A deep copy of the room options
+   * @example
+   * ```typescript
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient = new ChatClient(realtime);
+   *
+   * // Create room with specific options
+   * const room = await chatClient.rooms.get('conference-hall', {
+   *   presence: {
+   *     enableEvents: true,
+   *     syncPresenceOnEntry: true
+   *   },
+   *   typing: {
+   *     heartbeatThrottleMs: 1500
+   *   },
+   *   occupancy: {
+   *     enableEvents: true
+   *   },
+   *   messages: {
+   *     rawMessageReactions: false
+   *   }
+   * });
+   *
+   * // Get room options to check configuration
+   * const options = room.options();
+   *
+   * console.log('Room configuration:');
+   * console.log('Presence events:', options.presence?.enableEvents);
+   * console.log('Typing throttle:', options.typing?.heartbeatThrottleMs);
+   * console.log('Occupancy events:', options.occupancy?.enableEvents);
+   * ```
    */
   options(): RoomOptions;
 
   /**
-   * Registers a handler that will be called whenever a discontinuity is detected in the room's connection.
-   * A discontinuity occurs when the room's connection is interrupted and cannot be resumed from its previous state.
-   * @param handler The function to call when a discontinuity is detected.
-   * @returns An object that can be used to unregister the handler.
+   * Registers a handler for discontinuity events in the room's connection.
+   *
+   * A discontinuity occurs when the connection is interrupted and cannot resume
+   * from its previous state, potentially resulting in missed messages or events.
+   * Use this to detect gaps in the event stream and take corrective action.
+   *
+   * **Note**:
+   * - Discontinuities require fetching missed messages via history.
+   * - Message subscriptions automatically reset their position on discontinuity, see {@link MessageSubscriptionResponse.historyBeforeSubscribe} for more information.
+   * - You should subscribe to discontinuities before attaching to the room.
+   * @param handler - Callback invoked when a discontinuity is detected
+   * @returns Subscription object with an unsubscribe method
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * const room = await chatClient.rooms.get('critical-updates');
+   *
+   * // Handle discontinuities to ensure no messages are missed
+   * const discontinuitySubscription = room.onDiscontinuity((reason) => {
+   *   console.warn('Discontinuity detected:', reason);
+   *
+   *   // Show warning to user
+   *   showDiscontinuityWarning('Connection interrupted - fetching missed messages...');
+   *
+   *   // You may also want to fetch missed messages to fill gaps during the discontinuity.
+   * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
+   * // Clean up
+   * discontinuitySubscription.off();
+   * ```
    */
   onDiscontinuity(handler: DiscontinuityListener): StatusSubscription;
 
   /**
-   * Get the underlying Ably realtime channel used for the room.
-   * @returns The realtime channel.
+   * Provides direct access to the underlying Ably Realtime channel.
+   *
+   * Use this for advanced scenarios requiring direct access to the underlying channel. Directly interacting
+   * with the Ably channel can lead to unexpected behavior, and so is generally discouraged.
+   * @returns The underlying Ably RealtimeChannel instance
+   * @example
+   * ```typescript
+   * const room = await chatClient.rooms.get('advanced-room');
+   *
+   * // Access underlying channel for advanced operations
+   * const channel = room.channel;
+   * ```
    */
   get channel(): Ably.RealtimeChannel;
 }

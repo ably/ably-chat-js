@@ -14,34 +14,95 @@ import { normalizeRoomOptions, RoomOptions } from './room-options.js';
  */
 export interface Rooms {
   /**
-   * Gets a room reference by its unique identifier. The Rooms class ensures that only one reference
-   * exists for each room. A new reference object is created if it doesn't already
-   * exist, or if the one used previously was released using release(name).
+   * Gets a room reference by its unique identifier.
    *
-   * Always call `release(name)` after the Room object is no longer needed.
+   * Creates a new room instance or returns an existing one. The Rooms class ensures
+   * only one instance exists per room name. Always call `release()` when the room
+   * is no longer needed to free resources.
    *
-   * If a call to `get` is made for a room that is currently being released, then the promise will resolve only when
-   * the release operation is complete.
+   * **Note**:
+   * - If options differ from an existing room, an error is thrown.
+   * - If `get` is called during a release, it waits for release to complete.
+   * - If `release` is called before `get` resolves, the promise rejects.
+   * @param name - The unique identifier of the room
+   * @param options - Optional configuration for the room features
+   * @returns Promise resolving to the Room instance, or rejecting with:
+   * - {@link ErrorCode.RoomExistsWithDifferentOptions} if room exists with different options
+   * - {@link ErrorCode.ResourceDisposed} if the rooms instance has been disposed
+   * - {@link ErrorCode.RoomReleasedBeforeOperationCompleted} if room is released before get completes
+   * @example
+   * ```
+   * import * as Ably from 'ably';
+   * import { ChatClient, Room } from '@ably/chat';
    *
-   * If a call to `get` is made, followed by a subsequent call to `release` before the promise resolves, then the
-   * promise will reject with an error.
-   * @param name The unique identifier of the room.
-   * @param options The options for the room.
-   * @throws {@link ErrorInfo} if a room with the same name but different options already exists.
-   * @returns Room A promise to a new or existing Room object.
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options
+   * const room = await chatClient.rooms.get('general-chat');
+   *
+   * // Always release when done
+   * await chatClient.rooms.release('general-chat');
+   *
+   * // Handle errors when options conflict
+   * try {
+   *   // This will throw if 'game-room' already exists with different options
+   *   const room1 = await chatClient.rooms.get('game-room', {
+   *     typing: { heartbeatThrottleMs: 1000 }
+   *   });
+   *
+   *   const room2 = await chatClient.rooms.get('game-room', {
+   *     typing: { heartbeatThrottleMs: 2000 } // Different options!
+   *   });
+   * } catch (error) {
+   *   if (error.code === 40000) {
+   *     console.error('Room already exists with different options');
+   *   }
+   * }
+   * ```
    */
   get(name: string, options?: RoomOptions): Promise<Room>;
 
   /**
-   * Release the Room object if it exists. This method only releases the reference
-   * to the Room object from the Rooms instance and detaches the room from Ably. It does not unsubscribe to any
-   * events.
+   * Releases a room, freeing its resources and detaching it from Ably.
    *
-   * After calling this function, the room object is no-longer usable. If you wish to get the room object again,
-   * you must call {@link Rooms.get}.
+   * After release, the room object is no longer usable. To use the room again,
+   * call `get()` to create a new instance. This method only releases the reference
+   * and detaches from Ably; it doesn't unsubscribe existing event listeners.
    *
-   * Calling this function will abort any in-progress `get` calls for the same room.
-   * @param name The unique identifier of the room.
+   * **Note**:
+   * - Calling release aborts any in-progress `get` calls for the same room.
+   * - The room object becomes unusable after release.
+   * @param name - The unique identifier of the room to release
+   * @returns Promise that resolves when the room is fully released
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options and attach to it
+   * const room = await chatClient.rooms.get('temporary-chat');
+   * await room.attach();
+   *
+   * // Do chat operations...
+   *
+   * // When done, release the room
+   * await chatClient.rooms.release('temporary-chat');
+   *
+   * // The room object is now unusable
+   * try {
+   *   await room.messages.send({ text: 'This will fail' });
+   * } catch (error) {
+   *   console.error('Room has been released');
+   * }
+   *
+   * // To use the room again, get a new instance
+   * const newRoom = await chatClient.rooms.get('temporary-chat');
+   *
+   * // Handle release of non-existent rooms (no-op)
+   * await chatClient.rooms.release('non-existent-room'); // Safe, does nothing
+   * ```
    */
   release(name: string): Promise<void>;
 

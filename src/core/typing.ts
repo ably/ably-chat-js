@@ -18,53 +18,161 @@ import EventEmitter, { wrap } from './utils/event-emitter.js';
  */
 export interface Typing {
   /**
-   * Subscribe a given listener to all typing events from users in the chat room.
-   * @param listener A listener to be called when the typing state of a user in the room changes.
-   * @returns A response object that allows you to control the subscription to typing events.
+   * Subscribes to typing events from users in the chat room.
+   *
+   * Receives updates whenever a user starts or stops typing, providing real-time
+   * feedback about who is currently composing messages. The subscription emits
+   * events containing the current set of typing users and details about what changed.
+   *
+   * **Note**: The room must be attached to receive typing events.
+   * @param listener - Callback invoked when the typing state changes
+   * @returns Subscription object with an unsubscribe method
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, TypingSetEvent } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options
+   * const room = await chatClient.rooms.get('team-chat');
+   *
+   * // Subscribe to typing events
+   * const subscription = room.typing.subscribe((event: TypingSetEvent) => {
+   *   const { currentlyTyping, change } = event;
+   *
+   *   // Display who is currently typing
+   *   if (currentlyTyping.size === 0) {
+   *     hideTypingIndicator();
+   *   } else if (currentlyTyping.size === 1) {
+   *     const [typingUser] = Array.from(currentlyTyping);
+   *     showTypingIndicator(`${typingUser} is typing...`);
+   *   } else if (currentlyTyping.size === 2) {
+   *     const users = Array.from(currentlyTyping);
+   *     showTypingIndicator(`${users[0]} and ${users[1]} are typing...`);
+   *   } else {
+   *     showTypingIndicator(`${currentlyTyping.size} people are typing...`);
+   *   }
+   * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
+   * // Later, unsubscribe when done
+   * subscription.unsubscribe();
+   * ```
    */
   subscribe(listener: TypingListener): Subscription;
 
   /**
-   * Get the current typers, a set of clientIds.
-   * @returns The set of clientIds that are currently typing.
+   * Gets the current set of users who are typing.
+   *
+   * Returns a Set containing the client IDs of all users currently typing in the room.
+   * This provides a snapshot of the typing state at the time of the call.
+   * @returns Set of client IDs currently typing
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options
+   * const room = await chatClient.rooms.get('support-chat');
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
+   * // Fetch the current cached set of typing users
+   * const typingUsers = room.typing.current;
+   *
+   * console.log(`${typingUsers.size} users are typing`);
+   *
+   * if (typingUsers.has('agent-001')) {
+   *   console.log('Support agent is typing a response...');
+   * }
+   * ```
    */
   get current(): Set<string>;
 
   /**
-   * This will send a `typing.started` event to the server.
-   * Events are throttled according to the `heartbeatThrottleMs` room option.
-   * If an event has been sent within the interval, this operation is no-op.
+   * Sends a typing started event to notify other users that the current user is typing.
    *
+   * Events are throttled according to the `heartbeatThrottleMs` room option to prevent
+   * excessive network traffic. If called within the throttle interval, the operation
+   * becomes a no-op. Multiple rapid calls are serialized to maintain consistency.
    *
-   * Calls to `keystroke()` and `stop()` are serialized and will always resolve in the correct order.
-   * - For example, if multiple `keystroke()` calls are made in quick succession before the first `keystroke()` call has
-   * sent a `typing.started` event to the server, followed by one `stop()` call, the `stop()` call will execute
-   * as soon as the first `keystroke()` call completes.
-   * All intermediate `keystroke()` calls will be treated as no-ops.
-   * - The most recent operation (`keystroke()` or `stop()`) will always determine the final state, ensuring operations
-   * resolve to a consistent and correct state.
-   * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
-   * @throws If the `Connection` is not in the `Connected` state.
-   * @throws If the operation fails to send the event to the server.
-   * @throws If there is a problem acquiring the mutex that controls serialization.
+   * **Note**:
+   * - The connection must be in the `connected` state.
+   * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
+   * - The most recent operation always determines the final typing state.
+   * - The room must be attached to send typing events.
+   * @returns Promise that resolves when the typing event has been sent, or rejects with:
+   * - {@link ErrorCode.Disconnected} if not connected
+   * - {@link ErrorCode.OperationSerializationFailed} if mutex acquisition fails
+   * - {@link Ably.ErrorInfo} if the operation fails to send the event
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options and attach to it
+   * const room = await chatClient.rooms.get('project-discussion');
+   * await room.attach();
+   *
+   * try {
+   *     await room.typing.keystroke();
+   * } catch (error) {
+   *     console.error('Typing indicator error:', error);
+   *   }
+   * ```
    */
   keystroke(): Promise<void>;
 
   /**
-   * This will send a `typing.stopped` event to the server.
-   * If the user was not currently typing, this operation is no-op.
+   * Sends a typing stopped event to notify other users that the current user has stopped typing.
    *
-   * Calls to `keystroke()` and `stop()` are serialized and will always resolve in the correct order.
-   * - For example, if multiple `keystroke()` calls are made in quick succession before the first `keystroke()` call has
-   * sent a `typing.started` event to the server, followed by one `stop()` call, the `stop()` call will execute
-   * as soon as the first `keystroke()` call completes.
-   * All intermediate `keystroke()` calls will be treated as no-ops.
-   * - The most recent operation (`keystroke()` or `stop()`) will always determine the final state, ensuring operations
-   * resolve to a consistent and correct state.
-   * @returns A promise which resolves upon success of the operation and rejects with an {@link Ably.ErrorInfo} object upon its failure.
-   * @throws If the `Connection` is not in the `Connected` state.
-   * @throws If the operation fails to send the event to the server.
-   * @throws If there is a problem acquiring the mutex that controls serialization.
+   * If the user is not currently typing, this operation is a no-op. Multiple rapid calls
+   * are serialized to maintain consistency, with the most recent operation determining
+   * the final state.
+   *
+   * **Note**:
+   * - The connection must be in the `connected` state.
+   * - Calls to `keystroke()` and `stop()` are serialized and resolve in order.
+   * - The room must be attached to send typing events.
+   * @returns Promise that resolves when the stop event has been sent, or rejects with:
+   * - {@link ErrorCode.Disconnected} if not connected
+   * - {@link ErrorCode.OperationSerializationFailed} if mutex acquisition fails
+   * - {@link Ably.ErrorInfo} if the operation fails to send the event
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Get a room with default options and attach to it
+   * const room = await chatClient.rooms.get('customer-support');
+   * await room.attach();
+   *
+   * // Start typing in the room
+   * try {
+   *  await room.typing.keystroke();
+   *  } catch (error) {
+   *  console.error('Typing indicator error:', error);
+   *  }
+   *
+   *  // User sends a message, or deletes their draft, etc.
+   *
+   * // Stop typing in the room
+   * try {
+   * await room.typing.stop();
+   * } catch (error) {
+   * console.error('Failed to stop typing:', error);
+   * }
+   * ```
    */
   stop(): Promise<void>;
 }
