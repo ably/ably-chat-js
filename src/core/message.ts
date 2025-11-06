@@ -129,10 +129,10 @@ export interface Message {
   /**
    * Creates a new message instance with the event applied.
    *
-   * NOTE: This method will not replace the message reactions if the event is of type `Message`.
+   * **NOTE**: This method will not replace the message reactions if the event is of type `Message`.
    * @param event The event to be applied to the returned message.
-   * @throws {@link ErrorInfo} if the event is for a different message.
-   * @throws {@link ErrorInfo} if the event is a {@link ChatMessageEventType.Created}.
+   * @throws An {@link Ably.ErrorInfo} if the event is for a different message.
+   * @throws An {@link Ably.ErrorInfo} if the event is a {@link ChatMessageEventType.Created}.
    * @returns A new message instance with the event applied. If the event is a no-op, such
    *    as an event for an old version, the same message is returned (not a copy).
    */

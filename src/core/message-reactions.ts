@@ -42,12 +42,12 @@ export type MessageRawReactionListener = (event: MessageReactionRawEvent) => voi
  */
 export interface SendMessageReactionParams {
   /**
-   * The reaction name to send; ie. the emoji.
+   * The reaction name to send; (e.g., emoji like "👍", "❤️", or custom names)
    */
   name: string;
 
   /**
-   * The type of reaction, must be one of {@link MessageReactionType}.
+   * The optional type of reaction, must be one of {@link MessageReactionType} if set.
    * If not set, the default type will be used which is configured in the {@link MessagesOptions.defaultMessageReactionType} of the room.
    */
   type?: MessageReactionType;
@@ -82,63 +82,256 @@ export interface DeleteMessageReactionParams {
  */
 export interface MessageReactions {
   /**
-   * Send a message reaction.
-   * @param messageSerial The serial of the message to react to.
-   * @param params Describe the reaction to send.
-   * @returns A promise that resolves when the reaction is sent.
+   * Sends a reaction to a specific chat message.
+   *
+   * **Note**:
+   * - The behavior depends on the reaction type configured for the room.
+   * - This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
+   * @param messageSerial - The unique identifier of the message to react to.
+   * @param params - The reaction parameters
+   * @returns Promise that resolves when the reaction has been sent, or rejects with:
+   * - {@link Ably.ErrorInfo} with code 40400 if the message does not exist.
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, MessageReactionType } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * const room = await chatClient.rooms.get('sports-chat');
+   *
+   * const messageSerial = '01726585978590-001@abcdefghij:001';
+   *
+   * // Send a simple reaction to a message
+   * try {
+   *   await room.messages.reactions.send(messageSerial, {
+   *     name: '👍'
+   *   });
+   *   console.log('Reaction sent successfully');
+   * } catch (error) {
+   *   console.error('Failed to send reaction:', error);
+   * }
+   *
+   * // Send a distinct type reaction (can react with multiple different emojis)
+   * await room.messages.reactions.send(messageSerial, {
+   *   name: '❤️',
+   *   type: MessageReactionType.Distinct
+   * });
+   *
+   * // Send a multiple type reaction with count (for vote-style reactions)
+   * await room.messages.reactions.send(messageSerial, {
+   *   name: 'option-a',
+   *   type: MessageReactionType.Multiple,
+   *   count: 3  // User votes 3 times for option-a
+   * });
+   * ```
    */
   send(messageSerial: string, params: SendMessageReactionParams): Promise<void>;
 
   /**
-   * Delete a message reaction
-   * @param messageSerial The serial of the message to remove the reaction from.
-   * @param params The type of reaction annotation and the specific reaction to remove. The reaction to remove is required for all types except {@link MessageReactionType.Unique}.
-   * @returns A promise that resolves when the reaction is deleted.
+   * Deletes a previously sent reaction from a chat message.
+   *
+   * The deletion behavior depends on the reaction type:
+   * - **Unique**: Removes the client's single reaction (name not required)
+   * - **Distinct**: Removes a specific reaction by name
+   * - **Multiple**: Removes all instances of a reaction by name
+   *
+   * **Note**: This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
+   * @param messageSerial - The unique identifier of the message to remove the reaction from
+   * @param params - Optional deletion parameters
+   * @returns Promise that resolves when the reaction has been deleted, or rejects with:
+   * - {@link Ably.ErrorInfo} with code 40400 if the message does not exist.
+   * - {@link ErrorCode.InvalidArgument} if trying to delete a non-Unique reaction without a name.
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, MessageReactionType } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * const room = await chatClient.rooms.get('team-chat');
+   *
+   * const messageSerial = '01726585978590-001@abcdefghij:001';
+   *
+   * // Delete a distinct reaction (specific emoji)
+   * try {
+   *   await room.messages.reactions.delete(messageSerial, {
+   *     name: '👍',
+   *     type: MessageReactionType.Distinct
+   *   });
+   *   console.log('Thumbs up reaction removed');
+   * } catch (error) {
+   *   console.error('Failed to delete reaction:', error);
+   * }
+   *
+   * // Delete a unique reaction (only one per user, name not needed)
+   * await room.messages.reactions.delete(messageSerial, {
+   *   type: MessageReactionType.Unique
+   * });
+   *
+   * // Delete all instances of a multiple reaction
+   * await room.messages.reactions.delete(messageSerial, {
+   *   name: 'option-b',
+   *   type: MessageReactionType.Multiple
+   * });
+   * ```
    */
   delete(messageSerial: string, params?: DeleteMessageReactionParams): Promise<void>;
 
   /**
-   * Subscribe to message reaction summaries. Use this to keep message reaction
-   * counts up to date efficiently in the UI.
-   * @param listener The listener to call when a message reaction summary is received.
-   * @returns A subscription object that should be used to unsubscribe.
+   * Subscribes to chat message reaction summary events.
+   *
+   * Summary events provide aggregated reaction counts. Each summary event contains counts and
+   * client lists for all reaction types on a message.
+   *
+   * **Note**:
+   * - The room must be attached to receive reaction events.
+   * - When there are many reacting clients, the client list may be clipped. Check the `clipped` flag and use {@link clientReactions} for complete client information when needed.
+   * - When the rate of reactions is very high, multiple summaries may be rolled up into a single summary event, meaning the delta between sequential summaries is not guaranteed to be a single reaction change.
+   * @param listener - Callback invoked when reaction summaries are updated
+   * @returns Subscription object with an unsubscribe method
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, MessageReactionSummaryEvent } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * const room = await chatClient.rooms.get('product-reviews');
+   *
+   * // Subscribe to reaction summaries
+   * const subscription = room.messages.reactions.subscribe((event: MessageReactionSummaryEvent) => {
+   *   const { reactions } = event;
+   *   // Handle distinct reactions
+   *   if (reactions.distinct) {
+   *     Object.entries(reactions.distinct).forEach(([reaction, data]) => {
+   *       console.log(`${reaction}: ${data.total} reactions from ${data.clientIds.length} users`);
+   *     });
+   *   }
+   *   // Handle unique reactions
+   *   if (reactions.unique) {
+   *     Object.entries(reactions.unique).forEach(([reaction, data]) => {
+   *       console.log(`${reaction}: ${data.total} users reacted`);
+   *     });
+   *   }
+   *   // Handle multiple reactions
+   *   if (reactions.multiple) {
+   *     Object.entries(reactions.multiple).forEach(([reaction, data]) => {
+   *       console.log(`${reaction}: ${data.total} total votes`);
+   *     });
+   *   }
+   * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
+   * // Later, unsubscribe when done
+   * subscription.unsubscribe();
+   * ```
    */
   subscribe(listener: MessageReactionListener): Subscription;
 
   /**
-   * Subscribe to individual reaction events.
+   * Subscribes to individual chat message reaction events.
    *
-   * If you only need to keep track of reaction counts and clients, use
-   * {@link subscribe} instead.
-   * @param listener The listener to call when a message reaction event is received.
-   * @returns A subscription object that should be used to unsubscribe.
+   * Raw reaction events provide the individual updates for each reaction
+   * added or removed. This is most useful for analytics, but is not recommended
+   * for driving UI due to the high volume of events.
+   *
+   * **Note**: Requires {@link MessagesOptions.rawMessageReactions} to be enabled in room options.
+   * @param listener - Callback invoked for each individual reaction event
+   * @returns Subscription object with an unsubscribe method
+   * @throws An {@link Ably.ErrorInfo} with {@link ErrorCode.FeatureNotEnabledInRoom} if raw message reactions are not enabled
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, MessageReactionRawEvent, MessageReactionEventType } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Enable raw reactions in room options
+   * const room = await chatClient.rooms.get('live-stream', {
+   *   messages: {
+   *     rawMessageReactions: true
+   *   }
+   * });
+   *
+   * // Subscribe to individual reaction events
+   * const subscription = room.messages.reactions.subscribeRaw((event: MessageReactionRawEvent) => {
+   *   const { type, reaction, timestamp } = event;
+   *
+   *   switch (type) {
+   *     case MessageReactionEventType.Create:
+   *       console.log(`${reaction.clientId} added ${reaction.name} to message ${reaction.messageSerial} at ${timestamp}`);
+   *       break;
+   *
+   *     case MessageReactionEventType.Delete:
+   *       console.log(`${reaction.clientId} removed ${reaction.name} from message ${reaction.messageSerial} at ${timestamp}`);
+   *       break;
+   *   }
+   *
+   *   // Handle multiple type reactions with counts
+   *   if (reaction.count !== undefined) {
+   *     console.log(`Reaction has count: ${reaction.count}`);
+   *   }
+   * });
+   *
+   * // Attach to the room to start receiving events
+   * await room.attach();
+   *
+   * // Later, unsubscribe when done
+   * subscription.unsubscribe();
+   * ```
    */
   subscribeRaw(listener: MessageRawReactionListener): Subscription;
 
   /**
-   * Get the reaction count for a message for a particular client.
-   * @param messageSerial The serial of the message to remove the reaction from.
-   * @param clientId The client to fetch the reaction summary for (leave unset for current client).
-   * @returns A clipped reaction summary containing only the requested clientId.
+   * Retrieves reaction information for a specific client on a message.
+   *
+   * Use this method when reaction summaries are clipped (too many reacting clients)
+   * and you need to check if a specific client has reacted. This is particularly
+   * useful for determining if the current user has reacted when they're not in
+   * the summary's client list.
+   * **Note**: This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
+   * @param messageSerial - The unique identifier of the message
+   * @param clientId - The client ID to check (defaults to current client)
+   * @returns Promise - That resolves to reaction data for the specified client.
+   * The promise **rejects** with:
+   * - {@link Ably.ErrorInfo} with code 40400 if the message does not exist.
    * @example
    * ```typescript
-   * // Subscribe to reaction summaries and check for specific client reactions
-   * room.messages.reactions.subscribe(async (event) => {
-   *   // For brevity of example, we check unique 👍 (normally iterate for all relevant reactions)
-   *   const uniqueLikes = event.summary.unique['👍'];
-   *   if (uniqueLikes && uniqueLikes.clipped && !uniqueLikes.clientIds.includes(myClientId)) {
-   *     // summary is clipped and doesn't include myClientId, so we need to fetch a clientSummary
-   *     const clientReactions = await room.messages.reactions.clientReactions(
-   *       event.messageSerial,
-   *       myClientId
-   *     );
-   *     if (clientReactions.unique && clientReactions.unique['👍']) {
-   *       // client has reacted with 👍
-   *       event.reactions.unique['👍'].clientIds.push(myClientId);
-   *     }
+   * import * as Ably from 'ably';
+   * import { ChatClient } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   * const room = await chatClient.rooms.get('large-event');
+   *
+   * const messageSerial = '01726585978590-001@abcdefghij:001';
+   *
+   * try {
+   *   // Get reactions for the current client
+   *   const myReactions = await room.messages.reactions.clientReactions(messageSerial);
+   *   if (myReactions.unique?.['👍']) {
+   *     console.log('I have reacted with 👍');
    *   }
-   *   // from here, process the summary as usual
-   * });
+   *   if (myReactions.distinct?.['❤️']) {
+   *     console.log('I have reacted with ❤️');
+   *   }
+   *   if (myReactions.multiple?.['vote-option-a'] && chatClient.clientId) {
+   *     console.log(`I voted for option A: ${myReactions.multiple['vote-option-a'].clientIds[chatClient.clientId]} times`);
+   *   }
+   *   // Check reactions for a specific client
+   *   const specificClientReactions = await room.messages.reactions.clientReactions(
+   *     messageSerial,
+   *     'specific-client-id'
+   *   );
+   *   console.log('Specific client reactions:', specificClientReactions);
+   * } catch (error) {
+   *   console.error('Failed to get client reactions:', error);
+   * }
    * ```
    */
   clientReactions(messageSerial: string, clientId?: string): Promise<Message['reactions']>;

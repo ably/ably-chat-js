@@ -103,6 +103,7 @@ export default [
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
       '@typescript-eslint/promise-function-async': 'error',
       'arrow-body-style': ['error', 'as-needed'],
+      'jsdoc/require-throws-type': 'off',
 
       // Off, as we currently support Chrome 109
       'unicorn/no-array-sort': 'off',

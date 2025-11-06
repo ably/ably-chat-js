@@ -91,18 +91,95 @@ export type ConnectionStatusListener = (change: ConnectionStatusChange) => void;
 export interface Connection {
   /**
    * The current status of the connection.
+   * @returns The current ConnectionStatus value
+   * @example
+   * ```typescript
+   * import { ChatClient, ConnectionStatus } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Check connection status
+   * if (chatClient.connection.status === ConnectionStatus.Connected) {
+   *   console.log('Connected to Ably');
+   * } else if (chatClient.connection.status === ConnectionStatus.Failed) {
+   *   console.error('Connection failed');
+   * }
+   *
+   * // Use status for conditional logic
+   * function canAttachToRoom(): boolean {
+   *   return chatClient.connection.status === ConnectionStatus.Connected;
+   * }
+   * ```
    */
   get status(): ConnectionStatus;
 
   /**
-   * The current error, if any, that caused the connection to enter the current status.
+   * The error that caused the connection to enter its current status, if any.
+   * @returns ErrorInfo if an error caused the current status, undefined otherwise
+   * @example
+   * ```typescript
+   * import { ChatClient, ConnectionStatus } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Check for connection errors
+   * if (chatClient.connection.error) {
+   *   console.error('Connection error:', chatClient.connection.error.message);
+   *   console.error('Error code:', chatClient.connection.error.code);
+   * }
+   * // Monitor for errors during status changes
+   * chatClient.connection.onStatusChange((change) => {
+   *   if (change.error) {
+   *     reportErrorToMonitoring(change.error);
+   *   }
+   * });
+   * ```
    */
   get error(): Ably.ErrorInfo | undefined;
 
   /**
-   * Registers a listener that will be called whenever the connection status changes.
-   * @param listener The function to call when the status changes.
-   * @returns An object that can be used to unregister the listener.
+   * Registers a listener to be notified of connection status changes.
+   *
+   * Status changes indicate the connection lifecycle, including connecting,
+   * connected, disconnected, suspended, and failed states. Use this to monitor
+   * connection health and handle network issues.
+   * @param listener - Callback invoked when the connection status changes
+   * @returns Subscription object with an off method to unregister
+   * @example
+   * ```typescript
+   * import * as Ably from 'ably';
+   * import { ChatClient, ConnectionStatus } from '@ably/chat';
+   *
+   * const chatClient: ChatClient; // existing ChatClient instance
+   *
+   * // Monitor connection status changes
+   * const { off } = chatClient.connection.onStatusChange((change) => {
+   *   console.log(`Connection: ${change.previous} -> ${change.current}`);
+   *
+   *   // Handle different connection states..
+   *   switch (change.current) {
+   *     case ConnectionStatus.Connected:
+   *       console.log('✅ Connected to Ably');
+   *       enableChatFeatures();
+   *       hideConnectionWarning();
+   *       break;
+   *
+   *     case ConnectionStatus.Failed:
+   *       console.error('❌ Connection failed permanently');
+   *       if (change.error) {
+   *         console.error('Failure reason:', change.error.message);
+   *         showErrorMessage(`Connection failed: ${change.error.message}`);
+   *       }
+   *       requireManualReconnection();
+   *       break;
+   *
+   *     // Other states: Connecting, Disconnected, Suspended
+   *   }
+   * });
+   *
+   * // Clean up when done
+   * off();
+   * ```
    */
   onStatusChange(listener: ConnectionStatusListener): StatusSubscription;
 }

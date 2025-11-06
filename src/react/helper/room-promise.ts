@@ -16,16 +16,13 @@ export interface RoomPromise {
    * Multiple calls are no-op.
    *
    * This should be used in conjunction with React's useEffect hook to ensure that resources are cleaned up.
-   *
-   * Example usage:
-   *
+   * @returns A function that should be called when the component is unmounted.
+   * @example
    * ```ts
    * useEffect(() => {
    *   const roomPromise: RoomPromise;
    *   return roomPromise.unmount();
    * }, []);
-   *
-   * @returns A function that should be called when the component is unmounted.
    */
   unmount: () => () => void;
 }

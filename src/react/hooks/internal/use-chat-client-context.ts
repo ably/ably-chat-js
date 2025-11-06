@@ -9,7 +9,7 @@ import { DEFAULT_CHAT_CLIENT_ID } from '../../providers/chat-client-provider.js'
 /**
  * Hook to access the chat client provided by the current {@link ChatClientProvider}.
  * This hook must be used within a {@link ChatClientProvider}.
- * @throws {ErrorInfo} When the hook is not used within a {@link ChatClientProvider}.
+ * @throws An {@link Ably.ErrorInfo} When the hook is not used within a {@link ChatClientProvider}.
  * @returns The {@link ChatClient} instance provided by the context.
  */
 export const useChatClientContext = (): ChatClient => {

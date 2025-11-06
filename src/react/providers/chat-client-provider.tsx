@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import * as Ably from 'ably';
 import * as React from 'react';
 import { ReactNode, useRef } from 'react';
 
@@ -34,30 +36,43 @@ export interface ChatClientProviderProps {
  * Returns a React component that provides a {@link ChatClient} in a React context to the component subtree.
  * Updates the context value when the client prop changes.
  *
- * **Important**: The `client` should be memoized to prevent unnecessary context updates. Ideally, the {@link ChatClient}
- * and its underlying Ably.Realtime client should be created outside of React components to avoid duplicate connections.
+ * The provider manages room reference counting internally and will only detach rooms when no more references exist.
+ *
+ * **Important**: The `client` prop should be memoized to prevent unnecessary context updates.
+ * Ideally, create the {@link ChatClient} and its underlying {@link Ably.Realtime} client outside
+ * of React components to avoid duplicate connections and ensure stable references.
+ *
+ * **Note**: All chat-related hooks must be used within this provider's component tree.
+ * @param props - The props for the {@link ChatClientProvider} component
+ * @param props.children - The child components to be rendered within this provider.
+ * @param props.client - An instance of the {@link ChatClient} to be used in the provider
+ * @returns A React element that provides the chat client context to its children
  * @example
  * ```tsx
  * import * as Ably from 'ably';
+ * import React, { useMemo } from 'react';
  * import { ChatClient } from '@ably/chat';
- * import { ChatClientProvider } from '@ably/chat/react';
+ * import { ChatClientProvider, useChatClient } from '@ably/chat/react';
  *
- * // Create client outside React to avoid recreating on re-renders
- * const realtime = new Ably.Realtime({ key: 'your-api-key', clientId: 'user-123' });
- * const chatClient = new ChatClient(realtime);
+ * // Child component that uses chat functionality
+ * const ChatComponent = () => {
+ *   const { clientId } = useChatClient();
+ *   return <div>Connected as: {clientId}</div>;
+ * };
  *
+ * const chatClient: ChatClient; // existing ChatClient instance
+ *
+ * // Main app component with provider
  * const App = () => {
  *   return (
  *     <ChatClientProvider client={chatClient}>
- *       <MyChatApp />
+ *         <ChatComponent />
  *     </ChatClientProvider>
  *   );
  * };
+ *
+ * export default App;
  * ```
- * @param props - The props for the {@link ChatClientProvider} component.
- * @param props.children The child components to render.
- * @param props.client The chat client instance to provide in context.
- * @returns A React element that provides the chat client context to its children.
  */
 export const ChatClientProvider = ({ children, client }: ChatClientProviderProps) => {
   const context = React.useContext(ChatClientContext);
