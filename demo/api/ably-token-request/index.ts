@@ -37,7 +37,7 @@ Please see README.md for more details on configuring your Ably API Key.`);
   // Create JWT token with Ably claims
   const currentTime = Math.floor(Date.now() / 1000);
   const claims = {
-    'x-ably-capability': JSON.stringify({ '[chat]*': ['*'] }),
+    'x-ably-capability': JSON.stringify({ '*': ['*'] }),
     'x-ably-clientId': clientId,
     iat: currentTime,
     exp: currentTime + 3600, // Token valid for 1 hour
