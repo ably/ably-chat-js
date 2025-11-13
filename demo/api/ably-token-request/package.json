@@ -8,7 +8,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@netlify/functions": "^4.2.7",
+    "@netlify/functions": "^5.1.0",
     "@types/node": "^24.7.0",
     "ably": "^2.14.0",
     "dotenv": "^17.2.3",
