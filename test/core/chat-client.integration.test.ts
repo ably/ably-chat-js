@@ -1,5 +1,5 @@
 import * as Ably from 'ably';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat-client.ts';
 import { ConnectionStatus } from '../../src/core/connection.ts';
@@ -29,7 +29,7 @@ const waitForConnectionStatus = async (chat: ChatClient, state: ConnectionStatus
   });
 
 describe('Chat', () => {
-  let connectSpy: ReturnType<typeof vi.spyOn>;
+  let connectSpy: Mock;
 
   beforeEach(() => {
     const chat = newChatClient(testClientOptions());

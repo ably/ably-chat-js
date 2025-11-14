@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 
 import { on, once, subscribe } from '../../src/core/realtime-subscriptions.ts';
 import { waitForUnsubscribe } from '../helper/realtime-subscriptions.ts';
@@ -21,12 +21,12 @@ interface MockSubscribable<T> {
 
 interface TestContext {
   mockEmitter: MockEmitter<string>;
-  mockCallback: ReturnType<typeof vi.fn>;
+  mockCallback: Mock;
 }
 
 interface SubscribableTestContext {
   mockSubscribable: MockSubscribable<string>;
-  mockCallback: ReturnType<typeof vi.fn>;
+  mockCallback: Mock;
 }
 
 vi.mock('ably');

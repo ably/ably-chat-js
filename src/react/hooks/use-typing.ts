@@ -195,47 +195,46 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   });
 
   const context = useRoomContext('useTyping');
+  const [prevContext, setPrevContext] = useState(context);
+  const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
+  if (prevContext !== context) {
+    setPrevContext(context);
+    setCurrentlyTyping(new Set<string>());
+  }
   const { status: roomStatus, error: roomError } = useRoomStatus(params);
   const logger = useRoomLogger();
   logger.trace('useTyping();');
-
-  const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
 
   // Create a stable reference for the listeners
   const listenerRef = useEventListenerRef(params?.listener);
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
-  useEffect(() => {
-    // Start with a clean slate - empty set
-    setCurrentlyTyping((prev) => {
-      // keep reference constant if it's already empty
-      if (prev.size === 0) return prev;
-      return new Set<string>();
-    });
+  useEffect(
+    () =>
+      wrapRoomPromise(
+        context.room,
+        (room) => {
+          logger.debug('useTyping(); subscribing to typing events');
+          const { unsubscribe } = room.typing.subscribe((event) => {
+            setCurrentlyTyping(event.currentlyTyping);
+          });
 
-    return wrapRoomPromise(
-      context.room,
-      (room) => {
-        logger.debug('useTyping(); subscribing to typing events');
-        const { unsubscribe } = room.typing.subscribe((event) => {
-          setCurrentlyTyping(event.currentlyTyping);
-        });
+          // If we're not attached, we can't call typing.current() right now
+          if (room.status === RoomStatus.Attached) {
+            const typing = room.typing.current;
+            logger.debug('useTyping(); room attached, getting initial typers', { typing });
+            setCurrentlyTyping(typing);
+          }
 
-        // If we're not attached, we can't call typing.current() right now
-        if (room.status === RoomStatus.Attached) {
-          const typing = room.typing.current;
-          logger.debug('useTyping(); room attached, getting initial typers', { typing });
-          setCurrentlyTyping(typing);
-        }
-
-        return () => {
-          logger.debug('useTyping(); unsubscribing from typing events');
-          unsubscribe();
-        };
-      },
-      logger,
-    ).unmount();
-  }, [context, logger]);
+          return () => {
+            logger.debug('useTyping(); unsubscribing from typing events');
+            unsubscribe();
+          };
+        },
+        logger,
+      ).unmount(),
+    [context, logger],
+  );
 
   // if provided, subscribes the user-provided onDiscontinuity listener
   useEffect(() => {

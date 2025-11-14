@@ -255,6 +255,7 @@ export const usePresenceListener = (params?: UsePresenceListenerParams): UsePres
               }, waitBeforeRetry);
             });
 
+          // eslint-disable-next-line unicorn/consistent-function-scoping
           return () => {
             // No-op
           };
