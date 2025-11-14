@@ -2,6 +2,12 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [1.1.1](https://github.com/ably/ably-chat-js/tree/1.1.1) (2025-11-14)
+
+### Changes
+
+- **TypeDocs**: Expanded TypeDoc coverage to include example usage.
+
 ## [1.1.0](https://github.com/ably/ably-chat-js/tree/1.1.0) (2025-10-30)
 
 ### Bug Fixes
