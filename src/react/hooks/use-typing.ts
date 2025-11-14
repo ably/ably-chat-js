@@ -195,25 +195,21 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   });
 
   const context = useRoomContext('useTyping');
+  const [prevContext, setPrevContext] = useState(context);
+  const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
+  if (prevContext !== context) {
+    setPrevContext(context);
+    setCurrentlyTyping(new Set<string>());
+  }
   const { status: roomStatus, error: roomError } = useRoomStatus(params);
   const logger = useRoomLogger();
   logger.trace('useTyping();');
-
-  const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
 
   // Create a stable reference for the listeners
   const listenerRef = useEventListenerRef(params?.listener);
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
-  useEffect(() => {
-    // Start with a clean slate - empty set
-    setCurrentlyTyping((prev) => {
-      // keep reference constant if it's already empty
-      if (prev.size === 0) return prev;
-      return new Set<string>();
-    });
-
-    return wrapRoomPromise(
+  useEffect(() => wrapRoomPromise(
       context.room,
       (room) => {
         logger.debug('useTyping(); subscribing to typing events');
@@ -234,8 +230,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
         };
       },
       logger,
-    ).unmount();
-  }, [context, logger]);
+    ).unmount(), [context, logger]);
 
   // if provided, subscribes the user-provided onDiscontinuity listener
   useEffect(() => {
