@@ -209,28 +209,32 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   const listenerRef = useEventListenerRef(params?.listener);
   const onDiscontinuityRef = useEventListenerRef(params?.onDiscontinuity);
 
-  useEffect(() => wrapRoomPromise(
-      context.room,
-      (room) => {
-        logger.debug('useTyping(); subscribing to typing events');
-        const { unsubscribe } = room.typing.subscribe((event) => {
-          setCurrentlyTyping(event.currentlyTyping);
-        });
+  useEffect(
+    () =>
+      wrapRoomPromise(
+        context.room,
+        (room) => {
+          logger.debug('useTyping(); subscribing to typing events');
+          const { unsubscribe } = room.typing.subscribe((event) => {
+            setCurrentlyTyping(event.currentlyTyping);
+          });
 
-        // If we're not attached, we can't call typing.current() right now
-        if (room.status === RoomStatus.Attached) {
-          const typing = room.typing.current;
-          logger.debug('useTyping(); room attached, getting initial typers', { typing });
-          setCurrentlyTyping(typing);
-        }
+          // If we're not attached, we can't call typing.current() right now
+          if (room.status === RoomStatus.Attached) {
+            const typing = room.typing.current;
+            logger.debug('useTyping(); room attached, getting initial typers', { typing });
+            setCurrentlyTyping(typing);
+          }
 
-        return () => {
-          logger.debug('useTyping(); unsubscribing from typing events');
-          unsubscribe();
-        };
-      },
-      logger,
-    ).unmount(), [context, logger]);
+          return () => {
+            logger.debug('useTyping(); unsubscribing from typing events');
+            unsubscribe();
+          };
+        },
+        logger,
+      ).unmount(),
+    [context, logger],
+  );
 
   // if provided, subscribes the user-provided onDiscontinuity listener
   useEffect(() => {

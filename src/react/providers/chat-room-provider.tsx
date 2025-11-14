@@ -160,7 +160,11 @@ export const ChatRoomProvider = ({ name: roomName, options, children }: ChatRoom
     // Add reference and get the room
     const roomPromise = roomReferenceManager.addReference(roomName, options);
 
-    // Update the context value with the new room promise
+    // Intentional, guarded state update from within an effect.
+    // This is safe because we:
+    // - use the functional updater form
+    // - bail out if the identity (client, roomName, options) hasn't changed.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValue((prev: ChatRoomContextType) => {
       // If the room id and options haven't changed, then we don't need to do anything
       if (prev.client === client && prev.roomName === roomName && prev.options === options) {

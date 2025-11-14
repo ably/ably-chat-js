@@ -105,6 +105,7 @@ class DefaultRoomPromise implements RoomPromise {
       };
     }
 
+    // eslint-disable-next-line unicorn/consistent-function-scoping
     return () => {
       this._logger.debug('DefaultRoomPromise(); unmount');
       this._unmounted = true;
