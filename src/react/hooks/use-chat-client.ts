@@ -67,15 +67,21 @@ export const useChatClient = (): UseChatClientResponse => {
     return client.clientId;
   });
 
+  // Track the last seen clientId to safely sync in render
+  if (client.clientId !== clientId) {
+    logger.debug('useChatClient(); detected clientId change in render', {
+      previousClientId: clientId,
+      nextClientId: client.clientId,
+    });
+    setClientId(client.clientId);
+  }
+
   // Right now, it's possible to change the clientId being used on then core SDK, but only by disconnecting
   // and then reconnecting. So to ensure our clientId remains up to date, check it every time the SDK connects.
   useEffect(() => {
     logger.debug('useChatClient(); subscribing to connection status changes', {
       clientId: client.clientId,
     });
-
-    // Set the clientId again in case it's changed between original state and effects
-    setClientId(client.clientId);
 
     const { off } = client.connection.onStatusChange((change: ConnectionStatusChange) => {
       if (change.current === ConnectionStatus.Connected) {
