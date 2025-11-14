@@ -83,7 +83,7 @@ export const ChatClientProvider = ({ children, client }: ChatClientProviderProps
     (client as unknown as { addReactAgent(): void }).addReactAgent();
 
     // Create or update the room reference manager
-    if (!roomReferenceManagerRef.current || roomReferenceManagerRef.current.client !== client) {
+    if (roomReferenceManagerRef.current?.client !== client) {
       const clientLogger = (client as unknown as { logger: Logger }).logger;
       roomReferenceManagerRef.current = new RoomReferenceManager(client, clientLogger);
     }
