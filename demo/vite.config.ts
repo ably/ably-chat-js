@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import type { ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { handleTokenRequest } from './server/token-handler';
@@ -9,7 +10,7 @@ import { handleTokenRequest } from './server/token-handler';
 function ablyTokenServerPlugin() {
   return {
     name: 'ably-token-server',
-    configureServer(server: { middlewares: { use: (path: string, handler: typeof handleTokenRequest) => void } }) {
+    configureServer(server: ViteDevServer) {
       server.middlewares.use('/api/ably-token-request', handleTokenRequest);
     },
   };
