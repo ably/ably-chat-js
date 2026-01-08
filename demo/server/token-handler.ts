@@ -3,14 +3,22 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import * as url from 'url';
 
-// Load environment variables from .env file
-dotenv.config();
+// Load environment variables. We do this on demand.
+let mustLoadDotenv = true;
+function loadDotenv() {
+  if (mustLoadDotenv) {
+    mustLoadDotenv = false;
+    dotenv.config();
+  }
+}
 
 /**
  * Handles requests to /api/ably-token-request
  * Generates a JWT token for Ably authentication.
  */
 export function handleTokenRequest(req: IncomingMessage, res: ServerResponse): void {
+  loadDotenv();
+
   const apiKey = process.env.VITE_ABLY_CHAT_API_KEY;
 
   if (!apiKey) {
