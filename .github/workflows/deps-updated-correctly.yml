@@ -5,14 +5,12 @@ on:
     paths:
       - package.json
       - demo/package.json
-      - demo/api/package.json
   push:
     branches:
       - main
     paths:
       - package.json
       - demo/package.json
-      - demo/api/package.json
 
 jobs:
   check-all-package-lock-updated:
@@ -27,6 +25,4 @@ jobs:
       - run: npm install
       - run: git diff --exit-code
       - run: cd demo && npm install
-      - run: git diff --exit-code
-      - run: cd demo/api && npm install
       - run: git diff --exit-code
