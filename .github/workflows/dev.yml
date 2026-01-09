@@ -118,9 +118,6 @@ jobs:
       - name: npm ci (demo)
         run: npm ci
         working-directory: demo
-      - name: npm ci (ably-token-request)
-        run: npm ci
-        working-directory: demo/api/ably-token-request
       - name: 'npm build (demo)'
         run: npm run build
         working-directory: demo

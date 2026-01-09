@@ -39,7 +39,7 @@ export const ConnectionStatusComponent: React.FC = () => {
    *
    * There is no real login here. We just have to specify a clientId in the
    * request that we sent to get a valid token from our function at
-   * demo/api/ably-token-request. This happens when the demo app loads the
+   * demo/server/token-handler.ts. This happens when the demo app loads the
    * first time and periodically to refresh the token (handled by ably-js).
    *
    * See demo/src/main.tsx to see how the clientId is initially set (random
@@ -50,7 +50,7 @@ export const ConnectionStatusComponent: React.FC = () => {
    * In a live app if you need to re-authenticate with another clientId you
    * will need to stop everything including the Ably Pubsub Client and restart
    * with the new clientId. Neither libraries support changing the clientId
-   * witohut reconnecting. Typically changing user is achieved by navigating to
+   * without reconnecting. Typically changing user is achieved by navigating to
    * a login page and back, unless the login page is part of the same single-
    * page app as the chat.
    *

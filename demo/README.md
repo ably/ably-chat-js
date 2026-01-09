@@ -28,8 +28,8 @@ For Ably: if running local realtime, see [`src/main.tsx`](./src/main.tsx).
 
 ## Running
 
-Run `npm run start`, and it will automatically open your browser on port 8888.
+Run `npm run start`.
 
-Use `npm run start-silent` if you'd rather not have your browser open automatically.
+## Server-side token generation
 
-`npm run start` (and the `start-silent` version) will run both the API component for generating tokens and the front-end side. If you'd like to only run the front-end site use `npm run dev`.
+This demo app configures a vite plugin to handle the `/api/ably-token-request` request. The handler is defined in `server/token-handler.ts`.
