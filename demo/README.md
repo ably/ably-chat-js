@@ -28,7 +28,7 @@ For Ably: if running local realtime, see [`src/main.tsx`](./src/main.tsx).
 
 ## Running
 
-Run `npm run start`, and it will automatically open your browser on port 8888.
+Run `npm run start`.
 
 ## Server-side token generation
 
