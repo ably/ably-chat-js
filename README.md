@@ -17,7 +17,13 @@ Everything you need to get started with Ably:
 * [About Ably Chat.](https://ably.com/docs/chat)
 * [Getting started with Ably Chat in JavaScript.](https://ably.com/docs/chat/getting-started/javascript)
 * [Getting started with Ably Chat in React.](https://ably.com/docs/chat/getting-started/react)
+* [Getting started with react UI Kit.](https://ably.com/docs/chat/getting-started/react-ui-kit)
 * [SDK and usage docs in JavaScript.](https://ably.com/docs/chat/setup?lang=javascript)
+* [SDK and usage docs in React.](https://ably.com/docs/chat/setup?lang=react)
+* [SDK and usage docs for React UI kit.](https://ably.com/docs/chat/react-ui-kit/setup)
+* [API documentation (Javascript).](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/modules/chat-js.html)
+* [API documentation (React Hooks).](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/modules/chat-react.html)
+* [Chat Example App.](https://github.com/ably/ably-chat-js/tree/main/demo)
 * Play with the [livestream chat demo.](https://ably-livestream-chat-demo.vercel.app/)
 
 ---
@@ -38,8 +44,118 @@ This SDK supports the following platforms:
 | Android      | Supported via the [Ably Chat Kotlin SDK.](https://github.com/ably/ably-chat-kotlin) |
 | iOS          | Supported via the [Ably Chat Swift SDK.](https://github.com/ably/ably-chat-swift) |
 
-> [!NOTE]
-> The Chat SDK can be installed either from NPM, or included directly from Ably's CDN. Note that you also need to install the core Ably SDK.
+---
+
+## Installation
+
+The Chat SDK is built on top of the Ably Pub/Sub SDK and uses that to establish a connection with Ably.
+
+### JavaScript/React
+
+Install the Pub/Sub SDK and the Chat SDK:
+
+```sh
+npm install ably @ably/chat
+```
+
+---
+
+## Usage
+
+### JavaScript / TypeScript
+
+The following code connects to Ably's chat service, subscribes to a chat room, and sends a message to that room:
+
+```typescript
+import * as Ably from 'ably';
+import { ChatClient, RoomStatus } from '@ably/chat';
+
+// Initialize Ably Realtime client
+const realtimeClient = new Ably.Realtime({
+  key: '<your-ably-api-key>',
+  clientId: 'your-client-id',
+});
+
+// Create a chat client
+const chatClient = new ChatClient(realtimeClient);
+
+// Get a chat room
+const room = await chatClient.rooms.get('my-room');
+
+// Monitor room status
+room.onStatusChange((statusChange) => {
+  switch (statusChange.current) {
+    case RoomStatus.Attached:
+      console.log('Room is attached');
+      break;
+    case RoomStatus.Detached:
+      console.log('Room is detached');
+      break;
+    case RoomStatus.Failed:
+      console.log('Room failed:', statusChange.error);
+      break;
+    default:
+      console.log('Room status:', statusChange.current);
+  }
+});
+
+// Attach to the room
+await room.attach();
+
+// Subscribe to messages
+const subscription = room.messages.subscribe((event) => {
+  console.log('Received message:', event.message.text);
+});
+
+// Send a message
+await room.messages.send({ text: 'Hello, World!' });
+```
+
+### React
+
+For React applications, the SDK provides hooks and providers for seamless integration:
+
+```tsx
+import * as Ably from 'ably';
+import { ChatClient } from '@ably/chat';
+import { ChatClientProvider, ChatRoomProvider, useMessages } from '@ably/chat/react';
+import { AblyProvider } from 'ably/react';
+
+// Initialize clients
+const realtimeClient = new Ably.Realtime({
+  key: '<your-ably-api-key>',
+  clientId: 'your-client-id',
+});
+const chatClient = new ChatClient(realtimeClient);
+
+// Wrap your app with providers
+function App() {
+  return (
+    <AblyProvider client={realtimeClient}>
+      <ChatClientProvider client={chatClient}>
+        <ChatRoomProvider name="my-room">
+          <ChatComponent />
+        </ChatRoomProvider>
+      </ChatClientProvider>
+    </AblyProvider>
+  );
+}
+
+// Use hooks to interact with chat
+function ChatComponent() {
+  const { sendMessage } = useMessages({
+    listener: (event) => {
+      console.log('Received message:', event.message.text);
+    },
+  });
+
+  const handleSend = () => {
+    sendMessage({ text: 'Hello, World!' });
+  };
+
+  return <button onClick={handleSend}>Send Message</button>;
+}
+```
 
 ---
 
