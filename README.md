@@ -17,8 +17,11 @@ Everything you need to get started with Ably:
 * [About Ably Chat.](https://ably.com/docs/chat)
 * [Getting started with Ably Chat in JavaScript.](https://ably.com/docs/chat/getting-started/javascript)
 * [Getting started with Ably Chat in React.](https://ably.com/docs/chat/getting-started/react)
+* [Getting started with react UI Kit.](https://ably.com/docs/chat/getting-started/react-ui-kit)
 * [SDK and usage docs in JavaScript.](https://ably.com/docs/chat/setup?lang=javascript)
-* [API documentation (Javascript).](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/modules/chat-js.html)
+* [SDK and usage docs in React.](https://ably.com/docs/chat/setup?lang=react)
+* [SDK and usage docs for React UI kit.](https://ably.com/docs/chat/react-ui-kit/setup)
+* [API documentation (JavaScript).](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/modules/chat-js.html)
 * [API documentation (React Hooks).](https://sdk.ably.com/builds/ably/ably-chat-js/main/typedoc/modules/chat-react.html)
 * [Chat Example App.](https://github.com/ably/ably-chat-js/tree/main/demo)
 * Play with the [livestream chat demo.](https://ably-livestream-chat-demo.vercel.app/)
@@ -41,8 +44,19 @@ This SDK supports the following platforms:
 | Android      | Supported via the [Ably Chat Kotlin SDK.](https://github.com/ably/ably-chat-kotlin) |
 | iOS          | Supported via the [Ably Chat Swift SDK.](https://github.com/ably/ably-chat-swift) |
 
-> [!NOTE]
-> The Chat SDK can be installed either from NPM, or included directly from Ably's CDN. Note that you also need to install the core Ably SDK.
+---
+
+## Installation
+
+The Chat SDK is built on top of the Ably Pub/Sub SDK and uses that to establish a connection with Ably.
+
+### JavaScript/React
+
+Install the Pub/Sub SDK and the Chat SDK:
+
+```sh
+npm install ably @ably/chat
+```
 
 ---
 
@@ -69,7 +83,7 @@ const chatClient = new ChatClient(realtimeClient);
 const room = await chatClient.rooms.get('my-room');
 
 // Monitor room status
-room.onStatusChange((statusChange) => {
+room.onStatusChange((statusChange: RoomStatusChange) => {
   switch (statusChange.current) {
     case RoomStatus.Attached:
       console.log('Room is attached');
@@ -85,13 +99,13 @@ room.onStatusChange((statusChange) => {
   }
 });
 
-// Attach to the room
-await room.attach();
-
 // Subscribe to messages
 const subscription = room.messages.subscribe((event) => {
   console.log('Received message:', event.message.text);
 });
+
+// Attach to the room
+await room.attach();
 
 // Send a message
 await room.messages.send({ text: 'Hello, World!' });
