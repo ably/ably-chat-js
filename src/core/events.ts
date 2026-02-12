@@ -122,6 +122,12 @@ export interface TypingSetEvent {
      * Type of the change.
      */
     type: TypingEventType;
+
+    /**
+     * The user claim attached to this typing event by the server. This is set automatically
+     * by the server when a JWT contains a matching `ably.room.<roomName>` claim.
+     */
+    userClaim?: string;
   };
 }
 
@@ -279,6 +285,12 @@ export interface MessageReactionRawEvent {
 
     /** The client ID of the user who added/removed the reaction */
     clientId: string;
+
+    /**
+     * The user claim attached to this reaction by the server. This is set automatically
+     * by the Ably server when a JWT contains a matching `ably.room.<roomName>` claim.
+     */
+    userClaim?: string;
   };
 }
 

@@ -6,13 +6,22 @@ import { ChatClientOptions, normalizeClientOptions } from '../../src/core/config
 import { testLoggingLevel, testLogHandler } from './logger.js';
 import { ablyRealtimeClientWithToken } from './realtime-client.js';
 
-export const newChatClient = (options?: ChatClientOptions, realtimeClient?: Ably.Realtime): ChatClient => {
+export const newChatClient = (
+  options?: ChatClientOptions,
+  realtimeClient?: Ably.Realtime,
+  extraClaims?: Record<string, string>,
+): ChatClient => {
+  if (realtimeClient && extraClaims) {
+    throw new Error(
+      'Cannot provide both realtimeClient and extraClaims; extraClaims are only used when creating a new client',
+    );
+  }
   const normalizedOptions = normalizeClientOptions({
     ...options,
     logLevel: options?.logLevel ?? testLoggingLevel(),
     logHandler: options?.logHandler ?? testLogHandler(),
   });
-  realtimeClient = realtimeClient ?? ablyRealtimeClientWithToken();
+  realtimeClient = realtimeClient ?? ablyRealtimeClientWithToken(undefined, extraClaims);
 
   return new ChatClient(realtimeClient, normalizedOptions);
 };

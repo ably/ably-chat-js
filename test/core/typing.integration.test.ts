@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TypingEventType, TypingSetEvent, TypingSetEventType } from '../../src/core/events.ts';
 import { Room } from '../../src/core/room.ts';
 import { ChatClient } from '../../src/index.ts';
-import { newChatClient } from '../helper/chat.ts';
+import { newChatClient, waitForClientId } from '../helper/chat.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { randomClientId, randomRoomName } from '../helper/identifier.ts';
 import { ablyRealtimeClient, ablyRealtimeClientWithToken } from '../helper/realtime-client.ts';
@@ -120,12 +120,12 @@ describe('Typing', () => {
       await waitForTypingEvent(events, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId1]),
-        change: { clientId: clientId1, type: TypingEventType.Started },
+        change: { clientId: clientId1, type: TypingEventType.Started, userClaim: undefined },
       });
       await waitForTypingEvent(events, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId1, clientId2]),
-        change: { clientId: clientId2, type: TypingEventType.Started },
+        change: { clientId: clientId2, type: TypingEventType.Started, userClaim: undefined },
       });
       // Get the currently typing client ids
       const currentlyTypingClientIds = context.chatRoom.typing.current;
@@ -140,7 +140,7 @@ describe('Typing', () => {
       await waitForTypingEvent(events, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId2]),
-        change: { clientId: clientId1, type: TypingEventType.Stopped },
+        change: { clientId: clientId1, type: TypingEventType.Stopped, userClaim: undefined },
       });
       // Get the currently typing client ids
       const currentlyTypingClientIdsAfterStop = context.chatRoom.typing.current;
@@ -150,6 +150,40 @@ describe('Typing', () => {
 
       // stop typing 2, clears typing timeout
       await client2Room.typing.stop();
+    },
+    TEST_TIMEOUT,
+  );
+
+  it(
+    'should receive typing events with a user claim',
+    async () => {
+      const roomName = randomRoomName();
+      const roomClaim = `ably.room.${roomName}`;
+      const chat = newChatClient(undefined, undefined, { [roomClaim]: 'test-claim-value' });
+      await waitForClientId(chat);
+
+      const room = await chat.rooms.get(roomName, { typing: { heartbeatThrottleMs: 600 } });
+
+      const events: TypingSetEvent[] = [];
+      room.typing.subscribe((event) => {
+        events.push(event);
+      });
+
+      await room.attach();
+
+      await room.typing.keystroke();
+
+      // Wait for the started event
+      await waitForArrayLength(events, 1);
+      expect(events[0]?.change.type).toBe(TypingEventType.Started);
+      expect(events[0]?.change.userClaim).toBe('test-claim-value');
+
+      await room.typing.stop();
+
+      // Wait for the stopped event
+      await waitForArrayLength(events, 2);
+      expect(events[1]?.change.type).toBe(TypingEventType.Stopped);
+      expect(events[1]?.change.userClaim).toBe('test-claim-value');
     },
     TEST_TIMEOUT,
   );

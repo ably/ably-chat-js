@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
-import { DefaultRoomReaction, RoomReaction, RoomReactionHeaders, RoomReactionMetadata } from './room-reaction.js';
+import { realtimeExtras } from './realtime-extensions.js';
+import { DefaultRoomReaction, RoomReaction, RoomReactionMetadata } from './room-reaction.js';
 
 interface ReactionPayload {
   data?: {
@@ -9,9 +10,6 @@ interface ReactionPayload {
   };
   clientId?: string;
   timestamp: number;
-  extras?: {
-    headers?: RoomReactionHeaders;
-  };
 }
 
 /**
@@ -35,12 +33,15 @@ export const parseRoomReaction = (message: Ably.InboundMessage, clientId?: strin
   // Use current time if timestamp is missing
   const timestamp = reactionCreatedMessage.timestamp ? new Date(reactionCreatedMessage.timestamp) : new Date();
 
+  const extras = realtimeExtras(message.extras);
+
   return new DefaultRoomReaction(
     name,
     messageClientId,
     timestamp,
     clientId ? clientId === messageClientId : false,
     reactionCreatedMessage.data?.metadata ?? {},
-    reactionCreatedMessage.extras?.headers ?? {},
+    extras.headers ?? {},
+    extras.userClaim,
   );
 };

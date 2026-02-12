@@ -30,8 +30,31 @@ describe('messageFromRest', () => {
     expect(result.action).toBe(ChatMessageAction.MessageCreate);
     expect(result.metadata).toEqual({});
     expect(result.headers).toEqual({});
+    expect(result.userClaim).toBeUndefined();
     expect(result.timestamp).toEqual(new Date(1672531300000));
     expect(result.reactions).toEqual(emptyMessageReactions());
+  });
+
+  it('should convert a REST message with userClaim', () => {
+    const restMessage: RestMessage = {
+      serial: '01672531200000-123@abcdefghij',
+      version: {
+        serial: '01672531200000-123@abcdefghij:0',
+        timestamp: 1672531300000,
+      },
+      text: 'Hello with claim',
+      clientId: 'client123',
+      action: 'message.create',
+      metadata: {},
+      headers: {},
+      userClaim: 'admin-role',
+      timestamp: 1672531300000,
+    };
+
+    const result = messageFromRest(restMessage);
+
+    expect(result).toBeInstanceOf(DefaultMessage);
+    expect(result.userClaim).toBe('admin-role');
   });
 
   it('should handle message with metadata and headers', () => {

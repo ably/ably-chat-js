@@ -45,7 +45,7 @@ const stopMessage: Ably.Message = {
 // This interface simply extends the DefaultTyping interface and exposes some private properties for testing
 interface TestTypingInterface extends Typing {
   _heartbeatTimerId: ReturnType<typeof setTimeout> | undefined;
-  _currentlyTyping: Map<string, ReturnType<typeof setTimeout>>;
+  _currentlyTyping: Map<string, { timer: ReturnType<typeof setTimeout>; userClaim?: string }>;
 }
 
 interface TestRoomInterface extends Room {
@@ -720,6 +720,160 @@ describe('Typing', () => {
 
       // Unsubscribe second subscription
       subscription2.unsubscribe();
+    });
+
+    it<TestContext>('includes userClaim in typing start events', async (context) => {
+      const { room } = context;
+
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
+      });
+
+      // Emulate a typing event with a userClaim
+      context.emulateBackendPublish({
+        name: TypingEventType.Started,
+        clientId: 'otherClient',
+        extras: { userClaim: 'test-claim' },
+      });
+
+      await waitForArrayLength(receivedEvents, 1);
+      expect(receivedEvents[0]?.change.userClaim).toBe('test-claim');
+
+      // Check the internal state also stored the claim
+      const defaultTyping = room.typing as TestTypingInterface;
+      expect(defaultTyping._currentlyTyping.get('otherClient')?.userClaim).toBe('test-claim');
+    });
+
+    it<TestContext>('clears userClaim on heartbeat when new event has no claim', async (context) => {
+      const { room } = context;
+
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
+      });
+
+      // Start typing with a userClaim
+      context.emulateBackendPublish({
+        name: TypingEventType.Started,
+        clientId: 'otherClient',
+        extras: { userClaim: 'test-claim' },
+      });
+
+      await waitForArrayLength(receivedEvents, 1);
+
+      // Send a heartbeat without a userClaim
+      context.emulateBackendPublish({
+        name: TypingEventType.Started,
+        clientId: 'otherClient',
+      });
+
+      // The internal state should reflect the absent claim (claim removed server-side)
+      const defaultTyping = room.typing as TestTypingInterface;
+      await vi.waitFor(
+        () => {
+          expect(defaultTyping._currentlyTyping.get('otherClient')?.userClaim).toBeUndefined();
+        },
+        { timeout: 1000 },
+      );
+    });
+
+    it<TestContext>('includes userClaim in typing stop events', async (context) => {
+      const { room } = context;
+
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
+      });
+
+      // Start typing with a userClaim
+      context.emulateBackendPublish({
+        name: TypingEventType.Started,
+        clientId: 'otherClient',
+        extras: { userClaim: 'test-claim' },
+      });
+
+      await waitForArrayLength(receivedEvents, 1);
+
+      // Stop typing
+      context.emulateBackendPublish({
+        name: TypingEventType.Stopped,
+        clientId: 'otherClient',
+        extras: { userClaim: 'test-claim' },
+      });
+
+      await waitForArrayLength(receivedEvents, 2);
+      expect(receivedEvents[1]?.change.userClaim).toBe('test-claim');
+    });
+
+    it<TestContext>('uses stored userClaim on implicit timeout stop', async (context) => {
+      const { room } = context;
+
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
+      });
+
+      // Start typing with a userClaim
+      context.emulateBackendPublish({
+        name: TypingEventType.Started,
+        clientId: 'otherClient',
+        extras: { userClaim: 'test-claim' },
+      });
+
+      await waitForArrayLength(receivedEvents, 1);
+
+      // Expire the inactivity timer - this is a synthesized stop, so it should use the stored claim
+      vi.advanceTimersToNextTimer();
+
+      await waitForArrayLength(receivedEvents, 2);
+      expect(receivedEvents[1]?.change.type).toBe(TypingEventType.Stopped);
+      expect(receivedEvents[1]?.change.userClaim).toBe('test-claim');
+    });
+
+    it<TestContext>('uses server userClaim on explicit stop event, not cached state', async (context) => {
+      const { room } = context;
+
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
+      });
+
+      // Start typing with a claim
+      context.emulateBackendPublish({
+        name: TypingEventType.Started,
+        clientId: 'otherClient',
+        extras: { userClaim: 'old-claim' },
+      });
+
+      await waitForArrayLength(receivedEvents, 1);
+
+      // Server sends a stop with a different claim - trust the server
+      context.emulateBackendPublish({
+        name: TypingEventType.Stopped,
+        clientId: 'otherClient',
+        extras: { userClaim: 'new-claim' },
+      });
+
+      await waitForArrayLength(receivedEvents, 2);
+      expect(receivedEvents[1]?.change.userClaim).toBe('new-claim');
+
+      // Also verify: server sends stop with no claim - trust that too (claim was removed)
+      context.emulateBackendPublish({
+        name: TypingEventType.Started,
+        clientId: 'otherClient',
+        extras: { userClaim: 'another-claim' },
+      });
+
+      await waitForArrayLength(receivedEvents, 3);
+
+      context.emulateBackendPublish({
+        name: TypingEventType.Stopped,
+        clientId: 'otherClient',
+      });
+
+      await waitForArrayLength(receivedEvents, 4);
+      expect(receivedEvents[3]?.change.userClaim).toBeUndefined();
     });
   });
 
