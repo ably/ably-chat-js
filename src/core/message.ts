@@ -93,6 +93,9 @@ export interface Message {
    *
    * Do not use metadata for authoritative information. There is no server-side
    * validation. When reading the metadata treat it like user input.
+   *
+   * If you need per-room authoritative information on messages, consider using
+   * {@link userClaim} via JWT user claims instead.
    */
   readonly metadata: MessageMetadata;
 
@@ -108,8 +111,20 @@ export interface Message {
    *
    * Do not use the headers for authoritative information. There is no server-side
    * validation. When reading the headers, treat them like user input.
+   *
+   * If you need per-room authoritative information on messages, consider using
+   * {@link userClaim} via JWT user claims instead.
    */
   readonly headers: MessageHeaders;
+
+  /**
+   * The user claim attached to this message by the server. This is set automatically
+   * by the Ably server when a JWT contains a matching `ably.room.<roomName>` claim.
+   *
+   * This value is only present if the publishing user's token contained a claim
+   * for the room in which this message was published.
+   */
+  readonly userClaim?: string;
 
   /**
    * The action type of the message. This can be used to determine if the message was created, updated, or deleted.
@@ -195,6 +210,7 @@ export interface DefaultMessageParams {
   text: string;
   metadata: MessageMetadata;
   headers: MessageHeaders;
+  userClaim?: string;
   action: ChatMessageAction;
   version: MessageVersion;
   timestamp: Date;
@@ -212,6 +228,7 @@ export class DefaultMessage implements Message {
   public readonly text: string;
   public readonly metadata: MessageMetadata;
   public readonly headers: MessageHeaders;
+  public readonly userClaim?: string;
   public readonly action: ChatMessageAction;
   public readonly version: MessageVersion;
   public readonly timestamp: Date;
@@ -223,6 +240,7 @@ export class DefaultMessage implements Message {
     text,
     metadata,
     headers,
+    userClaim,
     action,
     version,
     timestamp,
@@ -233,6 +251,7 @@ export class DefaultMessage implements Message {
     this.text = text;
     this.metadata = metadata;
     this.headers = headers;
+    this.userClaim = userClaim;
     this.action = action;
     this.version = version;
     this.timestamp = timestamp;
@@ -318,6 +337,7 @@ export class DefaultMessage implements Message {
       text: replace?.text ?? source.text,
       metadata: replace?.metadata ?? cloneDeep(source.metadata),
       headers: replace?.headers ?? cloneDeep(source.headers),
+      userClaim: replace?.userClaim ?? source.userClaim,
       action: replace?.action ?? source.action,
       version: replace?.version ?? cloneDeep(source.version),
       timestamp: replace?.timestamp ?? source.timestamp,

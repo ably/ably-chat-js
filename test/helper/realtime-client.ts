@@ -30,7 +30,10 @@ const baseOptions = (options?: Ably.ClientOptions): Ably.ClientOptions => {
 const ablyRealtimeClient = (options?: Ably.ClientOptions): Ably.Realtime => new Ably.Realtime(baseOptions(options));
 
 // At the moment, chat doesn't support keys for authentication, so create a client that uses tokens
-const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtime => {
+const ablyRealtimeClientWithToken = (
+  options?: Ably.ClientOptions,
+  extraClaims?: Record<string, string>,
+): Ably.Realtime => {
   options = baseOptions(options);
 
   if (!options.key) {
@@ -61,6 +64,7 @@ const ablyRealtimeClientWithToken = (options?: Ably.ClientOptions): Ably.Realtim
       exp: currentTime + 600,
       'x-ably-capability': '{"*":["*"]}',
       'x-ably-clientId': clientId,
+      ...extraClaims,
     };
 
     let token: string | null = null;

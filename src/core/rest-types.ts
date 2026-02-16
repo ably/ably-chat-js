@@ -43,6 +43,7 @@ export interface RestMessage {
   action: 'message.create' | 'message.update' | 'message.delete';
   metadata: JsonObject;
   headers: Record<string, string>;
+  userClaim?: string;
   timestamp: number;
   reactions?: RestChatMessageReactions;
 }
@@ -104,6 +105,7 @@ export const messageFromRest = (message: RestMessage): Message => {
     text: message.text,
     metadata: message.metadata,
     headers: message.headers,
+    userClaim: message.userClaim,
     action,
     version,
     timestamp: new Date(message.timestamp),

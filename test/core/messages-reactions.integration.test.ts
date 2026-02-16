@@ -10,6 +10,7 @@ import {
 } from '../../src/core/events.ts';
 import { newChatClient, waitForClientId } from '../helper/chat.ts';
 import { waitForArrayLength } from '../helper/common.ts';
+import { randomRoomName } from '../helper/identifier.ts';
 import { getRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
@@ -473,5 +474,30 @@ describe('message reactions integration', { timeout: 60000 }, () => {
 
     // Clean up
     void room2.detach();
+  });
+
+  it('should be able to send and receive raw message reactions with a user claim', async () => {
+    const roomName = randomRoomName();
+    const roomClaim = `ably.room.${roomName}`;
+    const chat = newChatClient(undefined, undefined, { [roomClaim]: 'test-claim-value' });
+    await waitForClientId(chat);
+
+    const room = await chat.rooms.get(roomName, { messages: { rawMessageReactions: true } });
+    await room.attach();
+
+    // Send a message to react to
+    const message1 = await room.messages.send({ text: 'Hello there!' });
+
+    // Subscribe to raw reactions
+    const found: MessageReactionRawEvent[] = [];
+    room.messages.reactions.subscribeRaw((reactionEvent) => {
+      found.push(reactionEvent);
+    });
+
+    await room.messages.reactions.send(message1.serial, { type: MessageReactionType.Distinct, name: '👍' });
+
+    await waitForArrayLength(found, 1);
+
+    expect(found[0]?.reaction.userClaim).toBe('test-claim-value');
   });
 });

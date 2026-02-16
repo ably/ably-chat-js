@@ -5,6 +5,7 @@ import { ErrorCode } from './errors.js';
 import { PresenceEventType } from './events.js';
 import { JsonObject } from './json.js';
 import { Logger } from './logger.js';
+import { realtimeExtras } from './realtime-extensions.js';
 import { on, subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
@@ -116,6 +117,12 @@ export type PresenceMember = Omit<Ably.PresenceMessage, 'id' | 'action' | 'times
    * The extras associated with the presence member.
    */
   extras: JsonObject | undefined;
+
+  /**
+   * The user claim attached to this presence event by the server. This is set automatically
+   * by the server when a JWT contains a matching `ably.room.<roomName>` claim.
+   */
+  userClaim?: string;
 };
 
 /**
@@ -593,11 +600,13 @@ export class DefaultPresence implements Presence {
    * @returns The presence member.
    */
   private _realtimeMemberToPresenceMember(member: Ably.PresenceMessage): PresenceMember {
+    const extras = realtimeExtras(member.extras);
     return {
       // Note that we're casting `extras` from ably-js's `any` to our `JsonObject | undefined`; although ably-js's types don't express it we can assume this type per https://sdk.ably.com/builds/ably/specification/main/features/#TP3i.
       ...member,
       data: member.data as PresenceData,
       updatedAt: new Date(member.timestamp),
+      userClaim: extras.userClaim,
     };
   }
 

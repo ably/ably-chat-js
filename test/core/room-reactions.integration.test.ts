@@ -4,7 +4,8 @@ import { ChatClient } from '../../src/core/chat-client.js';
 import { RoomReactionEvent, RoomReactionEventType } from '../../src/core/events.js';
 import { RealtimeChannelWithOptions } from '../../src/core/realtime-extensions.js';
 import { CHANNEL_OPTIONS_AGENT_STRING } from '../../src/core/version.js';
-import { newChatClient } from '../helper/chat.js';
+import { newChatClient, waitForClientId } from '../helper/chat.js';
+import { randomRoomName } from '../helper/identifier.js';
 import { getRandomRoom } from '../helper/room.js';
 
 interface TestContext {
@@ -73,5 +74,30 @@ describe('room-level reactions integration test', () => {
     }
 
     await waitForReactions(reactions, expectedReactions);
+  });
+
+  it('sends and receives a reaction with a user claim', async () => {
+    const roomName = randomRoomName();
+    const roomClaim = `ably.room.${roomName}`;
+    const chat = newChatClient(undefined, undefined, { [roomClaim]: 'test-claim-value' });
+    await waitForClientId(chat);
+
+    const room = await chat.rooms.get(roomName);
+
+    const events: RoomReactionEvent[] = [];
+    room.reactions.subscribe((event: RoomReactionEvent) => {
+      events.push(event);
+    });
+
+    await room.attach();
+
+    await room.reactions.send({ name: 'like' });
+
+    await waitForReactions(
+      events.map((e) => e.reaction.name),
+      ['like'],
+    );
+
+    expect(events[0]?.reaction.userClaim).toBe('test-claim-value');
   });
 });

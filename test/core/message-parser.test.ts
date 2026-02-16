@@ -98,7 +98,7 @@ describe('parseMessage', () => {
         },
         action: ChatMessageAction.MessageCreate,
       },
-      expectedDefaults: { headers: {} },
+      expectedDefaults: { headers: {}, userClaim: undefined },
     },
     {
       description: 'message.action is unhandled',
@@ -352,6 +352,7 @@ describe('parseMessage', () => {
       clientId: 'client1',
       extras: {
         headers: { headerKey: 'headerValue' },
+        userClaim: 'some-claim',
       },
       timestamp: 1728402074206,
       version: {
@@ -371,6 +372,7 @@ describe('parseMessage', () => {
     expect(result.timestamp).toEqual(new Date(1728402074206));
     expect(result.metadata).toEqual({ key: 'value' });
     expect(result.headers).toEqual({ headerKey: 'headerValue' });
+    expect(result.userClaim).toBe('some-claim');
     expect(result.version.serial).toBe('01728402074207-000@cbfkKvEYgBhDaZ38195418:0');
     expect(result.version.timestamp).toEqual(new Date(1728402074207));
 
@@ -529,5 +531,47 @@ describe('parseMessage', () => {
     expect(result.version.clientId).toEqual('client2');
     expect(result.version.description).toEqual('delete message');
     expect(result.version.metadata).toEqual({ 'custom-warning': 'this is a warning' });
+  });
+
+  it('should preserve an empty string userClaim', () => {
+    const message = {
+      data: { text: 'hello' },
+      clientId: 'client1',
+      extras: {
+        headers: {},
+        userClaim: '',
+      },
+      timestamp: 1728402074206,
+      serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      version: {
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        timestamp: 1728402074206,
+      },
+      action: ChatMessageAction.MessageCreate,
+    } as Ably.InboundMessage;
+
+    const result = parseMessage(message);
+    expect(result.userClaim).toBe('');
+  });
+
+  it('should ignore non-string userClaim values', () => {
+    const message = {
+      data: { text: 'hello' },
+      clientId: 'client1',
+      extras: {
+        headers: {},
+        userClaim: 123,
+      },
+      timestamp: 1728402074206,
+      serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+      version: {
+        serial: '01728402074206-000@cbfkKvEYgBhDaZ38195418:0',
+        timestamp: 1728402074206,
+      },
+      action: ChatMessageAction.MessageCreate,
+    } as Ably.InboundMessage;
+
+    const result = parseMessage(message);
+    expect(result.userClaim).toBeUndefined();
   });
 });

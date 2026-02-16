@@ -5,10 +5,21 @@ import { ErrorCode } from './errors.js';
 import { TypingEventType, TypingSetEvent, TypingSetEventType } from './events.js';
 import { Logger } from './logger.js';
 import { ephemeralMessage } from './realtime.js';
+import { realtimeExtras } from './realtime-extensions.js';
 import { subscribe } from './realtime-subscriptions.js';
 import { InternalTypingOptions } from './room-options.js';
 import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
+
+/**
+ * Represents a user in the set of currently typing users, with associated metadata.
+ */
+export interface TypingSetEntry {
+  /** The client ID of the typing user. */
+  clientId: string;
+  /** The user claim attached to this user's typing event, if any. */
+  userClaim?: string;
+}
 
 /**
  * This interface is used to interact with typing in a chat room including subscribing to typing events and
@@ -69,6 +80,7 @@ export interface Typing {
    *
    * Returns a Set containing the client IDs of all users currently typing in the room.
    * This provides a snapshot of the typing state at the time of the call.
+   * @deprecated Use {@link Typing.currentTypers | currentTypers} instead, which includes metadata such as user claims.
    * @returns Set of client IDs currently typing
    * @example
    * ```typescript
@@ -94,6 +106,15 @@ export interface Typing {
    * ```
    */
   get current(): Set<string>;
+
+  /**
+   * Gets the current set of users who are typing, with associated metadata.
+   *
+   * Returns an array of {@link TypingSetEntry} objects containing the client IDs and
+   * user claims of all users currently typing in the room.
+   * @returns Array of typing set entries for users currently typing
+   */
+  get currentTypers(): TypingSetEntry[];
 
   /**
    * Sends a typing started event to notify other users that the current user is typing.
@@ -196,6 +217,16 @@ interface TypingEventsMap {
 type TypingTimerHandle = ReturnType<typeof setTimeout> | undefined;
 
 /**
+ * Tracks the state of a currently typing client.
+ */
+interface TypingClientState {
+  /** The inactivity timer for this client. */
+  timer: TypingTimerHandle;
+  /** The user claim from the typing event, if any. */
+  userClaim?: string;
+}
+
+/**
  * @inheritDoc
  */
 export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typing {
@@ -211,7 +242,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   // CHA-T10a
   private readonly _timeoutMs = 2000;
   private _heartbeatTimerId: TypingTimerHandle;
-  private readonly _currentlyTyping: Map<string, TypingTimerHandle>;
+  private readonly _currentlyTyping: Map<string, TypingClientState>;
 
   // Mutex for controlling `keystroke` and `stop` operations
   private readonly _mutex = new Mutex();
@@ -239,8 +270,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     // Interval for the heartbeat, how often we should emit a typing event with repeated calls to start()
     this._heartbeatThrottleMs = options.heartbeatThrottleMs;
 
-    // Map of clientIds to their typing timers, used to track typing state
-    this._currentlyTyping = new Map<string, TypingTimerHandle>();
+    // Map of clientIds to their typing state (timer + userClaim)
+    this._currentlyTyping = new Map<string, TypingClientState>();
     this._logger = logger;
 
     // Use subscription helper to create cleanup function
@@ -278,8 +309,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   private _clearCurrentlyTyping(): void {
     this._logger.trace('DefaultTyping._clearCurrentlyTyping(); clearing current store and timeouts');
     // Clear all client typing timeouts
-    for (const [, timeoutId] of this._currentlyTyping.entries()) {
-      clearTimeout(timeoutId);
+    for (const [, state] of this._currentlyTyping.entries()) {
+      clearTimeout(state.timer);
     }
     // Clear the currently typing map
     this._currentlyTyping.clear();
@@ -292,6 +323,14 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   get current(): Set<string> {
     this._logger.trace(`DefaultTyping.current();`);
     return new Set<string>(this._currentlyTyping.keys());
+  }
+
+  /**
+   * @inheritDoc
+   */
+  get currentTypers(): TypingSetEntry[] {
+    this._logger.trace(`DefaultTyping.currentTypers();`);
+    return this._buildCurrentTypers();
   }
 
   /**
@@ -487,15 +526,27 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
    * It will also acquire a mutex to ensure that the currentlyTyping state is updated safely.
    * @param clientId The client ID of the user.
    * @param event The typing event.
+   * @param userClaim The user claim from the typing event, if any.
    */
-  private _updateCurrentlyTyping(clientId: string, event: TypingEventType): void {
+  private _updateCurrentlyTyping(clientId: string, event: TypingEventType, userClaim?: string): void {
     this._logger.trace(`DefaultTyping._updateCurrentlyTyping();`, { clientId, event });
 
     if (event === TypingEventType.Started) {
-      this._handleTypingStart(clientId);
+      this._handleTypingStart(clientId, userClaim);
     } else {
-      this._handleTypingStop(clientId);
+      this._handleTypingStop(clientId, userClaim);
     }
+  }
+
+  /**
+   * Builds an array of TypingSetEntry objects from the current typing state.
+   * @returns Array of typing set entries for users currently typing
+   */
+  private _buildCurrentTypers(): TypingSetEntry[] {
+    return [...this._currentlyTyping.entries()].map(([clientId, state]) => ({
+      clientId,
+      userClaim: state.userClaim,
+    }));
   }
 
   /**
@@ -515,7 +566,8 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
         clientId,
       });
       // Verify the timer is still valid (it might have been reset)
-      if (this._currentlyTyping.get(clientId) !== timeoutId) {
+      const clientState = this._currentlyTyping.get(clientId);
+      if (clientState?.timer !== timeoutId) {
         this._logger.debug(`DefaultTyping._startNewClientInactivityTimer(); timeout already cleared; ignoring`, {
           clientId,
         });
@@ -523,13 +575,16 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       }
 
       // Remove client whose timeout has expired
+      const timedOutUserClaim = clientState.userClaim;
       this._currentlyTyping.delete(clientId);
       this.emit(TypingSetEventType.SetChanged, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
+        currentTypers: this._buildCurrentTypers(),
         change: {
           clientId,
           type: TypingEventType.Stopped,
+          userClaim: timedOutUserClaim,
         },
       });
     }, this._heartbeatThrottleMs + this._timeoutMs);
@@ -539,23 +594,24 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * Handles logic for TypingEventType.Started, including starting a new timeout or resetting an existing one.
    * @param clientId The client ID that started typing.
+   * @param userClaim The user claim from the typing event, if any.
    */
-  private _handleTypingStart(clientId: string): void {
+  private _handleTypingStart(clientId: string, userClaim?: string): void {
     this._logger.debug(`DefaultTyping._handleTypingStart();`, { clientId });
     // Start a new timeout for the client
     const timeoutId = this._startNewClientInactivityTimer(clientId);
 
-    const existingTimeout = this._currentlyTyping.get(clientId);
+    const existingState = this._currentlyTyping.get(clientId);
 
-    // Set the new timeout for the client
-    this._currentlyTyping.set(clientId, timeoutId);
+    // Set the new state for the client, using the claim from the incoming event
+    this._currentlyTyping.set(clientId, { timer: timeoutId, userClaim });
 
-    if (existingTimeout) {
+    if (existingState) {
       // Heartbeat - User is already typing, we just need to clear the existing timeout
       this._logger.debug(`DefaultTyping._handleTypingStart(); received heartbeat for currently typing client`, {
         clientId,
       });
-      clearTimeout(existingTimeout);
+      clearTimeout(existingState.timer);
     } else {
       // Otherwise, we need to emit a new typing event
       this._logger.debug(`DefaultTyping._handleTypingStart(); new client started typing`, {
@@ -564,9 +620,11 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       this.emit(TypingSetEventType.SetChanged, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
+        currentTypers: this._buildCurrentTypers(),
         change: {
           clientId,
           type: TypingEventType.Started,
+          userClaim,
         },
       });
     }
@@ -575,10 +633,11 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * Handles logic for TypingEventType.Stopped, including clearing the timeout for the client.
    * @param clientId The client ID that stopped typing.
+   * @param userClaim The user claim from the stop event, if any.
    */
-  private _handleTypingStop(clientId: string): void {
-    const existingTimeout = this._currentlyTyping.get(clientId);
-    if (!existingTimeout) {
+  private _handleTypingStop(clientId: string, userClaim?: string): void {
+    const existingState = this._currentlyTyping.get(clientId);
+    if (!existingState) {
       // Stop requested for a client that isn't currently typing
       this._logger.trace(
         `DefaultTyping._handleTypingStop(); received "Stop" event for client not in currentlyTyping list`,
@@ -589,15 +648,17 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
 
     // Stop typing: clear their timeout and remove from the currently typing set
     this._logger.debug(`DefaultTyping._handleTypingStop(); client stopped typing`, { clientId });
-    clearTimeout(existingTimeout);
+    clearTimeout(existingState.timer);
     this._currentlyTyping.delete(clientId);
     // Emit stop event only when the client is removed
     this.emit(TypingSetEventType.SetChanged, {
       type: TypingSetEventType.SetChanged,
       currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
+      currentTypers: this._buildCurrentTypers(),
       change: {
         clientId,
         type: TypingEventType.Stopped,
+        userClaim,
       },
     });
   }
@@ -620,9 +681,12 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       return;
     }
 
+    const extras = realtimeExtras(inbound.extras);
+    const userClaim = extras.userClaim;
+
     // Safety check to ensure we are handling only typing events
     if (name === TypingEventType.Started || name === TypingEventType.Stopped) {
-      this._updateCurrentlyTyping(clientId, name);
+      this._updateCurrentlyTyping(clientId, name, userClaim);
     } else {
       this._logger.warn(`DefaultTyping._internalSubscribeToEvents(); unrecognized event`, {
         name,

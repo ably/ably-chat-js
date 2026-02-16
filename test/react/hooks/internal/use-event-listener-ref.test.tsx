@@ -59,7 +59,6 @@ describe('useEventListenerRef', () => {
     expect(callback2).toHaveBeenCalledWith('arg3', 'arg4');
 
     // When we inspect the result, it should be the same as the initial result
-    console.log(result.current);
     expect(result.current).toBe(initialCallback);
   });
 });

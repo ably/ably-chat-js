@@ -44,6 +44,12 @@ export interface RoomReaction {
    * Whether the reaction was sent by the current user.
    */
   readonly isSelf: boolean;
+
+  /**
+   * The user claim attached to this reaction by the server. This is set automatically
+   * by the Ably server when a JWT contains a matching `ably.room.<roomName>` claim.
+   */
+  readonly userClaim?: string;
 }
 
 /**
@@ -57,6 +63,7 @@ export class DefaultRoomReaction implements RoomReaction {
     public readonly isSelf: boolean,
     public readonly metadata: RoomReactionMetadata,
     public readonly headers: RoomReactionHeaders,
+    public readonly userClaim?: string,
   ) {
     // The object is frozen after constructing to enforce readonly at runtime too
     Object.freeze(this);

@@ -11,5 +11,8 @@
  * server-side validation. When reading the headers, treat them like user
  * input.
  *
+ * If you need per-room authoritative information on messages, consider using
+ * {@link Message.userClaim} via JWT user claims instead.
+ *
  */
 export type Headers = Record<string, number | string | boolean | null | undefined>;
