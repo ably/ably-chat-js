@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-deprecated */
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
@@ -90,6 +91,27 @@ describe('Typing', () => {
 
     // Ensure that the typing status is correct
     expect(room.typing.current).toEqual(new Set(['some']));
+  });
+
+  it<TestContext>('gets current typers with metadata via currentTypers', (context) => {
+    const { room } = context;
+
+    // Emulate typing events with user claims
+    context.emulateBackendPublish({
+      name: TypingEventType.Started,
+      clientId: 'user1',
+      extras: { userClaim: 'claim1' },
+    });
+
+    context.emulateBackendPublish({
+      name: TypingEventType.Started,
+      clientId: 'user2',
+    });
+
+    expect(room.typing.currentTypers).toEqual([
+      { clientId: 'user1', userClaim: 'claim1' },
+      { clientId: 'user2', userClaim: undefined },
+    ]);
   });
 
   it<TestContext>('ensures multiple keystroke/stop calls are resolved in order', async (context) => {
@@ -391,6 +413,7 @@ describe('Typing', () => {
           type: TypingEventType.Started,
         },
         currentlyTyping: new Set(['otherClient']),
+        currentTypers: [{ clientId: 'otherClient', userClaim: undefined }],
       });
 
       // Unsubscribe the listener
@@ -502,6 +525,7 @@ describe('Typing', () => {
           type: TypingEventType.Started,
         },
         currentlyTyping: new Set(['otherClient']),
+        currentTypers: [{ clientId: 'otherClient', userClaim: undefined }],
       });
 
       // Check our current typers
@@ -539,6 +563,7 @@ describe('Typing', () => {
           type: TypingEventType.Started,
         },
         currentlyTyping: new Set(['otherClient']),
+        currentTypers: [{ clientId: 'otherClient', userClaim: undefined }],
       });
 
       // Get current inactivity timer
@@ -589,6 +614,7 @@ describe('Typing', () => {
           type: TypingEventType.Started,
         },
         currentlyTyping: new Set(['otherClient']),
+        currentTypers: [{ clientId: 'otherClient', userClaim: undefined }],
       });
 
       // Get current inactivity timer
@@ -609,6 +635,7 @@ describe('Typing', () => {
           type: TypingEventType.Stopped,
         },
         currentlyTyping: new Set(),
+        currentTypers: [],
       });
     });
 
@@ -638,6 +665,7 @@ describe('Typing', () => {
           type: TypingEventType.Started,
         },
         currentlyTyping: new Set(['otherClient']),
+        currentTypers: [{ clientId: 'otherClient', userClaim: undefined }],
       });
 
       // Get current inactivity timer
@@ -661,6 +689,7 @@ describe('Typing', () => {
           type: TypingEventType.Stopped,
         },
         currentlyTyping: new Set(),
+        currentTypers: [],
       });
 
       // Check that the inactivity timer has been cleared
@@ -720,6 +749,39 @@ describe('Typing', () => {
 
       // Unsubscribe second subscription
       subscription2.unsubscribe();
+    });
+
+    it<TestContext>('includes all user claims in currentTypers for multi-client typing', async (context) => {
+      const { room } = context;
+
+      const receivedEvents: TypingSetEvent[] = [];
+      room.typing.subscribe((event: TypingSetEvent) => {
+        receivedEvents.push(event);
+      });
+
+      // First client starts typing with a claim
+      context.emulateBackendPublish({
+        name: TypingEventType.Started,
+        clientId: 'client1',
+        extras: { userClaim: 'claim-a' },
+      });
+
+      await waitForArrayLength(receivedEvents, 1);
+
+      // Second client starts typing with a different claim
+      context.emulateBackendPublish({
+        name: TypingEventType.Started,
+        clientId: 'client2',
+        extras: { userClaim: 'claim-b' },
+      });
+
+      await waitForArrayLength(receivedEvents, 2);
+
+      // The second event's currentTypers should include both clients with their claims
+      expect(receivedEvents[1]?.currentTypers).toEqual([
+        { clientId: 'client1', userClaim: 'claim-a' },
+        { clientId: 'client2', userClaim: 'claim-b' },
+      ]);
     });
 
     it<TestContext>('includes userClaim in typing start events', async (context) => {

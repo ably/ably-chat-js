@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-deprecated */
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -90,6 +91,7 @@ describe('useTyping', () => {
         type: TypingSetEventType.SetChanged,
         change: { clientId: 'someClientId', type: TypingEventType.Stopped },
         currentlyTyping: new Set<string>(),
+        currentTypers: [],
       };
       for (const listener of mockTyping.listeners) {
         listener(typingEvent);
@@ -168,6 +170,10 @@ describe('useTyping', () => {
           type: TypingSetEventType.SetChanged,
           change: { clientId: 'user2', type: TypingEventType.Started },
           currentlyTyping: testSet,
+          currentTypers: [
+            { clientId: 'user1', userClaim: undefined },
+            { clientId: 'user2', userClaim: undefined },
+          ],
         });
       }
     });

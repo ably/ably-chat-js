@@ -12,6 +12,16 @@ import { Subscription } from './subscription.js';
 import EventEmitter, { wrap } from './utils/event-emitter.js';
 
 /**
+ * Represents a user in the set of currently typing users, with associated metadata.
+ */
+export interface TypingSetEntry {
+  /** The client ID of the typing user. */
+  clientId: string;
+  /** The user claim attached to this user's typing event, if any. */
+  userClaim?: string;
+}
+
+/**
  * This interface is used to interact with typing in a chat room including subscribing to typing events and
  * fetching the current set of typing clients.
  *
@@ -70,6 +80,7 @@ export interface Typing {
    *
    * Returns a Set containing the client IDs of all users currently typing in the room.
    * This provides a snapshot of the typing state at the time of the call.
+   * @deprecated Use {@link Typing.currentTypers | currentTypers} instead, which includes metadata such as user claims.
    * @returns Set of client IDs currently typing
    * @example
    * ```typescript
@@ -95,6 +106,15 @@ export interface Typing {
    * ```
    */
   get current(): Set<string>;
+
+  /**
+   * Gets the current set of users who are typing, with associated metadata.
+   *
+   * Returns an array of {@link TypingSetEntry} objects containing the client IDs and
+   * user claims of all users currently typing in the room.
+   * @returns Array of typing set entries for users currently typing
+   */
+  get currentTypers(): TypingSetEntry[];
 
   /**
    * Sends a typing started event to notify other users that the current user is typing.
@@ -308,6 +328,14 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * @inheritDoc
    */
+  get currentTypers(): TypingSetEntry[] {
+    this._logger.trace(`DefaultTyping.currentTypers();`);
+    return this._buildCurrentTypers();
+  }
+
+  /**
+   * @inheritDoc
+   */
   get channel(): Ably.RealtimeChannel {
     return this._channel;
   }
@@ -511,6 +539,17 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   }
 
   /**
+   * Builds an array of TypingSetEntry objects from the current typing state.
+   * @returns Array of typing set entries for users currently typing
+   */
+  private _buildCurrentTypers(): TypingSetEntry[] {
+    return [...this._currentlyTyping.entries()].map(([clientId, state]) => ({
+      clientId,
+      userClaim: state.userClaim,
+    }));
+  }
+
+  /**
    * Starts a new inactivity timer for the client.
    * This timer will expire after the configured timeout,
    * which is the sum of the heartbeat interval and the inactivity timeout.
@@ -541,6 +580,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       this.emit(TypingSetEventType.SetChanged, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
+        currentTypers: this._buildCurrentTypers(),
         change: {
           clientId,
           type: TypingEventType.Stopped,
@@ -580,6 +620,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
       this.emit(TypingSetEventType.SetChanged, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
+        currentTypers: this._buildCurrentTypers(),
         change: {
           clientId,
           type: TypingEventType.Started,
@@ -613,6 +654,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
     this.emit(TypingSetEventType.SetChanged, {
       type: TypingSetEventType.SetChanged,
       currentlyTyping: new Set<string>(this._currentlyTyping.keys()),
+      currentTypers: this._buildCurrentTypers(),
       change: {
         clientId,
         type: TypingEventType.Stopped,

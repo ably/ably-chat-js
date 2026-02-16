@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-deprecated */
 // Import necessary modules and dependencies
 import * as Ably from 'ably';
 import { dequal } from 'dequal';
@@ -120,11 +121,16 @@ describe('Typing', () => {
       await waitForTypingEvent(events, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId1]),
+        currentTypers: [{ clientId: clientId1, userClaim: undefined }],
         change: { clientId: clientId1, type: TypingEventType.Started, userClaim: undefined },
       });
       await waitForTypingEvent(events, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId1, clientId2]),
+        currentTypers: [
+          { clientId: clientId1, userClaim: undefined },
+          { clientId: clientId2, userClaim: undefined },
+        ],
         change: { clientId: clientId2, type: TypingEventType.Started, userClaim: undefined },
       });
       // Get the currently typing client ids
@@ -140,6 +146,7 @@ describe('Typing', () => {
       await waitForTypingEvent(events, {
         type: TypingSetEventType.SetChanged,
         currentlyTyping: new Set([clientId2]),
+        currentTypers: [{ clientId: clientId2, userClaim: undefined }],
         change: { clientId: clientId1, type: TypingEventType.Stopped, userClaim: undefined },
       });
       // Get the currently typing client ids
