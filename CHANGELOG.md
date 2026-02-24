@@ -2,6 +2,13 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [1.2.0](https://github.com/ably/ably-chat-js/tree/1.2.0) (2026-02-24)
+
+### New Features
+
+- **User Claims**: Exposed `userClaim` as an optional string field on chat messages, presence events, typing events, room reactions, and message reactions. This allows customers to use channel-specific JWT user claims with Chat. [#711](https://github.com/ably/ably-chat-js/pull/711)
+- **Typing Indicators**: Added `currentTypers` to `TypingSetEvent` and `Typing` interface, providing a `TypingMember[]` with `clientId` and `userClaim` for each currently typing user. The existing `currentlyTyping` (`Set<string>`) and `current` getter are deprecated in favour of `currentTypers`. [#711](https://github.com/ably/ably-chat-js/pull/711)
+
 ## [1.1.1](https://github.com/ably/ably-chat-js/tree/1.1.1) (2025-11-14)
 
 ### Changes
