@@ -1,7 +1,7 @@
 import type { Message, MessageReactionSummary } from './message.js';
 import type { OccupancyData } from './occupancy-parser.js';
 import type { RoomReaction } from './room-reaction.js';
-import type { TypingSetEntry } from './typing.js';
+import type { TypingMember } from './typing.js';
 
 /**
  * All chat message events.
@@ -114,7 +114,7 @@ export interface TypingSetEvent {
   /**
    * The set of users currently typing, with associated metadata.
    */
-  currentTypers: TypingSetEntry[];
+  currentTypers: TypingMember[];
 
   /**
    * Represents the change that resulted in the new set of typers.

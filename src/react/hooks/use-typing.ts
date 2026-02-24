@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { RoomStatus } from '../../core/room-status.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Typing, TypingListener, TypingSetEntry } from '../../core/typing.js';
+import { Typing, TypingListener, TypingMember } from '../../core/typing.js';
 import { wrapRoomPromise } from '../helper/room-promise.js';
 import { ChatStatusResponse } from '../types/chat-status-response.js';
 import { Listenable } from '../types/listenable.js';
@@ -117,7 +117,7 @@ export interface UseTypingResponse extends ChatStatusResponse {
    * A state value representing the set of users currently typing in the room, with associated metadata.
    * It automatically updates based on typing events received from the room.
    */
-  readonly currentTypers: TypingSetEntry[];
+  readonly currentTypers: TypingMember[];
 }
 
 /**
@@ -207,7 +207,7 @@ export const useTyping = (params?: TypingParams): UseTypingResponse => {
   logger.trace('useTyping();');
 
   const [currentlyTyping, setCurrentlyTyping] = useState<Set<string>>(new Set());
-  const [currentTypers, setCurrentTypers] = useState<TypingSetEntry[]>([]);
+  const [currentTypers, setCurrentTypers] = useState<TypingMember[]>([]);
 
   // Create a stable reference for the listeners
   const listenerRef = useEventListenerRef(params?.listener);
