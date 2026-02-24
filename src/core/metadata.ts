@@ -10,5 +10,8 @@ import { JsonObject } from './json.js';
  * Do not use metadata for authoritative information. There is no server-side
  * validation. When reading the metadata, treat it like user input.
  *
+ * If you need per-room authoritative information on messages, consider using
+ * {@link Message.userClaim} via JWT user claims instead.
+ *
  */
 export type Metadata = JsonObject;

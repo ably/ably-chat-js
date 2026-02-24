@@ -4,6 +4,7 @@ import React, { useCallback } from 'react';
 import clsx from 'clsx';
 import { FaPencil, FaTrash } from 'react-icons/fa6';
 import { MessageReactionsUnique, MessageReactionsDistinct, MessageReactionsMultiple } from '../MessageReactions';
+import { displayNameFromClaim } from '../../display-name.js';
 
 interface MessageProps {
   self?: boolean;
@@ -116,7 +117,7 @@ export const MessageComponent: React.FC<MessageProps> = ({
           })}
         >
           <div className="text-xs text-gray-500">
-            <span>{message.clientId}</span> &middot;{' '}
+            <span>{displayNameFromClaim(message.userClaim, message.clientId)}</span> &middot;{' '}
             <span className="group/time relative">
               <span className="group-hover/time:hidden">{shortDate(message.timestamp)}</span>
               <span className="hidden group-hover/time:inline">{message.timestamp.toLocaleString()}</span>

@@ -1,14 +1,17 @@
 import { FC } from 'react';
 import { useChatClient, useTyping } from '@ably/chat/react';
+import { displayNameFromClaim } from '../../display-name.js';
 
 interface TypingIndicatorPanelProps {}
 
 export const TypingIndicatorPanel: FC<TypingIndicatorPanelProps> = () => {
   const { clientId } = useChatClient();
-  const { currentlyTyping } = useTyping();
+  const { currentTypers } = useTyping();
 
   // Filter out the current user from the list of typing users
-  const otherTypingUsers = Array.from(currentlyTyping).filter((client) => client !== clientId);
+  const otherTypingUsers = currentTypers
+    .filter((typer) => typer.clientId !== clientId)
+    .map((typer) => displayNameFromClaim(typer.userClaim, typer.clientId));
 
   return (
     <div className="h-6 px-2 pt-2">

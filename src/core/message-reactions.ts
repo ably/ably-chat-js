@@ -18,6 +18,7 @@ import {
 } from './events.js';
 import { Logger } from './logger.js';
 import { Message } from './message.js';
+import { realtimeExtras } from './realtime-extensions.js';
 import { subscribe } from './realtime-subscriptions.js';
 import { InternalRoomOptions, MessagesOptions } from './room-options.js';
 import { assertValidSerial } from './serial.js';
@@ -393,6 +394,7 @@ export class DefaultMessageReactions implements MessageReactions {
     }
 
     const name = event.name ?? '';
+    const extras = realtimeExtras(event.extras);
     const reactionEvent: MessageReactionRawEvent = {
       type: eventType,
       timestamp: new Date(event.timestamp),
@@ -401,6 +403,7 @@ export class DefaultMessageReactions implements MessageReactions {
         type: reactionType,
         name: name,
         clientId: event.clientId ?? '',
+        userClaim: extras.userClaim,
       },
     };
 

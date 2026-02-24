@@ -342,4 +342,35 @@ describe('UserPresence', { timeout: 30000 }, () => {
       presenceEvents,
     );
   });
+
+  it('should receive presence events with a user claim', async () => {
+    const roomName = randomRoomName();
+    const roomClaim = `ably.room.${roomName}`;
+    const chat = newChatClient(undefined, undefined, { [roomClaim]: 'test-claim-value' });
+    const clientId = await waitForClientId(chat);
+
+    const room = await chat.rooms.get(roomName);
+    await room.attach();
+    // Ensure we have performed a sync so we don't get `present` events instead of `enter`
+    await room.presence.get({ waitForSync: true });
+
+    const presenceEvents: PresenceEvent[] = [];
+    room.presence.subscribe((event) => {
+      presenceEvents.push(event);
+    });
+
+    await room.presence.enter({ status: 'online' });
+
+    // Wait for the enter event with the user claim
+    await vi.waitFor(
+      () => {
+        const enterEvent = presenceEvents.find(
+          (e) => e.type === PresenceEventType.Enter && e.member.clientId === clientId,
+        );
+        expect(enterEvent).toBeDefined();
+        expect(enterEvent?.member.userClaim).toBe('test-claim-value');
+      },
+      { timeout: 10000, interval: 100 },
+    );
+  });
 });

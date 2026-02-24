@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat-client.ts';
 import { ChatMessageAction, ChatMessageEventType } from '../../src/core/events.ts';
@@ -67,6 +67,52 @@ describe('messages integration', { timeout: 10000 }, () => {
           serial: message2.serial,
         }),
       ]);
+    });
+
+    it('should be able to send and receive chat messages with a user claim', async () => {
+      const roomName = randomRoomName();
+      const roomClaim = `ably.room.${roomName}`;
+      const chat = newChatClient(undefined, undefined, { [roomClaim]: 'test-claim-value' });
+      await waitForClientId(chat);
+
+      const room = await chat.rooms.get(roomName);
+
+      // Attach the room
+      await room.attach();
+
+      // Subscribe to messages and add them to a list when they arrive
+      const messages: Message[] = [];
+      room.messages.subscribe((messageEvent) => {
+        messages.push(messageEvent.message);
+      });
+
+      await room.messages.send({ text: 'Hello with claim!' });
+
+      // Wait for the message to arrive via realtime
+      await waitForArrayLength(messages, 1);
+
+      // Check that the realtime message has the userClaim
+      expect(messages[0]?.userClaim).toBe('test-claim-value');
+
+      // Check that getting an individual message via REST also returns the userClaim
+      const serial = messages[0]?.serial || '';
+      await vi.waitFor(
+        async () => {
+          const fetched = await room.messages.get(serial);
+          expect(fetched.userClaim).toBe('test-claim-value');
+        },
+        { timeout: 5000, interval: 1000 },
+      );
+
+      // Check that the REST history also returns the userClaim
+      await vi.waitFor(
+        async () => {
+          const history = await room.messages.history({ limit: 1, orderBy: OrderBy.NewestFirst });
+          expect(history.items.length).toBe(1);
+          expect(history.items[0]?.userClaim).toBe('test-claim-value');
+        },
+        { timeout: 5000, interval: 1000 },
+      );
     });
 
     it<TestContext>('should be able to send, receive and query chat messages with metadata and headers', async (context) => {

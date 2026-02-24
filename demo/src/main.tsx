@@ -26,10 +26,24 @@ const clientId = (function () {
 
 // This is a config useful for the Ably team to work on new features before they are released.
 // In real apps, developers building with the Ably Chat SDK only need to use Ably Production.
+function getRoomNameFromUrl(): string {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('room') || 'abcd';
+}
+
 const getRealtimeOptions = () => {
   const environment = import.meta?.env?.VITE_ABLY_CHAT_ENV;
   const realtimeOptions: ClientOptions = {
-    authUrl: `/api/ably-token-request?clientId=${clientId}`,
+    authCallback: async (_params, callback) => {
+      try {
+        const roomName = getRoomNameFromUrl();
+        const response = await fetch(`/api/ably-token-request?clientId=${clientId}&roomName=${roomName}`);
+        const token = await response.text();
+        callback(null, token);
+      } catch (error) {
+        callback(error instanceof Error ? error.message : String(error), null);
+      }
+    },
     clientId,
   };
   switch (environment) {

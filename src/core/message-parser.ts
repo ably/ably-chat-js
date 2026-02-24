@@ -1,7 +1,8 @@
 import * as Ably from 'ably';
 
 import { ChatMessageAction } from './events.js';
-import { DefaultMessage, emptyMessageReactions, Message, MessageHeaders, MessageMetadata } from './message.js';
+import { DefaultMessage, emptyMessageReactions, Message, MessageMetadata } from './message.js';
+import { realtimeExtras } from './realtime-extensions.js';
 
 interface MessagePayload {
   data?: {
@@ -10,10 +11,6 @@ interface MessagePayload {
   };
   clientId?: string;
   timestamp: number;
-  extras?: {
-    headers?: MessageHeaders;
-  };
-
   serial: string;
   action: Ably.MessageAction;
   version: Ably.MessageVersion;
@@ -26,7 +23,7 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
 
   // Provide default values for all fields
   const data = message.data && typeof message.data === 'object' ? message.data : {};
-  const extras = message.extras && typeof message.extras === 'object' ? message.extras : {};
+  const extras = realtimeExtras(inboundMessage.extras);
   const clientId = message.clientId || '';
   const text = data.text || '';
   // Spec: CHA-M4k5
@@ -34,6 +31,7 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
   const serial = message.serial || '';
   const metadata = data.metadata && typeof data.metadata === 'object' ? data.metadata : {};
   const headers = extras.headers || {};
+  const userClaim = extras.userClaim;
 
   // Create the version, using defaults as required
   const version = {
@@ -55,6 +53,7 @@ export const parseMessage = (inboundMessage: Ably.InboundMessage): Message => {
     text,
     metadata,
     headers,
+    userClaim,
     action,
     version,
     timestamp,

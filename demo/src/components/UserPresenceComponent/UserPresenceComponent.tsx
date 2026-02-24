@@ -1,6 +1,7 @@
 import { FC } from 'react';
 import { PresenceMember } from '@ably/chat';
 import { useChatClient, usePresence, usePresenceListener } from '@ably/chat/react';
+import { displayNameFromClaim } from '../../display-name.js';
 
 interface UserListComponentProps {}
 
@@ -17,10 +18,11 @@ export const UserPresenceComponent: FC<UserListComponentProps> = () => {
   const renderPresentMember = (presentMember: PresenceMember, index: number) => {
     let status: string;
     const data = presentMember.data as { status: string };
+    const name = displayNameFromClaim(presentMember.userClaim, presentMember.clientId);
     if (presentMember.clientId === clientId) {
-      status = `👤 You - ${data.status}`;
+      status = `👤 You (${name}) - ${data.status}`;
     } else {
-      status = `${presentMember.clientId} - ${data.status}`;
+      status = `${name} - ${data.status}`;
     }
     return (
       <div

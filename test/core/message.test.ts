@@ -329,6 +329,7 @@ describe('ChatMessage', () => {
         text: 'original text',
         metadata: { key: 'value' },
         headers: { headerKey: 'headerValue' },
+        userClaim: 'original-claim',
         action: ChatMessageAction.MessageCreate,
         version: {
           serial: 'version1',
@@ -349,6 +350,7 @@ describe('ChatMessage', () => {
       expect(copiedMessage.text).toBe('updated text');
       expect(copiedMessage.metadata).toEqual({ newKey: 'newValue' });
       expect(copiedMessage.headers).toEqual({ headerKey: 'headerValue' });
+      expect(copiedMessage.userClaim).toBe('original-claim');
       expect(copiedMessage.serial).toBe(originalMessage.serial);
       expect(copiedMessage.clientId).toBe(originalMessage.clientId);
       expect(copiedMessage.action).toBe(originalMessage.action);
@@ -363,6 +365,7 @@ describe('ChatMessage', () => {
         text: 'original text',
         metadata: { key: 'value' },
         headers: { headerKey: 'headerValue' },
+        userClaim: 'test-claim',
         action: ChatMessageAction.MessageCreate,
         version: {
           serial: 'version1',
@@ -396,6 +399,8 @@ describe('ChatMessage', () => {
 
       expect(copiedMessage.headers).toEqual(originalMessage.headers); // must be equal
       expect(copiedMessage.headers).not.toBe(originalMessage.headers); // but not same object
+
+      expect(copiedMessage.userClaim).toBe(originalMessage.userClaim);
 
       expect(copiedMessage.serial).toBe(originalMessage.serial);
       expect(copiedMessage.clientId).toBe(originalMessage.clientId);
