@@ -14,7 +14,7 @@ import EventEmitter, { wrap } from './utils/event-emitter.js';
 /**
  * Represents a user in the set of currently typing users, with associated metadata.
  */
-export interface TypingSetEntry {
+export interface TypingMember {
   /** The client ID of the typing user. */
   clientId: string;
   /** The user claim attached to this user's typing event, if any. */
@@ -110,11 +110,11 @@ export interface Typing {
   /**
    * Gets the current set of users who are typing, with associated metadata.
    *
-   * Returns an array of {@link TypingSetEntry} objects containing the client IDs and
+   * Returns an array of {@link TypingMember} objects containing the client IDs and
    * user claims of all users currently typing in the room.
-   * @returns Array of typing set entries for users currently typing
+   * @returns Array of {@link TypingMember} objects for users currently typing
    */
-  get currentTypers(): TypingSetEntry[];
+  get currentTypers(): TypingMember[];
 
   /**
    * Sends a typing started event to notify other users that the current user is typing.
@@ -328,7 +328,7 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   /**
    * @inheritDoc
    */
-  get currentTypers(): TypingSetEntry[] {
+  get currentTypers(): TypingMember[] {
     this._logger.trace(`DefaultTyping.currentTypers();`);
     return this._buildCurrentTypers();
   }
@@ -539,10 +539,10 @@ export class DefaultTyping extends EventEmitter<TypingEventsMap> implements Typi
   }
 
   /**
-   * Builds an array of TypingSetEntry objects from the current typing state.
-   * @returns Array of typing set entries for users currently typing
+   * Builds an array of TypingMember objects from the current typing state.
+   * @returns Array of {@link TypingMember} objects for users currently typing
    */
-  private _buildCurrentTypers(): TypingSetEntry[] {
+  private _buildCurrentTypers(): TypingMember[] {
     return [...this._currentlyTyping.entries()].map(([clientId, state]) => ({
       clientId,
       userClaim: state.userClaim,
