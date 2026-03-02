@@ -16,12 +16,12 @@ To validate that the web documentation code snippets are accurate and up-to-date
 > [!IMPORTANT]
 > These prompts should be run with the most powerful LLM available to you (e.g. Claude Opus, GPT-5, etc.) for the best results.
 
-Replace `{DOCS_PATH}` with the path to your local clone of the [ably/docs](https://github.com/ably/docs) repository and `{SDK_PATH}` with the path to your local clone of this SDK repository.
+Replace `{DOCS_PATH}` with the path to your local clone of the [ably/docs](https://github.com/ably/docs) repository and `{SDK_PATH}` with the path to your local clone of the [ably-chat-js](https://github.com/ably/ably-chat-js) SDK repository. Ensure both the local `ably/docs` and `ably-chat-js` repositories are on the `main` branch and in sync with the remote.
 
 ### JavaScript
 
 ```text
-Verify all `javascript` annotated code snippets in `.mdx` files located at `{DOCS_PATH}` against the `ably-chat-js` source code repository at `{SDK_PATH}`.
+Verify all `javascript` annotated code snippets in `.mdx` files located at `{DOCS_PATH}/src/pages/docs/chat` against the `ably-chat-js` source code repository at `{SDK_PATH}`.
 
 ### Verification Steps:
 
@@ -60,7 +60,7 @@ Create/update a markdown report file `chat_javascript_api_verification_report.md
 ### React
 
 ```text
-Verify all `react` annotated code snippets in `.mdx` files located at `{DOCS_PATH}` against the `ably-chat-js` source code repository at `{SDK_PATH}`.
+Verify all `react` annotated code snippets in `.mdx` files located at `{DOCS_PATH}/src/pages/docs/chat` against the `ably-chat-js` source code repository at `{SDK_PATH}`.
 
 ### Verification Steps:
 
