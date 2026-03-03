@@ -123,9 +123,14 @@ describe('Typing', () => {
     const publishSpy = vi
       .spyOn(realtimeChannel, 'publish')
       .mockImplementationOnce(
-        async () => new Promise((resolve) => setTimeout(resolve, 300)), // Simulate 300ms delay in publish
+        async () =>
+          new Promise((resolve) =>
+            setTimeout(() => {
+              resolve({ serials: [] });
+            }, 300),
+          ), // Simulate 300ms delay in publish
       )
-      .mockImplementationOnce(async () => {});
+      .mockResolvedValueOnce({ serials: [] });
 
     // Needed to allow typing calls to proceed
     vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
@@ -169,7 +174,7 @@ describe('Typing', () => {
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
-      vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
+      vi.spyOn(realtimeChannel, 'publish').mockResolvedValue({ serials: [] });
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
@@ -193,7 +198,7 @@ describe('Typing', () => {
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
-      vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
+      vi.spyOn(realtimeChannel, 'publish').mockResolvedValue({ serials: [] });
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
@@ -234,9 +239,14 @@ describe('Typing', () => {
       const publishSpy = vi
         .spyOn(realtimeChannel, 'publish')
         .mockImplementationOnce(
-          async () => new Promise((resolve) => setTimeout(resolve, 1000)), // Simulate 1s delay
+          async () =>
+            new Promise((resolve) =>
+              setTimeout(() => {
+                resolve({ serials: [] });
+              }, 1000),
+            ), // Simulate 1s delay
         )
-        .mockImplementation(async () => {}); // All subsequent calls resolve immediately
+        .mockResolvedValue({ serials: [] }); // All subsequent calls resolve immediately
 
       // Needed to allow typing calls to proceed
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
@@ -275,7 +285,7 @@ describe('Typing', () => {
       const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
-      vi.spyOn(room.channel, 'publish').mockImplementation(async (): Promise<void> => {});
+      vi.spyOn(room.channel, 'publish').mockResolvedValue({ serials: [] });
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Stop typing
@@ -290,7 +300,7 @@ describe('Typing', () => {
       const { room, realtime } = context;
       const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
-      vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
+      vi.spyOn(realtimeChannel, 'publish').mockResolvedValue({ serials: [] });
       await room.typing.keystroke();
       vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
 
@@ -306,7 +316,7 @@ describe('Typing', () => {
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If stop is called, it should publish a leave message
-      vi.spyOn(realtimeChannel, 'publish').mockImplementation(async (): Promise<void> => {});
+      vi.spyOn(realtimeChannel, 'publish').mockResolvedValue({ serials: [] });
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       await Promise.all([room.typing.keystroke(), room.typing.stop()]);
@@ -331,9 +341,14 @@ describe('Typing', () => {
       const publishSpy = vi
         .spyOn(realtimeChannel, 'publish')
         .mockImplementationOnce(
-          async () => new Promise((resolve) => setTimeout(resolve, 1000)), // Simulate 1s delay on first keystroke
+          async () =>
+            new Promise((resolve) =>
+              setTimeout(() => {
+                resolve({ serials: [] });
+              }, 1000),
+            ), // Simulate 1s delay on first keystroke
         )
-        .mockImplementation(async () => {}); // All subsequent calls resolve immediately
+        .mockResolvedValue({ serials: [] }); // All subsequent calls resolve immediately
 
       // Needed to allow typing calls to proceed
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
@@ -947,7 +962,7 @@ describe('Typing', () => {
       const defaultTyping = room.typing as TestTypingInterface;
       const defaultRoom = room as TestRoomInterface;
       // Mock implementation for `publish` to simulate successful publish
-      vi.spyOn(realtimeChannel, 'publish').mockImplementation(async () => {});
+      vi.spyOn(realtimeChannel, 'publish').mockResolvedValue({ serials: [] });
 
       // Put the room into the attached state
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
@@ -984,9 +999,14 @@ describe('Typing', () => {
       const publishSpy = vi
         .spyOn(realtimeChannel, 'publish')
         .mockImplementationOnce(
-          async () => new Promise((resolve) => setTimeout(resolve, 2000)), // Simulate 2s delay
+          async () =>
+            new Promise((resolve) =>
+              setTimeout(() => {
+                resolve({ serials: [] });
+              }, 2000),
+            ), // Simulate 2s delay
         )
-        .mockImplementation(async () => {}); // All subsequent calls resolve immediately
+        .mockResolvedValue({ serials: [] }); // All subsequent calls resolve immediately
 
       // Needed to allow typing calls to proceed
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');

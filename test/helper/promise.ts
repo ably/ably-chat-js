@@ -8,16 +8,17 @@ import { vi } from 'vitest';
 export const mockReturningPromiseNull = () => vi.fn().mockResolvedValue(null);
 
 /**
- * Wraps a synchronous callback function to return a Promise<void>.
+ * Wraps a synchronous callback function to return a Promise.
  * Useful for mock implementations that need to perform synchronous work but must return a Promise.
  * For example, when we want to emulate a publish (which returns a Promise), but the actual publish
  * mock is synchronous and thus we don't have an await to run.
  * @param callback The synchronous callback to execute
- * @returns A function that executes the callback and returns Promise<void>
+ * @returns A function that executes the callback and returns a Promise
  */
 export const wrapWithPromise =
   <TArgs extends unknown[]>(callback: (...args: TArgs) => void) =>
-  async (...args: TArgs): Promise<void> => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async (...args: TArgs): Promise<any> => {
     callback(...args);
     await Promise.resolve();
   };
