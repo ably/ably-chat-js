@@ -75,7 +75,7 @@ function createMockChannel(name: string) {
     off: (...args: any[]) => {
       mock.attachmentStateEmitter.off(...args);
     },
-    publish: () => ({ serials: [] }),
+    publish: () => mockPromisify({ serials: [] }),
     subscriptions: createMockEmitter(),
     setOptions: methodReturningVoidPromise,
     whenState: methodReturningVoidPromise,
