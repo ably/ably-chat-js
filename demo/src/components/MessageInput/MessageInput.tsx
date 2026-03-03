@@ -1,6 +1,6 @@
 import { ChangeEventHandler, FC, FormEventHandler, useEffect, useRef, useState } from 'react';
 import { useChatConnection, useMessages, useTyping } from '@ably/chat/react';
-import { ConnectionStatus, ErrorInfo } from '@ably/chat';
+import { ConnectionStatus, ErrorInfo, ErrorCode } from '@ably/chat';
 import { TypingIndicatorPanel } from '../TypingIndicatorPanel';
 import { SettingsModal } from '../SettingsModal';
 
@@ -62,7 +62,7 @@ export const MessageInput: FC<MessageInputProps> = ({}) => {
       })
       .catch((error: unknown) => {
         const errorInfo = error as ErrorInfo;
-        if (errorInfo.code === 42213) {
+        if (errorInfo.code === ErrorCode.MessageRejectedByModeration) {
           // This error code means the message was rejected by Ably's content moderation system.
           const rejectionReason = errorInfo.detail?.reason || 'unknown reason';
           alert(`Message rejected due to content: ${rejectionReason}`);
