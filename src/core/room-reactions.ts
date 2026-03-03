@@ -243,7 +243,7 @@ export class DefaultRoomReactions implements RoomReactions {
       },
     };
 
-    return this._channel.publish(messageToEphemeral(realtimeMessage));
+    await this._channel.publish(messageToEphemeral(realtimeMessage));
   }
 
   /**
