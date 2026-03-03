@@ -2,6 +2,16 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [1.3.0](https://github.com/ably/ably-chat-js/tree/1.3.0) (2026-03-03)
+
+### New Features
+
+- **Error Detail Support**: Added support for the `detail` field on `ErrorInfo`, enabling structured data to be passed from moderation (e.g. BeforePublish rules) to clients. This is useful for chat moderation rejection details. [#718](https://github.com/ably/ably-chat-js/pull/718)
+
+### Changes
+
+- **Ably SDK Upgrade**: Upgraded `ably` dependency to v2.19.0, which introduces the `detail` field on `ErrorInfo`. [#718](https://github.com/ably/ably-chat-js/pull/718)
+
 ## [1.2.0](https://github.com/ably/ably-chat-js/tree/1.2.0) (2026-02-24)
 
 ### New Features
