@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@ably/chat": "file:..",
-    "ably": "^2.14.0",
+    "ably": "^2.19.0",
     "clsx": "^2.1.1",
     "nanoid": "^5.1.6",
     "react": "^18.3.1",
