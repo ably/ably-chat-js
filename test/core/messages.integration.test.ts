@@ -86,7 +86,10 @@ describe('messages integration', { timeout: 10000 }, () => {
         messages.push(messageEvent.message);
       });
 
-      await room.messages.send({ text: 'Hello with claim!' });
+      const sentMessage = await room.messages.send({ text: 'Hello with claim!' });
+
+      // Check that the send response contains the userClaim
+      expect(sentMessage.userClaim).toBe('test-claim-value');
 
       // Wait for the message to arrive via realtime
       await waitForArrayLength(messages, 1);
@@ -369,6 +372,111 @@ describe('messages integration', { timeout: 10000 }, () => {
       expect(deletions[0]?.version.clientId).toEqual(chat.clientId);
     });
 
+    it('should return user claim when deleting a message', async () => {
+      const roomName = randomRoomName();
+      const roomClaim = `ably.room.${roomName}`;
+      const chat = newChatClient(undefined, undefined, { [roomClaim]: 'test-claim-value' });
+      await waitForClientId(chat);
+
+      const room = await chat.rooms.get(roomName);
+
+      // Send a message and then delete it
+      const message1 = await room.messages.send({ text: 'Hello there!' });
+      const deletedMessage = await room.messages.delete(message1.serial, { description: 'Deleted message' });
+
+      // Check that the delete response contains the userClaim
+      expect(deletedMessage.userClaim).toBe('test-claim-value');
+
+      // Check that history returns the correct userClaim on the deleted message
+      await vi.waitFor(
+        async () => {
+          const history = await room.messages.history({ limit: 1, orderBy: OrderBy.NewestFirst });
+          expect(history.items.length).toBe(1);
+          expect(history.items[0]?.userClaim).toBe('test-claim-value');
+          expect(history.items[0]?.action).toEqual(ChatMessageAction.MessageDelete);
+        },
+        { timeout: 5000, interval: 1000 },
+      );
+    });
+
+    it('should return the deleting clients user claim when a different client deletes a message', async () => {
+      const roomName = randomRoomName();
+      const roomClaim = `ably.room.${roomName}`;
+
+      // Create two clients with different claims
+      const senderChat = newChatClient(undefined, undefined, { [roomClaim]: 'sender-claim' });
+      const deleterChat = newChatClient(undefined, undefined, { [roomClaim]: 'deleter-claim' });
+      await waitForClientId(senderChat);
+      await waitForClientId(deleterChat);
+
+      const senderRoom = await senderChat.rooms.get(roomName);
+      const deleterRoom = await deleterChat.rooms.get(roomName);
+
+      // Send a message from the sender
+      const message1 = await senderRoom.messages.send({ text: 'Hello there!' });
+      expect(message1.userClaim).toBe('sender-claim');
+
+      // Delete the message from the deleter
+      const deletedMessage = await deleterRoom.messages.delete(message1.serial, { description: 'Deleted by other' });
+
+      // The delete response should have the deleter's claim, not the sender's
+      expect(deletedMessage.userClaim).toBe('deleter-claim');
+
+      // History should also reflect the deleter's claim
+      await vi.waitFor(
+        async () => {
+          const history = await deleterRoom.messages.history({ limit: 1, orderBy: OrderBy.NewestFirst });
+          expect(history.items.length).toBe(1);
+          expect(history.items[0]?.userClaim).toBe('deleter-claim');
+          expect(history.items[0]?.action).toEqual(ChatMessageAction.MessageDelete);
+        },
+        { timeout: 5000, interval: 1000 },
+      );
+    });
+
+    it('should return the deleting clients user claim when deleting an updated message', async () => {
+      const roomName = randomRoomName();
+      const roomClaim = `ably.room.${roomName}`;
+
+      // Create three clients with different claims
+      const senderChat = newChatClient(undefined, undefined, { [roomClaim]: 'sender-claim' });
+      const updaterChat = newChatClient(undefined, undefined, { [roomClaim]: 'updater-claim' });
+      const deleterChat = newChatClient(undefined, undefined, { [roomClaim]: 'deleter-claim' });
+      await waitForClientId(senderChat);
+      await waitForClientId(updaterChat);
+      await waitForClientId(deleterChat);
+
+      const senderRoom = await senderChat.rooms.get(roomName);
+      const updaterRoom = await updaterChat.rooms.get(roomName);
+      const deleterRoom = await deleterChat.rooms.get(roomName);
+
+      // Send a message from the sender
+      const message1 = await senderRoom.messages.send({ text: 'Hello there!' });
+      expect(message1.userClaim).toBe('sender-claim');
+
+      // Update the message from the updater
+      const updatedMessage = await updaterRoom.messages.update(message1.serial, { text: 'Updated by other' });
+
+      expect(updatedMessage.userClaim).toBe('updater-claim');
+
+      // Delete the message from the deleter
+      const deletedMessage = await deleterRoom.messages.delete(message1.serial, { description: 'Deleted by other' });
+
+      // The delete response should have the deleter's claim, not the updaters or sender's
+      expect(deletedMessage.userClaim).toBe('deleter-claim');
+
+      // History should also reflect the deleter's claim
+      await vi.waitFor(
+        async () => {
+          const history = await deleterRoom.messages.history({ limit: 1, orderBy: OrderBy.NewestFirst });
+          expect(history.items.length).toBe(1);
+          expect(history.items[0]?.userClaim).toBe('deleter-claim');
+          expect(history.items[0]?.action).toEqual(ChatMessageAction.MessageDelete);
+        },
+        { timeout: 5000, interval: 1000 },
+      );
+    });
+
     it<TestContext>('should be able to delete a message using with()', async (context) => {
       const { chat } = context;
 
@@ -458,6 +566,74 @@ describe('messages integration', { timeout: 10000 }, () => {
           timestamp: message1.timestamp,
         }),
       ]);
+    });
+
+    it('should return user claim when updating a message', async () => {
+      const roomName = randomRoomName();
+      const roomClaim = `ably.room.${roomName}`;
+      const chat = newChatClient(undefined, undefined, { [roomClaim]: 'test-claim-value' });
+      await waitForClientId(chat);
+
+      const room = await chat.rooms.get(roomName);
+
+      // Send a message and then update it
+      const message1 = await room.messages.send({ text: 'Hello there!' });
+      const updatedMessage = await room.messages.update(message1.serial, message1.copy({ text: 'Updated text' }), {
+        description: 'Updated message',
+      });
+
+      // Check that the update response contains the userClaim
+      expect(updatedMessage.userClaim).toBe('test-claim-value');
+
+      // Check that history returns the correct userClaim on the updated message
+      await vi.waitFor(
+        async () => {
+          const history = await room.messages.history({ limit: 1, orderBy: OrderBy.NewestFirst });
+          expect(history.items.length).toBe(1);
+          expect(history.items[0]?.userClaim).toBe('test-claim-value');
+          expect(history.items[0]?.action).toEqual(ChatMessageAction.MessageUpdate);
+        },
+        { timeout: 5000, interval: 1000 },
+      );
+    });
+
+    it('should return the updating clients user claim when a different client updates a message', async () => {
+      const roomName = randomRoomName();
+      const roomClaim = `ably.room.${roomName}`;
+
+      // Create two clients with different claims
+      const senderChat = newChatClient(undefined, undefined, { [roomClaim]: 'sender-claim' });
+      const updaterChat = newChatClient(undefined, undefined, { [roomClaim]: 'updater-claim' });
+      await waitForClientId(senderChat);
+      await waitForClientId(updaterChat);
+
+      const senderRoom = await senderChat.rooms.get(roomName);
+      const updaterRoom = await updaterChat.rooms.get(roomName);
+
+      // Send a message from the sender
+      const message1 = await senderRoom.messages.send({ text: 'Hello there!' });
+      expect(message1.userClaim).toBe('sender-claim');
+
+      // Update the message from the updater
+      const updatedMessage = await updaterRoom.messages.update(
+        message1.serial,
+        { text: 'Updated by other' },
+        { description: 'Updated by different client' },
+      );
+
+      // The update response should have the updater's claim, not the sender's
+      expect(updatedMessage.userClaim).toBe('updater-claim');
+
+      // History should also reflect the updater's claim
+      await vi.waitFor(
+        async () => {
+          const history = await updaterRoom.messages.history({ limit: 1, orderBy: OrderBy.NewestFirst });
+          expect(history.items.length).toBe(1);
+          expect(history.items[0]?.userClaim).toBe('updater-claim');
+          expect(history.items[0]?.action).toEqual(ChatMessageAction.MessageUpdate);
+        },
+        { timeout: 5000, interval: 1000 },
+      );
     });
 
     it<TestContext>('should be able to update a message using just the serial string', async (context) => {
