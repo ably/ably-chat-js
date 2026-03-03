@@ -69,6 +69,50 @@ describe('config', () => {
     });
   });
 
+  it('includes errorDetail in thrown ErrorInfo on non-paginated request', async () => {
+    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const chatApi = new ChatApi(realtime, makeTestLogger());
+
+    vi.spyOn(realtime, 'request').mockReturnValue(
+      Promise.resolve({
+        success: false,
+        errorMessage: 'test',
+        errorCode: 40000,
+        statusCode: 400,
+        errorDetail: { field: 'name', reason: 'invalid' } as Record<string, string>,
+      }) as Promise<Ably.HttpPaginatedResponse>,
+    );
+
+    await expect(chatApi.sendMessage('test', { text: 'hello world' })).rejects.toBeErrorInfo({
+      message: 'test',
+      code: 40000,
+      statusCode: 400,
+      detail: { field: 'name', reason: 'invalid' },
+    });
+  });
+
+  it('includes errorDetail in thrown ErrorInfo on paginated request', async () => {
+    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const chatApi = new ChatApi(realtime, makeTestLogger());
+
+    vi.spyOn(realtime, 'request').mockReturnValue(
+      Promise.resolve({
+        success: false,
+        errorMessage: 'test',
+        errorCode: 40000,
+        statusCode: 400,
+        errorDetail: { field: 'name', reason: 'invalid' } as Record<string, string>,
+      }) as Promise<Ably.HttpPaginatedResponse>,
+    );
+
+    await expect(chatApi.history('test', {})).rejects.toBeErrorInfo({
+      message: 'test',
+      code: 40000,
+      statusCode: 400,
+      detail: { field: 'name', reason: 'invalid' },
+    });
+  });
+
   it('throws errors if invalid OrderBy used on history request', async () => {
     const realtime = new Ably.Realtime({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger());

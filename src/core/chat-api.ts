@@ -268,7 +268,13 @@ export class ChatApi {
         errorMessage: response.errorMessage,
         errorDetail: response.errorDetail,
       });
-      throw new Ably.ErrorInfo(response.errorMessage, response.errorCode, response.statusCode, undefined, response.errorDetail);
+      throw new Ably.ErrorInfo(
+        response.errorMessage,
+        response.errorCode,
+        response.statusCode,
+        undefined,
+        response.errorDetail,
+      );
     }
 
     return response;

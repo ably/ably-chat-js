@@ -72,7 +72,8 @@ const ablyRealtimeClientWithToken = (
     try {
       token = jwt.sign(claims, keySecret, { header: header });
     } catch (error: unknown) {
-      err = new Ably.ErrorInfo('unable to generate JWT', 40000, 400, error as Error);
+      const message = error instanceof Error ? error.message : String(error);
+      err = new Ably.ErrorInfo(`unable to generate JWT; ${message}`, 40000, 400);
     } finally {
       callback(err, token);
     }
