@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+
 import * as Ably from 'ably';
 import { expect } from 'vitest';
 
@@ -48,8 +50,7 @@ export const toBeErrorInfo = (received: unknown, expected: ErrorInfoCompareType)
   const codeMatch = expected.code === undefined || received.code === expected.code;
   const statusCodeMatch = expected.statusCode === undefined || received.statusCode === expected.statusCode;
   const messageMatch = expected.message === undefined || received.message === expected.message;
-  const detailMatch =
-    expected.detail === undefined || JSON.stringify(received.detail) === JSON.stringify(expected.detail);
+  const detailMatch = expected.detail === undefined || isDeepStrictEqual(received.detail, expected.detail);
   const causeMatch = expected.cause === undefined || toBeErrorInfo(received.cause, expected.cause).pass;
 
   return {
