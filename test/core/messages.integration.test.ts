@@ -69,6 +69,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       ]);
     });
 
+    // CHA-M2h
     it('should be able to send and receive chat messages with a user claim', async () => {
       const roomName = randomRoomName();
       const roomClaim = `ably.room.${roomName}`;
@@ -372,6 +373,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       expect(deletions[0]?.version.clientId).toEqual(chat.clientId);
     });
 
+    // CHA-M2h
     it('should return user claim when deleting a message', async () => {
       const roomName = randomRoomName();
       const roomClaim = `ably.room.${roomName}`;
@@ -399,6 +401,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       );
     });
 
+    // CHA-M2h
     it('should return the deleting clients user claim when a different client deletes a message', async () => {
       const roomName = randomRoomName();
       const roomClaim = `ably.room.${roomName}`;
@@ -434,6 +437,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       );
     });
 
+    // CHA-M2h
     it('should return the deleting clients user claim when deleting an updated message', async () => {
       const roomName = randomRoomName();
       const roomClaim = `ably.room.${roomName}`;
@@ -568,6 +572,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       ]);
     });
 
+    // CHA-M2h
     it('should return user claim when updating a message', async () => {
       const roomName = randomRoomName();
       const roomClaim = `ably.room.${roomName}`;
@@ -597,6 +602,7 @@ describe('messages integration', { timeout: 10000 }, () => {
       );
     });
 
+    // CHA-M2h
     it('should return the updating clients user claim when a different client updates a message', async () => {
       const roomName = randomRoomName();
       const roomClaim = `ably.room.${roomName}`;
