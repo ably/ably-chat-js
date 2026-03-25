@@ -132,6 +132,14 @@ describe('Chat', () => {
     const message = await room.messages.send({ text: 'my message' });
     expect(message).toEqual(expect.objectContaining({ text: 'my message', clientId: chat.clientId }));
 
+    // Update the message (PUT request with msgpack body)
+    const updatedMessage = await room.messages.update(message.serial, { text: 'updated message' });
+    expect(updatedMessage).toEqual(expect.objectContaining({ text: 'updated message', clientId: chat.clientId }));
+
+    // Delete the message (POST request with msgpack body)
+    const deletedMessage = await room.messages.delete(updatedMessage.serial);
+    expect(deletedMessage).toBeDefined();
+
     // Attach to the room
     await room.attach();
 
@@ -144,9 +152,7 @@ describe('Chat', () => {
     // Request history, and expect it to succeed
     await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for persistence - this will not be necessary in the future
     const history = await room.messages.history({ limit: 1 });
-    expect(history.items).toEqual(
-      expect.arrayContaining([expect.objectContaining({ text: 'my message', clientId: chat.clientId })]),
-    );
+    expect(history.items.length).toBeGreaterThan(0);
   });
 
   it('should have a connection state', async () => {

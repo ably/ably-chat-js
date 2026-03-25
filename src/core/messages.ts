@@ -854,8 +854,8 @@ export class DefaultMessages implements Messages {
     const response = await this._chatApi.updateMessage(this._roomName, serial, {
       message: {
         text: updateParams.text,
-        metadata: updateParams.metadata,
-        headers: updateParams.headers,
+        ...(updateParams.metadata && { metadata: updateParams.metadata }),
+        ...(updateParams.headers && { headers: updateParams.headers }),
       },
       ...details,
     });
