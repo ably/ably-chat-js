@@ -2,6 +2,12 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [1.3.1](https://github.com/ably/ably-chat-js/tree/1.3.1) (2026-03-25)
+
+### Bug Fixes
+
+- **Message Update with MsgPack**: Fixed message update failing when using MsgPack encoding by stripping `undefined` values from the request payload. [#721](https://github.com/ably/ably-chat-js/pull/721)
+
 ## [1.3.0](https://github.com/ably/ably-chat-js/tree/1.3.0) (2026-03-03)
 
 ### New Features
