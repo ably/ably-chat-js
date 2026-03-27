@@ -9,14 +9,14 @@
   "react-native": "dist/chat/ably-chat.umd.cjs",
   "exports": {
     ".": {
-      "react-native": "./dist/chat/ably-chat.umd.cjs",
       "types": "./dist/chat/index.d.ts",
+      "react-native": "./dist/chat/ably-chat.umd.cjs",
       "import": "./dist/chat/ably-chat.js",
       "require": "./dist/chat/ably-chat.umd.cjs"
     },
     "./react": {
-      "react-native": "./dist/react/ably-chat-react.umd.cjs",
       "types": "./dist/react/index.d.ts",
+      "react-native": "./dist/react/ably-chat-react.umd.cjs",
       "import": "./dist/react/ably-chat-react.js",
       "require": "./dist/react/ably-chat-react.umd.cjs"
     },
