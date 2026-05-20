@@ -169,10 +169,16 @@ export class DefaultRooms implements InternalRooms {
    * @param realtime An instance of the Ably Realtime client.
    * @param clientIdResolver A resolver for the clientId.
    * @param logger An instance of the Logger.
+   * @param idempotentRestPublishing Whether the ChatApi should attach an idempotency key to outgoing requests.
    */
-  constructor(realtime: Ably.Realtime, clientIdResolver: ClientIdResolver, logger: Logger) {
+  constructor(
+    realtime: Ably.Realtime,
+    clientIdResolver: ClientIdResolver,
+    logger: Logger,
+    idempotentRestPublishing = false,
+  ) {
     this._realtime = realtime;
-    this._chatApi = new ChatApi(realtime, logger);
+    this._chatApi = new ChatApi(realtime, logger, idempotentRestPublishing);
     this._clientIdResolver = clientIdResolver;
     this._logger = logger;
   }

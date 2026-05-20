@@ -15,6 +15,17 @@ export interface ChatClientOptions {
    * @defaultValue LogLevel.error
    */
   logLevel?: LogLevel;
+
+  /**
+   * When `true`, the SDK generates a unique idempotency identifier for each
+   * `send/update/delete` call and sends it with the request. If the request is
+   * retried internally across fallback hosts, the same identifier is used,
+   * allowing the server to deduplicate the attempt.
+   *
+   * The identifier is regenerated for each new call.
+   * @defaultValue false
+   */
+  idempotentRestPublishing?: boolean;
 }
 
 /**
@@ -22,6 +33,7 @@ export interface ChatClientOptions {
  */
 const defaultClientOptions = {
   logLevel: LogLevel.Error,
+  idempotentRestPublishing: false,
 };
 
 /**
@@ -37,6 +49,7 @@ export type NormalizedChatClientOptions = Modify<
   ChatClientOptions,
   {
     logLevel: LogLevel;
+    idempotentRestPublishing: boolean;
   }
 >;
 
@@ -46,5 +59,6 @@ export const normalizeClientOptions = (options?: ChatClientOptions): NormalizedC
   return {
     ...options,
     logLevel: options.logLevel ?? defaultClientOptions.logLevel,
+    idempotentRestPublishing: options.idempotentRestPublishing ?? defaultClientOptions.idempotentRestPublishing,
   };
 };

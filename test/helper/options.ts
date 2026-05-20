@@ -3,6 +3,7 @@ import { LogLevel } from '../../src/core/logger.js';
 
 const defaults: NormalizedChatClientOptions = {
   logLevel: LogLevel.Error,
+  idempotentRestPublishing: false,
 };
 
 export const testClientOptions = (options?: ChatClientOptions): NormalizedChatClientOptions => {

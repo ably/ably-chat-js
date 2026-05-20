@@ -78,7 +78,7 @@ describe('logger', () => {
   );
 
   it('throws exception on invalid log level', () => {
-    expect(() => makeLogger({ logLevel: 'invalid' as LogLevel })).toThrowErrorInfo({
+    expect(() => makeLogger({ logLevel: 'invalid' as LogLevel, idempotentRestPublishing: false })).toThrowErrorInfo({
       message: 'unable to create logger; invalid log level: invalid',
       statusCode: 400,
       code: ErrorCode.InvalidArgument,

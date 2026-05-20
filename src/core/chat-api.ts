@@ -1,6 +1,7 @@
 import * as Ably from 'ably';
 
 import { ErrorCode } from './errors.js';
+import { idempotencyKey } from './id.js';
 import { Logger } from './logger.js';
 import { Message, MessageHeaders, MessageMetadata, MessageOperationMetadata } from './message.js';
 import { OrderBy } from './messages.js';
@@ -115,10 +116,12 @@ export class ChatApi {
   private readonly _realtime: Ably.Realtime;
   private readonly _logger: Logger;
   private readonly _apiProtocolVersion: number = 4;
+  private readonly _idempotentRestPublishing: boolean;
 
-  constructor(realtime: Ably.Realtime, logger: Logger) {
+  constructor(realtime: Ably.Realtime, logger: Logger, idempotentRestPublishing = false) {
     this._realtime = realtime;
     this._logger = logger;
+    this._idempotentRestPublishing = idempotentRestPublishing;
   }
 
   async history(roomName: string, params: HistoryQueryParams): Promise<PaginatedResult<Message>> {
@@ -195,7 +198,7 @@ export class ChatApi {
       this._messageUrl(roomName, serial, '/delete'),
       'POST',
       body,
-      {},
+      this._idempotencyQueryParams(),
     );
   }
 
@@ -205,11 +208,25 @@ export class ChatApi {
       ...(params.metadata && { metadata: params.metadata }),
       ...(params.headers && { headers: params.headers }),
     };
-    return this._makeAuthorizedRequest<RestMessage>(this._roomUrl(roomName, '/messages'), 'POST', body);
+    return this._makeAuthorizedRequest<RestMessage>(
+      this._roomUrl(roomName, '/messages'),
+      'POST',
+      body,
+      this._idempotencyQueryParams(),
+    );
   }
 
   async updateMessage(roomName: string, serial: string, params: UpdateMessageParams): Promise<UpdateMessageResponse> {
-    return this._makeAuthorizedRequest<UpdateMessageResponse>(this._messageUrl(roomName, serial), 'PUT', params);
+    return this._makeAuthorizedRequest<UpdateMessageResponse>(
+      this._messageUrl(roomName, serial),
+      'PUT',
+      params,
+      this._idempotencyQueryParams(),
+    );
+  }
+
+  private _idempotencyQueryParams(): { idempotencyKey: string } | undefined {
+    return this._idempotentRestPublishing ? { idempotencyKey: idempotencyKey() } : undefined;
   }
 
   async sendMessageReaction(roomName: string, serial: string, data: SendMessageReactionParams): Promise<void> {
