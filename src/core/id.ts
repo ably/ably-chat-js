@@ -15,6 +15,14 @@ const IDEMPOTENCY_KEY_ENTROPY_BYTES = 9;
 export const idempotencyKey = (): string => {
   const bytes = new Uint8Array(IDEMPOTENCY_KEY_ENTROPY_BYTES);
   crypto.getRandomValues(bytes);
+
+  // Prefer Uint8Array.prototype.toBase64() where available (Node 22+, modern
+  // browsers, recent React Native) — operates directly on bytes. Fall back to
+  // btoa for older runtimes where toBase64 isn't yet available.
+  const native = (bytes as Uint8Array & { toBase64?: () => string }).toBase64;
+  if (typeof native === 'function') {
+    return native.call(bytes);
+  }
   let binary = '';
   for (const b of bytes) {
     binary += String.fromCodePoint(b);

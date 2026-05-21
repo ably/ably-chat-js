@@ -175,7 +175,7 @@ export class DefaultRooms implements InternalRooms {
     realtime: Ably.Realtime,
     clientIdResolver: ClientIdResolver,
     logger: Logger,
-    idempotentRestPublishing = false,
+    idempotentRestPublishing: boolean,
   ) {
     this._realtime = realtime;
     this._chatApi = new ChatApi(realtime, logger, idempotentRestPublishing);
