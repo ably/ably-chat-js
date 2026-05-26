@@ -118,7 +118,7 @@ export class ChatApi {
   private readonly _apiProtocolVersion: number = 4;
   private readonly _idempotentRestPublishing: boolean;
 
-  constructor(realtime: Ably.Realtime, logger: Logger, idempotentRestPublishing = false) {
+  constructor(realtime: Ably.Realtime, logger: Logger, idempotentRestPublishing: boolean) {
     this._realtime = realtime;
     this._logger = logger;
     this._idempotentRestPublishing = idempotentRestPublishing;

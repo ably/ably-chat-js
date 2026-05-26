@@ -37,7 +37,7 @@ describe('MessageReactions', () => {
   describe('message reaction basics', () => {
     beforeEach<TestContext>((context) => {
       context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
-      context.chatApi = new ChatApi(context.realtime, makeTestLogger());
+      context.chatApi = new ChatApi(context.realtime, makeTestLogger(), false);
       context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
       const channel = context.room.channel;
       context.emulateBackendPublish = channelEventEmitter(channel);
@@ -383,7 +383,7 @@ describe('MessageReactions', () => {
   describe('raw message reactions', () => {
     beforeEach<TestContext>((context) => {
       context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
-      context.chatApi = new ChatApi(context.realtime, makeTestLogger());
+      context.chatApi = new ChatApi(context.realtime, makeTestLogger(), false);
       context.room = makeRandomRoom({
         chatApi: context.chatApi,
         realtime: context.realtime,
@@ -764,7 +764,7 @@ describe('MessageReactions', () => {
   describe('dispose', () => {
     beforeEach<TestContext>((context) => {
       context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
-      context.chatApi = new ChatApi(context.realtime, makeTestLogger());
+      context.chatApi = new ChatApi(context.realtime, makeTestLogger(), false);
       context.room = makeRandomRoom({
         chatApi: context.chatApi,
         realtime: context.realtime,

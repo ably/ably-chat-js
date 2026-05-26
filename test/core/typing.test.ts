@@ -64,7 +64,7 @@ describe('Typing', () => {
       },
     };
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
-    context.chatApi = new ChatApi(context.realtime, context.logger);
+    context.chatApi = new ChatApi(context.realtime, context.logger, false);
     context.room = makeRandomRoom({
       ...context,
     });
