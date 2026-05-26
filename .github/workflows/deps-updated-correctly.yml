@@ -12,6 +12,9 @@ on:
       - package.json
       - demo/package.json
 
+permissions:
+  contents: read
+
 jobs:
   check-all-package-lock-updated:
     runs-on: ubuntu-latest
