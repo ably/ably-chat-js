@@ -15,7 +15,7 @@ jobs:
         with:
           submodules: true
           persist-credentials: false
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3 # zizmor: ignore[cache-poisoning] no cache input is set, so npm cache is not enabled
         with:
           node-version: '20.10.0'
           registry-url: 'https://registry.npmjs.org'
