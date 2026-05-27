@@ -23,7 +23,7 @@ vi.mock('ably');
 describe('Occupancy', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
-    context.chatApi = new ChatApi(context.realtime, makeTestLogger());
+    context.chatApi = new ChatApi(context.realtime, makeTestLogger(), false);
     context.room = makeRandomRoom({
       chatApi: context.chatApi,
       realtime: context.realtime,

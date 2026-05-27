@@ -116,7 +116,12 @@ export class ChatClient {
 
     this._connection = new DefaultConnection(realtime, this._logger);
     this._clientIdResolver = new DefaultClientIdResolver(realtime, this._logger);
-    this._rooms = new DefaultRooms(realtime, this._clientIdResolver, this._logger);
+    this._rooms = new DefaultRooms(
+      realtime,
+      this._clientIdResolver,
+      this._logger,
+      this._clientOptions.idempotentRestPublishing,
+    );
     this._addAgent('chat-js');
     this._logger.trace(`ably chat client version ${VERSION}; initialized`);
   }

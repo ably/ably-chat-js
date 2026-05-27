@@ -21,7 +21,12 @@ describe('rooms', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
     const logger = makeTestLogger();
-    context.rooms = new DefaultRooms(context.realtime, new DefaultClientIdResolver(context.realtime, logger), logger);
+    context.rooms = new DefaultRooms(
+      context.realtime,
+      new DefaultClientIdResolver(context.realtime, logger),
+      logger,
+      false,
+    );
   });
 
   describe('room get', () => {

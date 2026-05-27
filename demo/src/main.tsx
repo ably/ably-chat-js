@@ -94,7 +94,7 @@ const getLogLevel = () => {
 
 const realtimeClient = new Ably.Realtime(getRealtimeOptions());
 
-const chatClient = new ChatClient(realtimeClient, { logLevel: getLogLevel() });
+const chatClient = new ChatClient(realtimeClient, { logLevel: getLogLevel(), idempotentRestPublishing: true });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

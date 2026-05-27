@@ -45,7 +45,7 @@ export const makeRandomRoom = (params?: {
 }): Room => {
   const logger = params?.logger ?? makeTestLogger();
   const realtime = params?.realtime ?? ablyRealtimeClient();
-  const chatApi = params?.chatApi ?? new ChatApi(realtime, logger);
+  const chatApi = params?.chatApi ?? new ChatApi(realtime, logger, false);
 
   return new DefaultRoom(
     randomRoomName(),

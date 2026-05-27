@@ -27,7 +27,7 @@ describe('Room', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
     const logger = makeTestLogger();
-    const chatApi = new ChatApi(context.realtime, logger);
+    const chatApi = new ChatApi(context.realtime, logger, false);
     context.getRoom = (options?: RoomOptions, useReact?: boolean) =>
       new DefaultRoom(
         randomRoomName(),
