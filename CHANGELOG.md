@@ -2,6 +2,17 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [1.4.0](https://github.com/ably/ably-chat-js/tree/1.4.0) (2026-05-28)
+
+### New Features
+
+- **Idempotent REST Publishing**: Added an opt-in `idempotentRestPublishing` flag on `ChatClientOptions` (default `false`). When enabled, the SDK attaches an `idempotencyKey` to send, update, and delete message requests so the server can deduplicate retried publish attempts. [#726](https://github.com/ably/ably-chat-js/pull/726)
+
+### Bug Fixes
+
+- **Package Exports**: Reordered the `"types"` condition to appear first in `package.json` `exports` so type resolution works correctly across bundlers. [#725](https://github.com/ably/ably-chat-js/pull/725)
+- **Security**: Bumped `ws` to `8.20.1` to resolve [GHSA-58qx-3vcg-4xpx](https://github.com/advisories/GHSA-58qx-3vcg-4xpx). [#727](https://github.com/ably/ably-chat-js/pull/727)
+
 ## [1.3.1](https://github.com/ably/ably-chat-js/tree/1.3.1) (2026-03-25)
 
 ### Bug Fixes
