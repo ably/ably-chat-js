@@ -577,18 +577,21 @@ export interface Messages {
   update(serial: string, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
-   * Get all getVersions of a message by its serial, in oldest-first order.
+   * Get all versions of a message by its serial, in oldest-first order.
    *
    * Returns the original create event followed by any subsequent update and delete events.
    *
    * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
    * @param serial - The unique serial identifier of the message.
-   * @returns A Promise that resolves to a {@link PaginatedResult} of {@link Message} objects representing each version.
+   * @returns A Promise that resolves to a {@link PaginatedResult} of {@link Message} objects representing each version,
+   * or rejects with:
+   * - {@link Ably.ErrorInfo} when the serial is null, undefined, or empty
+   * - {@link Ably.ErrorInfo} when the Ably Chat REST API request fails due to network or authorization errors
    * @example
    * ```typescript
-   * const getVersions = await room.messages.getVersions('01726585978590-001@abcdefghij:001');
-   * for (const version of getVersions.items) {
+   * const versions = await room.messages.getVersions('01726585978590-001@abcdefghij:001');
+   * for (const version of versions.items) {
    *   console.log(version.action, version.text);
    * }
    * ```
