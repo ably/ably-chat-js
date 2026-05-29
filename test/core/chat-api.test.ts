@@ -267,3 +267,31 @@ describe('getClientReactions', () => {
     );
   });
 });
+
+describe('getMessageVersions', () => {
+  it('calls the correct URL with GET and no params', async () => {
+    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const chatApi = new ChatApi(realtime, makeTestLogger(), false);
+    const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(
+      Promise.resolve({
+        success: true,
+        items: [],
+        hasNext: () => false,
+        isLast: () => true,
+        first: async () => await Promise.resolve({ items: [] }),
+        next: async () => await Promise.resolve(null),
+        current: async () => await Promise.resolve({ items: [] }),
+      }) as unknown as Promise<Ably.HttpPaginatedResponse>,
+    );
+
+    await chatApi.getMessageVersions('room123', 'msg-serial-123');
+
+    expect(requestSpy).toHaveBeenCalledWith(
+      'GET',
+      '/chat/v4/rooms/room123/messages/msg-serial-123/versions',
+      4,
+      undefined,
+      undefined,
+    );
+  });
+});
