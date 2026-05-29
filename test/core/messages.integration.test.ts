@@ -1265,15 +1265,16 @@ describe('messages integration', { timeout: 10000 }, () => {
         // Delete it
         const deleted = await room.messages.delete(sent.serial, { description: 'removed' });
 
-        // Wait for persistence before querying versions
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-
-        const result = await room.messages.getVersions(sent.serial);
-
-        expect(result.items).toHaveLength(3);
-        expect(result.items[0]).toEqual(sent);
-        expect(result.items[1]).toEqual(updated);
-        expect(result.items[2]).toEqual(deleted);
+        await vi.waitFor(
+          async () => {
+            const result = await room.messages.getVersions(sent.serial);
+            expect(result.items).toHaveLength(3);
+            expect(result.items[0]).toEqual(sent);
+            expect(result.items[1]).toEqual(updated);
+            expect(result.items[2]).toEqual(deleted);
+          },
+          { timeout: 5000, interval: 1000 },
+        );
       });
     });
 
