@@ -6,6 +6,7 @@ This contains only the most important and/or user-facing changes; for a full cha
 
 ### New Features
 
+- **Message Version History**: Added `room.messages.getVersions(serial)` to retrieve the full version history of a message — the original create followed by any updates and deletes — in oldest-first order. [#730](https://github.com/ably/ably-chat-js/pull/730)
 - **Idempotent REST Publishing**: Added an opt-in `idempotentRestPublishing` flag on `ChatClientOptions` (default `false`). When enabled, the SDK attaches an `idempotencyKey` to send, update, and delete message requests so the server can deduplicate retried publish attempts. [#726](https://github.com/ably/ably-chat-js/pull/726)
 
 ### Bug Fixes
