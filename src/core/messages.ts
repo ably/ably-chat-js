@@ -577,6 +577,28 @@ export interface Messages {
   update(serial: string, updateParams: UpdateMessageParams, details?: OperationDetails): Promise<Message>;
 
   /**
+   * Get all versions of a message by its serial, in oldest-first order.
+   *
+   * Returns the original create event followed by any subsequent update and delete events.
+   *
+   * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
+   * @param serial - The unique serial identifier of the message.
+   * @returns A Promise that resolves to a {@link PaginatedResult} of {@link Message} objects representing each version,
+   * or rejects with:
+   * - {@link Ably.ErrorInfo} when the serial is null, undefined, or empty
+   * - {@link Ably.ErrorInfo} when the Ably Chat REST API request fails due to network or authorization errors
+   * @example
+   * ```typescript
+   * const versions = await room.messages.getVersions('01726585978590-001@abcdefghij:001');
+   * for (const version of versions.items) {
+   *   console.log(version.action, version.text);
+   * }
+   * ```
+   */
+  getVersions(serial: string): Promise<PaginatedResult<Message>>;
+
+  /**
    * Send, delete, and subscribe to message reactions.
    *
    * This property provides access to the message reactions functionality, allowing you to
@@ -862,6 +884,15 @@ export class DefaultMessages implements Messages {
 
     this._logger.debug('Messages.update(); message update successfully', { updateParams });
     return messageFromRest(response);
+  }
+
+  /**
+   * @inheritdoc
+   */
+  async getVersions(serial: string): Promise<PaginatedResult<Message>> {
+    this._logger.trace('Messages.getVersions();', { serial });
+    assertValidSerial(serial, 'get message getVersions', 'serial');
+    return this._chatApi.getMessageVersions(this._roomName, serial);
   }
 
   /**

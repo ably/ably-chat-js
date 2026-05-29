@@ -441,6 +441,50 @@ describe('Messages', () => {
     });
   });
 
+  describe('getting message versions', () => {
+    describe.each([
+      ['undefined', undefined],
+      ['null', null],
+      ['empty string', ''],
+    ])('when serial is %s', (_, serial: unknown) => {
+      it<TestContext>('should throw InvalidArgument error', async (context) => {
+        await expect(context.room.messages.getVersions(serial as string)).rejects.toBeErrorInfoWithCode(
+          ErrorCode.InvalidArgument,
+        );
+      });
+    });
+
+    it<TestContext>('should return the paginated result from chatApi', async (context) => {
+      const { room, chatApi } = context;
+      const serial = '01672531200001-123@abcdefghij:0';
+      const timestamp = Date.now();
+
+      const mockVersions = await mockPaginatedResultWithItems([
+        {
+          serial,
+          clientId: 'clientId',
+          text: 'original text',
+          timestamp: new Date(timestamp),
+          metadata: {},
+          headers: {},
+          action: ChatMessageAction.MessageCreate,
+          version: { serial, timestamp: new Date(timestamp) },
+          reactions: emptyMessageReactions(),
+          isDeleted: false,
+          isUpdated: false,
+          with: vi.fn(),
+        } as unknown as Message,
+      ]);
+
+      vi.spyOn(chatApi, 'getMessageVersions').mockResolvedValue(mockVersions);
+
+      const result = await room.messages.getVersions(serial);
+
+      expect(chatApi.getMessageVersions).toHaveBeenCalledWith(room.name, serial);
+      expect(result).toBe(mockVersions);
+    });
+  });
+
   describe('subscribing to updates', () => {
     it<TestContext>('should subscribe to all message events', async (context) =>
       new Promise<void>((done, reject) => {

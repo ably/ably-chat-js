@@ -247,6 +247,13 @@ export class ChatApi {
     );
   }
 
+  async getMessageVersions(roomName: string, serial: string): Promise<PaginatedResult<Message>> {
+    const data = await this._makeAuthorizedPaginatedRequest<RestMessage>(
+      this._messageUrl(roomName, serial, '/versions'),
+    );
+    return this._recursivePaginateMessages(data);
+  }
+
   async getOccupancy(roomName: string): Promise<OccupancyData> {
     return this._makeAuthorizedRequest<OccupancyData>(this._roomUrl(roomName, '/occupancy'), 'GET');
   }

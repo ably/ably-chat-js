@@ -1251,6 +1251,33 @@ describe('messages integration', { timeout: 10000 }, () => {
       expect(historyPreSubscription2.items).toEqual(historyPreSubscription3.items);
     });
 
+    describe('versions', () => {
+      it<TestContext>('should return create, update, and delete versions in order', async (context) => {
+        const { chat } = context;
+        const room = await getRandomRoom(chat);
+
+        // Send the initial message
+        const sent = await room.messages.send({ text: 'original text' });
+
+        // Update it
+        const updated = await room.messages.update(sent.serial, { text: 'updated text' });
+
+        // Delete it
+        const deleted = await room.messages.delete(sent.serial, { description: 'removed' });
+
+        await vi.waitFor(
+          async () => {
+            const result = await room.messages.getVersions(sent.serial);
+            expect(result.items).toHaveLength(3);
+            expect(result.items[0]).toEqual(sent);
+            expect(result.items[1]).toEqual(updated);
+            expect(result.items[2]).toEqual(deleted);
+          },
+          { timeout: 5000, interval: 1000 },
+        );
+      });
+    });
+
     it<TestContext>('handles the room being released before historyBeforeSubscribe is called', async (context) => {
       const chat = context.chat;
       const roomName = randomRoomName();
