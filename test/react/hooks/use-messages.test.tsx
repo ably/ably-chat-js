@@ -195,6 +195,10 @@ describe('useMessages', () => {
 
     const deleteSpy = vi.spyOn(mockRoom.messages, 'delete').mockResolvedValue({} as unknown as Message);
 
+    const getVersionsSpy = vi
+      .spyOn(mockRoom.messages, 'getVersions')
+      .mockResolvedValue({} as unknown as PaginatedResult<Message>);
+
     const message = new DefaultMessage({
       serial: '01719948956834-000@108TeGZDQBderu97202638',
       clientId: 'client-1',
@@ -214,6 +218,7 @@ describe('useMessages', () => {
         description: 'deleted',
         metadata: { reason: 'test' },
       });
+      await result.current.getVersions(message.serial);
     });
 
     expect(sendSpy).toHaveBeenCalledWith({ text: 'test message' });
@@ -222,6 +227,7 @@ describe('useMessages', () => {
       description: 'deleted',
       metadata: { reason: 'test' },
     });
+    expect(getVersionsSpy).toHaveBeenCalledWith(message.serial);
   });
 
   it('should handle rerender if the room instance changes', async () => {

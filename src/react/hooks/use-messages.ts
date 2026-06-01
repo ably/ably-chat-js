@@ -100,6 +100,40 @@ export interface UseMessagesResponse extends ChatStatusResponse {
   readonly getMessage: (serial: string) => Promise<Message>;
 
   /**
+   * A shortcut to the {@link Messages.getVersions} method.
+   *
+   * Get all versions of a message by its serial, in oldest-first order.
+   *
+   * Returns the original create event followed by any subsequent update and delete events.
+   *
+   * **NOTE**: This method uses the Ably Chat REST API and so does not require the room
+   * to be attached to be called.
+   *
+   * This is a stable reference and will not be changed between renders for the same room.
+   * @param serial - The unique serial identifier of the message.
+   * @returns A Promise that resolves to a {@link PaginatedResult} of {@link Message} objects representing each version,
+   * or rejects with:
+   * - {@link Ably.ErrorInfo} when the serial is null, undefined, or empty
+   * - {@link Ably.ErrorInfo} when the Ably Chat REST API request fails due to network or authorization errors
+   * @example
+   * ```tsx
+   * const { getVersions } = useMessages();
+   *
+   * const handleGetVersions = async (messageSerial: string) => {
+   *   try {
+   *     const versions = await getVersions(messageSerial);
+   *     for (const version of versions.items) {
+   *       console.log(version.action, version.text);
+   *     }
+   *   } catch (error) {
+   *     console.error('Failed to get message versions:', error);
+   *   }
+   * };
+   * ```
+   */
+  readonly getVersions: (serial: string) => Promise<PaginatedResult<Message>>;
+
+  /**
    * A shortcut to the {@link Messages.update} method.
    *
    * Update a message in the chat room.
@@ -511,6 +545,14 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     [context],
   );
 
+  const getVersions = useCallback(
+    async (serial: string) => {
+      const room = await context.room;
+      return room.messages.getVersions(serial);
+    },
+    [context],
+  );
+
   const deleteMessage = useCallback(
     async (serial: string, details?: OperationDetails) => {
       const room = await context.room;
@@ -655,6 +697,7 @@ export const useMessages = (params?: UseMessagesParams): UseMessagesResponse => 
     roomError,
     sendMessage,
     getMessage,
+    getVersions,
     updateMessage,
     history,
     deleteMessage,
