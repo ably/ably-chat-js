@@ -16,7 +16,7 @@ jobs:
           submodules: true
       - uses: actions/setup-node@v3
         with:
-          node-version: '20.10.0'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
       - name: Install dependencies and publish
         env:
