@@ -11,18 +11,22 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.ref }}
+          persist-credentials: false
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::${{ secrets.ABLY_AWS_ACCOUNT_ID_SDK }}:role/prod-ably-sdk-cdn
           role-session-name: '${{ github.run_id }}-${{ github.run_number }}'
       - name: Use Node.js 20.x
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0 # zizmor: ignore[cache-poisoning] no cache input is set, so npm cache is not enabled
         with:
           node-version: 20.x
       - run: npm ci
-      - run: node scripts/cdn_deploy.js --skipCheckout --tag=${{ github.ref_name }}
+      - name: Deploy to CDN
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/cdn_deploy.js --skipCheckout --tag="$RELEASE_TAG"
