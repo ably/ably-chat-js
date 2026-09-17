@@ -10,7 +10,7 @@ import { ChatRoomProvider } from '../../../src/react/providers/chat-room-provide
 import { makeTestLogger } from '../../helper/logger.js';
 import { wrapWithPromise } from '../../helper/promise.js';
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 interface TestContext {
   mockRoom: Room;

@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 const MOCK_CLIENT_ID = 'MOCK_CLIENT_ID';
 
@@ -46,7 +46,7 @@ type anyType = ((arg: unknown) => void)[];
 type eventType = { [event: string]: ((arg: unknown) => void)[] };
 
 function createMockEmitter() {
-  return new (Ably.Realtime as any).EventEmitter();
+  return new Ably.EventEmitter();
 }
 
 function createMockChannel(name: string) {
@@ -155,10 +155,11 @@ class MockRealtime {
   }
 
   public request() {}
-
-  static EventEmitter = (Ably.Realtime as any).EventEmitter;
 }
 
-class MockErrorInfo extends Ably.ErrorInfo {}
+const createClient = (options: Ably.ClientOptions | string): Ably.PubSubRealtimeClient =>
+  new MockRealtime(typeof options === 'string' ? {} : options) as unknown as Ably.PubSubRealtimeClient;
 
-export { MockErrorInfo as ErrorInfo, MockRealtime as Realtime };
+const ErrorInfo = Ably.ErrorInfo;
+
+export { createClient, ErrorInfo };

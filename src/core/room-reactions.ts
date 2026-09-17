@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { ClientIdResolver } from './client-id.js';
 import { ErrorCode } from './errors.js';
@@ -80,7 +80,7 @@ export interface RoomReactions {
    * - {@link ErrorCode.Disconnected} if not connected to Ably
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -115,7 +115,7 @@ export interface RoomReactions {
    * @returns Subscription object with an unsubscribe method
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, RoomReactionEvent } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance

@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { useEffect, useState } from 'react';
 
 import { ConnectionStatus, ConnectionStatusChange, ConnectionStatusListener } from '../../core/connection.js';
@@ -54,7 +54,7 @@ export interface UseChatConnectionResponse {
  * @throws An {@link Ably.ErrorInfo} When used outside of a {@link ChatClientProvider}
  * @example
  * ```tsx
- * import * as Ably from 'ably';
+ * import * as Ably from '@ably/pubsub-device';
  * import React from 'react';
  * import { ChatClient, ConnectionStatus } from '@ably/chat';
  * import { ChatClientProvider, useChatConnection } from '@ably/chat/react';

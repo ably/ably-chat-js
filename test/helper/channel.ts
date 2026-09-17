@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 interface Emitter {
   emit(event: string, arg: unknown): void;
@@ -6,6 +6,14 @@ interface Emitter {
 
 export type ChannelEventEmitterReturnType<PayloadType> = (arg: PayloadType) => void;
 export type ChannelStateEventEmitterReturnType = (arg: Ably.ChannelStateChange, update?: boolean) => void;
+
+/**
+ * The promise-returning overload of {@link Ably.RealtimeChannel.publish}. The Pub/Sub SDK declares a deprecated
+ * callback overload last, which `vi.spyOn` would otherwise infer, so cast to this type before spying on `publish`.
+ */
+export interface PublishableChannel {
+  publish(message: Ably.Message, options?: Ably.PublishOptions): Promise<Ably.PublishResult>;
+}
 
 export const channelEventEmitter = (
   channel: Ably.RealtimeChannel,

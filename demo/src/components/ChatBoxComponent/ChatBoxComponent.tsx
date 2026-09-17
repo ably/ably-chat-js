@@ -3,7 +3,7 @@ import { useChatClient, useMessages } from '@ably/chat/react';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { Message, PaginatedResult, ChatMessageEventType } from '@ably/chat';
 import type { ChatMessageEvent, MessageReactionSummaryEvent } from '@ably/chat';
-import { ErrorInfo } from 'ably';
+import { ErrorInfo } from '@ably/pubsub-device';
 import { useReactionType } from '../MessageReactions';
 import { MessageInput } from '../MessageInput';
 

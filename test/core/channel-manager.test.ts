@@ -1,4 +1,5 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
+import { createClient } from '@ably/pubsub-device';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { roomChannelName } from '../../src/core/channel.ts';
@@ -9,15 +10,15 @@ import { randomClientId } from '../helper/identifier.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 
 interface TestContext {
-  mockRealtime: Ably.Realtime;
+  mockRealtime: Ably.PubSubRealtimeClient;
   channelManager: ChannelManager;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('ChannelManager', () => {
   beforeEach<TestContext>((context) => {
-    context.mockRealtime = new Ably.Realtime({ clientId: randomClientId() });
+    context.mockRealtime = createClient({ clientId: randomClientId() });
     context.channelManager = new ChannelManager('test-room', context.mockRealtime, makeTestLogger(), false);
 
     vi.spyOn(context.mockRealtime.channels, 'get').mockReturnValue({} as Ably.RealtimeChannel);

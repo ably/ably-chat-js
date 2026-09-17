@@ -19,7 +19,7 @@ async function run() {
     path: '.',
     // Comma separated directories (relative to `path`) to upload
     // TODO: Update this when we release React
-    includeDirs: 'dist/core',
+    includeDirs: 'dist/cdn',
     // Comma separated directories (relative to `path`) to exclude from upload
     excludeDirs: 'node_modules,.git',
     // Regex to match files against for upload

@@ -1,18 +1,19 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
+import { createClient } from '@ably/pubsub-device';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DefaultClientIdResolver } from '../../src/core/client-id.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 
 interface TestContext {
-  realtime: Ably.Realtime;
+  realtime: Ably.PubSubRealtimeClient;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('ClientIdResolver', () => {
   beforeEach<TestContext>((context) => {
-    context.realtime = new Ably.Realtime({ clientId: 'initial-client-id', key: 'key' });
+    context.realtime = createClient({ clientId: 'initial-client-id', key: 'key' });
   });
 
   describe('get', () => {

@@ -1,5 +1,5 @@
+import * as Ably from '@ably/pubsub-core';
 import { act, cleanup, renderHook } from '@testing-library/react';
-import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus } from '../../../src/core/connection.js';
@@ -36,7 +36,7 @@ vi.mock('../../../src/react/hooks/internal/use-logger.js', () => ({
   useRoomLogger: () => mockLogger,
 }));
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 const updateMockRoom = (room: Room) => {
   mockRoom = room;

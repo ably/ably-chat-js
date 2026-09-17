@@ -19,7 +19,7 @@ vi.mock('../../../../src/react/hooks/internal/use-logger.js', () => ({
   useRoomLogger: () => mockLogger,
 }));
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 const updateMockRoom = (newRoom: Room) => {
   mockRoom = newRoom;

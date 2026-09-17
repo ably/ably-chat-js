@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { DefaultRoomLifecycle, RoomStatus } from '../../src/core/room-status.ts';

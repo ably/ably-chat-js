@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChannelManager } from '../../src/core/channel-manager.js';
@@ -26,7 +26,7 @@ interface TestContext {
   };
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('RoomLifecycleManager', () => {
   beforeEach<TestContext>((context) => {

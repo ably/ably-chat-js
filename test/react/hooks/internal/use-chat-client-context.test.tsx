@@ -16,7 +16,7 @@ const TestComponent: React.FC<{ callback: (client: ChatClient) => void }> = ({ c
   return <div />;
 };
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('useChatClientContext', () => {
   afterEach(() => {

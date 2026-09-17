@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { Mutex } from 'async-mutex';
 
 import { ChannelManager } from './channel-manager.js';

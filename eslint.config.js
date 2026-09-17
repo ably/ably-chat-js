@@ -39,6 +39,7 @@ export default [
       'scripts/**',
       '**/vitest.config.ts',
       '**/vite.config.ts',
+      '**/vite.cdn.config.ts',
       '**/vitest.workspace.ts',
       'test/helper/test-setup.ts',
       '**/__mocks__',
@@ -162,6 +163,17 @@ export default [
     rules: {
       '@typescript-eslint/no-unused-vars': ['error'],
       'import/no-unresolved': 'off',
+      // TypeScript already checks these, and eslint-plugin-import cannot follow the nested
+      // `export *` chains in the @ably/pubsub-core type declarations.
+      'import/named': 'off',
+      'import/namespace': 'off',
+      // Pub/Sub declares its messages as classes, but they are plain data that we copy by spreading.
+      '@typescript-eslint/no-misused-spread': [
+        'error',
+        {
+          allow: [{ from: 'package', package: '@ably/pubsub-core', name: ['Message', 'PresenceMessage'] }],
+        },
+      ],
       'no-undef': 'off',
       'no-dupe-class-members': 'off',
       'require-await': 'off',
@@ -191,6 +203,7 @@ export default [
     files: ['test/**/*.{ts,tsx}'],
 
     rules: {
+      '@typescript-eslint/no-deprecated': 'off',
       '@typescript-eslint/unbound-method': 'off',
       '@typescript-eslint/no-empty-function': 'off',
       'unicorn/no-null': 'off',

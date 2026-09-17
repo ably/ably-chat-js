@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 // Update this when you release a new version
 export const VERSION = '1.4.0';

@@ -39,6 +39,7 @@
     "build:chat": "vite build --config ./src/vite.config.ts --emptyOutDir",
     "build:core": "vite build --config ./src/core/vite.config.ts --emptyOutDir",
     "build:react": "vite build --config ./src/react/vite.config.ts --emptyOutDir",
+    "build:cdn": "vite build --config ./src/core/vite.cdn.config.ts",
     "build:start-demo": "npm run build && (cd demo && npm start)",
     "prepare": "npm run build",
     "test:typescript": "tsc",
@@ -52,6 +53,7 @@
   },
   "files": [
     "dist/**",
+    "!dist/cdn",
     "src/**",
     "react/**"
   ],
@@ -75,7 +77,8 @@
     "node": ">=20.0.0"
   },
   "peerDependencies": {
-    "ably": "^2.19.0",
+    "@ably/pubsub-device": "^3.0.0",
+    "@ably/pubsub-server": "^3.0.0",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },
@@ -85,9 +88,16 @@
     },
     "react-dom": {
       "optional": true
+    },
+    "@ably/pubsub-server": {
+      "optional": true
+    },
+    "@ably/pubsub-device": {
+      "optional": true
     }
   },
   "devDependencies": {
+    "@ably/pubsub-device": "^3.0.0",
     "@eslint/compat": "^1.2.7",
     "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.12.0",
@@ -130,6 +140,7 @@
     "vitest": "^3.0.8"
   },
   "dependencies": {
+    "@ably/pubsub-core": "^3.0.0",
     "async-mutex": "^0.5.0",
     "dequal": "^2.0.3",
     "lodash.clonedeep": "^4.5.0"

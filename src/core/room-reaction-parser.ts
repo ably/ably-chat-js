@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { realtimeExtras } from './realtime-extensions.js';
 import { DefaultRoomReaction, RoomReaction, RoomReactionMetadata } from './room-reaction.js';

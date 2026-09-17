@@ -26,6 +26,7 @@ jobs:
         with:
           node-version: 20.x
       - run: npm ci
+      - run: npm run build:cdn
       - name: Deploy to CDN
         env:
           RELEASE_TAG: ${{ github.ref_name }}

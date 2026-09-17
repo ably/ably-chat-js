@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { expect, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat-client.ts';
@@ -8,7 +8,7 @@ import { ablyRealtimeClientWithToken } from './realtime-client.js';
 
 export const newChatClient = (
   options?: ChatClientOptions,
-  realtimeClient?: Ably.Realtime,
+  realtimeClient?: Ably.PubSubRealtimeClient,
   extraClaims?: Record<string, string>,
 ): ChatClient => {
   if (realtimeClient && extraClaims) {

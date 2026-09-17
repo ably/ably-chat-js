@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { ErrorCode } from './errors.js';
 import { idempotencyKey } from './id.js';
@@ -113,12 +113,12 @@ export interface DeleteMessageReactionParams {
  * @internal
  */
 export class ChatApi {
-  private readonly _realtime: Ably.Realtime;
+  private readonly _realtime: Ably.PubSubRealtimeClient;
   private readonly _logger: Logger;
   private readonly _apiProtocolVersion: number = 4;
   private readonly _idempotentRestPublishing: boolean;
 
-  constructor(realtime: Ably.Realtime, logger: Logger, idempotentRestPublishing: boolean) {
+  constructor(realtime: Ably.PubSubRealtimeClient, logger: Logger, idempotentRestPublishing: boolean) {
     this._realtime = realtime;
     this._logger = logger;
     this._idempotentRestPublishing = idempotentRestPublishing;

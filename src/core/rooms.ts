@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { dequal } from 'dequal';
 
 import { ChatApi } from './chat-api.js';
@@ -32,7 +32,7 @@ export interface Rooms {
    * - {@link ErrorCode.RoomReleasedBeforeOperationCompleted} if room is released before get completes
    * @example
    * ```
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, Room } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -76,7 +76,7 @@ export interface Rooms {
    * @returns Promise that resolves when the room is fully released
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -155,7 +155,7 @@ interface RoomMapEntry {
  * Manages the chat rooms.
  */
 export class DefaultRooms implements InternalRooms {
-  private readonly _realtime: Ably.Realtime;
+  private readonly _realtime: Ably.PubSubRealtimeClient;
   private readonly _chatApi: ChatApi;
   private readonly _rooms: Map<string, RoomMapEntry> = new Map<string, RoomMapEntry>();
   private readonly _releasing = new Map<string, Promise<void>>();
@@ -172,7 +172,7 @@ export class DefaultRooms implements InternalRooms {
    * @param idempotentRestPublishing Whether the ChatApi should attach an idempotency key to outgoing requests.
    */
   constructor(
-    realtime: Ably.Realtime,
+    realtime: Ably.PubSubRealtimeClient,
     clientIdResolver: ClientIdResolver,
     logger: Logger,
     idempotentRestPublishing: boolean,

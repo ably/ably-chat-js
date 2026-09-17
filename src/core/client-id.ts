@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { ErrorCode } from './errors.js';
 import { Logger } from './logger.js';
@@ -17,7 +17,7 @@ export interface ClientIdResolver {
 
 export class DefaultClientIdResolver implements ClientIdResolver {
   constructor(
-    private _realtime: Ably.Realtime,
+    private _realtime: Ably.PubSubRealtimeClient,
     private _logger: Logger,
   ) {}
 

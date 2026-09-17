@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { ChannelOptionsMerger } from './channel-manager.js';
 import {
@@ -95,7 +95,7 @@ export interface MessageReactions {
    * - {@link Ably.ErrorInfo} with code 40400 if the message does not exist.
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, MessageReactionType } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -147,7 +147,7 @@ export interface MessageReactions {
    * - {@link ErrorCode.InvalidArgument} if trying to delete a non-Unique reaction without a name.
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, MessageReactionType } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -195,7 +195,7 @@ export interface MessageReactions {
    * @returns Subscription object with an unsubscribe method
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, MessageReactionSummaryEvent } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -247,7 +247,7 @@ export interface MessageReactions {
    * @throws An {@link Ably.ErrorInfo} with {@link ErrorCode.FeatureNotEnabledInRoom} if raw message reactions are not enabled
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, MessageReactionRawEvent, MessageReactionEventType } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -304,7 +304,7 @@ export interface MessageReactions {
    * - {@link Ably.ErrorInfo} with code 40400 if the message does not exist.
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance

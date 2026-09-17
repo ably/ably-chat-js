@@ -1,5 +1,6 @@
-import * as Ably from 'ably';
-import { RealtimeChannel } from 'ably';
+import * as Ably from '@ably/pubsub-core';
+import { RealtimeChannel } from '@ably/pubsub-core';
+import { createClient } from '@ably/pubsub-device';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, HistoryQueryParams } from '../../src/core/chat-api.ts';
@@ -20,7 +21,7 @@ import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
-  realtime: Ably.Realtime;
+  realtime: Ably.PubSubRealtimeClient;
   chatApi: ChatApi;
   emulateBackendStateChange: ChannelStateEventEmitterReturnType;
   emulateBackendPublish: ChannelEventEmitterReturnType<Partial<Ably.InboundMessage>>;
@@ -51,11 +52,11 @@ const mockPaginatedResultWithItems = async (items: Message[]): Promise<MockPagin
     isLast: () => true,
   });
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('Messages', () => {
   beforeEach<TestContext>((context) => {
-    context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
+    context.realtime = createClient({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger(), false);
     context.room = makeRandomRoom({ chatApi: context.chatApi, realtime: context.realtime });
     const channel = context.room.channel;

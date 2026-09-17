@@ -1,4 +1,5 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
+import { createClient } from '@ably/pubsub-device';
 import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
@@ -8,14 +9,14 @@ import { Room } from '../../src/core/room.ts';
 import { RoomReaction } from '../../src/core/room-reaction.ts';
 import { DefaultRoomReactions } from '../../src/core/room-reactions.ts';
 import { ErrorCode } from '../../src/index.ts';
-import { channelEventEmitter } from '../helper/channel.ts';
+import { channelEventEmitter, PublishableChannel } from '../helper/channel.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { wrapWithPromise } from '../helper/promise.ts';
 import { waitForUnsubscribeTimes } from '../helper/realtime-subscriptions.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
-  realtime: Ably.Realtime;
+  realtime: Ably.PubSubRealtimeClient;
   chatApi: ChatApi;
   publishTimestamp: Date;
   room: Room;
@@ -23,13 +24,13 @@ interface TestContext {
   emulateBackendPublish: Ably.messageCallback<Partial<Ably.Message>>;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('Reactions', () => {
   beforeEach<TestContext>((context) => {
     const clientId = 'd.vader';
 
-    context.realtime = new Ably.Realtime({ clientId: clientId, key: 'key' });
+    context.realtime = createClient({ clientId: clientId, key: 'key' });
     context.chatApi = new ChatApi(context.realtime, makeTestLogger(), false);
 
     context.publishTimestamp = new Date();
@@ -44,7 +45,7 @@ describe('Reactions', () => {
     const channel = context.room.channel;
     context.emulateBackendPublish = channelEventEmitter(channel);
 
-    vi.spyOn(channel, 'publish').mockImplementation(
+    vi.spyOn(channel as PublishableChannel, 'publish').mockImplementation(
       wrapWithPromise((message: Ably.Message) => {
         context.emulateBackendPublish({
           ...message,

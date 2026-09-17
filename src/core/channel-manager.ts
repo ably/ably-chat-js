@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { roomChannelName } from './channel.js';
 import { ErrorCode } from './errors.js';
@@ -10,14 +10,14 @@ export type ChannelOptionsWithModes = Omit<Ably.ChannelOptions, 'modes'> & Requi
 export type ChannelOptionsMerger = (options: ChannelOptionsWithModes) => ChannelOptionsWithModes;
 
 export class ChannelManager {
-  private readonly _realtime: Ably.Realtime;
+  private readonly _realtime: Ably.PubSubRealtimeClient;
   private readonly _logger: Logger;
   private _registeredOptions: ChannelOptionsWithModes;
   private readonly _isReact: boolean;
   private _resolvedChannel?: Ably.RealtimeChannel;
   private readonly _channelId: string;
 
-  constructor(roomName: string, realtime: Ably.Realtime, logger: Logger, isReact: boolean) {
+  constructor(roomName: string, realtime: Ably.PubSubRealtimeClient, logger: Logger, isReact: boolean) {
     logger.trace('ChannelManager();', { isReact });
     this._realtime = realtime;
     this._logger = logger;
