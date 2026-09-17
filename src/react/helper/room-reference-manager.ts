@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { dequal } from 'dequal';
 
 import { ChatClient } from '../../core/chat-client.js';

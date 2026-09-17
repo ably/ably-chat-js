@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
@@ -23,7 +23,7 @@ interface TestContext {
   emulateBackendPublish: Ably.messageCallback<Partial<Ably.Message>>;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('Reactions', () => {
   beforeEach<TestContext>((context) => {

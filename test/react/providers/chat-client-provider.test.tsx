@@ -5,7 +5,7 @@ import { afterEach, describe, it, vi } from 'vitest';
 import { ChatClientProvider } from '../../../src/react/providers/chat-client-provider.tsx';
 import { newChatClient } from '../../helper/chat.ts';
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('useChatClient', () => {
   afterEach(() => {

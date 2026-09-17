@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ErrorCode } from '../../../src/core/errors.js';
@@ -8,7 +8,7 @@ import { newChatClient } from '../../helper/chat.js';
 import { randomRoomName } from '../../helper/identifier.js';
 import { wrapWithPromise } from '../../helper/promise.js';
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('RoomReferenceManager', () => {
   it('should create a manager with the correct client', () => {

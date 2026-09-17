@@ -11,14 +11,14 @@
     "external": true
   },
   "externalSymbolLinkMappings": {
-    "ably": {
+    "@ably/pubsub-core": {
       "*": "https://sdk.ably.com/builds/ably/ably-js/main/typedoc/",
     }
   },
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@ably": ["node_modules/ably/ably.d.ts"],
+      "@ably": ["node_modules/@ably/pubsub-core/ably.d.ts"],
       "@ably/chat": ["./src/core"],
     }
   },

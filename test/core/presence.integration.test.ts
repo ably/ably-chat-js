@@ -1,5 +1,5 @@
-import * as Ably from 'ably';
-import { PresenceAction, Realtime } from 'ably';
+import * as Ably from '@ably/pubsub-core';
+import { PresenceAction, Realtime } from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat-client.ts';

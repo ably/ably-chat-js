@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
@@ -32,7 +32,7 @@ interface PresenceWithStateChangeListener extends Presence {
   onPresenceStateChange: (listener: PresenceStateChangeListener) => Subscription;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('Presence', () => {
   beforeEach<TestContext>((context) => {

@@ -24,12 +24,12 @@ export default defineConfig({
       formats: ['es', 'umd'],
     },
     rollupOptions: {
-      external: ['ably', 'react', 'react-dom', 'react/jsx-runtime'],
+      external: ['@ably/pubsub-core', 'react', 'react-dom', 'react/jsx-runtime'],
       output: {
         globals: {
           react: 'React',
           'react-dom': 'ReactDOM',
-          ably: 'Ably',
+          '@ably/pubsub-core': 'Ably',
         },
       },
     },

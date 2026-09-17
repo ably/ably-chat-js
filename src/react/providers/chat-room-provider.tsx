@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type * as Ably from 'ably';
+import type * as Ably from '@ably/pubsub-core';
 // imported for docs linking
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 
@@ -71,7 +71,7 @@ export interface ChatRoomProviderProps {
  * @throws An {@link Ably.ErrorInfo} with {@link chat-js!ErrorCode.RoomExistsWithDifferentOptions | RoomExistsWithDifferentOptions} if room exists with different options
  * @example Basic usage
  * ```tsx
- * import * as Ably from 'ably';
+ * import * as Ably from '@ably/pubsub-core';
  * import React, { useMemo } from 'react';
  * import { ChatClient } from '@ably/chat';
  * import {

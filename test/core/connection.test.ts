@@ -1,7 +1,7 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ErrorInfo } from '../../__mocks__/ably/index.ts';
+import { ErrorInfo } from '../../__mocks__/@ably/pubsub-core/index.ts';
 import { ConnectionStatus, DefaultConnection } from '../../src/core/connection.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 
@@ -51,7 +51,7 @@ const mapAblyStatusToChat = (status: Ably.ConnectionState): ConnectionStatus => 
   }
 };
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('connection', () => {
   beforeEach<TestContext>((context) => {

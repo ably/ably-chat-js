@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { useCallback, useEffect, useState } from 'react';
 
 import { ErrorCode } from '../../core/errors.js';

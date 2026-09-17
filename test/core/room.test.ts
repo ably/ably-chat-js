@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
@@ -16,7 +16,7 @@ import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { waitForRoomStatus } from '../helper/room.ts';
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 interface TestContext {
   realtime: Ably.Realtime;

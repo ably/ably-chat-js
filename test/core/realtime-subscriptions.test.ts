@@ -29,7 +29,7 @@ interface SubscribableTestContext {
   mockCallback: ReturnType<typeof vi.fn>;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('realtime-subscriptions', () => {
   beforeEach<TestContext>((context) => {

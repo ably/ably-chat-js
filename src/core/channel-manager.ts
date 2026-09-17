@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { roomChannelName } from './channel.js';
 import { ErrorCode } from './errors.js';

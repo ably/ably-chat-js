@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { NormalizedChatClientOptions } from './config.js';
 import { ErrorCode } from './errors.js';

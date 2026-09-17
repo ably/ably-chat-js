@@ -75,7 +75,7 @@
     "node": ">=20.0.0"
   },
   "peerDependencies": {
-    "ably": "^2.19.0",
+    "@ably/pubsub-core": "3.0.0-canary.20260917T1031.521a3374",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },
@@ -88,6 +88,7 @@
     }
   },
   "devDependencies": {
+    "@ably/pubsub-device": "3.0.0-canary.20260917T1031.521a3374",
     "@eslint/compat": "^1.2.7",
     "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.12.0",

@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { E_CANCELED, Mutex } from 'async-mutex';
 
 import { ErrorCode } from './errors.js';
@@ -40,7 +40,7 @@ export interface Typing {
    * @returns Subscription object with an unsubscribe method
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient, TypingSetEvent } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -84,7 +84,7 @@ export interface Typing {
    * @returns Set of client IDs currently typing
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -134,7 +134,7 @@ export interface Typing {
    * - {@link Ably.ErrorInfo} if the operation fails to send the event
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -169,7 +169,7 @@ export interface Typing {
    * - {@link Ably.ErrorInfo} if the operation fails to send the event
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance

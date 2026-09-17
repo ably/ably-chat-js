@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { Logger } from './logger.js';
 import { StatusSubscription } from './subscription.js';
