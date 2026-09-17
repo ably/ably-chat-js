@@ -1,5 +1,5 @@
-import * as Ably from 'ably';
-import { RealtimeChannel } from 'ably';
+import * as Ably from '@ably/pubsub-core';
+import { RealtimeChannel } from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi, HistoryQueryParams } from '../../src/core/chat-api.ts';
@@ -51,7 +51,7 @@ const mockPaginatedResultWithItems = async (items: Message[]): Promise<MockPagin
     isLast: () => true,
   });
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('Messages', () => {
   beforeEach<TestContext>((context) => {

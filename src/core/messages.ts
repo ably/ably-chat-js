@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { ChatApi } from './chat-api.js';
 import { ErrorCode } from './errors.js';
@@ -185,7 +185,7 @@ export interface MessageSubscriptionResponse extends Subscription {
    * re-populate your local state.
    * @example Populating messages on initial subscription
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient, ChatMessageEventType } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -286,7 +286,7 @@ export interface Messages {
    *          - `historyBeforeSubscribe()`: Method to retrieve messages sent before subscription
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient, ChatMessageEvent } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -324,7 +324,7 @@ export interface Messages {
    *          and methods for pagination control, or rejects with {@link ErrorCode.InvalidArgument} when the query fails due to invalid parameters
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient, OrderBy } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -377,7 +377,7 @@ export interface Messages {
    * - {@link Ably.ErrorInfo} when the message is not found or network/server errors occur
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -422,7 +422,7 @@ export interface Messages {
    * - {@link Ably.ErrorInfo} when the message fails to send due to network issues, authentication problems, or rate limiting
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -477,7 +477,7 @@ export interface Messages {
    *            or network/server errors occur
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient, Message } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -538,7 +538,7 @@ export interface Messages {
    *           or network/server errors occur.
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance

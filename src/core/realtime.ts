@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 /**
  * Convenience function that takes an event name and optional data and turns it into a

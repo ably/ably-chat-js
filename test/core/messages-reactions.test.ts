@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
@@ -31,7 +31,7 @@ interface TestContext {
   room: Room;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('MessageReactions', () => {
   describe('message reaction basics', () => {

@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { expect } from 'vitest';
 
 const extractExpectedKeys = (expected: unknown): Set<string> => new Set(Object.keys(expected as Ably.ErrorInfo));

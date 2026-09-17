@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DefaultClientIdResolver } from '../../src/core/client-id.ts';
@@ -8,7 +8,7 @@ interface TestContext {
   realtime: Ably.Realtime;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('ClientIdResolver', () => {
   beforeEach<TestContext>((context) => {

@@ -91,7 +91,7 @@ All public types/interfaces must be exported from `src/core/index.ts` or `src/re
 ## Coding Conventions
 
 ### TypeScript
-- Import ably as: `import * as Ably from 'ably'`
+- Import the Pub/Sub SDK as: `import * as Ably from '@ably/pubsub-core'`
 - Use relative imports within the project
 - File extension in imports: `import { Foo } from './foo.js'` (enforced by `import/extensions` rule)
 - Prefer arrow functions (enforced by eslint)

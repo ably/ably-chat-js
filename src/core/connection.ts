@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { Logger } from './logger.js';
 import { on } from './realtime-subscriptions.js';
@@ -147,7 +147,7 @@ export interface Connection {
    * @returns Subscription object with an off method to unregister
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient, ConnectionStatus } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance

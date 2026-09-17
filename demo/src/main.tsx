@@ -1,13 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import * as Ably from 'ably';
-import { ClientOptions } from 'ably';
+import { createClient, ClientOptions } from '@ably/pubsub-device';
 import { ChatClient, LogLevel } from '@ably/chat';
 import { ChatClientProvider } from '@ably/chat/react';
 import { nanoid } from 'nanoid';
 import App from './App.tsx';
 import './index.css';
-import { AblyProvider } from 'ably/react';
+import { AblyProvider } from '@ably/pubsub-device/react';
 
 // Generate a random clientId and remember it for the length of the session, so
 // if refreshing the page you still see your own messages as yours.
@@ -92,7 +91,7 @@ const getLogLevel = () => {
   }
 };
 
-const realtimeClient = new Ably.Realtime(getRealtimeOptions());
+const realtimeClient = createClient(getRealtimeOptions());
 
 const chatClient = new ChatClient(realtimeClient, { logLevel: getLogLevel(), idempotentRestPublishing: true });
 

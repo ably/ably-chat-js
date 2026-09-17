@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { DefaultClientIdResolver } from './client-id.js';
 import { ChatClientOptions, normalizeClientOptions, NormalizedChatClientOptions } from './config.js';
@@ -63,11 +63,11 @@ export class ChatClient {
    * @param clientOptions - Optional configuration for the chat client
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import { createClient } from '@ably/pubsub-device';
    * import { ChatClient, LogLevel } from '@ably/chat';
    *
    * // Preferred in production: Use auth URL that returns a JWT
-   * const realtimeClientWithJWT = new Ably.Realtime({
+   * const realtimeClientWithJWT = createClient({
    *   authUrl: '/api/ably-auth', // Your server endpoint that returns a JWT with clientId
    *   authMethod: 'POST'
    * });
@@ -76,8 +76,8 @@ export class ChatClient {
    *```
    * @example
    *```typescript
-   * // Alternative for development and server-side operations: Set clientId directly (requires API key)
-   * const realtimeClientWithKey = new Ably.Realtime({
+   * // Alternative for development: Set clientId directly (requires API key)
+   * const realtimeClientWithKey = createClient({
    *   key: 'your-ably-api-key',
    *   clientId: 'user-123'
    * });
@@ -86,7 +86,7 @@ export class ChatClient {
    * ```
    * @example
    * ```typescript
-   * const realtimeClient = new Ably.Realtime({
+   * const realtimeClient = createClient({
    *   authUrl: '/api/ably-auth',
    *   authMethod: 'POST'
    * });
@@ -246,7 +246,7 @@ export class ChatClient {
    * @returns Promise that resolves when all resources are released
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance

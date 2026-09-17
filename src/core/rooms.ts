@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { dequal } from 'dequal';
 
 import { ChatApi } from './chat-api.js';
@@ -32,7 +32,7 @@ export interface Rooms {
    * - {@link ErrorCode.RoomReleasedBeforeOperationCompleted} if room is released before get completes
    * @example
    * ```
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient, Room } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -76,7 +76,7 @@ export interface Rooms {
    * @returns Promise that resolves when the room is fully released
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-core';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance

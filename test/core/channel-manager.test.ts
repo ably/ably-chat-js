@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { roomChannelName } from '../../src/core/channel.ts';
@@ -13,7 +13,7 @@ interface TestContext {
   channelManager: ChannelManager;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('ChannelManager', () => {
   beforeEach<TestContext>((context) => {

@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 /**
  * This type represents a callback that can be registered with an EventEmitter.

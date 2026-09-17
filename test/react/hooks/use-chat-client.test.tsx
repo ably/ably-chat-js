@@ -1,5 +1,5 @@
+import * as Ably from '@ably/pubsub-core';
 import { cleanup, render } from '@testing-library/react';
-import * as Ably from 'ably';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -15,7 +15,7 @@ const TestComponent: React.FC<{ callback: (clientId?: string) => void }> = ({ ca
   return <div />;
 };
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('useChatClient', () => {
   afterEach(() => {

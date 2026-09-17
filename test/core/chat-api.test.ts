@@ -1,11 +1,11 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { ErrorCode } from '../../src/core/errors.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('config', () => {
   it('calls the api with the correct protocol version', async () => {

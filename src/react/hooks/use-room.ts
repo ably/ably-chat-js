@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { useCallback } from 'react';
 
 import { ConnectionStatusChange } from '../../core/connection.js';

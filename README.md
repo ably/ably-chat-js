@@ -57,7 +57,7 @@ The Chat SDK is built on top of the Ably Pub/Sub SDK and uses that to establish 
 Install the Pub/Sub SDK and the Chat SDK:
 
 ```sh
-npm install ably @ably/chat
+npm install @ably/pubsub-device@3.0.0-canary.20260917T1031.521a3374 @ably/chat
 ```
 
 ---
@@ -69,13 +69,13 @@ npm install ably @ably/chat
 The following code connects to Ably's chat service, subscribes to a chat room, and sends a message to that room:
 
 ```typescript
-import * as Ably from 'ably';
+import { createClient } from '@ably/pubsub-device';
 import { ChatClient, RoomStatus, RoomStatusChange } from '@ably/chat';
 
 // Initialize Ably Realtime client
 // Note: For client-side applications, token authentication is recommended.
 // See: https://ably.com/docs/auth
-const realtimeClient = new Ably.Realtime({
+const realtimeClient = createClient({
   key: '<your-ably-api-key>',
   clientId: 'your-client-id',
 });
@@ -120,14 +120,14 @@ await room.messages.send({ text: 'Hello, World!' });
 For React applications, the SDK provides hooks and providers for seamless integration:
 
 ```tsx
-import * as Ably from 'ably';
+import { createClient } from '@ably/pubsub-device';
 import { ChatClient } from '@ably/chat';
 import { ChatClientProvider, ChatRoomProvider, useMessages } from '@ably/chat/react';
 
 // Initialize clients
 // Note: For client-side applications, token authentication is recommended.
 // See: https://ably.com/docs/auth
-const realtimeClient = new Ably.Realtime({
+const realtimeClient = createClient({
   key: '<your-ably-api-key>',
   clientId: 'your-client-id',
 });

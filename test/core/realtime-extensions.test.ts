@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 import { realtimeExtras } from '../../src/core/realtime-extensions.ts';
 

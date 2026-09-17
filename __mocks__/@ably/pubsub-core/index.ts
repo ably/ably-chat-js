@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 const MOCK_CLIENT_ID = 'MOCK_CLIENT_ID';
 

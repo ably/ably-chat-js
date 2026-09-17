@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { expect, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';

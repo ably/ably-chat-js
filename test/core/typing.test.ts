@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-deprecated */
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
@@ -53,7 +52,7 @@ interface TestRoomInterface extends Room {
   release: () => Promise<void>;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-core');
 
 describe('Typing', () => {
   beforeEach<TestContext>((context) => {

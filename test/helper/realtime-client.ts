@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import * as jwt from 'jsonwebtoken';
 
 import { ablyApiKey, isLocalEnvironment, testEndpoint } from './environment.js';

@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { ConnectionStatus } from '../../core/connection.js';
 import { RoomStatus } from '../../core/room-status.js';

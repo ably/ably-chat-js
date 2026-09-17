@@ -191,6 +191,12 @@ export default [
     files: ['test/**/*.{ts,tsx}'],
 
     rules: {
+      // Tests build realtime clients with the core `Realtime` constructor rather than the
+      // side-declaring factories its deprecation points at. Unit tests need the constructor
+      // so that `vi.mock('@ably/pubsub-core')` supplies a mock, and the shared client helper
+      // has to stay mockable through that same module because mocked suites import it too.
+      // Sandbox test traffic is neither device nor server traffic, so it has no side to declare.
+      '@typescript-eslint/no-deprecated': 'off',
       '@typescript-eslint/unbound-method': 'off',
       '@typescript-eslint/no-empty-function': 'off',
       'unicorn/no-null': 'off',
