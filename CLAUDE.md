@@ -70,7 +70,7 @@ Each has its own `vite.config.ts` using Vite library mode with `vite-plugin-dts`
 ### Core SDK (`src/core/`)
 
 Key class hierarchy:
-- **`ChatClient`** → entry point, provides `rooms` collection and manages Ably Realtime connection
+- **`ChatClient`** → entry point (interface, created via `createChatClient`; implemented by `DefaultChatClient`), provides `rooms` collection and manages Ably Realtime connection
 - **`Rooms`** → manages `Room` instances (get/release)
 - **`Room`** → chat room with feature accessors: `messages`, `presence`, `reactions`, `typing`, `occupancy`
 - **`RoomLifecycleManager`** → orchestrates room state (attach/detach) coordinating features via `ChannelManager`

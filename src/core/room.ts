@@ -276,9 +276,9 @@ export interface Room {
    * @returns A deep copy of the room options
    * @example
    * ```typescript
-   * import { ChatClient } from '@ably/chat';
+   * import { createChatClient } from '@ably/chat';
    *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = createChatClient(realtime);
    *
    * // Create room with specific options
    * const room = await chatClient.rooms.get('conference-hall', {

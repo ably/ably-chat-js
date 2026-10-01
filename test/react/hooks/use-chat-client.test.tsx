@@ -118,7 +118,7 @@ describe('useChatClient', () => {
     const client = newChatClient();
     // Start the connection state as disconnected
     const connectionEmitter = (
-      client.realtime.connection as unknown as {
+      client.pubsubClient.connection as unknown as {
         eventEmitter: EventEmitter<{
           ['connected']: Ably.ConnectionStateChange;
           ['disconnected']: Ably.ConnectionStateChange;
@@ -147,7 +147,7 @@ describe('useChatClient', () => {
     });
 
     // Now we're going to change the clientId on the client and simulate a connection change
-    vi.spyOn(client.realtime.auth, 'clientId', 'get').mockReturnValue('some-other-clientId');
+    vi.spyOn(client.pubsubClient.auth, 'clientId', 'get').mockReturnValue('some-other-clientId');
     connectionEmitter.emit('connected', {
       current: 'connected',
       previous: 'disconnected',

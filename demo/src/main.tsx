@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createClient, ClientOptions } from '@ably/pubsub-device';
-import { ChatClient, LogLevel } from '@ably/chat';
+import { createChatClient, LogLevel } from '@ably/chat';
 import { ChatClientProvider } from '@ably/chat/react';
 import { nanoid } from 'nanoid';
 import App from './App.tsx';
@@ -93,7 +93,7 @@ const getLogLevel = () => {
 
 const pubsubClient = createClient(getPubSubOptions());
 
-const chatClient = new ChatClient(pubsubClient, { logLevel: getLogLevel(), idempotentRestPublishing: true });
+const chatClient = createChatClient(pubsubClient, { logLevel: getLogLevel(), idempotentRestPublishing: true });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

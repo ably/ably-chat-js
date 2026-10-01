@@ -70,7 +70,7 @@ The following code connects to Ably's chat service, subscribes to a chat room, a
 
 ```typescript
 import { createClient } from '@ably/pubsub-device';
-import { ChatClient, RoomStatus, RoomStatusChange } from '@ably/chat';
+import { createChatClient, RoomStatus, RoomStatusChange } from '@ably/chat';
 
 // Initialize Ably Realtime client
 // Note: For client-side applications, token authentication is recommended.
@@ -81,7 +81,7 @@ const realtimeClient = createClient({
 });
 
 // Create a chat client
-const chatClient = new ChatClient(realtimeClient);
+const chatClient = createChatClient(realtimeClient);
 
 // Get a chat room
 const room = await chatClient.rooms.get('my-room');
@@ -121,7 +121,7 @@ For React applications, the SDK provides hooks and providers for seamless integr
 
 ```tsx
 import { createClient } from '@ably/pubsub-device';
-import { ChatClient } from '@ably/chat';
+import { createChatClient } from '@ably/chat';
 import { ChatClientProvider, ChatRoomProvider, useMessages } from '@ably/chat/react';
 
 // Initialize clients
@@ -131,7 +131,7 @@ const realtimeClient = createClient({
   key: '<your-ably-api-key>',
   clientId: 'your-client-id',
 });
-const chatClient = new ChatClient(realtimeClient);
+const chatClient = createChatClient(realtimeClient);
 
 // Wrap your app with providers
 function App() {

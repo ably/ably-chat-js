@@ -1,7 +1,7 @@
 import * as Ably from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatClient } from '../../src/core/chat-client.ts';
+import { ChatClient, createChatClient } from '../../src/core/chat-client.ts';
 import { InternalConnection } from '../../src/core/connection.ts';
 import { randomRoomName } from '../helper/identifier.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
@@ -17,7 +17,20 @@ interface TestContext {
 describe('ChatClient', () => {
   beforeEach<TestContext>((context) => {
     context.realtime = ablyRealtimeClient();
-    context.chat = new ChatClient(context.realtime);
+    context.chat = createChatClient(context.realtime);
+  });
+
+  describe('createChatClient', () => {
+    it<TestContext>('should create a client wrapping the given realtime client', (context) => {
+      expect(context.chat.pubsubClient).toBe(context.realtime);
+      expect(context.chat.clientId).toBe(context.realtime.auth.clientId);
+    });
+
+    it('should apply the given client options over the defaults', () => {
+      const chat = createChatClient(ablyRealtimeClient(), { idempotentRestPublishing: true });
+
+      expect(chat.clientOptions.idempotentRestPublishing).toBe(true);
+    });
   });
 
   describe('dispose', () => {
