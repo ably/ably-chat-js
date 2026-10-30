@@ -2,6 +2,97 @@
 
 This guide provides detailed instructions on how to upgrade between major versions of the Chat SDK.
 
+## 1.x to 2.0.0
+
+### Chat Now Depends On Ably Pub/Sub v3
+
+**Expected Impact: High**
+
+The Chat SDK no longer uses the `ably` package. It now builds on Ably Pub/Sub v3, and you create the Pub/Sub client that you pass to the Chat SDK with one of:
+
+- `@ably/pubsub-device`, for code that runs on an end user's device, such as a browser or a mobile app.
+- `@ably/pubsub-server`, for backend services.
+
+Replace `ably` with one of these packages and create your client with its factory function instead of `new Ably.Realtime()`.
+
+**Before**
+
+```sh
+npm install ably @ably/chat
+```
+
+```ts
+import * as Ably from 'ably';
+import { ChatClient } from '@ably/chat';
+
+const realtimeClient = new Ably.Realtime({ key: '<API-key>', clientId: '<client-ID>' });
+const chatClient = new ChatClient(realtimeClient);
+```
+
+**After**
+
+```sh
+npm install @ably/pubsub-device @ably/chat
+```
+
+```ts
+import { createClient } from '@ably/pubsub-device';
+import { createChatClient } from '@ably/chat';
+
+const pubsubClient = createClient({ key: '<API-key>', clientId: '<client-ID>' });
+const chatClient = createChatClient(pubsubClient);
+```
+
+On a server, install `@ably/pubsub-server` instead and create the client with its `createRealtimeClient` function.
+
+In React, `AblyProvider` from `ably/react` is replaced by `PubSubClientProvider` from `@ably/pubsub-device/react`, which takes the client the same way: `<PubSubClientProvider client={pubsubClient}>`.
+
+### Node.js 22 Or Newer Is Required
+
+**Expected Impact: Medium**
+
+The minimum supported Node.js version is now 22, the oldest Node.js LTS release line that is still supported. Node.js 20 is no longer supported.
+
+### ChatClient Is Now Created With `createChatClient`
+
+**Expected Impact: High**
+
+`ChatClient` is now an interface rather than a class, so it can no longer be constructed with `new`. Use the `createChatClient` factory function instead; it takes the same arguments. `ChatClient` remains available as a type.
+
+**Before**
+
+```ts
+import { ChatClient } from '@ably/chat';
+
+const chatClient = new ChatClient(pubsubClient, { logLevel: LogLevel.Debug });
+```
+
+**After**
+
+```ts
+import { ChatClient, createChatClient } from '@ably/chat';
+
+const chatClient: ChatClient = createChatClient(pubsubClient, { logLevel: LogLevel.Debug });
+```
+
+### `ChatClient.realtime` Is Renamed To `ChatClient.pubsubClient`
+
+**Expected Impact: Low**
+
+The getter that returns the underlying Pub/Sub client has been renamed from `realtime` to `pubsubClient`.
+
+**Before**
+
+```ts
+const pubsubClient = chatClient.realtime;
+```
+
+**After**
+
+```ts
+const pubsubClient = chatClient.pubsubClient;
+```
+
 ## <=1.0.0 to 1.1.0
 
 ### Additional Connection Status Enum Values

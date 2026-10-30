@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { ChannelOptionsMerger } from './channel-manager.js';
 import { ChatApi } from './chat-api.js';
@@ -33,7 +33,7 @@ export interface Occupancy {
    * @throws An {@link Ably.ErrorInfo} with {@link ErrorCode.FeatureNotEnabledInRoom} if occupancy events are not enabled
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, OccupancyEvent } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -74,7 +74,7 @@ export interface Occupancy {
    * @returns Promise resolving to current occupancy data
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, OccupancyData } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -108,7 +108,7 @@ export interface Occupancy {
    * @throws An {@link Ably.ErrorInfo} with {@link ErrorCode.FeatureNotEnabledInRoom} if occupancy events are not enabled
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, OccupancyData } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance

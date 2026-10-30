@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { useEffect, useState } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -34,7 +34,7 @@ export interface UseChatClientResponse {
  * @throws An {@link Ably.ErrorInfo} When used outside of a {@link ChatClientProvider}
  * @example
  * ```tsx
- * import * as Ably from 'ably';
+ * import * as Ably from '@ably/pubsub-device';
  * import React from 'react';
  * import { ChatClient } from '@ably/chat';
  * import { ChatClientProvider, useChatClient } from '@ably/chat/react';

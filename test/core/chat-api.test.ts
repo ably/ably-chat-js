@@ -1,15 +1,16 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
+import { createClient } from '@ably/pubsub-device';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
 import { ErrorCode } from '../../src/core/errors.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('config', () => {
   it('calls the api with the correct protocol version', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
 
     vi.spyOn(realtime, 'request').mockReturnValue(
@@ -30,7 +31,7 @@ describe('config', () => {
   });
 
   it('throws an error if Realtime returns ErrorInfo on non-paginated request', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
 
     vi.spyOn(realtime, 'request').mockReturnValue(
@@ -50,7 +51,7 @@ describe('config', () => {
   });
 
   it('throws errors if Realtime returns ErrorInfo on paginated request', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
 
     vi.spyOn(realtime, 'request').mockReturnValue(
@@ -70,7 +71,7 @@ describe('config', () => {
   });
 
   it('includes errorDetail in thrown ErrorInfo on non-paginated request', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
 
     vi.spyOn(realtime, 'request').mockReturnValue(
@@ -92,7 +93,7 @@ describe('config', () => {
   });
 
   it('includes errorDetail in thrown ErrorInfo on paginated request', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
 
     vi.spyOn(realtime, 'request').mockReturnValue(
@@ -114,7 +115,7 @@ describe('config', () => {
   });
 
   it('throws errors if invalid OrderBy used on history request', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
 
     vi.spyOn(realtime, 'request');
@@ -140,7 +141,7 @@ describe('sendMessage idempotency', () => {
   const KEY_PATTERN = /^[A-Za-z0-9+/]{12}$/;
 
   it('does not attach an idempotencyKey when disabled (sendMessage)', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
     const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(okResponse());
 
@@ -152,7 +153,7 @@ describe('sendMessage idempotency', () => {
   });
 
   it('attaches idempotencyKey as a query param when enabled (sendMessage)', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), true);
     const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(okResponse());
 
@@ -166,7 +167,7 @@ describe('sendMessage idempotency', () => {
   });
 
   it('generates a fresh idempotencyKey for each send call', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), true);
     const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(okResponse());
 
@@ -179,7 +180,7 @@ describe('sendMessage idempotency', () => {
   });
 
   it('attaches idempotencyKey as a query param when enabled (deleteMessage)', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), true);
     const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(okResponse());
 
@@ -190,7 +191,7 @@ describe('sendMessage idempotency', () => {
   });
 
   it('does not attach an idempotencyKey when disabled (deleteMessage)', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
     const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(okResponse());
 
@@ -200,7 +201,7 @@ describe('sendMessage idempotency', () => {
   });
 
   it('attaches idempotencyKey as a query param when enabled (updateMessage)', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), true);
     const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(okResponse());
 
@@ -214,7 +215,7 @@ describe('sendMessage idempotency', () => {
   });
 
   it('does not attach an idempotencyKey when disabled (updateMessage)', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
     const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(okResponse());
 
@@ -226,7 +227,7 @@ describe('sendMessage idempotency', () => {
 
 describe('getClientReactions', () => {
   it('adds forClientId param when clientId is provided', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
     const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(
       Promise.resolve({
@@ -247,7 +248,7 @@ describe('getClientReactions', () => {
   });
 
   it('does not add forClientId param when clientId is not provided', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
     const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(
       Promise.resolve({
@@ -270,7 +271,7 @@ describe('getClientReactions', () => {
 
 describe('getMessageVersions', () => {
   it('calls the correct URL with GET and no params', async () => {
-    const realtime = new Ably.Realtime({ clientId: 'test' });
+    const realtime = createClient({ clientId: 'test' });
     const chatApi = new ChatApi(realtime, makeTestLogger(), false);
     const requestSpy = vi.spyOn(realtime, 'request').mockReturnValue(
       Promise.resolve({

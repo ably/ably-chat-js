@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-deprecated */
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
+import { createClient } from '@ably/pubsub-device';
 import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
@@ -11,14 +11,14 @@ import { Room } from '../../src/core/room.ts';
 import { RoomOptions } from '../../src/core/room-options.ts';
 import { DefaultTyping, Typing } from '../../src/core/typing.ts';
 import { ErrorCode } from '../../src/index.ts';
-import { channelEventEmitter, ChannelEventEmitterReturnType } from '../helper/channel.ts';
+import { channelEventEmitter, ChannelEventEmitterReturnType, PublishableChannel } from '../helper/channel.ts';
 import { waitForArrayLength } from '../helper/common.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 import { withAsyncTimeout } from '../helper/promise.ts';
 import { makeRandomRoom } from '../helper/room.ts';
 
 interface TestContext {
-  realtime: Ably.Realtime;
+  realtime: Ably.PubSubRealtimeClient;
   chat: ChatClient;
   chatApi: ChatApi;
   room: Room;
@@ -53,7 +53,7 @@ interface TestRoomInterface extends Room {
   release: () => Promise<void>;
 }
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('Typing', () => {
   beforeEach<TestContext>((context) => {
@@ -63,7 +63,7 @@ describe('Typing', () => {
         heartbeatThrottleMs: TEST_HEARTBEAT_THROTTLE_MS,
       },
     };
-    context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
+    context.realtime = createClient({ clientId: 'clientId', key: 'key' });
     context.chatApi = new ChatApi(context.realtime, context.logger, false);
     context.room = makeRandomRoom({
       ...context,
@@ -121,7 +121,7 @@ describe('Typing', () => {
 
     // Mock implementation for `publish` to simulate delay in the call on the first invocation
     const publishSpy = vi
-      .spyOn(realtimeChannel, 'publish')
+      .spyOn(realtimeChannel as PublishableChannel, 'publish')
       .mockImplementationOnce(
         async () =>
           new Promise((resolve) =>
@@ -174,7 +174,7 @@ describe('Typing', () => {
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
-      vi.spyOn(realtimeChannel, 'publish').mockResolvedValue({ serials: [] });
+      vi.spyOn(realtimeChannel as PublishableChannel, 'publish').mockResolvedValue({ serials: [] });
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
@@ -198,7 +198,7 @@ describe('Typing', () => {
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If start is called, it should publish a start message
-      vi.spyOn(realtimeChannel, 'publish').mockResolvedValue({ serials: [] });
+      vi.spyOn(realtimeChannel as PublishableChannel, 'publish').mockResolvedValue({ serials: [] });
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Start typing
@@ -237,7 +237,7 @@ describe('Typing', () => {
 
       // Mock implementation for `publish` to simulate 1s delay on the first keystroke call
       const publishSpy = vi
-        .spyOn(realtimeChannel, 'publish')
+        .spyOn(realtimeChannel as PublishableChannel, 'publish')
         .mockImplementationOnce(
           async () =>
             new Promise((resolve) =>
@@ -285,7 +285,7 @@ describe('Typing', () => {
       const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
 
-      vi.spyOn(room.channel, 'publish').mockResolvedValue({ serials: [] });
+      vi.spyOn(room.channel as PublishableChannel, 'publish').mockResolvedValue({ serials: [] });
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       // Stop typing
@@ -300,7 +300,7 @@ describe('Typing', () => {
       const { room, realtime } = context;
       const channel = room.channel;
       const realtimeChannel = realtime.channels.get(channel.name);
-      vi.spyOn(realtimeChannel, 'publish').mockResolvedValue({ serials: [] });
+      vi.spyOn(realtimeChannel as PublishableChannel, 'publish').mockResolvedValue({ serials: [] });
       await room.typing.keystroke();
       vi.spyOn(context.realtime.connection, 'state', 'get').mockReturnValue(ConnectionStatus.Disconnected);
 
@@ -316,7 +316,7 @@ describe('Typing', () => {
       const realtimeChannel = realtime.channels.get(channel.name);
 
       // If stop is called, it should publish a leave message
-      vi.spyOn(realtimeChannel, 'publish').mockResolvedValue({ serials: [] });
+      vi.spyOn(realtimeChannel as PublishableChannel, 'publish').mockResolvedValue({ serials: [] });
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
 
       await Promise.all([room.typing.keystroke(), room.typing.stop()]);
@@ -339,7 +339,7 @@ describe('Typing', () => {
 
       // Mock implementation for `publish` to simulate 1s delay on the first keystroke call
       const publishSpy = vi
-        .spyOn(realtimeChannel, 'publish')
+        .spyOn(realtimeChannel as PublishableChannel, 'publish')
         .mockImplementationOnce(
           async () =>
             new Promise((resolve) =>
@@ -962,7 +962,7 @@ describe('Typing', () => {
       const defaultTyping = room.typing as TestTypingInterface;
       const defaultRoom = room as TestRoomInterface;
       // Mock implementation for `publish` to simulate successful publish
-      vi.spyOn(realtimeChannel, 'publish').mockResolvedValue({ serials: [] });
+      vi.spyOn(realtimeChannel as PublishableChannel, 'publish').mockResolvedValue({ serials: [] });
 
       // Put the room into the attached state
       vi.spyOn(room.channel, 'state', 'get').mockReturnValue('attached');
@@ -997,7 +997,7 @@ describe('Typing', () => {
 
       // Mock implementation for `publish` to simulate 1s delay on the keystroke call
       const publishSpy = vi
-        .spyOn(realtimeChannel, 'publish')
+        .spyOn(realtimeChannel as PublishableChannel, 'publish')
         .mockImplementationOnce(
           async () =>
             new Promise((resolve) =>

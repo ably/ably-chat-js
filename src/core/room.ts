@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import cloneDeep from 'lodash.clonedeep';
 
 import { ChannelManager } from './channel-manager.js';
@@ -151,7 +151,7 @@ export interface Room {
    * @returns Subscription object with an unsubscribe method
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, RoomStatus } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -202,7 +202,7 @@ export interface Room {
    * - {@link Ably.ErrorInfo} if the room enters failed state (manual intervention required)
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, RoomStatus } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -245,7 +245,7 @@ export interface Room {
    * @returns Promise that resolves when the room is successfully detached
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -276,9 +276,9 @@ export interface Room {
    * @returns A deep copy of the room options
    * @example
    * ```typescript
-   * import { ChatClient } from '@ably/chat';
+   * import { createChatClient } from '@ably/chat';
    *
-   * const chatClient = new ChatClient(realtime);
+   * const chatClient = createChatClient(realtime);
    *
    * // Create room with specific options
    * const room = await chatClient.rooms.get('conference-hall', {
@@ -323,7 +323,7 @@ export interface Room {
    * @returns Subscription object with an unsubscribe method
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -400,7 +400,7 @@ export class DefaultRoom implements Room {
     name: string,
     nonce: string,
     options: InternalRoomOptions,
-    realtime: Ably.Realtime,
+    realtime: Ably.PubSubRealtimeClient,
     chatApi: ChatApi,
     clientIdResolver: ClientIdResolver,
     logger: Logger,
@@ -469,7 +469,11 @@ export class DefaultRoom implements Room {
    * @param logger An instance of the Logger.
    * @returns The channel manager instance.
    */
-  private _getChannelManager(options: InternalRoomOptions, realtime: Ably.Realtime, logger: Logger): ChannelManager {
+  private _getChannelManager(
+    options: InternalRoomOptions,
+    realtime: Ably.PubSubRealtimeClient,
+    logger: Logger,
+  ): ChannelManager {
     const manager = new ChannelManager(this._name, realtime, logger, options.isReactClient);
 
     manager.mergeOptions(DefaultOccupancy.channelOptionMerger(options));

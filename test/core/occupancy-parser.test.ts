@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { describe, expect, it } from 'vitest';
 
 import { parseOccupancyMessage } from '../../src/core/occupancy-parser.js';

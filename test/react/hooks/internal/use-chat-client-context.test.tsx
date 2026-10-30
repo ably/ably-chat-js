@@ -16,7 +16,7 @@ const TestComponent: React.FC<{ callback: (client: ChatClient) => void }> = ({ c
   return <div />;
 };
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('useChatClientContext', () => {
   afterEach(() => {
@@ -42,7 +42,7 @@ describe('useChatClientContext', () => {
         <TestComponent
           callback={(client) => {
             expect(client).toBe(chatClient);
-            const agents = (client.realtime as RealtimeWithOptions).options.agents;
+            const agents = (client.pubsubClient as RealtimeWithOptions).options.agents;
             expect(agents).toEqual({ 'chat-js': VERSION, 'chat-react': VERSION });
           }}
         />
@@ -59,7 +59,7 @@ describe('useChatClientContext', () => {
         <TestComponent
           callback={(client) => {
             expect(client).toBe(chatClient);
-            const agents = (client.realtime as RealtimeWithOptions).options.agents;
+            const agents = (client.pubsubClient as RealtimeWithOptions).options.agents;
             expect(agents).toEqual({ 'chat-js': VERSION, 'chat-react': VERSION, 'chat-react-ui-kit': '1.0.0' });
           }}
         />

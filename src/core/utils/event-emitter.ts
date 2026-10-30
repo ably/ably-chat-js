@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 /**
  * This type represents a callback that can be registered with an EventEmitter.
@@ -17,11 +17,10 @@ type Callback<EventsMap> = (arg: EventsMap[keyof EventsMap]) => void;
 type CallbackSingle<K> = (arg: K) => void;
 
 /**
- * This interface extends the Ably.EventEmitter interface to add a type-safe
- * emit method as well as convert an EventsMap into the type parameters used by
- * Ably.EventEmitter.
+ * This interface narrows the emit, on and off methods of the Pub/Sub
+ * {@link Ably.EventEmitter} to the events and payloads of an EventsMap.
  */
-interface InterfaceEventEmitter<EventsMap> extends Ably.EventEmitter<Callback<EventsMap>, void, keyof EventsMap> {
+interface InterfaceEventEmitter<EventsMap> extends Omit<Ably.EventEmitter, 'emit' | 'on' | 'off'> {
   emit<K extends keyof EventsMap>(event: K, arg: EventsMap[K]): void;
 
   on<K extends keyof EventsMap>(event: K, callback: CallbackSingle<EventsMap[K]>): void;
@@ -42,27 +41,18 @@ interface InterfaceEventEmitter<EventsMap> extends Ably.EventEmitter<Callback<Ev
 }
 
 /**
- * This is a workaround for the fact that the EventEmitter constructor is only
- * exported from the ably-js package for internal use by other Ably SDKs (like
- * this one).
- *
- * It is a correctly-typed constructor for the ably-js EventEmitter.
+ * The Pub/Sub {@link Ably.EventEmitter} constructor, typed to produce an
+ * {@link InterfaceEventEmitter}.
  *
  * We do not export this directly because we prefer to export a class, which is
  * what we normally expect EventEmitter to be.
  */
-const InternalEventEmitter: new <EventsMap>() => InterfaceEventEmitter<EventsMap> = (
-  Ably.Realtime as unknown as { EventEmitter: new <EventsMap>() => InterfaceEventEmitter<EventsMap> }
-).EventEmitter;
+const InternalEventEmitter = Ably.EventEmitter as new <EventsMap>() => InterfaceEventEmitter<EventsMap>;
 
 /**
- * EventEmitter class based on the internal ably-js EventEmitter. It is
- * different from the ably-js EventEmitter because it takes an EventsMap type
- * parameter as opposed to the three type parameters required by
- * {@link Ably.EventEmitter}.
- *
- * We find the EventsMap type parameter to be more convenient to use in this
- * Chat SDK.
+ * EventEmitter class based on the Pub/Sub {@link Ably.EventEmitter}. It is
+ * different from the Pub/Sub EventEmitter because it takes an EventsMap type
+ * parameter that types the events and their payloads.
  *
  * The EventsMap is an interface of event names to the types of the payloads of
  * those events. For example:
@@ -94,18 +84,11 @@ export const wrap =
  * @returns true if the emitter has listeners, false otherwise
  */
 export const emitterHasListeners = <EventsMap>(emitter: EventEmitter<EventsMap>): boolean => {
-  const destructured = emitter as unknown as {
-    events: Record<string, unknown[]>;
-    any: unknown[];
-    eventsOnce: Record<string, unknown[]>;
-    anyOnce: unknown[];
-  };
-
   const numListeners =
-    Object.values(destructured.events).flat().length +
-    destructured.any.length +
-    Object.values(destructured.eventsOnce).flat().length +
-    destructured.anyOnce.length;
+    Object.values(emitter.events).flat().length +
+    emitter.any.length +
+    Object.values(emitter.eventsOnce).flat().length +
+    emitter.anyOnce.length;
 
   return numListeners ? numListeners > 0 : false;
 };

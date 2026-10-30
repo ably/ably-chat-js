@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { expect, vi } from 'vitest';
 
 import { ChatApi } from '../../src/core/chat-api.ts';
@@ -38,7 +38,7 @@ export const expectRoomsCount = (rooms: Rooms, count: number) => {
 // Makes a room with the given (or default) options, as a standalone room aside from the chat client
 // Should be used in unit tests where the dependencies are mocked.
 export const makeRandomRoom = (params?: {
-  realtime?: Ably.Realtime;
+  realtime?: Ably.PubSubRealtimeClient;
   chatApi?: ChatApi;
   options?: RoomOptions;
   logger?: Logger;

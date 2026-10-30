@@ -1,5 +1,5 @@
+import * as Ably from '@ably/pubsub-core';
 import { act, cleanup, render, renderHook } from '@testing-library/react';
-import * as Ably from 'ably';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,7 +16,7 @@ const TestComponent: React.FC<{ callback?: (room: UseRoomResponse) => void }> = 
   return <></>;
 };
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('useRoom', () => {
   afterEach(() => {

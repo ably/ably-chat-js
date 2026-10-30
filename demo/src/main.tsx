@@ -1,13 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import * as Ably from 'ably';
-import { ClientOptions } from 'ably';
-import { ChatClient, LogLevel } from '@ably/chat';
+import { createClient, ClientOptions } from '@ably/pubsub-device';
+import { createChatClient, LogLevel } from '@ably/chat';
 import { ChatClientProvider } from '@ably/chat/react';
 import { nanoid } from 'nanoid';
 import App from './App.tsx';
 import './index.css';
-import { AblyProvider } from 'ably/react';
+import { PubSubClientProvider } from '@ably/pubsub-device/react';
 
 // Generate a random clientId and remember it for the length of the session, so
 // if refreshing the page you still see your own messages as yours.
@@ -31,9 +30,9 @@ function getRoomNameFromUrl(): string {
   return params.get('room') || 'abcd';
 }
 
-const getRealtimeOptions = () => {
+const getPubSubOptions = () => {
   const environment = import.meta?.env?.VITE_ABLY_CHAT_ENV;
-  const realtimeOptions: ClientOptions = {
+  const pubsubOptions: ClientOptions = {
     authCallback: async (_params, callback) => {
       try {
         const roomName = getRoomNameFromUrl();
@@ -49,26 +48,26 @@ const getRealtimeOptions = () => {
   switch (environment) {
     case 'local': {
       console.log('Using local Ably environment');
-      realtimeOptions.endpoint = 'local-rest.ably.io';
-      realtimeOptions.port = 8081;
-      realtimeOptions.tls = false;
+      pubsubOptions.endpoint = 'local-rest.ably.io';
+      pubsubOptions.port = 8081;
+      pubsubOptions.tls = false;
       break;
     }
     case 'sandbox':
       console.log('Using sandbox Ably environment');
-      realtimeOptions.endpoint = 'nonprod:sandbox';
+      pubsubOptions.endpoint = 'nonprod:sandbox';
       break;
     case 'production':
     case undefined:
       console.log('Using production Ably environment');
-      realtimeOptions.endpoint = import.meta.env.VITE_ABLY_HOST ?? undefined;
+      pubsubOptions.endpoint = import.meta.env.VITE_ABLY_HOST ?? undefined;
       break;
     default:
       throw new Error(
         `Unknown environment: ${environment}, please set VITE_ABLY_CHAT_ENV to one of 'local', 'sandbox', or 'production'`,
       );
   }
-  return realtimeOptions;
+  return pubsubOptions;
 };
 
 const getLogLevel = () => {
@@ -92,16 +91,16 @@ const getLogLevel = () => {
   }
 };
 
-const realtimeClient = new Ably.Realtime(getRealtimeOptions());
+const pubsubClient = createClient(getPubSubOptions());
 
-const chatClient = new ChatClient(realtimeClient, { logLevel: getLogLevel(), idempotentRestPublishing: true });
+const chatClient = createChatClient(pubsubClient, { logLevel: getLogLevel(), idempotentRestPublishing: true });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AblyProvider client={realtimeClient}>
+    <PubSubClientProvider client={pubsubClient}>
       <ChatClientProvider client={chatClient}>
         <App />
       </ChatClientProvider>
-    </AblyProvider>
+    </PubSubClientProvider>
   </React.StrictMode>,
 );

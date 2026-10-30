@@ -1,5 +1,5 @@
+import * as Ably from '@ably/pubsub-core';
 import { act, cleanup, renderHook } from '@testing-library/react';
-import * as Ably from 'ably';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStatus, ConnectionStatusChange, ConnectionStatusListener } from '../../../src/core/connection.ts';

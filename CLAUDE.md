@@ -14,6 +14,7 @@ npm run build              # Build all (chat, core, react)
 npm run build:chat         # Main chat bundle
 npm run build:core         # Core SDK (no React)
 npm run build:react        # React bindings
+npm run build:cdn          # CDN bundle with @ably/pubsub-core bundled in (run by the CDN publish workflow)
 ```
 
 ### Test
@@ -34,7 +35,7 @@ npm test -- test/core/messages.test.ts
 npm test -- -t "should send a message"
 ```
 
-Unit tests mock `ably` via `vi.mock('ably')` with mocks in `__mocks__/`. Integration tests (`*.integration.test.ts`) connect to Ably sandbox - no mocking.
+Unit tests mock the Pub/Sub client via `vi.mock('@ably/pubsub-device')` with mocks in `__mocks__/@ably/pubsub-device/`, and build clients with its `createClient()`. Integration tests (`*.integration.test.ts`) connect to Ably sandbox - no mocking.
 
 ### Lint & Format
 ```bash
@@ -60,16 +61,16 @@ The SDK ships three packages from a single repo (not a monorepo - single `packag
 
 | Export | Source | Output | Dependencies |
 |---|---|---|---|
-| `@ably/chat` | `src/core/` + `src/index.ts` | `dist/chat/` (ESM + UMD) | `ably` (peer) |
-| `@ably/chat` (core only) | `src/core/` | `dist/core/` | `ably` (external) |
-| `@ably/chat/react` | `src/react/` | `dist/react/` (ESM + UMD) | `ably`, `react` (peers) |
+| `@ably/chat` | `src/core/` + `src/index.ts` | `dist/chat/` (ESM + UMD) | `@ably/pubsub-core` (external) |
+| `@ably/chat` (core only) | `src/core/` | `dist/core/` | `@ably/pubsub-core` (external) |
+| `@ably/chat/react` | `src/react/` | `dist/react/` (ESM + UMD) | `@ably/pubsub-core` (external), `react` (peer) |
 
 Each has its own `vite.config.ts` using Vite library mode with `vite-plugin-dts` for type generation.
 
 ### Core SDK (`src/core/`)
 
 Key class hierarchy:
-- **`ChatClient`** → entry point, provides `rooms` collection and manages Ably Realtime connection
+- **`ChatClient`** → entry point (interface, created via `createChatClient`; implemented by `DefaultChatClient`), provides `rooms` collection and manages Ably Realtime connection
 - **`Rooms`** → manages `Room` instances (get/release)
 - **`Room`** → chat room with feature accessors: `messages`, `presence`, `reactions`, `typing`, `occupancy`
 - **`RoomLifecycleManager`** → orchestrates room state (attach/detach) coordinating features via `ChannelManager`
@@ -91,7 +92,7 @@ All public types/interfaces must be exported from `src/core/index.ts` or `src/re
 ## Coding Conventions
 
 ### TypeScript
-- Import ably as: `import * as Ably from 'ably'`
+- Import the Pub/Sub SDK as: `import * as Ably from '@ably/pubsub-core'`
 - Use relative imports within the project
 - File extension in imports: `import { Foo } from './foo.js'` (enforced by `import/extensions` rule)
 - Prefer arrow functions (enforced by eslint)
@@ -123,7 +124,7 @@ Code is backed by a feature spec with points like `CHA-M10a`. `@[Testable]@` spe
 
 ### Unit Tests
 - Framework: Vitest (`describe`, `it`, `expect`)
-- Mock ably: `vi.mock('ably')` at top of file
+- Mock Pub/Sub: `vi.mock('@ably/pubsub-device')` at top of file, and create clients with `createClient()` from `@ably/pubsub-device`
 - Custom matchers from `test/helper/expectations.ts`: `toBeErrorInfo()`, `toThrowErrorInfo()`, `toBeErrorInfoWithCode()`, `toThrowErrorInfoWithCode()`, `toBeErrorInfoWithCauseCode()`
 - For async rejection testing: `await expect(() => asyncFn()).rejects.toBeErrorInfo({ code: 40000 })`
 - Arrange-Act-Assert pattern; data-driven tests with `.each()`
@@ -151,7 +152,7 @@ src/react/          React hooks and providers
 test/core/          Core SDK tests (unit + integration)
 test/react/         React SDK tests
 test/helper/        Test utilities, custom matchers, setup
-__mocks__/          Module mocks (ably)
+__mocks__/          Module mocks (@ably/pubsub-device)
 demo/               Demo React app (separate package.json)
 ably-common/        Git submodule - shared Ably protocol resources (errors.json)
 scripts/            Build and validation scripts

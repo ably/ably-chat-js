@@ -1,5 +1,5 @@
+import * as Ably from '@ably/pubsub-core';
 import { cleanup, render } from '@testing-library/react';
-import * as Ably from 'ably';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -15,7 +15,7 @@ const TestComponent: React.FC<{ callback: (clientId?: string) => void }> = ({ ca
   return <div />;
 };
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('useChatClient', () => {
   afterEach(() => {
@@ -118,7 +118,7 @@ describe('useChatClient', () => {
     const client = newChatClient();
     // Start the connection state as disconnected
     const connectionEmitter = (
-      client.realtime.connection as unknown as {
+      client.pubsubClient.connection as unknown as {
         eventEmitter: EventEmitter<{
           ['connected']: Ably.ConnectionStateChange;
           ['disconnected']: Ably.ConnectionStateChange;
@@ -147,7 +147,7 @@ describe('useChatClient', () => {
     });
 
     // Now we're going to change the clientId on the client and simulate a connection change
-    vi.spyOn(client.realtime.auth, 'clientId', 'get').mockReturnValue('some-other-clientId');
+    vi.spyOn(client.pubsubClient.auth, 'clientId', 'get').mockReturnValue('some-other-clientId');
     connectionEmitter.emit('connected', {
       current: 'connected',
       previous: 'disconnected',

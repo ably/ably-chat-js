@@ -14,9 +14,14 @@ export default defineConfig({
       fileName: 'ably-chat',
     },
     rollupOptions: {
-      // We currently suggest that ably be installed as a separate dependency, so lets
+      // We currently suggest that @ably/pubsub-core be installed as a separate dependency, so lets
       // not bundle it.
-      external: ['ably', 'react', 'react-dom', 'react/jsx-runtime'],
+      external: ['@ably/pubsub-core', 'react', 'react-dom', 'react/jsx-runtime'],
+      output: {
+        globals: {
+          '@ably/pubsub-core': 'AblyPubSub',
+        },
+      },
     },
     sourcemap: true,
   },

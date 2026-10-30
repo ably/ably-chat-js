@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DefaultClientIdResolver } from '../../src/core/client-id.ts';
@@ -10,10 +10,10 @@ import { makeTestLogger } from '../helper/logger.ts';
 import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 import { expectRoomsCount } from '../helper/room.ts';
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 interface TestContext {
-  realtime: Ably.Realtime;
+  realtime: Ably.PubSubRealtimeClient;
   rooms: Rooms;
 }
 

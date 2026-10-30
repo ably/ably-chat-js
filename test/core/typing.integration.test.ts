@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-deprecated */
 // Import necessary modules and dependencies
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { dequal } from 'dequal';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,7 +15,7 @@ const TEST_TIMEOUT = 10000;
 
 // Define the test context interface
 interface TestContext {
-  realtime: Ably.Realtime;
+  realtime: Ably.PubSubRealtimeClient;
   clientId: string;
   chatRoom: Room;
   chat: ChatClient;

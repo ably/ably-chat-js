@@ -7,7 +7,7 @@ import { useRoomReferenceManager } from '../../../../src/react/hooks/internal/us
 import { ChatClientProvider } from '../../../../src/react/providers/chat-client-provider.js';
 import { newChatClient } from '../../../helper/chat.js';
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('useRoomReferenceManager', () => {
   it('should throw an error when used outside of ChatClientProvider', () => {

@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat-client.ts';
@@ -35,7 +35,7 @@ describe('Chat', () => {
     const chat = newChatClient(testClientOptions());
     // Spy on the connectWs method to check if the agent string is sent
     const cm = (
-      chat.realtime as unknown as {
+      chat.pubsubClient as unknown as {
         connection: { connectionManager: { connectWs: (...args: unknown[]) => void } };
       }
     ).connection.connectionManager;
@@ -49,13 +49,13 @@ describe('Chat', () => {
 
   it('should set the agent string on client instantiation', () => {
     const chat = newChatClient(testClientOptions());
-    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({ 'chat-js': VERSION });
+    expect((chat.pubsubClient as RealtimeWithOptions).options.agents).toEqual({ 'chat-js': VERSION });
   });
 
   it('should add a new agent string', () => {
     const chat = newChatClient(testClientOptions());
     chat.addReactAgent();
-    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({
+    expect((chat.pubsubClient as RealtimeWithOptions).options.agents).toEqual({
       'chat-js': VERSION,
       'chat-react': VERSION,
     });
@@ -64,7 +64,7 @@ describe('Chat', () => {
   it('should add an agent/version pair', () => {
     const chat = newChatClient(testClientOptions());
     chat.addAgentWithVersion('test-agent', '1.0.0');
-    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({
+    expect((chat.pubsubClient as RealtimeWithOptions).options.agents).toEqual({
       'test-agent': '1.0.0',
       'chat-js': VERSION,
     });
@@ -72,7 +72,7 @@ describe('Chat', () => {
 
   it('should send agent string with room attach', async () => {
     const chat = newChatClient(testClientOptions());
-    expect((chat.realtime as RealtimeWithOptions).options.agents).toEqual({ 'chat-js': VERSION });
+    expect((chat.pubsubClient as RealtimeWithOptions).options.agents).toEqual({ 'chat-js': VERSION });
     const room = await getRandomRoom(chat);
     await room.attach();
 

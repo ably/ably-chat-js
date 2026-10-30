@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { ChannelOptionsMerger } from './channel-manager.js';
 import { ErrorCode } from './errors.js';
@@ -102,7 +102,7 @@ export interface PresenceEvent {
  * Presence members are unique based on their `connectionId` and `clientId`. It is possible for
  * multiple users to have the same `clientId` if they are connected to the room from different devices.
  */
-export type PresenceMember = Omit<Ably.PresenceMessage, 'id' | 'action' | 'timestamp'> & {
+export type PresenceMember = Omit<Ably.PresenceMessage, 'id' | 'action' | 'timestamp' | 'memberKey'> & {
   /**
    * The timestamp of when the last change in state occurred for this presence member.
    */
@@ -147,7 +147,7 @@ export interface Presence {
    *          or rejects with {@link ErrorCode.RoomInInvalidState} if the room is not attached
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -188,7 +188,7 @@ export interface Presence {
    * - {@link Ably.ErrorInfo} if the operation fails for any other reason
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -224,7 +224,7 @@ export interface Presence {
    *          or rejects with {@link ErrorCode.RoomInInvalidState} if the room is not attached
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -262,7 +262,7 @@ export interface Presence {
    *          or rejects with {@link ErrorCode.RoomInInvalidState} if the room is not attached
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -303,7 +303,7 @@ export interface Presence {
    *          or rejects with {@link ErrorCode.RoomInInvalidState} if the room is not attached
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -346,7 +346,7 @@ export interface Presence {
    * @throws An {@link Ably.ErrorInfo} with {@link ErrorCode.FeatureNotEnabledInRoom} if presence events are not enabled
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, PresenceEvent, PresenceEventType } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance

@@ -2,7 +2,7 @@
  * @module chat-js
  */
 
-export { ChatClient } from './chat-client.js';
+export { type ChatClient, createChatClient } from './chat-client.js';
 export type { ChatClientOptions } from './config.js';
 export type { Connection, ConnectionStatusChange, ConnectionStatusListener } from './connection.js';
 export { ConnectionStatus } from './connection.js';
@@ -75,4 +75,4 @@ export { RoomStatus } from './room-status.js';
 export type { Rooms } from './rooms.js';
 export type { StatusSubscription, Subscription } from './subscription.js';
 export type { Typing, TypingListener, TypingMember } from './typing.js';
-export type { ErrorInfo, RealtimePresenceParams } from 'ably';
+export type { ErrorInfo, RealtimePresenceParams } from '@ably/pubsub-core';

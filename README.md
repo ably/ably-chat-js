@@ -39,7 +39,7 @@ This SDK supports the following platforms:
 | Platform     | Support |
 |--------------|---------|
 | Browsers     | All major desktop and mobile browsers, including Chrome, Firefox, Edge, Safari (iOS/macOS), Opera, and Android. Internet Explorer is not supported. |
-| Node.js      | Version 20 or newer. |
+| Node.js      | Version 22 or newer. |
 | TypeScript   | Fully supported, the library is written in TypeScript. |
 | React        | Includes providers and hooks for deep integration with the React ecosystem. |
 | React Native | All React Native platforms. Issues can be reported or support requested. |
@@ -57,7 +57,7 @@ The Chat SDK is built on top of the Ably Pub/Sub SDK and uses that to establish 
 Install the Pub/Sub SDK and the Chat SDK:
 
 ```sh
-npm install ably @ably/chat
+npm install @ably/pubsub-device @ably/chat
 ```
 
 ---
@@ -69,19 +69,19 @@ npm install ably @ably/chat
 The following code connects to Ably's chat service, subscribes to a chat room, and sends a message to that room:
 
 ```typescript
-import * as Ably from 'ably';
-import { ChatClient, RoomStatus, RoomStatusChange } from '@ably/chat';
+import { createClient } from '@ably/pubsub-device';
+import { createChatClient, RoomStatus, RoomStatusChange } from '@ably/chat';
 
 // Initialize Ably Realtime client
 // Note: For client-side applications, token authentication is recommended.
 // See: https://ably.com/docs/auth
-const realtimeClient = new Ably.Realtime({
+const realtimeClient = createClient({
   key: '<your-ably-api-key>',
   clientId: 'your-client-id',
 });
 
 // Create a chat client
-const chatClient = new ChatClient(realtimeClient);
+const chatClient = createChatClient(realtimeClient);
 
 // Get a chat room
 const room = await chatClient.rooms.get('my-room');
@@ -120,18 +120,18 @@ await room.messages.send({ text: 'Hello, World!' });
 For React applications, the SDK provides hooks and providers for seamless integration:
 
 ```tsx
-import * as Ably from 'ably';
-import { ChatClient } from '@ably/chat';
+import { createClient } from '@ably/pubsub-device';
+import { createChatClient } from '@ably/chat';
 import { ChatClientProvider, ChatRoomProvider, useMessages } from '@ably/chat/react';
 
 // Initialize clients
 // Note: For client-side applications, token authentication is recommended.
 // See: https://ably.com/docs/auth
-const realtimeClient = new Ably.Realtime({
+const realtimeClient = createClient({
   key: '<your-ably-api-key>',
   clientId: 'your-client-id',
 });
-const chatClient = new ChatClient(realtimeClient);
+const chatClient = createChatClient(realtimeClient);
 
 // Wrap your app with providers
 function App() {

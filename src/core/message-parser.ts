@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { ChatMessageAction } from './events.js';
 import { DefaultMessage, emptyMessageReactions, Message, MessageMetadata } from './message.js';

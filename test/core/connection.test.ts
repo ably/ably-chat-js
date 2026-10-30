@@ -1,12 +1,13 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
+import { ErrorInfo } from '@ably/pubsub-core';
+import { createClient } from '@ably/pubsub-device';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ErrorInfo } from '../../__mocks__/ably/index.ts';
 import { ConnectionStatus, DefaultConnection } from '../../src/core/connection.ts';
 import { makeTestLogger } from '../helper/logger.ts';
 
 interface TestContext {
-  realtime: Ably.Realtime;
+  realtime: Ably.PubSubRealtimeClient;
   emulateStateChange: Ably.connectionEventCallback;
   channelLevelListeners: Set<Ably.connectionEventCallback>;
 }
@@ -51,11 +52,11 @@ const mapAblyStatusToChat = (status: Ably.ConnectionState): ConnectionStatus => 
   }
 };
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('connection', () => {
   beforeEach<TestContext>((context) => {
-    context.realtime = new Ably.Realtime({ clientId: 'clientId', key: 'key' });
+    context.realtime = createClient({ clientId: 'clientId', key: 'key' });
     context.channelLevelListeners = new Set();
 
     const connection = context.realtime.connection;

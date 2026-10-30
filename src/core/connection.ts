@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { Logger } from './logger.js';
 import { on } from './realtime-subscriptions.js';
@@ -147,7 +147,7 @@ export interface Connection {
    * @returns Subscription object with an off method to unregister
    * @example
    * ```typescript
-   * import * as Ably from 'ably';
+   * import * as Ably from '@ably/pubsub-device';
    * import { ChatClient, ConnectionStatus } from '@ably/chat';
    *
    * const chatClient: ChatClient; // existing ChatClient instance
@@ -214,7 +214,7 @@ export class DefaultConnection implements InternalConnection {
    * @param ably The Ably Realtime client.
    * @param logger The logger to use.
    */
-  constructor(ably: Ably.Realtime, logger: Logger) {
+  constructor(ably: Ably.PubSubRealtimeClient, logger: Logger) {
     this._logger = logger;
 
     // Set our initial status and error

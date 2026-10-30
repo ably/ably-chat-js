@@ -1,5 +1,5 @@
-import * as Ably from 'ably';
-import { PresenceAction, Realtime } from 'ably';
+import * as Ably from '@ably/pubsub-core';
+import { PresenceAction } from '@ably/pubsub-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat-client.ts';
@@ -13,7 +13,7 @@ import { ablyRealtimeClient } from '../helper/realtime-client.ts';
 
 // Define the test context interface
 interface TestContext {
-  realtime: Ably.Realtime;
+  realtime: Ably.PubSubRealtimeClient;
   defaultTestClientId: string;
   chatRoom: Room;
   chat: ChatClient;
@@ -43,7 +43,7 @@ const assertNoPresenceEvent = async (events: PresenceEvent[], type: PresenceEven
 // Helper function to wait for an event and run an expectation function on the received message
 // Wait a maximum of 3 seconds for the event to be received
 const waitForEvent = async (
-  realtimeClient: Realtime,
+  realtimeClient: Ably.PubSubRealtimeClient,
   event: PresenceAction | PresenceAction[],
   realtimeChannelName: string,
   expectationFn: (member: Ably.PresenceMessage) => void,

@@ -1,9 +1,9 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ephemeralMessage, messageToEphemeral } from '../../src/core/realtime.ts';
 
-vi.mock('ably');
+vi.mock('@ably/pubsub-device');
 
 describe('realtime', () => {
   describe('messageToEphemeral', () => {

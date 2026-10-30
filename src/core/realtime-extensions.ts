@@ -1,4 +1,4 @@
-import * as Ably from 'ably';
+import * as Ably from '@ably/pubsub-core';
 
 import { Headers } from './headers.js';
 
@@ -6,7 +6,7 @@ import { Headers } from './headers.js';
  * Exposes the agents option in the Ably Realtime client for typescript.
  * @internal
  */
-export interface RealtimeWithOptions extends Ably.Realtime {
+export interface RealtimeWithOptions extends Ably.PubSubRealtimeClient {
   options: {
     agents?: Record<string, string | undefined>;
   };
