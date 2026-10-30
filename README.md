@@ -72,16 +72,16 @@ The following code connects to Ably's chat service, subscribes to a chat room, a
 import { createClient } from '@ably/pubsub-device';
 import { createChatClient, RoomStatus, RoomStatusChange } from '@ably/chat';
 
-// Initialize Ably Realtime client
+// Initialize Ably Pub/Sub Realtime client
 // Note: For client-side applications, token authentication is recommended.
 // See: https://ably.com/docs/auth
-const realtimeClient = createClient({
+const pubsubClient = createClient({
   key: '<your-ably-api-key>',
   clientId: 'your-client-id',
 });
 
 // Create a chat client
-const chatClient = createChatClient(realtimeClient);
+const chatClient = createChatClient(pubsubClient);
 
 // Get a chat room
 const room = await chatClient.rooms.get('my-room');
@@ -127,11 +127,11 @@ import { ChatClientProvider, ChatRoomProvider, useMessages } from '@ably/chat/re
 // Initialize clients
 // Note: For client-side applications, token authentication is recommended.
 // See: https://ably.com/docs/auth
-const realtimeClient = createClient({
+const pubsubClient = createClient({
   key: '<your-ably-api-key>',
   clientId: 'your-client-id',
 });
-const chatClient = createChatClient(realtimeClient);
+const chatClient = createChatClient(pubsubClient);
 
 // Wrap your app with providers
 function App() {
