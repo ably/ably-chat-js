@@ -47,6 +47,12 @@ On a server, install `@ably/pubsub-server` instead and create the client with it
 
 In React, `AblyProvider` from `ably/react` is replaced by `PubSubClientProvider` from `@ably/pubsub-device/react`, which takes the client the same way: `<PubSubClientProvider client={pubsubClient}>`.
 
+### Node.js 22 Or Newer Is Required
+
+**Expected Impact: Medium**
+
+The minimum supported Node.js version is now 22, the oldest Node.js LTS release line that is still supported. Node.js 20 is no longer supported.
+
 ### ChatClient Is Now Created With `createChatClient`
 
 **Expected Impact: High**
