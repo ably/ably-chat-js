@@ -2,6 +2,28 @@
 
 This contains only the most important and/or user-facing changes; for a full changelog, see the commit history.
 
+## [2.0.0](https://github.com/ably/ably-chat-js/tree/2.0.0) (2026-10-30)
+
+The 2.0.0 release moves the Chat SDK onto Ably Pub/Sub v3. Pub/Sub v3 is split by where your code runs: `@ably/pubsub-device` for code that runs on an end user's device, such as a browser or a mobile app, and `@ably/pubsub-server` for code that runs on your own infrastructure. The Chat SDK works with a client from either package, so you install the one that matches your side of the connection alongside `@ably/chat`.
+
+Below is an overview of the major changes in this release.
+
+Please refer to the [upgrade guide](./UPGRADING.md) for the full details, including a list of all breaking changes and instructions on how to address them.
+
+### Ably Pub/Sub v3
+
+- The Chat SDK no longer uses the `ably` package. Create the Pub/Sub client you pass to the Chat SDK with `createClient` from `@ably/pubsub-device`, or `createRealtimeClient` from `@ably/pubsub-server`, instead of `new Ably.Realtime()`. [#734](https://github.com/ably/ably-chat-js/pull/734)
+- In React, wrap your app in `PubSubClientProvider` from `@ably/pubsub-device/react` instead of `AblyProvider` from `ably/react`. [#734](https://github.com/ably/ably-chat-js/pull/734)
+
+### Client API naming
+
+- `ChatClient` is now an interface. Create clients with the `createChatClient` factory function instead of `new ChatClient()`; it takes the same arguments. [#734](https://github.com/ably/ably-chat-js/pull/734)
+- The `ChatClient.realtime` getter is renamed `pubsubClient`. [#734](https://github.com/ably/ably-chat-js/pull/734)
+
+### Supported platforms changes
+
+- Support for Node.js versions lower than 22 has been dropped. [#734](https://github.com/ably/ably-chat-js/pull/734)
+
 ## [1.4.0](https://github.com/ably/ably-chat-js/tree/1.4.0) (2026-05-28)
 
 ### New Features
@@ -238,8 +260,7 @@ This release contains breaking API changes. Please see `UPGRADING.md` for full g
 
 ### New Features
 
-- **Message Reactions**: Added *experimental* support for message reactions. [#473](https://github.com/ably/ably-chat-js/pull/473)
-
+- **Message Reactions**: Added _experimental_ support for message reactions. [#473](https://github.com/ably/ably-chat-js/pull/473)
 
 ## [0.6.0](https://github.com/ably/ably-chat-js/tree/0.6.0) (2025-04-17)
 
@@ -272,7 +293,6 @@ This release contains minor breaking API changes. Please see `UPGRADING.md` for 
 ### Removals
 
 - Removed public realtime message parsing functions [#475](https://github.com/ably/ably-chat-js/pull/475).
-
 
 ## [0.4.0](https://github.com/ably/ably-chat-js/tree/0.4.0) (2025-01-20)
 
