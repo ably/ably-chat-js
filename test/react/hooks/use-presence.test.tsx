@@ -493,6 +493,37 @@ describe('usePresence', () => {
       expect(enterSpy).not.toHaveBeenCalled();
     });
 
+    it('should not leave presence on connection status changes, only on unmount', async () => {
+      const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
+      const leaveSpy = vi.spyOn(mockRoom.presence, 'leave');
+
+      const { rerender, unmount } = renderHook(() => usePresence({ initialData: { test: 'data' } }));
+
+      // Wait for initial auto-enter
+      await waitFor(() => {
+        expect(enterSpy).toHaveBeenCalledWith({ test: 'data' });
+      });
+
+      // Simulate a brief disconnection while the room stays attached
+      mockCurrentConnectionStatus = ConnectionStatus.Disconnected;
+      rerender();
+
+      mockCurrentConnectionStatus = ConnectionStatus.Connected;
+      rerender();
+
+      // Wait to ensure no leave happens
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(leaveSpy).not.toHaveBeenCalled();
+      expect(enterSpy).toHaveBeenCalledTimes(1);
+
+      // Unmount and verify leave is called automatically
+      unmount();
+
+      await vi.waitFor(() => {
+        expect(leaveSpy).toHaveBeenCalledTimes(1);
+      });
+    });
+
     it('should auto-enter after room goes detached->attached even if already auto-entered before', async () => {
       const enterSpy = vi.spyOn(mockRoom.presence, 'enter');
 

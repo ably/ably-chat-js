@@ -328,10 +328,14 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
   // Track if room has been detached since last auto-enter (for recovery logic)
   const roomWasDetachedRef = useRef<boolean>(false);
 
+  // Track if we've attempted to auto-enter the current room, so that we know to auto-leave it
+  const hasAttemptedAutoEnterRef = useRef<boolean>(false);
+
   // If the context changes, then we'll assume auto-enter is required.
   useEffect(() => {
     hasAutoEnteredRef.current = false;
     roomWasDetachedRef.current = false;
+    hasAttemptedAutoEnterRef.current = false;
   }, [context]);
 
   // Keep track of the room and connection statuses
@@ -406,6 +410,7 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
 
         // Enter the room using latest data - state updates are handled by presence.ts
         logger.debug('usePresence(); entering room');
+        hasAttemptedAutoEnterRef.current = true;
         room.presence
           .enter(latestDataRef.current)
           .then(() => {
@@ -419,32 +424,52 @@ export const usePresence = (params?: UsePresenceParams): UsePresenceResponse => 
           });
 
         return () => {
-          const canLeavePresence =
-            room.status === RoomStatus.Attached &&
-            !INACTIVE_CONNECTION_STATES.has(roomStatusAndConnectionStatusRef.current.connectionStatus);
-
-          logger.debug('usePresence(); unmounting', {
-            canLeavePresence,
-            roomStatus,
-            connectionStatus,
-          });
-          if (canLeavePresence && !hasExplicitlyLeftRef.current) {
-            // Only auto-leave if we haven't already explicitly left
-            // Leave the room - state updates are handled by presence.ts
-            room.presence
-              .leave()
-              .then(() => {
-                logger.debug('usePresence(); left room');
-              })
-              .catch((error: unknown) => {
-                logger.error('usePresence(); error leaving room', { error });
-              });
-          }
+          // no-op, auto-leave is handled by the effect below so that status changes do not leave presence
         };
       },
       logger,
     ).unmount();
   }, [context, connectionStatus, roomStatus, logger, shouldAutoEnterLeave]);
+
+  // leave the room when the hook is unmounted, the room changes or autoEnterLeave is disabled.
+  // This is kept separate from the auto-enter effect, so that room and connection status changes
+  // (e.g. a brief disconnection) do not cause the client to leave presence.
+  useEffect(() => {
+    if (!shouldAutoEnterLeave) {
+      return () => {
+        // no-op
+      };
+    }
+
+    return wrapRoomPromise(
+      context.room,
+      (room: Room) => () => {
+        const canLeavePresence =
+          room.status === RoomStatus.Attached &&
+          !INACTIVE_CONNECTION_STATES.has(roomStatusAndConnectionStatusRef.current.connectionStatus);
+
+        logger.debug('usePresence(); unmounting', {
+          canLeavePresence,
+          hasAttemptedAutoEnter: hasAttemptedAutoEnterRef.current,
+          ...roomStatusAndConnectionStatusRef.current,
+        });
+
+        // Only auto-leave if we have auto-entered and haven't already explicitly left
+        if (canLeavePresence && hasAttemptedAutoEnterRef.current && !hasExplicitlyLeftRef.current) {
+          // Leave the room - state updates are handled by presence.ts
+          room.presence
+            .leave()
+            .then(() => {
+              logger.debug('usePresence(); left room');
+            })
+            .catch((error: unknown) => {
+              logger.error('usePresence(); error leaving room', { error });
+            });
+        }
+      },
+      logger,
+    ).unmount();
+  }, [context, logger, shouldAutoEnterLeave]);
 
   // if provided, subscribes the user provided onDiscontinuity listener
   useEffect(() => {
