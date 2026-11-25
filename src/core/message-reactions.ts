@@ -93,6 +93,8 @@ export interface MessageReactions {
    * @param params - The reaction parameters
    * @returns Promise that resolves when the reaction has been sent, or rejects with:
    * - {@link Ably.ErrorInfo} with code 40400 if the message does not exist.
+   * - {@link ErrorCode.MessageReactionTargetDeleted} if the message has been deleted.
+   * - {@link ErrorCode.MessageReactionLimitExceeded} if the message already has the maximum number of distinct reactions.
    * @example
    * ```typescript
    * import * as Ably from '@ably/pubsub-device';
@@ -137,6 +139,8 @@ export interface MessageReactions {
    * - **Unique**: Removes the client's single reaction (name not required)
    * - **Distinct**: Removes a specific reaction by name
    * - **Multiple**: Removes all instances of a reaction by name
+   *
+   * Reactions can still be deleted from a message that has itself been deleted.
    *
    * **Note**: This method uses the Ably Chat REST API and so does not require the room
    * to be attached to be called.
