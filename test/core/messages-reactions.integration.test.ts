@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatClient } from '../../src/core/chat-client.ts';
+import { ErrorCode } from '../../src/core/errors.ts';
 import {
   MessageReactionRawEvent,
   MessageReactionRawEventType,
@@ -499,5 +500,22 @@ describe('message reactions integration', { timeout: 60000 }, () => {
     await waitForArrayLength(found, 1);
 
     expect(found[0]?.reaction.userClaim).toBe('test-claim-value');
+  });
+
+  it<TestContext>('should reject reactions to a deleted message but allow deleting existing ones', async (context) => {
+    const { chat } = context;
+
+    const room = await getRandomRoom(chat);
+
+    const message = await room.messages.send({ text: 'Hello there!' });
+    await room.messages.reactions.send(message.serial, { type: MessageReactionType.Distinct, name: '👍' });
+    await room.messages.delete(message.serial);
+
+    await expect(
+      room.messages.reactions.send(message.serial, { type: MessageReactionType.Distinct, name: '🚀' }),
+    ).rejects.toBeErrorInfoWithCode(ErrorCode.MessageReactionTargetDeleted);
+
+    // rejects if the delete is refused
+    await room.messages.reactions.delete(message.serial, { type: MessageReactionType.Distinct, name: '👍' });
   });
 });
